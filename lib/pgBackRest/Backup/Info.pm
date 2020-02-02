@@ -22,7 +22,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
@@ -165,7 +164,7 @@ sub new
         }
         elsif ($iResult == ERROR_CRYPTO && $strResultMessage =~ "^unable to flush")
         {
-            confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+            confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: is or was the repo encrypted?", $iResult);
         }
         else
         {
@@ -193,7 +192,7 @@ sub new
 ####################################################################################################################################
 # validate
 #
-# Comfirm the file exists and reconstruct as necessary.
+# Confirm the file exists and reconstruct as necessary.
 ####################################################################################################################################
 sub validate
 {
@@ -335,14 +334,9 @@ sub reconstruct
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
 
-        if (!$self->{oStorage}->pathExists($strBackupPath))
+        if (!$self->{oStorage}->pathExists($strBackupPath) || !$self->{oStorage}->exists($strManifestFile))
         {
-            &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
-            $self->delete($strBackup);
-        }
-        elsif (!$self->{oStorage}->exists($strManifestFile))
-        {
-            &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
+            &log(WARN, "backup '${strBackup}' missing manifest removed from " . FILE_BACKUP_INFO);
             $self->delete($strBackup);
         }
     }
@@ -967,14 +961,15 @@ sub dbSectionSet
     $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
     $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
     $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
-    $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
+    # Force the version to a string since newer versions of JSON::PP lose track of the fact that it is one
+    $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion . '');
     $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
 
     # Fill db history
     $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
     $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
     $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
-    $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
+    $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion . '');
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1017,7 +1012,7 @@ sub confirmDb
     # If the db-id for the backup exists in the list
     if (exists $hDbList->{$iDbHistoryId})
     {
-        # If the version and system-id match then datbase is confirmed for the backup
+        # If the version and system-id match then database is confirmed for the backup
         if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
             ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
         {

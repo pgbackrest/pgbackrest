@@ -9,12 +9,15 @@
 # - if Dockerfile has not changed, comment out vm hash below and use --vm-force when building
 #
 # To upload a new image:
-# - docker login
-# - docker tag pgbackrest/test:{vm}-base pgbackrest/test:{vm}-base-YYYYMMDDA
-# - docker push pgbackrest/test:{vm}-base-YYYYMMDDA
+# - docker login -u pgbackrest
+# - VM=XXX;DATE=YYYYMMDDX;BASE=pgbackrest/test:${VM?}-base;docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
-20190424A:
-  u18: 72f9a453557e21dd3269b8b3fba1b4b8d6dc9d77
-  co6: 27a1efc146c200ad7592575808443bd086cf3e0d
-  co7: 5816e9219e7b5fb188331021c82559f9062de8b0
-  u12: 20b1b60cf8f456c03dc8ebadaf7d264fe1d9f957
+20200124A:
+  u12: 0f2fcf1bc79ee35e78121773c9a2155a77cb10d5
+  u18: e0d670be1f7167152748e36832081b5b09aabc70
+  u19: 9d057b1081efedfce0f7ba38092b867a125fde37
+
+20191122A:
+  f30: 3a60318c275cdbfa6daa0f2b502a5551562e6db6
+  co6: 63527115fd269dfee74bda70da8a5b0569f94886
+  co7: 0b4c4b953709dc086f95fcc5c8ca45dee1a5eee9

@@ -19,7 +19,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
@@ -220,8 +219,12 @@ use constant DB_FILE_POSTMASTERPID                                  => 'postmast
     push @EXPORT, qw(DB_FILE_POSTMASTERPID);
 use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
     push @EXPORT, qw(DB_FILE_RECOVERYCONF);
+use constant DB_FILE_RECOVERYSIGNAL                                 => 'recovery.signal';
+    push @EXPORT, qw(DB_FILE_RECOVERYSIGNAL);
 use constant DB_FILE_RECOVERYDONE                                   => 'recovery.done';
     push @EXPORT, qw(DB_FILE_RECOVERYDONE);
+use constant DB_FILE_STANDBYSIGNAL                                  => 'standby.signal';
+    push @EXPORT, qw(DB_FILE_STANDBYSIGNAL);
 use constant DB_FILE_TABLESPACEMAP                                  => 'tablespace_map';
     push @EXPORT, qw(DB_FILE_TABLESPACEMAP);
 
@@ -268,8 +271,12 @@ use constant MANIFEST_FILE_POSTMASTERPID                            => MANIFEST_
     push @EXPORT, qw(MANIFEST_FILE_POSTMASTERPID);
 use constant MANIFEST_FILE_RECOVERYCONF                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYCONF;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYCONF);
+use constant MANIFEST_FILE_RECOVERYSIGNAL                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYSIGNAL;
+    push @EXPORT, qw(MANIFEST_FILE_RECOVERYSIGNAL);
 use constant MANIFEST_FILE_RECOVERYDONE                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYDONE;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYDONE);
+use constant MANIFEST_FILE_STANDBYSIGNAL                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_STANDBYSIGNAL;
+    push @EXPORT, qw(MANIFEST_FILE_STANDBYSIGNAL);
 use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;
     push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
 
@@ -322,7 +329,8 @@ sub new
             confess &log(ASSERT, 'strDbVersion and iDbCatalogVersion must be provided with bLoad = false');
         }
 
-        $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
+        # Force the version to a string since newer versions of JSON::PP lose track of the fact that it is one
+        $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion . '');
         $self->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
     }
 
@@ -883,13 +891,21 @@ sub build
         # Skip pg_internal.init since it is recreated on startup
         next if $strFile =~ (DB_FILE_PGINTERNALINIT . '$');
 
+        # Skip recovery files
+        if ($self->dbVersion() >= PG_VERSION_12)
+        {
+            next if ($strFile eq MANIFEST_FILE_RECOVERYSIGNAL || $strFile eq MANIFEST_FILE_STANDBYSIGNAL);
+        }
+        else
+        {
+            next if ($strFile eq MANIFEST_FILE_RECOVERYDONE || $strFile eq MANIFEST_FILE_RECOVERYCONF);
+        }
+
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
             $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
             $strFile eq MANIFEST_FILE_POSTMASTEROPTS ||             # postmaster.opts - not useful for backup
-            $strFile eq MANIFEST_FILE_POSTMASTERPID ||              # postmaster.pid - to avoid confusing postgres after restore
-            $strFile eq MANIFEST_FILE_RECOVERYCONF ||               # recovery.conf - doesn't make sense to backup this file
-            $strFile eq MANIFEST_FILE_RECOVERYDONE)                 # recovery.done - doesn't make sense to backup this file
+            $strFile eq MANIFEST_FILE_POSTMASTERPID)                # postmaster.pid - to avoid confusing postgres after restore
         {
             next;
         }
@@ -897,7 +913,7 @@ sub build
         # If version is greater than 9.0, check for files to exclude
         if ($self->dbVersion() >= PG_VERSION_90 && $hManifest->{$strName}{type} eq 'f')
         {
-            # Get the directory name from the manifest; it will be used later to seach for existence in the keys
+            # Get the directory name from the manifest; it will be used later to search for existence in the keys
             my $strDir = dirname($strName);
 
             # If it is a database data directory (base or tablespace) then check for files to skip
@@ -936,48 +952,6 @@ sub build
             }
         }
 
-        my $cType = $hManifest->{$strName}{type};
-        my $strSection = MANIFEST_SECTION_TARGET_PATH;
-
-        if ($cType eq 'f')
-        {
-            $strSection = MANIFEST_SECTION_TARGET_FILE;
-        }
-        elsif ($cType eq 'l')
-        {
-            $strSection = MANIFEST_SECTION_TARGET_LINK;
-        }
-        elsif ($cType ne 'd')
-        {
-            confess &log(ASSERT, "unrecognized file type $cType for file $strName");
-        }
-
-        # Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA
-        my $bTablespace = false;
-
-        if (index($strName, DB_PATH_PGTBLSPC . '/') == 0 && $strLevel eq MANIFEST_TARGET_PGDATA)
-        {
-            $bTablespace = true;
-            $strFile = MANIFEST_TARGET_PGDATA . '/' . $strName;
-
-            # Check for files in DB_PATH_PGTBLSPC that are not links
-            if ($hManifest->{$strName}{type} ne 'l')
-            {
-                confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
-                             ERROR_LINK_EXPECTED);
-            }
-
-            # Check for tablespaces in PGDATA
-            if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
-                (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
-                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-                       $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
-            {
-                confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
-                             ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
-            }
-        }
-
         # Exclude files requested by the user
         if (defined($rhExclude))
         {
@@ -1012,6 +986,49 @@ sub build
 
             # Skip the file if it was excluded
             next if $bExclude;
+        }
+
+        my $cType = $hManifest->{$strName}{type};
+        my $strSection = MANIFEST_SECTION_TARGET_PATH;
+
+        if ($cType eq 'f')
+        {
+            $strSection = MANIFEST_SECTION_TARGET_FILE;
+        }
+        elsif ($cType eq 'l')
+        {
+            $strSection = MANIFEST_SECTION_TARGET_LINK;
+        }
+        elsif ($cType ne 'd')
+        {
+            &log(WARN, "exclude special file '" . $self->dbPathGet(undef, $strFile) . "' from backup");
+            next;
+        }
+
+        # Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA
+        my $bTablespace = false;
+
+        if (index($strName, DB_PATH_PGTBLSPC . '/') == 0 && $strLevel eq MANIFEST_TARGET_PGDATA)
+        {
+            $bTablespace = true;
+            $strFile = MANIFEST_TARGET_PGDATA . '/' . $strName;
+
+            # Check for files in DB_PATH_PGTBLSPC that are not links
+            if ($hManifest->{$strName}{type} ne 'l')
+            {
+                confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
+                             ERROR_LINK_EXPECTED);
+            }
+
+            # Check for tablespaces in PGDATA
+            if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
+                (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
+                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
+                       $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
+            {
+                confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
+                             ' destination must not be in $PGDATA', ERROR_LINK_DESTINATION);
+            }
         }
 
         # User and group required for all types
@@ -1090,9 +1107,7 @@ sub build
         # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups do
         # not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
         # consistent anyway and the one-second resolution problem is the least of our worries).
-        my $lTimeBegin =
-            $oStorageDbMaster->can('protocol') ?
-                $oStorageDbMaster->protocol()->cmdExecute(OP_WAIT, [$bOnline]) : waitRemainder($bOnline);
+        my $lTimeBegin = waitRemainder($bOnline);
 
         # Check that links are valid
         $self->linkCheck();
@@ -1419,7 +1434,7 @@ sub buildDefault
 ####################################################################################################################################
 # validate
 #
-# Checks for any mising values or inconsistencies in the manifest.
+# Checks for any missing values or inconsistencies in the manifest.
 ####################################################################################################################################
 sub validate
 {
@@ -1504,9 +1519,10 @@ sub isChecksumPage
 {
     my $strFile = shift;
 
-    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE . '|^' . MANIFEST_TARGET_PGTBLSPC . '\/') &&
+    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE . '\/[0-9]+\/|^' . MANIFEST_TARGET_PGTBLSPC .
+            '\/[0-9]+\/[^\/]+\/[0-9]+\/') &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . ')$')) ||
-        ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL) &&
+        ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL . '\/') &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . '|' .
             DB_FILE_PGCONTROL . ')$')))
     {

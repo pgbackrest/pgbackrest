@@ -5,7 +5,7 @@ Archive Get File
 
 #include "command/archive/get/file.h"
 #include "command/archive/common.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/decompress.h"
 #include "common/crypto/cipherBlock.h"
@@ -47,11 +47,10 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get pg control info
-        PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+        PgControl controlInfo = pgControlFromFile(storagePg());
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNewLoad(
-            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType, cipherPass);
+        InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;
@@ -69,7 +68,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
                 // If a WAL segment search among the possible file names
                 if (walIsSegment(archiveFile))
                 {
-                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
+                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
 
                     if (walSegmentFile != NULL)
                     {
@@ -79,7 +78,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
                 }
                 // Else if not a WAL segment, see if it exists in the archive dir
                 else if (
-                    storageExistsNP(
+                    storageExistsP(
                         storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveFile))))
                 {
                     archiveFileActual = archiveFile;
@@ -98,10 +97,12 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
 
         if (archiveFileActual != NULL)
         {
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
-            result.cipherPass = strDup(infoArchiveCipherPass(info));
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
+                result.cipherPass = strDup(infoArchiveCipherPass(info));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -132,6 +133,9 @@ archiveGetFile(
     // By default result indicates WAL segment not found
     int result = 1;
 
+    // Is the file compressible during the copy?
+    bool compressible = true;
+
     // Test for stop file
     lockStopTest();
 
@@ -146,26 +150,27 @@ archiveGetFile(
                 storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
                 .noAtomic = !durable);
 
-            // Add filters
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-
             // If there is a cipher then add the decrypt filter
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup, cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL));
+                    ioWriteFilterGroup(storageWriteIo(destination)), cipherBlockNew(cipherModeDecrypt, cipherType,
+                        BUFSTR(archiveGetCheckResult.cipherPass), NULL));
+                compressible = false;
             }
 
             // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
-                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
-
-            ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
+            {
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzipDecompressNew(false));
+                compressible = false;
+            }
 
             // Copy the file
-            storageCopyNP(
-                storageNewReadNP(
-                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual))),
+            storageCopyP(
+                storageNewReadP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveGetCheckResult.archiveFileActual)),
+                    .compressible = compressible),
                 destination);
 
             // The WAL file was found

@@ -59,12 +59,18 @@ my @stryCFile =
     'common/io/filter/buffer.c',
     'common/io/filter/filter.c',
     'common/io/filter/group.c',
+    'common/io/filter/sink.c',
     'common/io/filter/size.c',
     'common/io/handleWrite.c',
+    'common/io/http/cache.c',
+    'common/io/http/client.c',
+    'common/io/http/common.c',
+    'common/io/http/header.c',
+    'common/io/http/query.c',
     'common/io/io.c',
     'common/io/read.c',
+    'common/io/tls/client.c',
     'common/io/write.c',
-    'common/lock.c',
     'common/log.c',
     'common/memContext.c',
     'common/regExp.c',
@@ -80,16 +86,26 @@ my @stryCFile =
     'common/type/variant.c',
     'common/type/variantList.c',
     'common/type/xml.c',
+    'common/user.c',
     'common/wait.c',
     'config/config.c',
     'config/define.c',
     'config/load.c',
     'config/parse.c',
-    'perl/config.c',
+    'protocol/client.c',
+    'protocol/command.c',
+    'protocol/helper.c',
+    'protocol/parallel.c',
+    'protocol/parallelJob.c',
+    'protocol/server.c',
+    'postgres/client.c',
     'postgres/pageChecksum.c',
     'storage/posix/read.c',
     'storage/posix/storage.c',
     'storage/posix/write.c',
+    'storage/s3/read.c',
+    'storage/s3/storage.c',
+    'storage/s3/write.c',
     'storage/helper.c',
     'storage/read.c',
     'storage/storage.c',
@@ -115,7 +131,8 @@ WriteMakefile
         -std=c99
         -D_POSIX_C_SOURCE=200112L
         -D_FILE_OFFSET_BITS=64
-        `xml2-config --cflags`
+        `pkg-config libxml-2.0 --cflags`
+        -I`pg_config --includedir`
     )),
 
     INC => join(' ', qw(
@@ -125,7 +142,7 @@ WriteMakefile
 
     C => \@stryCFile,
 
-    LIBS => '-lcrypto -lssl -lxml2',
+    LIBS => '-lcrypto -lpq -lssl -lxml2',
 
     OBJECT => '$(O_FILES)',
 );

@@ -65,12 +65,9 @@ Error handling macros that throw a Perl error when a C error is caught
 /***********************************************************************************************************************************
 Core context handling macros, only intended to be called from other macros
 ***********************************************************************************************************************************/
-#define MEM_CONTEXT_XS_OLD()                                                                                                       \
-    MEM_CONTEXT_XS_memContextOld
-
 #define MEM_CONTEXT_XS_CORE_BEGIN(memContext)                                                                                      \
     /* Switch to the new memory context */                                                                                         \
-    MemContext *MEM_CONTEXT_XS_OLD() = memContextSwitch(memContext);                                                               \
+    MemContext *MEM_CONTEXT_memContextPrior = memContextSwitch(memContext);                                                        \
                                                                                                                                    \
     /* Store any errors to be croaked to Perl at the end */                                                                        \
     bool MEM_CONTEXT_XS_croak = false;                                                                                             \
@@ -87,12 +84,12 @@ Core context handling macros, only intended to be called from other macros
     /* Free the context on error */                                                                                                \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-        memContextSwitch(MEM_CONTEXT_XS_OLD());                                                                                    \
+        memContextSwitch(memContextPrior());                                                                                       \
     }                                                                                                                              \
     TRY_END();
 
 /***********************************************************************************************************************************
-Simplifies creation of the memory context in contructors and includes error handling
+Simplifies creation of the memory context in constructors and includes error handling
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_XS_NEW_BEGIN(contextName)                                                                                      \
 {                                                                                                                                  \
@@ -164,8 +161,8 @@ Simplifies switching to a temp memory context in functions and includes error ha
     /* Free the context on error */                                                                                                \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-            memContextSwitch(MEM_CONTEXT_XS_OLD());                                                                                \
-            memContextFree(MEM_CONTEXT_XS_TEMP());                                                                                 \
+        memContextSwitch(memContextPrior());                                                                                       \
+        memContextFree(MEM_CONTEXT_XS_TEMP());                                                                                     \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
@@ -181,3 +178,15 @@ Free memory context in destructors
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_XS_DESTROY(memContext)                                                                                         \
     memContextFree(memContext)
+
+/***********************************************************************************************************************************
+Create new string from an SV
+***********************************************************************************************************************************/
+#define STR_NEW_SV(param)                                                                                                          \
+    (SvOK(param) ? strNewN(SvPV_nolen(param), SvCUR(param)) : NULL)
+
+/***********************************************************************************************************************************
+Create const buffer from an SV
+***********************************************************************************************************************************/
+#define BUF_CONST_SV(param)                                                                                                        \
+    (SvOK(param) ? BUF(SvPV_nolen(param), SvCUR(param)) : NULL)

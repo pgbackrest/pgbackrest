@@ -1,6 +1,6 @@
 # Initialize configuration
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.15dev])
+AC_INIT([pgBackRest], [2.24dev])
 AC_CONFIG_SRCDIR([version.h])
 
 # Check compiler
@@ -31,21 +31,28 @@ else
 fi
 
 # Set includes
-AC_SUBST(CINCLUDE, "-I. -I../libc")
+AC_SUBST(CINCLUDE, "-I.")
 
-# Check required perl library
-LIBS_BEFORE_PERL=$LIBS
-AC_CHECK_LIB([perl], [perl_parse], [], [AC_MSG_ERROR([library 'perl' is required])], [`perl -MExtUtils::Embed -e ldopts`])
-LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
-AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts`")
+# Check required pq library
+AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])
+AC_SUBST(CINCLUDE, "$CINCLUDE -I`pg_config --includedir`")
 
 # Check required openssl libraries
 AC_CHECK_LIB([crypto], [EVP_get_digestbyname], [], [AC_MSG_ERROR([library 'crypto' is required])])
 AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([library 'ssl' is required])])
 
 # Check required xml library
+AC_ARG_VAR(XML2_CONFIG, [path to xml2 config utility])dnl
+
+if test -z "$XML2_CONFIG"; then
+    XML2_CONFIG="pkg-config libxml-2.0"
+fi
+
+CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags`"
+
 AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
-AC_SUBST(CLIBRARY, "$CLIBRARY `xml2-config --cflags`")
+AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required])])
+AC_SUBST(CLIBRARY, "$CLIBRARY `pkg-config libxml-2.0 --cflags`")
 
 # Check required gzip library
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])

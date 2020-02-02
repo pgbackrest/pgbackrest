@@ -20,6 +20,7 @@ struct StorageRead
     IoRead *io;
 };
 
+OBJECT_DEFINE_MOVE(STORAGE_READ);
 OBJECT_DEFINE_FREE(STORAGE_READ);
 
 /***********************************************************************************************************************************
@@ -47,32 +48,16 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
     StorageRead *this = NULL;
 
     this = memNew(sizeof(StorageRead));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
 
-    this->io = ioReadNew(driver, interface->ioInterface);
+    *this = (StorageRead)
+    {
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+        .io = ioReadNew(driver, interface->ioInterface),
+    };
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
-}
-
-/***********************************************************************************************************************************
-Move the file object to a new context
-***********************************************************************************************************************************/
-StorageRead *
-storageReadMove(StorageRead *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

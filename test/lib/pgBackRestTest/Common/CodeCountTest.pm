@@ -43,6 +43,8 @@ sub codeCountScan
 
         # Only exclude these directories/files entirely
         next if ($strFile =~ '^\.' ||
+                 $strFile =~ '\.DS_Store$' ||
+                 $strFile =~ '\.gitignore$' ||
                  $strFile =~ '\.md$' ||
                  $strFile =~ '\.log$' ||
                  $strFile eq 'LICENSE' ||
@@ -55,6 +57,7 @@ sub codeCountScan
                  $strFile =~ '^doc/site/' ||
                  $strFile eq 'libc/typemap' ||
                  $strFile eq 'test/Vagrantfile' ||
+                 $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/coverage/' ||
@@ -69,7 +72,7 @@ sub codeCountScan
                  $strFile eq 'test/src/valgrind.suppress' ||
                  $strFile eq 'test/src/lcov.conf');
 
-        # Classify the souce file
+        # Classify the source file
         my $strClass = 'test/harness';
 
         if ($strFile =~ '^doc/xml/' || $strFile eq 'doc/manifest.xml')
@@ -90,16 +93,15 @@ sub codeCountScan
         {
             $strClass = 'test/module';
         }
-        elsif ($strFile =~ '^src/' || $strFile =~ '^lib/' || $strFile =~ '^libc/')
+        elsif ($strFile =~ '^src/')
         {
-            if ($strFile =~ '\.auto\..$' || $strFile =~ 'Auto\.pm$')
-            {
-                $strClass = 'core/auto';
-            }
-            else
-            {
-                $strClass = 'core';
-            }
+            $strClass = 'core';
+        }
+
+        # Append auto if an auto-generated file
+        if ($strFile =~ '\.auto\..$' | $strFile =~ 'Auto\.pm$')
+        {
+            $strClass .= '/auto';
         }
 
         # Force unrecognized file types
@@ -165,7 +167,7 @@ sub codeCountScan
         my $strYaml = executeTest(
             "cloc --yaml ${strBasePath}/${strFile}" .
             " --read-lang-def=${strBasePath}/test/code-count/code.def" .
-            " --force-lang='${strForceLang}'");
+            " --force-lang='${strForceLang}'", {bSuppressStdErr => true});
 
         # Error if the file was ignored
         if ($strYaml =~ '1 file ignored')

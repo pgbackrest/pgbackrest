@@ -37,10 +37,6 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptLogLevelStderr))
     {
         logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
-
-        // If configured log level exceeds the max for a command, set it to the max
-        if (logLevelStdErr > cfgLogLevelStdErrMax())
-            logLevelStdErr = cfgLogLevelStdErrMax();
     }
 
     if (cfgOptionValid(cfgOptLogLevelFile))
@@ -136,14 +132,14 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
             // If the repo-type is defined, then see if corresponding retention-full is set
             if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
             {
-                LOG_WARN(
+                LOG_WARN_FMT(
                     "option %s is not set, the repository may run out of space"
                         "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
@@ -187,7 +183,7 @@ cfgLoadUpdateOption(void)
                     }
                     else
                     {
-                        LOG_WARN("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
+                        LOG_WARN_FMT("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
                             cfgOptionName(cfgOptRepoRetentionArchive + optionIdx),
                             cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
                     }
@@ -196,7 +192,7 @@ cfgLoadUpdateOption(void)
                 {
                     CHECK(strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR));
 
-                    LOG_WARN("%s option '%s' is not set", strPtr(msgArchiveOff),
+                    LOG_WARN_FMT("%s option '%s' is not set", strPtr(msgArchiveOff),
                         cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
                 }
             }
@@ -208,7 +204,7 @@ cfgLoadUpdateOption(void)
                 if ((strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) &&
                     (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)))
                 {
-                    LOG_WARN("option '%s' is not set for '%s=%s'\n"
+                    LOG_WARN_FMT("option '%s' is not set for '%s=%s'\n"
                         "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
                         cfgOptionName(cfgOptRepoRetentionDiff + optionIdx),
                         cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),
@@ -226,9 +222,9 @@ cfgLoadUpdateOption(void)
         THROW_FMT(
             OptionInvalidValueError,
             "'%s' is not valid for option '" CFGOPT_REPO1_S3_BUCKET "'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches"
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
-                "\nHINT: remove dots from the bucket name",
+                "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                "\nHINT: remove dots from the bucket name.",
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
@@ -236,14 +232,45 @@ cfgLoadUpdateOption(void)
 }
 
 /***********************************************************************************************************************************
-Attempt to set the log file and turn file logging off if the file cannot be opened.  This is so the Perl code won't attempt to open
-the file again and error out.
+Attempt to set the log file and turn file logging off if the file cannot be opened
 ***********************************************************************************************************************************/
 void
-cfgLoadLogFile(const String *logFile)
+cfgLoadLogFile(void)
 {
-    if (!logFileSet(strPtr(logFile)))
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+    if (cfgLogFile() && !cfgCommandHelp())
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct log filename prefix
+            String *logFile = strNewFmt(
+                "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
+
+            // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
+            // case the async role is added to more commands.
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+            {
+                if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
+                    strCatFmt(logFile, "-async");
+            }
+
+            // Add command role if it is not default
+            if (cfgCommandRole() != cfgCmdRoleDefault)
+                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
+
+            // Add process id if local or remote role
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+                strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
+
+            // Add extension
+            strCat(logFile, ".log");
+
+            // Attempt to open log file
+            if (!logFileSet(strPtr(logFile)))
+                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 }
 
 /***********************************************************************************************************************************
@@ -277,27 +304,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
             // Open the log file if this command logs to a file
-            if (cfgLogFile() && !cfgCommandHelp())
-            {
-                // Construct log filename prefix
-                String *logFile = strNewFmt(
-                    "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
-                    cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
-
-                // If local or remote command add command name and process id
-                if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
-                {
-                    strCatFmt(
-                        logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                        cfgOptionUInt(cfgOptProcess));
-                }
-                // Else add command name
-                else
-                    strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
-
-                // Set the log file name
-                cfgLoadLogFile(logFile);
-            }
+            cfgLoadLogFile();
 
             // Begin the command
             cmdBegin(true);

@@ -5,12 +5,14 @@ Remote Command
 
 #include <string.h>
 
+#include "command/control/common.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "config/protocol.h"
+#include "db/protocol.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
 #include "storage/remote/protocol.h"
@@ -33,10 +35,12 @@ cmdRemote(int handleRead, int handleWrite)
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
         protocolServerHandlerAdd(server, storageRemoteProtocol);
+        protocolServerHandlerAdd(server, dbProtocol);
         protocolServerHandlerAdd(server, configProtocol);
 
         // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
-        // handshake to return an error.
+        // handshake to return an error.  We can't take a lock earlier than this because we want the error to go back through the
+        // protocol layer.
         volatile bool success = false;
 
         TRY_BEGIN()
@@ -47,13 +51,18 @@ cmdRemote(int handleRead, int handleWrite)
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)
             {
-                ConfigCommand commandId = cfgCommandId(strPtr(cfgOptionStr(cfgOptCommand)));
-
                 // Acquire a lock if this command requires a lock
-                if (cfgLockRemoteRequired(commandId))
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockRemoteType(commandId), 0, true);
+                if (cfgLockRemoteRequired())
+                {
+                    // Make sure the local host is not stopped
+                    lockStopTest();
+
+                    // Acquire the lock
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+                }
             }
 
+            // Notify the client of success
             protocolServerResponse(server, NULL);
             success = true;
         }

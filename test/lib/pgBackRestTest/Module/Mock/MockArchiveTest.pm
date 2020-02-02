@@ -93,7 +93,7 @@ sub run
     )
     {
         # Only run tests for this vm
-        next if ($rhRun->{vm} ne $self->vm());
+        next if ($rhRun->{vm} ne vmTest($self->vm()));
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
@@ -143,7 +143,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
             'stanza create',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    push first WAL');
@@ -214,13 +214,7 @@ sub run
                     substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}." . COMPRESS_EXT . qw{.} .
                     STORAGE_TEMP_EXT;
 
-            executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
             storageTest()->put($strArchiveTmp, 'JUNK');
-
-            if ($bRemote)
-            {
-                executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
-            }
         }
 
         # Push the WAL

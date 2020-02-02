@@ -16,17 +16,18 @@
 #     * define - defines for C code (will also be applied to the test harness)
 #     * define-test - defines for the test harness
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
-#     * perlReq - is Perl required for this C test?
+#     * binReq - is the pgbackrest binary required for this test?
+#     * containerReq - is this test required to run in a container?
 #
 # Some options are unique to tests:
 #     * total - total runs in the test
 #     * vm - VMs that the test will be run on
+#     * include - modules to include directly into test.c (all files in coverage are automatically included)
+#           This is useful when a module's internal data needs to be manipulated for testing but no coverage is added by the test.
 # **********************************************************************************************************************************
 
 # **********************************************************************************************************************************
 # Unit tests
-#
-# Unit tests are assumed to be C tests unless they end in "-perl".
 # **********************************************************************************************************************************
 unit:
 
@@ -79,7 +80,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
-        total: 2
+        total: 3
         define-test: -DNO_ERROR -DNO_LOG
 
         coverage:
@@ -148,14 +149,14 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 9
+        total: 10
 
         coverage:
           common/type/convert: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
-        total: 3
+        total: 4
 
         coverage:
           common/type/list: full
@@ -184,6 +185,13 @@ unit:
           common/type/variantList: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-mcv
+        total: 1
+
+        coverage:
+          common/type/mcv: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-json
         total: 11
 
@@ -205,6 +213,13 @@ unit:
           common/type/xml: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: user
+        total: 1
+
+        coverage:
+          common/user: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
         total: 4
 
@@ -214,6 +229,7 @@ unit:
           common/io/filter/buffer: full
           common/io/filter/filter: full
           common/io/filter/group: full
+          common/io/filter/sink: full
           common/io/filter/size: full
           common/io/handleRead: full
           common/io/handleWrite: full
@@ -223,14 +239,15 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 3
+        total: 4
+        containerReq: true
 
         coverage:
           common/io/tls/client: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
-        total: 5
+        total: 6
 
         coverage:
           common/io/http/cache: full
@@ -282,17 +299,6 @@ unit:
           common/encode/base64: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: encode-perl
-        total: 1
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: http-client-perl
-        total: 2
-
-        coverage:
-          Common/Http/Client: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: reg-exp
         total: 3
 
@@ -306,48 +312,20 @@ unit:
         coverage:
           common/ini: full
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: ini-perl
-        total: 10
-
-        coverage:
-          Common/Ini: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-handle-perl
-        total: 6
-
-        coverage:
-          Common/Io/Handle: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-buffered-perl
-        total: 3
-
-        coverage:
-          Common/Io/Buffered: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-process-perl
-        total: 3
-
-        coverage:
-          Common/Io/Process: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: log-perl
-        total: 1
-
-        coverage:
-          Common/Log: partial
-
   # ********************************************************************************************************************************
   - name: postgres
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: client
+        total: 1
+
+        coverage:
+          postgres/client: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
-        total: 5
+        total: 8
 
         coverage:
           postgres/interface: full
@@ -358,25 +336,6 @@ unit:
 
         coverage:
           postgres/pageChecksum: full
-
-  # ********************************************************************************************************************************
-  - name: perl
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: config
-        total: 1
-
-        coverage:
-          perl/config: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exec
-        total: 4
-        perlReq: true
-
-        coverage:
-          perl/exec: full
 
   # ********************************************************************************************************************************
   - name: config
@@ -432,84 +391,6 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-cipher-block-perl
-        total: 2
-
-        coverage:
-          Storage/Filter/CipherBlock: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-gzip-perl
-        total: 3
-
-        coverage:
-          Storage/Filter/Gzip: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-sha-perl
-        total: 2
-
-        coverage:
-          Storage/Filter/Sha: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: posix-perl
-        total: 10
-
-        coverage:
-          Storage/Posix/Driver: partial
-          Storage/Posix/FileRead: partial
-          Storage/Posix/FileWrite: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-auth-perl
-        total: 5
-
-        coverage:
-          Storage/S3/Auth: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-cert-perl
-        total: 1
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-request-perl
-        total: 2
-
-        coverage:
-          Storage/S3/Request: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-perl
-        total: 7
-
-        coverage:
-          Storage/S3/Driver: partial
-          Storage/S3/FileRead: partial
-          Storage/S3/FileWrite: full
-
-        vm:
-          - co7
-          - u14
-          - u16
-          - u18
-          - d8
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: local-perl
-        total: 10
-
-        coverage:
-          Storage/Local: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: helper-perl
-        total: 4
-
-        coverage:
-          Storage/Helper: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: cifs
         total: 1
 
@@ -517,11 +398,14 @@ unit:
           storage/cifs/storage: full
           storage/posix/storage: full
           storage/helper: full
-          storage/storage: full
+
+        include:
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
         total: 20
+        containerReq: true
 
         coverage:
           storage/posix/read: full
@@ -534,8 +418,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 11
-        perlReq: true
+        total: 12
+        containerReq: true
+        binReq: true
 
         coverage:
           storage/remote/read: full
@@ -544,6 +429,10 @@ unit:
           storage/remote/write: full
           storage/helper: full
           storage/storage: full
+
+        include:
+          - storage/read
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
@@ -561,23 +450,10 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common-minion-perl
-        total: 1
-
-        coverage:
-          Protocol/Base/Minion: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: helper-perl
-        total: 2
-
-        coverage:
-          Protocol/Helper: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
-        total: 8
-        perlReq: true
+        total: 9
+        containerReq: true
+        binReq: true
 
         coverage:
           protocol/client: full
@@ -593,14 +469,14 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info
-        total: 2
+        total: 3
 
         coverage:
           info/info: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-pg
-        total: 1
+        total: 2
 
         coverage:
           info/infoPg: full
@@ -613,13 +489,6 @@ unit:
           info/infoArchive: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-archive-perl
-        total: 4
-
-        coverage:
-          Archive/Info: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-backup
         total: 2
 
@@ -627,11 +496,26 @@ unit:
           info/infoBackup: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-backup-perl
-        total: 3
+      - name: manifest
+        total: 6
 
         coverage:
-          Backup/Info: partial
+          info/manifest: full
+
+  # ********************************************************************************************************************************
+  - name: db
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: db
+        total: 3
+        containerReq: true
+        binReq: true
+
+        coverage:
+          db/db: full
+          db/helper: full
+          db/protocol: full
 
   # ********************************************************************************************************************************
   - name: command
@@ -645,16 +529,9 @@ unit:
           command/archive/common: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-common-perl
-        total: 4
-
-        coverage:
-          Archive/Common: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
         total: 5
-        perlReq: true
+        binReq: true
 
         coverage:
           command/archive/get/file: full
@@ -662,16 +539,9 @@ unit:
           command/archive/get/protocol: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-get-perl
-        total: 1
-
-        coverage:
-          Archive/Get/File: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push
         total: 4
-        perlReq: true
+        binReq: true
 
         coverage:
           command/archive/push/file: full
@@ -680,11 +550,34 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup-common
-        total: 2
+        total: 3
 
         coverage:
           command/backup/common: full
           command/backup/pageChecksum: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: backup
+        total: 10
+        binReq: true
+
+        coverage:
+          command/backup/backup: full
+          command/backup/file: full
+          command/backup/protocol: full
+
+        include:
+          - info/manifest
+          - storage/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: check
+        total: 4
+        containerReq: true
+
+        coverage:
+          command/check/common: full
+          command/check/check: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
@@ -695,10 +588,19 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: control
-        total: 2
+        total: 3
 
         coverage:
-          command/control/control: full
+          command/control/common: full
+          command/control/start: full
+          command/control/stop: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: expire
+        total: 7
+
+        coverage:
+          command/expire/expire: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: help
@@ -730,11 +632,29 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 1
+        total: 12
+        containerReq: true
+        binReq: true
 
         coverage:
           command/restore/file: full
           command/restore/protocol: full
+          command/restore/restore: full
+
+        include:
+          - common/user
+          - info/infoBackup
+          - info/manifest
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: stanza
+        total: 5
+
+        coverage:
+          command/stanza/common: full
+          command/stanza/create: full
+          command/stanza/upgrade: full
+          command/stanza/delete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: storage
@@ -742,47 +662,6 @@ unit:
 
         coverage:
           command/storage/list: full
-
-  # ********************************************************************************************************************************
-  - name: backup
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: unit-perl
-        total: 4
-
-        coverage:
-          Backup/Common: full
-          Backup/Backup: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: file-unit-perl
-        total: 2
-
-        coverage:
-          Backup/File: partial
-
-  # ********************************************************************************************************************************
-  - name: manifest
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all-perl
-        total: 11
-
-        coverage:
-          Manifest: partial
-
-  # ********************************************************************************************************************************
-  - name: stanza
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all-perl
-        total: 9
-
-        coverage:
-          Stanza: full
 
 # **********************************************************************************************************************************
 # Integration tests
@@ -838,9 +717,10 @@ performance:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive
+      - name: archive-perl
         total: 1
 
+    test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io
-        total: 1
+      - name: type
+        total: 3

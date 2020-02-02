@@ -55,6 +55,7 @@ sub new
     # Set defaults
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
+    $self->{bOutLogOnError} = defined($self->{bOutLogOnError}) ? $self->{bOutLogOnError} : true;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
@@ -107,7 +108,8 @@ sub begin
         new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
-    $self->{iProcessTimeout} = 540;
+    $self->{iProcessTimeout} = 300;
+    $self->{iProcessTimeoutTotal} = 4;
     $self->{lTimeLast} = time();
 
     if (!defined($self->{hError}))
@@ -129,13 +131,11 @@ sub endRetry
     my
     (
         $strOperation,
-        $strTest,
         $bWait
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->endRetry', \@_,
-            {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
 
@@ -147,8 +147,16 @@ sub endRetry
         # Error if process has been running longer than timeout
         if (time() - $self->{lTimeLast} > $self->{iProcessTimeout})
         {
-            confess &log(ASSERT,
-                "timeout after $self->{iProcessTimeout} seconds waiting for process to complete: $self->{strCommand}");
+            if ($self->{iProcessTimeoutTotal} > 0)
+            {
+                &log(WARN, "process has been running for $self->{iProcessTimeout} seconds with no output");
+                $self->{iProcessTimeoutTotal}--;
+                $self->{lTimeLast} = time();
+            }
+            else
+            {
+                confess &log(ASSERT, "timeout waiting for process to complete: $self->{strCommand}");
+            }
         }
 
         # Drain the stdout stream and look for test points
@@ -162,12 +170,6 @@ sub endRetry
             if ($self->{bShowOutputAsync})
             {
                 syswrite(*STDOUT, "    ${strLine}\n")
-            }
-
-            if (defined($strTest) && testCheck($strLine, $strTest))
-            {
-                &log(DEBUG, "Found test ${strTest}");
-                return true;
             }
         }
 
@@ -243,8 +245,10 @@ sub endRetry
             {
                 confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
                              ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
-                             ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
-                                 length($self->{strOutLog}) > 10000 ? length($self->{strOutLog}) - 10000 : 0) : '') .
+                             ($self->{strOutLog} ne '' && $self->{bOutLogOnError} ? "STDOUT (last 10,000 characters):\n" .
+                                substr(
+                                    $self->{strOutLog}, length($self->{strOutLog}) > 10000 ?
+                                    length($self->{strOutLog}) - 10000 : 0) : '') .
                              ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
             }
         }
@@ -258,11 +262,6 @@ sub endRetry
     if ($self->{bShowOutput})
     {
         print "output:\n$self->{strOutLog}\n";
-    }
-
-    if (defined($strTest))
-    {
-        confess &log(ASSERT, "test point ${strTest} was not found");
     }
 
     # Return from function and log return values if any
@@ -284,13 +283,11 @@ sub end
     my
     (
         $strOperation,
-        $strTest,
         $bWait
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->end', \@_,
-            {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
 
@@ -299,7 +296,7 @@ sub end
 
     if (!defined($self->{iRetrySeconds}))
     {
-        $iExitStatus = $self->endRetry($strTest, $bWait);
+        $iExitStatus = $self->endRetry($bWait);
     }
     # Else loop until success or timeout
     else
@@ -310,7 +307,7 @@ sub end
         {
             $self->{bRetry} = false;
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest, $bWait);
+            $iExitStatus = $self->endRetry($bWait);
 
             if ($self->{bRetry})
             {
@@ -322,7 +319,7 @@ sub end
         if ($self->{bRetry})
         {
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest, $bWait);
+            $iExitStatus = $self->endRetry($bWait);
         }
     }
 
@@ -341,16 +338,9 @@ sub executeTest
 {
     my $strCommand = shift;
     my $oParam = shift;
-    my $strTest = shift;
 
     my $oExec = new pgBackRestTest::Common::ExecuteTest($strCommand, $oParam);
     $oExec->begin();
-
-    if (defined($strTest))
-    {
-        $oExec->end($strTest);
-    }
-
     $oExec->end();
 
     return $oExec->{strOutLog};

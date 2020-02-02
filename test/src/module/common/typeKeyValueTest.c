@@ -24,15 +24,15 @@ testRun(void)
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetList(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), and kvDup()"))
     {
         KeyValue *store = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(store, kvNew(), "new store");
-            TEST_RESULT_PTR(kvMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to old context");
-            TEST_RESULT_PTR(kvMove(store, MEM_CONTEXT_OLD()), store, "move kv to old context");
+            TEST_RESULT_PTR(kvMove(NULL, memContextPrior()), NULL, "move null to old context");
+            TEST_RESULT_PTR(kvMove(store, memContextPrior()), store, "move kv to old context");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -45,12 +45,14 @@ testRun(void)
 
         // Get the types and make sure they have the correct value
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(varStr(kvGet(store, varNewStr(strNew("str-key"))))), "str-value", "get string/string");
+        TEST_RESULT_STR_Z(varStr(kvGet(store, varNewStr(strNew("str-key")))), "str-value", "get string/string");
         TEST_RESULT_INT(varInt(kvGet(store, varNewInt(42))), 57, "get int/int");
         TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(42)), 0)), 57, "get int/int");
         TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
+        TEST_RESULT_PTR(kvGetDefault(store, varNewInt(78), varNewInt(999)), NULL, "get int/null (default ignored)");
         TEST_RESULT_PTR(kvGet(store, varNewInt(777)), NULL, "get missing key");
+        TEST_RESULT_INT(varInt(kvGetDefault(store, varNewInt(777), varNewInt(888))), 888, "get missing key with default");
 
         // Check key exists
         // -------------------------------------------------------------------------------------------------------------------------
@@ -90,8 +92,8 @@ testRun(void)
         KeyValue *storeSub = kvPutKv(store, varNewStr(strNew("kv-key")));
 
         kvPut(storeSub, varNewStr(strNew("str-sub-key")), varNewStr(strNew("str-sub-value")));
-        TEST_RESULT_STR(
-            strPtr(varStr(kvGet(varKv(kvGet(store, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key"))))),
+        TEST_RESULT_STR_Z(
+            varStr(kvGet(varKv(kvGet(store, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key")))),
             "str-sub-value", "get string/kv");
 
         // Duplicate the kv
@@ -100,8 +102,8 @@ testRun(void)
 
         TEST_RESULT_INT(varBool(kvGet(store, varNewInt(78))), false, "get int/bool");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 2)), 3, "get int/int");
-        TEST_RESULT_STR(
-            strPtr(varStr(kvGet(varKv(kvGet(storeDup, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key"))))),
+        TEST_RESULT_STR_Z(
+            varStr(kvGet(varKv(kvGet(storeDup, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key")))),
             "str-sub-value", "get string/kv");
 
         TEST_RESULT_VOID(kvFree(storeDup), "free dup store");

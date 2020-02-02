@@ -81,7 +81,9 @@ varLstAdd(VariantList *this, Variant *data)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((VariantList *)lstAdd((List *)this, &data));
+    lstAdd((List *)this, &data);
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

@@ -26,6 +26,7 @@ Functions
 bool ioReadOpen(IoRead *this);
 size_t ioRead(IoRead *this, Buffer *buffer);
 String *ioReadLine(IoRead *this);
+String *ioReadLineParam(IoRead *this, bool allowEof);
 void ioReadClose(IoRead *this);
 
 /***********************************************************************************************************************************
@@ -34,7 +35,6 @@ Getters/Setters
 bool ioReadBlock(const IoRead *this);
 bool ioReadEof(const IoRead *this);
 IoFilterGroup *ioReadFilterGroup(const IoRead *this);
-IoRead *ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
 int ioReadHandle(const IoRead *this);
 
 /***********************************************************************************************************************************

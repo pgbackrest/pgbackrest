@@ -3,6 +3,8 @@ Remote Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
@@ -23,7 +25,12 @@ typedef struct StorageWriteRemote
     MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageRemote *storage;                                         // Storage that created this object
+    StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
+
+#ifdef DEBUG
+    uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
+#endif
 } StorageWriteRemote;
 
 /***********************************************************************************************************************************
@@ -61,6 +68,10 @@ storageWriteRemoteOpen(THIS_VOID)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If the file is compressible add decompression filter on the remote
+        if (this->interface.compressible)
+            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzipDecompressNew(true));
+
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARUINT(this->interface.modeFile));
@@ -72,8 +83,19 @@ storageWriteRemoteOpen(THIS_VOID)
         protocolCommandParamAdd(command, VARBOOL(this->interface.syncFile));
         protocolCommandParamAdd(command, VARBOOL(this->interface.syncPath));
         protocolCommandParamAdd(command, VARBOOL(this->interface.atomic));
+        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
         protocolClientExecute(this->client, command, false);
+
+        // Clear filters since they will be run on the remote side
+        ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
+
+        // If the file is compressible add cecompression filter locally
+        if (this->interface.compressible)
+        {
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(storageWriteIo(this->write)), gzipCompressNew((int)this->interface.compressLevel, true));
+        }
 
         // Set free callback to ensure remote file is freed
         memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);
@@ -103,6 +125,10 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
     ioWrite(protocolClientIoWrite(this->client), buffer);
     ioWriteFlush(protocolClientIoWrite(this->client));
 
+#ifdef DEBUG
+    this->protocolWriteBytes += bufUsed(buffer);
+#endif
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -125,7 +151,7 @@ storageWriteRemoteClose(THIS_VOID)
     {
         ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
         ioWriteFlush(protocolClientIoWrite(this->client));
-        protocolClientReadOutput(this->client, false);
+        ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutput(this->client, true));
         this->client = NULL;
 
         memContextCallbackClear(this->memContext);
@@ -140,7 +166,8 @@ Create a new file
 StorageWrite *
 storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
-    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
+    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible,
+    unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -149,11 +176,13 @@ storageWriteRemoteNew(
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(STRING, user);
         FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(INT64, timeModified);
+        FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
+        FUNCTION_LOG_PARAM(UINT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -162,41 +191,47 @@ storageWriteRemoteNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWrite *this = NULL;
+    StorageWriteRemote *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("StorageWriteRemote")
     {
-        StorageWriteRemote *driver = memNew(sizeof(StorageWriteRemote));
-        driver->memContext = MEM_CONTEXT_NEW();
+        this = memNew(sizeof(StorageWriteRemote));
 
-        driver->interface = (StorageWriteInterface)
+        *this = (StorageWriteRemote)
         {
-            .type = STORAGE_REMOTE_TYPE_STR,
-            .name = strDup(name),
-            .atomic = atomic,
-            .createPath = createPath,
-            .group = strDup(group),
-            .modeFile = modeFile,
-            .modePath = modePath,
-            .syncFile = syncFile,
-            .syncPath = syncPath,
-            .user = strDup(user),
-            .timeModified = timeModified,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .client = client,
 
-            .ioInterface = (IoWriteInterface)
+            .interface = (StorageWriteInterface)
             {
-                .close = storageWriteRemoteClose,
-                .open = storageWriteRemoteOpen,
-                .write = storageWriteRemote,
+                .type = STORAGE_REMOTE_TYPE_STR,
+                .name = strDup(name),
+                .atomic = atomic,
+                .compressible = compressible,
+                .compressLevel = compressLevel,
+                .createPath = createPath,
+                .group = strDup(group),
+                .modeFile = modeFile,
+                .modePath = modePath,
+                .syncFile = syncFile,
+                .syncPath = syncPath,
+                .user = strDup(user),
+                .timeModified = timeModified,
+
+                .ioInterface = (IoWriteInterface)
+                {
+                    .close = storageWriteRemoteClose,
+                    .open = storageWriteRemoteOpen,
+                    .write = storageWriteRemote,
+                },
             },
         };
 
-        driver->storage = storage;
-        driver->client = client;
-
-        this = storageWriteNew(driver, &driver->interface);
+        this->write = storageWriteNew(this, &this->interface);
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    ASSERT(this != NULL);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, this->write);
 }

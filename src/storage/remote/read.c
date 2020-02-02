@@ -6,6 +6,8 @@ Remote Storage Read
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -24,10 +26,15 @@ typedef struct StorageReadRemote
     MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageRemote *storage;                                         // Storage that created this object
+    StorageRead *read;                                              // Storage read interface
 
     ProtocolClient *client;                                         // Protocol client for requests
     size_t remaining;                                               // Bytes remaining to be read in block
     bool eof;                                                       // Has the file reached eof?
+
+#ifdef DEBUG
+    uint64_t protocolReadBytes;                                     // How many bytes were read from the protocol layer?
+#endif
 } StorageReadRemote;
 
 /***********************************************************************************************************************************
@@ -56,11 +63,26 @@ storageReadRemoteOpen(THIS_VOID)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If the file is compressible add compression filter on the remote
+        if (this->interface.compressible)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(this->read)), gzipCompressNew((int)this->interface.compressLevel, true));
+        }
+
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
+        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         result = varBool(protocolClientExecute(this->client, command, true));
+
+        // Clear filters since they will be run on the remote side
+        ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+
+        // If the file is compressible add decompression filter locally
+        if (this->interface.compressible)
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzipDecompressNew(true));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -99,7 +121,15 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     this->remaining = (size_t)storageRemoteProtocolBlockSize(ioReadLine(protocolClientIoRead(this->client)));
 
                     if (this->remaining == 0)
+                    {
+                        ioFilterGroupResultAllSet(
+                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutput(this->client, true));
                         this->eof = true;
+                    }
+
+#ifdef DEBUG
+                    this->protocolReadBytes += this->remaining;
+#endif
                 }
                 MEM_CONTEXT_TEMP_END();
             }
@@ -147,46 +177,56 @@ storageReadRemoteEof(THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 StorageRead *
-storageReadRemoteNew(StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing)
+storageReadRemoteNew(
+    StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
+    unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
+        FUNCTION_LOG_PARAM(UINT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(client != NULL);
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
+    StorageReadRemote *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadRemote")
     {
-        StorageReadRemote *driver = memNew(sizeof(StorageReadRemote));
-        driver->memContext = MEM_CONTEXT_NEW();
+        this = memNew(sizeof(StorageReadRemote));
 
-        driver->interface = (StorageReadInterface)
+        *this = (StorageReadRemote)
         {
-            .type = STORAGE_REMOTE_TYPE_STR,
-            .name = strDup(name),
-            .ignoreMissing = ignoreMissing,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .client = client,
 
-            .ioInterface = (IoReadInterface)
+            .interface = (StorageReadInterface)
             {
-                .eof = storageReadRemoteEof,
-                .open = storageReadRemoteOpen,
-                .read = storageReadRemote,
+                .type = STORAGE_REMOTE_TYPE_STR,
+                .name = strDup(name),
+                .compressible = compressible,
+                .compressLevel = compressLevel,
+                .ignoreMissing = ignoreMissing,
+
+                .ioInterface = (IoReadInterface)
+                {
+                    .eof = storageReadRemoteEof,
+                    .open = storageReadRemoteOpen,
+                    .read = storageReadRemote,
+                },
             },
         };
 
-        driver->storage = storage;
-        driver->client = client;
-
-        this = storageReadNew(driver, &driver->interface);
+        this->read = storageReadNew(this, &this->interface);
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    ASSERT(this != NULL);
+    FUNCTION_LOG_RETURN(STORAGE_READ, this->read);
 }

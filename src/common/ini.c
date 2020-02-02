@@ -9,6 +9,7 @@ Ini Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/log.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
 #include "common/object.h"
@@ -22,6 +23,7 @@ struct Ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
 
+OBJECT_DEFINE_MOVE(INI);
 OBJECT_DEFINE_FREE(INI);
 
 /***********************************************************************************************************************************
@@ -30,21 +32,23 @@ Create a new Ini object
 Ini *
 iniNew(void)
 {
+    FUNCTION_TEST_VOID();
+
     Ini *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ini")
+    MEM_CONTEXT_NEW_BEGIN("Ini")
     {
-        // Create object
         this = memNew(sizeof(Ini));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        // Allocate key value store
-        this->store = kvNew();
+        *this = (Ini)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .store = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -197,7 +201,7 @@ iniSectionKeyList(const Ini *this, const String *section)
         else
             result = strLstNew();
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -223,7 +227,7 @@ iniSectionList(const Ini *this)
         // Get the sections from the keyList
         result = strLstNewVarLst(kvKeyList(this->store));
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -304,7 +308,7 @@ iniParse(Ini *this, const String *content)
             MEM_CONTEXT_TEMP_END();
         }
     }
-    MEM_CONTEXT_END()
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -343,70 +347,86 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 }
 
 /***********************************************************************************************************************************
-Save the ini file
+Load an ini file and return data to a callback
 ***********************************************************************************************************************************/
 void
-iniSave(Ini *this, IoWrite *write)
+iniLoad(
+    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    void *callbackData)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
-    ASSERT(write != NULL);
+    ASSERT(read != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioWriteOpen(write);
+        // Track the current section
+        String *section = NULL;
 
-        StringList *sectionList = strLstSort(iniSectionList(this), sortOrderAsc);
+        // Keep track of the line number for error reporting
+        unsigned int lineIdx = 0;
 
-        for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            const String *section = strLstGet(sectionList, sectionIdx);
+            ioReadOpen(read);
 
-            if (sectionIdx != 0)
-                ioWrite(write, LF_BUF);
-
-            ioWrite(write, BRACKETL_BUF);
-            ioWriteStr(write, section);
-            ioWriteLine(write, BRACKETR_BUF);
-
-            StringList *keyList = strLstSort(iniSectionKeyList(this, section), sortOrderAsc);
-
-            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+            do
             {
-                const String *key = strLstGet(keyList, keyIdx);
+                const String *line = strTrim(ioReadLineParam(read, true));
+                const char *linePtr = strPtr(line);
 
-                ioWriteStr(write, key);
-                ioWrite(write, EQ_BUF);
-                ioWriteStrLine(write, iniGet(this, section, key));
+                // Only interested in lines that are not blank or comments
+                if (strSize(line) > 0 && linePtr[0] != '#')
+                {
+                    // Looks like this line is a section
+                    if (linePtr[0] == '[')
+                    {
+                        // Make sure the section ends with ]
+                        if (linePtr[strSize(line) - 1] != ']')
+                            THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Assign section
+                        MEM_CONTEXT_PRIOR_BEGIN()
+                        {
+                            section = strNewN(linePtr + 1, strSize(line) - 2);
+                        }
+                        MEM_CONTEXT_PRIOR_END();
+                    }
+                    // Else it should be a key/value
+                    else
+                    {
+                        if (section == NULL)
+                            THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Find the =
+                        const char *lineEqual = strstr(linePtr, "=");
+
+                        if (lineEqual == NULL)
+                            THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Extract the key
+                        String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+
+                        if (strSize(key) == 0)
+                            THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
+
+                        // Callback with the section/key/value
+                        callbackFunction(callbackData, section, key, strTrim(strNew(lineEqual + 1)));
+                    }
+                }
+
+                lineIdx++;
+                MEM_CONTEXT_TEMP_RESET(1000);
             }
+            while (!ioReadEof(read));
         }
-
-        ioWriteClose(write);
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move to a new mem context
-***********************************************************************************************************************************/
-Ini *
-iniMove(Ini *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_LOG_RETURN_VOID();
 }

@@ -163,8 +163,6 @@ sub buildConfig
             "        CONFIG_COMMAND_INTERNAL(" . ($rhCommand->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "        CONFIG_COMMAND_LOG_FILE(" . ($rhCommand->{&CFGDEF_LOG_FILE} ? 'true' : 'false') . ")\n" .
             "        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevel" . ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_DEFAULT})) . ")\n" .
-            "        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevel" .
-                ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_STDERR_MAX})) . ")\n" .
             "        CONFIG_COMMAND_LOCK_REQUIRED(" . ($rhCommand->{&CFGDEF_LOCK_REQUIRED} ? 'true' : 'false') . ")\n" .
             "        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(" .
                 ($rhCommand->{&CFGDEF_LOCK_REMOTE_REQUIRED} ? 'true' : 'false') . ")\n" .

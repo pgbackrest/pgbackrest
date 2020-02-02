@@ -65,7 +65,7 @@ void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegm
 bool walIsPartial(const String *walSegment);
 bool walIsSegment(const String *walSegment);
 String *walPath(const String *walFile, const String *pgPath, const String *command);
-String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment);
+String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
 StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
 

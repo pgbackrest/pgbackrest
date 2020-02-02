@@ -27,7 +27,6 @@ use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -121,7 +120,7 @@ sub new
         }
         elsif ($iResult == ERROR_CRYPTO && $strResultMessage =~ "^unable to flush")
         {
-            confess &log(ERROR, "unable to parse '$strArchiveInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+            confess &log(ERROR, "unable to parse '$strArchiveInfoFile'\nHINT: is or was the repo encrypted?", $iResult);
         }
         else
         {
@@ -409,24 +408,23 @@ sub reconstruct
         # Get the db-system-id from the WAL file depending on the version of postgres
         my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
 
-        # Read first 8k of WAL segment
-        my $tBlock;
-
         # Error if the file encryption setting is not valid for the repo
         if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
         {
             confess &log(ERROR, "encryption incompatible for '$strArchiveFilePath'" .
-                "\nHINT: Is or was the repo encrypted?", ERROR_CRYPTO);
+                "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
         }
 
-        # If the file is encrypted, then the passprase from the info file is required, else getEncryptionKeySub returns undefined
+        # If the file is encrypted, then the passphrase from the info file is required, else getEncryptionKeySub returns undefined
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef,
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
             strCipherPass => $self->cipherPassSub()});
+        $oFileIo->open();
 
-        $oFileIo->read(\$tBlock, 512, true);
+        my $tBlock;
+        $oFileIo->read(\$tBlock, 512);
         $oFileIo->close();
 
         # Get the required data from the file that was pulled into scalar $tBlock
@@ -579,12 +577,14 @@ sub dbSectionSet
 
     # Fill db section
     $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId);
-    $self->set(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion);
+    # Force the version to a string since newer versions of JSON::PP lose track of the fact that it is one
+    $self->set(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion . '');
     $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID, undef, $iDbHistoryId);
 
     # Fill db history
     $self->numericSet(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbHistoryId, INFO_ARCHIVE_KEY_DB_ID, $ullDbSysId);
-    $self->set(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbHistoryId, INFO_ARCHIVE_KEY_DB_VERSION, $strDbVersion);
+    # Force the version to a string since newer versions of JSON::PP lose track of the fact that it is one
+    $self->set(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbHistoryId, INFO_ARCHIVE_KEY_DB_VERSION, $strDbVersion . '');
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

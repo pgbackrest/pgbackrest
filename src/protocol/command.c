@@ -27,6 +27,7 @@ struct ProtocolCommand
     Variant *parameterList;
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
 OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
 
 /***********************************************************************************************************************************
@@ -46,9 +47,12 @@ protocolCommandNew(const String *command)
     MEM_CONTEXT_NEW_BEGIN("ProtocolCommand")
     {
         this = memNew(sizeof(ProtocolCommand));
-        this->memContext = memContextCurrent();
 
-        this->command = strDup(command);
+        *this = (ProtocolCommand)
+        {
+            .memContext = memContextCurrent(),
+            .command = strDup(command),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -83,25 +87,6 @@ protocolCommandParamAdd(ProtocolCommand *this, const Variant *param)
 }
 
 /***********************************************************************************************************************************
-Move object to a new context
-***********************************************************************************************************************************/
-ProtocolCommand *
-protocolCommandMove(ProtocolCommand *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
 Get write interface
 ***********************************************************************************************************************************/
 String *
@@ -122,9 +107,11 @@ protocolCommandJson(const ProtocolCommand *this)
         if (this->parameterList != NULL)
             kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = jsonFromKv(command, 0);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = jsonFromKv(command);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

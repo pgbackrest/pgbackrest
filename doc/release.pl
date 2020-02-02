@@ -40,6 +40,7 @@ use pgBackRest::Version;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Usage
@@ -63,6 +64,7 @@ release.pl [options]
    --build          Build the cache before release (should be included in the release commit)
    --deploy         Deploy documentation to website (can be done as docs are updated)
    --no-gen         Don't auto-generate
+   --vm             vm to build documentation for
 =cut
 
 ####################################################################################################################################
@@ -75,6 +77,7 @@ my $strLogLevel = 'info';
 my $bBuild = false;
 my $bDeploy = false;
 my $bNoGen = false;
+my $strVm = undef;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
@@ -82,7 +85,8 @@ GetOptions ('help' => \$bHelp,
             'log-level=s' => \$strLogLevel,
             'build' => \$bBuild,
             'deploy' => \$bDeploy,
-            'no-gen' => \$bNoGen)
+            'no-gen' => \$bNoGen,
+            'vm=s' => \$strVm)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -208,10 +212,10 @@ eval
 
             $oStorageDoc->put("${strDocPath}/resource/git-history.cache", "[\n${strGitLog}\n]\n");
 
-            # Generate coverage summmary
+            # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
             executeTest(
-                "${strTestExe} --no-lint --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
+                "${strTestExe} --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
                 {bShowOutputAsync => true});
         }
 
@@ -222,33 +226,55 @@ eval
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
         # Generate deployment docs for RHEL/Centos 7
-        &log(INFO, "Generate RHEL/CentOS 7 documentation");
+        if (!defined($strVm) || $strVm eq VM_CO7)
+        {
+            &log(INFO, "Generate RHEL/CentOS 7 documentation");
 
-        executeTest("${strDocExe} --deploy --key-var=os-type=centos7 --out=pdf", {bShowOutputAsync => true});
-        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=pdf");
+            executeTest("${strDocExe} --deploy --key-var=os-type=centos7 --out=pdf", {bShowOutputAsync => true});
+
+            if (!defined($strVm))
+            {
+                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=pdf");
+            }
+        }
 
         # Generate deployment docs for RHEL/Centos 6
-        &log(INFO, "Generate RHEL/CentOS 6 documentation");
+        if (!defined($strVm) || $strVm eq VM_CO6)
+        {
+            &log(INFO, "Generate RHEL/CentOS 6 documentation");
 
-        executeTest("${strDocExe} --deploy --key-var=os-type=centos6 --out=pdf", {bShowOutputAsync => true});
-        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos6 --out=pdf");
+            executeTest("${strDocExe} --deploy --key-var=os-type=centos6 --out=html", {bShowOutputAsync => true});
+
+            if (!defined($strVm))
+            {
+                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos6 --out=html");
+            }
+        }
 
         # Generate deployment docs for Debian
-        &log(INFO, "Generate Debian/Ubuntu documentation");
+        if (!defined($strVm) || $strVm eq VM_U18)
+        {
+            &log(INFO, "Generate Debian/Ubuntu documentation");
 
-        executeTest("${strDocExe} --deploy", {bShowOutputAsync => true});
+            executeTest("${strDocExe} --deploy --out=man --out=html --out=markdown", {bShowOutputAsync => true});
+        }
 
         # Generate a full copy of the docs for review
-        &log(INFO, "Generate full documentation for review");
+        if (!defined($strVm))
+        {
+            &log(INFO, "Generate full documentation for review");
 
-        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html --var=project-url-root=index.html");
-        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-        executeTest(
-            "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html" .
-                " --var=project-url-root=index.html");
-        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+            executeTest(
+            "${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html --var=project-url-root=index.html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
+            executeTest(
+                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html" .
+                    " --var=project-url-root=index.html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
 
-        executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=man --out=html --var=project-url-root=index.html");
+            executeTest(
+                "${strDocExe} --deploy --out-preserve --cache-only --out=man --out=html --var=project-url-root=index.html");
+        }
     }
 
     if ($bDeploy)

@@ -48,7 +48,7 @@ testRun(void)
 
         XmlNode *nodeMaxKeys = NULL;
         TEST_ASSIGN(nodeMaxKeys, xmlNodeChild(rootNode, strNew("MaxKeys"), true), "get max keys");
-        TEST_RESULT_STR(strPtr(xmlNodeContent(nodeMaxKeys)), "1000", "    check MaxKeys content");
+        TEST_RESULT_STR_Z(xmlNodeContent(nodeMaxKeys), "1000", "    check MaxKeys content");
 
         TEST_RESULT_PTR(xmlNodeContent(NULL), NULL, "    get null content for null node");
 
@@ -56,21 +56,21 @@ testRun(void)
         TEST_RESULT_VOID(xmlNodeFree(NULL), "free null node");
 
         TEST_RESULT_UINT(xmlNodeChildTotal(rootNode, strNew("Contents")), 2, "Contents child total");
-        TEST_RESULT_STR(
-            strPtr(xmlNodeContent(xmlNodeChild(xmlNodeChildN(rootNode, strNew("Contents"), 0, true), strNew("Key"), true))),
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeChildN(rootNode, strNew("Contents"), 0, true), strNew("Key"), true)),
             "test1.txt", "Contents index 0 Key");
-        TEST_RESULT_STR(
-            strPtr(xmlNodeContent(xmlNodeChild(xmlNodeChildN(rootNode, strNew("Contents"), 1, true), strNew("Key"), true))),
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeChildN(rootNode, strNew("Contents"), 1, true), strNew("Key"), true)),
             "test2.txt", "Contents index 1 Key");
 
         XmlNodeList *list = NULL;
         TEST_ASSIGN(list, xmlNodeChildList(rootNode, strNew("Contents")), "create node list");
         TEST_RESULT_UINT(xmlNodeLstSize(list), 2, "    check size");
-        TEST_RESULT_STR(
-            strPtr(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 0), strNew("Key"), true))), "test1.txt",
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 0), strNew("Key"), true)), "test1.txt",
             "    check Contents index 0 Key");
-        TEST_RESULT_STR(
-            strPtr(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 1), strNew("Key"), true))), "test2.txt",
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 1), strNew("Key"), true)), "test2.txt",
             "    check Contents index 1 Key");
         TEST_RESULT_VOID(xmlNodeLstFree(list), "    free list");
 
@@ -80,8 +80,7 @@ testRun(void)
         TEST_RESULT_PTR(xmlNodeChildN(rootNode, strNew("Contents"), 2, false), NULL, "get missing child without error");
 
         TEST_RESULT_PTR(xmlNodeAttribute(rootNode, strNew(BOGUS_STR)), NULL, "attempt to get missing attribute");
-        TEST_RESULT_STR(
-            strPtr(xmlNodeAttribute(xmlNodeChild(rootNode, strNew("Name"), true), strNew("id"))), "test", "get attribute");
+        TEST_RESULT_STR_Z(xmlNodeAttribute(xmlNodeChild(rootNode, strNew("Name"), true), strNew("id")), "test", "get attribute");
 
         TEST_RESULT_VOID(xmlDocumentFree(xmlDocument), "free xmldoc");
 
@@ -98,8 +97,8 @@ testRun(void)
         TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("PartNumber")), strNew("2")), "set part number 2");
         TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("ETag")), strNew("E2")), "set etag 2");
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(xmlDocumentBuf(xmlDocument))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(xmlDocumentBuf(xmlDocument)),
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<CompleteMultipartUpload>"
                 "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"

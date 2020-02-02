@@ -31,14 +31,11 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--command=archive-get-async");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--host-id=1");
-                strLstAddZ(argList, "local");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
                 cmdLocal(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }

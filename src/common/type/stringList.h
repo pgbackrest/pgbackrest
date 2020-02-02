@@ -9,23 +9,16 @@ StringList object
 ***********************************************************************************************************************************/
 typedef struct StringList StringList;
 
-/***********************************************************************************************************************************
-Sort orders
-***********************************************************************************************************************************/
-typedef enum
-{
-    sortOrderAsc,
-    sortOrderDesc,
-} SortOrder;
-
 #include "common/memContext.h"
+#include "common/type/list.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
 StringList *strLstNew(void);
+StringList *strLstNewParam(ListComparator *comparator);
 StringList *strLstNewSplit(const String *string, const String *delimiter);
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 StringList *strLstNewSplitSize(const String *string, const String *delimiter, size_t size);
@@ -33,21 +26,35 @@ StringList *strLstNewSplitSizeZ(const String *string, const char *delimiter, siz
 StringList *strLstNewVarLst(const VariantList *sourceList);
 StringList *strLstDup(const StringList *sourceList);
 
-StringList *strLstAdd(StringList *this, const String *string);
-StringList *strLstAddZ(StringList *this, const char *string);
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+String *strLstAdd(StringList *this, const String *string);
+String *strLstAddZ(StringList *this, const char *string);
+String *strLstAddIfMissing(StringList *this, const String *string);
 bool strLstExists(const StringList *this, const String *string);
 bool strLstExistsZ(const StringList *this, const char *cstring);
-StringList *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
-StringList *strLstInsertZ(StringList *this, unsigned int listIdx, const char *string);
+String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
+String *strLstInsertZ(StringList *this, unsigned int listIdx, const char *string);
 String *strLstGet(const StringList *this, unsigned int listIdx);
 String *strLstJoin(const StringList *this, const char *separator);
 String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
 StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
-StringList * strLstMove(StringList *this, MemContext *parentNew);
+StringList *strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
+bool strLstRemove(StringList *this, const String *item);
+StringList *strLstRemoveIdx(StringList *this, unsigned int listIdx);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
+/***********************************************************************************************************************************
+Setters
+***********************************************************************************************************************************/
+StringList *strLstComparatorSet(StringList *this, ListComparator *comparator);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void strLstFree(StringList *this);
 
 /***********************************************************************************************************************************

@@ -17,11 +17,11 @@ testRun(void)
         char buffer[8];
 
         TEST_RESULT_INT(stackTraceFmt(buffer, 8, 0, "%s", "1234567"), 7, "fill buffer");
-        TEST_RESULT_STR(buffer, "1234567", "    check buffer");
+        TEST_RESULT_Z(buffer, "1234567", "    check buffer");
         TEST_RESULT_INT(stackTraceFmt(buffer, 8, 7, "%s", "1234567"), 7, "try to fill buffer - at end");
-        TEST_RESULT_STR(buffer, "1234567", "    check buffer is unmodified");
+        TEST_RESULT_Z(buffer, "1234567", "    check buffer is unmodified");
         TEST_RESULT_INT(stackTraceFmt(buffer, 8, 8, "%s", "1234567"), 7, "try to fill buffer - past end");
-        TEST_RESULT_STR(buffer, "1234567", "    check buffer is unmodified");
+        TEST_RESULT_Z(buffer, "1234567", "    check buffer is unmodified");
     }
 
     // *****************************************************************************************************************************
@@ -88,17 +88,17 @@ testRun(void)
             stackTraceToZ(buffer, sizeof(buffer), "file1.c", "function2", 99);
 
 #ifdef WITH_BACKTRACE
-            TEST_RESULT_STR(
+            TEST_RESULT_Z(
                 buffer,
                 "file1:function2:99:(test build required for parameters)\n"
-                "    ... function(s) ommitted ...\n"
+                "    ... function(s) omitted ...\n"
                 "file1:function1:0:(void)",
                 "    check stack trace");
 #else
-            TEST_RESULT_STR(
+            TEST_RESULT_Z(
                 buffer,
                 "file1:function2:99:(test build required for parameters)\n"
-                "    ... function(s) ommitted ...\n"
+                "    ... function(s) omitted ...\n"
                 "file1:function1:(void)",
                 "    check stack trace");
 #endif
@@ -153,7 +153,7 @@ testRun(void)
                 stackTraceToZ(buffer, sizeof(buffer), "file4.c", "function4", 99);
 
 #ifdef WITH_BACKTRACE
-                TEST_RESULT_STR(
+                TEST_RESULT_Z(
                     buffer,
                     "file4:function4:99:(buffer full - parameters not available)\n"
                     "file3:function3:7777:(param1: value1, param2: value2)\n"
@@ -162,7 +162,7 @@ testRun(void)
                     "file1:function1:7777:(void)",
                     "stack trace");
 #else
-                TEST_RESULT_STR(
+                TEST_RESULT_Z(
                     buffer,
                     "file4:function4:99:(buffer full - parameters not available)\n"
                     "file3:function3:(param1: value1, param2: value2)\n"
@@ -188,7 +188,7 @@ testRun(void)
             }
             CATCH(ConfigError)
             {
-                // Ignore the error since we are just testing stack cleaup
+                // Ignore the error since we are just testing stack cleanup
             }
             TRY_END();
 
@@ -197,7 +197,7 @@ testRun(void)
         }
         CATCH(ConfigError)
         {
-            // Ignore the error since we are just testing stack cleaup
+            // Ignore the error since we are just testing stack cleanup
         }
         TRY_END();
 

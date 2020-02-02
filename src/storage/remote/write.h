@@ -13,6 +13,7 @@ Constructor
 ***********************************************************************************************************************************/
 StorageWrite *storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
-    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
+    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible,
+    unsigned int compressLevel);
 
 #endif

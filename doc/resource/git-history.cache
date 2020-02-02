@@ -1,5 +1,2803 @@
 [
     {
+        "commit": "2358d3448507f5dc4fd50edf65172285bca69c4b",
+        "date": "2020-01-26 22:38:21 -0700",
+        "subject": "v2.23: Bug Fix"
+    },
+    {
+        "commit": "7ab07dc580989452d807332bc91d26a42e5a0d3a",
+        "date": "2020-01-26 21:58:59 -0700",
+        "subject": "Validate checksums are set in the manifest on backup/restore.",
+        "body": "This is a modest start but it addresses the specific issue that was caused by the bug fixed in 45ec694a.  This validation will produce an immediate error rather than erroring out partway through the restore.\n\nMore validations are planned but this is the most important one and seems safest for this release."
+    },
+    {
+        "commit": "45ec694af22dda84b124f0df242bbcfdd28726d1",
+        "date": "2020-01-26 13:19:13 -0700",
+        "subject": "Fix missing files corrupting the manifest.",
+        "body": "If a file was removed by PostgreSQL during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest. If this happened then the backup would error when restored.\n\nThe issue was that removing files from the manifest invalidated the pointers stored in the processing queues.  When a file was removed, all the pointers shifted to the next file in the list, causing a file to be unprocessed.  Since the unprocessed file was still in the manifest it would be saved with no checksum, causing a failure on restore.\n\nWhen process-max was > 1 then the bug would often not express since the file had already been pulled from the queue and updates to the manifest are done by name rather than by pointer."
+    },
+    {
+        "commit": "9b47ff2746b74bf41d20fa43d6ed2697b0a99087",
+        "date": "2020-01-26 12:29:53 -0700",
+        "subject": "Sort last processing queue on backup from standby.",
+        "body": "The last queue was not being sorted when a primary queue was added first.\n\nThis did not affect the backup or integrity but could lead to slightly lower performance since large files were not always copied first."
+    },
+    {
+        "commit": "0444d3741423004e0f94116b528d94090c1e4303",
+        "date": "2020-01-24 10:43:47 -0700",
+        "subject": "Remove obsolete include to ../libc."
+    },
+    {
+        "commit": "b1c5885017c035320804c5d16ed57b149a33ab10",
+        "date": "2020-01-24 10:40:42 -0700",
+        "subject": "Add lib path for libpq in case it is in a non-standard location."
+    },
+    {
+        "commit": "90abc3cf170a3d5da8bbc5307cf5032d6af5ed6c",
+        "date": "2020-01-24 10:08:05 -0700",
+        "subject": "Use pkg-config instead of xml2-config for libxml2 build options.",
+        "body": "pkg-config is a generic way to get build options rather than relying on a package-specific utility.\n\nXML2_CONFIG can be used to override this utility for systems that do not ship pkg-config."
+    },
+    {
+        "commit": "b134175fc7a98836f49f20d552f7c31138b66b1b",
+        "date": "2020-01-23 14:15:58 -0700",
+        "subject": "Use designated initializers to initialize structs.",
+        "body": "Previously memNew() used memset() to initialize all struct members to 0, NULL, false, etc.  While this appears to work in practice, it is a violation of the C specification.  For instance, NULL == 0 must be true but neither NULL nor 0 must be represented with all zero bits.\n\nInstead use designated initializers to initialize structs.  These guarantee that struct members will be properly initialized even if they are not specified in the initializer.  Note that due to a quirk in the C99 specification at least one member must be explicitly initialized even if it needs to be the default value.\n\nSince pre-zeroed memory is no longer required, adjust memAllocInternal()/memReallocInternal() to return raw memory and update dependent functions accordingly.  All instances of memset() have been removed except in debug/test code where needed.\n\nAdd memNewPtrArray() to allocate an array of pointers and automatically set all pointers to NULL.\n\nRename memGrowRaw() to the more logical memResize()."
+    },
+    {
+        "commit": "cf2024beafba82b3899d9c46c7ea64716835a292",
+        "date": "2020-01-21 18:47:14 -0700",
+        "subject": "Add XML2_CONFIG environment variable to configure.",
+        "body": "This allows the default 'xml2-config' to be replaced with, e.g. 'pkg-config libxml-2.0', for libxml2 configuration."
+    },
+    {
+        "commit": "600a51815feacb149add2bb777d6a3b4d284c8aa",
+        "date": "2020-01-21 18:42:22 -0700",
+        "subject": "Set client_encoding to UTF8 on PostgreSQL connect.",
+        "body": "This is the only non-ASCII character encoding we have tested so make sure that's all we get from PostgreSQL."
+    },
+    {
+        "commit": "1706c599bd1c4d1eeac5bf44d1811e0259809027",
+        "date": "2020-01-21 18:37:43 -0700",
+        "subject": "Set encoding to UTF8 for Debian documentation containers.",
+        "body": "This allows testing multi-byte encodings in PostgreSQL."
+    },
+    {
+        "commit": "382ddfd79dfec12f4cdf821f36a47dd404a51356",
+        "date": "2020-01-21 16:43:44 -0700",
+        "subject": "Begin v2.23 development."
+    },
+    {
+        "commit": "bae6e1c9e3a035f3793739ef1b469015777aa70b",
+        "date": "2020-01-21 16:12:33 -0700",
+        "subject": "v2.22: Bug Fix"
+    },
+    {
+        "commit": "94842ccecee642cc58f6c177c19e642d86a8d997",
+        "date": "2020-01-21 11:59:25 -0700",
+        "subject": "Fix comment."
+    },
+    {
+        "commit": "03d434c7e112eb3a8649e9c11149e08929f9651b",
+        "date": "2020-01-21 11:57:59 -0700",
+        "subject": "Remove RHEL package patch now that it has been merged upstream.",
+        "body": "Also revert 731ffcfb and update ContainerTest.pm for upstream changes."
+    },
+    {
+        "commit": "b89e6b7f69677fdaff3bb1ed5e908c843f72a4b5",
+        "date": "2020-01-21 10:29:46 -0700",
+        "subject": "Fix error in timeline conversion.",
+        "body": "The timeline is required to verify WAL segments in the archive after a backup. The conversion was performed base 10 instead of 16, which led to errors when the timeline was ≥ 0xA."
+    },
+    {
+        "commit": "c2da9aa907802a59a0c6fd5c111a1dbe7ea16c76",
+        "date": "2020-01-19 14:54:38 -0700",
+        "subject": "Fix invalid bufSize().",
+        "body": "bufUsed() should be used here to avoid a possible segfault or xml parse error when bufSize() > bufUsed()."
+    },
+    {
+        "commit": "c630bda1c184d475155220884f8a25fa4b788aaf",
+        "date": "2020-01-19 10:37:08 -0700",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "d9efbc3698f92b874abb6eff3298c44fd35b0d5c",
+        "date": "2020-01-18 10:46:48 -0700",
+        "subject": "Add UTF8 strings to manifest and restore tests.",
+        "body": "The most likely place to get UTF8 characters is in database names so make sure UTF8 works in the places where database names are processed."
+    },
+    {
+        "commit": "19c39fe1e262dd7c259e9f1e68d0695c43afefe3",
+        "date": "2020-01-17 22:54:19 -0700",
+        "subject": "Fix redundancy in comment."
+    },
+    {
+        "commit": "ec173f12fb9c26553b2021473dd62d73a006835a",
+        "date": "2020-01-17 13:29:49 -0700",
+        "subject": "Add MEM_CONTEXT_PRIOR() block and update current call sites.",
+        "body": "This macro block encapsulates the common pattern of switching to the prior (formerly called old) mem context to return results from a function.\n\nAlso rename MEM_CONTEXT_OLD() to memContextPrior().  This violates our convention of macros being in all caps but memContextPrior() will become a function very soon so this will reduce churn."
+    },
+    {
+        "commit": "b5fa9951e36641d0ad751f0c89751e84b5b1df0d",
+        "date": "2020-01-17 13:08:47 -0700",
+        "subject": "Use MEM_CONTEXT_BEGIN() block in varFree().",
+        "body": "We probably arrived at this unusual construction because of the complexity of getting the mem context.  Whether or not this is a good way to store the mem context, it still makes sense to use the standard pattern for switching mem contexts."
+    },
+    {
+        "commit": "c6d6b7dbefb62578be64133e36836fc936945555",
+        "date": "2020-01-17 11:58:41 -0700",
+        "subject": "Use MEM_CONTEXT_NEW_BEGIN() block instead of memContextNew().",
+        "body": "A few places were using just memContextNew(), probably because they did not immediately need to create anything in the new context, but it's better if we use the same pattern everywhere, even if it results in a few extra mem context switches."
+    },
+    {
+        "commit": "d3be1e41a4cdb5b7bbc40d73de8f185b22a97efd",
+        "date": "2020-01-16 16:23:40 -0700",
+        "subject": "Add braces and spaces for clarity.",
+        "body": "This should make it a little easier to see how the TRY macros work together."
+    },
+    {
+        "commit": "254f79803fca8cd591849b77d1266c79580ab08c",
+        "date": "2020-01-16 16:20:59 -0700",
+        "subject": "Use MEM_CONTEXT_BEGIN() block instead of memContextSwitch().",
+        "body": "This is the standard pattern but was missed here."
+    },
+    {
+        "commit": "8068a610d566cf9b5bcc79a3602a3a8442192bad",
+        "date": "2020-01-16 16:19:45 -0700",
+        "subject": "Use MEM_CONTEXT_NEW_BEGIN() block.",
+        "body": "This pattern makes more sense.  The prior code was probably copy-pasted from code with slightly different requirements."
+    },
+    {
+        "commit": "4274fcbf6f99f6d8414d2ba095809341bcf56797",
+        "date": "2020-01-16 14:42:01 -0700",
+        "subject": "Add missing semicolon.",
+        "body": "This worked when the FUNCTION_TEST_RETURN_VOID() macro expanded to nothing because of the final semicolon.  If the FUNCTION_TEST_RETURN_VOID() macro expanded to something then there was one semicolon too few."
+    },
+    {
+        "commit": "731ffcfb3d77e6a9d17091f9819cf3e21e25d951",
+        "date": "2020-01-16 14:29:04 -0700",
+        "subject": "Disable RHEL package builds since upstream is broken."
+    },
+    {
+        "commit": "e81629b4420759f80bd18017ee47b89942c90090",
+        "date": "2020-01-15 13:53:30 -0700",
+        "subject": "Reclassify Perl and LibC code as test/harness.",
+        "body": "These were still being included in the core totals but they are no longer used by core."
+    },
+    {
+        "commit": "193b78e150919470b33f3941be03f0ef589a3e79",
+        "date": "2020-01-15 13:40:17 -0700",
+        "subject": "Remove -s from make instructions.",
+        "body": "It's a good option but not required so let the user make the choice.\n\nAlso combine configure and make into a single line."
+    },
+    {
+        "commit": "9414ad2300f5ab87000da333fbbfa58228dae0c4",
+        "date": "2020-01-15 13:29:52 -0700",
+        "subject": "Begin v2.22 development."
+    },
+    {
+        "commit": "2c0ba0820d3e4adea31ef6b8ee201be653ef9579",
+        "date": "2020-01-15 13:21:52 -0700",
+        "subject": "v2.21: C Migration Complete"
+    },
+    {
+        "commit": "8d3710b2fe94c90783374d19a435bded1903fe1b",
+        "date": "2020-01-15 12:24:58 -0700",
+        "subject": "Fix options being ignored by asynchronous commands.",
+        "body": "The local, remote, archive-get-async, and archive-push-async commands were used to run functionality that was not directly available to the user. Unfortunately that meant they would not pick up options from the command that the user expected, e.g. backup, archive-get, etc.\n\nRemove the internal commands and add roles which allow pgBackRest to determine what functionality is required without implementing special commands. This way the options are loaded from the expected command section.\n\nSince remote is no longer a specific command with its own options, more manipulation is required when calling remote. This might be something we can improve in the config system but it may be worth leaving as is because it is a one-off, for now at least."
+    },
+    {
+        "commit": "c43ec9d38c7cd543d7a832f1e362705658ca5c12",
+        "date": "2020-01-15 08:19:32 -0700",
+        "subject": "Fix function return logging type.",
+        "body": "This was working because the stack was being cleaned up by a try block at the call site."
+    },
+    {
+        "commit": "f8a29c266e1e9b6e207fdd74478e3aca9b728cb9",
+        "date": "2020-01-13 20:36:42 -0700",
+        "subject": "Clarify comment."
+    },
+    {
+        "commit": "a7738ebba3cfd3a732c5de997a113746136133af",
+        "date": "2020-01-13 13:21:28 -0700",
+        "subject": "Update comments in command/remote module."
+    },
+    {
+        "commit": "a969a860abea7384572a1244913bcfbd8851545d",
+        "date": "2020-01-13 11:13:37 -0700",
+        "subject": "Fix misaligned braces."
+    },
+    {
+        "commit": "fe263e87b1822b051ccea3fc0a8fea64f944dd7b",
+        "date": "2020-01-12 11:31:06 -0700",
+        "subject": "Allow path-style URIs in S3 driver.",
+        "body": "Although path-style URIs have been deprecated by AWS, they may still be used with products like Minio because no additional DNS configuration is required.\n\nPath-style URIs must be explicitly enabled since it is not clear how they can be auto-detected reliably.  More importantly, faulty detection could cause regressions in current installations."
+    },
+    {
+        "commit": "069345d33959eb7b2ff0f4ae2b2ec65023ac7186",
+        "date": "2020-01-12 11:00:10 -0700",
+        "subject": "Add string constants."
+    },
+    {
+        "commit": "3f89ecf8d9b848c2ca063581bc75064d9d353255",
+        "date": "2020-01-10 09:39:33 -0700",
+        "subject": "Add time to storage ls JSON output.",
+        "body": "Time is supported in all drivers with the update to S3 at 61538f93, so it is now possible to add time to the ls command and have it work on all repo types."
+    },
+    {
+        "commit": "0fe7bb2ec4d6ba10af8f2a6fd736e2c4cbdb2af2",
+        "date": "2020-01-09 12:20:13 -0700",
+        "subject": "Improve code that updates/removes pg options passed to a remote.",
+        "body": "The prior code was updating/removing hard-coded options but new options are added all the time and there was no indication that this code needed to be updated.  For example, dc1e7ca2 added the pg-user option but this code was not updated.\n\nInstead find the options to update/remove dynamically.  The new code uses prefixes, which is not perfect, but the patterns for pg options are pretty well established and this seems safer than the existing code."
+    },
+    {
+        "commit": "4c8653fc8bc6e8b3070c59ba12af4e5f2131c21c",
+        "date": "2020-01-09 11:56:03 -0700",
+        "subject": "Update inaccurate comments."
+    },
+    {
+        "commit": "2e11389ed4db29d530ec8e480134c44eab9a5896",
+        "date": "2020-01-09 11:52:51 -0700",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "0c5c78e5e16b10f79dcfa023c6276a65ad87481d",
+        "date": "2020-01-09 09:23:15 -0700",
+        "subject": "Make quoting in cfgExeParam() optional.",
+        "body": "Parameter lists that are passed directly to exec*() do not need quoting when spaces are present.  Worse, the quotes will not be stripped and the option value will be garbled.\n\nUnfortunately this still does not fix all issues with quoting since we don't know how it might need to be escaped to work with SSH command configuration.  The answer seems to be to pass the options in the protocol layer but that's beyond the scope of this commit."
+    },
+    {
+        "commit": "7de5ce23ad387602125f478ceec2c834703080d5",
+        "date": "2020-01-08 18:59:02 -0700",
+        "subject": "Add internal remote-type option.",
+        "body": "This option was overloaded on the general type option but it makes sense to split this out since the meaning is pretty different.\n\nRename the values to conform to current standards, i.e. pg and repo, now that the Perl code won't care anymore."
+    },
+    {
+        "commit": "7a1871c341c2ae530927bcf018792733530fc417",
+        "date": "2020-01-08 09:54:44 -0700",
+        "subject": "Fix test log message to match pg-version parameter name.",
+        "body": "It was confusing that this part of the log message did not match the parameter name, which made reproducing test failures from CI a little harder."
+    },
+    {
+        "commit": "8e1f78b4c82d3b4f7ecbdb053df1c8fd46bf3c1e",
+        "date": "2020-01-07 12:20:51 -0700",
+        "subject": "Remove obsolete Perl code missed in f0ef73db."
+    },
+    {
+        "commit": "a84ae6be04fc21c52c04284004836292089fa0e1",
+        "date": "2020-01-06 16:16:48 -0700",
+        "subject": "Fix comment typos."
+    },
+    {
+        "commit": "61538f932c58c3bb0afad5b6c16cf997604e3606",
+        "date": "2020-01-06 15:53:53 -0700",
+        "subject": "Parse dates in storageS3InfoList() and storageS3Info().",
+        "body": "Previously dates were not being filled by these functions which was fine since dates were not used.\n\nWe plan to use dates for the ls command plus it makes sense for the driver to be complete since it will be used as an example."
+    },
+    {
+        "commit": "d2fb4f977ceba499f134ad363ea3170f0d9ef5b9",
+        "date": "2020-01-06 15:24:49 -0700",
+        "subject": "Add httpLastModifiedToTime() to parse HTTP last-modified header."
+    },
+    {
+        "commit": "a08298ce1b9ee96a9f84b613848327f7f60eb063",
+        "date": "2020-01-06 15:18:52 -0700",
+        "subject": "Add basic time management functions.",
+        "body": "These are similar to what mktime() and strptime() do but they ignore the local system timezone which saves having to munge the TZ env variable to do time conversions."
+    },
+    {
+        "commit": "fc47907fe32560e8d3086287023d6f727027a0a1",
+        "date": "2020-01-03 09:32:52 -0700",
+        "subject": "Update LICENSE.txt for 2020."
+    },
+    {
+        "commit": "011bcb48697ddb56fe1396502a36254718f74dfa",
+        "date": "2019-12-29 21:22:18 -0700",
+        "subject": "Remove command option from Perl db application name.",
+        "body": "The command option will be removed from the C code so it needs to be removed here as well.\n\nThis code is now used only for testing so it's not important that it be so precise."
+    },
+    {
+        "commit": "33e328abbf5992caccc15ff42ca2dca14502c983",
+        "date": "2019-12-28 18:30:32 -0700",
+        "subject": "Remove unused LibC code.",
+        "body": "The code was made obsolete by the migration to C."
+    },
+    {
+        "commit": "e72a9dd0d2b6aad58a5d845112631253382e20e2",
+        "date": "2019-12-28 13:37:03 -0700",
+        "subject": "Add error parameter to cfgCommandId().",
+        "body": "This allows commands to be checked for validity without generating an error."
+    },
+    {
+        "commit": "d28837a300d4b585792c049dce25fd73387408b3",
+        "date": "2019-12-28 13:31:59 -0700",
+        "subject": "Remove obsolete function declaration."
+    },
+    {
+        "commit": "d41eea685a732fa80d99d0af0fc52746e13d1152",
+        "date": "2019-12-26 18:08:27 -0700",
+        "subject": "Change meaning of TEST_RESULT_STR() macro.",
+        "body": "This macro was created before the String object existed so subsequent usage with String always included a lot of strPtr() wrapping.\n\nTEST_RESULT_STR_Z() had already been introduced but a wholesale replacement of TEST_RESULT_STR() was not done since the priority was on the C migration.\n\nUpdate all calls to (old) TEST_RESULT_STR() with one of the following variants: (new) TEST_RESULT_STR(), TEST_RESULT_STR_Z(), TEST_RESULT_Z(), TEST_RESULT_Z_STR()."
+    },
+    {
+        "commit": "02d3918b3233276651fff443b7fcee3f325cf263",
+        "date": "2019-12-19 19:37:55 -0500",
+        "subject": "Remove duplicate header and extra linefeed."
+    },
+    {
+        "commit": "74c3842595f49b81be341faf56f2343e9a5c60c8",
+        "date": "2019-12-19 16:25:46 -0500",
+        "subject": "Remove errant tabs and fix spacing."
+    },
+    {
+        "commit": "7dfea6b71728bc4985021ce8eb993c1376344581",
+        "date": "2019-12-19 16:20:11 -0500",
+        "subject": "Remove errant tab."
+    },
+    {
+        "commit": "dc1e7ca22dbdae2556513468433b0591d7cf5a44",
+        "date": "2019-12-19 11:26:38 -0500",
+        "subject": "Add pg-user option.",
+        "body": "Specifies the database user name when connecting to PostgreSQL.\n\nIf not specified pgBackRest will connect with the local OS user or PGUSER, which was the previous behavior."
+    },
+    {
+        "commit": "9452084dd174925c554273eb2f8b224c89069123",
+        "date": "2019-12-17 23:32:39 -0500",
+        "subject": "Fix misspellings of libpq."
+    },
+    {
+        "commit": "63a855e2f7108f54100b973e23e4bcf3005a1647",
+        "date": "2019-12-17 23:26:52 -0500",
+        "subject": "Fix misaligned continuation character."
+    },
+    {
+        "commit": "2f7e139534de54fb19fa46edf7eeb7ecf00d8284",
+        "date": "2019-12-17 22:35:30 -0500",
+        "subject": "Error if option prefix and index total are not both defined.",
+        "body": "They are both required for indexed options."
+    },
+    {
+        "commit": "d780d084b7b4ad0950bd35b905c778c3a47e8860",
+        "date": "2019-12-17 21:56:02 -0500",
+        "subject": "Add comments about increasing Vagrantfile disk size."
+    },
+    {
+        "commit": "d89d9f1c52b9fc7bf4827d1b367da6e8520a79d2",
+        "date": "2019-12-17 21:47:19 -0500",
+        "subject": "Skip vagrant disksize option if no plugin.",
+        "body": "Previously, `vagrant up` would bail if no `vagrant-disksize` plugin was\ninstalled. This option is just a nice-to-have, so skip it rather than\nbailing."
+    },
+    {
+        "commit": "ac35dcac39699b5ecae5f3d178cb837bac1446dc",
+        "date": "2019-12-17 21:28:40 -0500",
+        "subject": "Add note about symlink required for contributing documentation to build."
+    },
+    {
+        "commit": "3394a5017091e57b0adc296b43ac00010a223c3d",
+        "date": "2019-12-17 21:25:54 -0500",
+        "subject": "Remove unused Perl library missed in f0ef73db."
+    },
+    {
+        "commit": "620386f034fd97371c467bda4dc0d90f423bf663",
+        "date": "2019-12-17 20:14:45 -0500",
+        "subject": "Remove integration tests that are now covered in the unit tests.",
+        "body": "Most of these tests are just checking that errors are thrown when required.  These are well covered in various unit tests.\n\nThe \"cannot resume\" tests are also well covered in the backup unit tests.\n\nFinally, config warnings are well covered in the config unit tests.\n\nThere is more to be done here, but this accounts for the low-hanging fruit."
+    },
+    {
+        "commit": "977ec2e307c5487df9ed6fadebd486a92c75f269",
+        "date": "2019-12-17 15:23:07 -0500",
+        "subject": "Integration test improvements for disk and memory efficiency.",
+        "body": "Set log-level-file=off when more that one test will run.  In this case is it impossible to see the logs anyway since they will be automatically cleaned up after the test.  This improves performance pretty dramatically since trace-level logging is expensive.  If a singe integration test is run then log-level-file is trace by default but can be changed with the --log-level-test-file option.\n\nReduce buffer-size to 64k to save memory during testing and allow more processes to run in parallel.\n\nUpdate log replacement rules so that these options can change without affecting expect logs."
+    },
+    {
+        "commit": "ccea30b8d8970acf9c1826c5c988d819aabf2d0f",
+        "date": "2019-12-14 10:20:23 -0500",
+        "subject": "Increase memory in ramdisk for Travis CI testing.",
+        "body": "The co6 tests were occasionally running out of space so bump up the size of the ramdisk a bit to hopefully prevent this.\n\nA longer term solution would be to disable the trace-level file logs when running on Travis CI since they seem to be using most of the space."
+    },
+    {
+        "commit": "6bd280f7bd667305317a7c825d913dac9719c475",
+        "date": "2019-12-14 09:53:50 -0500",
+        "subject": "Don't warn when stop-auto is enabled on PostgreSQL >= 9.6.",
+        "body": "PostgreSQL >= 9.6 uses non-exclusive backup which has implicit stop-auto since the backup will stop when the connection is terminated.\n\nThe warning was made more verbose in 1f2ce45e but this now seems like a bad idea since there are likely users with mixed version environments where stop-auto is enabled globally.  There's no reason to fill their logs with warnings over a harmless option.  If anything we should warn when stop-auto is explicitly set to false but this doesn't seem very important either.\n\nRevert to the prior behavior, which is to warn and reset when stop-auto is enabled on PostgreSQL < 9.3."
+    },
+    {
+        "commit": "03849840b813fdfdc2e00874fa8e3bbe9ac95338",
+        "date": "2019-12-13 21:33:13 -0500",
+        "subject": "Fix handling of \\ in filenames.",
+        "body": "\\ was not being properly escaped when calculating the manifest checksum which prevented the manifest from loading.\n\nUse jsonFromStr() to properly quote and escape \\.\n\nSince instances of \\ in cluster filenames should be rare to nonexistent this does not seem likely to be a serious problem in the field."
+    },
+    {
+        "commit": "f0ef73db7009cd6e08740d270a6ee7565efc9f8c",
+        "date": "2019-12-13 17:55:41 -0500",
+        "subject": "pgBackRest is now pure C.",
+        "body": "Remove embedded Perl from the distributed binary.  This includes code, configure, Makefile, and packages.  The distributed binary is now pure C.\n\nRemove storagePathEnforceSet() from the C Storage object which allowed Perl to write outside of the storage base directory.  Update mock/all and real/all integration tests to use storageLocal() where they were violating this rule.\n\nRemove \"c\" option that allowed the remote to tell if it was being called from C or Perl.\n\nCode to convert options to JSON for passing to Perl (perl/config.c) has been moved to LibC since it is still required for Perl integration tests.\n\nUpdate build and installation instructions in the user guide.\n\nRemove all Perl unit tests.\n\nRemove obsolete Perl code.  In particular this included all the Perl protocol code which required modifications to the Perl storage, manifest, and db objects that are still required for integration testing but only run locally.  Any remaining Perl code is required for testing, documentation, or code generation.\n\nRename perlReq to binReq in define.yaml to indicate that the binary is required for a test.  This had been the actual meaning for quite some time but the key was never renamed."
+    },
+    {
+        "commit": "1f2ce45e6b613edfb628ac40fd2369c9455692ba",
+        "date": "2019-12-13 17:14:26 -0500",
+        "subject": "The backup command is implemented entirely in C.",
+        "body": "For the most part this is a direct migration of the Perl code into C except as noted below.\n\nA backup can now be initiated from a linked directory.  The link will not be stored in the manifest or recreated on restore.  If a link or directory does not already exist in the restore location then a directory will be created.\n\nThe logic for creating backup labels has been improved and it should no longer be possible to get a backup label earlier than the latest backup even with timezone changes or clock skew.  This has never been an issue in the field that we know of, but we found it in testing.\n\nFor online backups all times are fetched from the PostgreSQL primary host (before only copy start was).  This doesn't affect backup integrity but it does prevent clock skew between hosts affecting backup duration reporting.\n\nArchive copy now works as expected when the archive and backup have different compression settings, i.e. when one is compressed and the other is not.  This was a long-standing bug in the Perl code.\n\nResume will now work even if hardlink settings have been changed."
+    },
+    {
+        "commit": "e206093beb43981f11b532f05897c383f93d8f63",
+        "date": "2019-12-12 18:52:16 -0500",
+        "subject": "Allow end anchor to be excluded in backupRegExp().",
+        "body": "This is useful for matching files in the backup history directory which have characters after the backup label."
+    },
+    {
+        "commit": "8acfb6adf410571464c956ad161ad3df227b73a5",
+        "date": "2019-12-12 16:43:34 -0500",
+        "subject": "Add pgLsnRangeToWalSegmentList() to convert lsn range to wal segments."
+    },
+    {
+        "commit": "81295fd3889ce05829b6443aa29032ccffdfef3e",
+        "date": "2019-12-12 16:28:26 -0500",
+        "subject": "Move not found error into walSegmentFind().",
+        "body": "This error is also needed in backup so move it here to centralize it."
+    },
+    {
+        "commit": "1378d9c58b05f2f45352df155463ab8cd55276a6",
+        "date": "2019-12-12 16:21:51 -0500",
+        "subject": "Fix bad arithmetic in pgLsnToWalSegment().",
+        "body": "/ takes precedence over & but the appropriate parens were not provided.\n\nBy some bad luck the tests worked either way, so add a new test that only works the correct way to prevent a regression."
+    },
+    {
+        "commit": "676be2c77390587bb36c9d88bcf1a54d333ee0f3",
+        "date": "2019-12-12 16:11:09 -0500",
+        "subject": "Add pgWalPath() to return version-specific WAL path.",
+        "body": "Also update the manifest module to use the new function."
+    },
+    {
+        "commit": "94cb9540f1c94746d78ae4efb16246b26daf79a0",
+        "date": "2019-12-12 09:05:10 -0500",
+        "subject": "Begin v2.21 development."
+    },
+    {
+        "commit": "39fc2b7ad68d97cf5f23757e8a341428935621f4",
+        "date": "2019-12-12 08:20:21 -0500",
+        "subject": "v2.20: Bug Fixes"
+    },
+    {
+        "commit": "b031dbbcf8fa83ef60cfabc20fbf16046904f9aa",
+        "date": "2019-12-11 22:11:04 -0500",
+        "subject": "Allow timezones to be explicitly set for testing.",
+        "body": "The TZ environment variable was not reliably pushed down to the test processes.\n\nInstead pass TZ via a command line parameter and set explicitly in the test process."
+    },
+    {
+        "commit": "db5175915a0dc09b7591d71886ee8ce3bf5a12c3",
+        "date": "2019-12-11 21:51:32 -0500",
+        "subject": "Use localtime() to format time_t in cvtTimeToZ().",
+        "body": "Using gmtime() produced output skewed by the local timezone.\n\nSince this function is currently only used for debug logging this is not a live bug in the field."
+    },
+    {
+        "commit": "811ecd758d9e2ca12966995ec6cfc1e4ff8c0cfd",
+        "date": "2019-12-11 14:57:32 -0500",
+        "subject": "Make type in comment more specific."
+    },
+    {
+        "commit": "0194a9867182435c7a181be6466ca2b91f05801d",
+        "date": "2019-12-11 14:36:39 -0500",
+        "subject": "Fix archive-push/archive-get when PGDATA is symlinked.",
+        "body": "Commit 7168e074 tried to use cwd() as PGDATA but this would disagree with the path configured in pgBackRest if PGDATA was symlinked.\n\nIf cwd() does not match the pgBackRest path then chdir() to the path and make sure the next cwd() matches the result from the first call."
+    },
+    {
+        "commit": "8c840c28a65dae3cca581691e88e51839cd64bca",
+        "date": "2019-12-11 08:48:46 -0500",
+        "subject": "Fix segfault on unexpected EOF in gzip decompression.",
+        "body": "If the compressed stream terminated early then the decompression process would get a flush request (NULL input buffer) since the filter was not marked as done.  This could happen on a zero-length or truncated (i.e. invalid) compressed file.\n\nChange the existing assertion to an error to catch this condition in production gracefully."
+    },
+    {
+        "commit": "c933f12f9c39d7c076f84252c081c3430be72e55",
+        "date": "2019-12-10 13:28:15 -0500",
+        "subject": "Remove obsolete --perl-option option.",
+        "body": "This option was used when Perl was executed instead of being embedded.\n\nIt has been obsolete for a long time so remove it."
+    },
+    {
+        "commit": "d0ba8ff58c46c15facb4dba19eab8db83835b07c",
+        "date": "2019-12-10 13:16:47 -0500",
+        "subject": "Remove test point infrastructure.",
+        "body": "82df7e6f and 9856fef5 updated tests that used test points in preparation for the feature not being available in the C code.\n\nSince tests points are no longer used remove the infrastructure.\n\nAlso remove one stray --test option in mock/all that was essentially a noop but no longer works now that the option has been removed."
+    },
+    {
+        "commit": "d7d663c2b93fd6a3bdfb1c6a4bd1feae0cd8cc63",
+        "date": "2019-12-10 13:02:36 -0500",
+        "subject": "Make buildPutDiffers() work with empty files.",
+        "body": "If the file was empty the timestamp was updated.  If the file is empty and there is no content then file should not be saved."
+    },
+    {
+        "commit": "800d2972b00bb381c92cdadead9a1c04141853be",
+        "date": "2019-12-09 18:28:20 -0500",
+        "subject": "Remove stray uint type.",
+        "body": "This was probably copied from an example but some compilers don't like it."
+    },
+    {
+        "commit": "471d54a738887dd5c99afced36420cf6fb5c631b",
+        "date": "2019-12-09 17:55:20 -0500",
+        "subject": "Add stringz module to define some commonly used strings.",
+        "body": "This module will eventually contain various useful zero-terminated string functions.\n\nFor now, using NULL_Z instead of strPtr(NULL_STR) avoids a strict aliasing warning on RHEL 6.  This is likely a compiler issue, but adding these constants seems like a good idea anyway and we are not going to get a fix in a gcc that old."
+    },
+    {
+        "commit": "ca33545630a073579ef763294d897dd06820f5a5",
+        "date": "2019-12-09 14:06:32 -0500",
+        "subject": "Remove redundant test and move another test."
+    },
+    {
+        "commit": "61ad3a44c9e562a306064770428726a5664056e9",
+        "date": "2019-12-09 09:12:34 -0500",
+        "subject": "Note that next repo format should use UTC for backup labels."
+    },
+    {
+        "commit": "d3132dae26ad40c2a47db62d4cc5f4502465d7c6",
+        "date": "2019-12-08 18:43:47 -0500",
+        "subject": "Add functions for building new manifests.",
+        "body": "New manifests are built before a backup is performed."
+    },
+    {
+        "commit": "2cfde18755f305008af134ac833aca6989321ca7",
+        "date": "2019-12-08 14:19:47 -0500",
+        "subject": "Add pgLsnFromStr(), pgLsnToStr(), and pgLsnToWalSegment()."
+    },
+    {
+        "commit": "f517b141fb065efd21878fc774f51b52c014d887",
+        "date": "2019-12-08 14:15:23 -0500",
+        "subject": "Update pq harness to play nicely with variable LSNs."
+    },
+    {
+        "commit": "d2587250da82a90257534268e2175bfcfd3e15ac",
+        "date": "2019-12-07 18:44:06 -0500",
+        "subject": "Add backup functions to Db object.",
+        "body": "These functions implement the database backup functionality for all supported versions."
+    },
+    {
+        "commit": "8766326da812f6aae00bdbfef4b1382805de8c3e",
+        "date": "2019-12-07 17:48:53 -0500",
+        "subject": "Add protocolRemoteFree() to shutdown a specific remote.",
+        "body": "Sometimes it is useful to shutdown remotes that are no longer needed instead of waiting for them to be shutdown at program exit."
+    },
+    {
+        "commit": "5175d52e9466c339f5a4cd5c7d7e8724c3bbb2e3",
+        "date": "2019-12-07 17:42:42 -0500",
+        "subject": "Add constant for pg_tblspc path."
+    },
+    {
+        "commit": "78b1e05b7e6f8d09a424a2e8864e317d63c474f3",
+        "date": "2019-12-07 17:39:25 -0500",
+        "subject": "Remove unused Perl module."
+    },
+    {
+        "commit": "35a262951a1ed74431cdfa92c36ee2c9ae867c1a",
+        "date": "2019-12-07 17:33:34 -0500",
+        "subject": "Pq test harness usability and error reporting improvements.",
+        "body": "Pq script errors are now printed in test output in case they are being masked by a later error.\n\nOnce a script error occurs, the same error will be thrown forever rather than throwing a new error on the next item in the script.\n\nHRNPQ_MACRO_CLOSE() is not required in scripts unless harnessPqScriptStrictSet(true) is called.  Most higher-level tests should not need to run in strict mode.\n\nThe command/check test seems to require strict mode but there's no apparent reason why it should.  This would be a good thing to look into at some point."
+    },
+    {
+        "commit": "d6479ddd0efda9bb442f4bbfe937daa0ab46ac72",
+        "date": "2019-12-07 17:15:20 -0500",
+        "subject": "Add log replacements to help test non-deterministic log output.",
+        "body": "Some log output (e.g. time) is hard to test because the values can change between tests.\n\nAdd expressions to replace substrings in the log with predictable values to simplify testing.\n\nThis is similar to the log replacement facility available for Perl expect log testing."
+    },
+    {
+        "commit": "e4716ee036e8a4417f6dcb8d108c0d7b9e3f2b7d",
+        "date": "2019-12-07 17:02:41 -0500",
+        "subject": "Improve diff output in tests.",
+        "body": "Always compare expected vs actual (in that order) and give a hint in the error message to indicate what should be added and what removed."
+    },
+    {
+        "commit": "8c47ee296a1f311682b46b3f1de98d4eb7dcaf6a",
+        "date": "2019-12-07 16:55:50 -0500",
+        "subject": "Improve storage harness test callback.",
+        "body": "Add ability to omit the root (i.e. dot) path and get real size of compressed files."
+    },
+    {
+        "commit": "1b3770e248f4a5b59ba16f6a4c6cba7cf23de883",
+        "date": "2019-12-07 09:48:33 -0500",
+        "subject": "Recopy during backup when resumed file is missing or corrupt.",
+        "body": "A recopy would occur if the size or checksum was invalid but on error the backup would terminate.\n\nInstead, recopy the resumed file on any error.  If the error is systemic (e.g. network failure) then it should show up again during the recopy."
+    },
+    {
+        "commit": "d3f717c89208ef132e75b634ad2e91efbda25a04",
+        "date": "2019-12-07 09:26:51 -0500",
+        "subject": "Storage hardlink and symlink features require path feature.",
+        "body": "Since there is only one driver that supports (or is likely to support) links (Posix), require the path feature to make logic in the code simpler.\n\nThe checks are added just in case another driver supports links."
+    },
+    {
+        "commit": "e632c605250438a9e06f133b55c88e578ea709cd",
+        "date": "2019-12-06 11:48:41 -0500",
+        "subject": "Fix backup labels in mock/all resume integration tests.",
+        "body": "These were not getting updated to match the directory name when the manifests were copied.\n\nThe Perl code didn't care but the C code expects labels to be set correctly."
+    },
+    {
+        "commit": "5395aa0c92febadbf0c71f93799877cfe7268b6b",
+        "date": "2019-12-05 22:34:38 -0500",
+        "subject": "Allocate one extra process for backup from standby.",
+        "body": "The connection to the primary is process-max + 1 so make space for it."
+    },
+    {
+        "commit": "b2d82bd2484dbe3dee12479efb6e9aceba5aac57",
+        "date": "2019-12-04 19:43:26 -0500",
+        "subject": "Add functions to get the substring found by regExpMatch().",
+        "body": "For now this is only used in testing but there are places where it could be useful in the core code.\n\nEven if that turns out not to be true, it doesn't seem worth implementing a new version in testing just to capture a few values that we already have."
+    },
+    {
+        "commit": "053af2f54db0eaaaca3ac67cbdd68ba1b701048a",
+        "date": "2019-12-04 19:31:39 -0500",
+        "subject": "Add asserts to ensure hostId > 0.",
+        "body": "hostId is 1-based (e.g. pg1-*) so it should always be > 0."
+    },
+    {
+        "commit": "d1f49825b11ba88ac2024734c4c8a1c961f05854",
+        "date": "2019-12-02 11:54:45 -0500",
+        "subject": "Add missing header."
+    },
+    {
+        "commit": "8dfe0e48e25725978738ecb3fec24e5ce2e9076b",
+        "date": "2019-12-02 10:49:25 -0500",
+        "subject": "Use more general error code when tablespace linked into PGDATA.",
+        "body": "The specific error code was not that useful since we also test the error message which contains details of the link error."
+    },
+    {
+        "commit": "33a63aae503adf8d7f3f4430ee6478b845d38e2c",
+        "date": "2019-12-02 07:39:42 -0500",
+        "subject": "Add flag to dbGet() to require a standby.",
+        "body": "This is needed from backup from standby functionality."
+    },
+    {
+        "commit": "28116918ff3a00b133d74d524df452e29398082d",
+        "date": "2019-12-02 07:35:36 -0500",
+        "subject": "Error in remote command when stop file exists.",
+        "body": "This duplicates the Perl functionality."
+    },
+    {
+        "commit": "fc291b6f28753329afdd7b65b115f90d31569df1",
+        "date": "2019-12-01 17:47:47 -0500",
+        "subject": "Reduce the scope of mock/all exclusion tests.",
+        "body": "Run exclusions only on the tests where they will have an effect to reduce churn in the expect logs when they change."
+    },
+    {
+        "commit": "d15ed338217667f0bd7ffff3eb9f5e24052477fd",
+        "date": "2019-12-01 16:32:21 -0500",
+        "subject": "Make MCV return false when a boolean tie.",
+        "body": "This is to maintain compatibility with the older Perl code that returned the lowest sorted order item in a tie.\n\nFor other datatypes the C code returns the same value, often enough at least to not cause churn in the expect tests."
+    },
+    {
+        "commit": "ab0974cc8ea0cff70a9f680ff8e1dc10b1ba3c48",
+        "date": "2019-12-01 16:30:44 -0500",
+        "subject": "Add PostgreSQL version where backup from standby is supported."
+    },
+    {
+        "commit": "218698088f0e4d5a978b8f4c8df6b114980889b9",
+        "date": "2019-12-01 16:28:33 -0500",
+        "subject": "Add PostgreSQL file and path names used for building manifests."
+    },
+    {
+        "commit": "56ee321a9565e7c1e076c58744e0cfc408801e28",
+        "date": "2019-12-01 15:49:34 -0500",
+        "subject": "Add pgLsnName() and pgXactPath()."
+    },
+    {
+        "commit": "bc83354fb53a1ba8a86366478c5be871775dd04a",
+        "date": "2019-11-29 11:29:16 -0500",
+        "subject": "Add storage feature flags.",
+        "body": "Even though storagePathSync() is a noop when path sync is not supported, it is useful to know in advance if the function will do anything so add the storageFeaturePathSync flag.\n\nThe storageFeatureSymLink and storageFeatureHardLink flags are currently informational only since links are not yet implemented in the storage interface."
+    },
+    {
+        "commit": "0933aeb1ad954f8c7b2ed6d4e160d7e132ada8b7",
+        "date": "2019-11-29 10:56:13 -0500",
+        "subject": "Remove unused reference to use pgBackRest::Backup::File."
+    },
+    {
+        "commit": "50eb062e0e7a6aac326e411ed28e0c8aa397bf01",
+        "date": "2019-11-28 09:34:19 -0500",
+        "subject": "Fix reference list when backup.info is reconstructed in expire command.",
+        "body": "Adding a manifest to backup.info was migrated to C in 4e4d1f41 but deduplication of the references was missed leading to a reference for every file being added to backup.info.\n\nSince the backup command is still using the Perl version of reconstruct this issue will not express unless 1) there is a backup missing from backup.info and 2) the expire command is run directly instead of running after backup as usual.\n\nThis unlikely combination of events means this is probably not a problem in the field."
+    },
+    {
+        "commit": "686b6f91da4cfdbc8708b0f08ced460c10e4326c",
+        "date": "2019-11-28 08:27:21 -0500",
+        "subject": "Set archive-check option in manifest correctly when offline.",
+        "body": "Archive check does not run when in offline backup mode but the option was set to true in the manifest.  It's harmless since these options are informational only but it could cause confusion when debugging."
+    },
+    {
+        "commit": "5506e5de27b1a61015f6e18d5582ca81f696e30f",
+        "date": "2019-11-27 15:09:07 -0500",
+        "subject": "Remove obsolete call to perlExec() for stand-alone expire command.",
+        "body": "This was missed in ecae5e34."
+    },
+    {
+        "commit": "4683557c54d2f2511fd754ae7c0c5e34ac1e5ba4",
+        "date": "2019-11-26 17:22:30 -0500",
+        "subject": "Remove unused reference to pgBackRest::Db."
+    },
+    {
+        "commit": "158e439689c8247ba2e53da4bfe65934e391b690",
+        "date": "2019-11-26 17:16:45 -0500",
+        "subject": "Remove obsolete Perl archive code.",
+        "body": "This should have been removed in a1c13a50 but was missed."
+    },
+    {
+        "commit": "82df7e6f3bf53409b3c3a15eff7bbc33c13197f8",
+        "date": "2019-11-26 11:32:12 -0500",
+        "subject": "Update integration tests in real/all that use test points.",
+        "body": "Test points are not supported by the new C code so these will be replaced with unit tests.\n\nThe fact that the tests still pass even when the changes aren't made mid-backup (except application_name) shows how weak they were in the first place.\n\nEven so, this does represent a regression in (soon to be be removed) Perl coverage."
+    },
+    {
+        "commit": "b145c72b5c27ad299ad1fa7dcd84f45fb0797e0f",
+        "date": "2019-11-25 08:51:28 -0500",
+        "subject": "Update missing manifest warning in BackupInfo.",
+        "body": "This brings the Perl message in line with C to reduce expect log churn."
+    },
+    {
+        "commit": "8800f32ad9b6b9b1351afd4280cc8dfe1ada2d92",
+        "date": "2019-11-25 08:35:26 -0500",
+        "subject": "Remove exclusions once they have been tested in mock/all.",
+        "body": "The exclusions no longer have any effect after a restore and just add noise to the expect log."
+    },
+    {
+        "commit": "9856fef5861fbf054007233f78582d3584c03565",
+        "date": "2019-11-25 07:48:52 -0500",
+        "subject": "Update integration tests in mock/all that use test points.",
+        "body": "Test points will not be available in the C code so update these tests as best as possible without using them.\n\nThis represents a loss of coverage for the Perl code (soon to be removed) which will be made up in the C code with unit tests."
+    },
+    {
+        "commit": "3cd45a7411ce67630915c89cf5c69a37265d0e07",
+        "date": "2019-11-25 07:45:58 -0500",
+        "subject": "Remove start/stop --force integration tests in mock/all.",
+        "body": "These tests require test points which are not being implemented in the C code.\n\nThis functionality is fully tested in the command/control unit tests so integration tests are no longer required."
+    },
+    {
+        "commit": "01aefc563dbabc7c7b1b7dbed27716692898597f",
+        "date": "2019-11-25 07:37:09 -0500",
+        "subject": "Update Perl page checksum expression.",
+        "body": "This expression determines which files contain page checksums but it was also including the directory above the relation directories.  In a real PostgreSQL installation this not a problem because these directories don't contain any files.\n\nHowever, our tests place a file in `base` which the Perl code thought should have page checksums while the new C code says no.\n\nUpdate the expression to document the change and avoid churn in the expect logs later."
+    },
+    {
+        "commit": "18e43c5955217838ad55e68e176b83a9187533ec",
+        "date": "2019-11-24 09:24:52 -0500",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "cace54151f3dc9f686b99923f1dbd1c010ab84f4",
+        "date": "2019-11-23 10:32:57 -0500",
+        "subject": "Add hostId to protocolLocalGet().",
+        "body": "Previously this function was only creating locals that talked to the repository.  Backup will need to be able to talk to multiple PostgreSQL hosts."
+    },
+    {
+        "commit": "ab65ffdfacf47b6d182cbf6461d49a76c0cc8b00",
+        "date": "2019-11-23 10:22:11 -0500",
+        "subject": "Add protocolStorageType*() to manage protocol storage types.",
+        "body": "Abstract the string representation of storage types that are passed over the protocol layer."
+    },
+    {
+        "commit": "a4b9440d354c3cf95f7ca3aa68dc691c10c65e21",
+        "date": "2019-11-22 19:25:49 -0500",
+        "subject": "Only install specific lcov version when required.",
+        "body": "Installing lcov 1.14 everywhere turned out to be a problem just as using 1.13 on Ubuntu 19.04 was.\n\nSince we primarily use Ubuntu 18.04 for coverage testing and reporting, we definitely want to make sure that works.  So, revert to using the default packaged lcov except when specified otherwise in VmTest.pm.\n\nPostgreSQL minor version releases are also included since all containers have been rebuilt."
+    },
+    {
+        "commit": "52a3ba6b6f25443b5ed456969b794f63a809a606",
+        "date": "2019-11-22 15:18:56 -0500",
+        "subject": "Revert \"Forbid % character in parameters.\"",
+        "body": "The issue \"fixed\" in f01aa586 was caused by treating all strings as format strings while logging, which was fixed in 0c05df45.\n\nRevert because there no longer seems a reason for the extra logic, and it was only partially applied, i.e. not to env vars, command-line options, or config options."
+    },
+    {
+        "commit": "381aecae4eeb15c538318e95c3101fa07a6712d4",
+        "date": "2019-11-22 14:30:56 -0500",
+        "subject": "Fix walPath() when CWD is / and path is relative.",
+        "body": "The function would return a // prefix in this case, which works fine but looks odd while debugging."
+    },
+    {
+        "commit": "0c05df458287c77df1188a68bbd74e145ed0f059",
+        "date": "2019-11-22 13:33:26 -0500",
+        "subject": "Add _FMT() logging macro variants.",
+        "body": "Using the same macros for formatted and unformatted logging had several disadvantages.\n\nFirst, the compiler was unable to verify the format string against the parameters.\n\nSecond, legitimate % characters in messages were being interpreted as format characters with garbage output ensuing.\n\nAdd _FMT() variants and update all call sites to use the correct variant."
+    },
+    {
+        "commit": "99edcca55b3b8b1d144bdeb32c4d98c8ee13bf34",
+        "date": "2019-11-22 09:18:24 -0500",
+        "subject": "Add missing linefeeds."
+    },
+    {
+        "commit": "29ab06cf133b6a3d18d7bc39507f92a45927b2e8",
+        "date": "2019-11-21 17:30:18 -0500",
+        "subject": "Add missing static keyword."
+    },
+    {
+        "commit": "f01aa5861d341a19d85ddf3d7307c250994fecd4",
+        "date": "2019-11-21 17:28:03 -0500",
+        "subject": "Forbid % character in parameters.",
+        "body": "This character causes problems in C and in the shell if we try to output it in an error message.\n\nForbid it completely and spell it out in error messages to avoid strange effects.\n\nThere is likely a better way deal with the issue but this will do for now."
+    },
+    {
+        "commit": "6be9c7b63a61464d60d15133662eb44776401b1d",
+        "date": "2019-11-21 17:20:42 -0500",
+        "subject": "Don't log secrets in cipherBlock module.",
+        "body": "In practice there are lots of ways secrets can be leaked (e.g. info load, protocol) but at least remove this instance."
+    },
+    {
+        "commit": "c524ec4f95462bfbc1484e139d754280ec05e94c",
+        "date": "2019-11-21 16:06:27 -0500",
+        "subject": "Remove obsolete integration tests from mock/all.",
+        "body": "The protocol timeout tests have been superceded by unit tests.\n\nThe TEST_BACKUP_RESUME test point was incorrectly included into a number of tests, probably a copy pasto.  It didn't hurt anything but it did add 200ms to each test where it appeared.\n\nCatalog and control version tests were redundant.  The database version and system id tests covered the important code paths and the C code gets these values from a lookup table.\n\nFinally, fix an incomplete update to the backup.info file while munging for tests."
+    },
+    {
+        "commit": "53cd530bbf3921c9500963d12393344425574d08",
+        "date": "2019-11-21 12:09:24 -0500",
+        "subject": "Safely initialize manifest object.",
+        "body": "Using a designated initializer is safer than zeroing the struct.  It is also better for debugging because Valgrind should be able to detect access to areas that are not initialized due to alignment."
+    },
+    {
+        "commit": "270f9496e432109b243e8db5d497805f72c56d91",
+        "date": "2019-11-21 12:08:32 -0500",
+        "subject": "Add manifestMove()."
+    },
+    {
+        "commit": "c5a6631d2791ca5ae69a6178fac758b6c96f9781",
+        "date": "2019-11-21 11:44:40 -0500",
+        "subject": "Rearrange manifest module.",
+        "body": "Put functions with related functions, move getters above the helper functions, and rename manifestPgPath() to manifestPathPg()."
+    },
+    {
+        "commit": "9f71a019c815af58bdd10ca2ceaaf6f1506fb560",
+        "date": "2019-11-21 10:55:03 -0500",
+        "subject": "Allow storageInfo() to operate outside the base storage path.",
+        "body": "It is occasionally useful to get information about a file outside of the base storage path.  storageLocal() can be used in some cases but when the storage is remote is doesn't seem worth creating a separate storage object for adhoc info requests.\n\nstorageInfo() is a read-only operation so this seems pretty safe.  The noPathEnforce parameter will make auditing exceptions easy."
+    },
+    {
+        "commit": "d3b1897625c5b200724fb087cedd975fce07672f",
+        "date": "2019-11-21 10:34:32 -0500",
+        "subject": "Allow adhoc enforcement in storagePath().",
+        "body": "The ability to disable enforcement (i.e., the requested absolute path is within the storage path) globally will be removed after the Perl migration.\n\nThe feature will still be needed occasionally so allow it in an adhoc fashion."
+    },
+    {
+        "commit": "e1dad720a126e2145718ccc78614727fa67cd619",
+        "date": "2019-11-21 10:21:35 -0500",
+        "subject": "Rename storagePath() to storageP() in places where it was missed.",
+        "body": "Correct this since it will be enforced in a subsequent patch."
+    },
+    {
+        "commit": "cef9f0f37f33fe46ffcb229535a82479700b8de2",
+        "date": "2019-11-21 09:40:15 -0500",
+        "subject": "Process . in strPathAbsolute().",
+        "body": "A . in a link will always lead to an error since the destination will be inside PGDATA.  However, it is accepted symlink syntax so it's better to resolve it and get the correct error message.\n\nAlso, we may have other uses for this function in the future."
+    },
+    {
+        "commit": "a6fc0bf2ca778844448885192f11d17bf933b551",
+        "date": "2019-11-21 08:15:37 -0500",
+        "subject": "Add contributor."
+    },
+    {
+        "commit": "3d2c0b0f3bcd4fbae0409a374f13d1aebb3bba81",
+        "date": "2019-11-20 14:24:58 -0500",
+        "subject": "Fix inverted page checksum load/save.",
+        "body": "This was not caught before because the on-disk format was correct even though the representation in memory was inverted."
+    },
+    {
+        "commit": "63c4c148361c75ec53d2d6b53a3ec69389b925c3",
+        "date": "2019-11-19 20:52:01 -0500",
+        "subject": "Fix lcov build in Vagrantfile.",
+        "body": "-q was being instead of -s for silent mode which caused the build to fail."
+    },
+    {
+        "commit": "5f034714453f28a04d8e48828e8ee53a61401c4e",
+        "date": "2019-11-19 15:56:13 -0500",
+        "subject": "Remove --force option from stanza-create documentation.",
+        "body": "This should have been removed when the support for the option was removed in c7333190.\n\nThe option cannot be removed entirely because we don't want to error in the case where --force was specified but the stanza is valid."
+    },
+    {
+        "commit": "c5ee56a724fe6c49b7e3496090ff1bf6d73e33f8",
+        "date": "2019-11-19 10:34:14 -0500",
+        "subject": "Markdown update missed in 1db9e3b1."
+    },
+    {
+        "commit": "20162ed3feec8d3de5de8e2cca7bb065a47bcc67",
+        "date": "2019-11-19 10:32:18 -0500",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "74317f0ab6024d6c3a2f9635677f26489786e166",
+        "date": "2019-11-17 17:35:03 -0500",
+        "subject": "Use variable parameter macros to make the storage interface tidier.",
+        "body": "Many functions don't take optional parameters, so tacking the struct onto the end was pretty burdensome.\n\nAdd macros to get the interface under a variety of circumstances to make this practical."
+    },
+    {
+        "commit": "1db9e3b144d886ec4159176312345d154b7178b8",
+        "date": "2019-11-17 15:10:40 -0500",
+        "subject": "Remove *MP() macros variants.",
+        "body": "Adding a dummy column which is always set by the P() macro allows a single macro to be used for parameters or no parameters without violating C's prohibition on the {} initializer.\n\n-Wmissing-field-initializers remains disabled because it still gives wildly different results between versions of gcc."
+    },
+    {
+        "commit": "5c65d88f6254176c257f0bf58ca5c9f59bb99177",
+        "date": "2019-11-17 14:17:03 -0500",
+        "subject": "Use structs to pass optional parameters to storage drivers.",
+        "body": "New optional parameters can be added without breaking the interface and this reduces noise in the function prototypes."
+    },
+    {
+        "commit": "09e129886e10a036e75493d55625f01c34e15d85",
+        "date": "2019-11-16 17:47:42 -0500",
+        "subject": "Add storageInfoList() support to remote storage driver."
+    },
+    {
+        "commit": "26e1da82e7970ac03b8300da5f55ed7da1c2ab96",
+        "date": "2019-11-16 17:32:49 -0500",
+        "subject": "Allow zero-length substrings to be extracted from the end of a string.",
+        "body": "The previous assert was a bit overzealous and did not allow this case.  It's not very common but still occasionally useful."
+    },
+    {
+        "commit": "8a3de1e05a427bf40b7742ac476c01ef219f6b46",
+        "date": "2019-11-16 17:30:08 -0500",
+        "subject": "Add storageInfo() support to remote storage driver."
+    },
+    {
+        "commit": "8d6a8c3bf0401705578d05902f8e7f871f3ab266",
+        "date": "2019-11-16 17:12:16 -0500",
+        "subject": "Store base path for remote storage locally.",
+        "body": "It wasn't practical for the main process to be ignorant of the remote path, and in any case knowing the path makes debugging easier.\n\nPull the remote path when connecting and pass the result of local storagePath() to the remote when making calls."
+    },
+    {
+        "commit": "6827a13f3a4b1943769601acf34676bd1f689b4b",
+        "date": "2019-11-16 17:05:34 -0500",
+        "subject": "Add facility for reading and writing adhoc protocol output.",
+        "body": "Pushing output through a JSON blob is not practical if the output is extremely large, e.g. a backup manifest with 100K+ files.\n\nAdd read/write routines so that output can be returned in chunks but errors will still be detected."
+    },
+    {
+        "commit": "90e19d99bab6b448484865cb6b46fb786352009c",
+        "date": "2019-11-16 09:38:42 -0500",
+        "subject": "Add mock module to CentOS6/7 Travis CI testing.",
+        "body": "This was dropped at some point but is important for integration coverage."
+    },
+    {
+        "commit": "c8db11e65bed37ec18d83b527c895b8b86c9f11b",
+        "date": "2019-11-15 17:50:12 -0500",
+        "subject": "Add user-id/group-id to hrnReplaceKey()."
+    },
+    {
+        "commit": "53a2d04ab0e0c6d3ef75afcef1663492d9db98e7",
+        "date": "2019-11-15 17:48:25 -0500",
+        "subject": "Allow \"null\" in jsonToStr()."
+    },
+    {
+        "commit": "64ddc163c95b6bc87a7589462b1b16ca70cb08bc",
+        "date": "2019-11-15 10:50:17 -0500",
+        "subject": "Allow cipherPassSub() to be set in Info without the constructor.",
+        "body": "This value is not always known when the object is created so allow it to be set later."
+    },
+    {
+        "commit": "48e8942e86b1471568116dc7fe604878ca9afd70",
+        "date": "2019-11-15 08:53:15 -0500",
+        "subject": "Allow trailing / for relative paths in strPathAbsolute().",
+        "body": "The trailing / does nothing but is nevertheless valid syntax."
+    },
+    {
+        "commit": "83ab272171887092df85704e27ddfec22c9f335f",
+        "date": "2019-11-14 16:50:58 -0500",
+        "subject": "Update varNew*() calls to Variant constant macros.",
+        "body": "The constants created by the macros are faster and use less memory."
+    },
+    {
+        "commit": "3b879c2cb3cfdbcd03dad1d6cc898052f8d8863d",
+        "date": "2019-11-14 16:48:41 -0500",
+        "subject": "Filter logged command options based on the command definition.",
+        "body": "Previously, options were being filtered based on what was currently valid.  For chained commands (e.g. backup then expire) some options may be valid for the first command but not the second.\n\nFilter based on the command definition rather than what is currently valid to avoid logging options that are not valid for subsequent commands.  This reduces the number of options logged and will hopefully help avoid confusion and expect log churn."
+    },
+    {
+        "commit": "c5b76d213bc24d703e7b973df171a2b01595dabc",
+        "date": "2019-11-12 17:05:09 -0500",
+        "subject": "Modify InfoBackupData struct to use time_t for backup start/stop times.",
+        "body": "The uint64_t types worked but were not consistent with how timestamps are handled in other parts of the code."
+    },
+    {
+        "commit": "6f65dde8d39436a31f90030e9b3cef5cf10d04e3",
+        "date": "2019-11-12 15:56:28 -0500",
+        "subject": "Begin v2.20 development."
+    },
+    {
+        "commit": "2d10293d041cbbc72e4a2bac32401f6f384ecb1a",
+        "date": "2019-11-12 15:51:28 -0500",
+        "subject": "v2.19: C Migrations and Bug Fixes"
+    },
+    {
+        "commit": "a44c5d0315e49c42eb908a4ed0605bee0c509f6d",
+        "date": "2019-11-12 13:12:07 -0500",
+        "subject": "Add Strings for STORAGE_REPO_ARCHIVE and STORAGE_REPO_BACKUP.",
+        "body": "These constants are used often enough that they deserve to have String constants rather than repeatedly calling STRDEF()."
+    },
+    {
+        "commit": "10c8eeaf6c0413da265047aeb02a047209ef9d69",
+        "date": "2019-11-08 18:58:45 -0500",
+        "subject": "Fix handling of repeated HTTP headers.",
+        "body": "When HTTP headers are repeated they should be considered equivalent to a single comma-separated header rather than generating an error, which was the prior behavior."
+    },
+    {
+        "commit": "43171786336733d8e1efe672b801236fd3e2d829",
+        "date": "2019-11-08 17:56:34 -0500",
+        "subject": "Update MinIO to newest release.",
+        "body": "We had some problems with newer versions so had held off on updating.  Those problems appear to have been resolved.\n\nIn addition, the --compat flag is no longer required.  Prior versions of MinIO required all parts of a multi-part upload (except the last) to be of equal size.  The --compat flag was introduced to restore the default S3 behavior.  Now --compat is only required when ETag is being used for MD5 verification, which we don't do."
+    },
+    {
+        "commit": "edcc7306a39852ddff507d384555230001442bf4",
+        "date": "2019-11-08 09:46:00 -0500",
+        "subject": "Add TIME parameter debug type.",
+        "body": "Previously we were using int64_t to debug time_t but this may not be right depending on how the compiler represents time_t, e.g. it could be a float.\n\nSince a mismatch would have caused a compiler error we are not worried that this has actually happened, and anyway the worst case is that the debug log would be wonky.\n\nThe primary benefit, aside from correctness, is that it makes choosing a parameter debug type for time_t obvious."
+    },
+    {
+        "commit": "eca00e0be00bcd692b10de1b89a700f6525d51a7",
+        "date": "2019-11-07 13:11:01 -0500",
+        "subject": "Add building a development environment to contributing documentation.",
+        "body": "This documentation shows how to build a development environment on Ubuntu 19.04 and should work for other Debian-based distros.\n\nNote that this document is not included in automated testing due to some unresolved issues with Docker in Docker on Travis CI.  We'll address this in the future when we add contributing documentation to the website."
+    },
+    {
+        "commit": "8b682b75d2ade2e52c75b417fad2eb61150616d1",
+        "date": "2019-11-02 10:35:48 +0100",
+        "subject": "Allow mock integration tests for all VM types.",
+        "body": "Previously the mock integration tests would be skipped for VMs other than the standard four used in CI.  Now VMs outside the standard four will run the same tests as VM4 (currently U18)."
+    },
+    {
+        "commit": "b3e5d88304860fbcb566059d08cbf85e2c3cd95a",
+        "date": "2019-11-02 09:59:39 +0100",
+        "subject": "Add markdown renderer for execute-list block."
+    },
+    {
+        "commit": "7168e0744018d7d27668d59bfe9b6deafe923efa",
+        "date": "2019-10-30 14:55:25 +0100",
+        "subject": "Use getcwd() to construct path when WAL path is relative.",
+        "body": "Using pg1-path, as we were doing previously, could lead to WAL being copied to/from unexpected places.  PostgreSQL sets the current working directory to PGDATA so we can use that to resolve relative paths."
+    },
+    {
+        "commit": "e06db21e35f701b62c625b9f25436459b8fd5c26",
+        "date": "2019-10-17 14:00:18 +0200",
+        "subject": "Error when specified vm is invalid."
+    },
+    {
+        "commit": "a52faf83a502427a7079ec2bae0593b318c2594c",
+        "date": "2019-10-17 11:56:45 +0200",
+        "subject": "Disable code generation on dry-run."
+    },
+    {
+        "commit": "fa6a54bb4503efdc8e02a98089a935b6d52a3797",
+        "date": "2019-10-16 17:05:24 +0200",
+        "subject": "Update last tests that required sudo.",
+        "body": "All tests should now run in a sudo-less environment."
+    },
+    {
+        "commit": "48bd9e22f124163aa61574027476af8b3737dc39",
+        "date": "2019-10-16 15:48:33 +0200",
+        "subject": "C test harness refactor.",
+        "body": "Consolidate setting configuration into hrnInit() and rename other functions for consistency.\n\nSplit out internal functions into a new header."
+    },
+    {
+        "commit": "b4aeb217e665a166cb75577e07f80b01bc0345d1",
+        "date": "2019-10-15 17:19:42 +0200",
+        "subject": "Allow parameters to be passed to travis.pl.",
+        "body": "This makes configuring tests easier.\n\nAlso add a parameter for tests that require sudo.  This should be retired at some point but some tests still require it."
+    },
+    {
+        "commit": "f3b2189659a7f0e8e660c1be42175f0ff82cffb0",
+        "date": "2019-10-15 13:27:03 +0200",
+        "subject": "Remove package build sudo into the container.",
+        "body": "By running this in the container we no longer need sudo on the host system for package builds."
+    },
+    {
+        "commit": "67dde73727d2b30ce3f329054398a1f516a65899",
+        "date": "2019-10-14 11:51:14 +0200",
+        "subject": "Run tests in tmpfs.",
+        "body": "This will likely improve performance, but it also makes the filesystem consistent between platforms.\n\nA number of tests were failing on shiftfs, which was the default for arm64 on Travis."
+    },
+    {
+        "commit": "b1dc5a6d269b858960061e59f3885303d2417051",
+        "date": "2019-10-13 14:02:52 -0400",
+        "subject": "Add disk/mem info for Travis.",
+        "body": "This is helpful for determining the virtual machine resources."
+    },
+    {
+        "commit": "64c6102a1536ba94f4957fe950038f31525748b5",
+        "date": "2019-10-12 14:47:01 -0400",
+        "subject": "Update packages required for Travis-CI builds.",
+        "body": "These packages are expected on the arm64 build even though we are using the same os image as amd64.  It appears the arm64 image is slimmer."
+    },
+    {
+        "commit": "35eef2b8676115036b9d68b14223629dd1e1b773",
+        "date": "2019-10-12 14:16:22 -0400",
+        "subject": "Use a lower user id for posix storage tests.",
+        "body": "arm64 was not happy with the old user id, so use something smaller."
+    },
+    {
+        "commit": "827e95944a2f13301fa14af5a8f11324e17a1cd9",
+        "date": "2019-10-12 13:52:45 -0400",
+        "subject": "Use < 0 and > 0 for strCmp() tests.",
+        "body": "Using -1 and 1 was a bit sloppy since the spec only guarantees that the values will be < 0 and > 0.\n\nFound on arm64 where the values were -64 and 64."
+    },
+    {
+        "commit": "a2fa1d04b0cbd6dbedaa2447273371c20bd46e56",
+        "date": "2019-10-12 11:26:13 -0400",
+        "subject": "Update container images to PostgreSQL 12 GA."
+    },
+    {
+        "commit": "397a41e0f9f82987952912b8127a5e6929e29752",
+        "date": "2019-10-12 11:24:55 -0400",
+        "subject": "Add Ubuntu 19.04 container definition."
+    },
+    {
+        "commit": "93656db186e6da286bd704dc65235fcc209bb19d",
+        "date": "2019-10-12 11:24:21 -0400",
+        "subject": "Update lcov to 1.14.",
+        "body": "1.13 is not compatible with gcc 8 which is what ships with newer distributions.  Build from source to get a more recent version.\n\n1.13 is not compatible with gcc 9 so we'll need to address that at a later date."
+    },
+    {
+        "commit": "11c7c8fabb1e3eb9dadce2231fbb9cb3d76d553f",
+        "date": "2019-10-12 09:45:18 -0400",
+        "subject": "Remove pgbackrest test user.",
+        "body": "This user was created before we tested in containers to ensure isolation between the pg and repo hosts which were then just directories.  The downside is that this resulted in a lot of sudos to set the pgbackrest user and to remove files which did not belong to the main test user.\n\nContainers provide isolation without needing separate users so we can now safely remove the pgbackrest user.  This allows us to remove most sudos, except where they are explicitly needed in tests.\n\nWhile we're at it, remove the code that installed the Perl C library (which also required sudo) and simply add the build path to @INC instead."
+    },
+    {
+        "commit": "6f0e7f00af3e83d071713a671a6f155cd1fa3b88",
+        "date": "2019-10-12 09:26:19 -0400",
+        "subject": "Fix recovery test failing in PostgreSQL 12.0.",
+        "body": "This test was not creating recovery.signal when testing with --type=preserve.  The preserve recovery type only keeps existing files and does not create any.\n\nRC1 was just ignoring recovery.signal and going right into recovery.  Weirdly, 12.0 used restore_command to do crash recovery which made the problem harder to diagnose, but this has now been fixed in PostgreSQL and should be released in 12.1."
+    },
+    {
+        "commit": "59a4a0c1b1726812126a13e57bee29689b0a8fdc",
+        "date": "2019-10-11 13:14:47 -0400",
+        "subject": "Add a warning about jq rounding numbers to the documentation."
+    },
+    {
+        "commit": "db1dc4f275667903f560c140c2c61cce7f9b4020",
+        "date": "2019-10-11 13:03:52 -0400",
+        "subject": "Remove pretty-printing from jsonFromKv() and jsonFromVar().",
+        "body": "Now that pretty-printing has been removed from the info command it no longer has a purpose, so remove it."
+    },
+    {
+        "commit": "d90b2724f883686afdae386c1350abfdcfb0d5fa",
+        "date": "2019-10-11 12:56:03 -0400",
+        "subject": "JSON output from the info command is no longer pretty-printed.",
+        "body": "Monitoring systems can more easily ingest the JSON without linefeeds.\n\nExternal tools such as jq can be used to pretty-print if desired."
+    },
+    {
+        "commit": "29725805668656a920283401ef144a98cee2c5f9",
+        "date": "2019-10-11 12:38:03 -0400",
+        "subject": "Remove info expect tests from mock/all and mock/stanza.",
+        "body": "These tests are redundant now that we have full coverage in the unit tests are are not worth maintaining anymore."
+    },
+    {
+        "commit": "e4408c7dd390b13bb022b29e8f0b151fa0526362",
+        "date": "2019-10-11 12:28:47 -0400",
+        "subject": "Refactor --pre option in documentation.",
+        "body": "Mark all pre commands as skip so they won't be run again after the container is built.\n\nEnsure that pre commands added to the container are run as the container user if they are not intended to run as root."
+    },
+    {
+        "commit": "642ce003c8e8f59ec67d3bda4c18decb4aa21ae2",
+        "date": "2019-10-11 11:32:51 -0400",
+        "subject": "Don't autogenerate embedded libc code by default.",
+        "body": "This is only needed when new code is added to the Perl C library, which is becoming rare as the migration progresses.\n\nAlso, the code will vary slightly based on the Perl version used for generation so for normal users it is just noise."
+    },
+    {
+        "commit": "bcd3e4953aa1c8e8ccfadd141f38473b2ecbaff6",
+        "date": "2019-10-10 22:10:20 -0400",
+        "subject": "Make perl/exec test container required.",
+        "body": "This test fails in some cases when --vm=none but it's not worth investigating since this code will be going away soon."
+    },
+    {
+        "commit": "e3d87ebace36984728ae571a77ca1e11ae383d5b",
+        "date": "2019-10-10 19:43:42 -0400",
+        "subject": "Fix mismatched timezone in expect test.",
+        "body": "Also run the --vm-none tests in a non-UTC timezone to prevent regressions."
+    },
+    {
+        "commit": "6db4e59a6631eb47758fd0dff772e2ca086e924b",
+        "date": "2019-10-10 16:13:43 -0400",
+        "subject": "Allow tests that use ports to run in parallel.",
+        "body": "Set the test index in the C unit test code so it can assign port numbers that won't conflict between tests."
+    },
+    {
+        "commit": "13fcbb24e940084710acc13627515522215369dc",
+        "date": "2019-10-10 15:09:11 -0400",
+        "subject": "Fix container test path being used when --vm=none."
+    },
+    {
+        "commit": "e732720d855cffa0e4bb80997529254323fd7767",
+        "date": "2019-10-10 11:28:37 -0400",
+        "subject": "Disable docker service for --vm=none test.",
+        "body": "Starting this service wastes time and this will help catch any regressions where containers are being built when they should not be."
+    },
+    {
+        "commit": "9a3ba649e111f3529bb6fe09238d9fcb81454487",
+        "date": "2019-10-10 11:25:59 -0400",
+        "subject": "Remove code to generate .travis.yml.",
+        "body": "Most of the logic has been moved to test/travis.pl so there wasn't much purpose to this code anymore."
+    },
+    {
+        "commit": "696e6a7c444ba0ec3a28f8762b6a7266751faa0f",
+        "date": "2019-10-10 11:21:09 -0400",
+        "subject": "Don't require sudo to run tests with --vm=none.",
+        "body": "Run these tests without sudo privileges on Travis to prevent regressions."
+    },
+    {
+        "commit": "50d1d0a4e8f232842a27c4998cb6af3f1d906bf3",
+        "date": "2019-10-10 09:28:50 -0400",
+        "subject": "Move release note to correct section."
+    },
+    {
+        "commit": "47e0ba2502e5c3e8eb088ffcbd774144741b599b",
+        "date": "2019-10-10 09:27:46 -0400",
+        "subject": "Fix remote timeout in delta restore.",
+        "body": "When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within protocol-timeout.\n\nAdd keep-alives to prevent remote timeout."
+    },
+    {
+        "commit": "82baf1e521e2a1ed7b27403478aa4a1dc4a6afcc",
+        "date": "2019-10-10 08:33:40 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "7f369006b5c812d0d3e05f4735d03623c3873b45",
+        "date": "2019-10-09 15:03:03 -0400",
+        "subject": "Add gcc 9 support.",
+        "body": "A number of tests have been updated and Fedora 30 has been added to the test suite so the unit tests can run on gcc 9.\n\nStop running unit tests on co6/7 since we appear to have ample unit test coverage."
+    },
+    {
+        "commit": "528f4c4347d89a0c05b0a9521e8ef91432616b0c",
+        "date": "2019-10-09 14:38:24 -0400",
+        "subject": "Remove dependency on aws cli for testing.",
+        "body": "This tool was only being used it a few places but was a pretty large dependency.\n\nRework the forceStorageMove() code using our storage layer and replace one aws cli cp with a storage put.\n\nAlso, remove the Dockerfile that was once used to build the Scality S3 test container."
+    },
+    {
+        "commit": "ac870b42de5a51436a4a08c6ad405ac4f1dd0763",
+        "date": "2019-10-09 08:43:30 -0400",
+        "subject": "Refactor error logic to make sure Db object gets freed immediately.",
+        "body": "Because db can be reset to NULL on an error in the try block we need nested try blocks to ensure that db is non-NULL and can be freed on an error after being created.\n\nThis is not a production issue because the db will be freed when the temp mem context is freed, but it does affect reproducibility in the tests and is a bit tidier."
+    },
+    {
+        "commit": "61c4f64895497da4cbe1e9225f274d255dd5133e",
+        "date": "2019-10-08 18:56:55 -0400",
+        "subject": "Be smarter about which packages are loaded for testing.",
+        "body": "Now that our tests are more diversified it makes sense to load only the packages that are needed for each test.\n\nMove the package loads from .travis.yaml to test/travis.pl where we have more control over what is loaded."
+    },
+    {
+        "commit": "a1c13a50dd0886076a1f32e58901eec271d9ec9a",
+        "date": "2019-10-08 18:04:09 -0400",
+        "subject": "The check command is implemented entirely in C.",
+        "body": "Note that building the manifest on each host has been temporarily removed.\n\nThis feature will likely be brought back as a non-default option (after the manifest code has been fully migrated to C) since it can be fairly expensive."
+    },
+    {
+        "commit": "ecae5e34e5063838bb55d55b1752c6b2eaaaa75b",
+        "date": "2019-10-08 17:30:33 -0400",
+        "subject": "Update expire command to use C backup.info reconstruct.",
+        "body": "This was still being done in Perl until the C Manifest object was available."
+    },
+    {
+        "commit": "4e4d1f414a153232079f2e2e9ce203ffc5a2362c",
+        "date": "2019-10-08 16:04:27 -0400",
+        "subject": "Add infoBackupLoadFileReconstruct() to InfoBackup object.",
+        "body": "Check the backup.info file against the backup path.  Add any backups that are missing and remove any backups that no longer exist.\n\nIt's important to run this before backup or expire to be sure we are using the most up-to-date list of backups."
+    },
+    {
+        "commit": "b2825b82c7b8cf140969dd4e9fd04552e921bbfc",
+        "date": "2019-10-08 15:47:47 -0400",
+        "subject": "Add missing header file."
+    },
+    {
+        "commit": "6d8d0eeba71fa7cd00af6e40c0adf74638a371bd",
+        "date": "2019-10-08 15:37:08 -0400",
+        "subject": "Add pgBackRest version to Info and Manifest objects.",
+        "body": "This was not being exposed previously because it is primarily informational, but now it is needed to reconstruct the backup.info file."
+    },
+    {
+        "commit": "38b72eded4b0f295ed1f30f849f0a99f69e396d2",
+        "date": "2019-10-08 15:27:17 -0400",
+        "subject": "Document how to contribute to pgBackRest.",
+        "body": "There's a lot more to be done here, but this is a good start."
+    },
+    {
+        "commit": "a4152a0ea1dc5c28515aedf9690cab22765076cb",
+        "date": "2019-10-08 12:29:42 -0400",
+        "subject": "Update release instructions with a reminder to install latex.",
+        "body": "Latex is no longer installed by default in the Vagrantfile."
+    },
+    {
+        "commit": "45881c74aeff4bb25559ec0254fa7fc1960d9cab",
+        "date": "2019-10-08 12:06:30 -0400",
+        "subject": "Allow most unit tests to run outside of a container.",
+        "body": "Three major changes were required to get this working:\n\n1) Provide the path to pgbackrest in the build directory when running outside a container.  Tests in a container will continue to install and run against /usr/bin/pgbackrest.\n\n1) Set a per-test lock path so tests don't conflict on the default /tmp/pgbackrest path.  Also set a per-test log-path while we are at it.\n\n2) Use localhost instead of a custom host for TLS test connections.  Tests in containers will continue to update /etc/hosts and use the custom host.\n\nAdd infrastructure and update harnessCfgLoad*() to get the correct exe and paths loaded for testing.\n\nSince new tests are required to verify that running outside a container works, also rework the tests in Travis CI to provide coverage within a reasonable amount of time.  Mainly, break up to doc tests by VM and run an abbreviated unit test suite on co6 and co7."
+    },
+    {
+        "commit": "77b0c6c993a0e6ff45a6a99f343c3709a016d152",
+        "date": "2019-10-08 10:35:47 -0400",
+        "subject": "Add missing spaces."
+    },
+    {
+        "commit": "5394893e33a844991a913e3b3c8874b435ac88d1",
+        "date": "2019-10-03 11:14:22 -0400",
+        "subject": "Remove pgPath parameter from pgControlFromFile().",
+        "body": "In practice this function is always used with storagePg*() so pgPath is known."
+    },
+    {
+        "commit": "887ec97e0743f758a0a2d2222cd1553b91f0908d",
+        "date": "2019-10-03 06:58:52 -0400",
+        "subject": "Document maximum version for auto-stop option."
+    },
+    {
+        "commit": "008ec6b05c631adf08cba312d6bab972f02881ef",
+        "date": "2019-10-01 17:04:26 -0400",
+        "subject": "Begin v2.19 development."
+    },
+    {
+        "commit": "4629237d6a308a250cd52fff49693cd0a1069253",
+        "date": "2019-10-01 16:02:07 -0400",
+        "subject": "v2.18: PostgreSQL 12 Support"
+    },
+    {
+        "commit": "29e132f5e928298e9be135d76674f2016b122029",
+        "date": "2019-10-01 13:20:43 -0400",
+        "subject": "PostgreSQL 12 support.",
+        "body": "Recovery settings are now written into postgresql.auto.conf instead of recovery.conf.  Existing recovery_target* settings will be commented out to help avoid conflicts.\n\nA comment is added before recovery settings to identify them as written by pgBackRest since it is unclear how, in general, old settings will be removed.\n\nrecovery.signal and standby.signal are automatically created based on the recovery settings."
+    },
+    {
+        "commit": "6be7e6fde54f2dc3edbed802efc3f5cb1e050fd2",
+        "date": "2019-10-01 10:25:08 -0400",
+        "subject": "Fix misplaced String declarations."
+    },
+    {
+        "commit": "309ae66e2fbd128b54f0859b231c14f6ab1518c4",
+        "date": "2019-10-01 08:47:56 -0400",
+        "subject": "Remove unneeded static declarations and use sizeof() where appropriate."
+    },
+    {
+        "commit": "f96c54c4ba0e526cda4cf9bed5cc1231b1d819b5",
+        "date": "2019-09-30 12:39:38 -0400",
+        "subject": "Add info command set option for detailed text output.",
+        "body": "The additional details include databases that can be used for selective restore and a list of tablespaces and symlinks with their default destinations.\n\nThis information is not included in the JSON output because it requires reading the manifest which is too IO intensive to do for all manifests.  We plan to include this information for JSON in a future release."
+    },
+    {
+        "commit": "33ec5a3aacdfe0dd258463c0cbcd43f0d155152e",
+        "date": "2019-09-29 09:05:55 -0400",
+        "subject": "Sort lists where it might help performance.",
+        "body": "Most of these lists should be quite small with the exception of the list in get.c, but it doesn't cost much to sort them and may help in corner cases we have not thought of."
+    },
+    {
+        "commit": "a58635ac0285fbb3178329bdc222221fe7160380",
+        "date": "2019-09-28 14:24:27 -0400",
+        "subject": "Move C performance tests out of unit tests.",
+        "body": "Performance tests were being done in unit tests until there was a better place to put them.\n\nNow there is, so move them there."
+    },
+    {
+        "commit": "f1ba428fb037eac7b6c6ea5b9f617d1ad4579026",
+        "date": "2019-09-28 14:02:12 -0400",
+        "subject": "Add performance test capability in C with scaling.",
+        "body": "Scaling allows the starting values to be increased from the command-line without code changes.\n\nAlso suppress valgrind and assertions when running performance testing.  Optimization is left at -O0 because we should not be depending on compiler optimizations to make our code performant, and it makes profiling more informative."
+    },
+    {
+        "commit": "004ff99a2d918fa3a5079ce9d7ff2f5b120176e3",
+        "date": "2019-09-28 13:17:21 -0400",
+        "subject": "Identify Perl performance test by appending -perl.",
+        "body": "This is intended to differentiate the upcoming C performance tests from the Perl performance tests that will eventually be migrated."
+    },
+    {
+        "commit": "cb62bebadf62613b770f79cd4fd43e20ec7db10c",
+        "date": "2019-09-28 10:08:20 -0400",
+        "subject": "Use bsearch() on sorted lists rather than an iterative method.",
+        "body": "bsearch() is far more efficient than an iterative approach except in the most trivial cases.\n\nFor now insert will reset the sort order to none and the list will need to be resorted before bsearch() can be used.  This is necessary because item pointers are not stable after a sort, i.e. they can move around.  Until lists are stable it's not a good idea to surprise the caller by mixing up their pointers on insert."
+    },
+    {
+        "commit": "d3d2a7cd8606be9696957eb052ca6569db1a8167",
+        "date": "2019-09-28 09:57:06 -0400",
+        "subject": "Add line number and fix spacing in TEST_LOG*() macros."
+    },
+    {
+        "commit": "afc483ef86aefe2cf8f057b6159af2c54f77c28b",
+        "date": "2019-09-27 13:37:59 -0400",
+        "subject": "Clarify which timeline should be used for timeline integration test."
+    },
+    {
+        "commit": "0a4122c77dc2e3fb866b95be73c2831530b2def1",
+        "date": "2019-09-27 13:34:59 -0400",
+        "subject": "Add reviewer."
+    },
+    {
+        "commit": "6355451870c90be346a378ef8b301f182c635edb",
+        "date": "2019-09-27 13:33:14 -0400",
+        "subject": "Fix old option name in documentation."
+    },
+    {
+        "commit": "d82102d6ef5445e5c96e47a095210f36a618b800",
+        "date": "2019-09-27 13:04:36 -0400",
+        "subject": "Add explicit promotes to recovery integration tests.",
+        "body": "PostgreSQL 12 will shutdown in these cases which seems to be the correct action (according to the documentation) when hot_standby = off, but older versions are promoting instead.  Set target_action explicitly so all versions will behave the same way.\n\nThis does beg the question of whether the PostgreSQL 12 behavior is wrong (though it matches the docs) or the previous versions are."
+    },
+    {
+        "commit": "833d0da0d96036ada9e2397e2b1484d2032c25fa",
+        "date": "2019-09-27 12:29:33 -0400",
+        "subject": "Store recovery file name in integration when testing preserve recovery.",
+        "body": "This makes the test a little more maintainable and is friendly with the changes needed for PostgreSQL 12."
+    },
+    {
+        "commit": "80eb561cafc1af645e689cca865158e4336c143d",
+        "date": "2019-09-27 09:45:11 -0400",
+        "subject": "Add missing PostgreSQL 11 control/WAL versions in Perl tests.",
+        "body": "These values don't seem to be used for testing but better to be tidy."
+    },
+    {
+        "commit": "d6a6d93a041af1b8e333d8e9b68b151ae43e564d",
+        "date": "2019-09-27 09:35:59 -0400",
+        "subject": "Add PostgreSQL 12 to u18 container.",
+        "body": "This does not add PostgresQL 12 support; it simply adds PostgreSQL 12 to the u18 container for development and testing."
+    },
+    {
+        "commit": "03a7bda511b293cf40fd8324951ace1252d40ac2",
+        "date": "2019-09-27 09:19:12 -0400",
+        "subject": "Refactor recovery file generation.",
+        "body": "Separate the generation of recovery values and formatting them into recovery.conf format.  This is generally a good idea, but also makes the code ready to deal with a different recovery file in PostgreSQL 12.\n\nAlso move the recovery file logic out of cmdRestore() into restoreRecoveryWrite()."
+    },
+    {
+        "commit": "cf1e96e827d154a62c0b52ff5531dd687695bf73",
+        "date": "2019-09-27 08:50:33 -0400",
+        "subject": "Refactor handling of ignored files in restore delta cleanup.",
+        "body": "Replace the boolean logic with a simple list that will be checked to see if the file should be ignored."
+    },
+    {
+        "commit": "c41fb575fbef7b4ce9714986b08f48d32b719862",
+        "date": "2019-09-26 17:39:45 -0400",
+        "subject": "Add standby restore type.",
+        "body": "This restore type automatically adds standby_mode=on to recovery.conf.\n\nThis could be accomplished previously by setting --recovery-option=standby_mode=on but PostgreSQL 12 requires standby mode to be enabled by a special file named standby.signal.\n\nThe new restore type allows us to maintain a common interface between PostgreSQL versions."
+    },
+    {
+        "commit": "89793368196e4073ca7137f2bf21edb385fb9ef6",
+        "date": "2019-09-26 16:02:39 -0400",
+        "subject": "Comment out unprivileged user documentation.",
+        "body": "We haven't had the time to complete this documentation and it has suffered bit rot.\n\nThis prevents us from building the docs on PostgreSQL >= 11 so just comment it all out until it can be updated."
+    },
+    {
+        "commit": "451ae397bec3f3bc070c4db674cc5df61bd63498",
+        "date": "2019-09-26 07:52:02 -0400",
+        "subject": "The restore command is implemented entirely in C.",
+        "body": "For the most part this is a direct migration of the Perl code into C.\n\nThere is one important behavioral change with regard to how file permissions are handled.  The Perl code tried to set ownership as it was in the manifest even when running as an unprivileged user.  This usually just led to errors and frustration.\n\nThe C code works like this:\n\nIf a restore is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing pgBackRest. If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group. In that case the file ownership will need to be updated by a privileged user before the restore can be retried.\n\nIf a restore is run as the root user then pgBackRest will attempt to recreate the ownership recorded in the manifest when the backup was made. Only user/group names are stored in the manifest so the same names must exist on the restore host for this to work. If the user/group name cannot be found locally then the user/group of the PostgreSQL data directory will be used and finally root if the data directory user/group cannot be mapped to a name."
+    },
+    {
+        "commit": "92e48c856ac87838c479c2a454fe007cf026d4bd",
+        "date": "2019-09-26 07:27:07 -0400",
+        "subject": "Add missing asserts."
+    },
+    {
+        "commit": "f2781bdad4bbe2afba4a0eda7df90753c63ccf03",
+        "date": "2019-09-25 16:38:13 -0400",
+        "subject": "Allow documentation to be built without encryption.",
+        "body": "This is mainly useful for testing, where an encrypted repo is a real nuisance."
+    },
+    {
+        "commit": "e968acbdd74db8f78f718cbe5bd6358107bcf822",
+        "date": "2019-09-24 16:55:11 -0400",
+        "subject": "Fix outdated comment.",
+        "body": "This was probably missed when a new test was added and the timeline was updated."
+    },
+    {
+        "commit": "6af64df9b6519897a55a733583ee40a571a51ee6",
+        "date": "2019-09-23 19:26:24 -0400",
+        "subject": "Thoughts on repository version 6."
+    },
+    {
+        "commit": "71349c89aecdb3b158d1638d0310cdba6c96362a",
+        "date": "2019-09-23 17:56:17 -0400",
+        "subject": "Add TEST_TITLE() macro.",
+        "body": "This macro displays a title for each test.  A test frequently has multiple parts and it was hard to tell which subparts went together.  We used ad hoc indentation to do this.\n\nAnything that is a not a title is automatically indented so manually indenting is not longer needed.  This should make the tests and the test output easier to read."
+    },
+    {
+        "commit": "2fd2fe509f3039ef28766b865f3b66cc524dee04",
+        "date": "2019-09-23 17:20:47 -0400",
+        "subject": "Add TEST_RESULT_LOG*() and TEST_SYSTEM*() macros.",
+        "body": "These macros encapsulate the functionality provided by direct calls to harnessLogResult() and system().  They both have _FMT() variants.\n\nThe primary advantage is that {[path]}, {[user]}, and {[group]} will be replaced with the test path, user, and group respectively.  This saves a log of strNewFmt() calls and makes the tests less noisy."
+    },
+    {
+        "commit": "d3a7055ee5d290da0196ba266051846c107ddede",
+        "date": "2019-09-23 15:15:04 -0400",
+        "subject": "Only enable test.pl --debug-test-trace option when --debug also enabled.",
+        "body": "The other way makes no sense and leads to compile errors since --debug-test-trace requires some code that is only enabled by --debug."
+    },
+    {
+        "commit": "072aeb810932605bb5e2b8ef64288f24913ddd04",
+        "date": "2019-09-23 15:10:31 -0400",
+        "subject": "Add LFs to storage list tests.",
+        "body": "This makes the diffs easier to read when testing."
+    },
+    {
+        "commit": "c969137021da5dc03e5f95d36080f4e4fd08522b",
+        "date": "2019-09-23 13:50:46 -0400",
+        "subject": "Migrate backup manifest load/save to C.",
+        "body": "The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,\ntimestamps, etc.  A list of databases is also included for selective restore.\n\nThe purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that\nnothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.\n\nFor now, migrate enough functionality to implement the restore command."
+    },
+    {
+        "commit": "5b64c93e8b1de010176b8d3927f80cc8039f4dbc",
+        "date": "2019-09-20 17:50:49 -0400",
+        "subject": "Add local option for cfgExecParam().",
+        "body": "cfgExecParam() was originally written to provide options for remote processes.  Remotes processes do not have access to the local config so it was necessary to pass every non-default option.\n\nLocal processes on the other hand, e.g. archive-get, archive-get-async, archive-push-async, and local, do have access to the local config and therefore don't need every parameter to be passed on the command-line.  The previous way was not wrong, but it was overly verbose and did not align with the way Perl had worked.\n\nUpdate cfgExecParam() to accept a local option which excludes options from the command line which can be read from local configs."
+    },
+    {
+        "commit": "3f18040aab5707c9be9b51fe37f3464d222fceb5",
+        "date": "2019-09-20 08:13:36 -0400",
+        "subject": "Rename MANIFEST_FILE to BACKUP_MANIFEST_FILE.",
+        "body": "This is a bit more descriptive and avoids a naming conflict in the new C manifest code."
+    },
+    {
+        "commit": "174cb7b3af6b40d171186060509252c256208cd6",
+        "date": "2019-09-19 22:42:28 -0400",
+        "subject": "Add strPathAbsolute() and strLstRemoveIdx().",
+        "body": "strPathAbsolute() generates an absolute path from an absolute base path and an absolute/relative path.\n\nstrLstRemoveIdx() is a support function based on lstRemoveIdx()."
+    },
+    {
+        "commit": "9421493d09033efda2d5e2cc6eb60d13491beca3",
+        "date": "2019-09-19 22:34:12 -0400",
+        "subject": "Allow resets when generating local/remote command options.",
+        "body": "Somehow this was left out of the original implementation, but it is particularly important for certain types of restores."
+    },
+    {
+        "commit": "e24b2e3f4dcb0a288b4e742fd0b198b768d6320a",
+        "date": "2019-09-18 22:23:04 -0400",
+        "subject": "Only test timestamps for files.",
+        "body": "In general we don't care about path and link times since they are easily recreated when restoring.\n\nSo, outside of storageInfo() we don't need to bother testing them."
+    },
+    {
+        "commit": "54638e87042b2315f24abef2d7f8c5610c53762e",
+        "date": "2019-09-18 22:17:22 -0400",
+        "subject": "Add strLstRemove().",
+        "body": "Allow a string to be removed from a StringList using the underlying lstRemove()."
+    },
+    {
+        "commit": "a6a42b18a9c28b1410df803d7073340b2d7d52c6",
+        "date": "2019-09-18 22:09:49 -0400",
+        "subject": "Use switch instead of if else tree in jsonFromKvInternal().",
+        "body": "This is more efficient but more importantly it is easier to read."
+    },
+    {
+        "commit": "60d93df503c234730109c87114068dde4203804e",
+        "date": "2019-09-18 07:15:16 -0400",
+        "subject": "Use a callback to feed jobs to ProtocolParallel.",
+        "body": "Loading jobs in advance uses a lot of memory in the case that there are millions of jobs to be performed.  We haven't seen this yet, but with backup and restore on the horizon it will become the norm.\n\nInstead, use a callback so that jobs are only created as they are needed and can be freed as soon as they are completed."
+    },
+    {
+        "commit": "ce1c7b02520f2e37dfcfb283471fb4ec263b5d50",
+        "date": "2019-09-17 21:04:38 -0400",
+        "subject": "Ignore write errors when the ls command is writing to stdout.",
+        "body": "It's possible (even likely) that the ls output is being piped to something like head which will exit when it gets what it needs and leave us writing to a broken pipe.\n\nIt would be better to just ignore the broken pipe error but currently we don't store system error codes."
+    },
+    {
+        "commit": "8675699d08b91c57294becfcf27dbf7ddb594c46",
+        "date": "2019-09-16 14:09:53 -0400",
+        "subject": "Add FAQ for time-based Point-in-Time Recovery."
+    },
+    {
+        "commit": "49b421d372144df726d71552850e55cee298a566",
+        "date": "2019-09-16 13:56:25 -0400",
+        "subject": "Add documentation clarifications regarding standby repositories.",
+        "body": "Clarify that placing the repository on a standby is not a robust configuration and recommend against it."
+    },
+    {
+        "commit": "09ef03b7ef69d2760756146cad86b784b0b5d7c3",
+        "date": "2019-09-15 08:27:38 -0400",
+        "subject": "Add FAQ regarding backup-standby."
+    },
+    {
+        "commit": "f9c8bd31de89cc1140fe37e3996672bbb1c99934",
+        "date": "2019-09-14 14:10:04 -0400",
+        "subject": "Add required FreeBSD header."
+    },
+    {
+        "commit": "56bf9d0566bbb9708d1687e9d2e59be306e32dda",
+        "date": "2019-09-14 12:21:08 -0400",
+        "subject": "Update HINT messages to conform to new standard detailed in CODING.md."
+    },
+    {
+        "commit": "c5f496b903ab9a4fa545d5f1a0a8dae9ec5c49af",
+        "date": "2019-09-14 11:56:29 -0400",
+        "subject": "Rename parameter processId to processIdx in harnessFork.h for clarity."
+    },
+    {
+        "commit": "f57e119b25d73a4b33aa83b5484898c5d7e84dfb",
+        "date": "2019-09-13 12:28:39 -0400",
+        "subject": "Document the relationship between db-timeout and protocol-timeout."
+    },
+    {
+        "commit": "15d04ca19c0bd1aafe9d4389e8429bcc392e842d",
+        "date": "2019-09-12 16:29:50 -0400",
+        "subject": "Add recursion and json output to the ls command.",
+        "body": "These features finally make the ls command practical.\n\nCurrently the JSON contains only name, type, and size.  We may add more fields in the future, but these seem like the minimum needed to be useful."
+    },
+    {
+        "commit": "e45baa1830ac5251fc4284d094c3e12920e50862",
+        "date": "2019-09-12 16:03:05 -0400",
+        "subject": "Add sorting, filters, and recursion to storageInfoList().",
+        "body": "These are needed for the ls command and are also useful for testing."
+    },
+    {
+        "commit": "92365fb801543f8d6d52037b1936b3cd42512238",
+        "date": "2019-09-12 15:55:18 -0400",
+        "subject": "Disable missing-field-initializers warnings in unit testing.",
+        "body": "This warning gives very unpredictable results between compiler versions and seems unrealistic since most of our structs are zeroed for initialization.\n\nThis warning has been disabled in the Makefile for a long time."
+    },
+    {
+        "commit": "f809d2f008a4d8d769b72a68ffff9ef75ab9de22",
+        "date": "2019-09-12 15:16:42 -0400",
+        "subject": "Ignore apt-get update errors in Travis CI.",
+        "body": "Broken vendor packages have been causing builds to break due to an error on apt-get update.\n\nIgnore errors and proceed directory to apt-get install.  It's possible that we'll try to reference an expired package version and get an error anyway, but that seems better than a guaranteed hard error."
+    },
+    {
+        "commit": "506c10f7f270806aca8acecaa303bf4458463720",
+        "date": "2019-09-12 12:04:25 -0400",
+        "subject": "Sort and find improvements to List and StringList objects.",
+        "body": "Push the responsibility for sort and find down to the List object by introducing a general comparator function that can be used for both sorting and finding.\n\nUpdate insert and add functions to return the item added rather than the list.  This is more useful in the core code, though numerous updates to the tests were required."
+    },
+    {
+        "commit": "e4a071ce033ae53dafb35eb9ccd4daba1030064c",
+        "date": "2019-09-12 10:56:45 -0400",
+        "subject": "Add missing header in common/user module."
+    },
+    {
+        "commit": "b53305cc361e9978807d506e3e8ec13b3ae93511",
+        "date": "2019-09-12 08:17:07 -0400",
+        "subject": "Update incorrect pipelining references to connection reuse.",
+        "body": "Connection reuse and pipelining are not the same thing and should not have been conflated.\n\nUpdate comments and release notes to reflect the correct usage."
+    },
+    {
+        "commit": "dca5b63f970be8a13cd11222f4b5a9d4ca71261e",
+        "date": "2019-09-10 13:06:44 -0400",
+        "subject": "Move documentation job first for Travis CI.",
+        "body": "Since this job has been running long recently this should improved overall performance when multiple commits are queued up."
+    },
+    {
+        "commit": "f4f21d0df7217bcb583189d0fc4ecaac3faed146",
+        "date": "2019-09-10 13:02:05 -0400",
+        "subject": "Add groupIdFromName() and userIdFromName() to user module.",
+        "body": "Update StorageWritePosix to use the new functions.\n\nA side effect is that storageWritePosixOpen() will no longer error when the user/group name does not exist.  It will simply retain the original user/group, i.e. the user that executed the restore.\n\nIn general this is a feature since completing a restore is more important than setting permissions exactly from the source host.  However, some notification of this omission to the user would be beneficial."
+    },
+    {
+        "commit": "f8d0574759340f0260f06e377da412041987f582",
+        "date": "2019-09-10 12:29:36 -0400",
+        "subject": "Increase process timeout and emit occasional warnings.",
+        "body": "Travis will timeout after 10 minutes with no output.  Emit a warning every 5 minutes to keep Travis alive and increase the total timeout to 20 minutes.\n\nDocumentation builds have been timing out a lot recently so hopefully this will help."
+    },
+    {
+        "commit": "e043c6b1bc388422aee9255077544c3644b8f69d",
+        "date": "2019-09-09 07:37:57 -0400",
+        "subject": "Update comment missed in d957acb3."
+    },
+    {
+        "commit": "1049632873d5a70cda90e5c4ed87312bfe4810d6",
+        "date": "2019-09-08 20:11:51 -0400",
+        "subject": "Add user module for managing system users/groups.",
+        "body": "Centralize the management of users and groups.\n\nAlso update Posix storage driver where users/groups were already in use."
+    },
+    {
+        "commit": "d957acb36b6b50c6166d9a68b03f239cdc508fa7",
+        "date": "2019-09-08 06:53:23 -0400",
+        "subject": "Add function to generate PostgreSQL tablespace identifier.",
+        "body": "In PostgreSQL >= 9.0 each tablespace data is stored in a specially named directory so different major versions can share the same tablespace path."
+    },
+    {
+        "commit": "051128ed9ee0ebc63fb35e69818c6213397a053f",
+        "date": "2019-09-08 06:47:52 -0400",
+        "subject": "Add test macro for comparing String to zero-terminated strings.",
+        "body": "This macro avoids the need to wrap the first parameter in strPtr() and should improve readability."
+    },
+    {
+        "commit": "0a96764cb8daa615121069e840268e216d1983ff",
+        "date": "2019-09-07 18:04:39 -0400",
+        "subject": "Remove most references to PostgreSQL control and catalog versions.",
+        "body": "The control and catalog versions were stored a variety of places in the optimistic hope that they would be useful.  In fact they never were.\n\nWe can't remove them from the backup.info and backup.manifest files due to backwards compatibility concerns, but we can at least avoid loading and storing them in C structures.\n\nAdd functions to the PostgreSQL interface which will return the control and catalog versions for any supported version of PostgreSQL to allow backwards compatibility for backup.info and backup.manifest.  These functions will be useful in other ways, e.g. generating the tablespace identifier in PostgreSQL >= 9.0."
+    },
+    {
+        "commit": "843a602080e13ea0f205720892f7bfee58e075fb",
+        "date": "2019-09-07 15:41:55 -0400",
+        "subject": "Add user/group id to storageInfo().",
+        "body": "This is required for some operations on Posix storage."
+    },
+    {
+        "commit": "1c7c1042b4509ff3ad42dad240d895617f01d644",
+        "date": "2019-09-07 12:32:25 -0400",
+        "subject": "Remove extraneous semicolons and add spaces."
+    },
+    {
+        "commit": "2eb1d1fee315e1e757856d3d88eb74b8434dad74",
+        "date": "2019-09-06 16:50:57 -0400",
+        "subject": "Rename lstRemove() to lstRemoveIdx().",
+        "body": "This works better with the names of upcoming functions and seems sensible even in isolation."
+    },
+    {
+        "commit": "dde0c2b0c9c9743a863b6064e7dbb69de26fa364",
+        "date": "2019-09-06 16:43:53 -0400",
+        "subject": "Rename INFO_MANIFEST_FILE to MANIFEST_FILE.",
+        "body": "This was missed in 5c314df0 when the module was renamed."
+    },
+    {
+        "commit": "4d84820021ad2a96922c87263d9200aace42358f",
+        "date": "2019-09-06 13:48:28 -0400",
+        "subject": "Improve performance of info file load/save.",
+        "body": "Info files required three copies in memory to be loaded (the original string, an ini representation, and the final info object). Not only was this memory inefficient but the Ini object does sequential scans when searching for keys making large files very slow to load.\n\nThis has not been an issue since archive.info and backup.info are very small, but it becomes a big deal when loading manifests with hundreds of thousands of files.\n\nInstead of holding copies of the data in memory, use a callback to deliver the ini data directly to the object when loading. Use a similar method for save to avoid having an intermediate copy. Save is a bit complex because sections/keys must be written in alpha order or older versions of pgBackRest will not calculate the correct checksum.\n\nAlso move the load retry logic to helper functions rather than embedding it in the Info object. This allows for more flexibility in loading and ensures that stack traces will be available when developing unit tests."
+    },
+    {
+        "commit": "7334f30c350b5275106b9acf28b60d999287d800",
+        "date": "2019-09-06 13:35:28 -0400",
+        "subject": "Add helper function for adding CipherBlock filters to groups."
+    },
+    {
+        "commit": "5c314df098ee2295af400fb0b6b4f0cccd96fb69",
+        "date": "2019-09-05 19:53:00 -0400",
+        "subject": "Rename infoManifest module to manifest.",
+        "body": "The manifest is not an info file so if anything it should be called backupManifest.  But that seems too long for such a commonly used object so manifest seems better.\n\nNote that unlike Perl there is no storage manifest method so this stands as the only manifest in the C code, as befits its importance."
+    },
+    {
+        "commit": "8df7d68c8dca2c61b665bbbd1f26800c0dca3ae8",
+        "date": "2019-09-03 18:28:53 -0400",
+        "subject": "Fix sudo missed in \"Build pgBackRest as an unprivileged user\".",
+        "body": "286a106a updated the documentation to build pgBackRest as an unprivileged user, but the wget command was missed.  This command is not actually run, just displayed, because the release is not yet available when the documentation is built.\n\nUpdate the wget command to run as the local user."
+    },
+    {
+        "commit": "005684bf1f55206f122e1d0fcb4164cc84875ff5",
+        "date": "2019-09-03 17:53:50 -0400",
+        "subject": "Begin v2.18 development."
+    },
+    {
+        "commit": "ce2bf2999892f689001b084af4d5feb63dc9b402",
+        "date": "2019-09-03 16:39:32 -0400",
+        "subject": "v2.17: C Migrations and Bug Fixes"
+    },
+    {
+        "commit": "0b5720c642c040e16373f72a9058df094d05ca10",
+        "date": "2019-09-03 14:34:49 -0400",
+        "subject": "Fix yum.p.o package being installed when custom package specified.",
+        "body": "The {[os-type-is-centos]} expression was missing parens which meant \"and\" expressions built on it would always evaluate true if the os-type was centos6."
+    },
+    {
+        "commit": "7d8068f27b6b695f9616fd985517692236dda47d",
+        "date": "2019-09-03 12:30:45 -0400",
+        "subject": "Don't decode manifest data when it is generated on a remote.",
+        "body": "Decoding a manifest from the JSON provided by C to the hash required by Perl is an expensive process.  If manifest() was called on a remote it was being decoded into a hash and then immediately re-encoded into JSON for transmission over the protocol layer.\n\nInstead, provide a function for the remote to get the raw JSON which can be transmitted as is and decoded in the calling process instead.\n\nThis makes remote manifest calls as fast as they were before 2.16, but local calls must still pay the decoding penalty and are therefore slower.  This will continue to be true until the Perl storage interface is retired at the end of the C migration.\n\nNote that for reasonable numbers of tables there is no detectable difference.  The case in question involved 250K tables with a 10 minute decode time (which was being doubled) on a fast workstation."
+    },
+    {
+        "commit": "1e55b876206c73d0ce32424814d100ef82d8da05",
+        "date": "2019-09-03 07:49:04 -0400",
+        "subject": "Add more commonly-used buffer constants."
+    },
+    {
+        "commit": "7ade3fc1c31f09425547d1869e82863582b1b137",
+        "date": "2019-09-02 21:09:43 -0400",
+        "subject": "Move constants from the infoManifest module to the infoBackup module.",
+        "body": "These constants should be kept separate because the implementation of any info file might change in the future and only the interface should be expected to remain consistent.\n\nIn any case, infoBackup requires Variant constants while infoManifest uses String constants so they are not shareable.  Modern compilers should combine the underlying const char * constants."
+    },
+    {
+        "commit": "3a28b68b8bde996252ad8941107744c74a062453",
+        "date": "2019-09-02 19:06:12 -0400",
+        "subject": "Disable S3 and encryption on u18 integration tests for mock/all/1.",
+        "body": "This test is commonly used for sanity checking but the combination of S3 and encryption makes it hard to use and encourages temporary changes to make it usable.\n\nAcknowledge this and disable S3 and encryption for this test and move them to mock/all/2."
+    },
+    {
+        "commit": "05abab5e72e2e4d5d394b79533621dcf06d1f324",
+        "date": "2019-08-30 14:36:02 -0400",
+        "subject": "Add OBJECT_DEFINE_MOVE() macro.",
+        "body": "The object *Move() functions are very repetitive so replace them with a macro that works similarly to OBJECT_DEFINE_FREE()."
+    },
+    {
+        "commit": "d1675b7e914a3e25a3d6cff2c73f36f69ec9f729",
+        "date": "2019-08-28 10:46:54 -0400",
+        "subject": "Add ioReadLineParam() to allow return on eof.",
+        "body": "ioReadLine() errors on eof because it has previously been used only for protocol reads.\n\nReturning on eof is handy for reading lines from files where eof is not considered an error."
+    },
+    {
+        "commit": "a605117a2329965d65f985b4b8e991a5267416c2",
+        "date": "2019-08-28 10:36:21 -0400",
+        "subject": "Add required header.",
+        "body": "Apparently this header is already included everywhere convert.h is included."
+    },
+    {
+        "commit": "8074ca6a2613f6b9310654b5e0f5c468ae7821e8",
+        "date": "2019-08-26 12:30:22 -0400",
+        "subject": "Fix typos in variable names."
+    },
+    {
+        "commit": "4a88791a0af78ba6f5496ec4e4351e9726662546",
+        "date": "2019-08-26 12:29:43 -0400",
+        "subject": "Fix typos in the release notes."
+    },
+    {
+        "commit": "545ccfa8786b631476c232a1d78791687e638432",
+        "date": "2019-08-26 12:26:00 -0400",
+        "subject": "Fix typos in the documentation."
+    },
+    {
+        "commit": "08bac74d38b126515e2620cdf129cd4cbd53f6e8",
+        "date": "2019-08-26 12:20:51 -0400",
+        "subject": "Fix typo in stack trace message."
+    },
+    {
+        "commit": "c2771e5469ecd94899243e86668a4bcc0d2c65f5",
+        "date": "2019-08-26 12:05:36 -0400",
+        "subject": "Fix comment typos.",
+        "body": "This includes some variable names in tests which don't seem important enough for their own commits."
+    },
+    {
+        "commit": "22aa532be1be83c5b1df8db5fa85047e1255a789",
+        "date": "2019-08-26 11:37:21 -0400",
+        "subject": "Add storage tests for files beginning with dots.",
+        "body": "Prevent a regression of the issue fixed in f88012ce by adding some tests."
+    },
+    {
+        "commit": "8c9df8c290f760b6a1f8a6a0acb6b4d9b8fa4056",
+        "date": "2019-08-26 11:35:35 -0400",
+        "subject": "Fix typo in httpClientReponseHeader() function name."
+    },
+    {
+        "commit": "d1cc22f886a865d5b7e0c3e699e4fbe89c11aade",
+        "date": "2019-08-26 11:25:14 -0400",
+        "subject": "Fix typo in CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE macro name."
+    },
+    {
+        "commit": "01c2669b9764491ec3ca96ffd0de6676bef9e5dc",
+        "date": "2019-08-23 07:47:54 -0400",
+        "subject": "Fix exclusions for special files.",
+        "body": "Prior to 2.16 the Perl manifest code would skip any file that began with a dot.  This was not intentional but it allowed PostgreSQL socket files to be located in the data directory.  The new C code in 2.16 did not have this unintentional exclusion so socket files in the data directory caused errors.\n\nWorse, the file type error was being thrown before the exclusion check so there was really no way around the issue except to move the socket files out of the data directory.\n\nSpecial file types (e.g. socket, pipe) will now be automatically skipped and a warning logged to notify the user of the exclusion.  The warning can be suppressed with an explicit --exclude."
+    },
+    {
+        "commit": "2862f480cd1712ee9c188c28d79f2f9ed1bb9c6b",
+        "date": "2019-08-23 07:24:25 -0400",
+        "subject": "Add special file type to storageInfo().",
+        "body": "There's not much we can do with special files, but higher level logic can at least exclude them gracefully rather than throwing a hard error."
+    },
+    {
+        "commit": "04e4fde5733bbe885ef94098f0114a3a160a88e5",
+        "date": "2019-08-22 10:28:08 -0400",
+        "subject": "Remove unneeded strFree() in storagePosixInfoListEntry().",
+        "body": "This strFree() was the primary culprit in the performance issue fixed in 9eaeb33c.\n\nSince the parent mem context is now freed regularly, this strFree() performs better, but still adds time so removing it seems best."
+    },
+    {
+        "commit": "f88012cef3acc29fb5311c73ea1a84c1409d88ee",
+        "date": "2019-08-22 10:18:34 -0400",
+        "subject": "Fix regexp to ignore ./.. directories in the Posix driver.",
+        "body": "In versions <= 2.15 the old regexp caused any file or directory beginning with . to be ignored during a backup.  This has caused behavioral differences in 2.16 because the new C code correctly excludes ./.. directories.\n\nThis Perl code is only used for testing now, but it should still match the output of the C functions."
+    },
+    {
+        "commit": "c002a2ce2fb7a1bc4bbeaa5dee2f3e7d719ccc24",
+        "date": "2019-08-21 19:45:48 -0400",
+        "subject": "Move info file checksum to the end of the file.",
+        "body": "Putting the checksum at the beginning of the file made it impossible to stream the file out when saving.  The entire file had to be held in memory while it was checksummed so the checksum could be written at the beginning.\n\nInstead place the checksum at the end.  This does not break the existing Perl or C code since the read is not order dependent.\n\nThere are no plans to improve the Perl code to take advantage of this change, but it will make the C implementation more efficient."
+    },
+    {
+        "commit": "c733319063bbc9d67ba99b96c178f1d9f863b8fe",
+        "date": "2019-08-21 16:26:28 -0400",
+        "subject": "The stanza-create/update/delete commands are implemented entirely in C."
+    },
+    {
+        "commit": "53f27da3a6d770608de6aa6059c40526b83b31dd",
+        "date": "2019-08-21 15:41:52 -0400",
+        "subject": "Add checkDbConfig() to compare pgBackRest/PostgreSQL configs.",
+        "body": "Checking the PostgreSQL-reported path and version against the pgBackRest configuration helps ensure that pgBackRest is operating against the correct cluster.\n\nIn Perl this functionality was in the Db object, but check seems like a better place for it in C."
+    },
+    {
+        "commit": "8b93fdf3493d96fcbbc127604b502d246928ec8e",
+        "date": "2019-08-21 15:26:52 -0400",
+        "subject": "Add storagePg*() variants to get storage for a specified host id.",
+        "body": "Previously the host id to use was pulled from the host-id option or defaulted to 1.\n\nThe stanza, check, and backup commands will all need the ability to address a specified pg host, so add functions to make that possible."
+    },
+    {
+        "commit": "fa640f22add9af88c2ddd584812d8fde93c8f8c5",
+        "date": "2019-08-21 15:12:00 -0400",
+        "subject": "Allow Info* objects to be created from scratch in C.",
+        "body": "Previously, info files (e.g. archive.info, backup.info) were created in Perl and only loaded in C.\n\nThe upcoming stanza commands in C need to create these files so refactor the Info* objects to allow new, empty objects to be created.  Also, add functions needed to initialize each Info* object to a valid state."
+    },
+    {
+        "commit": "aa6f7eb862f71bf0b8f64d3c5e3d67903b048214",
+        "date": "2019-08-21 14:14:30 -0400",
+        "subject": "Fix comment indents."
+    },
+    {
+        "commit": "71d96531f8b581d460ff24a229b676607fc8992b",
+        "date": "2019-08-21 12:10:09 -0400",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "c4533765fb5cd4b72f9fcb27f53db2a30165b9b2",
+        "date": "2019-08-21 11:59:51 -0400",
+        "subject": "Add Db object getters missed in e4901d50.",
+        "body": "dbOpen() loaded the version and data directory but there was no way to get the data externally."
+    },
+    {
+        "commit": "27e823581201374df831abc4cf299ce4da29b910",
+        "date": "2019-08-21 11:41:36 -0400",
+        "subject": "Add repoIsLocalVerify() to verify repository locality.",
+        "body": "Some commands can only be run on a host where the repository is local.  This function centralizes the check and error."
+    },
+    {
+        "commit": "6a09d9294d0ef13158fbc96c9d38a28ac7a6f150",
+        "date": "2019-08-21 11:29:30 -0400",
+        "subject": "Require storage when calling pgControlFromFile().",
+        "body": "Previously storageLocal() was being used internally but loading pg_control from remote storage is often required.\n\nAlso, storagePg() is more appropriate than storageLocal() for all current usage."
+    },
+    {
+        "commit": "286a106ae4932ae8213d62528de934afa99c246e",
+        "date": "2019-08-20 09:46:29 -0400",
+        "subject": "Build pgBackRest as an unprivileged user.",
+        "body": "pgBackRest was being built by root in the documentation which is definitely not best practice.\n\nInstead build as the unprivileged default container user.  Sudo privileges are still required to install."
+    },
+    {
+        "commit": "6b5366a663f8c408e56bb2f8e5b27821898a91cc",
+        "date": "2019-08-19 21:57:14 -0400",
+        "subject": "Remove Perl info command invocation missed in 205525b6."
+    },
+    {
+        "commit": "f6aef6e466ccba368fb53cc00450b501f35782fc",
+        "date": "2019-08-19 21:45:54 -0400",
+        "subject": "Properly reset conflicting pg-* options for the remote protocol.",
+        "body": "The pg1-socket-path and pg1-port options were not being reset when options from a higher index were being pushed down for processing by a remote.  Since remotes only talk to one cluster they always use the options in index 1.  This requires moving options from the original index to 1 before starting the remote.  All options already set on index 1 must be removed if they are not being overwritten."
+    },
+    {
+        "commit": "9eaeb33c882b79a1cade3ce65b5d1b51b6978b05",
+        "date": "2019-08-19 21:36:01 -0400",
+        "subject": "Improve slow manifest build for very large quantities of tables/segments.",
+        "body": "storagePosixInfoList() processed each directory in a single memory context.  If the directory contained hundreds of thousands of files processing became very slow due to the number of allocations.\n\nInstead, reset the memory context every thousand files to minimize the number of allocations active at once, improving both speed and memory consumption."
+    },
+    {
+        "commit": "d411321d28d2c94f3376b82984981624fe30e287",
+        "date": "2019-08-19 21:16:10 -0400",
+        "subject": "Add reset to temp memory contexts to save memory and processing time.",
+        "body": "Processing large datasets in a memory context can lead to high memory usage and long allocation times.  Add a new MEM_CONTEXT_TEMP_RESET_BEGIN() macro that allows temp allocations to be automatically freed after N iterations."
+    },
+    {
+        "commit": "7d97d49f41e961dcaa0d54b56538d3c5a0b8f6ce",
+        "date": "2019-08-18 20:46:34 -0400",
+        "subject": "Add MostCommonValue object.",
+        "body": "Calculate the most common value in a list of variants.  If there is a tie then the first value passed to mcvUpdate() wins.\n\nmcvResult() can be called multiple times because it does not end processing, but there is a cost to calculating the result each time\nsince it is not stored."
+    },
+    {
+        "commit": "8aa1e552b00cb3a9cf5665812e6de782f0805675",
+        "date": "2019-08-18 20:09:44 -0400",
+        "subject": "Add backup type conversion functions.",
+        "body": "Convert back and forth between the string and enum representations of backup types."
+    },
+    {
+        "commit": "3df075bf4022e84f0238591b18bc5e866d6a2aa8",
+        "date": "2019-08-18 15:29:18 -0400",
+        "subject": "Fix test writing \"null\" into manifest files.",
+        "body": "\"null\" is not allowed in the manifest format (null values should be missing instead) but Perl was treating the invalid values written by this test as if they were missing.\n\nUpdate the test code to remove the values rather than setting them to \"null\"."
+    },
+    {
+        "commit": "8edc57b5819a41d43524452de378ec409d05f4d9",
+        "date": "2019-08-18 15:19:10 -0400",
+        "subject": "Remove RHEL package patch merged to upstream."
+    },
+    {
+        "commit": "0da3352d59c3d985d6fad7b08d28446900932857",
+        "date": "2019-08-17 17:52:00 -0400",
+        "subject": "Add cvtZToMode() replacement missed in 969e5817."
+    },
+    {
+        "commit": "d0dee2e26027f866c282050457d61d6907f3263f",
+        "date": "2019-08-17 17:47:13 -0400",
+        "subject": "Add bool rendering to jsonFromVar()."
+    },
+    {
+        "commit": "8fc1d3883b2d96d4f518ff2bfa810b082cc48b38",
+        "date": "2019-08-17 17:43:56 -0400",
+        "subject": "Fix expire not immediately writing into separate file after backup.",
+        "body": "Logging stayed in the backup log until the Perl code started.  Fix this so it logs to the correct file and will still work after the Perl code is removed."
+    },
+    {
+        "commit": "41b6795a374391d66dcfb2df0521f1d7acf84b3e",
+        "date": "2019-08-17 14:15:37 -0400",
+        "subject": "Create log directories/files with 0750/0640 mode.",
+        "body": "The log directories/files were being created with a mix of modes depending on whether they were created in C or Perl.  In particular, the C code was creating log files with the execute bit set for the user and group which was just odd.\n\nStandardize on 750/640 for both code paths."
+    },
+    {
+        "commit": "bc5385142c75f5fa390531a8ff1bd660dd1380ef",
+        "date": "2019-08-09 15:18:42 -0400",
+        "subject": "Change comment for searchability."
+    },
+    {
+        "commit": "382ed9282504b2adced37275937d2414632bb968",
+        "date": "2019-08-09 15:17:18 -0400",
+        "subject": "The start/stop commands are implemented entirely in C.",
+        "body": "The Perl versions remain because they are still being used by the Perl stanza commands.  Once the stanza commands are migrated they can be removed."
+    },
+    {
+        "commit": "fe196cb0dffacb5d2d1488e3b592cc8ba3f39a5e",
+        "date": "2019-08-09 14:52:26 -0400",
+        "subject": "Update RHEL patch for upstream changes.",
+        "body": "This isn't correct, but we can't test anything else if the package doesn't build."
+    },
+    {
+        "commit": "0e7134d114af1767addce36a3857ea3fd38abc5f",
+        "date": "2019-08-08 18:50:54 -0400",
+        "subject": "Constify some globals."
+    },
+    {
+        "commit": "e9517dcec05c75a03fa73029250de4f5b21fdfd3",
+        "date": "2019-08-08 18:47:02 -0400",
+        "subject": "Add hash constants for zero-length data.",
+        "body": "No need to calculate a hash when the data length is known to be zero.  Use one of these constants instead."
+    },
+    {
+        "commit": "56c24b7669f1e636a8221106547469065eb7d161",
+        "date": "2019-08-08 16:20:51 -0400",
+        "subject": "Fix typo in parameter logging."
+    },
+    {
+        "commit": "1076b142e38a4960af1157bd117fa2aacee7d8e6",
+        "date": "2019-08-08 16:15:42 -0400",
+        "subject": "Remove Debian package patch merged to upstream."
+    },
+    {
+        "commit": "969e5817c5d29890cbe12fa95422cd8703abf8d9",
+        "date": "2019-08-08 11:59:39 -0400",
+        "subject": "Add cvtZToMode().",
+        "body": "The companion function to cvtModeToZ()."
+    },
+    {
+        "commit": "1f93e147fa8563028db8b58621db4a1a12387c87",
+        "date": "2019-08-08 11:41:49 -0400",
+        "subject": "Add kvGetDefault() to KeyValue object.",
+        "body": "Return the default only if the key is not found, not when the value is NULL."
+    },
+    {
+        "commit": "289b47902ba1f49a1baea9fdce53eec52d5358bb",
+        "date": "2019-08-08 10:50:25 -0400",
+        "subject": "Allow NULLs in strEq().",
+        "body": "Bring this function more in line with the way varEq() works.  NULL == NULL but NULL != NOT NULL."
+    },
+    {
+        "commit": "feec674b6ff88bdfa62b20dd706d724c79ca1bcd",
+        "date": "2019-08-08 06:48:25 -0400",
+        "subject": "Add constant for lock file extension."
+    },
+    {
+        "commit": "efc62c90573bd7a0595d81bcf8a261f732fa1fa9",
+        "date": "2019-08-05 12:32:06 -0400",
+        "subject": "Begin v2.17 development."
+    },
+    {
+        "commit": "9e730c1bd61b00fa506ea443cdd6161e88ed31ae",
+        "date": "2019-08-05 12:03:04 -0400",
+        "subject": "v2.16: C Migrations and Bug Fixes"
+    },
+    {
+        "commit": "3d3003e9ca6dd449ea16c6812d1cabc392c9d294",
+        "date": "2019-08-01 20:35:01 -0400",
+        "subject": "The check command is implemented partly in C.",
+        "body": "Implement switch WAL and archive check in C but leave the rest in Perl for now.\n\nThe main idea was to have some real integration tests for the new database code so the rest of the migration can wait."
+    },
+    {
+        "commit": "e4901d50d5e99168f7962b93f7a327e45f7b7fed",
+        "date": "2019-08-01 15:38:27 -0400",
+        "subject": "Add Db object to encapsulate PostgreSQL queries and commands.",
+        "body": "Migrate functionality from the Perl Db module to C. For now this is just enough to implement the WAL switch check.\n\nAdd the dbGet() helper function to get Db objects easily.\n\nCreate macros in harnessPq to make writing pq scripts easier by grouping commonly used functions together."
+    },
+    {
+        "commit": "f9e1f3a79823ee1bd6656e4f7a8fb23e735b8ccf",
+        "date": "2019-08-01 14:28:30 -0400",
+        "subject": "Retry S3 RequestTimeTooSkewed errors instead of immediately terminating.",
+        "body": "The cause of this error seems to be that a failed request takes so long that a subsequent retry at the http level uses outdated headers.\n\nWe're not sure if pgBackRest it to blame here (in one case a kernel downgrade fixed it, in another case an incorrect network driver was the problem) so add retries to hopefully deal with the issue if it is not too persistent.  If SSL_write() has long delays before reporting an error then this will obviously affect backup performance."
+    },
+    {
+        "commit": "2eb3c9f95f6e57072b65da81cb07a1268ebbf38e",
+        "date": "2019-08-01 09:58:24 -0400",
+        "subject": "Improve error handling for SSL_write().",
+        "body": "Error codes were not being caught for SSL_write() so it was hard to see exactly what was happening in error cases.  Report errors to aid in debugging.\n\nAlso add a retry for SSL_ERROR_WANT_READ.  Even though we have not been able to reproduce this case it is required by SSL_write() so go ahead and implement it."
+    },
+    {
+        "commit": "89c67287bcb8bc7884b5dd37703b0d7786c68b95",
+        "date": "2019-07-31 20:44:49 -0400",
+        "subject": "Improve multi-host handling in protocol helper.",
+        "body": "Multiple PostgreSQL hosts were supported via the host-id option but there are cases where it is useful to be able to directly specify the host id required, e.g. to iterate through pg* hosts when looking for candidate primaries and standbys during backup."
+    },
+    {
+        "commit": "893ae24284e506c551fbc28bec8719881a856e2a",
+        "date": "2019-07-31 19:58:57 -0400",
+        "subject": "Add timeout to walSegmentFind().",
+        "body": "Keep trying to locate the WAL segment until timeout.  This is useful for the check and backup commands which must wait for segments to arrive in the archive."
+    },
+    {
+        "commit": "03b28da1cac8f39c7f57d2c15a83ad667a51b997",
+        "date": "2019-07-31 11:35:58 -0400",
+        "subject": "Rename control/control module to control/common.",
+        "body": "This is more consistent with how other common modules are named."
+    },
+    {
+        "commit": "a04baa1bdc07f85041bfaf910f122b7ae278d6aa",
+        "date": "2019-07-30 11:42:56 -0400",
+        "subject": "Fix incorrect comment (obviously pasted from S3 code)."
+    },
+    {
+        "commit": "3d892cfb75c3303b0b592d4481d415d25c3f0df9",
+        "date": "2019-07-30 11:39:01 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "88c1929ec5a41915753e3d3078bdaae62d14bf0f",
+        "date": "2019-07-26 08:37:58 -0400",
+        "subject": "Don't pass local config* options to the remote.",
+        "body": "The remotes have their own config options (repo-host-config, etc.) so don't pass the local config* options.\n\nThis was a regression from the behavior of the Perl code and while there have been no field reports it caused breakage on test systems with multiple configurations."
+    },
+    {
+        "commit": "f8b0676fd6edbe915bc23d2f082b4862004ca151",
+        "date": "2019-07-25 20:15:06 -0400",
+        "subject": "Allow modules to be included for testing without requiring coverage.",
+        "body": "Sometimes it is useful to get at the internals of a module that is not being tested for coverage in order to provide coverage for another module that is being tested.  The include directive allows this.\n\nUpdate modules that had previously been added to coverage that only need to be included."
+    },
+    {
+        "commit": "554d98746a96d5a93e3449d62c81c9b7a7c84e9d",
+        "date": "2019-07-25 17:36:51 -0400",
+        "subject": "Add repo-s3-port option for setting a non-standard S3 service port.",
+        "body": "If this option is set then ports appended to repo-s3-endpoint or repo-s3-host will be ignored.\n\nSetting this option explicitly may be the only way to use a bare ipv6 address with S3 (since multiple colons confuse the parser) but we plan to improve this in the future."
+    },
+    {
+        "commit": "d8ca0e5c5bc2af6b85b20f48b40b83762d415b7a",
+        "date": "2019-07-25 17:05:39 -0400",
+        "subject": "Add Perl interface to C PgQuery object.",
+        "body": "This validates that all current queries work with the new interface and removes the dependency on DBD::Pg."
+    },
+    {
+        "commit": "415542b4a3589ff7b25dbd97d1041a9b1ff87815",
+        "date": "2019-07-25 14:50:02 -0400",
+        "subject": "Add PostgreSQL query client.",
+        "body": "This direct interface to libpq allows simple queries to be run against PostgreSQL and supports timeouts.\n\nTesting is performed using a shim that can use scripted responses to test all aspects of the client code.  The shim will be very useful for testing backup scenarios on complex topologies."
+    },
+    {
+        "commit": "59f135340d4f76c522c8b24ecb23d56b57b2b0f8",
+        "date": "2019-07-25 14:34:16 -0400",
+        "subject": "The local command for backup is implemented entirely in C.",
+        "body": "The local process is now entirely migrated to C.  Since all major I/O operations are performed in the local process, the vast majority of I/O is now performed in C."
+    },
+    {
+        "commit": "54ec8f151e4164c3f363f417bece7c4b1533dfd6",
+        "date": "2019-07-24 19:45:35 -0400",
+        "subject": "Add int rendering to jsonFromVar()."
+    },
+    {
+        "commit": "615735e7eed32c429a13559584a7268e4dbff3fc",
+        "date": "2019-07-24 06:52:49 -0400",
+        "subject": "Add new types to JSON render.",
+        "body": "Add bool, array, and int64 as valid array subtypes.\n\nPretty print for the array subtype is not correct but is currently not in use (this can be seen at line 328 in typeJsonTest.c)."
+    },
+    {
+        "commit": "62f0c7fb37e160d4a8a2dbe410fe8a569bc4ba38",
+        "date": "2019-07-22 13:09:51 -0400",
+        "subject": "Add lock bot configuration.",
+        "body": "Lock closed issues after ninety days to prevent posting on old issues."
+    },
+    {
+        "commit": "38ba458616f450232dc1090306e651561c9b3076",
+        "date": "2019-07-18 08:42:42 -0400",
+        "subject": "Add IoSink filter.",
+        "body": "Discard all data passed to the filter.  Useful for calculating size/checksum on a remote system when no data needs to be returned.\n\nUpdate ioReadDrain() to automatically use the IoSink filter."
+    },
+    {
+        "commit": "d1dd6add4853a77d2ebbf27c326bbb4670b78955",
+        "date": "2019-07-17 16:55:21 -0400",
+        "subject": "Remove never-used infoBackupCheckPg() function.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "3bdba4933d45451a3fa6f5dafcb79fd976bffef6",
+        "date": "2019-07-17 16:49:42 -0400",
+        "subject": "Fix incorrect handling of transfer-encoding response to HEAD request.",
+        "body": "The HTTP server can use either content-length or transfer-encoding to indicate that there is content in the response.  HEAD requests do not include content but return all the same headers as GET.  In the HEAD case we were ignoring content-length but not transfer-encoding which led to unexpected eof errors on AWS S3.  Our test server, minio, uses content-length so this was not caught in integration testing.\n\nIgnore all content for HEAD requests (no matter how it is reported) and add a unit test for transfer-encoding to prevent a regression."
+    },
+    {
+        "commit": "6f981c53bb63d3a644a8573cb9edb162c443d03b",
+        "date": "2019-07-17 15:44:55 -0400",
+        "subject": "Remove obsolete ignoreMissing parameter.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "7662d32e6020148d822fd5080f2a5ebda7ebe103",
+        "date": "2019-07-17 15:42:37 -0400",
+        "subject": "Fix comment typos and clarify HEAD response behavior."
+    },
+    {
+        "commit": "eee67db4d611bb18950daf7bddb84217b010d767",
+        "date": "2019-07-17 14:09:50 -0400",
+        "subject": "Allow pg storage to be remote.",
+        "body": "None of the currently migrated commands needed remote pg storage but now backup, check, stanza-* will need it."
+    },
+    {
+        "commit": "30f55a3c2a139ffd59547fd8e422c3fae3feecd3",
+        "date": "2019-07-15 17:36:24 -0400",
+        "subject": "Add compressed storage feature.",
+        "body": "This feature denotes storage that can compress files so that they take up less space than what was written.  Currently this includes the Posix and CIFS drivers.  The stored size of the file will be rechecked after write to determine if the reported size is different.  This check would be wasted on object stores such as S3, and they might not report the file as existing immediately after write.\n\nAlso add tests to each storage driver to check features."
+    },
+    {
+        "commit": "3e1062825dde7cab506225a3b0658552b44de7ce",
+        "date": "2019-07-15 16:49:46 -0400",
+        "subject": "Allow multiple filters to be pushed to the remote and return results.",
+        "body": "Previously only a single filter could be pushed to the remote since order was not being maintained.  Now the filters are strictly ordered.\n\nResults are returned from the remote and set in the local IoFilterGroup so they can be retrieved.\n\nExpand remote filter support to include all filters."
+    },
+    {
+        "commit": "d5654375a5152764f76335eb5265eb994d1df6bd",
+        "date": "2019-07-15 08:44:41 -0400",
+        "subject": "Add ioReadDrain().",
+        "body": "Read all data from an IoRead object and discard it.  This is handy for calculating size, hash, etc. when the output is not needed.\n\nUpdate code where a loop was used before."
+    },
+    {
+        "commit": "cdb75ac8b38810e2e7c6f5d0161443650f94bb31",
+        "date": "2019-07-15 07:13:36 -0400",
+        "subject": "Add constants for path and archive.info/backup.info combinations.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "ede7df9fb1d937f228e982d987d306345007dfe0",
+        "date": "2019-07-14 15:53:31 -0400",
+        "subject": "Allow NULL in JSON list."
+    },
+    {
+        "commit": "c836c483dc7198a685991753300bae49d3caa73c",
+        "date": "2019-07-14 15:42:55 -0400",
+        "subject": "Add lstClear() to List object."
+    },
+    {
+        "commit": "e10577d0b0c8054a08513b069e2f2647ddd51fb7",
+        "date": "2019-07-11 09:13:56 -0400",
+        "subject": "Fix incorrect offline upper bound for ignoring page checksum errors.",
+        "body": "For offline backups the upper bound was being set to 0x0000FFFF0000FFFF rather than UINT64_MAX.  This meant that page checksum errors might be ignored for databases with a lot of past WAL in offline mode.\n\nOnline mode is not affected since the upper bound is retrieved from pg_start_backup()."
+    },
+    {
+        "commit": "2fd0ebb78aabe882d4b080d4014d7ecabbded3da",
+        "date": "2019-07-10 15:08:35 -0400",
+        "subject": "Fix links broken by non-standard version.",
+        "body": "Using version 2.15.1 fixed the duplicate tarball problem but broke the auto-generated links.  Fix them manually since this should not be a common problem."
+    },
+    {
+        "commit": "6a89c1526e1ecc2940ed2bf42258ceb9ef85f0e0",
+        "date": "2019-07-10 12:04:25 -0400",
+        "subject": "Revert a2dcdc07.",
+        "body": "It is simpler to implement the required logic in stanza-delete rather than add complexity to this function."
+    },
+    {
+        "commit": "04646599a776348914b3e9bb9b707d2845540aac",
+        "date": "2019-07-10 06:17:33 -0400",
+        "subject": "Remove extraneous test macro."
+    },
+    {
+        "commit": "4e7db608dc6488feb99e5f2707f06e3ca39d78e8",
+        "date": "2019-07-10 06:11:21 -0400",
+        "subject": "Clarify that return statements are not removed in production builds."
+    },
+    {
+        "commit": "a22a6dc08c25a2af9ac9a6f2331144f2bae8dcbe",
+        "date": "2019-07-10 06:06:07 -0400",
+        "subject": "Update contributor name."
+    },
+    {
+        "commit": "a2dcdc0711a8dfb7d562b2ee0a8586de9676669f",
+        "date": "2019-07-09 16:41:58 -0400",
+        "subject": "Update lockStopTest() to optionally return a result rather than error.",
+        "body": "Some commands (e.g. stanza-delete) would prefer to throw a customized error."
+    },
+    {
+        "commit": "27b3246e852e98902f21589f5cdfece9ebb27b39",
+        "date": "2019-07-08 08:29:25 -0400",
+        "subject": "Exclude more build files from rsync between tests.",
+        "body": "Files (especially build.auto.h) were being removed and forcing a full build between separate invocations of test.pl.\n\nThis affected ad-hoc testing at the command-line, not a full test run in CI."
+    },
+    {
+        "commit": "5e1ed2e8a52c2c4d2151ef17496f0847cd9ae939",
+        "date": "2019-07-05 18:34:15 -0400",
+        "subject": "Remove clang static analysis.",
+        "body": "This analysis never produced anything but false positives (var might be NULL) but took over a minute per test run and added 600MB to the test container."
+    },
+    {
+        "commit": "488fb672948c07abfd7e38604eacbd0f82610b1a",
+        "date": "2019-07-05 17:25:01 -0400",
+        "subject": "Force PostgreSQL versions to string for newer versions of JSON:PP.",
+        "body": "Since 2.91 JSON::PP has a bias for saving variables that look like numbers as numbers even if they were declared as strings.\n\nForce versions to strings where needed by appending ''.\n\nUpdate the json-pp-perl package on Ubuntu 18.04 to 2.97 to provide test coverage."
+    },
+    {
+        "commit": "9836578520e3fb5c038230ebfb123001a7eb32fa",
+        "date": "2019-07-05 16:55:17 -0400",
+        "subject": "Remove perl critic and coverage.",
+        "body": "No new Perl code is being developed, so these tools are just taking up time and making migrations to newer platforms harder.  There are only a few Perl tests remaining with full coverage so the coverage tool does not warn of loss of coverage in most cases.\n\nRemove both tools and associated libraries."
+    },
+    {
+        "commit": "fc2101352206a87f8471fd37455d9cd990fce95d",
+        "date": "2019-07-05 16:25:28 -0400",
+        "subject": "Fix scoping violations exposed by optimizations in gcc 9.",
+        "body": "gcc < 9 makes all compound literals function scope, even though the C spec requires them to be invalid outside the current scope.  Since the compiler and valgrind were not enforcing this we had a few violations which caused problems in gcc >= 9.\n\nEven though we are not quite ready to support gcc 9 officially, fix the scoping violations that currently exist in the codebase."
+    },
+    {
+        "commit": "1708f1d1514b3f2afb69664317df705a1fccfaf7",
+        "date": "2019-07-02 22:20:35 -0400",
+        "subject": "Use minio for integration testing.",
+        "body": "ScalityS3 has not received any maintenance in years and is slow to start which is bad for testing.  Replace it with minio which starts quickly and ships as a single executable or a tiny container.\n\nMinio has stricter limits on allowable characters but should still provide enough coverage to show that our encoding is working correctly.\n\nThis commit also includes the upgrade to openssl 1.1.1 in the Ubuntu 18.04 container."
+    },
+    {
+        "commit": "b9b21315ead6610bb41ee19794763555a7265261",
+        "date": "2019-07-02 22:09:12 -0400",
+        "subject": "Updates for openssl 1.1.1.",
+        "body": "Some HTTP error tests were failing after the upgrade to openssl 1.1.1, though the rest of the unit and integration tests worked fine.  This seemed to be related to the very small messages used in the error testing, but it pointed to an issue with the code not being fully compliant, made worse by auto-retry being enabled by default.\n\nDisable auto-retry and implement better error handling to bring the code in line with openssl recommendations.\n\nThere's no evidence this is a problem in the field, but having all the tests pass seems like a good idea and the new code is certainly more robust.\n\nCoverage will be complete in the next commit when openssl 1.1.1 is introduced."
+    },
+    {
+        "commit": "c55009d0f9ebfea746ab270be167dc2d78976ce9",
+        "date": "2019-06-27 14:39:11 -0400",
+        "subject": "Community yum package can be installed with --var=package=yum.",
+        "body": "Like apt, the community yum package can now be installed instead of a user-specified package."
+    },
+    {
+        "commit": "b0728c33dbd7c99a7b785c152f20d5cdfa902bff",
+        "date": "2019-06-27 14:30:20 -0400",
+        "subject": "Remove Debian package patch merged to upstream."
+    },
+    {
+        "commit": "020101b30bfe9f2d34b878fcd51fad932781d9f8",
+        "date": "2019-06-27 09:38:40 -0400",
+        "subject": "Update release notes to explicitly select release commit when tagging."
+    },
+    {
+        "commit": "33e3d316d63a41cd64d217abe30786cfb48bf09e",
+        "date": "2019-06-26 19:52:04 -0400",
+        "subject": "Reverse loop in infoPgSave() to be consistent with infoPgNewLoad().",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "4bffa0c5bb7d551c60b8d8bcff9a3bbe6e02eddd",
+        "date": "2019-06-26 15:02:30 -0400",
+        "subject": "Add test function to create the S3 bucket instead of using aws cli.",
+        "body": "Eventually the idea is to remove the dependency on aws cli since Python is a big install."
+    },
+    {
+        "commit": "4815752ccc46ff742f67b369bc75ad3efcf11204",
+        "date": "2019-06-26 08:24:58 -0400",
+        "subject": "Add Perl interface to C storage layer.",
+        "body": "Maintaining the storage layer/drivers in two languages is burdensome.  Since the integration tests require the Perl storage layer/drivers we'll need them even after the core code is migrated to C.  Create an interface layer so the Perl code can be removed and new storage drivers/features introduced without adding Perl equivalents.\n\nThe goal is to move the integration tests to C so this interface will eventually be removed.  That being the case, the interface was designed for maximum compatibility to ease the transition.  The result looks a bit hacky but we'll improve it as needed until it can be retired."
+    },
+    {
+        "commit": "bd6c0941e9e3aa2dab84f7404da1f9dc60cd693b",
+        "date": "2019-06-25 17:27:19 -0400",
+        "subject": "Fix missing dash in site name.",
+        "body": "Without this the project name and tagline just run together."
+    },
+    {
+        "commit": "466602387bc279aa44a811dc2948b893e4127b2c",
+        "date": "2019-06-25 08:42:20 -0400",
+        "subject": "Begin v2.16 development."
+    },
+    {
+        "commit": "6650d8144cba46f93ad75c11ad98d87c57d2ea7f",
+        "date": "2019-06-25 08:29:06 -0400",
+        "subject": "v2.15: C Implementation of Expire"
+    },
+    {
+        "commit": "51fcaee43edf022aea0f94b76d254f2de8b6e1d1",
+        "date": "2019-06-25 07:58:38 -0400",
+        "subject": "Add host-repo-path variable internal replacement.",
+        "body": "This variable needs to be replaced right before being used without being added to the cache since the host repo path will vary from system to system.\n\nThis is frankly a bit of a hack to get the documentation to build in the Debian packages for the upcoming release.  We'll need to come up with something more flexible going forward."
+    },
+    {
+        "commit": "5cbe2dee855577ccd14051cad35f30376db21d50",
+        "date": "2019-06-25 07:36:16 -0400",
+        "subject": "Add compress-level-network option to ls command.",
+        "body": "039e515a added a dependency on compress-level-network but the ls command did not get updated."
+    },
+    {
+        "commit": "d7f12f268a370e388c6a6375666831ecd8fad72c",
+        "date": "2019-06-24 19:27:13 -0400",
+        "subject": "Redact secure options in the help command.",
+        "body": "Secure options could show up in the help as \"current\".  While the user must have permissions to see the source of the options (e.g. environment, config file) it's still not a good idea to display them in an unexpected context.\n\nInstead show secure options as <redacted> in the help command."
+    },
+    {
+        "commit": "c22e10e4a938b444ac7912efc3b751829401360f",
+        "date": "2019-06-24 15:42:33 -0400",
+        "subject": "Honor configure --prefix option.",
+        "body": "The --prefix option was entirely ignored and DESTDIR was a combination of DESTDIR and bindir.\n\nBring both in line with recommendations for autoconf and make as specified in https://www.gnu.org/software/make/manual/html_node/Directory-Variables.html and https://www.gnu.org/prep/standards/html_node/DESTDIR.html."
+    },
+    {
+        "commit": "b498188f01f8d2ccd4d0ce2cce3af2e5069d9ac3",
+        "date": "2019-06-24 11:59:44 -0400",
+        "subject": "Error on db history mismatch when expiring.",
+        "body": "Amend commit 434cd832 to error when the db history in archive.info and backup.info do not match.\n\nThe Perl code would attempt to reconcile the history by matching on system id and version but we are not planning to migrate that code to C.  It's possible that there are users with mismatches but if so they should have been getting errors from info for the last six months.  It's easy enough to manually fix these files if there are any mismatches in the field."
+    },
+    {
+        "commit": "039e515a319216035187c89efccf97143d4cac03",
+        "date": "2019-06-24 10:20:47 -0400",
+        "subject": "Allow protocol compression when read/writing remote files.",
+        "body": "If the file is compressible (i.e. not encrypted or already compressed) it can be marked as such in storageNewRead()/storageNewWrite().  If the file is being read from/written to a remote it will be compressed in transit using gzip.\n\nSimplify filter group handling by having the IoRead/IoWrite objects create the filter group automatically.  This removes the need for a lot of NULL checking and has a negligible effect on performance since a filter group needs to be created eventually unless the source file is missing.\n\nAllow filters to be created using a VariantList so filter parameters can be passed to the remote."
+    },
+    {
+        "commit": "62715ebf2d8b0585c35cd2ee14d6aabf9cc0f1f8",
+        "date": "2019-06-19 17:49:38 -0400",
+        "subject": "Fix archive retention expiring too aggressively.",
+        "body": "The problem expressed when repo1-archive-retention-type was set to diff.  In this case repo1-archive-retention ended up being effectively equal to one, which meant PITR recovery was only possible from the last backup.  WAL required for consistency was still preserved for all backups.\n\nThis issue is not present in the C migration committed at 434cd832, which was written before this bug was reported.  Even so, we wanted to note this issue in the release notes in case any other users have been affected.\n\nFixed by Cynthia Shang.\nReported by Mohamad El-Rifai."
+    },
+    {
+        "commit": "a7d64bab7abe56132ad1c83eb6bfcca1166e0000",
+        "date": "2019-06-18 19:02:09 -0400",
+        "subject": "Add FAQ on where to find old Debian/Ubuntu packages."
+    },
+    {
+        "commit": "e2d791394a3577aac53a21e3141e4e337ac8edf0",
+        "date": "2019-06-18 18:42:47 -0400",
+        "subject": "Add FAQ to the documentation.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "434cd832855e4e189403962753fd8771e29880a4",
+        "date": "2019-06-18 15:19:20 -0400",
+        "subject": "The expire command is implemented entirely in C.",
+        "body": "This implementation duplicates the functionality of the Perl code but does so with different logic and includes full unit tests.\n\nAlong the way at least one bug was fixed, see issue #748."
+    },
+    {
+        "commit": "f88bee7b3321a2c79f0317913ba1e83a56d19c7d",
+        "date": "2019-06-18 10:13:28 -0400",
+        "subject": "TLS/HTTP statistics log replacements.",
+        "body": "These statistics can change with any code update so they cause a lot of churn in the expect logs."
+    },
+    {
+        "commit": "0efdf2576f02b1768fb8805b27571e403ac3cb52",
+        "date": "2019-06-18 07:35:34 -0400",
+        "subject": "Remove hard-coded PostgreSQL user so $PGUSER works.",
+        "body": "The PostgreSQL user was hard-coded to the OS user which libpq will automatically use if $PGUSER is not set, so this code was redundant and prevented $PGUSER from working when set."
+    },
+    {
+        "commit": "593446718a8997bfd674cf5e54230290cb5bcdea",
+        "date": "2019-06-18 06:45:47 -0400",
+        "subject": "Add S3 info type missed in 7f2f5354.",
+        "body": "File is the only type possible in S3."
+    },
+    {
+        "commit": "0a96a2895d7a1e4c5eec402d3742f1d1e25cc126",
+        "date": "2019-06-17 09:16:44 -0400",
+        "subject": "Add storage layer for tests and documentation.",
+        "body": "The tests and documentation have been using the core storage layer but soon that will depend entirely on the C library, creating a bootstrap problem (i.e. the storage layer will be needed to build the C library).\n\nCreate a simplified Posix storage layer to be used by documentation and the parts of the test code that build and execute the actual tests.  The actual tests will still use the core storage driver so they can interact with any type of storage."
+    },
+    {
+        "commit": "ceafd8e19d416106f50c4ff440bf1cf7fcb5553f",
+        "date": "2019-06-17 07:52:03 -0400",
+        "subject": "Migrate page checksum filter to C.",
+        "body": "This filter exactly mimics the behavior of the Perl filter so is a drop-in replacement.\n\nThe filter is not integrated yet since it requires the Perl-to-C storage layer interface coming in a future commit."
+    },
+    {
+        "commit": "892f35a7283462fae0bc3077aeb23c9624a50dea",
+        "date": "2019-06-17 07:42:12 -0400",
+        "subject": "Add new types to JSON render.",
+        "body": "Still not a complete list, but we are getting there."
+    },
+    {
+        "commit": "c64c9c05905d435cd650195ed9470355a4d2be2f",
+        "date": "2019-06-17 06:59:06 -0400",
+        "subject": "Add backup management functions to InfoBackup.",
+        "body": "Allow current backups to be listed and deleted.\n\nAlso expose some constants required by expire and stanza-* commands."
+    },
+    {
+        "commit": "44bafc127d9d4e38478aa44d0adc0f34695c6640",
+        "date": "2019-06-17 06:47:15 -0400",
+        "subject": "Rename info*New() functions to info*NewLoad().",
+        "body": "These names more accurately reflect what the functions do and follow the convention started in Info and InfoPg.\n\nAlso remove the ignoreMissing parameter since it was never used."
+    },
+    {
+        "commit": "f05fbc54a8f00a56937439fb88eafe8e239781e8",
+        "date": "2019-06-14 08:04:28 -0400",
+        "subject": "Fix filters not processing when there is no input.",
+        "body": "Some filters (e.g. encryption and compression) produce output even if there is no input.  Since the filter group was marked as \"done\" initially, processing would not run when there was zero input and that resulted in zero output.\n\nAll filters start not done so start the filter group the same way."
+    },
+    {
+        "commit": "9ba95e993ba3dbf73f8967a875608980e6380633",
+        "date": "2019-06-13 17:58:33 -0400",
+        "subject": "Use retries to wait for test S3 server to start.",
+        "body": "The prior method of tailing the docker log no longer seems reliable.  Instead, keep retrying the make bucket command until it works and show the error if it times out."
+    },
+    {
+        "commit": "b9233f7412e44c8daf41db05bd9699fa088ece5d",
+        "date": "2019-06-13 12:44:40 -0400",
+        "subject": "Create filter group in read/write object's memory context.",
+        "body": "The filter group was being created in the parent context so it would go away if the parent context was freed."
+    },
+    {
+        "commit": "20be5c9bf39d606b8586ffcf575a7443c6375479",
+        "date": "2019-06-13 12:35:13 -0400",
+        "subject": "Remove extra spaces."
+    },
+    {
+        "commit": "fdd375b63d3962845efbb38a7020d852143b97fd",
+        "date": "2019-06-11 16:26:32 -0400",
+        "subject": "Integrate S3 storage driver with HTTP client cache.",
+        "body": "This allows copying from one S3 object to another.  We generally try to avoid doing this but there are a few cases where it is needed and the tests do it quite a bit.\n\nOne thing to look out for here is that reads require the http client to be explicitly released by calling httpClientDone().  This means than clients could grow if they are not released properly.  The http statistics will hopefully alert us if this is happening."
+    },
+    {
+        "commit": "ced42d6511e9b5735a2281dd0e1faec41870fd37",
+        "date": "2019-06-11 10:48:22 -0400",
+        "subject": "Add HTTP client cache.",
+        "body": "This cache manages multiple http clients and returns one to the caller that is not busy.  It is the responsibility of the caller to indicate when they are done with a client. If returnContent is set then the client will automatically be marked done.\n\nAlso add special handing for HEAD requests to recognize that content-length is informational only and no content is expected."
+    },
+    {
+        "commit": "6e809e578fbd24269205de25cc6e9c84cefc5647",
+        "date": "2019-06-11 10:34:42 -0400",
+        "subject": "Add tag to specify minio version to use for documentation build.",
+        "body": "The new minio major release broke the build.  We'll need to figure that out but for now use the last major version, which is known to work."
+    },
+    {
+        "commit": "7f2f535460e3499c1811b5beca9130f84b78c982",
+        "date": "2019-06-10 16:09:38 -0400",
+        "subject": "Add info() and infoList() to S3 driver.",
+        "body": "These should be the last functions required to complete the implementation of the S3 driver."
+    },
+    {
+        "commit": "9d1b03781f9fe88b868cdfaf4808d84ad1f072fb",
+        "date": "2019-06-10 15:52:51 -0400",
+        "subject": "Revert removal of aws cli in 3e1b06ac.",
+        "body": "This is required for integration tests to create buckets."
+    },
+    {
+        "commit": "456391f67c220647e130fdc7a7fc805b075cfd87",
+        "date": "2019-06-10 12:23:04 -0400",
+        "subject": "Create general-purpose S3 list function.",
+        "body": "There are already two functions which need file lists and more on the way, so create a general-purpose function to reduce code duplication."
+    },
+    {
+        "commit": "fb8bd095ca93e2bf77eaec0f7573f961f691c3ab",
+        "date": "2019-06-10 10:37:20 -0400",
+        "subject": "Add missing const qualifiers."
+    },
+    {
+        "commit": "78b333790c69aca991f740a9ea6b1982fb70c3d6",
+        "date": "2019-06-07 10:35:44 -0400",
+        "subject": "Return IoRead/IoWrite from io*FilterGroupSet()",
+        "body": "This makes is possible to chain functions more effectively."
+    },
+    {
+        "commit": "e701e8fd846539ec20f2a9be90b0590ceb6a7be6",
+        "date": "2019-06-05 11:50:49 -0400",
+        "subject": "Expose storage type.",
+        "body": "Code calling the storage should be driver agnostic but knowing the storage type can be useful for debugging and error reporting."
+    },
+    {
+        "commit": "6ff3325c7744a8f6f0e1e965fa673040a2f40a71",
+        "date": "2019-06-05 11:43:17 -0400",
+        "subject": "Enforce requiring repo-cipher-pass at config parse time.",
+        "body": "This was not enforced at parse time because repo1-cipher-type could be passed on the command-line even in cases where encryption was not needed by the subprocess.\n\nFilter repo-cipher-type so it is never passed on the command line.  If the subprocess does not have access to the passphrase then knowing the encryption type is useless anyway."
+    },
+    {
+        "commit": "d7bd0c58cdd9a434aa5893db16e6bcf8425e26b9",
+        "date": "2019-06-05 07:27:24 -0400",
+        "subject": "Use wal_level=replica in the documentation for PostgreSQL >= 9.6.",
+        "body": "The documentation was using wal_level=hot_standby which is a deprecated setting.\n\nAlso remove the reference to wal_level=archive since it is no longer supported and is not recommended for older versions."
+    },
+    {
+        "commit": "aca11b2fa19337f934fc095e33f014d5e6df71f3",
+        "date": "2019-06-04 17:40:27 -0400",
+        "subject": "Add String to types supported by JSON list render.",
+        "body": "All types should be supported eventually but for now this answers the need."
+    },
+    {
+        "commit": "0ab6f3bb87005d5a5d102156730b1e3099894189",
+        "date": "2019-06-04 13:38:05 -0400",
+        "subject": "Fix incorrect error type on missing path."
+    },
+    {
+        "commit": "4b91259de8d7feec6d33d154032169aa32c879e3",
+        "date": "2019-06-04 12:56:04 -0400",
+        "subject": "Make working with filter groups less restrictive.",
+        "body": "Filter groups could not be manipulated once they had been assigned to an IO object.  Now they can be freely manipulated up to the time the IO object is opened.\n\nAlso, move the filter group into the IO object's context so they don't need to be tracked separately."
+    },
+    {
+        "commit": "92e04ea9f4e0eb3f6cd88a72497a026cbd348280",
+        "date": "2019-06-04 10:34:19 -0400",
+        "subject": "Remove per-stanza repo cache clear during testing.",
+        "body": "This was not being used and is not supported by the equivalent C code."
+    },
+    {
+        "commit": "44eb21ea935fdaa4e96d4637c7b62cb5a73d3e77",
+        "date": "2019-06-04 10:05:27 -0400",
+        "subject": "Use HEAD to check if a file exists on S3.",
+        "body": "The previous implementation searched for the file in a list which worked but was not optimal.  For arbitrary bucket structures it would also produce a false negative if a match was not found in the first 1000 entries.  This was not an issue for our repo structure since the max hits on exists calls is two but it seems worth fixing to avoid future complications."
+    },
+    {
+        "commit": "15b8e3b6af7327179d8bdd2e0c6833ed28005b0b",
+        "date": "2019-06-04 09:39:08 -0400",
+        "subject": "Make C S3 requests use the same host logic as Perl.",
+        "body": "The C code was passing the host (if specified) with the request which could force the server into path-style URLs, which are not supported.\n\nInstead, use the Perl logic of always passing bucket.endpoint in the request no matter what host is used for the HTTPS connection.\n\nIt's an open question whether we should support path-style URLs but since we don't it's useless to tell the server otherwise.  Note that Amazon S3 has deprecated path-style URLs and they are no longer supported on newly created buckets."
+    },
+    {
+        "commit": "5f92c36b30072edb71b12f79163c37c67d9806bc",
+        "date": "2019-06-04 08:04:33 -0400",
+        "subject": "Fix erroneous parameter name.",
+        "body": "The exists() function only checks for files so the parameter name should reflect that."
+    },
+    {
+        "commit": "0945d9666b5af1a5893ba0b4537e9cd1f72be478",
+        "date": "2019-06-01 11:09:01 -0400",
+        "subject": "Bring back PATH_PAX for platforms that don't define it.",
+        "body": "This define was replaced in 8c712d89 with limits.h but that caused an issue with the hurd-i386 build for Debian which apparently does not define this value."
+    },
+    {
+        "commit": "a207af79215d05539825c484dbfa9aa2a26cf7d0",
+        "date": "2019-06-01 09:44:40 -0400",
+        "subject": "Fix mismatched log/test macros."
+    },
+    {
+        "commit": "12bca3c43eb2ee0df80ef5e10850657b52fb680b",
+        "date": "2019-06-01 09:28:31 -0400",
+        "subject": "Add CPPFLAGS to compile rules.",
+        "body": "This should silence the last of the Debian package warnings."
+    },
+    {
+        "commit": "388ba0458c37ab4e8b82df0c0fa2b6a4d7462ecb",
+        "date": "2019-05-31 18:37:31 -0400",
+        "subject": "Fix build.flags being removed on each build.",
+        "body": "This was being removed by rsync which forced a full build even when a partial should have been fine.  Rewrite the file after the rsync so it is preserved."
+    },
+    {
+        "commit": "6cba50c3f23a7a7822ae0fd03ff3b5a3f6d8a32a",
+        "date": "2019-05-31 18:32:40 -0400",
+        "subject": "Remove Debian package patch merged to upstream."
+    },
+    {
+        "commit": "3a5fd7b28a79c1564ddd2b5bad36d4d4be358453",
+        "date": "2019-05-30 11:19:59 -0400",
+        "subject": "Fix typo in macro name."
+    },
+    {
+        "commit": "a2ec1253e97805e2a3b990d8bc23c98ab8013d09",
+        "date": "2019-05-30 10:44:35 -0400",
+        "subject": "Add code classification exclusion missed in 3e1b06ac."
+    },
+    {
+        "commit": "64260b2e9878944116dc78812a3a21633c5f3d15",
+        "date": "2019-05-29 08:38:45 -0400",
+        "subject": "Build all docs with S3 using --var=s3-all=y",
+        "body": "Force repo-type=s3 for all tests.  This is not currently the default for any OS builds."
+    },
+    {
+        "commit": "404284b90ff0f67fe29fa5a7b2831ebf51d459aa",
+        "date": "2019-05-28 12:18:05 -0400",
+        "subject": "Add internal flag for commands.",
+        "body": "Allow commands to be skipped by default in the command help but still work if help is requested for the command directly.  There may be other uses for the flag in the future.\n\nUpdate help for ls now that it is exposed."
+    },
+    {
+        "commit": "20e5b92f366848ec1464e2272c6af2c29ac7b36d",
+        "date": "2019-05-28 10:03:48 -0400",
+        "subject": "Add ls command.",
+        "body": "Allows listing repo paths/files from the command-line, to be used primarily for testing and debugging.\n\nThis command is internal-only so the interface may change at any time without notice."
+    },
+    {
+        "commit": "3b3327eae6dd14f67f1002f094bd33ab7785f765",
+        "date": "2019-05-28 09:50:59 -0400",
+        "subject": "Move tls/http statistics output to command/command.",
+        "body": "This module already has the filtering required to keep these messages from being displayed by default for commands that output to stdout (e.g. info)."
+    },
+    {
+        "commit": "3e1b06acaa84399abcfaa8c684f437b63aa38de5",
+        "date": "2019-05-27 07:37:20 -0400",
+        "subject": "Use minio as local S3 emulator in documentation.",
+        "body": "The documentation was relying on a ScalityS3 container built for testing which wasn't very transparent.  Instead, use the stock minio container and configure it in the documentation.\n\nAlso, install certificates and CA so that TLS verification can be enabled."
+    },
+    {
+        "commit": "a474ba54c5c9c7bdba6ffa3e92671bb9565889f6",
+        "date": "2019-05-26 12:41:15 -0400",
+        "subject": "Refactoring path support in the storage module.",
+        "body": "Not all storage types support paths as a physical thing that must be created/destroyed.  Add a feature to determine which drivers use paths and simplify the driver API as much as possible given that knowledge and by implementing as much path logic as possible in the Storage object.\n\nRemove the ignoreMissing parameter from pathSync() since it is not used and makes little sense.\n\nCreate a standard list of error messages for the drivers to use and apply them where the code was modified -- there is plenty of work still to be done here."
+    },
+    {
+        "commit": "38f28bd52081405321939fec66046bd9ada35c23",
+        "date": "2019-05-26 12:32:49 -0400",
+        "subject": "Log TLS and HTTP statistics on exit.",
+        "body": "These stats measure how efficiently TLS and HTTP are reusing connections."
+    },
+    {
+        "commit": "819eda0818669ea9cc45bcd65c57e3b4c7d29129",
+        "date": "2019-05-26 12:29:29 -0400",
+        "subject": "Set log level of protocol processing functions to debug.",
+        "body": "Setting these to trace effectively made debug level useless in local/remote processes since all debug messages were demoted to trace when called from these functions."
+    },
+    {
+        "commit": "d12d94c53c466eb808459b98669a877c19b5716b",
+        "date": "2019-05-24 18:09:16 -0400",
+        "subject": "Make info(), pathCreate() and pathSync() optional for storage drivers.",
+        "body": "These functions are not required for repository storage so make them optional and error if they are not implemented for non-repository storage, .e.g. pg or spool.\n\nThe goal is to simplify the drivers (e.g. S3) that are intended only for repository storage."
+    },
+    {
+        "commit": "39645fc1a99540063399a7a3b86177a330bd743c",
+        "date": "2019-05-24 14:33:47 -0400",
+        "subject": "Add pathRemove() and remove() to S3 storage.",
+        "body": "These functions will be needed for the expire command."
+    },
+    {
+        "commit": "6c385dfa7a7f489159c06c5a31fd3cd7c77c39a8",
+        "date": "2019-05-24 13:56:38 -0400",
+        "subject": "Add function to determine if HTTP response code is OK.",
+        "body": "OK responses are a range rather than a single value, so simplify the check with a function."
+    },
+    {
+        "commit": "96770c529be4df408b9d1fc39fc5157e90555375",
+        "date": "2019-05-24 13:12:56 -0400",
+        "subject": "storageList() returns an empty list by default for missing paths.",
+        "body": "The prior behavior was to return NULL so the caller would know the path was missing, but this is rarely useful, complicates the calling code, and increases the chance of segfaults.\n\nThe .nullOnMissing param has been added to enable the prior behavior."
+    },
+    {
+        "commit": "707e4a29f04a733cff868f37b90f8bf83a02394c",
+        "date": "2019-05-24 11:09:43 -0400",
+        "subject": "Notify compiler that cryptoErrorCode() does not return."
+    },
+    {
+        "commit": "01f3024b5c0a83819d58ee6ccc2edb5109277aaa",
+        "date": "2019-05-24 11:06:11 -0400",
+        "subject": "Add missing const qualifier."
+    },
+    {
+        "commit": "39cb6248314e21530924886e6e669ac395daeeb1",
+        "date": "2019-05-24 07:45:03 -0400",
+        "subject": "Add missing menus to the new user guides.",
+        "body": "Since the CentOS 6/7 user guides were generated as a single page they did not get menus.  Generate the entire site for each user guide so menus are included."
+    },
+    {
+        "commit": "04f8b4ea52f89d1542b25d2fb0ba28a43ddaba6d",
+        "date": "2019-05-24 07:41:55 -0400",
+        "subject": "Use git url for website clone."
+    },
+    {
+        "commit": "ec9622cde883c649c1346cbc0b9057e7f3fcb787",
+        "date": "2019-05-22 18:54:49 -0400",
+        "subject": "Use the git log to ease release note management.",
+        "body": "The release notes are generally a direct reflection of the git log.  So, ease the burden of maintaining the release notes by using the git log to determine what needs to be added.\n\nCurrently only non-dev items are required to be matched to a git commit but the goal is to account for all commits.\n\nThe git history cache is generated from the git log but can be modified to correct typos and match the release notes as they evolve.  The commit hash is used to identify commits that have already been added to the cache.\n\nThere's plenty more to do here.  For instance, links to the commits for each release item should be added to the release notes."
+    },
+    {
+        "commit": "86482c7db943375d48fcee0e243ca96bdf50d35c",
+        "date": "2019-05-22 18:23:44 -0400",
+        "subject": "Reduce log level for all expect tests to detail.",
+        "body": "The C code is designed to be efficient rather than deterministic at the debug log level.  As we move more testing from integration to unit tests it makes less sense to try and maintain the expect logs at this log level.\n\nMost of the expect logs have already been moved to detail level but mock/all still had tests at debug level.  Change the logging defaults in the config file and remove as many references to log-level-console as possible."
+    },
+    {
+        "commit": "e4cc008b982d47ac526962e310c18626e2aefbc2",
+        "date": "2019-05-22 11:31:38 -0400",
+        "subject": "Remove duplicated hint.",
+        "body": "At some point this hint got added to the underlying code so it is no longer needed here."
+    },
+    {
+        "commit": "ff9c1bed5de380a6e7df1cbc6870b972d93b3dc4",
+        "date": "2019-05-22 11:24:18 -0400",
+        "subject": "Save cipher-pass key/value missed in f492f057.",
+        "body": "This value is required when encryption is enabled.\n\nIn passing simplify the expression used to skip the checksum when calculating the checksum."
+    },
+    {
+        "commit": "3da60f4b5ee8ed663fc5e8d8968709dbaadee1f6",
+        "date": "2019-05-22 11:10:43 -0400",
+        "subject": "Don't escape / when rendering JSON.",
+        "body": "/ is escaped in the spec but the Perl renderer we use does not escape it which leads to checksum mismatches between the two sets of code.\n\nThis particular escape seems to be a more recent addition to the spec and is targeted toward embedding JSON in JavaScript.\n\n\\/ is still allowed when parsing JSON."
+    },
+    {
+        "commit": "664054fea94186374dcae84e31e0cd7329c279d0",
+        "date": "2019-05-22 06:55:31 -0400",
+        "subject": "Remove RHEL package patch merged to upstream."
+    },
+    {
+        "commit": "e1cce9c6147446c026f528cc4afe518de0bcb87f",
+        "date": "2019-05-21 14:07:35 -0400",
+        "subject": "Remove extraneous parens."
+    },
+    {
+        "commit": "936b8a289c4884dd22f7ff0d3d624d6e70980512",
+        "date": "2019-05-21 10:37:30 -0400",
+        "subject": "Allow separate paragraphs in release items.",
+        "body": "The first paragraph should match the first line of the commit message as closely as possible.  The following paragraphs add more information.\n\nRelease items have been updated back to 2.01."
+    },
+    {
+        "commit": "e3fe3434b4428398ffbee5359f0e0cdec8e55bcb",
+        "date": "2019-05-21 10:14:41 -0400",
+        "subject": "Rename repo-s3-verify-ssl option to repo-s3-verify-tls.",
+        "body": "The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).\n\nThe old name will continue to be accepted."
+    },
+    {
+        "commit": "1bc84c647490d6cf78975b5dde5b1937016d24c6",
+        "date": "2019-05-20 17:07:37 -0400",
+        "subject": "The local command for restore is implemented entirely in C.",
+        "body": "This is just the part of restore run by the local helper processes, not the entire command.\n\nEven so, various optimizations in the code (like connection reuse and optimizations for zero-length files) should make the restore command faster on object stores."
+    },
+    {
+        "commit": "a839830333490555800377ea095d756765f476e4",
+        "date": "2019-05-20 16:19:14 -0400",
+        "subject": "Add most unimplemented functions to the remote storage driver.",
+        "body": "Add pathCreate(), pathRemove(), pathSync(), and remove() to the driver."
+    },
+    {
+        "commit": "bbf2e0d5b0876d3663cc69d10925c6e0d08cd729",
+        "date": "2019-05-20 12:24:43 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "a9f589b87a09bd37ad903b5c37bcd3000d47840d",
+        "date": "2019-05-20 12:23:40 -0400",
+        "subject": "Begin v2.15 development."
+    },
+    {
         "commit": "0f685a33a02adde45792711b957a75391fc5f34e",
         "date": "2019-05-20 11:51:58 -0400",
         "subject": "v2.14: Bug Fix and Improvements"
@@ -1887,7 +4685,7 @@
     {
         "commit": "410a04a58ee59de3055483a2f971c2e42015267e",
         "date": "2018-11-28 14:20:12 -0500",
-        "subject": "Allow arbitary InOut filters to be chained in IoFilterGroup.",
+        "subject": "Allow arbitrary InOut filters to be chained in IoFilterGroup.",
         "body": "If InOut filters were placed next to each other then the second filter would never get a NULL input signaling it to flush.  This arrangement only worked if the second filter had some other indication that it should flush, such as a decompression filter where the flush is indicated in the input stream.\n\nThis is not a live issue because currently no InOut filters are chained together."
     },
     {
@@ -1983,13 +4781,13 @@
         "commit": "72252ed2a102bf9c43d45500de1a29834d36721c",
         "date": "2018-11-21 19:11:45 -0500",
         "subject": "Add HttpClient object.",
-        "body": "A robust HTTP client with pipelining support and automatic retries.\n\nUsing a single object to make multiple requests is more efficient because requests are pipelined whenever possible. Requests are automatically retried when the connection has been closed by the server. Any 5xx response is also retried.\n\nOnly the HTTPS protocol is currently supported."
+        "body": "A robust HTTP client with connection reuse and automatic retries.\n\nUsing a single object to make multiple requests is more efficient because connections are reused whenever possible. Requests are automatically retried when the connection has been closed by the server. Any 5xx response is also retried.\n\nOnly the HTTPS protocol is currently supported."
     },
     {
         "commit": "1dd06a6e460049ff888e152f33697b1e49046c30",
         "date": "2018-11-21 18:43:25 -0500",
         "subject": "Add TlsClient object.",
-        "body": "A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because SSL methods are disabled so only TLS connections are allowed.\n\nThis object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new connection is needed. By default, an open connection will be reused for pipelining so the user must be prepared to retry their transaction on a read/write error if the server closes the connection before it can be reused. If this behavior is not desirable then tlsClientClose() may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.\n\nNote that tlsClientRead() is non-blocking unless there are *zero* bytes to be read from the session in which case it will raise an error after the defined timeout. In any case the tlsClientRead()/tlsClientWrite()/tlsClientEof() functions should not generally be called directly. Instead use the read/write interfaces available from tlsClientIoRead()/tlsClientIoWrite()."
+        "body": "A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because SSL methods are disabled so only TLS connections are allowed.\n\nThis object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new connection is needed. By default, an open connection will be reused so the user must be prepared to retry their transaction on a read/write error if the server closes the connection before it can be reused. If this behavior is not desirable then tlsClientClose() may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.\n\nNote that tlsClientRead() is non-blocking unless there are *zero* bytes to be read from the session in which case it will raise an error after the defined timeout. In any case the tlsClientRead()/tlsClientWrite()/tlsClientEof() functions should not generally be called directly. Instead use the read/write interfaces available from tlsClientIoRead()/tlsClientIoWrite()."
     },
     {
         "commit": "ac426bc456425d68e33a7facc8393f26b9d17bb1",
@@ -2244,7 +5042,7 @@
         "commit": "a9feaba9e521e39928ff5fdbc025eeff8fc17646",
         "date": "2018-11-07 08:51:32 -0500",
         "subject": "Add memContextCallbackClear() to prevent double free() calls.",
-        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unecessary callback) and removes the need for semaphores to protect against a double free()."
+        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unnecessary callback) and removes the need for semaphores to protect against a double free()."
     },
     {
         "commit": "48d2795f312224f03dc88e99434865540ca71c7e",
@@ -6118,7 +8916,7 @@
         "commit": "6f34fbc6957f16719749372d78c014abe9b8a5f7",
         "date": "2016-10-03 09:15:29 -0400",
         "subject": "Vagrant build improvements:",
-        "body": "* Miminize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
+        "body": "* Minimize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
     },
     {
         "commit": "07898d33e332aa892e406d2df729c5d900110d41",
@@ -6575,7 +9373,7 @@
     {
         "commit": "9516db4ad660a4be29fd43b34ab9e0ef848daaf8",
         "date": "2016-06-27 20:37:25 -0400",
-        "subject": "Closed #209: Dont' use \"localtime\" for HTML-docs.",
+        "subject": "Closed #209: Don't use \"localtime\" for HTML-docs.",
         "body": "The release-date-static var has been added to allow the html footer to use the last release date instead of localtime()."
     },
     {
@@ -6723,7 +9521,7 @@
     {
         "commit": "9a9f26a96f0365b0223231f74426602edb5caad9",
         "date": "2016-05-27 18:36:25 -0400",
-        "subject": "Some word smithing in the introduction."
+        "subject": "Some wordsmithing in the introduction."
     },
     {
         "commit": "174b16165b2cd555fd63a6516520900089d643ab",
@@ -7865,7 +10663,7 @@
         "commit": "148836fe44e81622d1836f851b8b87e21d32188e",
         "date": "2015-06-13 18:25:49 -0400",
         "subject": "Implemented issue #26: Info command.",
-        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Does't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
+        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Doesn't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
     },
     {
         "commit": "5a73b1a2408fd22f90417fcbf70edd41a6a99f3b",

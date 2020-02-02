@@ -9,7 +9,6 @@ run 002 - stanzaUpgrade, enc 0, s3 0
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -27,6 +26,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -63,7 +65,7 @@ db-version="9.2"
 Create backups in current db version
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=diff --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=diff --stanza=db
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option 'repo1-retention-archive' nor option 'repo1-retention-diff' is set
@@ -73,7 +75,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -91,6 +92,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -133,7 +137,6 @@ db-version="9.2"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -156,6 +159,9 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -469,19 +475,19 @@ db-version="9.3"
 Upgrade stanza and expire only earliest db backup and archive
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=3 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-FULL-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-2], archiveId = 9.2-1, start = 00000001000000000000000C
 P00 DETAIL: remove archive: archiveId = 9.2-1, start = 000000010000000000000000, stop = 00000001000000000000000B
 P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.3-2, start = 000000010000000000000000
+P00 DETAIL: no archive to remove, archiveId = 9.3-2
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -502,6 +508,9 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -804,7 +813,6 @@ db-version="9.3"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -827,6 +835,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1137,7 +1148,7 @@ db-version="10"
 Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup and archive in previous db version removed
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-2]
 P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-INCR-2]
@@ -1147,12 +1158,12 @@ P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.2-1
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
 P00 DETAIL: remove archive: archiveId = 9.3-2, start = 000000010000000000000000, stop = 0000000100000000000000FE
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
+P00 DETAIL: no archive to remove, archiveId = 10-3
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1172,6 +1183,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1217,7 +1231,6 @@ db-version="10"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1238,6 +1251,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1287,7 +1303,7 @@ db-version="10"
 Expire all archive last full backup through pitr
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=3 --stanza=db
 P00   INFO: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
@@ -1300,7 +1316,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1320,6 +1335,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1365,7 +1383,6 @@ db-version="10"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1385,6 +1402,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1430,7 +1450,7 @@ db-version="10"
 Expire all archive except for the current database
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-4]
 P00   INFO: remove expired backup [BACKUP-FULL-4]
 P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.3-2
@@ -1441,7 +1461,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1460,6 +1479,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------

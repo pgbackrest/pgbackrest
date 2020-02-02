@@ -6,9 +6,7 @@ Posix Storage
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <grp.h>
 #include <limits.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -18,6 +16,7 @@ Posix Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/user.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
@@ -39,21 +38,20 @@ Object type
 ***********************************************************************************************************************************/
 struct StoragePosix
 {
+    STORAGE_COMMON_MEMBER;
     MemContext *memContext;                                         // Object memory context
-    StorageInterface interface;                                     // Storage interface
 };
 
-/***********************************************************************************************************************************
-Does a file exist? This function is only for files, not paths.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storagePosixExists(THIS_VOID, const String *file)
+storagePosixExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -77,18 +75,16 @@ storagePosixExists(THIS_VOID, const String *file)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-File/path info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StorageInfo
-storagePosixInfo(THIS_VOID, const String *file, bool followLink)
+storagePosixInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, followLink);
+        FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -99,7 +95,7 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
     // Attempt to stat the file
     struct stat statFile;
 
-    if ((followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
+    if ((param.followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
     {
         if (errno != ENOENT)
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strPtr(file));
@@ -108,19 +104,11 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
     else
     {
         result.exists = true;
+        result.groupId = statFile.st_gid;
+        result.group = groupNameFromId(result.groupId);
+        result.userId = statFile.st_uid;
+        result.user = userNameFromId(result.userId);
         result.timeModified = statFile.st_mtime;
-
-        // Get user name if it exists
-        struct passwd *userData = getpwuid(statFile.st_uid);
-
-        if (userData != NULL)
-            result.user = strNew(userData->pw_name);
-
-        // Get group name if it exists
-        struct group *groupData = getgrgid(statFile.st_gid);
-
-        if (groupData != NULL)
-            result.group = strNew(groupData->gr_name);
 
         if (S_ISREG(statFile.st_mode))
         {
@@ -143,7 +131,7 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
             result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
         }
         else
-            THROW_FMT(FileInfoError, "invalid type for '%s'", strPtr(file));
+            result.type = storageTypeSpecial;
 
         result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
@@ -151,9 +139,7 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
-/***********************************************************************************************************************************
-Info for all files/paths in a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
 storagePosixInfoListEntry(
     StoragePosix *this, const String *path, const String *name, StorageInfoListCallback callback, void *callbackData)
@@ -175,22 +161,21 @@ storagePosixInfoListEntry(
     {
         String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
 
-        StorageInfo storageInfo = storagePosixInfo(this, pathInfo, false);
+        StorageInfo storageInfo = storageInterfaceInfoP(this, pathInfo);
 
         if (storageInfo.exists)
         {
             storageInfo.name = name;
             callback(callbackData, &storageInfo);
         }
-
-        strFree(pathInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static bool
-storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData)
+storagePosixInfoList(
+    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
 {
     THIS(StoragePosix);
 
@@ -199,6 +184,7 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -223,7 +209,7 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
 
         TRY_BEGIN()
         {
-            MEM_CONTEXT_TEMP_BEGIN()
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
                 // Read the directory entries
                 struct dirent *dirEntry = readdir(dir);
@@ -235,6 +221,9 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
 
                     // Get next entry
                     dirEntry = readdir(dir);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -249,18 +238,16 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Get a list of files from a directory
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StringList *
-storagePosixList(THIS_VOID, const String *path, const String *expression)
+storagePosixList(THIS_VOID, const String *path, StorageInterfaceListParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, expression);
+        FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -285,7 +272,7 @@ storagePosixList(THIS_VOID, const String *path, const String *expression)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Prepare regexp if an expression was passed
-                RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
+                RegExp *regExp = param.expression == NULL ? NULL : regExpNew(param.expression);
 
                 // Create the string list now that we know the directory is valid
                 result = strLstNew();
@@ -305,7 +292,7 @@ storagePosixList(THIS_VOID, const String *path, const String *expression)
                 }
 
                 // Move finished list up to the old context
-                strLstMove(result, MEM_CONTEXT_OLD());
+                strLstMove(result, memContextPrior());
             }
             MEM_CONTEXT_TEMP_END();
         }
@@ -320,11 +307,9 @@ storagePosixList(THIS_VOID, const String *path, const String *expression)
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
-/***********************************************************************************************************************************
-Move a path/file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
+storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param)
 {
     THIS(StoragePosix);
 
@@ -332,6 +317,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STORAGE_READ, source);
         FUNCTION_LOG_PARAM(STORAGE_WRITE, destination);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -349,10 +335,10 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
         // Attempt to move the file
         if (rename(strPtr(sourceFile), strPtr(destinationFile)) == -1)
         {
-            // Detemine which file/path is missing
+            // Determine which file/path is missing
             if (errno == ENOENT)
             {
-                if (!storagePosixExists(this, sourceFile))
+                if (!storageInterfaceExistsP(this, sourceFile))
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
@@ -361,8 +347,8 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
                         PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
                 }
 
-                storagePosixPathCreate(this, destinationPath, false, false, storageWriteModePath(destination));
-                result = storagePosixMove(this, source, destination);
+                storageInterfacePathCreateP(this, destinationPath, false, false, storageWriteModePath(destination));
+                result = storageInterfaceMoveP(this, source, destination);
             }
             // Else the destination is on a different device so a copy will be needed
             else if (errno == EXDEV)
@@ -381,7 +367,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
                 String *sourcePath = strPath(sourceFile);
 
                 if (!strEq(destinationPath, sourcePath))
-                    storagePosixPathSync(this, sourcePath);
+                    storageInterfacePathSyncP(this, sourcePath);
             }
         }
     }
@@ -390,11 +376,9 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-New file read object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StorageRead *
-storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
+storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
 {
     THIS(StoragePosix);
 
@@ -402,6 +386,7 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -410,28 +395,24 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
     FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing));
 }
 
-/***********************************************************************************************************************************
-New file write object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StorageWrite *
-storagePosixNewWrite(
-    THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group, time_t timeModified,
-    bool createPath, bool syncFile, bool syncPath, bool atomic)
+storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(MODE, modeFile);
-        FUNCTION_LOG_PARAM(MODE, modePath);
-        FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(INT64, timeModified);
-        FUNCTION_LOG_PARAM(BOOL, createPath);
-        FUNCTION_LOG_PARAM(BOOL, syncFile);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
-        FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(MODE, param.modeFile);
+        FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, param.group);
+        FUNCTION_LOG_PARAM(TIME, param.timeModified);
+        FUNCTION_LOG_PARAM(BOOL, param.createPath);
+        FUNCTION_LOG_PARAM(BOOL, param.syncFile);
+        FUNCTION_LOG_PARAM(BOOL, param.syncPath);
+        FUNCTION_LOG_PARAM(BOOL, param.atomic);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -440,15 +421,14 @@ storagePosixNewWrite(
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWritePosixNew(
-            this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile,
-            this->interface.pathSync != NULL ? syncPath : false, atomic));
+            this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
+            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic));
 }
 
-/***********************************************************************************************************************************
-Create a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
-storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
+storagePosixPathCreate(
+    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param)
 {
     THIS(StoragePosix);
 
@@ -458,6 +438,7 @@ storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool n
         FUNCTION_LOG_PARAM(BOOL, errorOnExists);
         FUNCTION_LOG_PARAM(BOOL, noParentCreate);
         FUNCTION_LOG_PARAM(MODE, mode);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -469,8 +450,8 @@ storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool n
         // If the parent path does not exist then create it if allowed
         if (errno == ENOENT && !noParentCreate)
         {
-            storagePosixPathCreate(this, strPath(path), errorOnExists, noParentCreate, mode);
-            storagePosixPathCreate(this, path, errorOnExists, noParentCreate, mode);
+            storageInterfacePathCreateP(this, strPath(path), errorOnExists, noParentCreate, mode);
+            storageInterfacePathCreateP(this, path, errorOnExists, noParentCreate, mode);
         }
         // Ignore path exists if allowed
         else if (errno != EEXIST || errorOnExists)
@@ -480,17 +461,16 @@ storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool n
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Does a path exist?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storagePosixPathExists(THIS_VOID,  const String *path)
+storagePosixPathExists(THIS_VOID,  const String *path, StorageInterfacePathExistsParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -514,11 +494,9 @@ storagePosixPathExists(THIS_VOID,  const String *path)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Remove a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
+storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
     THIS(StoragePosix);
 
@@ -526,6 +504,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -539,7 +518,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
         if (recurse)
         {
             // Get a list of files in this path
-            StringList *fileList = storagePosixList(this, path, NULL);
+            StringList *fileList = storageInterfaceListP(this, path);
 
             // Only continue if the path exists
             if (fileList != NULL)
@@ -554,7 +533,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
                     {
                         // These errors indicate that the entry is actually a path so we'll try to delete it that way
                         if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-                            storagePosixPathRemove(this, file, true);
+                            storageInterfacePathRemoveP(this, file, true);
                         // Else error
                         else
                             THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));
@@ -578,17 +557,16 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Sync a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
-storagePosixPathSync(THIS_VOID, const String *path)
+storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -624,18 +602,16 @@ storagePosixPathSync(THIS_VOID, const String *path)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Remove a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
-storagePosixRemove(THIS_VOID, const String *file, bool errorOnMissing)
+storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -644,7 +620,7 @@ storagePosixRemove(THIS_VOID, const String *file, bool errorOnMissing)
     // Attempt to unlink the file
     if (unlink(strPtr(file)) == -1)
     {
-        if (errorOnMissing || errno != ENOENT)
+        if (param.errorOnMissing || errno != ENOENT)
             THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strPtr(file));
     }
 
@@ -654,6 +630,24 @@ storagePosixRemove(THIS_VOID, const String *file, bool errorOnMissing)
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
+static const StorageInterface storageInterfacePosix =
+{
+    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress),
+
+    .exists = storagePosixExists,
+    .info = storagePosixInfo,
+    .infoList = storagePosixInfoList,
+    .list = storagePosixList,
+    .move = storagePosixMove,
+    .newRead = storagePosixNewRead,
+    .newWrite = storagePosixNewWrite,
+    .pathCreate = storagePosixPathCreate,
+    .pathExists = storagePosixPathExists,
+    .pathRemove = storagePosixPathRemove,
+    .pathSync = storagePosixPathSync,
+    .remove = storagePosixRemove,
+};
+
 Storage *
 storagePosixNewInternal(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
@@ -674,22 +668,29 @@ storagePosixNewInternal(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
+    // Initialze user module
+    userInit();
+
     // Create the object
     Storage *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("StoragePosix")
     {
         StoragePosix *driver = memNew(sizeof(StoragePosix));
-        driver->memContext = MEM_CONTEXT_NEW();
 
-        driver->interface = (StorageInterface)
+        *driver = (StoragePosix)
         {
-            .feature = (1 << storageFeaturePath), .exists = storagePosixExists, .info = storagePosixInfo,
-            .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove, .newRead = storagePosixNewRead,
-            .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate, .pathExists = storagePosixPathExists,
-            .pathRemove = storagePosixPathRemove, .pathSync = pathSync ? storagePosixPathSync : NULL,
-            .remove = storagePosixRemove
+            .memContext = MEM_CONTEXT_NEW(),
+            .interface = storageInterfacePosix,
         };
+
+        // Disable path sync when not supported
+        if (!pathSync)
+            driver->interface.pathSync = NULL;
+
+        // If this is a posix driver then add link features
+        if (strEq(type, STORAGE_POSIX_TYPE_STR))
+            driver->interface.feature |= (1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync);
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

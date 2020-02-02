@@ -572,6 +572,9 @@ sub build
             # Add to pre-execute list
             my $strHost = $self->variableReplace($oParent->paramGet('host'));
             push(@{$self->{preExecute}{$strHost}}, $oNode);
+
+            # Skip this command so it doesn't get executed twice
+            $oNode->paramSet('skip', 'y')
         }
     }
 
@@ -1036,6 +1039,7 @@ sub processText
     {
         $strBuffer =~ s/\&mdash\;/--/g;
         $strBuffer =~ s/\&lt\;/\</g;
+        $strBuffer =~ s/\&ge\;/\>\=/g;
     }
 
     $strBuffer = $self->variableReplace($strBuffer);

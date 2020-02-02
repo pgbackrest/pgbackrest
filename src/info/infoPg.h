@@ -32,8 +32,6 @@ typedef struct InfoPgData
 {
     unsigned int id;
     uint64_t systemId;
-    uint32_t catalogVersion;
-    uint32_t controlVersion;
     unsigned int version;
 } InfoPgData;
 
@@ -44,21 +42,20 @@ typedef enum
 {
     infoPgArchive,                                                  // archive info file
     infoPgBackup,                                                   // backup info file
-    infoPgManifest,                                                 // manifest file
 } InfoPgType;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
-InfoPg *infoPgNewLoad(
-    const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini);
-void infoPgSave(
-    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
+void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters
@@ -70,11 +67,7 @@ InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataCurrentId(const InfoPg *this);
 Info *infoPgInfo(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void infoPgFree(InfoPg *this);
+unsigned int infoPgCurrentDataId(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

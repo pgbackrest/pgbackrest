@@ -17,11 +17,13 @@ struct IoFilter
     MemContext *memContext;                                         // Mem context of filter
     const String *type;                                             // Filter type
     void *driver;                                                   // Filter driver
+    const VariantList *paramList;                                   // Filter parameters
     IoFilterInterface interface;                                    // Filter interface
 
     bool flushing;                                                  // Has the filter started flushing?
 };
 
+OBJECT_DEFINE_MOVE(IO_FILTER);
 OBJECT_DEFINE_FREE(IO_FILTER);
 
 /***********************************************************************************************************************************
@@ -30,11 +32,12 @@ New object
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoFilter *
-ioFilterNew(const String *type, void *driver, IoFilterInterface interface)
+ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
         FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
     FUNCTION_LOG_END();
 
@@ -46,14 +49,17 @@ ioFilterNew(const String *type, void *driver, IoFilterInterface interface)
     ASSERT(!(interface.in != NULL && interface.inOut != NULL));
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
-    // Filters that produce output will not always be able to dump all their output and will need to get the same input again
-    ASSERT(interface.inOut == NULL || interface.inputSame != NULL);
 
     IoFilter *this = memNew(sizeof(IoFilter));
-    this->memContext = memContextCurrent();
-    this->type = type;
-    this->driver = driver;
-    this->interface = interface;
+
+    *this = (IoFilter)
+    {
+        .memContext = memContextCurrent(),
+        .type = type,
+        .driver = driver,
+        .paramList = paramList,
+        .interface = interface,
+    };
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
@@ -108,25 +114,6 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 
     CHECK(!ioFilterInputSame(this) || bufUsed(output) > 0);
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move the object to a new context
-***********************************************************************************************************************************/
-IoFilter *
-ioFilterMove(IoFilter *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -202,7 +189,7 @@ ioFilterInterface(const IoFilter *this)
 /***********************************************************************************************************************************
 Does filter produce output?
 
-All InOut filters produce output.
+All In filters produce output.
 ***********************************************************************************************************************************/
 bool
 ioFilterOutput(const IoFilter *this)
@@ -214,6 +201,21 @@ ioFilterOutput(const IoFilter *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface.inOut != NULL);
+}
+
+/***********************************************************************************************************************************
+List of filter parameters
+***********************************************************************************************************************************/
+const VariantList *
+ioFilterParamList(const IoFilter *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->paramList);
 }
 
 /***********************************************************************************************************************************

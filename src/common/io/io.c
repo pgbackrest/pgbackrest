@@ -4,6 +4,7 @@ IO Functions
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/filter/sink.h"
 #include "common/io/io.h"
 #include "common/log.h"
 
@@ -66,11 +67,46 @@ ioReadBuf(IoRead *read)
         }
         while (!ioReadEof(read));
 
-        // Resize the buffer and move to calling context
+        // Resize the buffer and move to prior context
         bufResize(result, bufUsed(result));
-        bufMove(result, MEM_CONTEXT_OLD());
+        bufMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Read all IO but don't store it.  Useful for calculating checksums, size, etc.
+***********************************************************************************************************************************/
+bool
+ioReadDrain(IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
+
+    // Add a sink filter so we only need one read
+    ioFilterGroupAdd(ioReadFilterGroup(read), ioSinkNew());
+
+    // Check if the IO can be opened
+    bool result = ioReadOpen(read);
+
+    if (result)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // A single read that returns zero bytes
+            ioRead(read, bufNew(1));
+            ASSERT(ioReadEof(read));
+
+            // Close the IO
+            ioReadClose(read);
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 
     FUNCTION_TEST_RETURN(result);
 }

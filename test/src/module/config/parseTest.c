@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
 #define TEST_BACKREST_EXE                                           "pgbackrest"
@@ -50,8 +51,8 @@ testRun(void)
 
         // Check old config file constants
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(PGBACKREST_CONFIG_ORIG_PATH_FILE, "/etc/pgbackrest.conf", "check old config path");
-        TEST_RESULT_STR(strPtr(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR), "/etc/pgbackrest.conf", "check old config path str");
+        TEST_RESULT_Z(PGBACKREST_CONFIG_ORIG_PATH_FILE, "/etc/pgbackrest.conf", "check old config path");
+        TEST_RESULT_STR_Z(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR, "/etc/pgbackrest.conf", "check old config path str");
 
         // Confirm same behavior with multiple config include files
         //--------------------------------------------------------------------------------------------------------------------------
@@ -66,14 +67,14 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePut(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "compress-level=3\n"
                 "spool-path=/path/to/spool\n"));
 
         storagePut(
-            storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
             BUFSTRDEF(
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
@@ -87,14 +88,14 @@ testRun(void)
                 "buffer-size=65536\n"));
 
         storagePut(
-            storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
             BUFSTRDEF(
                 "[db:backup]\n"
                 "compress=n\n"
                 "recovery-option=a=b\n"));
 
         storagePut(
-            storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/stanza.db.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza.db.conf", strPtr(configIncludePath))),
             BUFSTRDEF(
                 "[db]\n"
                 "pg1-host=db\n"
@@ -114,7 +115,7 @@ testRun(void)
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
@@ -138,27 +139,32 @@ testRun(void)
 
         // Set up defaults
         String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
-            cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfig)));
+            cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfig)));
         String *backupCmdDefConfigInclPathValue = strNew(cfgDefOptionDefault(
-                cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+                cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
-        ParseOption parseOptionList[CFG_OPTION_TOTAL];
-        memset(&parseOptionList, 0, sizeof(parseOptionList));
+        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{.found = false}};
+
+        StringList *value = strLstNew();
+        strLstAdd(value, configFile);
 
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
+
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
 
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_VOID(cfgFileLoadPart(NULL, NULL), "check null part");
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -172,15 +178,25 @@ testRun(void)
         // Pass invalid values
         //--------------------------------------------------------------------------------------------------------------------------
         // --config valid, --config-include-path invalid (does not exist)
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAddZ(strLstNew(), BOGUS_STR);
+        value = strLstNew();
+        strLstAddZ(value, BOGUS_STR);
+
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathMissingError,
                 "unable to list files for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), strNewFmt("%s/%s", testPath(), BOGUS_STR));
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
+
+        value = strLstNew();
+        strLstAdd(value, strNewFmt("%s/%s", testPath(), BOGUS_STR));
+
+        parseOptionList[cfgOptConfig].valueList = value;
 
         TEST_ERROR_FMT(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
@@ -196,28 +212,30 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
-            NULL,
-            "config default, config-include-path default but nothing to read");
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
+            NULL, "config default, config-include-path default but nothing to read");
 
         // Config not passed as parameter - config does not exist. config-include-path passed as parameter - only include read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
             "config default and doesn't exist, config-include-path passed read");
 
-        // config and config-include-path are "default" with files existing. Config file exists in both currrent default and old
+        // config and config-include-path are "default" with files existing. Config file exists in both current default and old
         // default location - old location ignored.
         //--------------------------------------------------------------------------------------------------------------------------
         parseOptionList[cfgOptConfig].found = false;
@@ -227,15 +245,15 @@ testRun(void)
 
         mkdir(strPtr(strPath(oldConfigDefault)), 0750);
         storagePut(
-            storageNewWriteNP(storageLocalWrite(), oldConfigDefault),
+            storageNewWriteP(storageLocalWrite(), oldConfigDefault),
             BUFSTRDEF(
                 "[global:backup]\n"
                 "buffer-size=65536\n"));
 
         // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
         // to choose.
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,  configIncludePath,
-            oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, configFile,  configIncludePath, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -249,14 +267,17 @@ testRun(void)
         // Config not passed as parameter - config does not exist in new default but does exist in old default. config-include-path
         // passed as parameter - both include and old default read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global:backup]\n"
             "buffer-size=65536\n"
             "\n"
@@ -268,15 +289,18 @@ testRun(void)
 
         // --no-config and config-include-path passed as parameter (files read only from include path and not current or old config)
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = true;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
@@ -291,22 +315,24 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            configIncludePath, oldConfigDefault)),
-            NULL,
-            "--no-config, config-include-path default, nothing read");
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, configIncludePath, oldConfigDefault),
+            NULL, "--no-config, config-include-path default, nothing read");
 
         // config passed and config-include-path default exists with files - only config read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configFile);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = false;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            configIncludePath, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, configIncludePath, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n",
@@ -314,14 +340,17 @@ testRun(void)
 
         // config new default and config-include-path passed - both exists with files. config-include-path & new config default read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, configFile, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -330,7 +359,7 @@ testRun(void)
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "config new default exists with files, config-include-path passed, defualt config and config-include-path read");
+            "config new default exists with files, config-include-path passed, default config and config-include-path read");
 
         // config and config-include-path are "default".
         //--------------------------------------------------------------------------------------------------------------------------
@@ -340,8 +369,8 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
         // File exists in old default config location but not in current default.
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            configIncludePath, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, configIncludePath, oldConfigDefault),
             "[global:backup]\n"
             "buffer-size=65536\n"
             "\n"
@@ -352,14 +381,17 @@ testRun(void)
             "config-path override - config-include-path files and old config default read since no config in current path");
 
         // Pass --config-path
+        value = strLstNew();
+        strLstAddZ(value, testPath());
+
         parseOptionList[cfgOptConfigPath].found = true;
         parseOptionList[cfgOptConfigPath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), testPath());
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Override default paths for config and config-include-path - but no pgbackrest.conf file in override path only in old
         // default so ignored
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
@@ -367,15 +399,18 @@ testRun(void)
             "config-path override: config-include-path files read but config not read - does not exist");
 
         // Pass --config
+        value = strLstNew();
+        strLstAdd(value, configFile);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = false;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
 
         // Passing --config and --config-path - default config-include-path overwritten and config is required and is loaded and
         // config-include-path files will attempt to be loaded but not required
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -386,12 +421,15 @@ testRun(void)
             "recovery-option=c=d\n",
             "config-path changed config-include-path default - files exist, config and config includes read");
 
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), BOGUS_STR);
+        value = strLstNew();
+        strLstAddZ(value, BOGUS_STR);
+
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Passing --config and bogus --config-path - default config-include-path overwritten, config is required and is loaded and
         // config-include-path files will attempt to be loaded but doesn't exist - no error since not required
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n",
@@ -410,11 +448,14 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), testPath());
+        value = strLstNew();
+        strLstAddZ(value, testPath());
+
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Override default paths for config and config-include-path with --config-path
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -432,16 +473,19 @@ testRun(void)
         // config default and config-include-path passed - but no config files in the include path - only in the default path
         // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
 
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
-            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, configFile, backupCmdDefConfigInclPathValue, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n",
@@ -452,16 +496,18 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
             "add empty conf file to include directory");
 
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue, backupCmdDefConfigValue)),
-            NULL,
-            "config default does not exist, config-include-path passed but only empty conf file - nothing read");
+        TEST_RESULT_STR_Z(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, backupCmdDefConfigValue),
+            NULL, "config default does not exist, config-include-path passed but only empty conf file - nothing read");
     }
 
     // *****************************************************************************************************************************
@@ -483,68 +529,68 @@ testRun(void)
         strCat(value, "10");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
-        TEST_RESULT_STR(strPtr(value), "10", "value no character identifier - straight to bytes");
+        TEST_RESULT_STR_Z(value, "10", "value no character identifier - straight to bytes");
 
         strCat(value, "B");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
-        TEST_RESULT_STR(strPtr(value), "10", "value B to bytes");
+        TEST_RESULT_STR_Z(value, "10", "value B to bytes");
 
         strCat(value, "Kb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
-        TEST_RESULT_STR(strPtr(value), "10240", "value KB to bytes");
+        TEST_RESULT_STR_Z(value, "10240", "value KB to bytes");
 
         strTrunc(value, strChr(value, '2'));
         strCat(value, "k");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
-        TEST_RESULT_STR(strPtr(value), "10240", "value k to bytes");
+        TEST_RESULT_STR_Z(value, "10240", "value k to bytes");
 
         strCat(value, "pB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
-        TEST_RESULT_STR(strPtr(value), "11529215046068469760", "value Pb to bytes");
+        TEST_RESULT_STR_Z(value, "11529215046068469760", "value Pb to bytes");
 
         strTrunc(value, strChr(value, '5'));
         strCat(value, "GB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
-        TEST_RESULT_STR(strPtr(value), "11811160064", "value GB to bytes");
+        TEST_RESULT_STR_Z(value, "11811160064", "value GB to bytes");
 
         strTrunc(value, strChr(value, '8'));
         strCat(value, "g");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
-        TEST_RESULT_STR(strPtr(value), "11811160064", "value g to bytes");
+        TEST_RESULT_STR_Z(value, "11811160064", "value g to bytes");
 
         strTrunc(value, strChr(value, '8'));
         strCat(value, "T");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
-        TEST_RESULT_STR(strPtr(value), "12094627905536", "value T to bytes");
+        TEST_RESULT_STR_Z(value, "12094627905536", "value T to bytes");
 
         strTrunc(value, strChr(value, '0'));
         strCat(value, "tb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
-        TEST_RESULT_STR(strPtr(value), "13194139533312", "value tb to bytes");
+        TEST_RESULT_STR_Z(value, "13194139533312", "value tb to bytes");
 
         strTrunc(value, strChr(value, '3'));
         strCat(value, "0m");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
-        TEST_RESULT_STR(strPtr(value), "10485760", "value m to bytes");
+        TEST_RESULT_STR_Z(value, "10485760", "value m to bytes");
 
         strCat(value, "mb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
-        TEST_RESULT_STR(strPtr(value), "10995116277760", "value mb to bytes");
+        TEST_RESULT_STR_Z(value, "10995116277760", "value mb to bytes");
 
         strTrunc(value, strChr(value, '0'));
         strCat(value, "99999999999999999999p");
         convertToByte(&value, &valueDbl);
-        TEST_RESULT_STR(strPtr(value), "225179981368524800000000000000000000", "value really large  to bytes");
+        TEST_RESULT_STR_Z(value, "225179981368524800000000000000000000", "value really large  to bytes");
     }
 
     // *****************************************************************************************************************************
@@ -562,6 +608,13 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(BOGUS_STR ":" BOGUS_STR));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS:BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -732,12 +785,12 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("local"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
@@ -747,12 +800,12 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("remote"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
@@ -833,11 +886,11 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--test-delay=1"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--spool-path=/path/to/spool"));
+        strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'test-delay' not valid without option 'test'");
+            "option 'spool-path' not valid without option 'archive-async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -960,8 +1013,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "compress=bogus\n"));
@@ -977,8 +1030,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "compress=\n"));
@@ -994,8 +1047,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[db]\n"
                 "pg1-path=/path/to/db\n"
@@ -1012,8 +1065,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[db]\n"
                 "pg1-path=/path/to/db\n"
@@ -1024,8 +1077,8 @@ testRun(void)
             "option 'pg1-path' cannot be set multiple times");
 
         // Also test with a boolean option since this gets converted immediately and will blow up if it is multi
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[db]\n"
                 "start-fast=y\n"
@@ -1089,8 +1142,8 @@ testRun(void)
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "command arguments");
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgCommandParam(), "|")), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
+        TEST_RESULT_STR_Z(
+            strLstJoin(cfgCommandParam(), "|"), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
             "    check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1110,17 +1163,17 @@ testRun(void)
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
 
-        TEST_RESULT_STR(strPtr(cfgExe()), TEST_BACKREST_EXE, "    exe is set");
+        TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "    exe is set");
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "    config is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "    config is source param");
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "    config is negated");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "    stanza is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "    stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3KeySecret)), "xxx", "    repo1-s3-secret is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3KeySecret), "xxx", "    repo1-s3-secret is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
@@ -1152,8 +1205,8 @@ testRun(void)
         setenv("PGBACKREST_START_FAST", "n", true);
         setenv("PGBACKREST_PG1_SOCKET_PATH", "/path/to/socket", true);
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "compress-level=3\n"
@@ -1196,11 +1249,11 @@ testRun(void)
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLockPath)), "/", "    lock-path is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgSocketPath)), "/path/to/socket", "    pg1-socket-path is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgSocketPath), "/path/to/socket", "    pg1-socket-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceConfig, "    pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source param");
@@ -1238,8 +1291,8 @@ testRun(void)
         strLstAdd(argList, strNew("--buffer-size=2MB"));
         strLstAdd(argList, strNew("archive-push"));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "spool-path=/path/to/spool\n"));
@@ -1287,8 +1340,8 @@ testRun(void)
 
         const VariantList *includeList = NULL;
         TEST_ASSIGN(includeList, cfgOptionLst(cfgOptDbInclude), "get db include options");
-        TEST_RESULT_STR(strPtr(varStr(varLstGet(includeList, 0))), "abc", "check db include option");
-        TEST_RESULT_STR(strPtr(varStr(varLstGet(includeList, 1))), "def", "check db include option");
+        TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 0)), "abc", "check db include option");
+        TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 1)), "def", "check db include option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1302,8 +1355,8 @@ testRun(void)
 
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("a"))))), "b", "check recovery option");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("c"))))), "de=fg hi", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("a")))), "b", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("c")))), "de=fg hi", "check recovery option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1312,8 +1365,8 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global:restore]\n"
                 "recovery-option=f=g\n"
@@ -1325,8 +1378,8 @@ testRun(void)
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk")))), "l", "check recovery option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1341,9 +1394,9 @@ testRun(void)
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
-        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
-        TEST_RESULT_STR(strPtr(varStr(varLstGet(cfgOptionLst(cfgOptDbInclude), 0))), "77", "check db include option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk")))), "l", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(varLstGet(cfgOptionLst(cfgOptDbInclude), 0)), "77", "check db include option");
         TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 1, "check db include option size");
 
         unsetenv("PGBACKREST_STANZA");
@@ -1358,8 +1411,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("info"));
 
-        storagePutNP(
-            storageNewWriteNP(storageLocalWrite(), configFile),
+        storagePutP(
+            storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-path=/path/to/repo\n"
@@ -1368,7 +1421,7 @@ testRun(void)
                 "repo1-path=/not/the/path\n"));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "info command");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoPath)), "/path/to/repo", "check repo1-path option");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoPath), "/path/to/repo", "check repo1-path option");
     }
 
     // *****************************************************************************************************************************

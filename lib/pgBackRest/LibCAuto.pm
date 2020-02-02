@@ -14,6 +14,12 @@ sub libcAutoConstant
         CFGOPTVAL_INFO_OUTPUT_TEXT                                       => 'text',
         CFGOPTVAL_INFO_OUTPUT_JSON                                       => 'json',
 
+        CFGOPTVAL_LS_OUTPUT_TEXT                                         => 'text',
+        CFGOPTVAL_LS_OUTPUT_JSON                                         => 'json',
+
+        CFGOPTVAL_REMOTE_TYPE_PG                                         => 'pg',
+        CFGOPTVAL_REMOTE_TYPE_REPO                                       => 'repo',
+
         CFGOPTVAL_REPO_CIPHER_TYPE_NONE                                  => 'none',
         CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                           => 'aes-256-cbc',
 
@@ -21,10 +27,14 @@ sub libcAutoConstant
         CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                       => 'diff',
         CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                       => 'incr',
 
+        CFGOPTVAL_REPO_S3_URI_STYLE_HOST                                 => 'host',
+        CFGOPTVAL_REPO_S3_URI_STYLE_PATH                                 => 'path',
+
         CFGOPTVAL_REPO_TYPE_CIFS                                         => 'cifs',
         CFGOPTVAL_REPO_TYPE_POSIX                                        => 'posix',
         CFGOPTVAL_REPO_TYPE_S3                                           => 's3',
 
+        CFGOPTVAL_SORT_NONE                                              => 'none',
         CFGOPTVAL_SORT_ASC                                               => 'asc',
         CFGOPTVAL_SORT_DESC                                              => 'desc',
 
@@ -36,12 +46,6 @@ sub libcAutoConstant
         CFGOPTVAL_BACKUP_TYPE_DIFF                                       => 'diff',
         CFGOPTVAL_BACKUP_TYPE_INCR                                       => 'incr',
 
-        CFGOPTVAL_LOCAL_TYPE_DB                                          => 'db',
-        CFGOPTVAL_LOCAL_TYPE_BACKUP                                      => 'backup',
-
-        CFGOPTVAL_REMOTE_TYPE_DB                                         => 'db',
-        CFGOPTVAL_REMOTE_TYPE_BACKUP                                     => 'backup',
-
         CFGOPTVAL_RESTORE_TYPE_NAME                                      => 'name',
         CFGOPTVAL_RESTORE_TYPE_TIME                                      => 'time',
         CFGOPTVAL_RESTORE_TYPE_XID                                       => 'xid',
@@ -49,6 +53,7 @@ sub libcAutoConstant
         CFGOPTVAL_RESTORE_TYPE_NONE                                      => 'none',
         CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                                 => 'immediate',
         CFGOPTVAL_RESTORE_TYPE_DEFAULT                                   => 'default',
+        CFGOPTVAL_RESTORE_TYPE_STANDBY                                   => 'standby',
 
         CFGDEF_TYPE_BOOLEAN                                              => 0,
         CFGDEF_TYPE_FLOAT                                                => 1,
@@ -74,22 +79,27 @@ sub libcAutoExportTag
         checksum =>
         [
             'pageChecksum',
-            'pageChecksumBufferTest',
-            'pageChecksumTest',
         ],
 
         config =>
         [
             'CFGOPTVAL_INFO_OUTPUT_TEXT',
             'CFGOPTVAL_INFO_OUTPUT_JSON',
+            'CFGOPTVAL_LS_OUTPUT_TEXT',
+            'CFGOPTVAL_LS_OUTPUT_JSON',
+            'CFGOPTVAL_REMOTE_TYPE_PG',
+            'CFGOPTVAL_REMOTE_TYPE_REPO',
             'CFGOPTVAL_REPO_CIPHER_TYPE_NONE',
             'CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR',
+            'CFGOPTVAL_REPO_S3_URI_STYLE_HOST',
+            'CFGOPTVAL_REPO_S3_URI_STYLE_PATH',
             'CFGOPTVAL_REPO_TYPE_CIFS',
             'CFGOPTVAL_REPO_TYPE_POSIX',
             'CFGOPTVAL_REPO_TYPE_S3',
+            'CFGOPTVAL_SORT_NONE',
             'CFGOPTVAL_SORT_ASC',
             'CFGOPTVAL_SORT_DESC',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE',
@@ -98,10 +108,6 @@ sub libcAutoExportTag
             'CFGOPTVAL_BACKUP_TYPE_FULL',
             'CFGOPTVAL_BACKUP_TYPE_DIFF',
             'CFGOPTVAL_BACKUP_TYPE_INCR',
-            'CFGOPTVAL_LOCAL_TYPE_DB',
-            'CFGOPTVAL_LOCAL_TYPE_BACKUP',
-            'CFGOPTVAL_REMOTE_TYPE_DB',
-            'CFGOPTVAL_REMOTE_TYPE_BACKUP',
             'CFGOPTVAL_RESTORE_TYPE_NAME',
             'CFGOPTVAL_RESTORE_TYPE_TIME',
             'CFGOPTVAL_RESTORE_TYPE_XID',
@@ -109,18 +115,15 @@ sub libcAutoExportTag
             'CFGOPTVAL_RESTORE_TYPE_NONE',
             'CFGOPTVAL_RESTORE_TYPE_IMMEDIATE',
             'CFGOPTVAL_RESTORE_TYPE_DEFAULT',
+            'CFGOPTVAL_RESTORE_TYPE_STANDBY',
             'CFGCMD_ARCHIVE_GET',
-            'CFGCMD_ARCHIVE_GET_ASYNC',
             'CFGCMD_ARCHIVE_PUSH',
-            'CFGCMD_ARCHIVE_PUSH_ASYNC',
             'CFGCMD_BACKUP',
             'CFGCMD_CHECK',
             'CFGCMD_EXPIRE',
             'CFGCMD_HELP',
             'CFGCMD_INFO',
-            'CFGCMD_LOCAL',
             'CFGCMD_LS',
-            'CFGCMD_REMOTE',
             'CFGCMD_RESTORE',
             'CFGCMD_STANZA_CREATE',
             'CFGCMD_STANZA_DELETE',
@@ -136,10 +139,8 @@ sub libcAutoExportTag
             'CFGOPT_ARCHIVE_TIMEOUT',
             'CFGOPT_BACKUP_STANDBY',
             'CFGOPT_BUFFER_SIZE',
-            'CFGOPT_C',
             'CFGOPT_CHECKSUM_PAGE',
             'CFGOPT_CMD_SSH',
-            'CFGOPT_COMMAND',
             'CFGOPT_COMPRESS',
             'CFGOPT_COMPRESS_LEVEL',
             'CFGOPT_COMPRESS_LEVEL_NETWORK',
@@ -166,7 +167,6 @@ sub libcAutoExportTag
             'CFGOPT_NEUTRAL_UMASK',
             'CFGOPT_ONLINE',
             'CFGOPT_OUTPUT',
-            'CFGOPT_PERL_OPTION',
             'CFGOPT_PG_HOST',
             'CFGOPT_PG_HOST2',
             'CFGOPT_PG_HOST3',
@@ -247,10 +247,20 @@ sub libcAutoExportTag
             'CFGOPT_PG_SOCKET_PATH6',
             'CFGOPT_PG_SOCKET_PATH7',
             'CFGOPT_PG_SOCKET_PATH8',
+            'CFGOPT_PG_USER',
+            'CFGOPT_PG_USER2',
+            'CFGOPT_PG_USER3',
+            'CFGOPT_PG_USER4',
+            'CFGOPT_PG_USER5',
+            'CFGOPT_PG_USER6',
+            'CFGOPT_PG_USER7',
+            'CFGOPT_PG_USER8',
             'CFGOPT_PROCESS',
             'CFGOPT_PROCESS_MAX',
             'CFGOPT_PROTOCOL_TIMEOUT',
             'CFGOPT_RECOVERY_OPTION',
+            'CFGOPT_RECURSE',
+            'CFGOPT_REMOTE_TYPE',
             'CFGOPT_REPO_CIPHER_PASS',
             'CFGOPT_REPO_CIPHER_TYPE',
             'CFGOPT_REPO_HARDLINK',
@@ -273,8 +283,10 @@ sub libcAutoExportTag
             'CFGOPT_REPO_S3_HOST',
             'CFGOPT_REPO_S3_KEY',
             'CFGOPT_REPO_S3_KEY_SECRET',
+            'CFGOPT_REPO_S3_PORT',
             'CFGOPT_REPO_S3_REGION',
             'CFGOPT_REPO_S3_TOKEN',
+            'CFGOPT_REPO_S3_URI_STYLE',
             'CFGOPT_REPO_S3_VERIFY_TLS',
             'CFGOPT_REPO_TYPE',
             'CFGOPT_RESUME',
@@ -290,12 +302,8 @@ sub libcAutoExportTag
             'CFGOPT_TARGET_ACTION',
             'CFGOPT_TARGET_EXCLUSIVE',
             'CFGOPT_TARGET_TIMELINE',
-            'CFGOPT_TEST',
-            'CFGOPT_TEST_DELAY',
-            'CFGOPT_TEST_POINT',
             'CFGOPT_TYPE',
             'cfgCommandName',
-            'cfgOptionIndex',
             'cfgOptionIndexTotal',
             'cfgOptionName',
         ],
@@ -322,8 +330,6 @@ sub libcAutoExportTag
 
         crypto =>
         [
-            'CIPHER_MODE_ENCRYPT',
-            'CIPHER_MODE_DECRYPT',
             'cryptoHashOne',
         ],
 
@@ -332,27 +338,9 @@ sub libcAutoExportTag
             'libcUvSize',
         ],
 
-        encode =>
-        [
-            'ENCODE_TYPE_BASE64',
-            'decodeToBin',
-            'encodeToStr',
-        ],
-
-        lock =>
-        [
-            'lockAcquire',
-            'lockRelease',
-        ],
-
-        random =>
-        [
-            'cryptoRandomBytes',
-        ],
-
         storage =>
         [
-            'storagePosixPathRemove',
+            'storageRepoFree',
         ],
 
         test =>

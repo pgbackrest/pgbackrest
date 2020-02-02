@@ -17,6 +17,7 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path);
+use Pod::Usage qw(pod2usage);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
@@ -24,6 +25,7 @@ use lib dirname(dirname($0)) . '/lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
 
@@ -41,6 +43,8 @@ test.pl [options] doc|test
 
  VM Options:
    --vm                 docker container to build/test
+   --param              parameters to pass to test.pl
+   --sudo               test requires sudo
 
  General Options:
    --help               display usage and exit
@@ -50,9 +54,13 @@ test.pl [options] doc|test
 # Command line parameters
 ####################################################################################################################################
 my $strVm;
+my @stryParam;
+my $bSudo;
 my $bHelp;
 
 GetOptions ('help' => \$bHelp,
+            'param=s@' => \@stryParam,
+            'sudo' => \$bSudo,
             'vm=s' => \$strVm)
     or pod2usage(2);
 
@@ -70,9 +78,18 @@ sub processBegin
     $lProcessBegin = time();
 }
 
+sub processExec
+{
+    my $strCommand = shift;
+    my $rhParam = shift;
+
+    &log(INFO, "    Exec ${strCommand}");
+    executeTest($strCommand, $rhParam);
+}
+
 sub processEnd
 {
-    &log(INFO, "End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
+    &log(INFO, "    End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
 }
 
 ####################################################################################################################################
@@ -97,6 +114,12 @@ eval
         pod2usage();
     }
 
+    # VM must be defined
+    if (!defined($strVm))
+    {
+        confess &log(ERROR, '--vm is required');
+    }
+
     ################################################################################################################################
     # Paths
     ################################################################################################################################
@@ -106,20 +129,40 @@ eval
 
     logLevelSet(INFO, INFO, OFF);
 
+    processBegin('install common packages');
+    processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
+    processExec(
+        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl' .
+            ' pkg-config',
+        {bSuppressStdErr => true});
+    processEnd();
+
+    processBegin('mount tmpfs');
+    processExec('mkdir -p -m 770 test');
+    processExec('sudo mount -t tmpfs -o size=2048m tmpfs test');
+    processExec('df -h test', {bShowOutputAsync => true});
+    processEnd();
+
     ################################################################################################################################
     # Build documentation
     ################################################################################################################################
     if ($ARGV[0] eq 'doc')
     {
-        processBegin('LaTeX install');
-        executeTest(
-            'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
-            {bSuppressStdErr => true});
-        executeTest('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
+        if ($strVm eq VM_CO7)
+        {
+            processBegin('LaTeX install');
+            processExec(
+                'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
+                {bSuppressStdErr => true});
+            processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
+        }
+
+        processBegin('remove sudo');
+        processExec('sudo rm /etc/sudoers.d/travis');
         processEnd();
 
-        processBegin('release documentation doc');
-        executeTest("${strReleaseExe} --build --no-gen", {bShowOutputAsync => true});
+        processBegin('release documentation');
+        processExec("${strReleaseExe} --build --no-gen --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 
@@ -128,29 +171,51 @@ eval
     ################################################################################################################################
     elsif ($ARGV[0] eq 'test')
     {
-        # VM must be defined
-        if (!defined($strVm))
+        # Build list of packages that need to be installed
+        my $strPackage = "libperl-dev";
+
+        if (vmCoverageC($strVm))
         {
-            confess &log(ERROR, '--vm is required');
+            $strPackage .= " lcov";
         }
 
-        # Only lint on U18
-        my $strParam = undef;
-
-        if ($strVm ne VM_U18)
+        if ($strVm eq VM_NONE)
         {
-            $strParam .= '--no-lint';
+            $strPackage .= " valgrind";
+        }
+        else
+        {
+            $strPackage .= " libdbd-pg-perl";
         }
 
-        processBegin("${strVm} build");
-        executeTest("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true});
+        processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
+        processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
         processEnd();
 
-        processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
-        executeTest(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
-                (defined($strParam) ? " ${strParam}" : ''),
-            {bShowOutputAsync => true});
+        processBegin('install test packages');
+        processExec("sudo apt-get install -y ${strPackage}", {bSuppressStdErr => true});
+        processEnd();
+
+        if (!$bSudo)
+        {
+            processBegin('remove sudo');
+            processExec('sudo rm /etc/sudoers.d/travis');
+            processEnd();
+        }
+
+        # Build the container
+        if ($strVm ne VM_NONE)
+        {
+            processBegin("${strVm} build");
+            processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
+            processEnd();
+        }
+
+        processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
+        processExec(
+            "${strTestExe} --no-gen --vm-host=none --vm-max=2 --vm=${strVm}" .
+            (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
+            {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 

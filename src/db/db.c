@@ -1,0 +1,721 @@
+/***********************************************************************************************************************************
+Database Client
+***********************************************************************************************************************************/
+#include "build.auto.h"
+
+#include "common/debug.h"
+#include "common/log.h"
+#include "common/memContext.h"
+#include "common/object.h"
+#include "common/wait.h"
+#include "db/db.h"
+#include "db/protocol.h"
+#include "postgres/interface.h"
+#include "postgres/version.h"
+#include "protocol/helper.h"
+#include "version.h"
+
+/***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+#define PG_BACKUP_ADVISORY_LOCK                                     "12340078987004321"
+
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+struct Db
+{
+    MemContext *memContext;
+    PgClient *client;                                               // Local PostgreSQL client
+    ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
+    unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
+    const String *applicationName;                                  // Used to identify this connection in PostgreSQL
+
+    unsigned int pgVersion;                                         // Version as reported by the database
+    const String *pgDataPath;                                       // Data directory reported by the database
+    const String *archiveMode;                                      // The archive_mode reported by the database
+    const String *archiveCommand;                                   // The archive_command reported by the database
+};
+
+OBJECT_DEFINE_MOVE(DB);
+OBJECT_DEFINE_FREE(DB);
+
+/***********************************************************************************************************************************
+Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
+{
+    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
+    protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+
+    protocolClientExecute(this->remoteClient, command, false);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
+
+/***********************************************************************************************************************************
+Create object
+***********************************************************************************************************************************/
+Db *
+dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PG_CLIENT, client);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, remoteClient);
+        FUNCTION_LOG_PARAM(STRING, applicationName);
+    FUNCTION_LOG_END();
+
+    ASSERT((client != NULL && remoteClient == NULL) || (client == NULL && remoteClient != NULL));
+    ASSERT(applicationName != NULL);
+
+    Db *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("Db")
+    {
+        this = memNew(sizeof(Db));
+
+        *this = (Db)
+        {
+            .memContext = memContextCurrent(),
+            .remoteClient = remoteClient,
+            .applicationName = strDup(applicationName),
+        };
+
+        this->client = pgClientMove(client, this->memContext);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(DB, this);
+}
+
+/***********************************************************************************************************************************
+Execute a query
+***********************************************************************************************************************************/
+static VariantList *
+dbQuery(Db *this, const String *query)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, query);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(query != NULL);
+
+    VariantList *result = NULL;
+
+    // Query remotely
+    if (this->remoteClient != NULL)
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY_STR);
+        protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+        protocolCommandParamAdd(command, VARSTR(query));
+
+        result = varVarLst(protocolClientExecute(this->remoteClient, command, true));
+    }
+    // Else locally
+    else
+        result = pgClientQuery(this->client, query);
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Execute a command that expects no output
+***********************************************************************************************************************************/
+static void
+dbExec(Db *this, const String *command)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, command);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(command != NULL);
+
+    CHECK(dbQuery(this, command) == NULL);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Execute a query that returns a single row and column
+***********************************************************************************************************************************/
+static Variant *
+dbQueryColumn(Db *this, const String *query)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, query);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(query != NULL);
+
+    VariantList *result = dbQuery(this, query);
+
+    CHECK(varLstSize(result) == 1);
+    CHECK(varLstSize(varVarLst(varLstGet(result, 0))) == 1);
+
+    FUNCTION_LOG_RETURN(VARIANT, varLstGet(varVarLst(varLstGet(result, 0)), 0));
+}
+
+/***********************************************************************************************************************************
+Execute a query that returns a single row
+***********************************************************************************************************************************/
+static VariantList *
+dbQueryRow(Db *this, const String *query)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, query);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(query != NULL);
+
+    VariantList *result = dbQuery(this, query);
+
+    CHECK(varLstSize(result) == 1);
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(varLstGet(result, 0)));
+}
+
+/***********************************************************************************************************************************
+Open the db connection
+***********************************************************************************************************************************/
+void
+dbOpen(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Open the connection
+        if (this->remoteClient != NULL)
+        {
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN_STR);
+            this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
+
+            // Set a callback to notify the remote when a connection is closed
+            memContextCallbackSet(this->memContext, dbFreeResource, this);
+        }
+        else
+            pgClientOpen(this->client);
+
+        // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
+        // but this is an extra level protection.
+        dbExec(this, STRDEF("set search_path = 'pg_catalog'"));
+
+        // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
+        dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
+
+        // Query the version and data_directory
+        VariantList *row = dbQueryRow(
+            this,
+            STRDEF(
+                "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
+                " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
+
+        // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
+        // running an old minor version.
+        this->pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
+
+        // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
+        // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->pgDataPath = strDup(varStr(varLstGet(row, 1)));
+            this->archiveMode = strDup(varStr(varLstGet(row, 2)));
+            this->archiveCommand = strDup(varStr(varLstGet(row, 3)));
+        }
+        MEM_CONTEXT_END();
+
+        if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
+            dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+// Helper to build start backup query
+static String *
+dbBackupStartQuery(unsigned int pgVersion, bool startFast)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(BOOL, startFast);
+    FUNCTION_TEST_END();
+
+    // Build query to return start lsn and WAL segment name
+    String *result = strNewFmt(
+        "select lsn::text as lsn,\n"
+        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
+        "  from pg_catalog.pg_start_backup('" PROJECT_NAME " backup started at ' || current_timestamp",
+        strPtr(pgWalName(pgVersion)));
+
+    // Start backup after immediate checkpoint
+    if (startFast)
+    {
+        strCatFmt(result, ", " TRUE_Z);
+    }
+    // Else start backup at the next scheduled checkpoint
+    else if (pgVersion >= PG_VERSION_84)
+        strCatFmt(result, ", " FALSE_Z);
+
+    // Use non-exclusive backup mode when available
+    if (pgVersion >= PG_VERSION_96)
+        strCatFmt(result, ", " FALSE_Z);
+
+    // Complete query
+    strCatFmt(result, ") as lsn");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+#define FUNCTION_LOG_DB_BACKUP_START_RESULT_TYPE                                                                                   \
+    DbBackupStartResult
+#define FUNCTION_LOG_DB_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
+    objToLog(&value, "DbBackupStartResult", buffer, bufferSize)
+
+DbBackupStartResult
+dbBackupStart(Db *this, bool startFast, bool stopAuto)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(BOOL, startFast);
+        FUNCTION_LOG_PARAM(BOOL, stopAuto);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    DbBackupStartResult result = {.lsn = NULL};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
+        // database cluster.  This lock helps make the stop-auto option safe.
+        if (!varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
+        {
+            THROW(
+                LockAcquireError,
+                "unable to acquire " PROJECT_NAME " advisory lock\n"
+                "HINT: is another " PROJECT_NAME " backup already running on this cluster?");
+        }
+
+        // If stop-auto is enabled check for a running backup
+        if (stopAuto)
+        {
+            // Feature is not supported in PostgreSQL < 9.3
+            CHECK(dbPgVersion(this) >= PG_VERSION_93);
+
+            // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
+            if (dbPgVersion(this) < PG_VERSION_96)
+            {
+                if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
+                {
+                    LOG_WARN(
+                        "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
+                        " pg_stop_backup() will be called so a new backup can be started.");
+
+                    dbBackupStop(this);
+                }
+            }
+        }
+
+        // Start backup
+        VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
+
+        // Return results
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(DB_BACKUP_START_RESULT, result);
+}
+/**********************************************************************************************************************************/
+// Helper to build stop backup query
+static String *
+dbBackupStopQuery(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    // Build query to return start lsn and WAL segment name
+    String *result = strNewFmt(
+        "select lsn::text as lsn,\n"
+        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
+        strPtr(pgWalName(pgVersion)));
+
+    // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
+    if (pgVersion >= PG_VERSION_96)
+    {
+        strCat(
+            result,
+            ",\n"
+            "       labelfile::text as backuplabel_file,\n"
+            "       spcmapfile::text as tablespacemap_file");
+    }
+
+    // Build stop backup function
+    strCat(
+        result,
+        "\n"
+        "  from pg_catalog.pg_stop_backup(");
+
+    // Use non-exclusive backup mode when available
+    if (pgVersion >= PG_VERSION_96)
+        strCatFmt(result, FALSE_Z);
+
+    // Disable archive checking in pg_stop_backup() since we do this elsewhere
+    if (pgVersion >= PG_VERSION_10)
+        strCatFmt(result, ", " FALSE_Z);
+
+    // Complete query
+    strCatFmt(result, ")");
+
+    if (pgVersion < PG_VERSION_96)
+        strCatFmt(result, " as lsn");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_TYPE                                                                                   \
+    DbBackupStopResult
+#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
+    objToLog(&value, "DbBackupStopResult", buffer, bufferSize)
+
+DbBackupStopResult
+dbBackupStop(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    DbBackupStopResult result = {.lsn = NULL};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Stop backup
+        VariantList *row = dbQueryRow(this, dbBackupStopQuery(dbPgVersion(this)));
+
+        // Check if the tablespace map is empty
+        bool tablespaceMapEmpty =
+            dbPgVersion(this) >= PG_VERSION_96 ? strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0 : false;
+
+        // Return results
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+
+            if (dbPgVersion(this) >= PG_VERSION_96)
+            {
+                result.backupLabel = strDup(varStr(varLstGet(row, 2)));
+
+                if (!tablespaceMapEmpty)
+                    result.tablespaceMap = strDup(varStr(varLstGet(row, 3)));
+            }
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(DB_BACKUP_STOP_RESULT, result);
+}
+
+/***********************************************************************************************************************************
+Is this instance a standby?
+***********************************************************************************************************************************/
+bool
+dbIsStandby(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    if (this->pgVersion >= PG_VERSION_HOT_STANDBY)
+    {
+        result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+VariantList *
+dbList(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+}
+
+/**********************************************************************************************************************************/
+void
+dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, targetLsn);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(targetLsn != NULL);
+    ASSERT(timeout > 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Loop until lsn has been reached or timeout
+        Wait *wait = waitNew(timeout);
+        bool targetReached = false;
+        const char *lsnName = strPtr(pgLsnName(dbPgVersion(this)));
+        const String *replayLsnFunction = strNewFmt(
+            "pg_catalog.pg_last_%s_replay_%s()", strPtr(pgWalName(dbPgVersion(this))), lsnName);
+        const String *replayLsn = NULL;
+
+        do
+        {
+            // Build the query
+            String *query = strNewFmt(
+                "select replayLsn::text,\n"
+                "       (replayLsn > '%s')::bool as targetReached",
+                strPtr(targetLsn));
+
+            if (replayLsn != NULL)
+            {
+                strCatFmt(
+                    query,
+                    ",\n"
+                    "       (replayLsn > '%s')::bool as replayProgress", strPtr(replayLsn));
+            }
+
+            strCatFmt(
+                query,
+                "\n"
+                "  from %s as replayLsn",
+                strPtr(replayLsnFunction));
+
+            // Execute the query and get replayLsn
+            VariantList *row = dbQueryRow(this, query);
+            replayLsn = varStr(varLstGet(row, 0));
+
+            // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
+            // connected but it's possible that the standy was promoted in the meantime.
+            if (replayLsn == NULL)
+            {
+                THROW_FMT(
+                    ArchiveTimeoutError,
+                    "unable to query replay lsn on the standby using '%s'\n"
+                    "HINT: Is this a standby?",
+                    strPtr(replayLsnFunction));
+            }
+
+            targetReached = varBool(varLstGet(row, 1));
+
+            // If the target has not been reached but progress is being made then reset the timer
+            if (!targetReached && varLstSize(row) > 2 && varBool(varLstGet(row, 2)))
+                wait = waitNew(timeout);
+
+            protocolKeepAlive();
+        }
+        while (!targetReached && waitMore(wait));
+
+        // Error if a timeout occurred before the target lsn was reached
+        if (!targetReached)
+        {
+            THROW_FMT(
+                ArchiveTimeoutError, "timeout before standby replayed to %s - only reached %s", strPtr(targetLsn),
+                strPtr(replayLsn));
+        }
+
+        // Perform a checkpoint
+        dbExec(this, STRDEF("checkpoint"));
+
+        // On PostgreSQL >= 9.6 the checkpoint location can be verified
+        //
+        // ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of
+        // the checkpoint recorded in pg_control?  It seems possible since it would be safer if the checkpoint in pg_control was
+        // behind rather than ahead, so add a loop to keep checking until the checkpoint has been recorded or timeout.
+        if (dbPgVersion(this) >= PG_VERSION_96)
+        {
+            // Build the query
+            const String *query = strNewFmt(
+                "select (checkpoint_%s > '%s')::bool as targetReached,\n"
+                "       checkpoint_%s::text as checkpointLsn\n"
+                "  from pg_catalog.pg_control_checkpoint()",
+                lsnName, strPtr(targetLsn), lsnName);
+
+            // Execute query
+            VariantList *row = dbQueryRow(this, query);
+
+            // Verify target was reached
+            if (!varBool(varLstGet(row, 0)))
+            {
+                THROW_FMT(
+                    ArchiveTimeoutError,
+                    "the checkpoint lsn %s is less than the target lsn %s even though the replay lsn is %s",
+                    strPtr(varStr(varLstGet(row, 1))), strPtr(targetLsn), strPtr(replayLsn));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+VariantList *
+dbTablespaceList(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, spcname::text from pg_catalog.pg_tablespace")));
+}
+
+/**********************************************************************************************************************************/
+TimeMSec
+dbTimeMSec(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        TIME_MSEC, varUInt64Force(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
+}
+
+/***********************************************************************************************************************************
+Switch the WAL segment and return the segment that should have been archived
+***********************************************************************************************************************************/
+String *
+dbWalSwitch(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Create a restore point to ensure current WAL will be archived.  For versions < 9.1 activity will need to be generated by
+        // the user if there have been no writes since the last WAL switch.
+        if (this->pgVersion >= PG_VERSION_RESTORE_POINT)
+            dbQueryColumn(this, STRDEF("select pg_catalog.pg_create_restore_point('" PROJECT_NAME " Archive Check')::text"));
+
+        // Request a WAL segment switch
+        const char *walName = strPtr(pgWalName(this->pgVersion));
+        const String *walFileName = varStr(
+            dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
+
+        // Copy WAL segment name to the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(walFileName);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Get pg data path loaded from the data_directory GUC
+***********************************************************************************************************************************/
+const String *
+dbPgDataPath(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgDataPath);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+unsigned int
+dbPgVersion(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgVersion);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+const String *
+dbArchiveMode(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->archiveMode);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+const String *
+dbArchiveCommand(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->archiveCommand);
+}
+
+/***********************************************************************************************************************************
+Render as string for logging
+***********************************************************************************************************************************/
+String *
+dbToLog(const Db *this)
+{
+    return strNewFmt(
+        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strPtr(pgClientToLog(this->client)),
+        this->remoteClient == NULL ? NULL_Z : strPtr(protocolClientToLog(this->remoteClient)));
+}

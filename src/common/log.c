@@ -56,7 +56,7 @@ Convert log level to string and vice versa
 ***********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const char *logLevelList[LOG_LEVEL_TOTAL] =
+static const char *const logLevelList[LOG_LEVEL_TOTAL] =
 {
     "OFF",
     "ASSERT",
@@ -211,12 +211,13 @@ logFileSet(const char *logFile)
     if (logLevelFile != logLevelOff)
     {
         // Open the file and handle errors
-        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0750);
+        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0640);
 
         if (logHandleFile == -1)
         {
             int errNo = errno;
-            LOG_WARN("unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
+            LOG_WARN_FMT(
+                "unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
             result = false;
         }
 
@@ -334,35 +335,35 @@ logWriteIndent(int handle, const char *message, size_t indentSize, const char *e
 }
 
 /***********************************************************************************************************************************
-General log function
+Generate the log header and anything else that needs to happen before the message is output
 ***********************************************************************************************************************************/
-void
-logInternal(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *format, ...)
+typedef struct LogPreResult
+{
+    size_t bufferPos;
+    char *logBufferStdErr;
+    size_t indentSize;
+} LogPreResult;
+
+static LogPreResult
+logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const char *functionName, int code)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
-        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+        FUNCTION_TEST_PARAM(UINT, processId);
         FUNCTION_TEST_PARAM(STRINGZ, fileName);
         FUNCTION_TEST_PARAM(STRINGZ, functionName);
         FUNCTION_TEST_PARAM(INT, code);
-        FUNCTION_TEST_PARAM(STRINGZ, format);
     FUNCTION_TEST_END();
 
     ASSERT_LOG_LEVEL(logLevel);
-    ASSERT_LOG_LEVEL(logRangeMin);
-    ASSERT_LOG_LEVEL(logRangeMax);
-    ASSERT(logRangeMin <= logRangeMax);
     ASSERT(fileName != NULL);
     ASSERT(functionName != NULL);
     ASSERT(
         (code == 0 && logLevel > logLevelError) || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
         (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
-    ASSERT(format != NULL);
 
-    size_t bufferPos = 0;   // Current position in the buffer
+    // Initialize buffer position
+    LogPreResult result = {.bufferPos = 0};
 
     // Add time
     if (logTimestamp)
@@ -370,24 +371,26 @@ logInternal(
         TimeMSec logTimeMSec = timeMSec();
         time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
-        bufferPos += strftime(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
-        bufferPos += (size_t)snprintf(
-            logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
+        result.bufferPos += strftime(
+            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+        result.bufferPos += (size_t)snprintf(
+            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }
 
     // Add process and aligned log level
-    bufferPos += (size_t)snprintf(
-        logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6, logLevelStr(logLevel));
+    result.bufferPos += (size_t)snprintf(
+        logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6,
+        logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
-    char *logBufferStdErr = logBuffer + bufferPos - strlen(logLevelStr(logLevel)) - 2;
+    result.logBufferStdErr = logBuffer + result.bufferPos - strlen(logLevelStr(logLevel)) - 2;
 
     // Set the indent size -- this will need to be adjusted for stderr
-    size_t indentSize = bufferPos;
+    result.indentSize = result.bufferPos;
 
     // Add error code
     if (code != 0)
-        bufferPos += (size_t)snprintf(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "[%03d]: ", code);
+        result.bufferPos += (size_t)snprintf(logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "[%03d]: ", code);
 
     // Add debug info
     if (logLevel >= logLevelDebug)
@@ -395,33 +398,54 @@ logInternal(
         // Adding padding for debug and trace levels
         for (unsigned int paddingIdx = 0; paddingIdx < ((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
         {
-            logBuffer[bufferPos++] = ' ';
-            indentSize++;
+            logBuffer[result.bufferPos++] = ' ';
+            result.indentSize++;
         }
 
-        bufferPos += (size_t)snprintf(
-            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%.*s::%s: ", (int)strlen(fileName) - 2, fileName,
+        result.bufferPos += (size_t)snprintf(
+            logBuffer + result.bufferPos, LOG_BUFFER_SIZE - result.bufferPos, "%.*s::%s: ", (int)strlen(fileName) - 2, fileName,
             functionName);
     }
 
-    // Format message -- this will need to be indented later
-    va_list argumentList;
-    va_start(argumentList, format);
-    bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
-    va_end(argumentList);
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Finalize formatting and log after the message has been added to the buffer
+***********************************************************************************************************************************/
+static void
+logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, logData->bufferPos);
+        FUNCTION_TEST_PARAM(STRINGZ, logData->logBufferStdErr);
+        FUNCTION_TEST_PARAM(SIZE, logData->indentSize);
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+    FUNCTION_TEST_END();
+
+    ASSERT_LOG_LEVEL(logLevel);
+    ASSERT_LOG_LEVEL(logRangeMin);
+    ASSERT_LOG_LEVEL(logRangeMax);
+    ASSERT(logRangeMin <= logRangeMax);
 
     // Add linefeed
-    logBuffer[bufferPos++] = '\n';
-    logBuffer[bufferPos] = 0;
+    logBuffer[logData->bufferPos++] = '\n';
+    logBuffer[logData->bufferPos] = 0;
 
     // Determine where to log the message based on log-level-stderr
     if (logLevel <= logLevelStdErr)
     {
         if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
-            logWriteIndent(logHandleStdErr, logBufferStdErr, indentSize - (size_t)(logBufferStdErr - logBuffer), "log to stderr");
+        {
+            logWriteIndent(
+                logHandleStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
+                "log to stderr");
+        }
     }
     else if (logLevel <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax))
-        logWriteIndent(logHandleStdOut, logBuffer, indentSize, "log to stdout");
+        logWriteIndent(logHandleStdOut, logBuffer, logData->indentSize, "log to stdout");
 
     // Log to file
     if (logLevel <= logLevelFile && logHandleFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
@@ -442,8 +466,72 @@ logInternal(
             logFileBanner = true;
         }
 
-        logWriteIndent(logHandleFile, logBuffer, indentSize, "log to file");
+        logWriteIndent(logHandleFile, logBuffer, logData->indentSize, "log to file");
     }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+logInternal(
+    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    const char *functionName, int code, const char *message)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+        FUNCTION_TEST_PARAM(UINT, processId);
+        FUNCTION_TEST_PARAM(STRINGZ, fileName);
+        FUNCTION_TEST_PARAM(STRINGZ, functionName);
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(STRINGZ, message);
+    FUNCTION_TEST_END();
+
+    ASSERT(message != NULL);
+
+    LogPreResult logData = logPre(logLevel, processId, fileName, functionName, code);
+
+    // Copy message into buffer and update buffer position
+    strncpy(logBuffer + logData.bufferPos, message, sizeof(logBuffer) - logData.bufferPos);
+    logBuffer[sizeof(logBuffer) - 1] = 0;
+    logData.bufferPos += strlen(logBuffer + logData.bufferPos);
+
+    logPost(&logData, logLevel, logRangeMin, logRangeMax);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+logInternalFmt(
+    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    const char *functionName, int code, const char *format, ...)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+        FUNCTION_TEST_PARAM(UINT, processId);
+        FUNCTION_TEST_PARAM(STRINGZ, fileName);
+        FUNCTION_TEST_PARAM(STRINGZ, functionName);
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+    FUNCTION_TEST_END();
+
+    ASSERT(format != NULL);
+
+    LogPreResult logData = logPre(logLevel, processId, fileName, functionName, code);
+
+    // Format message into buffer and update buffer position
+    va_list argumentList;
+    va_start(argumentList, format);
+    logData.bufferPos += (size_t)vsnprintf(
+        logBuffer + logData.bufferPos, LOG_BUFFER_SIZE - logData.bufferPos, format, argumentList);
+    va_end(argumentList);
+
+    logPost(&logData, logLevel, logRangeMin, logRangeMax);
 
     FUNCTION_TEST_RETURN_VOID();
 }

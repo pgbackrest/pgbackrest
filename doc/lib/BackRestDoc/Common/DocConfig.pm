@@ -195,12 +195,6 @@ sub process
 
     foreach my $strCommand (cfgDefineCommandList())
     {
-        if ($strCommand eq CFGCMD_REMOTE || $strCommand eq CFGCMD_LOCAL || $strCommand eq CFGCMD_ARCHIVE_GET_ASYNC ||
-            $strCommand eq CFGCMD_ARCHIVE_PUSH_ASYNC)
-        {
-            next;
-        }
-
         my $oCommandDoc = $oDoc->nodeGet('operation')->nodeGet('command-list')->nodeGetById('command', $strCommand);
 
         $$oConfigHash{&CONFIG_HELP_COMMAND}{$strCommand} = {};
@@ -489,7 +483,7 @@ sub manGet
         {
             my $hOption = $$hOptionList{$strSection}{$strOption};
 
-            # Contruct the default
+            # Construct the default
             my $strCommand = grep(/$strSection/i, cfgDefineCommandList()) ? $strSection : undef;
             my $strDefault = docConfigOptionDefault($strOption, $strCommand);
 
@@ -553,7 +547,7 @@ sub manGet
         "\n" .
         "SEE ALSO\n" .
         "\n" .
-	    '  /usr/share/doc/' . PROJECT_EXE . "-doc/html/index.html\n" .
+        '  /usr/share/doc/' . PROJECT_EXE . "-doc/html/index.html\n" .
         '  ' . $oManifest->variableReplace('{[backrest-url-base]}') . "\n";
 
     return $strManPage;

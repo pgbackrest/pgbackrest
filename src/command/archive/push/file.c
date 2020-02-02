@@ -5,7 +5,7 @@ Archive Push File
 
 #include "command/archive/push/file.h"
 #include "command/archive/common.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
 #include "common/crypto/cipherBlock.h"
@@ -72,26 +72,15 @@ archivePushFile(
 
         if (isSegment)
         {
-            // Generate a sha1 checksum for the wal segment.  ??? Probably need a function in storage for this.
-            IoRead *read = storageReadIo(storageNewReadNP(storageLocal(), walSource));
-            IoFilterGroup *filterGroup = ioFilterGroupAdd(ioFilterGroupNew(), cryptoHashNew(HASH_TYPE_SHA1_STR));
-            ioReadFilterGroupSet(read, filterGroup);
+            // Generate a sha1 checksum for the wal segment
+            IoRead *read = storageReadIo(storageNewReadP(storageLocal(), walSource));
+            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioReadDrain(read);
 
-            Buffer *buffer = bufNew(ioBufferSize());
-            ioReadOpen(read);
-
-            do
-            {
-                ioRead(read, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(read));
-
-            ioReadClose(read);
-            const String *walSegmentChecksum = varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR));
+            const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
             // If the wal segment already exists in the repo then compare checksums
-            walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
+            walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
 
             if (walSegmentFile != NULL)
             {
@@ -99,12 +88,14 @@ archivePushFile(
 
                 if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                 {
-                    memContextSwitch(MEM_CONTEXT_OLD());
-                    result = strNewFmt(
-                        "WAL file '%s' already exists in the archive with the same checksum"
-                            "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                        strPtr(archiveFile));
-                    memContextSwitch(MEM_CONTEXT_TEMP());
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result = strNewFmt(
+                            "WAL file '%s' already exists in the archive with the same checksum"
+                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                            strPtr(archiveFile));
+                    }
+                    MEM_CONTEXT_PRIOR_END();
                 }
                 else
                     THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strPtr(archiveFile));
@@ -117,29 +108,34 @@ archivePushFile(
         // Only copy if the file was not found in the archive
         if (walSegmentFile == NULL)
         {
-            StorageRead *source = storageNewReadNP(storageLocal(), walSource);
+            StorageRead *source = storageNewReadP(storageLocal(), walSource);
 
-            // Add filters
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
+            // Is the file compressible during the copy?
+            bool compressible = true;
 
             // If the file will be compressed then add compression filter
             if (isSegment && compress)
             {
                 strCat(archiveDestination, "." GZIP_EXT);
-                ioFilterGroupAdd(filterGroup, gzipCompressNew(compressLevel, false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), gzipCompressNew(compressLevel, false));
+                compressible = false;
             }
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)
-                ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
-
-            ioReadFilterGroupSet(storageReadIo(source), filterGroup);
+            {
+                ioFilterGroupAdd(
+                    ioReadFilterGroup(storageReadIo(source)),
+                    cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
+                compressible = false;
+            }
 
             // Copy the file
-            storageCopyNP(
+            storageCopyP(
                 source,
-                storageNewWriteNP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveDestination))));
+                storageNewWriteP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveDestination)),
+                .compressible = compressible));
         }
     }
     MEM_CONTEXT_TEMP_END();

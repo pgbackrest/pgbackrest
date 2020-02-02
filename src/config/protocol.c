@@ -71,9 +71,11 @@ configProtocolOption(ProtocolClient *client, const VariantList *paramList)
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             protocolCommandParamAdd(command, varLstGet(paramList, paramIdx));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = varVarLst(protocolClientExecute(client, command, true));
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = varVarLst(protocolClientExecute(client, command, true));
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

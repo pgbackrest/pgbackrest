@@ -8,11 +8,6 @@ Test Tls Client
 #include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
-Path and prefix for test certificates
-***********************************************************************************************************************************/
-#define TEST_CERTIFICATE_PREFIX                                     "test/certificate/pgbackrest-test"
-
-/***********************************************************************************************************************************
 Test server with subject alternate names
 ***********************************************************************************************************************************/
 static void
@@ -21,7 +16,7 @@ testTlsServerAltName(void)
     if (fork() == 0)
     {
         harnessTlsServerInit(
-            TLS_TEST_PORT,
+            harnessTlsTestPort(),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath())),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath())));
 
@@ -29,17 +24,20 @@ testTlsServerAltName(void)
         harnessTlsServerAccept();
         harnessTlsServerClose();
 
-        // Success on valid ca file and match common name
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
+        if (testContainer())
+        {
+            // Success on valid ca file and match common name
+            harnessTlsServerAccept();
+            harnessTlsServerClose();
 
-        // Success on valid ca file and match alt name
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
+            // Success on valid ca file and match alt name
+            harnessTlsServerAccept();
+            harnessTlsServerClose();
 
-        // Unable to find matching hostname in certificate
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
+            // Unable to find matching hostname in certificate
+            harnessTlsServerAccept();
+            harnessTlsServerClose();
+        }
 
         // Certificate error
         harnessTlsServerAccept();
@@ -61,7 +59,7 @@ testTlsServer(void)
 {
     if (fork() == 0)
     {
-        harnessTlsServerInit(TLS_TEST_PORT, TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
+        harnessTlsServerInitDefault();
 
         // First protocol exchange
         harnessTlsServerAccept();
@@ -81,7 +79,11 @@ testTlsServer(void)
         // Second protocol exchange
         harnessTlsServerExpect("more protocol info");
         harnessTlsServerReply("0123456789AB");
+        harnessTlsServerClose();
 
+        // Need data in read buffer to test tlsWriteContinue()
+        harnessTlsServerAccept();
+        harnessTlsServerReply("0123456789AB");
         harnessTlsServerClose();
 
         exit(0);
@@ -113,6 +115,19 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("a.bogus.host.com"), strNew("*.host.com")), false, "invalid host");
     }
 
+    // Additional coverage not provided by other tests
+    // *****************************************************************************************************************************
+    if (testBegin("tlsError()"))
+    {
+        TlsClient *client = NULL;
+
+        TEST_ASSIGN(client, tlsClientNew(strNew("99.99.99.99.99"), harnessTlsTestPort(), 0, true, NULL, NULL), "new client");
+
+        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_WANT_READ), true, "continue after want read");
+        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_ZERO_RETURN), false, "check connection closed error");
+        TEST_ERROR(tlsError(client, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("TlsClient verification"))
     {
@@ -120,57 +135,71 @@ testRun(void)
 
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(client, tlsClientNew(strNew("99.99.99.99.99"), 9443, 0, true, NULL, NULL), "new client");
+        TEST_ASSIGN(client, tlsClientNew(strNew("99.99.99.99.99"), harnessTlsTestPort(), 0, true, NULL, NULL), "new client");
         TEST_ERROR(
             tlsClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
-        TEST_ASSIGN(client, tlsClientNew(strNew("localhost"), 9443, 100, true, NULL, NULL), "new client");
-        TEST_ERROR(tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:9443': [111] Connection refused");
+        TEST_ASSIGN(client, tlsClientNew(strNew("localhost"), harnessTlsTestPort(), 100, true, NULL, NULL), "new client");
+        TEST_ERROR_FMT(
+            tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            harnessTlsTestPort());
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-        if (system(                                                                                 // {uncoverable_branch}
-                "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
-                    " sudo tee -a /etc/hosts > /dev/null") != 0)
+        if (testContainer())
         {
-            THROW(AssertError, "unable to add test hosts to /etc/hosts");                           // {uncovered+}
+            if (system(                                                                                 // {uncoverable_branch}
+                    "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
+                        " sudo tee -a /etc/hosts > /dev/null") != 0)
+            {
+                THROW(AssertError, "unable to add test hosts to /etc/hosts");                           // {uncovered+}
+            }
         }
 
         // Start server to test various certificate errors
         testTlsServerAltName();
 
         TEST_ERROR(
-            tlsClientOpen(tlsClientNew(strNew("localhost"), 9443, 500, true, strNew("bogus.crt"), strNew("/bogus"))),
+            tlsClientOpen(
+                tlsClientNew(strNew("localhost"), harnessTlsTestPort(), 500, true, strNew("bogus.crt"), strNew("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
-        TEST_ERROR(
-            tlsClientOpen(tlsClientNew(strNew("localhost"), 9443, 500, true, NULL, strNew("/bogus"))),
-            CryptoError, "unable to verify certificate presented by 'localhost:9443': [20] unable to get local issuer certificate");
+        TEST_ERROR_FMT(
+            tlsClientOpen(tlsClientNew(strNew("localhost"), harnessTlsTestPort(), 500, true, NULL, strNew("/bogus"))),
+            CryptoError, "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+            harnessTlsTestPort());
 
-        TEST_RESULT_VOID(
-            tlsClientOpen(
-                tlsClientNew(strNew("test.pgbackrest.org"), 9443, 500, true,
-                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-            "success on valid ca file and match common name");
-        TEST_RESULT_VOID(
-            tlsClientOpen(
-                tlsClientNew(strNew("host.test2.pgbackrest.org"), 9443, 500, true,
-                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-            "success on valid ca file and match alt name");
-        TEST_ERROR(
-            tlsClientOpen(
-                tlsClientNew(strNew("test3.pgbackrest.org"), 9443, 500, true,
-                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-            CryptoError, "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
+        if (testContainer())
+        {
+            TEST_RESULT_VOID(
+                tlsClientOpen(
+                    tlsClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 500, true,
+                    strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                "success on valid ca file and match common name");
+            TEST_RESULT_VOID(
+                tlsClientOpen(
+                    tlsClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 500, true,
+                    strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                "success on valid ca file and match alt name");
+            TEST_ERROR(
+                tlsClientOpen(
+                    tlsClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 500, true,
+                    strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                CryptoError,
+                "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
+        }
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             tlsClientOpen(
-                tlsClientNew(strNew("localhost"), 9443, 500, true, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
+                tlsClientNew(
+                    strNew("localhost"), harnessTlsTestPort(), 500, true, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt",
+                    testRepoPath()),
                 NULL)),
-            CryptoError, "unable to verify certificate presented by 'localhost:9443': [20] unable to get local issuer certificate");
+            CryptoError, "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+            harnessTlsTestPort());
 
         TEST_RESULT_VOID(
-            tlsClientOpen(tlsClientNew(strNew("localhost"), 9443, 500, false, NULL, NULL)), "success on no verify");
+            tlsClientOpen(tlsClientNew(strNew("localhost"), harnessTlsTestPort(), 500, false, NULL, NULL)), "success on no verify");
     }
     // *****************************************************************************************************************************
     if (testBegin("TlsClient general usage"))
@@ -179,35 +208,36 @@ testRun(void)
 
         // Reset statistics
         tlsClientStatLocal = (TlsClientStat){0};
-        TEST_RESULT_STR(tlsClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_PTR(tlsClientStatStr(), NULL, "no stats yet");
 
         testTlsServer();
         ioBufferSizeSet(12);
 
-        TEST_ASSIGN(client, tlsClientNew(strNew(TLS_TEST_HOST), 9443, 500, true, NULL, NULL), "new client");
+        TEST_ASSIGN(
+            client, tlsClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
         TEST_RESULT_VOID(tlsClientOpen(client), "open client");
 
         const Buffer *input = BUFSTRDEF("some protocol info");
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));
 
-        TEST_RESULT_STR(strPtr(ioReadLine(tlsClientIoRead(client))), "something:0", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(tlsClientIoRead(client)), "something:0", "read line");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         Buffer *output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "some content", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "some content", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(8);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 8, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "AND MORE", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             ioRead(tlsClientIoRead(client), output), FileReadError,
-            "unable to read data from 'tls.test.pgbackrest.org:9443' after 500ms");
+            "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
         // -------------------------------------------------------------------------------------------------------------------------
         input = BUFSTRDEF("more protocol info");
@@ -217,13 +247,23 @@ testRun(void)
 
         output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "0123456789AB", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(tlsClientOpen(client), "open client again (was closed by server)");
+        TEST_RESULT_BOOL(tlsWriteContinue(client, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
+        TEST_RESULT_BOOL(tlsWriteContinue(client, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
+        TEST_ERROR(
+            tlsWriteContinue(client, 77, 0, 88), FileWriteError,
+            "unable to write to tls, write size 77 does not match expected size 88");
+        TEST_ERROR(tlsWriteContinue(client, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(tlsClientStatStr() != NULL, true, "check statistics exist");
 
         TEST_RESULT_VOID(tlsClientFree(client), "free client");

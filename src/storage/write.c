@@ -20,6 +20,7 @@ struct StorageWrite
     IoWrite *io;
 };
 
+OBJECT_DEFINE_MOVE(STORAGE_WRITE);
 OBJECT_DEFINE_FREE(STORAGE_WRITE);
 
 /***********************************************************************************************************************************
@@ -48,33 +49,16 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
     ASSERT(interface != NULL);
 
     StorageWrite *this = memNew(sizeof(StorageWrite));
-    this->memContext = memContextCurrent();
 
-    this->driver = driver;
-    this->interface = interface;
-
-    this->io = ioWriteNew(driver, interface->ioInterface);
+    *this = (StorageWrite)
+    {
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+        .io = ioWriteNew(driver, interface->ioInterface),
+    };
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
-}
-
-/***********************************************************************************************************************************
-Move the file object to a new context
-***********************************************************************************************************************************/
-StorageWrite *
-storageWriteMove(StorageWrite *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

@@ -157,7 +157,7 @@
                     <config-key id="db-timeout" name="Database Timeout">
                         <summary>Database query timeout.</summary>
 
-                        <text>Sets the timeout, in seconds, for queries against the database.  This includes the <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>startfast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup).</text>
+                        <text>Sets the timeout, in seconds, for queries against the database.  This includes the <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>startfast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup). <admonition type="note">The <br-option>db-timeout</br-option> option must be less than the <br-option>protocol-timeout</br-option> option.</admonition></text>
 
                         <example>600</example>
                     </config-key>
@@ -223,7 +223,7 @@
                     <config-key id="protocol-timeout" name="Protocol Timeout">
                         <summary>Protocol timeout.</summary>
 
-                        <text>Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message.  The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</text>
+                        <text>Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message. <admonition type="note">The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</admonition></text>
 
                         <example>630</example>
                     </config-key>
@@ -437,6 +437,15 @@
                         <example>127.0.0.1</example>
                     </config-key>
 
+                    <!-- CONFIG - REPO SECTION - REPO-S3-PORT KEY -->
+                    <config-key id="repo-s3-port" name="S3 Repository Port">
+                        <summary>S3 repository port.</summary>
+
+                        <text>Port to use when connecting to the endpoint (or host if specified).</text>
+
+                        <example>9000</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>
@@ -444,6 +453,19 @@
                         <text>The AWS region where the bucket was created.</text>
 
                         <example>us-east-1</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-S3-URI-STYLE KEY -->
+                    <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
+                        <summary>S3 URI Style.</summary>
+
+                        <text>The following URI styles are supported:
+                        <ul>
+                            <li><id>host</id> - Connect to <id>bucket.endpoint</id> host.</li>
+                            <li><id>path</id> - Connect to <id>endpoint</id> host and prepend bucket to URIs.</li>
+                        </ul></text>
+
+                        <example>path</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
@@ -597,6 +619,8 @@
 
                         This feature relies on pg_is_in_backup() so only works on <postgres/> >= <id>9.3</id>.
 
+                        This feature is not supported for <postgres/> >= <id>9.6</id> since backups are run in non-exclusive mode.
+
                         The setting is disabled by default because it assumes that <backrest/> is the only process doing exclusive online backups.  It depends on an advisory lock that only <backrest/> sets so it may abort other processes that do exclusive online backups.  Note that <cmd>base_backup</cmd> and <cmd>pg_dump</cmd> are safe to use with this setting because they do not call <code>pg_start_backup()</code> so are not exclusive.</text>
 
                         <example>y</example>
@@ -731,7 +755,7 @@
             <config-section id="stanza" name="Stanza">
                 <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
 
-                <b>Indexing</b>: All <setting>pg-</setting> options are indexed to allow for configuring multiple <postgres/> hosts. For example, a single master is configured with the <setting>pg1-path</setting>, <setting>pg1-host</setting>, etc. options.  If a standby is configured then index the <setting>pg-</setting> options as <setting>pg2-</setting> (e.g. pg2-host, pg2-path, etc).</text>
+                <b>Indexing</b>: All <setting>pg-</setting> options are indexed to allow for configuring multiple <postgres/> hosts. For example, a single primary is configured with the <setting>pg1-path</setting>, <setting>pg1-port</setting>, etc. options.  If a standby is configured then index the <setting>pg-</setting> options on the repository host as <setting>pg2-</setting> (e.g. pg2-host, pg2-path, etc).</text>
 
                 <config-key-list>
                     <!-- CONFIG - STANZA SECTION - PG-HOST-CMD KEY -->
@@ -816,6 +840,15 @@
                         <text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgresql.conf</file>.</text>
 
                         <example>/var/run/postgresql</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - PG-USER KEY -->
+                    <config-key id="pg-user" name="PostgreSQL Database User">
+                        <summary><postgres/> database user.</summary>
+
+                        <text>The database user name used when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>.</text>
+
+                        <example>backupuser</example>
                     </config-key>
 
                     <!-- CONFIG - STANZA SECTION - PG-HOST-PORT KEY -->
@@ -1046,6 +1079,7 @@
                             <li><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</li>
                             <li><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</li>
                             <li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
+                            <li><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</li>
                             <li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
                         </ul></text>
                         <example>xid</example>
@@ -1124,6 +1158,13 @@
                         </ul></text>
 
                         <example>json</example>
+                    </option>
+
+                    <option id="set" name="Set">
+                        <summary>Backup set to detail.</summary>
+
+                        <text>Details include a list of databases (with OIDs) in the backup set (excluding template databases), tablespaces (with OIDs) with the destination where they will be restored by default, and symlinks with the destination where they will be restored when <setting>--link-all</setting> is specified.</text>
+                        <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
 
@@ -1234,14 +1275,37 @@
                         <example>(F|D|I)$</example>
                     </option>
 
+                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>The following output types are supported:
+                        <ul>
+                            <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
+                            <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul></text>
+
+                        <example>json</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
+                    <option id="recurse" name="Recurse Subpaths">
+                        <summary>Include all subpaths in output.</summary>
+
+                        <text>All subpaths and their files will be included in the output.</text>
+
+                        <example>y</example>
+                    </option>
+
                     <!-- OPERATION - LS COMMAND - SORT OPTION -->
                     <option id="sort" name="Sort Output">
-                        <summary>Sort output ascending/descending.</summary>
+                        <summary>Sort output ascending, descending, or none.</summary>
 
                         <text>The following sort types are supported:
                         <ul>
                             <li><id>asc</id> - sort ascending.</li>
                             <li><id>desc</id> - sort descending.</li>
+                            <li><id>none</id> - no sorting.</li>
                         </ul></text>
 
                         <example>desc</example>
@@ -1287,7 +1351,7 @@
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
-                        <text><admonition type="caution">Use <br-option>--force</br-option> only as a last resort, when all else fails.  If data is missing from the repository then the recreated <file>.info</file> files will likely be corrupt.</admonition>If the required stanza <file>.info</file> files do not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
+                        <text>This option is no longer supported.</text>
 
                         <example>n</example>
                     </option>

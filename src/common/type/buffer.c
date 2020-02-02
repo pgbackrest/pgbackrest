@@ -13,11 +13,16 @@ Buffer Handler
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
 ***********************************************************************************************************************************/
+BUFFER_STRDEF_EXTERN(BRACEL_BUF,                                    "{");
+BUFFER_STRDEF_EXTERN(BRACER_BUF,                                    "}");
 BUFFER_STRDEF_EXTERN(BRACKETL_BUF,                                  "[");
 BUFFER_STRDEF_EXTERN(BRACKETR_BUF,                                  "]");
+BUFFER_STRDEF_EXTERN(COMMA_BUF,                                     ",");
 BUFFER_STRDEF_EXTERN(CR_BUF,                                        "\r");
+BUFFER_STRDEF_EXTERN(DOT_BUF,                                       ".");
 BUFFER_STRDEF_EXTERN(EQ_BUF,                                        "=");
 BUFFER_STRDEF_EXTERN(LF_BUF,                                        "\n");
+BUFFER_STRDEF_EXTERN(QUOTED_BUF,                                    "\"");
 
 /***********************************************************************************************************************************
 Contains information about the buffer
@@ -29,6 +34,7 @@ struct Buffer
     MemContext *memContext;                                         // Mem context for dynamic buffers
 };
 
+OBJECT_DEFINE_MOVE(BUFFER);
 OBJECT_DEFINE_FREE(BUFFER);
 
 /***********************************************************************************************************************************
@@ -47,13 +53,16 @@ bufNew(size_t size)
     {
         // Create object
         this = memNew(sizeof(Buffer));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->size = size;
-        this->used = 0;
+
+        *this = (Buffer)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .size = size,
+        };
 
         // Allocate buffer
         if (size > 0)
-            this->buffer = memNewRaw(this->size);
+            this->buffer = memNew(this->size);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -244,25 +253,6 @@ bufHex(const Buffer *this)
 }
 
 /***********************************************************************************************************************************
-Move buffer to a new mem context
-***********************************************************************************************************************************/
-Buffer *
-bufMove(Buffer *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
 Resize the buffer
 ***********************************************************************************************************************************/
 Buffer *
@@ -304,7 +294,7 @@ bufResize(Buffer *this, size_t size)
                 if (this->buffer == NULL)
                     this->buffer = memNew(size);
                 else
-                    this->buffer = memGrowRaw(this->buffer, size);
+                    this->buffer = memResize(this->buffer, size);
             }
             MEM_CONTEXT_END();
 
@@ -434,7 +424,7 @@ bufSize(const Buffer *this)
 Get/set the amount of the buffer actually used
 
 Tracks how much of the buffer has actually been used.  This will be updated automatically when possible but if the buffer is
-modified by using bufPtr() then the user is reponsible for updating the used size.
+modified by using bufPtr() then the user is responsible for updating the used size.
 ***********************************************************************************************************************************/
 size_t
 bufUsed(const Buffer *this)

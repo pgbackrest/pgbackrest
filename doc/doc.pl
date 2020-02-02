@@ -215,7 +215,7 @@ eval
     {
         if (defined($rhVariableOverride->{$strKey}))
         {
-            confess &log(ERROR, "'${strKey}' canot be passed as --var and --key-var");
+            confess &log(ERROR, "'${strKey}' cannot be passed as --var and --key-var");
         }
 
         $rhVariableOverride->{$strKey} = $rhKeyVariableOverride->{$strKey};

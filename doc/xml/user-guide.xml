@@ -26,11 +26,14 @@
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
         <variable key="os-type">debian</variable>
 
+        <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
+        <variable key="encrypt">y</variable>
+
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
         <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
         <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos7]}'</variable>
-        <variable key="os-type-is-centos">{[os-type-is-centos6]} || {[os-type-is-centos7]}</variable>
+        <variable key="os-type-is-centos">({[os-type-is-centos6]} || {[os-type-is-centos7]})</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
@@ -45,13 +48,6 @@
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
 
-        <variable key="pgbackrest-host-repo-path" eval="y">
-            use File::Basename qw(dirname);
-            use Cwd qw(abs_path);
-
-            dirname(dirname(abs_path($0)));
-        </variable>
-
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
         <!-- Path where CA certificates are installed -->
@@ -60,7 +56,7 @@
 
         <!-- Path where fake certificates are located -->
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
-        <variable key="fake-cert-path">{[pgbackrest-host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
+        <variable key="fake-cert-path">{[host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
 
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
         <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
@@ -87,13 +83,10 @@
 
         <variable key="pg-group">postgres</variable>
 
-        <variable key="perl-lib-path">/usr/share/perl5</variable>
-        <variable key="perl-bin-path">/usr/bin</variable>
-
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
         <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
-        <variable key="br-bin">{[perl-bin-path]}/pgbackrest</variable>
+        <variable key="br-bin">/usr/bin/pgbackrest</variable>
         <variable key="br-user">pgbackrest</variable>
         <variable key="br-group">{[br-user]}</variable>
         <variable key="br-home-path">/home/{[br-user]}</variable>
@@ -134,7 +127,8 @@
 
         <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
-        <variable key="postgres-recovery-demo">{[pg-path]}/recovery.conf</variable>
+        <variable key="postgres-recovery-demo" if="{[pg-version]} &lt; 12">{[pg-path]}/recovery.conf</variable>
+        <variable key="postgres-recovery-demo" if="{[pg-version]} &gt;= 12">{[pg-path]}/postgresql.auto.conf</variable>
 
         <!-- Select correct WAL switch function based on the version of PostgreSQL -->
         <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
@@ -156,7 +150,7 @@
         <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
-        <variable key="host-mount">{[pgbackrest-host-repo-path]}:{[pgbackrest-repo-path]}</variable>
+        <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
         <variable key="host-s3-id">s3</variable>
@@ -170,7 +164,7 @@
 
         <variable key="host-build-id">build</variable>
         <variable key="host-build">build</variable>
-        <variable key="host-build-user">root</variable>
+        <variable key="host-build-user">{[host-user]}</variable>
         <variable key="host-build-image">{[host-image]}</variable>
         <variable key="host-build-mount">{[host-mount]}</variable>
 
@@ -270,7 +264,7 @@
 
         # Install base packages
         RUN apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates 2>&amp;1
+            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates locales 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-certificates
@@ -292,6 +286,12 @@
         # Add doc user with sudo privileges
         RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
             echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+        # Set UTF8 encoding
+        RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &amp;&amp; \
+            dpkg-reconfigure --frontend=noninteractive locales &amp;&amp; \
+            update-locale LANG=en_US.UTF-8
+        ENV LANG en_US.UTF-8
 
         RUN {[minio-client-install]}
 
@@ -451,11 +451,28 @@
     <block-define if="'{[package]}' eq 'none'" id="br-install">
         <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
 
+        <execute-list host="{[host-build]}">
+            <title>Install dependencies</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>
+                    apt-get install postgresql-client libxml2</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos]}" user="root" pre="y">
+                <exe-cmd>
+                    yum install postgresql-libs
+                </exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
         <execute-list host="{[br-install-host]}">
             <title>Copy <backrest/> binary from build host</title>
 
             <execute user="root">
-                <exe-cmd>scp {[host-build]}:/root/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd>scp {[host-build]}:/build/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -464,37 +481,7 @@
             </execute>
         </execute-list>
 
-        <!-- Perl installation -->
-        <p><backrest/> contains embedded Perl which requires some additional modules.</p>
-
-        <execute-list host="{[br-install-host]}">
-            <title>Install required Perl packages</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libdbd-pg-perl liblz4-1</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
-                <exe-cmd>
-                    yum install epel-release
-                </exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg lz4</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-Digest-SHA perl-DBD-Pg perl-JSON-PP</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p>Finally, <backrest/> requires log and configuration directories and a configuration file.</p>
+        <p><backrest/> requires log and configuration directories and a configuration file.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Create <backrest/> configuration file and directories</title>
@@ -550,13 +537,18 @@
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" show="n">
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" show="n">
                 <exe-cmd>yum -y install {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" skip="y">
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" skip="y">
                 <exe-cmd>yum install pgbackrest</exe-cmd>
+            </execute>
+
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' eq 'yum'" user="root">
+                <exe-cmd>yum install pgbackrest</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -598,20 +590,6 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
-        <execute-list host="{[s3-setup-host]}">
-            <title>Install packages required for S3-compatible object store support</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-             <execute if="{[os-type-is-centos]}" user="root" pre="y">
-                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-             </execute>
-        </execute-list>
-
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
@@ -641,7 +619,6 @@
             <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -654,11 +631,11 @@
         <title>Introduction</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio:RELEASE.2019-06-04T01-15-58Z" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443 --compat" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio:RELEASE.2019-10-12T01-39-57Z" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
-        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.
+        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.
 
         Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 
@@ -753,24 +730,27 @@
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
         <execute-list host="{[host-build]}">
-            <title>Download version <id>{[version]}</id> of <backrest/></title>
+            <title>Download version <id>{[version]}</id> of <backrest/> to pre-created <path>/build</path> path</title>
 
             <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
-            <execute user="root" skip="y">
+            <execute skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
-                    sudo tar zx -C /root</exe-cmd>
+                    tar zx -C /build</exe-cmd>
             </execute>
 
             <!-- These commands simulate what the command above would do if it could be run -->
             <execute user="root" show="n">
-                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>mkdir -p /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /build/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>chown -R {[host-build-user]} /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -783,57 +763,23 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev
-                    liblz4-dev
-                </exe-cmd>
+                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
+            <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install epel-release
-                </exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
-                <exe-cmd>
-                    yum install build-essential gcc openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed lz4-devel
-                </exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
-                <exe-cmd>
-                    yum install build-essential gcc make openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed lz4-devel
+                    yum install make gcc postgresql-devel openssl-devel libxml2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
-        <p><backrest/> supports 32-bit distributions that build Perl with 64-bit integer support.</p>
-
         <execute-list host="{[host-build]}">
-            <title>Check for 64-bit integers</title>
+            <title>Configure and compile <backrest/></title>
 
-            <execute output="y">
-                <exe-cmd>perl -V | grep USE_64_BIT_INT</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
-
-        <execute-list host="{[host-build]}">
-            <title>Build <backrest/> package</title>
-
-            <execute user="root" user-force="y">
-                <exe-cmd>(cd /root/pgbackrest-release-{[version]}/src &amp;&amp; ./configure)</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>make -s -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
+            <execute>
+                <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure &amp;&amp; make</exe-cmd>
             </execute>
         </execute-list>
     </section>
@@ -846,16 +792,16 @@
 
         <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-option]}"/>
 
-        <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
+        <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
 
             <execute if="{[os-type-is-debian]}" user="root">
-                <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
             </execute>
             <execute if="{[os-type-is-centos]}" user="root">
                 <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
             </execute>
-        </execute-list>
+        </execute-list> -->
 
         <block id="br-install">
             <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
@@ -954,9 +900,9 @@
             <list>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
                 <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
-                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desireable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desirable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
-                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-incude-path option is explicitly set.</list-item>
+                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-include-path option is explicitly set.</list-item>
             </list>
 
             <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence (highest to lowest) is:</p>
@@ -1068,7 +1014,7 @@
 
         <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
         <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
-        <section id="configure-encryption">
+        <section if="'{[encrypt]}' eq 'y'" id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
@@ -1121,7 +1067,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight> successfully stored in the archive at </exe-highlight>
+                    <exe-highlight> successfully archived to </exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1418,15 +1364,7 @@
 
         <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
 
-        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.  A script is needed to extract information in a format that the monitoring system can understand.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Get <backrest/> info in JSON format</title>
-
-            <execute user="postgres" show="y">
-                <exe-cmd>pgbackrest --output=json info</exe-cmd>
-            </execute>
-        </execute-list>
+        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.</p>
 
         <section id="postgresql">
             <title>In <postgres/></title>
@@ -1514,6 +1452,7 @@
             </execute-list>
 
             <admonition type="note">This syntax requires <proper>jq v1.5</proper>.</admonition>
+            <admonition type="note"><proper>jq</proper> may round large numbers such as system identifiers.  Test your queries carefully.</admonition>
         </section>
     </section>
 
@@ -1670,6 +1609,15 @@
 
         <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
 
+        <!-- ******************************************************************************************************************* -->
+        <section id="ownership">
+            <title>File Ownership</title>
+
+            <p>If a <cmd>restore</cmd> is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing <backrest/>.  If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group.  In that case the file ownership will need to be updated by a privileged user before the restore can be retried.</p>
+
+            <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made.  Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work.  If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
+        </section>
+
         <!-- SECTION => RESTORE - DELTA -->
         <section id="option-delta">
             <title>Delta Option</title>
@@ -1686,7 +1634,7 @@
                 <execute user="postgres" output="y" filter="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         --log-level-console=detail restore</exe-cmd>
-                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|check\/clean db path|restore global\/pg_control</exe-highlight>
+                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|remove invalid files|rename global\/pg_control</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1766,6 +1714,22 @@
                     <exe-cmd>
                         du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>If the database to restore is not known, use the <cmd>info</cmd> command <br-option>set</br-option> option to discover databases that are part of the backup set.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Show database list for backup</title>
+
+                <execute user="postgres" show="n" variable-key="backup-last-incr">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                        {[dash]}-set={[backup-last-incr]} info</exe-cmd>
+                    <exe-highlight>database list</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1980,18 +1944,27 @@
             </execute>
         </execute-list>
 
-        <p>Now take a new backup and attempt recovery from the new backup.</p>
+        <p>Now take a new backup and attempt recovery from the new backup by specifying the <br-option>{[dash]}-set</br-option> option. The <cmd>info</cmd> command can be used to find the new backup label.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Perform a backup then attempt recovery from that backup</title>
+            <title>Perform a backup and get backup info</title>
+
+            <execute user="postgres">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            </execute>
 
             <execute user="postgres" show="n" variable-key="backup-last">
                 <exe-cmd>{[cmd-backup-last]}</exe-cmd>
             </execute>
 
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            <execute user="postgres" filter="n" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>{[backup-last]}</exe-highlight>
             </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Attempt recovery from the specified backup</title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
@@ -1999,7 +1972,8 @@
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" --target-action=promote restore</exe-cmd>
+                     {[dash]}-set={[backup-last]}
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore</exe-cmd>
             </execute>
 
             <execute user="root" show="n">
@@ -2031,21 +2005,10 @@
             </execute>
         </execute-list>
 
-        <p>Using an earlier backup will allow <postgres/> to play forward to the correct time.  The <cmd>info</cmd> command can be used to find the next to last backup.</p>
+        <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not specified, is to attempt to discover an earlier backup to play forward from. If a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
-
-            <execute user="postgres" filter="n" output="y">
-                <exe-cmd>{[project-exe]} info</exe-cmd>
-                <exe-highlight>{[backup-last]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>The default behavior for restore is to use the last backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore from the selected backup, and start <postgres/></title>
+            <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
@@ -2055,7 +2018,7 @@
                 <exe-cmd>
                     {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-set={[backup-last]} --target-action=promote restore
+                        {[dash]}-target-action=promote restore
                 </exe-cmd>
             </execute>
 
@@ -2223,6 +2186,8 @@
 
         <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
 
+        <p>On <postgres/> hosts, <br-option>pg1-path</br-option> is required to be the path of the local PostgreSQL cluster and no <br-option>pg1-host</br-option> should be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and standby (if any) hosts. The repository host has the only pgbackrest configuration that should be aware of more than one <postgres/> host. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
+
         <section id="install">
             <title>Installation</title>
 
@@ -2304,14 +2269,14 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>pg1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
-                <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option>
+                <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option> -->
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -2337,7 +2302,7 @@
 
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 
-            <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
+            <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
                 <title>Set permissions required for backup</title>
 
                 <execute user="postgres">
@@ -2351,7 +2316,7 @@
                             grant execute on function pg_create_restore_point(text) to pgbackrest;"
                     </exe-cmd>
                 </execute>
-            </execute-list>
+            </execute-list> -->
 
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
@@ -2508,7 +2473,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for all stanzas</exe-highlight>
             </execute>
@@ -2549,7 +2514,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for stanza demo</exe-highlight>
             </execute>
@@ -2580,16 +2545,16 @@
 
             <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-option]}"/>
 
-            <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
+            <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
 
                 <execute if="{[os-type-is-debian]}" user="root">
-                    <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                    <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
                 </execute>
                 <execute if="{[os-type-is-centos]}" user="root">
                     <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
                 </execute>
-            </execute-list>
+            </execute-list> -->
 
             <block id="br-install">
                 <block-variable-replace key="br-install-host">{[host-pg2]}</block-variable-replace>
@@ -2626,7 +2591,7 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
+            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <id>standby</id> recovery type will be used to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
 
             <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> on the standby</title>
@@ -2634,8 +2599,6 @@
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
-
-                <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2671,19 +2634,17 @@
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
                 <execute user="postgres" if="{[os-type-is-debian]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" if="{[os-type-is-centos]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
-
-            <admonition type="note">The <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
 
@@ -2788,7 +2749,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight>all other checks passed</exe-highlight>
+                    <exe-highlight>because this is a standby</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -2866,13 +2827,15 @@
                 </execute>
 
                 <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
+
+            <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p if="{[os-type-is-centos]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
@@ -3102,8 +3065,8 @@
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
-            <backrest-config-option if="{[pg-version]} >= 11" section="demo"
-                key="pg2-host-user">{[br-user]}</backrest-config-option>
+            <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo"
+                key="pg2-host-user">{[br-user]}</backrest-config-option> -->
 
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
         </backrest-config>
@@ -3336,11 +3299,11 @@
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
             <execute user="postgres" if="{[os-type-is-debian]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
             </execute>
 
             <execute user="postgres" if="{[os-type-is-centos]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>
 

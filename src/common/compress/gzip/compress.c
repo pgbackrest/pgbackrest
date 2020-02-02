@@ -17,8 +17,7 @@ Gzip Compress
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define GZIP_COMPRESS_FILTER_TYPE                                   "gzipCompress"
-    STRING_STATIC(GZIP_COMPRESS_FILTER_TYPE_STR,                    GZIP_COMPRESS_FILTER_TYPE);
+STRING_EXTERN(GZIP_COMPRESS_FILTER_TYPE_STR,                        GZIP_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -29,7 +28,7 @@ Object type
 typedef struct GzipCompress
 {
     MemContext *memContext;                                         // Context to store data
-    z_stream *stream;                                               // Compression stream state
+    z_stream stream;                                                // Compression stream state
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flush;                                                     // Is input complete and flushing in progress?
@@ -44,7 +43,7 @@ gzipCompressToLog(const GzipCompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->done), this->stream->avail_in);
+        cvtBoolToConstZ(this->done), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZIP_COMPRESS_TYPE                                                                                            \
@@ -62,7 +61,7 @@ Free deflate stream
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZIP_COMPRESS, LOG, logLevelTrace)
 {
-    deflateEnd(this->stream);
+    deflateEnd(&this->stream);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -82,15 +81,14 @@ gzipCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 
     ASSERT(this != NULL);
     ASSERT(!this->done);
-    ASSERT(this->stream != NULL);
     ASSERT(compressed != NULL);
     ASSERT(!this->flush || uncompressed == NULL);
-    ASSERT(this->flush || (!this->inputSame || this->stream->avail_in != 0));
+    ASSERT(this->flush || (!this->inputSame || this->stream.avail_in != 0));
 
     // Flushing
     if (uncompressed == NULL)
     {
-        this->stream->avail_in = 0;
+        this->stream.avail_in = 0;
         this->flush = true;
     }
     // More input
@@ -99,27 +97,27 @@ gzipCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
         // Is new input allowed?
         if (!this->inputSame)
         {
-            this->stream->avail_in = (unsigned int)bufUsed(uncompressed);
-            this->stream->next_in = bufPtr(uncompressed);
+            this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
+            this->stream.next_in = bufPtr(uncompressed);
         }
     }
 
     // Initialize compressed output buffer
-    this->stream->avail_out = (unsigned int)bufRemains(compressed);
-    this->stream->next_out = bufPtr(compressed) + bufUsed(compressed);
+    this->stream.avail_out = (unsigned int)bufRemains(compressed);
+    this->stream.next_out = bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression
-    gzipError(deflate(this->stream, this->flush ? Z_FINISH : Z_NO_FLUSH));
+    gzipError(deflate(&this->stream, this->flush ? Z_FINISH : Z_NO_FLUSH));
 
     // Set buffer used space
-    bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream->avail_out);
+    bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
 
     // Is compression done?
-    if (this->flush && this->stream->avail_out > 0)
+    if (this->flush && this->stream.avail_out > 0)
         this->done = true;
 
     // Can more input be provided on the next call?
-    this->inputSame = this->flush ? !this->done : this->stream->avail_in != 0;
+    this->inputSame = this->flush ? !this->done : this->stream.avail_in != 0;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -176,21 +174,36 @@ gzipCompressNew(int level, bool raw)
     MEM_CONTEXT_NEW_BEGIN("GzipCompress")
     {
         GzipCompress *driver = memNew(sizeof(GzipCompress));
-        driver->memContext = MEM_CONTEXT_NEW();
+
+        *driver = (GzipCompress)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .stream = {.zalloc = NULL},
+        };
 
         // Create gzip stream
-        driver->stream = memNew(sizeof(z_stream));
-        gzipError(deflateInit2(driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
+        gzipError(deflateInit2(&driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipCompressFreeResource, driver);
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewInt(level));
+        varLstAdd(paramList, varNewBool(raw));
+
         // Create filter interface
         this = ioFilterNewP(
-            GZIP_COMPRESS_FILTER_TYPE_STR, driver, .done = gzipCompressDone, .inOut = gzipCompressProcess,
+            GZIP_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzipCompressDone, .inOut = gzipCompressProcess,
             .inputSame = gzipCompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+gzipCompressNewVar(const VariantList *paramList)
+{
+    return gzipCompressNew(varIntForce(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
 }

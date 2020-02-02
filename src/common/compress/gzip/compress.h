@@ -9,8 +9,15 @@ Compress IO using the gzip format.
 #include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
+Filter type constant
+***********************************************************************************************************************************/
+#define GZIP_COMPRESS_FILTER_TYPE                                   "gzipCompress"
+    STRING_DECLARE(GZIP_COMPRESS_FILTER_TYPE_STR);
+
+/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
 IoFilter *gzipCompressNew(int level, bool raw);
+IoFilter *gzipCompressNewVar(const VariantList *paramList);
 
 #endif

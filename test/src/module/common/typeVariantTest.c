@@ -298,7 +298,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *string = varNewStr(strNew("test-str"));
-        TEST_RESULT_STR(strPtr(varStr(string)), "test-str", "string pointer");
+        TEST_RESULT_STR_Z(varStr(string), "test-str", "string pointer");
         varFree(string);
 
         TEST_RESULT_PTR(varStr(NULL), NULL, "get null string variant");
@@ -321,13 +321,13 @@ testRun(void)
         TEST_ERROR(varBoolForce(VARSTRDEF(BOGUS_STR)), FormatError, "unable to convert str 'BOGUS' to bool");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(varStrForce(VARSTRDEF("teststring"))), "teststring", "force string to string");
-        TEST_RESULT_STR(strPtr(varStrForce(VARINT(999))), "999", "force int to string");
-        TEST_RESULT_STR(strPtr(varStrForce(VARINT64(9223372036854775807L))), "9223372036854775807", "force int64 to string");
-        TEST_RESULT_STR(strPtr(varStrForce(VARDBL((double)999999999.123456))), "999999999.123456", "force double to string");
-        TEST_RESULT_STR(strPtr(varStrForce(varNewBool(true))), "true", "force bool to string");
-        TEST_RESULT_STR(strPtr(varStrForce(varNewBool(false))), "false", "force bool to string");
-        TEST_RESULT_STR(strPtr(varStrForce(VARUINT64(18446744073709551615U))), "18446744073709551615", "force uint64 to string");
+        TEST_RESULT_STR_Z(varStrForce(VARSTRDEF("teststring")), "teststring", "force string to string");
+        TEST_RESULT_STR_Z(varStrForce(VARINT(999)), "999", "force int to string");
+        TEST_RESULT_STR_Z(varStrForce(VARINT64(9223372036854775807L)), "9223372036854775807", "force int64 to string");
+        TEST_RESULT_STR_Z(varStrForce(VARDBL((double)999999999.123456)), "999999999.123456", "force double to string");
+        TEST_RESULT_STR_Z(varStrForce(varNewBool(true)), "true", "force bool to string");
+        TEST_RESULT_STR_Z(varStrForce(varNewBool(false)), "false", "force bool to string");
+        TEST_RESULT_STR_Z(varStrForce(VARUINT64(18446744073709551615U)), "18446744073709551615", "force uint64 to string");
 
         TEST_ERROR(varStrForce(varNewKv(kvNew())), FormatError, "unable to force KeyValue to String");
 
@@ -337,12 +337,12 @@ testRun(void)
         varFree(string);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(varStr(VARSTRDEF("test-z-str"))), "test-z-str", "new zero-terminated string");
+        TEST_RESULT_STR_Z(varStr(VARSTRDEF("test-z-str")), "test-z-str", "new zero-terminated string");
         TEST_RESULT_PTR(strPtr(varStr(VARSTR(NULL))), NULL, "new null strz");
         TEST_RESULT_PTR(strPtr(varStr(varNewStrZ(NULL))), NULL, "new null strz");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(varStr(varDup(VARSTRDEF("yabba-dabba-doo")))), "yabba-dabba-doo", "dup string");
+        TEST_RESULT_STR_Z(varStr(varDup(VARSTRDEF("yabba-dabba-doo"))), "yabba-dabba-doo", "dup string");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(varDup(NULL), NULL, "dup NULL");
@@ -396,11 +396,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("varToLog"))
     {
-        TEST_RESULT_STR(strPtr(varToLog(varNewStrZ("testme"))), "{\"testme\"}", "format String");
-        TEST_RESULT_STR(strPtr(varToLog(varNewBool(false))), "{false}", "format bool");
-        TEST_RESULT_STR(strPtr(varToLog(varNewKv(kvNew()))), "{KeyValue}", "format KeyValue");
-        TEST_RESULT_STR(strPtr(varToLog(varNewVarLst(varLstNew()))), "{VariantList}", "format VariantList");
-        TEST_RESULT_STR(strPtr(varToLog(NULL)), "null", "format null");
+        TEST_RESULT_STR_Z(varToLog(varNewStrZ("testme")), "{\"testme\"}", "format String");
+        TEST_RESULT_STR_Z(varToLog(varNewBool(false)), "{false}", "format bool");
+        TEST_RESULT_STR_Z(varToLog(varNewKv(kvNew())), "{KeyValue}", "format KeyValue");
+        TEST_RESULT_STR_Z(varToLog(varNewVarLst(varLstNew())), "{VariantList}", "format VariantList");
+        TEST_RESULT_STR_Z(varToLog(NULL), "null", "format null");
     }
 
     // *****************************************************************************************************************************
@@ -411,8 +411,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(list, varLstNew(), "new list");
-            TEST_RESULT_PTR(varLstMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to old context");
-            TEST_RESULT_PTR(varLstMove(list, MEM_CONTEXT_OLD()), list, "move var list to old context");
+            TEST_RESULT_PTR(varLstMove(NULL, memContextPrior()), NULL, "move null to old context");
+            TEST_RESULT_PTR(varLstMove(list, memContextPrior()), list, "move var list to old context");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -422,7 +422,7 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(list), 2, "list size");
 
         TEST_RESULT_INT(varInt(varLstGet(list, 0)), 27, "check int");
-        TEST_RESULT_STR(strPtr(varStr(varLstGet(list, 1))), "test-str", "check string");
+        TEST_RESULT_STR_Z(varStr(varLstGet(list, 1)), "test-str", "check string");
 
         TEST_RESULT_VOID(varLstFree(list), "free list");
         TEST_RESULT_VOID(varLstFree(NULL), "free null list");
@@ -436,9 +436,7 @@ testRun(void)
         varLstAdd(list, varNewStrZ("string1"));
         varLstAdd(list, varNewStrZ("string2"));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstNewVarLst(varLstDup(list)), ", ")),
-            "string1, string2", "duplicate variant list");
+        TEST_RESULT_STR_Z(strLstJoin(strLstNewVarLst(varLstDup(list)), ", "), "string1, string2", "duplicate variant list");
 
         TEST_RESULT_PTR(varLstDup(NULL), NULL, "duplicate null list");
     }
@@ -451,9 +449,8 @@ testRun(void)
         strLstAdd(listStr, strNew("string1"));
         strLstAdd(listStr, strNew("string2"));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstNewVarLst(varLstNewStrLst(listStr)), ", ")),
-            "string1, string2", "variant list from string list");
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstNewVarLst(varLstNewStrLst(listStr)), ", "), "string1, string2", "variant list from string list");
 
         TEST_RESULT_PTR(varLstNewStrLst(NULL), NULL, "variant list from null string list");
     }

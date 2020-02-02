@@ -8,6 +8,7 @@ Storage Helper
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/cifs/storage.h"
@@ -22,20 +23,23 @@ Storage path constants
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
+STRING_EXTERN(STORAGE_REPO_ARCHIVE_STR,                             STORAGE_REPO_ARCHIVE);
+STRING_EXTERN(STORAGE_REPO_BACKUP_STR,                              STORAGE_REPO_BACKUP);
+
 STRING_EXTERN(STORAGE_PATH_ARCHIVE_STR,                             STORAGE_PATH_ARCHIVE);
 STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH_BACKUP);
 
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct
+static struct StorageHelper
 {
     MemContext *memContext;                                         // Mem context for storage helper
 
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
-    Storage *storagePg;                                             // PostgreSQL read-only storage
-    Storage *storagePgWrite;                                        // PostgreSQL write storage
+    Storage **storagePg;                                            // PostgreSQL read-only storage
+    Storage **storagePgWrite;                                       // PostgreSQL write storage
     Storage *storageRepo;                                           // Repository read-only storage
     Storage *storageRepoWrite;                                      // Repository write storage
     Storage *storageSpool;                                          // Spool read-only storage
@@ -58,7 +62,11 @@ storageHelperInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            storageHelper.memContext = memContextNew("storageHelper");
+            MEM_CONTEXT_NEW_BEGIN("StorageHelper")
+            {
+                storageHelper.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
@@ -138,51 +146,108 @@ storageLocalWrite(void)
 
     FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
 }
+/***********************************************************************************************************************************
+Get pg storage for the specified host id
+***********************************************************************************************************************************/
+static Storage *
+storagePgGet(unsigned int hostId, bool write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
+        FUNCTION_TEST_PARAM(BOOL, write);
+    FUNCTION_TEST_END();
+
+    Storage *result = NULL;
+
+    // Use remote storage
+    if (!pgIsLocal(hostId))
+    {
+        result = storageRemoteNew(
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
+            protocolRemoteGet(protocolStorageTypePg, hostId), cfgOptionUInt(cfgOptCompressLevelNetwork));
+    }
+    // Use Posix storage
+    else
+    {
+        result = storagePosixNew(
+            cfgOptionStr(cfgOptPgPath + hostId - 1), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 /***********************************************************************************************************************************
-Get ready-only PostgreSQL storage
+Get read-only PostgreSQL storage for a specific host id
+***********************************************************************************************************************************/
+const Storage *
+storagePgId(unsigned int hostId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
+    FUNCTION_TEST_END();
+
+    if (storageHelper.storagePg == NULL || storageHelper.storagePg[hostId - 1] == NULL)
+    {
+        storageHelperInit();
+
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            if (storageHelper.storagePg == NULL)
+                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+
+            storageHelper.storagePg[hostId - 1] = storagePgGet(hostId, false);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storagePg[hostId - 1]);
+}
+
+/***********************************************************************************************************************************
+Get read-only PostgreSQL storage for the host-id or the default of 1
 ***********************************************************************************************************************************/
 const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(storagePgId(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
+}
 
-    if (storageHelper.storagePg == NULL)
+/***********************************************************************************************************************************
+Get write PostgreSQL storage for a specific host id
+***********************************************************************************************************************************/
+const Storage *
+storagePgIdWrite(unsigned int hostId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
+    FUNCTION_TEST_END();
+
+    if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[hostId - 1] == NULL)
     {
         storageHelperInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePg = storagePosixNew(
-                cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+            if (storageHelper.storagePgWrite == NULL)
+                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+
+            storageHelper.storagePgWrite[hostId - 1] = storagePgGet(hostId, true);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg);
+    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[hostId - 1]);
 }
 
 /***********************************************************************************************************************************
-Get write PostgreSQL storage
+Get write PostgreSQL storage for the host-id or the default of 1
 ***********************************************************************************************************************************/
 const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-
-    if (storageHelper.storagePgWrite == NULL)
-    {
-        storageHelperInit();
-
-        MEM_CONTEXT_BEGIN(storageHelper.memContext)
-        {
-            storageHelper.storagePgWrite = storagePosixNew(
-                cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite);
+    FUNCTION_TEST_RETURN(storagePgIdWrite(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
 }
 
 /***********************************************************************************************************************************
@@ -220,9 +285,9 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
+    if (strEq(expression, STORAGE_REPO_ARCHIVE_STR))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
         else
@@ -240,9 +305,9 @@ storageRepoPathExpression(const String *expression, const String *path)
                 strCatFmt(result, "/%s", strPtr(path));
         }
     }
-    else if (strEqZ(expression, STORAGE_REPO_BACKUP))
+    else if (strEq(expression, STORAGE_REPO_BACKUP_STR))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
         else
@@ -278,7 +343,7 @@ storageRepoGet(const String *type, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo));
+            protocolRemoteGet(protocolStorageTypeRepo, 1), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use CIFS storage
     else if (strEqZ(type, STORAGE_TYPE_CIFS))
@@ -296,14 +361,19 @@ storageRepoGet(const String *type, bool write)
     else if (strEqZ(type, STORAGE_TYPE_S3))
     {
         // Set the default port
-        unsigned int port = STORAGE_S3_PORT_DEFAULT;
+        unsigned int port = cfgOptionUInt(cfgOptRepoS3Port);
 
         // Extract port from the endpoint and host if it is present
         const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
         const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
 
+        // If the port option was set explicitly then use it in preference to appended ports
+        if (cfgOptionSource(cfgOptRepoS3Port) != cfgSourceDefault)
+            port = cfgOptionUInt(cfgOptRepoS3Port);
+
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
+            strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
             cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_S3_PARTSIZE_MIN,
             STORAGE_S3_DELETE_MAX, host, port, STORAGE_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifyTls),
@@ -464,7 +534,7 @@ storageHelperFree(void)
     if (storageHelper.memContext != NULL)
         memContextFree(storageHelper.memContext);
 
-    memset(&storageHelper, 0, sizeof(storageHelper));
+    storageHelper = (struct StorageHelper){.memContext = NULL};
 
     FUNCTION_TEST_RETURN_VOID();
 }

@@ -38,7 +38,6 @@ use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::BuildDefine;
 use pgBackRestBuild::Config::BuildParse;
-use pgBackRestBuild::Embed::Build;
 use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
 
@@ -46,7 +45,6 @@ use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CoverageTest;
-use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -74,29 +72,31 @@ test.pl [options]
    --test               execute the specified test in a module
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
-   --no-cleanup         don't cleaup after the last test is complete - useful for debugging
+   --no-cleanup         don't cleanup after the last test is complete - useful for debugging
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
-   --no-lint            disable static source code analysis
    --build-only         compile the test library / packages and run tests only
    --build-max          max processes to use for builds (default 4)
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
+   --container-only     only run tests that must be run in a container
    --gen-only           only run auto-generation
+   --gen-libc           generate libc code to embed in the binary
    --no-gen             do not run code generation
    --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
-   --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --no-optimize
-   --dev-test           --no-lint --no-package
-   --expect             --no-lint --no-package --vm=co7 --db=9.6 --log-force
+   --dev                --smart --no-package --no-optimize
+   --dev-test           --no-package
+   --expect             --no-package --vm=co7 --db=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
    --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
    --no-debug           don't generate a debug build
+   --scale              scale performance tests
+   --tz                 test with the specified timezone
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
 
  Report Options:
@@ -107,6 +107,7 @@ test.pl [options]
    --test-path          path where tests are executed (defaults to ./test)
    --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
    --log-level-test     log level to use for C tests (defaults to OFF)
+   --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -126,6 +127,7 @@ test.pl [options]
 ####################################################################################################################################
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
+my $strLogLevelTestFile = lc(TRACE);
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -145,19 +147,19 @@ my $strVm;
 my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
-my $bNoLint = false;
 my $bBuildOnly = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
 my $bNoCoverage = false;
 my $bCOnly = false;
+my $bContainerOnly = false;
 my $bGenOnly = false;
+my $bGenLibC = false;
 my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
 my $bNoPackage = false;
-my $bNoCiConfig = false;
 my $bDev = false;
 my $bDevTest = false;
 my $bBackTrace = false;
@@ -166,8 +168,10 @@ my $bExpect = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
+my $iScale = 1;
 my $bDebugTestTrace = false;
 my $iRetry = 0;
+my $strTimeZone = undef;
 
 my @cmdOptions = @ARGV;
 
@@ -178,6 +182,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
+            'log-level-test-file=s' => \$strLogLevelTestFile,
             'vm=s' => \$strVm,
             'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
@@ -192,16 +197,16 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'pg-version=s' => \$strPgVersion,
             'log-force' => \$bLogForce,
-            'no-lint' => \$bNoLint,
             'build-only' => \$bBuildOnly,
             'build-max=s' => \$iBuildMax,
             'no-package' => \$bNoPackage,
-            'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
+            'container-only' => \$bContainerOnly,
             'gen-only' => \$bGenOnly,
+            'gen-libc' => \$bGenLibC,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
@@ -213,6 +218,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
+            'scale=s' => \$iScale,
+            'tz=s', => \$strTimeZone,
             'debug-test-trace', => \$bDebugTestTrace,
             'retry=s' => \$iRetry)
     or pod2usage(2);
@@ -246,6 +253,14 @@ eval
     }
 
     ################################################################################################################################
+    # Disable code generation on dry-run
+    ################################################################################################################################
+    if ($bDryRun)
+    {
+        $bNoGen = true;
+    }
+
+    ################################################################################################################################
     # Update options for --coverage-summary
     ################################################################################################################################
     if ($bCoverageSummary)
@@ -264,7 +279,6 @@ eval
 
     if ($bDev)
     {
-        $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
         $bNoOptimize = true;
@@ -273,7 +287,6 @@ eval
     if ($bDevTest)
     {
         $bNoPackage = true;
-        $bNoLint = true;
     }
 
     ################################################################################################################################
@@ -290,7 +303,6 @@ eval
     ################################################################################################################################
     if ($bExpect)
     {
-        $bNoLint = true;
         $bNoPackage = true;
         $strVm = VM_EXPECT;
         $strPgVersion = '9.6';
@@ -322,7 +334,7 @@ eval
         confess "Only one --test can be provided when --run is specified";
     }
 
-    # Set test path if not expicitly set
+    # Set test path if not explicitly set
     if (!defined($strTestPath))
     {
         $strTestPath = cwd() . '/test';
@@ -342,16 +354,17 @@ eval
         {
             confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
-        elsif (!vmCoveragePerl($strVm))
-        {
-            confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
-        }
     }
 
     # If VM is not defined then set it to all
     if (!defined($strVm))
     {
         $strVm = VM_ALL;
+    }
+    # Else make sure vm is valid
+    elsif ($strVm ne VM_ALL)
+    {
+        vmValid($strVm);
     }
 
     # Get the base backrest path
@@ -540,7 +553,7 @@ eval
             # Auto-generate Perl code
             #-----------------------------------------------------------------------------------------------------------------------
             use lib dirname(dirname($0)) . '/libc/build/lib';
-            use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+            use pgBackRestLibC::Build;
 
             if (!$bSmart || grep(/^(build|libc\/build)\//, @stryModifiedList))
             {
@@ -548,59 +561,6 @@ eval
 
                 my @stryBuilt = buildXsAll("${strBackRestBase}/libc");
                 &log(INFO, "    autogenerated Perl code: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
-
-                if (@stryBuilt)
-                {
-                    push(@stryBuiltAll, @stryBuilt);
-                    push(@stryModifiedList, @stryBuilt);
-                }
-            }
-
-            # Auto-generate C library code to embed in the binary
-            #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^libc\//, @stryModifiedList))
-            {
-                my $strLibC = executeTest(
-                    "cd ${strBackRestBase}/libc && " .
-                    "perl /usr/share/perl/5.26/ExtUtils/xsubpp -typemap /usr/share/perl/5.26/ExtUtils/typemap" .
-                        " -typemap typemap LibC.xs");
-
-                # Trim off any trailing LFs
-                $strLibC = trim($strLibC) . "\n";
-
-                # Strip out line numbers.  These are useful for the LibC build but only cause churn in the binary
-                # build.
-                $strLibC =~ s/^\#line .*\n//mg;
-
-                # Save into the bin src dir
-                my @stryBuilt;
-                my $strBuilt = 'src/perl/libc.auto.c';
-
-                if (buildPutDiffers($oStorageBackRest, "${strBackRestBase}/${strBuilt}", $strLibC))
-                {
-                    push(@stryBuilt, $strBuilt);
-                    push(@stryBuiltAll, @stryBuilt);
-                    push(@stryModifiedList, @stryBuilt);
-                }
-
-                &log(INFO, "    autogenerated embedded C code: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
-            }
-
-            # Auto-generate embedded Perl code
-            #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^lib\//, @stryModifiedList))
-            {
-                my $rhBuild =
-                {
-                    'embed' =>
-                    {
-                        &BLD_DATA => buildEmbed($oStorageBackRest),
-                        &BLD_PATH => 'perl',
-                    },
-                };
-
-                my @stryBuilt = buildAll("${strBackRestBase}/src", $rhBuild);
-                &log(INFO, "    autogenerated embedded Perl code: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
 
                 if (@stryBuilt)
                 {
@@ -643,13 +603,6 @@ eval
             {
                 exit 0;
             }
-        }
-
-        # Build CI config
-        #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bNoCiConfig)
-        {
-            (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
         }
 
         # Check Perl version against release notes and update version in C code if needed
@@ -718,26 +671,27 @@ eval
         my $iTestFail = 0;
         my $iTestRetry = 0;
         my $oyProcess = [];
-        my $strCoveragePath = "${strTestPath}/cover_db";
         my $strCodePath = "${strBackRestBase}/test/.vagrant/code";
 
         if (!$bDryRun || $bVmOut)
         {
-            &log(INFO, "cleanup old data and containers");
-            containerRemove('test-([0-9]+|build)');
+            &log(INFO, "cleanup old data" . ($strVm ne VM_NONE ? " and containers" : ''));
+
+            if ($strVm ne VM_NONE)
+            {
+                containerRemove('test-([0-9]+|build)');
+            }
 
             for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
             {
                 push(@{$oyProcess}, undef);
             }
 
-            executeTest(
-                "sudo rm -rf ${strTestPath}/cover_db ${strTestPath}/test-* ${strTestPath}/expect-*" .
-                ($bDev ? '' : " ${strTestPath}/gcov-*"));
-            $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+            executeTest("rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
+            $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
-            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/* ${strBackRestBase}/test/coverage/perl/*");
+            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
 
             # Overwrite the C coverage report so it will load but not show old coverage
             $oStorageTest->pathCreate("${strBackRestBase}/test/coverage", {strMode => '0770', bIgnoreExists => true});
@@ -767,13 +721,13 @@ eval
         {
             # Get the test list
             $oyTestRun = testListGet(
-                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly);
+                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly);
 
             # Determine if the C binary and test library need to be built
             foreach my $hTest (@{$oyTestRun})
             {
                 # Bin build required for all Perl tests or if a C unit test calls Perl
-                if (!$hTest->{&TEST_C} || $hTest->{&TEST_PERL_REQ})
+                if (!$hTest->{&TEST_C} || $hTest->{&TEST_BIN_REQ})
                 {
                     $bBinRequired = true;
                 }
@@ -849,9 +803,9 @@ eval
                     # Build configure/compile options and see if they have changed from the previous build
                     my $strCFlags =
                         "-Wfatal-errors -g -fPIC -D_FILE_OFFSET_BITS=64" .
-                        (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                        (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
+                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace  ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
                     my $strBuildFlags = "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
@@ -876,10 +830,13 @@ eval
                     {
                         &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strBuildVM ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         foreach my $strBinSrcPath (@stryBinSrcPath)
                         {
@@ -893,26 +850,24 @@ eval
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
                         buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
-                        if (vmLintC($strVm) && !$bNoLint)
-                        {
-                            &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
-                        }
-
                         if ($bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
                         {
                             executeTest(
-                                "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
+                                ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
+                                "bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
                                 {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(
-                            'docker exec -i test-build' .
-                            (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
-                            " make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                            ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
+                            "make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
                                 " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});
 
-                        executeTest("docker rm -f test-build");
+                        if ($strBuildVM ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
                 }
             }
@@ -939,7 +894,7 @@ eval
                 foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
-                    my $bContainerExists = $strBuildVM ne $strVmHost;
+                    my $bContainerExists = $strBuildVM ne $strVmHost && $strBuildVM ne VM_NONE;
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
 
                     my $strLibCSmart = "${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so";
@@ -955,12 +910,6 @@ eval
 
                             $bRebuild = true;
                         }
-                    }
-
-                    # Delete old libc files from the host
-                    if ($bRebuild)
-                    {
-                        executeTest('sudo rm -rf ' . $oVm->{$strBuildVM}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
                     }
 
                     if ($bRebuild)
@@ -1027,19 +976,13 @@ eval
                         {
                             executeTest("docker rm -f test-build");
                         }
-
-                        if ($strBuildVM eq $strVmHost)
-                        {
-                            executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
-                            buildLoadLibC();
-                        }
                     }
                 }
             }
 
             # Build the package
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bNoPackage)
+            if (!$bNoPackage && $strVm ne VM_NONE)
             {
                 my $strPackagePath = "${strVagrantPath}/package";
                 my $strPackageSmart = "${strPackagePath}/build.timestamp";
@@ -1068,7 +1011,7 @@ eval
                         &log(INFO, 'package dependencies have changed, rebuilding...');
                     }
 
-                    executeTest("sudo rm -rf ${strPackagePath}");
+                    executeTest("rm -rf ${strPackagePath}");
                 }
 
                 # Loop through VMs to do the package builds
@@ -1083,18 +1026,21 @@ eval
                     {
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
 
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
-                            "docker exec -i test-build " .
-                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
-                            " ${strBuildPath}");
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
+                            " ${strBuildPath}'");
 
                         # Patch files in debian package builds
                         #
@@ -1136,15 +1082,18 @@ eval
                             ${$oStorageBackRest->get("${strBuildPath}/debian/changelog")});
 
                         executeTest(
-                            "docker exec -i test-build " .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'cd ${strBuildPath} && debuild -i -us -uc -b'");
 
                         executeTest(
-                            "docker exec -i test-build " .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'rm -f ${strPackagePath}/${strBuildVM}/*.build ${strPackagePath}/${strBuildVM}/*.changes" .
                             " ${strPackagePath}/${strBuildVM}/pgbackrest-doc*'");
 
-                        executeTest("docker rm -f test-build");
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
 
                     if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -1152,10 +1101,13 @@ eval
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
                         # Create build container
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         # Create build directories
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
@@ -1163,6 +1115,11 @@ eval
                         $oStorageBackRest->pathCreate("${strBuildPath}/SPECS", {bIgnoreExists => true, bCreateParent => true});
                         $oStorageBackRest->pathCreate("${strBuildPath}/RPMS", {bIgnoreExists => true, bCreateParent => true});
                         $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
+
+                        # Install PostreSQL 11 development for package builds
+                        executeTest(
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "bash -c 'yum install -y postgresql11-devel 2>&1'");
 
                         # Copy source files
                         executeTest(
@@ -1172,7 +1129,7 @@ eval
 
                         # Copy package files
                         executeTest(
-                            "docker exec -i test-build bash -c '" .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') . "bash -c '" .
                             "ln -s ${strBuildPath} /root/rpmbuild && " .
                             "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
                             "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
@@ -1200,11 +1157,15 @@ eval
 
                         # Build package
                         executeTest(
-                            "docker exec -i test-build rpmbuild -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
                             {bSuppressStdErr => true});
 
                         # Remove build container
-                        executeTest("docker rm -f test-build");
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
                 }
 
@@ -1229,21 +1190,6 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
-            # Run Perl critic
-            if (!$bNoLint && !$bBuildOnly)
-            {
-                my $strBasePath = dirname(dirname(abs_path($0)));
-
-                &log(INFO, "Performing static code analysis using perlcritic");
-
-                executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
-                            ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
-                            " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
-                            " ${strBasePath}/lib/*" .
-                            " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
-                            " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
-            }
-
             logFileSet($oStorageTest, cwd() . "/test");
         }
 
@@ -1261,6 +1207,14 @@ eval
         {
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
         }
+
+        # Disable file logging for integration tests when there is more than one test since it will be overwritten
+        if (@{$oyTestRun} > 1)
+        {
+            $strLogLevelTestFile = lc(OFF);
+        }
+
+        # Don't allow --no-cleanup when more than one test will run.  How would the prior results be preserved?
 
         # Only use one vm for dry run so results are printed in order
         if ($bDryRun)
@@ -1325,10 +1279,11 @@ eval
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
-                        $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
-                        $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
-                        $bProfile, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, $bLogForce,
+                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
+                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1346,7 +1301,7 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if ((vmCoverageC($strVm) || vmCoveragePerl($strVm)) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
+        if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             # Determine which modules were covered (only check coverage if all tests were successful)
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1401,104 +1356,6 @@ eval
             if (keys(%{$hCoverageActual}) == 0)
             {
                 &log(INFO, 'no code modules had all tests run required for coverage');
-            }
-
-            # Generate Perl coverage report
-            #-----------------------------------------------------------------------------------------------------------------------
-            if (vmCoveragePerl($strVm))
-            {
-                &log(INFO, 'writing Perl coverage report');
-
-                executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-                executeTest(
-                    "cd ${strCoveragePath}_temp && " .
-                    LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                    {bSuppressStdErr => true});
-                executeTest("sudo rm -rf ${strCoveragePath}_temp");
-                executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-                executeTest(
-                    "cd ${strCoveragePath}_temp && " .
-                    LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                    {bSuppressStdErr => true});
-                executeTest("sudo rm -rf ${strCoveragePath}_temp");
-
-                # Load the results of coverage testing from JSON
-                my $oJSON = JSON::PP->new()->allow_nonref();
-                my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/perl/cover.json')});
-
-                foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
-                {
-                    # If the first char of the module is lower case then it's a c module
-                    if (substr($strCodeModule, 0, 1) eq lc(substr($strCodeModule, 0, 1)))
-                    {
-                        next;
-                    }
-
-                    # Create code module path -- where the file is located on disk
-                    my $strCodeModulePath = "${strBackRestBase}/lib/" . PROJECT_NAME . "/${strCodeModule}.pm";
-
-                    # Get summary results
-                    my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
-
-                    # Try an extra / if the module is not found
-                    if (!defined($hCoverageResultAll))
-                    {
-                        $strCodeModulePath = "/${strCodeModulePath}";
-                        $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
-                    }
-
-                    # If module is marked as having no code
-                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_NOCODE)
-                    {
-                        # Error if it really does have coverage
-                        if ($hCoverageResultAll)
-                        {
-                            confess &log(ERROR, "perl module ${strCodeModule} is marked 'no code' but has code");
-                        }
-
-                        # Skip to next module
-                        next;
-                    }
-
-                    if (!defined($hCoverageResultAll))
-                    {
-                        confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
-                    }
-
-                    # Check that all code has been covered
-                    my $iCoverageTotal = $hCoverageResultAll->{total};
-                    my $iCoverageUncoverable = coalesce($hCoverageResultAll->{uncoverable}, 0);
-                    my $iCoverageCovered = coalesce($hCoverageResultAll->{covered}, 0);
-
-                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_FULL)
-                    {
-                        my $iUncoveredLines = $iCoverageTotal - $iCoverageCovered - $iCoverageUncoverable;
-
-                        if ($iUncoveredLines != 0)
-                        {
-                            &log(ERROR, "perl module ${strCodeModule} is not fully covered");
-                            $iUncoveredCodeModuleTotal++;
-
-                            &log(ERROR, ('-' x 80));
-                            executeTest(
-                                "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
-                                PROJECT_NAME . "/${strCodeModule}.pm",
-                                {bShowOutputAsync => true});
-                            &log(ERROR, ('-' x 80));
-                        }
-                    }
-                    # Else test how much partial coverage there was
-                    elsif ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_PARTIAL)
-                    {
-                        my $iCoveragePercent = int(($iCoverageCovered + $iCoverageUncoverable) * 100 / $iCoverageTotal);
-
-                        if ($iCoveragePercent == 100)
-                        {
-                            &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
-                            $iUncoveredCodeModuleTotal++;
-                        }
-                    }
-                }
             }
 
             # Generate C coverage report
@@ -1606,12 +1463,23 @@ eval
     ################################################################################################################################
     # Runs tests
     ################################################################################################################################
+    push(
+        @INC,
+        "${strBackRestBase}/test/.vagrant/bin/" .
+            ((testDefModuleTest($stryModule[0], $stryModuleTest[0]))->{&TESTDEF_CONTAINER} ? $strVm : $strVmHost) .
+            "/libc/blib/arch");
     buildLoadLibC();
 
     my $iRun = 0;
 
     # Create host group for containers
     my $oHostGroup = hostGroupGet();
+
+    # Set timezone
+    if (defined($strTimeZone))
+    {
+        $ENV{TZ} = $strTimeZone;
+    }
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(
@@ -1624,13 +1492,14 @@ eval
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
-        TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
+        $strLogLevelTestFile,                                       # Log options
+        TEST_USER, TEST_GROUP);                                     # User/group info
 
     if (!$bNoCleanup)
     {
         if ($oHostGroup->removeAll() > 0)
         {
-            executeTest("sudo rm -rf ${strTestPath}");
+            executeTest("rm -rf ${strTestPath}");
         }
     }
 
@@ -1651,7 +1520,11 @@ or do
     # If a backrest exception then return the code
     if (isException(\$EVAL_ERROR))
     {
-        syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        if ($EVAL_ERROR->code() != ERROR_OPTION_INVALID_VALUE)
+        {
+            syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        }
+
         exit $EVAL_ERROR->code();
     }
 

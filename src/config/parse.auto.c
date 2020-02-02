@@ -126,13 +126,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
     },
 
-    // c option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_C,
-        .val = PARSE_OPTION_FLAG | cfgOptC,
-    },
-
     // checksum-page option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -158,14 +151,6 @@ static const struct option optionList[] =
     {
         .name = "reset-" CFGOPT_CMD_SSH,
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
-    },
-
-    // command option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_COMMAND,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCommand,
     },
 
     // compress option
@@ -470,18 +455,6 @@ static const struct option optionList[] =
         .name = CFGOPT_OUTPUT,
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
-    },
-
-    // perl-option option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_PERL_OPTION,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptPerlOption,
-    },
-    {
-        .name = "reset-" CFGOPT_PERL_OPTION,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPerlOption,
     },
 
     // pg-host option and deprecations
@@ -1594,6 +1567,81 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + 7),
     },
 
+    // pg-user option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_PG1_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPgUser,
+    },
+    {
+        .name = "reset-" CFGOPT_PG1_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgUser,
+    },
+    {
+        .name = CFGOPT_PG2_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 1),
+    },
+    {
+        .name = "reset-" CFGOPT_PG2_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 1),
+    },
+    {
+        .name = CFGOPT_PG3_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 2),
+    },
+    {
+        .name = "reset-" CFGOPT_PG3_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 2),
+    },
+    {
+        .name = CFGOPT_PG4_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 3),
+    },
+    {
+        .name = "reset-" CFGOPT_PG4_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 3),
+    },
+    {
+        .name = CFGOPT_PG5_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 4),
+    },
+    {
+        .name = "reset-" CFGOPT_PG5_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 4),
+    },
+    {
+        .name = CFGOPT_PG6_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 5),
+    },
+    {
+        .name = "reset-" CFGOPT_PG6_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 5),
+    },
+    {
+        .name = CFGOPT_PG7_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 6),
+    },
+    {
+        .name = "reset-" CFGOPT_PG7_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 6),
+    },
+    {
+        .name = CFGOPT_PG8_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 7),
+    },
+    {
+        .name = "reset-" CFGOPT_PG8_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 7),
+    },
+
     // process option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1636,6 +1684,21 @@ static const struct option optionList[] =
     {
         .name = "reset-" CFGOPT_RECOVERY_OPTION,
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRecoveryOption,
+    },
+
+    // recurse option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_RECURSE,
+        .val = PARSE_OPTION_FLAG | cfgOptRecurse,
+    },
+
+    // remote-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REMOTE_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
 
     // repo-cipher-pass option and deprecations
@@ -2008,6 +2071,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret,
     },
 
+    // repo-s3-port option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_PORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3Port,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_PORT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Port,
+    },
+
     // repo-s3-region option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2035,6 +2110,18 @@ static const struct option optionList[] =
     {
         .name = "reset-" CFGOPT_REPO1_S3_TOKEN,
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Token,
+    },
+
+    // repo-s3-uri-style option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_URI_STYLE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3UriStyle,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_URI_STYLE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3UriStyle,
     },
 
     // repo-s3-verify-tls option and deprecations
@@ -2221,29 +2308,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
     },
 
-    // test option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST,
-        .val = PARSE_OPTION_FLAG | cfgOptTest,
-    },
-
-    // test-delay option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST_DELAY,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTestDelay,
-    },
-
-    // test-point option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST_POINT,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTestPoint,
-    },
-
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2269,10 +2333,8 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
@@ -2298,7 +2360,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPerlOption,
     cfgOptPgHost,
     cfgOptPgHost + 1,
     cfgOptPgHost + 2,
@@ -2379,9 +2440,19 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgSocketPath + 5,
     cfgOptPgSocketPath + 6,
     cfgOptPgSocketPath + 7,
+    cfgOptPgUser,
+    cfgOptPgUser + 1,
+    cfgOptPgUser + 2,
+    cfgOptPgUser + 3,
+    cfgOptPgUser + 4,
+    cfgOptPgUser + 5,
+    cfgOptPgUser + 6,
+    cfgOptPgUser + 7,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
+    cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
@@ -2405,9 +2476,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStopAuto,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
-    cfgOptTest,
-    cfgOptTestDelay,
-    cfgOptTestPoint,
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
@@ -2421,8 +2489,10 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3Host,
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
+    cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
+    cfgOptRepoS3UriStyle,
     cfgOptRepoS3VerifyTls,
     cfgOptTarget,
     cfgOptTargetAction,

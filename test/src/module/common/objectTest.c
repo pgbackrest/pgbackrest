@@ -29,6 +29,7 @@ Free object
 ***********************************************************************************************************************************/
 void testObjectFree(TestObject *this);
 
+OBJECT_DEFINE_MOVE(TEST_OBJECT);
 OBJECT_DEFINE_FREE(TEST_OBJECT);
 
 /***********************************************************************************************************************************
@@ -57,7 +58,11 @@ testObjectNew(void)
     MEM_CONTEXT_NEW_BEGIN(STRINGIFY(TestObject))
     {
         this = memNew(sizeof(TestObject));
-        this->memContext = memContextCurrent();
+
+        *this = (TestObject)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         memContextCallbackSet(this->memContext, testObjectFreeResource, (void *)1);
     }
@@ -79,7 +84,14 @@ testRun(void)
     {
         TestObject *testObject = NULL;
 
-        TEST_ASSIGN(testObject, testObjectNew(), "new test object");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(testObject, testObjectNew(), "new test object");
+            TEST_RESULT_VOID(testObjectMove(testObject, memContextPrior()), "move object to parent context");
+            TEST_RESULT_VOID(testObjectMove(NULL, memContextPrior()), "move null object");
+        }
+        MEM_CONTEXT_TEMP_END();
+
         TEST_RESULT_VOID(testObjectFree(testObject), "    free object");
         TEST_RESULT_BOOL(testObjectFreeResourceCalled, true, "    check callback");
     }

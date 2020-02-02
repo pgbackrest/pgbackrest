@@ -9,9 +9,12 @@ old context and then back. Below is a simplified example:
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
-        memContextSwitch(MEM_CONTEXT_OLD()); <--- switch to old context so creation of the variant from the string is in old context
-        result = varNewUInt64(cvtZToUInt64(strPtr(resultStr))); <--- recreates variant from the string in the old context.
-        memContextSwitch(MEM_CONTEXT_TEMP()); <--- switch back to the temporary context
+
+        MEM_CONTEXT_PRIOR_BEGIN() <--- switch to old context so creation of the variant from the string is in old context
+        {
+            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr))); <--- recreates variant from the string in the old context.
+        }
+        MEM_CONTEXT_PRIOR_END(); <--- switch back to the temporary context
     }
     MEM_CONTEXT_TEMP_END(); <-- frees everything created inside this temporary memory context - i.e resultStr
 ***********************************************************************************************************************************/
@@ -201,14 +204,14 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to declare String Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \
-    const Variant *name = VARSTRDEF(dataParam)
+    const Variant *const name = VARSTRDEF(dataParam)
 
 // Used to declare String Variant constants that will be local to the .c file.  Must be used in a .c file.
 #define VARIANT_STRDEF_STATIC(name, dataParam)                                                                                     \
-    static const Variant *name = VARSTRDEF(dataParam)
+    static const Variant *const name = VARSTRDEF(dataParam)
 
 // Create a UInt Variant constant inline from an unsigned int
-#define VARUINT(dataParam)                                                                                                       \
+#define VARUINT(dataParam)                                                                                                         \
     ((const Variant *)&(const VariantUIntConst){.type = varTypeUInt, .data = dataParam})
 
 // Create a UInt64 Variant constant inline from a uint64_t
@@ -217,7 +220,7 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to extern String Variant constants declared with VARIANT_STRDEF_EXTERN/STATIC().  Must be used in a .h file.
 #define VARIANT_DECLARE(name)                                                                                                      \
-    extern const Variant *name
+    extern const Variant *const name
 
 /***********************************************************************************************************************************
 Constant variants that are generally useful

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc title="{[project]}" subtitle="Frequently Asked Questions" toc="y">
+    <description>{[project]} Frequently Asked Questions (FAQ).</description>
+
+    <section id="introduction">
+        <title>Introduction</title>
+
+        <p>Frequently Asked Questions are intended to provide details for specific questions that may or may not be covered in the User Guide, Configuration, or Command reference. If you are unable to find details for your specific issue here, remember that the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/issues">Issues List in GitHub</link> is also a valuable resource.</p>
+    </section>
+
+    <section id="timeout">
+        <title>What if I get the <quote>could not find WAL segment</quote> error?</title>
+
+        <p>The cause of this error can be a result of many different issues, some of which may be:</p>
+        <list>
+            <list-item>misconfigured archive_command</list-item>
+            <list-item>misconfigured <backrest/> configuration files</list-item>
+            <list-item>network or permissions issue</list-item>
+            <list-item>third party product (e.g. S3, Swift or Minio) configuration issue</list-item>
+            <list-item>large amount of WAL queueing to be archived</list-item>
+        </list>
+
+        <p>It is advisable to:</p>
+        <list>
+            <list-item>check the archive_command in <postgres/></list-item>
+            <list-item>check the <backrest/> configuration settings on each host (e.g. pg* settings are set on the repository host and repo* settings on the pg host)</list-item>
+            <list-item>run the <cmd>check</cmd> command with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file (or default) to see if the WAL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asynchronous archiving</link></list-item>
+        </list>
+    </section>
+
+    <section id="manual-expire">
+        <title>How do I manually purge a backup set?</title>
+
+        <p>Backup sets in the middle cannot be expired, but it is possible to expire the oldest backup sets by running the <cmd>expire</cmd> command with retention. For example, the following command will keep only the last two full backups, purging any prior full backups including their associated incremental/differential backups and archive:</p>
+
+        <code-block>pgbackrest --stanza=xxx --repo1-retention-full=2 expire</code-block>
+
+        <p>Using the <br-setting>{[dash]}-repo1-retention-full</br-setting> option on the command-  line simply overrides the setting in the configuration file for that one execution of the command. See the <link url='https://pgbackrest.org/user-guide.html#retention'>Retention</link> section in the User Guide for more information on retention.</p>
+    </section>
+
+    <section id="optimize-config">
+        <title>How can I configure options independently for each command?</title>
+
+        <p><backrest/> has the ability to set options independently in the configuration file for each command. <link url="https://pgbackrest.org/user-guide.html#quickstart/configure-stanza">Configure Cluster Stanza</link> details this feature as well as option precedence.</p>
+        <p>For example, the <br-option>process-max</br-option> option can be optimized for each command:</p>
+
+        <code-block>
+[global]
+# used where not overridden
+process-max=2
+
+[global:backup]
+# more cores for backup
+process-max=4
+
+[global:restore]
+# all the cores for restore
+process-max=8
+
+[global:archive-push]
+# more cores for archive-push
+process-max=3
+
+[global:archive-get]
+# fewer cores for archive-get
+process-max=1
+        </code-block>
+    </section>
+
+    <section id="s3-bucket">
+        <title>Can I use dots (periods) in my S3 bucket name?</title>
+
+        <p><proper>RFC-2818</proper> does not allow wildcards to match on a dot (.) so s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
+    </section>
+
+    <section id="old-package">
+        <title>Where can I find packages for older versions of <backrest/>?</title>
+
+        <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
+    </section>
+
+    <section id="backup-standby">
+        <title>Why does a backup attempt fail when <br-option>backup-standby=y</br-option> and the standby database is down?</title>
+
+        <p>Configuring backup from standby is generally intended to reduce load on the primary, so switching backups to the  primary when the standby is down often defeats the point. Putting more load on the primary in a situation where there are already failures in the system is not recommended. Backups are not critical as long as you have one that is fairly recent -- the important thing is to keep up with WAL archiving. There is plenty of time to get a backup when the system is stable again.</p>
+
+        <p>If you really need a backup, the solution is to have more standbys or remove <br-option>backup-standby</br-option>. This can be overridden on the command line with <br-option>--no-backup-standby</br-option>, so there is no need to reconfigure for a one-off backup.</p>
+    </section>
+
+    <section id="standby-repo">
+        <title>Should I setup my repository on a standby host?</title>
+
+        <p>No. When primary and standby databases are configured, the <backrest/> configuration files should be symmetric in order to seamlessly handle failovers. If they are not, the configurations will need to be changed on failover or further problems may result.</p>
+
+        <p>See the <link url="user-guide.html#repo-host">Dedicated Repository Host</link> section of the <proper>User Guide</proper> for more information.</p>
+    </section>
+
+    <section id="time-based-pitr">
+        <title>Time-based Point-in-Time Recovery does not appear to work, why?</title>
+
+        <p>The most common mistake when using time-based Point-in-Time Recovery is forgetting to choose a backup set that is before the target time. <backrest/> defaults to the latest backup and if it is after the target time, then <setting>--target=</setting> is not considered valid by <postgres/> and is therefore ignored, resulting in WAL recovery to the latest time available.</p>
+
+        <p>To choose the correct backup set, run the <cmd>info</cmd> command and find the backup with a timestamp stop that is before the target time. When running the restore, specify the option <setting>--set=BACKUP_LABEL</setting> where <id>BACKUP_LABEL</id> is the backup that was found with a <b>stop</b> timestamp before the target time.</p>
+
+        <p>See the <link url="user-guide.html#pitr">Point-in-Time Recovery</link> section of the <proper>User Guide</proper> for more information.</p>
+    </section>
+
+    <!-- <section id="different-server">
+        <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
+
+        <p>It is often desirable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
+
+        <p>NEED TO ELABORATE HERE:  Need an example of the restore command - what settings are different? Would they be {[dash]}-target, {[dash]}-target-action=promote, {[dash]}-type=immediate on the command-line? What about in the POSTGRES (e.g. hot_standby = on / wal_level = hot_standby - these would be different, no?) and PGBACKREST (e.g. would recovery-option=standby_mode=on still be set?) config files</p>
+    </section>
+
+    <section id="minio">
+        <title>Setting up Minio for pgBackRest</title>
+
+        <p>Setting up Minio for pgBackRest https://github.com/pgbackrest/pgbackrest/issues/645/</p>
+    </section>
+
+    <section id="patroni">
+        <title>Patroni</title>
+
+        <p>Patroni: https://github.com/pgbackrest/pgbackrest/issues/702</p>
+    </section>
+
+    <section id="SOMETHING">
+        <title>SOMETHING</title>
+
+        <p>Issue 610 - has come up a couple times, so distill it and point to this as a resource  https://github.com/pgbackrest/pgbackrest/issues/610</p>
+    </section>
+-->
+</doc>

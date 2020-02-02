@@ -24,7 +24,6 @@ typedef struct ConfigCommandData
 
     bool logFile:1;
     unsigned int logLevelDefault:4;
-    unsigned int logLevelStdErrMax:4;
 
     bool parameterAllowed:1;
 } ConfigCommandData;
@@ -47,8 +46,6 @@ typedef struct ConfigCommandData
     .logFile = logFileParam,
 #define CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                     \
     .logLevelDefault = logLevelDefaultParam,
-#define CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelStdErrMaxParam)                                                                \
-    .logLevelStdErrMax = logLevelStdErrMaxParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
 #define CONFIG_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                    \
@@ -84,47 +81,32 @@ Include the automatically generated configuration data
 #include "config/config.auto.c"
 
 /***********************************************************************************************************************************
-Store the config memory context
+Static data for the currently loaded configuration
 ***********************************************************************************************************************************/
-static MemContext *configMemContext = NULL;
-
-/***********************************************************************************************************************************
-Store the current command
-
-This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
-***********************************************************************************************************************************/
-static ConfigCommand command = cfgCmdNone;
-
-/***********************************************************************************************************************************
-Store the location of the executable
-***********************************************************************************************************************************/
-static String *exe = NULL;
-
-/***********************************************************************************************************************************
-Was help requested for the command?
-***********************************************************************************************************************************/
-static bool help = false;
-
-/***********************************************************************************************************************************
-Store the list of parameters passed to the command
-***********************************************************************************************************************************/
-static StringList *paramList = NULL;
-
-/***********************************************************************************************************************************
-Map options names and indexes to option definitions.
-***********************************************************************************************************************************/
-typedef struct ConfigOptionValue
+static struct ConfigStatic
 {
-    bool valid:1;
-    bool negate:1;
-    bool reset:1;
-    unsigned int source:2;
+    MemContext *memContext;                                         // Mem context for config data (child of top context)
 
-    Variant *value;
-    Variant *defaultValue;
-} ConfigOptionValue;
+    // Generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire
+    ConfigCommand command;                                          // Current command
+    ConfigCommandRole commandRole;                                  // Current command role
 
-static ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
+    String *exe;                                                    // Location of the executable
+    bool help;                                                      // Was help requested for the command?
+    StringList *paramList;                                          // Parameters passed to the command (if any)
+
+    // Map options names and indexes to option definitions
+    struct
+    {
+        bool valid:1;                                               // Is option valid for current command?
+        bool negate:1;                                              // Is the option negated?
+        bool reset:1;                                               // Is the option reset?
+        unsigned int source:2;                                      // Where the option came from, i.e. ConfigSource enum
+
+        Variant *value;                                             // Value
+        Variant *defaultValue;                                      // Default value
+    } option[CFG_OPTION_TOTAL];
+} configStatic;
 
 /***********************************************************************************************************************************
 Initialize or reinitialize the configuration data
@@ -134,26 +116,19 @@ cfgInit(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Reset configuration
-    command = cfgCmdNone;
-    exe = NULL;
-    help = false;
-    paramList = NULL;
-    memset(&configOptionValue, 0, sizeof(configOptionValue));
-
     // Free the old context
-    if (configMemContext != NULL)
-    {
-        memContextFree(configMemContext);
-        configMemContext = NULL;
-    }
+    if (configStatic.memContext != NULL)
+        memContextFree(configStatic.memContext);
+
+    // Initialize config data
+    configStatic = (struct ConfigStatic){.command = cfgCmdNone};
 
     // Allocate configuration context as a child of the top context
     MEM_CONTEXT_BEGIN(memContextTop())
     {
         MEM_CONTEXT_NEW_BEGIN("configuration")
         {
-            configMemContext = MEM_CONTEXT_NEW();
+            configStatic.memContext = MEM_CONTEXT_NEW();
         }
         MEM_CONTEXT_NEW_END();
     }
@@ -169,19 +144,28 @@ ConfigCommand
 cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(command);
+    FUNCTION_TEST_RETURN(configStatic.command);
+}
+
+ConfigCommandRole
+cfgCommandRole(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(configStatic.commandRole);
 }
 
 void
-cfgCommandSet(ConfigCommand commandParam)
+cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandParam);
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandParam <= cfgCmdNone);
+    ASSERT(commandId <= cfgCmdNone);
 
-    command = commandParam;
+    configStatic.command = commandId;
+    configStatic.commandRole = commandRoleId;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -193,17 +177,17 @@ bool
 cfgCommandHelp(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(help);
+    FUNCTION_TEST_RETURN(configStatic.help);
 }
 
 void
-cfgCommandHelpSet(bool helpParam)
+cfgCommandHelpSet(bool help)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BOOL, helpParam);
+        FUNCTION_TEST_PARAM(BOOL, help);
     FUNCTION_TEST_END();
 
-    help = helpParam;
+    configStatic.help = help;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -226,14 +210,13 @@ cfgCommandDefIdFromId(ConfigCommand commandId)
     FUNCTION_TEST_RETURN((ConfigDefineCommand)commandId);
 }
 
-/***********************************************************************************************************************************
-Get command id by name
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 ConfigCommand
-cfgCommandId(const char *commandName)
+cfgCommandId(const char *commandName, bool error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, commandName);
+        FUNCTION_TEST_PARAM(BOOL, error);
     FUNCTION_TEST_END();
 
     ASSERT(commandName != NULL);
@@ -244,7 +227,7 @@ cfgCommandId(const char *commandName)
         if (strcmp(commandName, configCommandData[commandId].name) == 0)
             break;
 
-    if (commandId == cfgCmdNone)
+    if (commandId == cfgCmdNone && error)
         THROW_FMT(AssertError, "invalid command '%s'", commandName);
 
     FUNCTION_TEST_RETURN(commandId);
@@ -265,6 +248,31 @@ cfgCommandName(ConfigCommand commandId)
     FUNCTION_TEST_RETURN(configCommandData[commandId].name);
 }
 
+String *
+cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
+        FUNCTION_TEST_PARAM(STRING, separator);
+    FUNCTION_TEST_END();
+
+    String *result = strNew(cfgCommandName(commandId));
+
+    if (commandRoleId != cfgCmdRoleDefault)
+        strCatFmt(result, "%s%s", strPtr(separator), strPtr(cfgCommandRoleStr(commandRoleId)));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+cfgCommandRoleName(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(cfgCommandRoleNameParam(cfgCommand(), cfgCommandRole(), COLON_STR));
+}
+
 /***********************************************************************************************************************************
 Command parameters, if any
 ***********************************************************************************************************************************/
@@ -273,16 +281,16 @@ cfgCommandParam(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (paramList == NULL)
+    if (configStatic.paramList == NULL)
     {
-        MEM_CONTEXT_BEGIN(configMemContext)
+        MEM_CONTEXT_BEGIN(configStatic.memContext)
         {
-            paramList = strLstNew();
+            configStatic.paramList = strLstNew();
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(paramList);
+    FUNCTION_TEST_RETURN(configStatic.paramList);
 }
 
 void
@@ -294,13 +302,73 @@ cfgCommandParamSet(const StringList *param)
 
     ASSERT(param != NULL);
 
-    MEM_CONTEXT_BEGIN(configMemContext)
+    MEM_CONTEXT_BEGIN(configStatic.memContext)
     {
-        paramList = strLstDup(param);
+        configStatic.paramList = strLstDup(param);
     }
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+STRING_STATIC(CONFIG_COMMAND_ROLE_ASYNC_STR,                        CONFIG_COMMAND_ROLE_ASYNC);
+STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        CONFIG_COMMAND_ROLE_LOCAL);
+STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       CONFIG_COMMAND_ROLE_REMOTE);
+
+ConfigCommandRole
+cfgCommandRoleEnum(const String *commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, commandRole);
+    FUNCTION_TEST_END();
+
+    if (commandRole == NULL)
+        FUNCTION_TEST_RETURN(cfgCmdRoleDefault);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleAsync);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleLocal);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
+
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strPtr(commandRole));
+}
+
+const String *
+cfgCommandRoleStr(ConfigCommandRole commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandRole);
+    FUNCTION_TEST_END();
+
+    const String *result = NULL;
+
+    switch (commandRole)
+    {
+        case cfgCmdRoleDefault:
+            break;
+
+        case cfgCmdRoleAsync:
+        {
+            result = CONFIG_COMMAND_ROLE_ASYNC_STR;
+            break;
+        }
+
+        case cfgCmdRoleLocal:
+        {
+            result = CONFIG_COMMAND_ROLE_LOCAL_STR;
+            break;
+        }
+
+        case cfgCmdRoleRemote:
+        {
+            result = CONFIG_COMMAND_ROLE_REMOTE_STR;
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -310,21 +378,21 @@ const String *
 cfgExe(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(exe);
+    FUNCTION_TEST_RETURN(configStatic.exe);
 }
 
 void
-cfgExeSet(const String *exeParam)
+cfgExeSet(const String *exe)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, exeParam);
+        FUNCTION_TEST_PARAM(STRING, exe);
     FUNCTION_TEST_END();
 
-    ASSERT(exeParam != NULL);
+    ASSERT(exe != NULL);
 
-    MEM_CONTEXT_BEGIN(configMemContext)
+    MEM_CONTEXT_BEGIN(configStatic.memContext)
     {
-        exe = strDup(exeParam);
+        configStatic.exe = strDup(exe);
     }
     MEM_CONTEXT_END();
 
@@ -354,24 +422,25 @@ cfgLockRequired(void)
 {
     FUNCTION_TEST_VOID();
 
-    ASSERT(command != cfgCmdNone);
+    ASSERT(configStatic.command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRequired);
+    // Local roles never take a lock and the remote role has special logic for locking
+    FUNCTION_TEST_RETURN(
+        // If a lock is required for the command and the role is default
+        (configCommandData[cfgCommand()].lockRequired && cfgCommandRole() == cfgCmdRoleDefault) ||
+        // Or any command when the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
 Does the command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
-cfgLockRemoteRequired(ConfigCommand commandId)
+cfgLockRemoteRequired(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN(configCommandData[commandId].lockRemoteRequired);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRemoteRequired);
 }
 
 /***********************************************************************************************************************************
@@ -382,26 +451,9 @@ cfgLockType(void)
 {
     FUNCTION_TEST_VOID();
 
-    ASSERT(command != cfgCmdNone);
+    ASSERT(configStatic.command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LockType)configCommandData[cfgCommand()].lockType);
-}
-
-/***********************************************************************************************************************************
-Get the remote lock type required for the command
-***********************************************************************************************************************************/
-LockType
-cfgLockRemoteType(ConfigCommand commandId)
-{
-    FUNCTION_TEST_VOID();
-
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LockType)configCommandData[commandId].lockType);
 }
 
 /***********************************************************************************************************************************
@@ -412,9 +464,15 @@ cfgLogFile(void)
 {
     FUNCTION_TEST_VOID();
 
-    ASSERT(command != cfgCmdNone);
+    ASSERT(configStatic.command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile);
+    FUNCTION_TEST_RETURN(
+        // If the command always logs to a file
+        configCommandData[cfgCommand()].logFile ||
+        // Or log-level-file was explicitly set as a param/env var
+        cfgOptionSource(cfgOptLogLevelFile) == cfgSourceParam ||
+        // Or the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
@@ -425,22 +483,9 @@ cfgLogLevelDefault(void)
 {
     FUNCTION_TEST_VOID();
 
-    ASSERT(command != cfgCmdNone);
+    ASSERT(configStatic.command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelDefault);
-}
-
-/***********************************************************************************************************************************
-Get max stderr log level -- used to suppress error output for higher log levels, e.g. local and remote commands
-***********************************************************************************************************************************/
-LogLevel
-cfgLogLevelStdErrMax(void)
-{
-    FUNCTION_TEST_VOID();
-
-    ASSERT(command != cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
 }
 
 /***********************************************************************************************************************************
@@ -451,7 +496,7 @@ cfgParameterAllowed(void)
 {
     FUNCTION_TEST_VOID();
 
-    ASSERT(command != cfgCmdNone);
+    ASSERT(configStatic.command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].parameterAllowed);
 }
@@ -531,21 +576,21 @@ cfgOptionDefault(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    if (configOptionValue[optionId].defaultValue == NULL)
+    if (configStatic.option[optionId].defaultValue == NULL)
     {
         ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
         if (cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId) != NULL)
         {
-            MEM_CONTEXT_BEGIN(configMemContext)
+            MEM_CONTEXT_BEGIN(configStatic.memContext)
             {
-                configOptionValue[optionId].defaultValue = cfgOptionDefaultValue(optionDefId);
+                configStatic.option[optionId].defaultValue = cfgOptionDefaultValue(optionDefId);
             }
             MEM_CONTEXT_END();
         }
     }
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].defaultValue);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].defaultValue);
 }
 
 void
@@ -558,19 +603,19 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    MEM_CONTEXT_BEGIN(configMemContext)
+    MEM_CONTEXT_BEGIN(configStatic.memContext)
     {
-        if (configOptionValue[optionId].defaultValue != NULL)
-            varFree(configOptionValue[optionId].defaultValue);
+        if (configStatic.option[optionId].defaultValue != NULL)
+            varFree(configStatic.option[optionId].defaultValue);
 
-        configOptionValue[optionId].defaultValue = varDup(defaultValue);
+        configStatic.option[optionId].defaultValue = varDup(defaultValue);
 
-        if (configOptionValue[optionId].source == cfgSourceDefault)
+        if (configStatic.option[optionId].source == cfgSourceDefault)
         {
-            if (configOptionValue[optionId].value != NULL)
-                varFree(configOptionValue[optionId].value);
+            if (configStatic.option[optionId].value != NULL)
+                varFree(configStatic.option[optionId].value);
 
-            configOptionValue[optionId].value = varDup(defaultValue);
+            configStatic.option[optionId].value = varDup(defaultValue);
         }
     }
     MEM_CONTEXT_END();
@@ -617,9 +662,11 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                 }
 
                 // Set the host
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(strLstGet(hostPart, 0));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(strLstGet(hostPart, 0));
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 // Set the port and error if it is not a positive integer
                 TRY_BEGIN()
@@ -639,9 +686,11 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
             // Else there is no port and just copy the host
             else
             {
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(host);
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(host);
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -758,7 +807,7 @@ cfgOptionNegate(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].negate);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].negate);
 }
 
 void
@@ -771,7 +820,7 @@ cfgOptionNegateSet(ConfigOption optionId, bool negate)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    configOptionValue[optionId].negate = negate;
+    configStatic.option[optionId].negate = negate;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -788,7 +837,7 @@ cfgOptionReset(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].reset);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].reset);
 }
 
 void
@@ -801,7 +850,7 @@ cfgOptionResetSet(ConfigOption optionId, bool reset)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    configOptionValue[optionId].reset = reset;
+    configStatic.option[optionId].reset = reset;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -818,7 +867,7 @@ cfgOption(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].value);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].value);
 }
 
 bool
@@ -829,9 +878,9 @@ cfgOptionBool(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeBool);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeBool);
 
-    FUNCTION_LOG_RETURN(BOOL, varBool(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(BOOL, varBool(configStatic.option[optionId].value));
 }
 
 double
@@ -842,9 +891,9 @@ cfgOptionDbl(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeDouble);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeDouble);
 
-    FUNCTION_LOG_RETURN(DOUBLE, varDbl(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(DOUBLE, varDbl(configStatic.option[optionId].value));
 }
 
 int
@@ -855,9 +904,9 @@ cfgOptionInt(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
 
-    FUNCTION_LOG_RETURN(INT, varIntForce(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(INT, varIntForce(configStatic.option[optionId].value));
 }
 
 int64_t
@@ -868,9 +917,9 @@ cfgOptionInt64(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
 
-    FUNCTION_LOG_RETURN(INT64, varInt64(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(INT64, varInt64(configStatic.option[optionId].value));
 }
 
 unsigned int
@@ -881,9 +930,9 @@ cfgOptionUInt(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
 
-    FUNCTION_LOG_RETURN(UINT, varUIntForce(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(UINT, varUIntForce(configStatic.option[optionId].value));
 }
 
 uint64_t
@@ -894,9 +943,9 @@ cfgOptionUInt64(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
 
-    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(configStatic.option[optionId].value));
 }
 
 const KeyValue *
@@ -907,9 +956,9 @@ cfgOptionKv(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configOptionValue[optionId].value) == varTypeKeyValue);
+    ASSERT(varType(configStatic.option[optionId].value) == varTypeKeyValue);
 
-    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(configStatic.option[optionId].value));
 }
 
 const VariantList *
@@ -920,18 +969,18 @@ cfgOptionLst(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionValue[optionId].value == NULL || varType(configOptionValue[optionId].value) == varTypeVariantList);
+    ASSERT(configStatic.option[optionId].value == NULL || varType(configStatic.option[optionId].value) == varTypeVariantList);
 
-    if (configOptionValue[optionId].value == NULL)
+    if (configStatic.option[optionId].value == NULL)
     {
-        MEM_CONTEXT_BEGIN(configMemContext)
+        MEM_CONTEXT_BEGIN(configStatic.memContext)
         {
-            configOptionValue[optionId].value = varNewVarLst(varLstNew());
+            configStatic.option[optionId].value = varNewVarLst(varLstNew());
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(configOptionValue[optionId].value));
+    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(configStatic.option[optionId].value));
 }
 
 const String *
@@ -942,12 +991,12 @@ cfgOptionStr(ConfigOption optionId)
     FUNCTION_LOG_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionValue[optionId].value == NULL || varType(configOptionValue[optionId].value) == varTypeString);
+    ASSERT(configStatic.option[optionId].value == NULL || varType(configStatic.option[optionId].value) == varTypeString);
 
     const String *result = NULL;
 
-    if (configOptionValue[optionId].value != NULL)
-        result = varStr(configOptionValue[optionId].value);
+    if (configStatic.option[optionId].value != NULL)
+        result = varStr(configStatic.option[optionId].value);
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
 }
@@ -963,13 +1012,13 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    MEM_CONTEXT_BEGIN(configMemContext)
+    MEM_CONTEXT_BEGIN(configStatic.memContext)
     {
         // Set the source
-        configOptionValue[optionId].source = source;
+        configStatic.option[optionId].source = source;
 
         // Store old value
-        Variant *valueOld = configOptionValue[optionId].value;
+        Variant *valueOld = configStatic.option[optionId].value;
 
         // Only set value if it is not null
         if (value != NULL)
@@ -979,9 +1028,9 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeBoolean:
                 {
                     if (varType(value) == varTypeBool)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
-                        configOptionValue[optionId].value = varNewBool(varBoolForce(value));
+                        configStatic.option[optionId].value = varNewBool(varBoolForce(value));
 
                     break;
                 }
@@ -989,9 +1038,9 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeFloat:
                 {
                     if (varType(value) == varTypeDouble)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
-                        configOptionValue[optionId].value = varNewDbl(varDblForce(value));
+                        configStatic.option[optionId].value = varNewDbl(varDblForce(value));
 
                     break;
                 }
@@ -1000,9 +1049,9 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeSize:
                 {
                     if (varType(value) == varTypeInt64)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
-                        configOptionValue[optionId].value = varNewInt64(varInt64Force(value));
+                        configStatic.option[optionId].value = varNewInt64(varInt64Force(value));
 
                     break;
                 }
@@ -1010,7 +1059,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeHash:
                 {
                     if (varType(value) == varTypeKeyValue)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
                         THROW_FMT(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
 
@@ -1020,7 +1069,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeList:
                 {
                     if (varType(value) == varTypeVariantList)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
                         THROW_FMT(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
 
@@ -1031,7 +1080,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 case cfgDefOptTypeString:
                 {
                     if (varType(value) == varTypeString)
-                        configOptionValue[optionId].value = varDup(value);
+                        configStatic.option[optionId].value = varDup(value);
                     else
                         THROW_FMT(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
 
@@ -1040,7 +1089,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
             }
         }
         else
-            configOptionValue[optionId].value = NULL;
+            configStatic.option[optionId].value = NULL;
 
         // Free old value
         if (valueOld != NULL)
@@ -1063,7 +1112,7 @@ cfgOptionSource(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].source);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].source);
 }
 
 /***********************************************************************************************************************************
@@ -1078,7 +1127,7 @@ cfgOptionTest(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL);
+    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configStatic.option[optionId].value != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -1093,7 +1142,7 @@ cfgOptionValid(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionValue[optionId].valid);
+    FUNCTION_TEST_RETURN(configStatic.option[optionId].valid);
 }
 
 void
@@ -1106,7 +1155,7 @@ cfgOptionValidSet(ConfigOption optionId, bool valid)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    configOptionValue[optionId].valid = valid;
+    configStatic.option[optionId].valid = valid;
 
     FUNCTION_TEST_RETURN_VOID();
 }

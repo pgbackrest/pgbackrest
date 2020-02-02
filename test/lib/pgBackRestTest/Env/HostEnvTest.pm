@@ -122,9 +122,6 @@ sub setup
     if (defined($oHostS3))
     {
         $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
-
-        # Wait for server to start
-        $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
     }
 
     # Create db master config
@@ -186,6 +183,12 @@ sub setup
 
     $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
+    # Create S3 bucket
+    if (defined($oHostS3))
+    {
+        storageRepo()->{oStorageC}->bucketCreate();
+    }
+
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
 }
 
@@ -243,6 +246,7 @@ sub dbCatalogVersion
         &PG_VERSION_96 => 201608131,
         &PG_VERSION_10 => 201707211,
         &PG_VERSION_11 => 201806231,
+        &PG_VERSION_12 => 201909212,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -284,6 +288,8 @@ sub dbControlVersion
         &PG_VERSION_95 => 942,
         &PG_VERSION_96 => 960,
         &PG_VERSION_10 => 1002,
+        &PG_VERSION_11 => 1100,
+        &PG_VERSION_12 => 1201,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))
@@ -317,7 +323,7 @@ sub controlGenerateContent
     $tControlContent .= pack('L', $self->dbControlVersion($strPgVersion));
     $tControlContent .= pack('L', $self->dbCatalogVersion($strPgVersion));
 
-    # Offset to page size by archecture bits and version
+    # Offset to page size by architecture bits and version
     my $rhOffsetToPageSize =
     {
         32 =>
@@ -333,6 +339,7 @@ sub controlGenerateContent
             '9.6' => 200 - length($tControlContent),
              '10' => 200 - length($tControlContent),
              '11' => 192 - length($tControlContent),
+             '12' => 196 - length($tControlContent),
         },
 
         64 =>
@@ -348,6 +355,7 @@ sub controlGenerateContent
             '9.6' => 216 - length($tControlContent),
              '10' => 216 - length($tControlContent),
              '11' => 208 - length($tControlContent),
+             '12' => 212 - length($tControlContent),
         },
     };
 
@@ -438,6 +446,8 @@ sub walGenerateContent
         &PG_VERSION_95 => hex('0xD087'),
         &PG_VERSION_96 => hex('0xD093'),
         &PG_VERSION_10 => hex('0xD097'),
+        &PG_VERSION_11 => hex('0xD098'),
+        &PG_VERSION_12 => hex('0xD101'),
     };
 
     my $tWalContent = pack('S', $hWalMagic->{$strPgVersion});

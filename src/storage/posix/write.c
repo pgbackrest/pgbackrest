@@ -4,8 +4,6 @@ Posix Storage File write
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <grp.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <utime.h>
@@ -15,6 +13,7 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/user.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
@@ -83,7 +82,7 @@ storageWritePosixOpen(THIS_VOID)
     if (this->handle == -1 && errno == ENOENT && this->interface.createPath)
     {
          // Create the path
-        storagePosixPathCreate(this->storage, this->path, false, false, this->interface.modePath);
+        storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
         this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
@@ -104,27 +103,18 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        struct passwd *userData = NULL;
-        struct group *groupData = NULL;
+        uid_t updateUserId = userIdFromName(this->interface.user);
 
-        if (this->interface.user != NULL)
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                (userData = getpwnam(strPtr(this->interface.user))) == NULL, UserMissingError, "unable to find user '%s'",
-                strPtr(this->interface.user));
-        }
+        if (updateUserId == userId())
+            updateUserId = (uid_t)-1;
 
-        if (this->interface.group != NULL)
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                (groupData = getgrnam(strPtr(this->interface.group))) == NULL, GroupMissingError, "unable to find group '%s'",
-                strPtr(this->interface.group));
-        }
+        gid_t updateGroupId = groupIdFromName(this->interface.group);
+
+        if (updateGroupId == groupId())
+            updateGroupId = (gid_t)-1;
 
         THROW_ON_SYS_ERROR_FMT(
-            chown(
-                strPtr(this->nameTmp), userData != NULL ? userData->pw_uid : (uid_t)-1,
-                groupData != NULL ? groupData->gr_gid : (gid_t)-1) == -1,
+            chown(strPtr(this->nameTmp), updateUserId, updateGroupId) == -1,
             FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
     }
 
@@ -203,7 +193,7 @@ storageWritePosixClose(THIS_VOID)
 
         // Sync the path
         if (this->interface.syncPath)
-            storagePosixPathSync(this->storage, this->path);
+            storageInterfacePathSyncP(this->storage, this->path);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -241,7 +231,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(STRING, user);
         FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(INT64, timeModified);
+        FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
@@ -258,35 +248,40 @@ storageWritePosixNew(
     MEM_CONTEXT_NEW_BEGIN("StorageWritePosix")
     {
         StorageWritePosix *driver = memNew(sizeof(StorageWritePosix));
-        driver->memContext = MEM_CONTEXT_NEW();
 
-        driver->interface = (StorageWriteInterface)
+        *driver = (StorageWritePosix)
         {
-            .type = STORAGE_POSIX_TYPE_STR,
-            .name = strDup(name),
-            .atomic = atomic,
-            .createPath = createPath,
-            .group = strDup(group),
-            .modeFile = modeFile,
-            .modePath = modePath,
-            .syncFile = syncFile,
-            .syncPath = syncPath,
-            .user = strDup(user),
-            .timeModified = timeModified,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .path = strPath(name),
+            .handle = -1,
 
-            .ioInterface = (IoWriteInterface)
+            .interface = (StorageWriteInterface)
             {
-                .close = storageWritePosixClose,
-                .handle = storageWritePosixHandle,
-                .open = storageWritePosixOpen,
-                .write = storageWritePosix,
+                .type = STORAGE_POSIX_TYPE_STR,
+                .name = strDup(name),
+                .atomic = atomic,
+                .createPath = createPath,
+                .group = strDup(group),
+                .modeFile = modeFile,
+                .modePath = modePath,
+                .syncFile = syncFile,
+                .syncPath = syncPath,
+                .user = strDup(user),
+                .timeModified = timeModified,
+
+                .ioInterface = (IoWriteInterface)
+                {
+                    .close = storageWritePosixClose,
+                    .handle = storageWritePosixHandle,
+                    .open = storageWritePosixOpen,
+                    .write = storageWritePosix,
+                },
             },
         };
 
-        driver->storage = storage;
+        // Create temp file name
         driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : driver->interface.name;
-        driver->path = strPath(name);
-        driver->handle = -1;
 
         this = storageWriteNew(driver, &driver->interface);
     }

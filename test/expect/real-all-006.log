@@ -9,10 +9,6 @@ check db - fail on missing archive.info file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - force create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-create
-------------------------------------------------------------------------------------------------------------------------------------
-
 full backup - fail on archive_mode=off (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -73,10 +69,6 @@ check db - fail on backup info mismatch (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-check db - confirm master manifest->build executed (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
-------------------------------------------------------------------------------------------------------------------------------------
-
 check db - verify success after backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -85,8 +77,8 @@ check db - verify success after backup (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - verify success with force (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-create
+stanza-create db - fail on backup info file missing from non-empty dir (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - fail on database mismatch with directory (backup host)
@@ -102,7 +94,7 @@ stanza-upgrade db - upgrade stanza files online (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - update during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=16384 --type=full --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -113,15 +105,16 @@ pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -137,20 +130,21 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 pg1-port=6543
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -168,7 +162,7 @@ archive-copy=y
 start-fast=y
 
 incr backup - update during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=32768 --delta --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=[BUFFER-SIZE] --delta --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -179,15 +173,16 @@ pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -203,21 +198,22 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 pg1-port=6543
 
 [global]
 archive-async=y
+buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -239,18 +235,21 @@ check db - check command with tablespace (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --buffer-size=16384  --link-all --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --buffer-size=[BUFFER-SIZE]  --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --buffer-size=16384 --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+# Recovery settings generated by pgBackRest restore on [TIMESTAMP]
+restore_command = '[BACKREST-BIN] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, backup '[BACKUP-FULL-1]', type 'time', target '[TIMESTAMP-TARGET-1]' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-1] --type=time --target="[TIMESTAMP-TARGET-1]" --link-all --stanza=db restore
+restore delta, type 'time', target '[TIMESTAMP-TARGET-1]', target-action=promote (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --type=time --target="[TIMESTAMP-TARGET-1]" --link-all --target-action=promote --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
+# Recovery settings generated by pgBackRest restore on [TIMESTAMP]
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target_time = '[TIMESTAMP-TARGET-1]'
+recovery_target_action = 'promote'

@@ -22,7 +22,7 @@ Lock Handler
 /***********************************************************************************************************************************
 Lock type names
 ***********************************************************************************************************************************/
-static const char *lockTypeName[] =
+static const char *const lockTypeName[] =
 {
     "archive",                                                      // lockTypeArchive
     "backup",                                                       // lockTypeBackup
@@ -67,7 +67,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateNP(storageLocalWrite(), strPath(lockFile));
+                    storagePathCreateP(storageLocalWrite(), strPath(lockFile));
                     retry = true;
                 }
             }
@@ -98,7 +98,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 const String *errorHint = NULL;
 
                 if (errNo == EWOULDBLOCK)
-                    errorHint = STRDEF("\nHINT: is another " PROJECT_NAME " process running?");
+                    errorHint = strNew("\nHINT: is another " PROJECT_NAME " process running?");
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(
@@ -138,7 +138,7 @@ lockReleaseFile(int lockHandle, const String *lockFile)
 
     // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
     // right before the delete which means the file locked by the other process will get deleted.
-    storageRemoveNP(storageLocalWrite(), lockFile);
+    storageRemoveP(storageLocalWrite(), lockFile);
     close(lockHandle);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -175,7 +175,11 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            lockMemContext = memContextNew("Lock");
+            MEM_CONTEXT_NEW_BEGIN("Lock")
+            {
+                lockMemContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
@@ -189,7 +193,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockFile[lockIdx] = strNewFmt("%s/%s-%s.lock", strPtr(lockPath), strPtr(stanza), lockTypeName[lockIdx]);
+            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strPtr(lockPath), strPtr(stanza), lockTypeName[lockIdx]);
 
             lockHandle[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
 

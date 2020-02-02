@@ -21,7 +21,6 @@ Archive Get Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
-#include "perl/exec.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
@@ -84,10 +83,12 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
             // Else delete it
             else
-                storageRemoveNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
+                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
+        strLstSort(keepQueue, sortOrderAsc);
+
         for (unsigned int idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
         {
             if (!strLstExists(keepQueue, strLstGet(idealQueue, idealQueueIdx)))
@@ -157,19 +158,19 @@ cmdArchiveGet(void)
                 }
 
                 // Check if the WAL segment is already in the queue
-                found = storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
 
                 // If found then move the WAL segment to the destination directory
                 if (found)
                 {
                     // Source is the WAL segment in the spool queue
-                    StorageRead *source = storageNewReadNP(
+                    StorageRead *source = storageNewReadP(
                         storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
 
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
                     // will be performed instead.
                     //
-                    // It looks scary that we are disabling syncs and atomicity (in case we need to copy intead of move) but this
+                    // It looks scary that we are disabling syncs and atomicity (in case we need to copy instead of move) but this
                     // is safe because if the system crashes Postgres will not try to reuse a restored WAL segment but will instead
                     // request it again using the restore_command. In the case of a move this hardly matters since path syncs are
                     // cheap but if a copy is required we could save a lot of writes.
@@ -178,7 +179,7 @@ cmdArchiveGet(void)
                         .noAtomic = true);
 
                     // Move (or copy if required) the file
-                    storageMoveNP(storageSpoolWrite(), source, destination);
+                    storageMoveP(storageSpoolWrite(), source, destination);
 
                     // Return success
                     result = 0;
@@ -190,7 +191,7 @@ cmdArchiveGet(void)
                     if (strLstSize(queue) > 0)
                     {
                         // Get size of the WAL segment
-                        uint64_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
+                        uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
                         queueFull = strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
@@ -204,10 +205,10 @@ cmdArchiveGet(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+                    PgControl pgControl = pgControlFromFile(storagePg());
 
                     // Create the queue
-                    storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
+                    storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
 
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
@@ -216,7 +217,7 @@ cmdArchiveGet(void)
                     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGetAsync, optionReplace);
+                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
 
                     // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
@@ -242,8 +243,8 @@ cmdArchiveGet(void)
 
                         // Execute the binary.  This statement will not return if it is successful.
                         THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
-                            ExecuteError, "unable to execute '" CFGCMD_ARCHIVE_GET_ASYNC "'");
+                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_GET "'");
                     }
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
@@ -274,9 +275,9 @@ cmdArchiveGet(void)
 
         // Log whether or not the file was found
         if (result == 0)
-            LOG_INFO("found %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("found %s in the archive", strPtr(walSegment));
         else
-            LOG_INFO("unable to find %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("unable to find %s in the archive", strPtr(walSegment));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -286,6 +287,39 @@ cmdArchiveGet(void)
 /***********************************************************************************************************************************
 Async version of archive get that runs in parallel for performance
 ***********************************************************************************************************************************/
+typedef struct ArchiveGetAsyncData
+{
+    const StringList *walSegmentList;                               // List of wal segments to process
+    unsigned int walSegmentIdx;                                     // Current index in the list to be processed
+} ArchiveGetAsyncData;
+
+static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    // No special logic based on the client, we'll just get the next job
+    (void)clientIdx;
+
+    // Get a new job if there are any left
+    ArchiveGetAsyncData *jobData = data;
+
+    if (jobData->walSegmentIdx < strLstSize(jobData->walSegmentList))
+    {
+        const String *walSegment = strLstGet(jobData->walSegmentList, jobData->walSegmentIdx);
+        jobData->walSegmentIdx++;
+
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
+        protocolCommandParamAdd(command, VARSTR(walSegment));
+
+        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
 void
 cmdArchiveGetAsync(void)
 {
@@ -296,33 +330,24 @@ cmdArchiveGetAsync(void)
         TRY_BEGIN()
         {
             // Check the parameters
-            const StringList *walSegmentList = cfgCommandParam();
+            ArchiveGetAsyncData jobData = {.walSegmentList = cfgCommandParam()};
 
-            if (strLstSize(walSegmentList) < 1)
+            if (strLstSize(jobData.walSegmentList) < 1)
                 THROW(ParamInvalidError, "at least one wal segment is required");
 
-            LOG_INFO(
-                "get %u WAL file(s) from archive: %s%s", strLstSize(walSegmentList), strPtr(strLstGet(walSegmentList, 0)),
-                strLstSize(walSegmentList) == 1 ?
-                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(walSegmentList, strLstSize(walSegmentList) - 1)))));
+            LOG_INFO_FMT(
+                "get %u WAL file(s) from archive: %s%s",
+                strLstSize(jobData.walSegmentList), strPtr(strLstGet(jobData.walSegmentList, 0)),
+                strLstSize(jobData.walSegmentList) == 1 ?
+                    "" :
+                    strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
 
             // Create the parallel executor
             ProtocolParallel *parallelExec = protocolParallelNew(
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
+                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
 
             for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
-
-            // Queue jobs in executor
-            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
-            {
-                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
-
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-                protocolCommandParamAdd(command, VARSTR(walSegment));
-
-                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(VARSTR(walSegment), command));
-            }
+                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
 
             // Process jobs
             do
@@ -342,19 +367,19 @@ cmdArchiveGetAsync(void)
                         // Get the archive file
                         if (varIntForce(protocolParallelJobResult(job)) == 0)
                         {
-                            LOG_DETAIL_PID(processId, "found %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strPtr(walSegment));
                         }
                         // If it does not exist write an ok file to indicate that it was checked
                         else
                         {
-                            LOG_DETAIL_PID(processId, "unable to find %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strPtr(walSegment));
                             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
                     // Else the job errored
                     else
                     {
-                        LOG_WARN_PID(
+                        LOG_WARN_PID_FMT(
                             processId,
                             "could not get %s from the archive (will be retried): [%d] %s", strPtr(walSegment),
                             protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
@@ -362,6 +387,8 @@ cmdArchiveGetAsync(void)
                         archiveAsyncStatusErrorWrite(
                             archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                     }
+
+                    protocolParallelJobFree(job);
                 }
             }
             while (!protocolParallelDone(parallelExec));

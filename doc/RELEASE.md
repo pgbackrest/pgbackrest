@@ -26,7 +26,7 @@ to:
 use constant PROJECT_VERSION                                        => '2.14';
 ```
 
-## Build release documentation
+## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
 doc/release.pl --build
 ```
@@ -39,7 +39,7 @@ test/test.pl --code-count
 ## Commit release branch and push to CI for testing
 ```
 git commit -m "Release test"
-git push release-ci
+git push origin release-ci
 ```
 
 ## Clone web documentation into `doc/site`
@@ -99,7 +99,7 @@ v2.14: Bug Fix and Improvements
 - Add user guides for CentOS/RHEL 6/7.
 ```
 
-The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master.
+The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
 
 ## Push web documentation to master and deploy
 ```
@@ -128,14 +128,20 @@ use constant PROJECT_VERSION                                        => '2.14';
 to:
 ```
 use constant PROJECT_VERSION                                        => '2.15dev';
-
-Build to generate files:
 ```
-test/test.pl --no-lint --vm=u18 --no-package --build-only
+
+Run deploy to generate git history (ctrl-c as soon as the file is generated):
+```
+doc/release.pl --build
+```
+
+Build to generate files and test documentation:
+```
+test/test.pl --vm=u18 --build-only
 ```
 
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."
-git push origin master
+git push origin integration
 ```

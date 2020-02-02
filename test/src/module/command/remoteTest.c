@@ -18,27 +18,25 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Create default storage object for testing
+    Storage *storageData = storagePosixNew(
+        strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
     {
-        // Create default storage object for testing
-        Storage *storageTest = storagePosixNew(
-            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-
-        // No remote lock required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no lock is required because process is > 0 (not the main remote)");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--command=info");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--type=backup");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                harnessCfgLoadRole(cfgCmdInfo, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -59,20 +57,21 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock not required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no remote lock is required for this command");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
-                strLstAddZ(argList, "--command=archive-get-async");
+                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
+                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -94,21 +93,21 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock required but errors out
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote lock is required but lock path is invalid");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
+                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--command=archive-push-async");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_REMOTE);
+                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -129,21 +128,18 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote lock is required and succeeds");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--command=archive-push-async");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--type=backup");
-                strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -160,9 +156,49 @@ testRun(void)
                 TEST_ASSIGN(client, protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
                 protocolClientNoOp(client);
 
-                storageExistsNP(storageTest, strNewFmt("--lock-path=%s/lock/test-archive.lock", testPath()));
+                TEST_RESULT_BOOL(
+                    storageExistsP(
+                        storagePosixNew(strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
+                        STRDEF("lock/test-archive" LOCK_FILE_EXT)),
+                    true, "lock exists");
 
                 protocolClientFree(client);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote lock is required but stop file exists");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "--stanza=test");
+                strLstAddZ(argList, "--process=0");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
+
+                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);
+
+                TEST_ERROR(
+                    protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
+                    "raised from test: stop file exists for all stanzas");
+
+                storageRemoveP(storageData, strNew("lock/all" STOP_FILE_EXT));
             }
             HARNESS_FORK_PARENT_END();
         }

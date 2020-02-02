@@ -55,9 +55,9 @@ sub new
         $self->{oStorageTest},
         $self->{strBackRestBase},
         $self->{strTestPath},
-        $self->{strCoveragePath},
         $self->{oTest},
         $self->{bDryRun},
+        $self->{strVmHost},
         $self->{bVmOut},
         $self->{iVmIdx},
         $self->{iVmMax},
@@ -65,6 +65,7 @@ sub new
         $self->{iTestMax},
         $self->{strLogLevel},
         $self->{strLogLevelTest},
+        $self->{strLogLevelTestFile},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -75,6 +76,8 @@ sub new
         $self->{bOptimize},
         $self->{bBackTrace},
         $self->{bProfile},
+        $self->{iScale},
+        $self->{strTimeZone},
         $self->{bDebug},
         $self->{bDebugTestTrace},
         $self->{iBuildMax},
@@ -85,9 +88,9 @@ sub new
             {name => 'oStorageTest'},
             {name => 'strBackRestBase'},
             {name => 'strTestPath'},
-            {name => 'strCoveragePath'},
             {name => 'oTest'},
             {name => 'bDryRun'},
+            {name => 'strVmHost'},
             {name => 'bVmOut'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
@@ -95,6 +98,7 @@ sub new
             {name => 'iTestMax'},
             {name => 'strLogLevel'},
             {name => 'strLogLevelTest'},
+            {name => 'strLogLevelTestFile'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -105,6 +109,8 @@ sub new
             {name => 'bOptimize'},
             {name => 'bBackTrace'},
             {name => 'bProfile'},
+            {name => 'iScale'},
+            {name => 'strTimeZone', required => false},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
             {name => 'iBuildMax'},
@@ -115,7 +121,7 @@ sub new
 
     # Setup the path where gcc coverage will be performed
     $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
-    $self->{strExpectPath} = "$self->{strTestPath}/expect-$self->{iVmIdx}";
+    $self->{strDataPath} = "$self->{strTestPath}/data-$self->{iVmIdx}";
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -158,7 +164,7 @@ sub run
             ', module=' . $self->{oTest}->{&TEST_MODULE} .
             ', test=' . $self->{oTest}->{&TEST_NAME} .
             (defined($self->{oTest}->{&TEST_RUN}) ? ', run=' . join(',', sort(@{$self->{oTest}->{&TEST_RUN}})) : '') .
-            (defined($self->{oTest}->{&TEST_DB}) ? ', db=' . $self->{oTest}->{&TEST_DB} : '') .
+            (defined($self->{oTest}->{&TEST_DB}) ? ', pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
@@ -187,24 +193,26 @@ sub run
                 $bGCovExists = false;
             }
 
-            # Create expect directory
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strExpectPath}))
+            # Create data directory
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
             {
-                $self->{oStorageTest}->pathCreate($self->{strExpectPath}, {strMode => '0770'});
+                $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
-                executeTest(
-                    'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
-                    " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
-                    " -v ${strHostTestPath}:${strVmTestPath}" .
-                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
-                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strExpectPath}:$self->{strExpectPath}" : '') .
-                    " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
-                    containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
-                    "-test",
-                    {bSuppressStdErr => true});
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
+                {
+                    executeTest(
+                        'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
+                        " -v ${strHostTestPath}:${strVmTestPath}" .
+                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
+                        " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
+                        containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
+                        "-test",
+                        {bSuppressStdErr => true});
+                }
 
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
@@ -214,7 +222,9 @@ sub run
                     {
                         executeTest(
                             'rsync -rt --delete --exclude=*.o --exclude=test.c --exclude=test.gcno --exclude=LibC.h --exclude=xs' .
-                                " --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags" .
+                                ' --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags' .
+                                ' --exclude=build.auto.h --exclude=build.auto.h.in --exclude=Makefile --exclude=Makefile.in' .
+                                ' --exclude=configure --exclude=configure.ac' .
                                 " $self->{strBackRestBase}/src/ $self->{strGCovPath} && " .
                             "rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath} && " .
                             "rsync -rt --delete $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs && " .
@@ -225,12 +235,10 @@ sub run
                     $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
                 }
 
-                # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
-                if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
+                # If testing Perl code (or C code that calls the binary) install binary
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_BIN_REQ}))
                 {
-                    jobInstallC(
-                        $self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage,
-                        !$self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_INTEGRATION});
+                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
             }
         }
@@ -249,10 +257,12 @@ sub run
         if ($self->{oTest}->{&TEST_C})
         {
             $strCommand =
-                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                "bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
-                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
+                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
+                    $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
                 " ./test.bin 2>&1'";
@@ -261,10 +271,9 @@ sub run
         {
             $strCommand =
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                testRunExe(
-                    vmCoverageC($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
-                    $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}) .
+                abs_path($0) .
                 " --test-path=${strVmTestPath}" .
+                " --vm-host=$self->{strVmHost}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
                 " --vm-id=$self->{iVmIdx}" .
                 " --module=" . $self->{oTest}->{&TEST_MODULE} .
@@ -272,7 +281,9 @@ sub run
                 $strCommandRunParam .
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
+                ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .
                 ($self->{bDryRun} ? ' --dry-run' : '') .
                 ($self->{bDryRun} ? ' --vm-out' : '') .
@@ -291,6 +302,8 @@ sub run
 
                 foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($self->{strGCovPath})})))
                 {
+                    my $strFileNoExt = substr($strFile, 0, length($strFile) - 2);
+
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
@@ -300,7 +313,7 @@ sub run
                     # Skip test.c -- it will be added manually at the end
                     next if $strFile =~ /test\.c$/;
 
-                    if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}) &&
+                    if (!defined($hTestCoverage->{$strFileNoExt}) && !grep(/^$strFileNoExt$/, @{$hTest->{&TESTDEF_INCLUDE}}) &&
                         $strFile !~ /^test\/module\/[^\/]*\/.*Test\.c$/)
                     {
                         push(@stryCFile, "${strFile}");
@@ -313,7 +326,7 @@ sub run
                     "test/module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test.c';
                 my $strCInclude;
 
-                foreach my $strFile (sort(keys(%{$hTestCoverage})))
+                foreach my $strFile (sort(keys(%{$hTestCoverage}), @{$hTest->{&TESTDEF_INCLUDE}}))
                 {
                     # Don't include the test file as it is already included below
                     next if $strFile =~ /Test$/;
@@ -342,7 +355,16 @@ sub run
 
                 # Update C test file with test module
                 my $strTestC = ${$self->{oStorageTest}->get("$self->{strGCovPath}/test/test.c")};
-                $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
+
+                if (defined($strCInclude))
+                {
+                    $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
+                }
+                else
+                {
+                    $strTestC =~ s/\{\[C\_INCLUDE\]\}//g;
+                }
+
                 $strTestC =~ s/\{\[C\_TEST\_INCLUDE\]\}/\#include \"$strTestFile\"/g;
                 $strTestDepend .= " ${strTestFile}";
 
@@ -358,12 +380,37 @@ sub run
                         $strDepend;
                 }
 
-                # Set globals
-                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
-                $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
-                $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
+                # Determine where the project exe is located
+                my $strProjectExePath = $self->{oTest}->{&TEST_VM} eq VM_NONE ?
+                    "$self->{strBackRestBase}/test/.vagrant/bin/$self->{oTest}->{&TEST_VM}/src/" . PROJECT_EXE : PROJECT_EXE;
 
-                # Set defalt log level
+                # Is this test running in a container?
+                my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
+
+                # What test path should be passed to C?  Containers always have their test path at ~/test but when running with
+                # vm=none it should be in a subdirectory of the current directory.
+                my $strTestPathC = $self->{oTest}->{&TEST_VM} eq VM_NONE ? $strHostTestPath : $strVmTestPath;
+
+                # Set globals
+                $strTestC =~ s/\{\[C\_TEST\_CONTAINER\]\}/$strContainer/g;
+                $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
+                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
+                $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
+                $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
+                $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
+
+                # Set timezone
+                if (defined($self->{strTimeZone}))
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/setenv\("TZ", "$self->{strTimeZone}", true\);/g;
+                }
+                else
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/\/\/ No timezone specified/g;
+                }
+
+                # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
                 $strTestC =~ s/\{\[C\_LOG\_LEVEL\_TEST\]\}/$strLogLevelTestC/g;
 
@@ -382,7 +429,7 @@ sub run
 
                     $strTestInit .=
                         (defined($strTestInit) ? "\n    " : '') .
-                        sprintf("testAdd(%3d, %8s);" , $iTestIdx, ($bSelected ? 'true' : 'false'));
+                        sprintf("hrnAdd(%3d, %8s);" , $iTestIdx, ($bSelected ? 'true' : 'false'));
                 }
 
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
@@ -390,7 +437,6 @@ sub run
 
                 # Create build.auto.h
                 my $strBuildAutoH =
-                    "#define HAVE_LIBPERL\n" .
                     (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
@@ -403,22 +449,22 @@ sub run
                         ' -Wformat-signedness' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
                         ' -Wduplicated-branches -Wduplicated-cond' : '') .
-                    # This warning appears to be broken on U12/CO6 even though the functionality is fine
-                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
-                        ' -Wno-missing-field-initializers' : '');
+                    # This is theoretically a portability issue but a compiler that does not treat NULL and false as 0 is crazy
+                        ' -Wno-missing-field-initializers';
 
                 # Flags that are common to all builds
                 my $strCommonFlags =
-                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
-                        ' `perl -MExtUtils::Embed -e ccopts`' .
-                        ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
+                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200809L -D_FILE_OFFSET_BITS=64' .
+                        ' `pkg-config libxml-2.0 --cflags`' . ($self->{bProfile} ? " -pg" : '') .
+                        ' -I`pg_config --includedir`' .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
-                    ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
+                    ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
+                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '');
 
-                # Flags used to buid harness files
+                # Flags used to build harness files
                 my $strHarnessFlags =
                     '-O2' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -427,9 +473,11 @@ sub run
                     $self->{oStorageTest}, "$self->{strGCovPath}/harnessflags",
                     "${strCommonFlags} ${strWarningFlags} ${strHarnessFlags}");
 
-                # Flags used to buid test.c
+                # Flags used to build test.c
                 my $strTestFlags =
-                    '-DDEBUG_TEST_TRACE -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_F30 ? '-O2' : '-O0') .
+                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -438,9 +486,10 @@ sub run
                     $self->{oStorageTest}, "$self->{strGCovPath}/testflags",
                     "${strCommonFlags} ${strWarningFlags} ${strTestFlags}");
 
-                # Flags used to buid all other files
+                # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
+                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",
@@ -458,7 +507,6 @@ sub run
                         (vmWithLz4($self->{oTest}->{&TEST_VM}) ? ' -llz4' : '') .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
-                        " `perl -MExtUtils::Embed -e ldopts`\n" .
                     "\n" .
                     "SRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
@@ -467,7 +515,7 @@ sub run
                     "\t\$(CC) -o test.bin \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: testflags test.c${strTestDepend}\n" .
-	                "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
+                    "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
 
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
@@ -496,7 +544,7 @@ sub run
                             " -c $strCFile -o " . substr($strCFile, 0, length($strCFile) - 2) . ".o\n";
                 }
 
-                $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
+                buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile", $strMakefile);
             }
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
@@ -541,7 +589,7 @@ sub end
     my $strTestDone = $self->{oProcess}{test};
     my $iTestDoneIdx = $self->{oProcess}{idx};
 
-    my $iExitStatus = $oExecDone->end(undef, $self->{iVmMax} == 1);
+    my $iExitStatus = $oExecDone->end($self->{iVmMax} == 1);
 
     if (defined($iExitStatus))
     {
@@ -556,7 +604,7 @@ sub end
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
         {
             executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
 
             $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
@@ -591,7 +639,7 @@ sub end
             my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 
             executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 "${strLCovExeBase} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
 
             # Generate coverage report for each module
@@ -716,8 +764,12 @@ sub end
         {
             my $strHostTestPath = "$self->{strTestPath}/${strImage}";
 
-            containerRemove("test-$self->{iVmIdx}");
-            executeTest("sudo rm -rf ${strHostTestPath}");
+            if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
+            {
+                containerRemove("test-$self->{iVmIdx}");
+            }
+
+            executeTest("rm -rf ${strHostTestPath}");
         }
 
         $bDone = true;
@@ -733,27 +785,21 @@ sub end
 }
 
 ####################################################################################################################################
-# Install C binary and library
+# Install C binary
 ####################################################################################################################################
 sub jobInstallC
 {
     my $strBasePath = shift;
     my $strVm = shift;
     my $strImage = shift;
-    my $bCopyLibC = shift;
 
-    # Install Perl C Library
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
     my $strBuildLibCPath = "${strBuildPath}/libc";
     my $strBuildBinPath = "${strBuildPath}/src";
-    my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
 
     executeTest(
         "docker exec -i -u root ${strImage} bash -c '" .
-        (defined($bCopyLibC) && $bCopyLibC ?
-            "mkdir -p -m 755 ${strPerlAutoPath} && " .
-            "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
         "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
         'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
 }

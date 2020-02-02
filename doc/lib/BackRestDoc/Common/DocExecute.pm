@@ -9,8 +9,10 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
@@ -259,8 +261,7 @@ sub execute
 
     &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
 
-    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y' ||
-        $oCommand->paramGet('pre', false, 'n') eq 'y' && $self->{oManifest}->{bPre})
+    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y')
     {
         if ($self->{bExe} && $self->isRequired($oSection))
         {
@@ -1039,6 +1040,7 @@ sub sectionChildProcess
 
                 my $strHost = $hCacheKey->{name};
                 my $strImage = $hCacheKey->{image};
+                my $strHostUser = $self->{oManifest}->variableReplace($oChild->paramGet('user'));
 
                 # Determine if a pre-built image should be created
                 if (defined($self->preExecute($strHost)))
@@ -1054,9 +1056,16 @@ sub sectionChildProcess
                     foreach my $oExecute ($self->preExecute($strHost))
                     {
                         my $hExecuteKey = $self->executeKey($strHost, $oExecute);
+
                         my $strCommand =
                             join("\n", @{$hExecuteKey->{cmd}}) .
                             (defined($hExecuteKey->{'cmd-extra'}) ? ' ' . $hExecuteKey->{'cmd-extra'} : '');
+                        $strCommand =~ s/'/'\\''/g;
+
+                        $strCommand =
+                            "sudo -u ${strHostUser}" .
+                            ($hCacheKey->{'bash-wrap'} ?
+                                " bash" . ($hCacheKey->{'load-env'} ? ' -l' : '') . " -c '${strCommand}'" : " ${strCommand}");
 
                         if (defined($strCommandList))
                         {
@@ -1080,12 +1089,28 @@ sub sectionChildProcess
                     $strImage = $strPreImage;
                 }
 
+                my $strHostRepoPath = dirname(dirname(abs_path($0)));
+
+                # Replace host repo path in mounts with if present
+                my $strMount = undef;
+
+                if (defined($oChild->paramGet('mount', false)))
+                {
+                    $strMount = $self->{oManifest}->variableReplace($oChild->paramGet('mount'));
+                    $strMount =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
+                }
+
+                # Replace host repo mount in params if present
+                my $strOption = $$hCacheKey{option};
+
+                if (defined($strOption))
+                {
+                    $strOption =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
+                }
+
                 my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage,
-                    $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
-                    defined($oChild->paramGet('mount', false)) ?
-                        [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
-                    $$hCacheKey{option}, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser, $$hCacheKey{os},
+                    defined($strMount) ? [$strMount] : undef, $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);

@@ -27,6 +27,7 @@ struct ProtocolParallelJob
     const Variant *result;                                          // Result if job was successful
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_PARALLEL_JOB);
 OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL_JOB);
 
 /***********************************************************************************************************************************
@@ -45,34 +46,19 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
     MEM_CONTEXT_NEW_BEGIN("ProtocolParallelJob")
     {
         this = memNew(sizeof(ProtocolParallelJob));
-        this->memContext = memContextCurrent();
-        this->state = protocolParallelJobStatePending;
 
-        this->key = varDup(key);
-        this->command = protocolCommandMove(command, memContextCurrent());
+        *this = (ProtocolParallelJob)
+        {
+            .memContext = memContextCurrent(),
+            .state = protocolParallelJobStatePending,
+            .key = varDup(key),
+        };
+
+        this->command = protocolCommandMove(command, this->memContext);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_PARALLEL_JOB, this);
-}
-
-/***********************************************************************************************************************************
-Move object to a new context
-***********************************************************************************************************************************/
-ProtocolParallelJob *
-protocolParallelJobMove(ProtocolParallelJob *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

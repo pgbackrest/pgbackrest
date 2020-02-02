@@ -19,10 +19,11 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
@@ -35,7 +36,7 @@ use constant BOGUS =>                                               'bogus';
     push @EXPORT, qw(BOGUS);
 
 ####################################################################################################################################
-# The current test run that is executung.  Only a single run should ever occur in a process to prevent various cleanup issues from
+# The current test run that is executing.  Only a single run should ever occur in a process to prevent various cleanup issues from
 # affecting the next run.  Of course multiple subtests can be executed in a single run.
 ####################################################################################################################################
 my $oTestRun;
@@ -69,14 +70,14 @@ sub new
 ####################################################################################################################################
 # initModule
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initModule {}
 
 ####################################################################################################################################
 # initTest
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initTest {}
 
@@ -89,13 +90,13 @@ sub cleanTest
 {
     my $self = shift;
 
-    executeTest('sudo rm -rf ' . $self->testPath() . '/*');
+    executeTest('rm -rf ' . $self->testPath() . '/*');
 }
 
 ####################################################################################################################################
 # cleanModule
 #
-# Empty final sub in case the ancestor class does not delare one.
+# Empty final sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub cleanModule {}
 
@@ -124,8 +125,8 @@ sub process
         $self->{bDryRun},
         $self->{bCleanup},
         $self->{bLogForce},
+        $self->{strLogLevelTestFile},
         $self->{strPgUser},
-        $self->{strBackRestUser},
         $self->{strGroup},
     ) =
         logDebugParam
@@ -146,8 +147,8 @@ sub process
             {name => 'bDryRun'},
             {name => 'bCleanup'},
             {name => 'bLogForce'},
+            {name => 'strLogLevelTestFile'},
             {name => 'strPgUser'},
-            {name => 'strBackRestUser'},
             {name => 'strGroup'},
         );
 
@@ -155,12 +156,10 @@ sub process
     $self->{bFirstTest} = true;
 
     # Initialize test storage
-    $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver());
+    $oStorage = new pgBackRest::Storage::Storage(STORAGE_LOCAL, {strPath => $self->testPath()});
 
     # Generate backrest exe
-    $self->{strBackRestExe} = testRunExe(
-        $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
-        $self->module(), $self->moduleTest(), true);
+    $self->{strBackRestExe} = defined($self->{strBackRestExeC}) ? $self->{strBackRestExeC} : $self->{strBackRestExeHelper};
 
     projectBinSet($self->{strBackRestExe});
 
@@ -507,8 +506,7 @@ sub testRun
         'pgBackRestTest::Module::' . testRunName($strModule) . '::' . testRunName($strModule) . testRunName($strModuleTest) .
         'Test';
 
-    $oTestRun = eval(                                                ## no critic (BuiltinFunctions::ProhibitStringyEval)
-        "require ${strModuleName}; ${strModuleName}->import(); return new ${strModuleName}();")
+    $oTestRun = eval("require ${strModuleName}; ${strModuleName}->import(); return new ${strModuleName}();")
         or do {confess $EVAL_ERROR};
 
     # Return from function and log return values if any
@@ -532,64 +530,6 @@ sub testRunGet
 push @EXPORT, qw(testRunGet);
 
 ####################################################################################################################################
-# Generate test executable
-####################################################################################################################################
-sub testRunExe
-{
-    my $bCoverage = shift;
-    my $strExeC = shift;
-    my $strExeHelper = shift;
-    my $strCoveragePath = shift;
-    my $strBackRestBasePath = shift;
-    my $strModule = shift;
-    my $strTest = shift;
-    my $bLog = shift;
-
-    my $strExe = defined($strExeC) ? $strExeC : undef;
-    my $strPerlModule;
-
-    if ($bCoverage)
-    {
-        # Limit Perl modules tested to what is defined in the test coverage (if it exists)
-        my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
-        my $strPerlModuleLog;
-
-        if (defined($hTestCoverage))
-        {
-            foreach my $strCoverageModule (sort(keys(%{$hTestCoverage})))
-            {
-                $strPerlModule .= ',.*/' . $strCoverageModule . '\.p.$';
-                $strPerlModuleLog .= (defined($strPerlModuleLog) ? ', ' : '') . $strCoverageModule;
-            }
-        }
-
-        # Build the exe
-        if (defined($strPerlModule))
-        {
-            $strExe .=
-                (defined($strExeC) ? ' --perl-option=' :  'perl ') .
-                "-MDevel::Cover=-silent,1,-dir,${strCoveragePath},-select${strPerlModule},+inc" .
-                ",${strBackRestBasePath},-coverage,statement,branch,condition,path,subroutine" .
-                (defined($strExeC) ? '' :  " ${strExeHelper}");
-
-            if (defined($bLog) && $bLog)
-            {
-                &log(INFO, "          coverage: ${strPerlModuleLog}");
-            }
-        }
-    }
-
-    if (!defined($strExeC) && !defined($strPerlModule))
-    {
-        $strExe = $strExeHelper;
-    }
-
-    return $strExe;
-}
-
-push(@EXPORT, qw(testRunExe));
-
-####################################################################################################################################
 # storageTest - get the storage for the current test
 ####################################################################################################################################
 sub storageTest
@@ -604,13 +544,12 @@ push(@EXPORT, qw(storageTest));
 ####################################################################################################################################
 sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
-sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {vmCoveragePerl(shift->{strVm})}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}
 sub doLogForce {return shift->{bLogForce}}
+sub logLevelTestFile {return shift->{strLogLevelTestFile}}
 sub group {return shift->{strGroup}}
 sub isDryRun {return shift->{bDryRun}}
 sub expect {return shift->{oExpect}}

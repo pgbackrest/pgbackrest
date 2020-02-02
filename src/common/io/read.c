@@ -53,10 +53,15 @@ ioReadNew(void *driver, IoReadInterface interface)
     MEM_CONTEXT_NEW_BEGIN("IoRead")
     {
         this = memNew(sizeof(IoRead));
-        this->memContext = memContextCurrent();
-        this->driver = driver;
-        this->interface = interface;
-        this->input = bufNew(ioBufferSize());
+
+        *this = (IoRead)
+        {
+            .memContext = memContextCurrent(),
+            .driver = driver,
+            .interface = interface,
+            .filterGroup = ioFilterGroupNew(),
+            .input = bufNew(ioBufferSize()),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -75,25 +80,14 @@ ioReadOpen(IoRead *this)
 
     ASSERT(this != NULL);
     ASSERT(!this->opened && !this->closed);
+    ASSERT(ioFilterGroupSize(this->filterGroup) == 0 || !ioReadBlock(this));
 
     // Open if the driver has an open function
     bool result = this->interface.open != NULL ? this->interface.open(this->driver) : true;
 
     // Only open the filter group if the read was opened
     if (result)
-    {
-        // If no filter group exists create one to do buffering
-        if (this->filterGroup == NULL)
-        {
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                this->filterGroup = ioFilterGroupNew();
-            }
-            MEM_CONTEXT_END();
-        }
-
         ioFilterGroupOpen(this->filterGroup);
-    }
 
 #ifdef DEBUG
     this->opened = result;
@@ -226,11 +220,11 @@ Read linefeed-terminated string
 The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/
 String *
-ioReadLine(IoRead *this)
+ioReadLineParam(IoRead *this, bool allowEof)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, this);
-        FUNCTION_LOG_PARAM(BUFFER, this->output);
+        FUNCTION_LOG_PARAM(BOOL, allowEof);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -279,14 +273,32 @@ ioReadLine(IoRead *this)
                 THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
 
             if (ioReadEof(this))
-                THROW(FileReadError, "unexpected eof while reading line");
-
-            ioReadInternal(this, this->output, false);
+            {
+                if (allowEof)
+                    result = strNewN((char *)bufPtr(this->output), bufUsed(this->output));
+                else
+                    THROW(FileReadError, "unexpected eof while reading line");
+            }
+            else
+                ioReadInternal(this, this->output, false);
         }
     }
     while (result == NULL);
 
     FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Read linefeed-terminated string and error on eof
+***********************************************************************************************************************************/
+String *
+ioReadLine(IoRead *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(STRING, ioReadLineParam(this, false));
 }
 
 /***********************************************************************************************************************************
@@ -365,9 +377,7 @@ ioReadEof(const IoRead *this)
 }
 
 /***********************************************************************************************************************************
-Get/set filters
-
-Filters must be set before open and cannot be reset.
+Get filter group if filters need to be added
 ***********************************************************************************************************************************/
 IoFilterGroup *
 ioReadFilterGroup(const IoRead *this)
@@ -379,25 +389,6 @@ ioReadFilterGroup(const IoRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->filterGroup);
-}
-
-IoRead *
-ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_READ, this);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(filterGroup != NULL);
-    ASSERT(this->filterGroup == NULL);
-    ASSERT(!this->opened && !this->closed);
-    ASSERT(!ioReadBlock(this));
-
-    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
-
-    FUNCTION_LOG_RETURN(IO_READ, this);
 }
 
 /***********************************************************************************************************************************

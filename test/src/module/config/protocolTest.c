@@ -30,12 +30,10 @@ testRun(void)
                 ioWriteOpen(write);
 
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--repo1-host=repo-host");
                 strLstAddZ(argList, "--repo1-host-user=repo-host-user");
-                strLstAddZ(argList, "archive-get");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoad(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
                 protocolServerHandlerAdd(server, configProtocol);
@@ -56,8 +54,8 @@ testRun(void)
                 varLstAdd(list, varNewStr(strNew("repo1-host")));
                 varLstAdd(list, varNewStr(strNew("repo1-host-user")));
 
-                TEST_RESULT_STR(
-                    strPtr(strLstJoin(strLstNewVarLst(configProtocolOption(client, list)), "|")), "repo-host|repo-host-user",
+                TEST_RESULT_STR_Z(
+                    strLstJoin(strLstNewVarLst(configProtocolOption(client, list)), "|"), "repo-host|repo-host-user",
                     "get options");
 
                 protocolClientFree(client);

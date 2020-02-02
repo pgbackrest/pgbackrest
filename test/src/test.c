@@ -28,7 +28,7 @@ The test code is included directly so it can freely interact with the included C
 #endif
 
 #include "common/harnessDebug.h"
-#include "common/harnessTest.h"
+#include "common/harnessTest.intern.h"
 
 #ifndef NO_LOG
     #include "common/harnessLog.h"
@@ -73,14 +73,22 @@ main(int argListSize, const char *argList[])
     // Set neutral umask for testing
     umask(0000);
 
+    // Set timezone if specified
+    {[C_TEST_TZ]}
+
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
 
     // Set globals
-    testExeSet(argList[0]);
-    testPathSet("{[C_TEST_PATH]}");
-    testRepoPathSet("{[C_TEST_REPO_PATH]}");
-    testExpectPathSet("{[C_TEST_EXPECT_PATH]}");
+    hrnInit(
+        argList[0],                 // Test exe
+        "{[C_TEST_PROJECT_EXE]}",   // Project exe
+        {[C_TEST_CONTAINER]},       // Is this test running in a container?
+        {[C_TEST_IDX]},             // The 0-based index of this test
+        {[C_TEST_SCALE]},           // Scaling factor for performance tests
+        "{[C_TEST_PATH]}",          // Path where tests write data
+        "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
+        "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
 
     // Set default test log level
 #ifndef NO_LOG
@@ -99,7 +107,7 @@ main(int argListSize, const char *argList[])
         testRun();
 
         // End test run and make sure all tests completed
-        testComplete();
+        hrnComplete();
 
         printf("\nTESTS COMPLETED SUCCESSFULLY\n");
         fflush(stdout);

@@ -19,6 +19,7 @@ struct HttpHeader
     KeyValue *kv;                                                   // KeyValue store
 };
 
+OBJECT_DEFINE_MOVE(HTTP_HEADER);
 OBJECT_DEFINE_FREE(HTTP_HEADER);
 
 /***********************************************************************************************************************************
@@ -35,10 +36,13 @@ httpHeaderNew(const StringList *redactList)
     {
         // Allocate state and set context
         this = memNew(sizeof(HttpHeader));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->redactList = strLstDup(redactList);
-        this->kv = kvNew();
+        *this = (HttpHeader)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .redactList = strLstDup(redactList),
+            .kv = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -60,15 +64,17 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 
     if (header != NULL)
     {
-
         MEM_CONTEXT_NEW_BEGIN("HttpHeader")
         {
             // Allocate state and set context
             this = memNew(sizeof(HttpHeader));
-            this->memContext = MEM_CONTEXT_NEW();
 
-            this->redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList);
-            this->kv = kvDup(header->kv);
+            *this = (HttpHeader)
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
+                .kv = kvDup(header->kv),
+            };
         }
         MEM_CONTEXT_NEW_END();
     }
@@ -92,14 +98,28 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    // Make sure the key does not already exist
+    // Check if the key already exists
     const Variant *keyVar = VARSTR(key);
+    const Variant *valueVar = kvGet(this->kv, keyVar);
 
-    if (kvGet(this->kv, keyVar) != NULL)
-        THROW_FMT(AssertError, "key '%s' already exists", strPtr(key));
+    // If the key exists then append the new value.  The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
+    // once then it is equivalent to a single comma-separated header.  There appear to be a few exceptions such as Set-Cookie, but
+    // they should not be of concern to us here.
+    if (valueVar != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            String *valueAppend = strDup(varStr(valueVar));
+            strCat(valueAppend, ", ");
+            strCat(valueAppend, strPtr(value));
 
-    // Store the key
-    kvPut(this->kv, keyVar, VARSTR(value));
+            kvPut(this->kv, keyVar, VARSTR(valueAppend));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    // Else store the key
+    else
+        kvPut(this->kv, keyVar, VARSTR(value));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -134,25 +154,6 @@ httpHeaderList(const HttpHeader *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
-}
-
-/***********************************************************************************************************************************
-Move object to a new mem context
-***********************************************************************************************************************************/
-HttpHeader *
-httpHeaderMove(HttpHeader *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_HEADER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

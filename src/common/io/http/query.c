@@ -19,6 +19,7 @@ struct HttpQuery
     KeyValue *kv;                                                   // KeyValue store
 };
 
+OBJECT_DEFINE_MOVE(HTTP_QUERY);
 OBJECT_DEFINE_FREE(HTTP_QUERY);
 
 /***********************************************************************************************************************************
@@ -35,8 +36,12 @@ httpQueryNew(void)
     {
         // Allocate state and set context
         this = memNew(sizeof(HttpQuery));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->kv = kvNew();
+
+        *this = (HttpQuery)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .kv = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -101,25 +106,6 @@ httpQueryList(const HttpQuery *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
-}
-
-/***********************************************************************************************************************************
-Move object to a new mem context
-***********************************************************************************************************************************/
-HttpQuery *
-httpQueryMove(HttpQuery *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_QUERY, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

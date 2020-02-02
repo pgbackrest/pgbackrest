@@ -16,10 +16,8 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     size_t inputTotal = 0;
     ioBufferSizeSet(outputSize);
 
-    IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, compress);
     IoWrite *write = ioBufferWriteNew(compressed);
-    ioWriteFilterGroupSet(write, filterGroup);
+    ioFilterGroupAdd(ioWriteFilterGroup(write), compress);
     ioWriteOpen(write);
 
     // Compress input data
@@ -52,10 +50,8 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
     Buffer *output = bufNew(outputSize);
     ioBufferSizeSet(inputSize);
 
-    IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, decompress);
     IoRead *read = ioBufferReadNew(compressed);
-    ioReadFilterGroupSet(read, filterGroup);
+    ioFilterGroupAdd(ioReadFilterGroup(read), decompress);
     ioReadOpen(read);
 
     while (!ioReadEof(read))
@@ -110,8 +106,15 @@ testRun(void)
         Buffer *compressed = NULL;
         Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
+        VariantList *compressParamList = varLstNew();
+        varLstAdd(compressParamList, varNewUInt(3));
+        varLstAdd(compressParamList, varNewBool(false));
+
+        VariantList *decompressParamList = varLstNew();
+        varLstAdd(decompressParamList, varNewBool(false));
+
         TEST_ASSIGN(
-            compressed, testCompress(gzipCompressNew(3, false), decompressed, 1024, 1024),
+            compressed, testCompress(gzipCompressNewVar(compressParamList), decompressed, 1024, 1024),
             "simple data - compress large in/large out buffer");
 
         TEST_RESULT_BOOL(
@@ -127,7 +130,7 @@ testRun(void)
             "simple data - compress small in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1024, 1024)), true,
+            bufEq(decompressed, testDecompress(gzipDecompressNewVar(decompressParamList), compressed, 1024, 1024)), true,
             "simple data - decompress large in/large out buffer");
 
         TEST_RESULT_BOOL(
@@ -141,6 +144,20 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1, 1)), true,
             "simple data - decompress small in/small out buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on no compression data");
+
+        TEST_ERROR(testDecompress(gzipDecompressNew(true), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on truncated compression data");
+
+        Buffer *truncated = bufNew(0);
+        bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
+
+        TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
+        TEST_ERROR(testDecompress(gzipDecompressNew(false), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
         // Compress a large zero input buffer into small output buffer
         // -------------------------------------------------------------------------------------------------------------------------
@@ -162,11 +179,11 @@ testRun(void)
     {
         GzipDecompress *decompress = (GzipDecompress *)ioFilterDriver(gzipDecompressNew(false));
 
-        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
 
         decompress->inputSame = true;
         decompress->done = true;
-        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

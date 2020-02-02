@@ -9,11 +9,20 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/backup/backup.h"
+#include "command/check/check.h"
 #include "command/command.h"
+#include "command/control/start.h"
+#include "command/control/stop.h"
+#include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/restore/restore.h"
+#include "command/stanza/create.h"
+#include "command/stanza/delete.h"
+#include "command/stanza/upgrade.h"
 #include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
@@ -21,7 +30,7 @@ Main
 #include "config/config.h"
 #include "config/load.h"
 #include "postgres/interface.h"
-#include "perl/exec.h"
+#include "storage/helper.h"
 #include "version.h"
 
 int
@@ -50,12 +59,25 @@ main(int argListSize, const char *argList[])
         // Load the configuration
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
+        ConfigCommandRole commandRole = cfgCommandRole();
 
         // Display help
         // -------------------------------------------------------------------------------------------------------------------------
         if (cfgCommandHelp())
         {
             cmdHelp();
+        }
+        // Local role
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (commandRole == cfgCmdRoleLocal)
+        {
+            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+        }
+        // Remote role
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (commandRole == cfgCmdRoleRemote)
+        {
+            cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }
         else
         {
@@ -65,15 +87,11 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchiveGet:
                 {
-                    result = cmdArchiveGet();
-                    break;
-                }
+                    if (commandRole == cfgCmdRoleAsync)
+                        cmdArchiveGetAsync();
+                    else
+                        result = cmdArchiveGet();
 
-                // Archive get async command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdArchiveGetAsync:
-                {
-                    cmdArchiveGetAsync();
                     break;
                 }
 
@@ -81,15 +99,11 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchivePush:
                 {
-                    cmdArchivePush();
-                    break;
-                }
+                    if (commandRole == cfgCmdRoleAsync)
+                        cmdArchivePushAsync();
+                    else
+                        cmdArchivePush();
 
-                // Archive push async command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdArchivePushAsync:
-                {
-                    cmdArchivePushAsync();
                     break;
                 }
 
@@ -97,24 +111,17 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdBackup:
                 {
-#ifdef DEBUG
-                    // Check pg_control during testing so errors are more obvious.  Otherwise errors only happen in
-                    // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
-                    // once backup is written in C.
-                    if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(cfgOptionStr(cfgOptPgPath));
-#endif
-
                     // Run backup
-                    perlExec();
+                    cmdBackup();
 
                     // Switch to expire command
                     cmdEnd(0, NULL);
-                    cfgCommandSet(cfgCmdExpire);
-                    cmdBegin(false);
+                    cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
+                    cfgLoadLogFile();
+                    cmdBegin(true);
 
                     // Run expire
-                    perlExec();
+                    cmdExpire();
 
                     break;
                 }
@@ -123,7 +130,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
                 {
-                    perlExec();
+                    cmdCheck();
                     break;
                 }
 
@@ -131,7 +138,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdExpire:
                 {
-                    perlExec();
+                    cmdExpire();
                     break;
                 }
 
@@ -151,41 +158,11 @@ main(int argListSize, const char *argList[])
                     break;
                 }
 
-                // Local command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdLocal:
-                {
-                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)  ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_RESTORE_STR))
-                    {
-                        cmdLocal(STDIN_FILENO, STDOUT_FILENO);
-                    }
-                    else
-                        perlExec();
-
-                    break;
-                }
-
-                // Remote command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdRemote:
-                {
-                    if (cfgOptionBool(cfgOptC))
-                    {
-                        cmdRemote(STDIN_FILENO, STDOUT_FILENO);
-                    }
-                    else
-                        perlExec();
-
-                    break;
-                }
-
                 // Restore command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
                 {
-                    perlExec();
+                    cmdRestore();
                     break;
                 }
 
@@ -193,7 +170,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
                 {
-                    perlExec();
+                    cmdStanzaCreate();
                     break;
                 }
 
@@ -201,7 +178,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
                 {
-                    perlExec();
+                    cmdStanzaDelete();
                     break;
                 }
 
@@ -209,7 +186,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
                 {
-                    perlExec();
+                    cmdStanzaUpgrade();
                     break;
                 }
 
@@ -217,7 +194,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStart:
                 {
-                    perlExec();
+                    cmdStart();
                     break;
                 }
 
@@ -225,7 +202,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
                 {
-                    perlExec();
+                    cmdStop();
                     break;
                 }
 

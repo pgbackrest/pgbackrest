@@ -25,8 +25,8 @@ forkSafe(void)
 }
 
 /***********************************************************************************************************************************
-Detach a forked process and detach it so it can continue running after the parent process has exited.  This is not a typical daemon
-startup because the parent process may continue to run and perform work for some time.
+Detach a forked process so it can continue running after the parent process has exited.  This is not a typical daemon startup
+because the parent process may continue to run and perform work for some time.
 ***********************************************************************************************************************************/
 void
 forkDetach(void)

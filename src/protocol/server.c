@@ -14,6 +14,7 @@ Protocol Server
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "protocol/client.h"
+#include "protocol/helper.h"
 #include "protocol/server.h"
 #include "version.h"
 
@@ -30,6 +31,7 @@ struct ProtocolServer
     List *handlerList;
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_SERVER);
 OBJECT_DEFINE_FREE(PROTOCOL_SERVER);
 
 /***********************************************************************************************************************************
@@ -54,13 +56,15 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     MEM_CONTEXT_NEW_BEGIN("ProtocolServer")
     {
         this = memNew(sizeof(ProtocolServer));
-        this->memContext = memContextCurrent();
 
-        this->name = strDup(name);
-        this->read = read;
-        this->write = write;
-
-        this->handlerList = lstNew(sizeof(ProtocolServerProcessHandler));
+        *this = (ProtocolServer)
+        {
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .read = read,
+            .write = write,
+            .handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
+        };
 
         // Send the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
@@ -70,7 +74,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteStrLine(this->write, jsonFromKv(greetingKv, 0));
+            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
@@ -119,7 +123,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
     kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
-    ioWriteStrLine(this->write, jsonFromKv(error, 0));
+    ioWriteStrLine(this->write, jsonFromKv(error));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -157,8 +161,13 @@ protocolServerProcess(ProtocolServer *this)
                     // Get the next handler
                     ProtocolServerProcessHandler handler = *(ProtocolServerProcessHandler *)lstGet(this->handlerList, handlerIdx);
 
-                    // Send the command to the handler
-                    found = handler(command, paramList, this);
+                    // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
+                    // needs to be stored by the handler.
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        found = handler(command, paramList, this);
+                    }
+                    MEM_CONTEXT_END();
 
                     // If the handler processed the command then exit the handler loop
                     if (found)
@@ -174,6 +183,11 @@ protocolServerProcess(ProtocolServer *this)
                     else
                         THROW_FMT(ProtocolError, "invalid command '%s'", strPtr(command));
                 }
+
+                // Send keep alives to remotes.  When a local process is doing work that does not involve the remote it is important
+                // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
+                // local process.
+                protocolKeepAlive();
             }
             MEM_CONTEXT_TEMP_END();
         }
@@ -205,29 +219,36 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     if (output != NULL)
         kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
-    ioWriteStrLine(this->write, jsonFromKv(result, 0));
+    ioWriteStrLine(this->write, jsonFromKv(result));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Move the file object to a new context
+Write a line
 ***********************************************************************************************************************************/
-ProtocolServer *
-protocolServerMove(ProtocolServer *this, MemContext *parentNew)
+void
+protocolServerWriteLine(const ProtocolServer *this, const String *line)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(STRING, line);
+    FUNCTION_LOG_END();
 
-    ASSERT(parentNew != NULL);
+    ASSERT(this != NULL);
 
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
+    // Dot indicates the start of an lf-terminated line
+    ioWrite(this->write, DOT_BUF);
 
-    FUNCTION_TEST_RETURN(this);
+    // Write the line if it exists
+    if (line != NULL)
+        ioWriteStr(this->write, line);
+
+    // Terminate with a linefeed
+    ioWrite(this->write, LF_BUF);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

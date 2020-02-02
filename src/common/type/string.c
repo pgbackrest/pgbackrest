@@ -13,21 +13,27 @@ String Handler
 #include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
+#include "common/type/stringList.h"
+#include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
 STRING_EXTERN(BRACKETL_STR,                                         "[");
 STRING_EXTERN(BRACKETR_STR,                                         "]");
+STRING_EXTERN(COLON_STR,                                            COLON_Z);
 STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(DASH_STR,                                             DASH_Z);
+STRING_EXTERN(DOT_STR,                                              ".");
+STRING_EXTERN(DOTDOT_STR,                                           "..");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
-STRING_EXTERN(FALSE_STR,                                            "false");
+STRING_EXTERN(FALSE_STR,                                            FALSE_Z);
 STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
-STRING_EXTERN(NULL_STR,                                             "null");
-STRING_EXTERN(TRUE_STR,                                             "true");
+STRING_EXTERN(NULL_STR,                                             NULL_Z);
+STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
 STRING_EXTERN(Y_STR,                                                "y");
 STRING_EXTERN(ZERO_STR,                                             "0");
 
@@ -71,11 +77,15 @@ strNew(const char *string)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)stringSize;
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)stringSize,
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
@@ -101,11 +111,15 @@ strNewBuf(const Buffer *buffer)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)bufUsed(buffer);
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)bufUsed(buffer),
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
     this->buffer[this->size] = 0;
 
@@ -126,7 +140,11 @@ strNewFmt(const char *format, ...)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+    };
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -139,7 +157,7 @@ strNewFmt(const char *format, ...)
 
     // Allocate and assign string
     this->size = (unsigned int)formatSize;
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     va_start(argumentList, format);
     vsnprintf(this->buffer, this->size + 1, format, argumentList);
     va_end(argumentList);
@@ -150,7 +168,7 @@ strNewFmt(const char *format, ...)
 /***********************************************************************************************************************************
 Create a new string from a string with a specific length
 
-The string may or may not be zero-terminated but we'll use that nomeclature since we're not concerned about the end of the string.
+The string may or may not be zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
 ***********************************************************************************************************************************/
 String *
 strNewN(const char *string, size_t size)
@@ -167,11 +185,15 @@ strNewN(const char *string, size_t size)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)size;
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)size,
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strncpy(this->buffer, string, this->size);
     this->buffer[this->size] = 0;
 
@@ -257,7 +279,7 @@ strResize(String *this, size_t requested)
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->buffer = memGrowRaw(this->buffer, this->size + this->extra + 1);
+            this->buffer = memResize(this->buffer, this->size + this->extra + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -363,10 +385,17 @@ strCmp(const String *this, const String *compare)
         FUNCTION_TEST_PARAM(STRING, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
+    if (this != NULL && compare != NULL)
+        FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+    else if (this == NULL)
+    {
+        if (compare == NULL)
+            FUNCTION_TEST_RETURN(0);
 
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+        FUNCTION_TEST_RETURN(-1);
+    }
+
+    FUNCTION_TEST_RETURN(1);
 }
 
 int
@@ -377,10 +406,7 @@ strCmpZ(const String *this, const char *compare)
         FUNCTION_TEST_PARAM(STRINGZ, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
-
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare));
+    FUNCTION_TEST_RETURN(strCmp(this, compare == NULL ? NULL : STRDEF(compare)));
 }
 
 /***********************************************************************************************************************************
@@ -465,13 +491,15 @@ strEq(const String *this, const String *compare)
         FUNCTION_TEST_PARAM(STRING, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
-
     bool result = false;
 
-    if (this->size == compare->size)
-        result = strcmp(strPtr(this), strPtr(compare)) == 0;
+    if (this != NULL && compare != NULL)
+    {
+        if (this->size == compare->size)
+            result = strcmp(strPtr(this), strPtr(compare)) == 0;
+    }
+    else
+        result = this == NULL && compare == NULL;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -588,6 +616,95 @@ strPath(const String *this)
 }
 
 /***********************************************************************************************************************************
+Combine with a base path to get an absolute path
+***********************************************************************************************************************************/
+String *
+strPathAbsolute(const String *this, const String *base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    // Path is already absolute so just return it
+    if (strBeginsWith(this, FSLASH_STR))
+    {
+        result = strDup(this);
+    }
+    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
+    // Posix spec that is seems best avoided.
+    else
+    {
+        ASSERT(base != NULL);
+
+        // Base must be absolute to start
+        if (!strBeginsWith(base, FSLASH_STR))
+            THROW_FMT(AssertError, "base path '%s' is not absolute", strPtr(base));
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            StringList *baseList = strLstNewSplit(base, FSLASH_STR);
+            StringList *pathList = strLstNewSplit(this, FSLASH_STR);
+
+            while (strLstSize(pathList) > 0)
+            {
+                const String *pathPart = strLstGet(pathList, 0);
+
+                // If the last part is empty
+                if (strSize(pathPart) == 0)
+                {
+                    // Allow when this is the last part since it just means there was a trailing /
+                    if (strLstSize(pathList) == 1)
+                    {
+                        strLstRemoveIdx(pathList, 0);
+                        break;
+                    }
+
+                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+                }
+
+                if (strEq(pathPart, DOTDOT_STR))
+                {
+                    const String *basePart = strLstGet(baseList, strLstSize(baseList) - 1);
+
+                    if (strSize(basePart) == 0)
+                    {
+                        THROW_FMT(
+                            AssertError, "relative path '%s' goes back too far in base path '%s'", strPtr(this), strPtr(base));
+                    }
+
+                    strLstRemoveIdx(baseList, strLstSize(baseList) - 1);
+                }
+                else if (!strEq(pathPart, DOT_STR))
+                    strLstAdd(baseList, pathPart);
+
+                strLstRemoveIdx(pathList, 0);
+            }
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                if (strLstSize(baseList) == 1)
+                    result = strDup(FSLASH_STR);
+                else
+                    result = strLstJoin(baseList, "/");
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // There should not be any stray .. or // in the final result
+    if (strstr(strPtr(result), "/..") != NULL || strstr(strPtr(result), "//") != NULL)
+        THROW_FMT(AssertError, "result path '%s' is not absolute", strPtr(result));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Return string ptr
 ***********************************************************************************************************************************/
 const char *
@@ -671,7 +788,7 @@ strSub(const String *this, size_t start)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
 
     FUNCTION_TEST_RETURN(strSubN(this, start, this->size - start));
 }
@@ -689,7 +806,7 @@ strSubN(const String *this, size_t start, size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
     ASSERT(start + size <= this->size);
 
     FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));
@@ -711,7 +828,7 @@ strSize(const String *this)
 }
 
 /***********************************************************************************************************************************
-Trim whitespace from the beginnning and end of a string
+Trim whitespace from the beginning and end of a string
 ***********************************************************************************************************************************/
 String *
 strTrim(String *this)
@@ -753,7 +870,7 @@ strTrim(String *this)
             MEM_CONTEXT_BEGIN(this->memContext)
             {
                 // Resize the buffer
-                this->buffer = memGrowRaw(this->buffer, this->size + 1);
+                this->buffer = memResize(this->buffer, this->size + 1);
             }
             MEM_CONTEXT_END();
         }
@@ -811,7 +928,7 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Resize the buffer
-            this->buffer = memGrowRaw(this->buffer, this->size + 1);
+            this->buffer = memResize(this->buffer, this->size + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -828,7 +945,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? strPtr(NULL_STR) : strPtr(formatFunc(object)));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 

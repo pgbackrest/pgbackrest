@@ -40,6 +40,12 @@ Standard config include path name
 #define PGBACKREST_CONFIG_INCLUDE_PATH                              "conf.d"
 
 /***********************************************************************************************************************************
+Option value constants
+***********************************************************************************************************************************/
+VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               "0");
+VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               "1");
+
+/***********************************************************************************************************************************
 Parse option flags
 ***********************************************************************************************************************************/
 // Offset the option values so they don't conflict with getopt_long return codes
@@ -153,7 +159,7 @@ sizeQualifierToMultiplier(char qualifier)
     FUNCTION_TEST_RETURN(result);
 }
 
-void
+static void
 convertToByte(String **value, double *valueDbl)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -236,7 +242,7 @@ Rules:
   the config-include-path will be appended and at least one is expected to exist.
 - If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
   loaded; the directory is required.
-- If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
+- If --no-config is specified and --config-path is specified then only *.conf files in the overridden default config-include-path
   (<config-path>/conf.d) will be loaded if exist but not required.
 - If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
 - If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
@@ -344,7 +350,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             configFileName = optConfigDefault;
 
         // Load the config file
-        Buffer *buffer = storageGetNP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
+        Buffer *buffer = storageGetP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -352,7 +358,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If confg is current default and it was not found, attempt to load the config file from the old default location
-            buffer = storageGetNP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+            buffer = storageGetP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
                 result = strNewBuf(buffer);
@@ -392,7 +398,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             {
                 cfgFileLoadPart(
                     &result,
-                    storageGetNP(
+                    storageGetP(
                         storageNewReadP(
                             storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
                             .ignoreMissing = true)));
@@ -439,8 +445,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         opterr = false;
 
         // List of parsed options
-        ParseOption parseOptionList[CFG_OPTION_TOTAL];
-        memset(&parseOptionList, 0, sizeof(parseOptionList));
+        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{.found = false}};
 
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
@@ -455,18 +460,34 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // The first argument should be the command
                     if (!commandSet)
                     {
+                        const char *command = argList[optind - 1];
+
                         // Try getting the command from the valid command list
-                        TRY_BEGIN()
+                        ConfigCommand commandId = cfgCommandId(command, false);
+                        ConfigCommandRole commandRoleId = cfgCmdRoleDefault;
+
+                        // If not successful then a command role may be appended
+                        if (commandId == cfgCmdNone)
                         {
-                            cfgCommandSet(cfgCommandId(argList[optind - 1]));
+                            const StringList *commandPart = strLstNewSplit(STR(command), COLON_STR);
+
+                            if (strLstSize(commandPart) == 2)
+                            {
+                                // Get command id
+                                commandId = cfgCommandId(strPtr(strLstGet(commandPart, 0)), false);
+
+                                // If command id is valid then get command role id
+                                if (commandId != cfgCmdNone)
+                                    commandRoleId = cfgCommandRoleEnum(strLstGet(commandPart, 1));
+                            }
                         }
-                        // Assert error means the command does not exist, which is correct for all usages but this one (since we
-                        // don't have any control over what the user passes), so modify the error code and message.
-                        CATCH(AssertError)
-                        {
-                            THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
-                        }
-                        TRY_END();
+
+                        // Error when command does not exist
+                        if (commandId == cfgCmdNone)
+                            THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
+
+                        //  Set the command
+                        cfgCommandSet(commandId, commandRoleId);
 
                         if (cfgCommand() == cfgCmdHelp)
                             cfgCommandHelpSet(true);
@@ -525,7 +546,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // Only set the argument if the option requires one
                         if (optionList[optionListIdx].has_arg == required_argument)
-                            parseOptionList[optionId].valueList = strLstAdd(strLstNew(), STR(optarg));
+                        {
+                            parseOptionList[optionId].valueList = strLstNew();
+                            strLstAdd(parseOptionList[optionId].valueList, STR(optarg));
+                        }
                     }
                     else
                     {
@@ -576,7 +600,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             if (argFound)
                 THROW_FMT(CommandRequiredError, "no command found");
 
-            // Otherwise set the comand to help
+            // Otherwise set the command to help
             cfgCommandHelpSet(true);
         }
 
@@ -590,7 +614,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         }
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
-        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote && resetLogLevel)
+        if (cfgCommandRole() != cfgCmdRoleLocal && cfgCommandRole() != cfgCmdRoleRemote && resetLogLevel)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 1);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
@@ -629,19 +653,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // Warn if the option not found
                     if (optionList[optionIdx].name == NULL)
                     {
-                        LOG_WARN("environment contains invalid option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if negate option found in env
                     else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                     {
-                        LOG_WARN("environment contains invalid negate option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid negate option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if reset option found in env
                     else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                     {
-                        LOG_WARN("environment contains invalid reset option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid reset option '%s'", strPtr(key));
                         continue;
                     }
 
@@ -732,19 +756,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         // Warn if the option not found
                         if (optionList[optionIdx].name == NULL)
                         {
-                            LOG_WARN("configuration file contains invalid option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains invalid option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if negate option found in config
                         else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                         {
-                            LOG_WARN("configuration file contains negate option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains negate option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if reset option found in config
                         else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                         {
-                            LOG_WARN("configuration file contains reset option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains reset option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -754,7 +778,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         /// Warn if this option should be command-line only
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
                         {
-                            LOG_WARN("configuration file contains command-line only option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains command-line only option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -777,7 +801,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
                             {
-                                LOG_WARN(
+                                LOG_WARN_FMT(
                                     "configuration file contains option '%s' invalid for section '%s'", strPtr(key),
                                     strPtr(section));
                                 continue;
@@ -790,7 +814,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
                             strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                         {
-                            LOG_WARN(
+                            LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strPtr(key),
                                 strPtr(section));
                             continue;
@@ -899,9 +923,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (dependOptionDefType == cfgDefOptTypeBoolean)
                         {
                             if (cfgOptionBool(dependOptionId))
-                                dependValue = VARSTRDEF("1");
+                                dependValue = OPTION_VALUE_1;
                             else
-                                dependValue = VARSTRDEF("0");
+                                dependValue = OPTION_VALUE_0;
                         }
                     }
 
@@ -926,7 +950,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // If depend not resolved and option value is set on the command-line then error.  It's OK to have
                         // unresolved options in the config file because they may be there for another command.  For instance,
-                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presense of
+                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presence of
                         // spool-path in the config file should not cause an error here, it will just end up null.
                         if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
                         {
@@ -1071,7 +1095,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         cfgOptionName(optionId));
                                 }
 
-                                // Make sure there are no occurences of //
+                                // Make sure there are no occurrences of //
                                 if (strstr(strPtr(value), "//") != NULL)
                                 {
                                     THROW_FMT(

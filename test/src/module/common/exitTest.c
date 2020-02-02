@@ -18,15 +18,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSignalName()"))
     {
-        TEST_RESULT_STR(exitSignalName(signalTypeHup), "HUP", "SIGHUP name");
-        TEST_RESULT_STR(exitSignalName(signalTypeInt), "INT", "SIGINT name");
-        TEST_RESULT_STR(exitSignalName(signalTypeTerm), "TERM", "SIGTERM name");
+        TEST_RESULT_Z(exitSignalName(signalTypeHup), "HUP", "SIGHUP name");
+        TEST_RESULT_Z(exitSignalName(signalTypeInt), "INT", "SIGINT name");
+        TEST_RESULT_Z(exitSignalName(signalTypeTerm), "TERM", "SIGTERM name");
         TEST_ERROR(exitSignalName(signalTypeNone), AssertError, "no name for signal none");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
+        cfgInit();
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)
@@ -43,13 +45,13 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         cfgInit();
-        cfgCommandSet(cfgCmdNone);
+        cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command")
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
-        cfgCommandSet(cfgCmdArchivePush);
+        cfgCommandSet(cfgCmdArchivePush, cfgCmdRoleDefault);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
@@ -104,19 +106,6 @@ testRun(void)
                 "            STACK TRACE\\:\n"
                 "            test/module/common/exitTest\\:testRun\\:.*\n"
                 "            test\\:main\\:.*\n");
-        }
-        TRY_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TRY_BEGIN()
-        {
-            THROW(RuntimeError, PERL_EMBED_ERROR);
-        }
-        CATCH_ANY()
-        {
-            exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
-                "P00   INFO: archive-push command end: aborted with exception [122]");
         }
         TRY_END();
 

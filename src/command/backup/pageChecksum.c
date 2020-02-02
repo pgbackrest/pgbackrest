@@ -146,8 +146,8 @@ pageChecksumResult(THIS_VOID)
         VariantList *errorList = varLstNew();
         unsigned int errorIdx = 0;
 
-        // Convert the full list to an abbreviated list that the Perl code can understand.  In the future we want to return the
-        // entire list so pages can be verified in the WAL.
+        // Convert the full list to an abbreviated list.  In the future we want to return the entire list so pages can be verified
+        // in the WAL.
         do
         {
             unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
@@ -196,8 +196,8 @@ pageChecksumResult(THIS_VOID)
         kvPut(result, varNewStrZ("error"), varNewVarLst(errorList));
     }
 
-    kvPut(result, varNewStrZ("valid"), varNewBool(this->valid));
-    kvPut(result, varNewStrZ("align"), varNewBool(this->align));
+    kvPut(result, VARSTRDEF("valid"), VARBOOL(this->valid));
+    kvPut(result, VARSTRDEF("align"), VARBOOL(this->align));
 
     FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
 }
@@ -220,18 +220,36 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
     MEM_CONTEXT_NEW_BEGIN("PageChecksum")
     {
         PageChecksum *driver = memNew(sizeof(PageChecksum));
-        driver->memContext = memContextCurrent();
 
-        driver->pageNoOffset = segmentNo * segmentPageTotal;
-        driver->pageSize = pageSize;
-        driver->lsnLimit = lsnLimit;
+        *driver = (PageChecksum)
+        {
+            .memContext = memContextCurrent(),
+            .pageNoOffset = segmentNo * segmentPageTotal,
+            .pageSize = pageSize,
+            .lsnLimit = lsnLimit,
+            .valid = true,
+            .align = true,
+        };
 
-        driver->valid = true;
-        driver->align = true;
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewUInt(segmentNo));
+        varLstAdd(paramList, varNewUInt(segmentPageTotal));
+        varLstAdd(paramList, varNewUInt64(pageSize));
+        varLstAdd(paramList, varNewUInt64(lsnLimit));
 
-        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE_STR, driver, .in = pageChecksumProcess, .result = pageChecksumResult);
+        this = ioFilterNewP(
+            PAGE_CHECKSUM_FILTER_TYPE_STR, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+pageChecksumNewVar(const VariantList *paramList)
+{
+    return pageChecksumNew(
+        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUIntForce(varLstGet(paramList, 2)),
+        varUInt64(varLstGet(paramList, 3)));
 }

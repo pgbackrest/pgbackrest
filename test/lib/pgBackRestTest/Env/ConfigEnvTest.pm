@@ -17,7 +17,7 @@ use Getopt::Long qw(GetOptions);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:test :lock);
+use pgBackRest::LibC qw(:test);
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::RunTest;

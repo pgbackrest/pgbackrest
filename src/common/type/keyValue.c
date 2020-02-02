@@ -27,6 +27,7 @@ struct KeyValue
     VariantList *keyList;                                           // List of keys
 };
 
+OBJECT_DEFINE_MOVE(KEY_VALUE);
 OBJECT_DEFINE_FREE(KEY_VALUE);
 
 /***********************************************************************************************************************************
@@ -52,11 +53,13 @@ kvNew(void)
     {
         // Allocate state and set context
         this = memNew(sizeof(KeyValue));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        // Initialize list
-        this->list = lstNew(sizeof(KeyValuePair));
-        this->keyList = varLstNew();
+        *this = (KeyValue)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .list = lstNew(sizeof(KeyValuePair)),
+            .keyList = varLstNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -332,6 +335,35 @@ kvGet(const KeyValue *this, const Variant *key)
 }
 
 /***********************************************************************************************************************************
+Get a value using the key and return a default if not found
+***********************************************************************************************************************************/
+const Variant *
+kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    const Variant *result = NULL;
+
+    // Find the key
+    unsigned int listIdx = kvGetIdx(this, key);
+
+    // If key not found then return default, else return the value
+    if (listIdx == KEY_NOT_FOUND)
+        result = defaultValue;
+    else
+        result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Get a value as a list (even if there is only one value) using the key
 ***********************************************************************************************************************************/
 VariantList *
@@ -357,23 +389,4 @@ kvGetList(const KeyValue *this, const Variant *key)
         result = varLstAdd(varLstNew(), varDup(value));
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Move to a new mem context
-***********************************************************************************************************************************/
-KeyValue *
-kvMove(KeyValue *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }

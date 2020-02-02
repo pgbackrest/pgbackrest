@@ -197,85 +197,81 @@ sub sectionProcess
         # Execute a command
         if ($oChild->nameGet() eq 'execute-list')
         {
-            # my $oSectionBodyExecute = $oSectionBodyElement->addNew(HTML_DIV, "execute");
-            # my $bFirst = true;
-            # my $strHostName = $self->{oManifest}->variableReplace($oChild->paramGet('host'));
-            #
-            # $oSectionBodyExecute->
-            #     addNew(HTML_DIV, "execute-title",
-            #            {strContent => "<span class=\"host\">${strHostName}</span> <b>&#x21d2;</b> " .
-            #                           $self->processText($oChild->nodeGet('title')->textGet())});
-            #
-            # my $oExecuteBodyElement = $oSectionBodyExecute->addNew(HTML_DIV, "execute-body");
-            #
-            # foreach my $oExecute ($oChild->nodeList('execute'))
-            # {
-            #     my $bExeShow = !$oExecute->paramTest('show', 'n');
-            #     my $bExeExpectedError = defined($oExecute->paramGet('err-expect', false));
-            #
-            #     my ($strCommand, $strOutput) = $self->execute($oSection, $strHostName, $oExecute, $iDepth + 3);
-            #
-            #     if ($bExeShow)
-            #     {
-            #         # Add continuation chars and proper spacing
-            #         $strCommand =~ s/\n/\n   /smg;
-            #
-            #         $oExecuteBodyElement->
-            #             addNew(HTML_PRE, "execute-body-cmd",
-            #                    {strContent => $strCommand, bPre => true});
-            #
-            #         my $strHighLight = $self->{oManifest}->variableReplace($oExecute->fieldGet('exe-highlight', false));
-            #         my $bHighLightFound = false;
-            #
-            #         if (defined($strOutput))
-            #         {
-            #             my $bHighLightOld;
-            #             my $strHighLightOutput;
-            #
-            #             if ($oExecute->fieldTest('exe-highlight-type', 'error'))
-            #             {
-            #                 $bExeExpectedError = true;
-            #             }
-            #
-            #             foreach my $strLine (split("\n", $strOutput))
-            #             {
-            #                 my $bHighLight = defined($strHighLight) && $strLine =~ /$strHighLight/;
-            #
-            #                 if (defined($bHighLightOld) && $bHighLight != $bHighLightOld)
-            #                 {
-            #                     $oExecuteBodyElement->
-            #                         addNew(HTML_PRE, 'execute-body-output' .
-            #                                ($bHighLightOld ? '-highlight' . ($bExeExpectedError ? '-error' : '') : ''),
-            #                                {strContent => $strHighLightOutput, bPre => true});
-            #
-            #                     undef($strHighLightOutput);
-            #                 }
-            #
-            #                 $strHighLightOutput .= (defined($strHighLightOutput) ? "\n" : '') . $strLine;
-            #                 $bHighLightOld = $bHighLight;
-            #
-            #                 $bHighLightFound = $bHighLightFound ? true : $bHighLight ? true : false;
-            #             }
-            #
-            #             if (defined($bHighLightOld))
-            #             {
-            #                 $oExecuteBodyElement->
-            #                     addNew(HTML_PRE, 'execute-body-output' .
-            #                            ($bHighLightOld ? '-highlight' . ($bExeExpectedError ? '-error' : '') : ''),
-            #                            {strContent => $strHighLightOutput, bPre => true});
-            #             }
-            #
-            #             $bFirst = true;
-            #         }
-            #
-            #         if ($self->{bExe} && $self->isRequired($oSection) && defined($strHighLight) && !$bHighLightFound)
-            #         {
-            #             confess &log(ERROR, "unable to find a match for highlight: ${strHighLight}");
-            #         }
-            #     }
-            #
-            #     $bFirst = false;
-            # }
+            my $bShow = $oChild->paramTest('show', 'n') ? false : true;
+            my $bFirst = true;
+            my $strHostName = $self->{oManifest}->variableReplace($oChild->paramGet('host'));
+            my $bOutput = false;
+
+            if ($bShow)
+            {
+                $strMarkdown .=
+                    "\n\n${strHostName} => " . $self->processText($oChild->nodeGet('title')->textGet()) .
+                    "\n```\n";
+            }
+
+            foreach my $oExecute ($oChild->nodeList('execute'))
+            {
+                my $bExeShow = !$oExecute->paramTest('show', 'n');
+                my $bExeExpectedError = defined($oExecute->paramGet('err-expect', false));
+
+                if ($bOutput)
+                {
+                    confess &log(ERROR, "only the last command can have output");
+                }
+
+                my ($strCommand, $strOutput) = $self->execute(
+                    $oSection, $strHostName, $oExecute, {iIndent => $iDepth + 3, bShow => $bShow && $bExeShow});
+
+                if ($bShow && $bExeShow)
+                {
+                    # Add continuation chars and proper spacing
+                    $strCommand =~ s/\n/\n   /smg;
+
+                    $strMarkdown .= "${strCommand}\n";
+
+                    my $strHighLight = $self->{oManifest}->variableReplace($oExecute->fieldGet('exe-highlight', false));
+                    my $bHighLightFound = false;
+
+                    if (defined($strOutput))
+                    {
+                        $strMarkdown .= "\n--- output ---\n\n";
+
+                        if ($oExecute->fieldTest('exe-highlight-type', 'error'))
+                        {
+                            $bExeExpectedError = true;
+                        }
+
+                        foreach my $strLine (split("\n", $strOutput))
+                        {
+                            my $bHighLight = defined($strHighLight) && $strLine =~ /$strHighLight/;
+
+                            if ($bHighLight)
+                            {
+                                $strMarkdown .= $bExeExpectedError ? "ERR" : "-->";
+                            }
+                            else
+                            {
+                                $strMarkdown .= "   ";
+                            }
+
+                            $strMarkdown .= " ${strLine}\n";
+
+                            $bHighLightFound = $bHighLightFound ? true : $bHighLight ? true : false;
+                        }
+
+                        $bFirst = true;
+                    }
+
+                    if ($self->{bExe} && $self->isRequired($oSection) && defined($strHighLight) && !$bHighLightFound)
+                    {
+                        confess &log(ERROR, "unable to find a match for highlight: ${strHighLight}");
+                    }
+                }
+
+                $bFirst = false;
+            }
+
+            $strMarkdown .= "```";
         }
         # Add code block
         elsif ($oChild->nameGet() eq 'code-block')
@@ -439,7 +435,7 @@ sub sectionProcess
          # Check if the child can be processed by a parent
         else
         {
-            # $self->sectionChildProcess($oSection, $oChild, $iDepth + 1);
+            $self->sectionChildProcess($oSection, $oChild, $iDepth + 1);
         }
 
         $strLastChild = $oChild->nameGet();

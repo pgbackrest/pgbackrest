@@ -39,49 +39,48 @@ testRun(void)
     if (testBegin("archivePushReadyList(), archivePushProcessList(), and archivePushDrop()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        strLstAddZ(argList, "archive-push-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
-        storagePathCreateNP(storagePgWrite(), strNew("pg_wal/archive_status"));
-        storagePathCreateNP(storageTest, strNew("spool/archive/db/out"));
+        storagePathCreateP(storagePgWrite(), strNew("pg_wal/archive_status"));
+        storagePathCreateP(storageTest, strNew("spool/archive/db/out"));
 
         // Create ok files to indicate WAL that has already been archived
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")), NULL);
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000003.ok")), NULL);
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000004.ok")), NULL);
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000005.error")), NULL);
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000006.error")), NULL);
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000003.ok")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000004.ok")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000005.error")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000006.error")), NULL);
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")), NULL);
 
         // Create ready files for wal that still needs to be archived
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000002.ready")), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000003.ready")), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000005.ready")), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000006.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000002.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000003.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000005.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000006.ready")), NULL);
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())), "|"),
             "000000010000000100000002|000000010000000100000005|000000010000000100000006", "ready list");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000003.ok", "remaining status list");
 
         // Test drop
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)1024 * 1024 * 1024));
-        harnessCfgLoad(strLstSize(argListDrop), strLstPtr(argListDrop));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
 
         // Write the files that we claim are in pg_wal
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
@@ -89,10 +88,10 @@ testRun(void)
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}, walBuffer);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000003")), walBuffer);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000005")), walBuffer);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000006")), walBuffer);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000003")), walBuffer);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000005")), walBuffer);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000006")), walBuffer);
 
         // Queue max is high enough that no WAL will be dropped
         TEST_RESULT_BOOL(
@@ -102,7 +101,7 @@ testRun(void)
         // Now set queue max low enough that WAL will be dropped
         argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)16 * 1024 * 1024 * 2));
-        harnessCfgLoad(strLstSize(argListDrop), strLstPtr(argListDrop));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
 
         TEST_RESULT_BOOL(
             archivePushDrop(strNew("pg_wal"), archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath()))), true,
@@ -113,22 +112,20 @@ testRun(void)
     if (testBegin("archivePushCheck()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // Check mismatched pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 0xFACEFACEFACEFACE}));
 
         // Create incorrect archive info
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
             harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
@@ -142,8 +139,8 @@ testRun(void)
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix the version
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
             harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
@@ -157,8 +154,8 @@ testRun(void)
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix archive info
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
             harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
@@ -172,30 +169,28 @@ testRun(void)
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
         TEST_RESULT_UINT(result.pgWalSegmentSize, 16 * 1024 * 1024, "check wal segment size");
-        TEST_RESULT_STR(strPtr(result.archiveId), "9.6-1", "check archive id");
-        TEST_RESULT_STR(strPtr(result.archiveCipherPass), NULL, "check archive cipher pass (not set in this test)");
+        TEST_RESULT_STR_Z(result.archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_STR_Z(result.archiveCipherPass, NULL, "check archive cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushProtocol()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_ERROR(
             cmdArchivePush(), OptionRequiredError,
             "option 'pg1-path' must be specified when relative wal paths are used"
-            "\nHINT: Is %f passed to archive-push instead of %p?"
+            "\nHINT: is %f passed to archive-push instead of %p?"
             "\nHINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
 
         // Create pg_control and archive.info
@@ -205,14 +200,14 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
 
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
             harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
@@ -227,7 +222,9 @@ testRun(void)
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
@@ -240,7 +237,7 @@ testRun(void)
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
@@ -255,13 +252,13 @@ testRun(void)
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/11-1/0000000100000001/000000010000000100000001-%s.gz",
@@ -280,22 +277,22 @@ testRun(void)
         memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer2);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer2);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer2);
 
         TEST_ERROR(cmdArchivePush(), ArchiveDuplicateError, "WAL file '000000010000000100000001' already exists in the archive");
 
         // Save it to a new file instead
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer2);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer2);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz",
@@ -306,25 +303,25 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/00000001.history");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
 
         TEST_RESULT_VOID(cmdArchivePush(), "push a history file");
         harnessLogResult("P00   INFO: pushed WAL file '00000001.history' to the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNew("repo/archive/test/11-1/00000001.history")), true, "check repo for history file");
+            storageExistsP(storageTest, strNew("repo/archive/test/11-1/00000001.history")), true, "check repo for history file");
 
         // Check drop functionality
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000001.ready")), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000002.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000001.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000002.ready")), NULL);
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "drop WAL file");
         harnessLogResult("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
@@ -332,7 +329,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1GB");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push WAL file again");
         harnessLogResult(
@@ -355,8 +352,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{\"out\":\"WAL file '000000010000000100000002' already exists in the archive with the same checksum"
                 "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"}\n",
             "check result");
@@ -371,14 +368,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathRemoveP(storageTest, strNew("repo"), .errorOnMissing = true, .recurse = true);
 
-        StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
+        StorageWrite *infoWrite = storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info"));
 
-        ioWriteFilterGroupSet(
-            storageWriteIo(infoWrite),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL)));
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("badpassphrase"), NULL));
 
-        storagePutNP(
+        storagePutP(
             infoWrite,
             harnessInfoChecksumZ(
                 "[cipher]\n"
@@ -396,14 +392,14 @@ testRun(void)
         strLstAddZ(argListTemp, "--repo1-cipher-type=aes-256-cbc");
         strLstAddZ(argListTemp, "--no-compress");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "badpassphrase", true);
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s",
@@ -423,12 +419,16 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "pg_wal/bogus");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+        storagePathCreateP(storageTest, cfgOptionStr(cfgOptPgPath));
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
@@ -437,25 +437,20 @@ testRun(void)
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--no-compress");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--log-path=%s/log", testPath()));
-        strLstAddZ(argList, "--log-level-file=trace");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "archive-push");
 
-        storagePathCreateNP(storageTest, strNew("log"));
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}));
 
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
             harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
@@ -467,12 +462,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePathCreateNP(storagePgWrite(), strNew("pg_xlog/archive_status"));
+        storagePathCreateP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error")),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error")),
             BUFSTRDEF("25\nbogus error"));
 
         TEST_ERROR(cmdArchivePush(), AssertError, "no WAL files to process");
@@ -484,7 +479,9 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
         strLstAddZ(argListTemp, "--archive-timeout=1");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         HARNESS_FORK_BEGIN()
         {
@@ -532,22 +529,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
 
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0xFF, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer1);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/000000010000000100000001")), walBuffer1);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/000000010000000100000001")), walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
@@ -557,17 +554,14 @@ testRun(void)
         // Direct tests of the async function
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--no-compress");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--log-path=%s/log", testPath()));
-        strLstAddZ(argList, "--log-level-file=trace");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "archive-push-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), ParamRequiredError, "WAL path to push required");
 
@@ -575,34 +569,34 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove data from prior tests
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
-        storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
         storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"), .recurse = true);
-        storagePathCreateNP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"));
+        storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"));
 
         storagePathRemoveP(storagePgWrite(), strNew("pg_xlog/archive_status"), .recurse = true);
-        storagePathCreateNP(storagePgWrite(), strNew("pg_xlog/archive_status"));
+        storagePathCreateP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
         strLstAdd(argList, strNewFmt("%s/pg/pg_xlog", testPath()));
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")))),
             "25\nno WAL files to process", "check global.error");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "global.error", "check status files");
 
         // Push WAL
         // -------------------------------------------------------------------------------------------------------------------------
         // Recreate ready file for WAL 1
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
 
         // Create a ready file for WAL 2 but don't create the segment yet -- this will test the file error
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000002.ready")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000002.ready")), NULL);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
@@ -615,15 +609,15 @@ testRun(void)
                     strPtr(strNewFmt("%s/pg/pg_xlog/000000010000000100000002", testPath())))));
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
                     TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
             true, "check repo for WAL 1 file");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.error", "check status files");
 
         // Create WAL 2 segment
@@ -632,11 +626,11 @@ testRun(void)
         memset(bufPtr(walBuffer2), 0x0C, bufSize(walBuffer2));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer2);
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/000000010000000100000002")), walBuffer2);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/000000010000000100000002")), walBuffer2);
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1gb");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
@@ -644,26 +638,26 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsNP(
+            storageExistsP(
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s",
                     TEST_64BIT() ? "0aea6fa5d53500ce548b84a86bc3a29ae77fa048" : "408822a89ef44ef6740e785743bf1b870d8024a2")),
             true, "check repo for WAL 2 file");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
 
         // Check that drop functionality works
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove status files
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
-        storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
@@ -671,22 +665,18 @@ testRun(void)
             "P00   WARN: dropped WAL file '000000010000000100000001' because archive queue exceeded 16MB\n"
             "P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
 
-        TEST_RESULT_STR(
-            strPtr(
-                strNewBuf(
-                    storageGetNP(
-                        storageNewReadNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(
+                storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")))),
             "0\ndropped WAL file '000000010000000100000001' because archive queue exceeded 16MB", "check WAL 1 warning");
 
-        TEST_RESULT_STR(
-            strPtr(
-                strNewBuf(
-                    storageGetNP(
-                        storageNewReadNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(
+                storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok")))),
             "0\ndropped WAL file '000000010000000100000002' because archive queue exceeded 16MB", "check WAL 2 warning");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
         }
 

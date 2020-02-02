@@ -15,6 +15,7 @@ typedef struct InfoBackup InfoBackup;
 #include "common/type/string.h"
 #include "common/type/stringList.h"
 #include "info/infoPg.h"
+#include "info/manifest.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -22,11 +23,17 @@ Constants
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_FILE                                            "backup.info"
 
+#define INFO_BACKUP_PATH_FILE                                       STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE
+    STRING_DECLARE(INFO_BACKUP_PATH_FILE_STR);
+#define INFO_BACKUP_PATH_FILE_COPY                                  INFO_BACKUP_PATH_FILE INFO_COPY_EXT
+    STRING_DECLARE(INFO_BACKUP_PATH_FILE_COPY_STR);
+
 /***********************************************************************************************************************************
 Information about an existing backup
 ***********************************************************************************************************************************/
 typedef struct InfoBackupData
 {
+    const String *backupLabel;                                      // backupLabel must be first to allow for built-in list sorting
     unsigned int backrestFormat;
     const String *backrestVersion;
     const String *backupArchiveStart;
@@ -35,12 +42,11 @@ typedef struct InfoBackupData
     uint64_t backupInfoRepoSizeDelta;
     uint64_t backupInfoSize;
     uint64_t backupInfoSizeDelta;
-    const String *backupLabel;
     unsigned int backupPgId;
     const String *backupPrior;
     StringList *backupReference;
-    uint64_t backupTimestampStart;
-    uint64_t backupTimestampStop;
+    time_t backupTimestampStart;
+    time_t backupTimestampStop;
     const String *backupType;
     bool optionArchiveCheck;
     bool optionArchiveCopy;
@@ -52,37 +58,44 @@ typedef struct InfoBackupData
 } InfoBackupData;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-unsigned int infoBackupCheckPg(
-    const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
+// Add backup to current section
+void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 // Remove a backup from the current section
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
-void infoBackupSave(
-    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
-
-/***********************************************************************************************************************************
-infoBackupDataLabelList - get a list of current backup labels
-***********************************************************************************************************************************/
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Get a list of current backup labels
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+
 InfoPg *infoBackupPg(const InfoBackup *this);
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 unsigned int infoBackupDataTotal(const InfoBackup *this);
+const String *infoBackupCipherPass(const InfoBackup *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 void infoBackupFree(InfoBackup *this);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+InfoBackup *infoBackupLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoBackup *infoBackupLoadFileReconstruct(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoBackupSaveFile(
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

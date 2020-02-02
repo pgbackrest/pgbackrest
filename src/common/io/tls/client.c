@@ -12,6 +12,10 @@ TLS Client
 #include <sys/socket.h>
 #include <unistd.h>
 
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
@@ -66,6 +70,57 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
+Report TLS errors.  Returns true if the command should continue and false if it should exit.
+***********************************************************************************************************************************/
+static bool
+tlsError(TlsClient *this, int code)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(INT, code);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    switch (code)
+    {
+        // The connection was closed
+        case SSL_ERROR_ZERO_RETURN:
+        {
+            tlsClientClose(this);
+            break;
+        }
+
+        // Try the read/write again
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        {
+            result = true;
+            break;
+        }
+
+        // A syscall failed (this usually indicates eof)
+        case SSL_ERROR_SYSCALL:
+        {
+            // Get the error before closing so it is not cleared
+            int errNo = errno;
+            tlsClientClose(this);
+
+            // Throw the sys error if there is one
+            THROW_ON_SYS_ERROR(errNo, KernelError, "tls failed syscall");
+
+            break;
+        }
+
+        // Some other tls error that cannot be handled
+        default:
+            THROW_FMT(ServiceError, "tls error [%d]", code);
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 TlsClient *
@@ -88,21 +143,24 @@ tlsClientNew(
     MEM_CONTEXT_NEW_BEGIN("TlsClient")
     {
         this = memNew(sizeof(TlsClient));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->host = strDup(host);
-        this->port = port;
-        this->timeout = timeout;
-        this->verifyPeer = verifyPeer;
+        *this = (TlsClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .timeout = timeout,
+            .verifyPeer = verifyPeer,
 
-        // Initialize socket to -1 so we know when it is disconnected
-        this->socket = -1;
+            // Initialize socket to -1 so we know when it is disconnected
+            .socket = -1,
+        };
 
         // Setup TLS context
         // -------------------------------------------------------------------------------------------------------------------------
         cryptoInit();
 
-        // Select the TLS method to use.  To maintain compatability with older versions of OpenSSL we need to use an SSL method,
+        // Select the TLS method to use.  To maintain compatibility with older versions of OpenSSL we need to use an SSL method,
         // but SSL versions will be excluded in SSL_CTX_set_options().
         const SSL_METHOD *method = SSLv23_method();
         cryptoError(method == NULL, "unable to load TLS method");
@@ -115,6 +173,9 @@ tlsClientNew(
 
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
+
+        // Disable auto-retry to prevent SSL_read() from hanging
+        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
 
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -275,6 +336,46 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
+Wait for the socket to be readable
+***********************************************************************************************************************************/
+static void
+tlsClientReadWait(TlsClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+
+    // Initialize the file descriptor set used for select
+    fd_set selectSet;
+    FD_ZERO(&selectSet);
+
+    // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
+    FD_SET((unsigned int)this->socket, &selectSet);
+
+    // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+    struct timeval timeoutSelect;
+    timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
+    timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+
+    // Determine if there is data to be read
+    int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
+    THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
+
+    // If no data read after time allotted then error
+    if (!result)
+    {
+        THROW_FMT(
+            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Read from the TLS session
 ***********************************************************************************************************************************/
 size_t
@@ -293,63 +394,80 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(buffer != NULL);
     ASSERT(!bufFull(buffer));
 
-    ssize_t actualBytes = 0;
+    ssize_t result = 0;
 
     // If blocking read keep reading until buffer is full
     do
     {
         // If no tls data pending then check the socket
         if (!SSL_pending(this->session))
-        {
-            // Initialize the file descriptor set used for select
-            fd_set selectSet;
-            FD_ZERO(&selectSet);
-
-            // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-            FD_SET((unsigned int)this->socket, &selectSet);
-
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-            struct timeval timeoutSelect;
-            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-            // Determine if there is data to be read
-            int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-            // If no data read after time allotted then error
-            if (!result)
-            {
-                THROW_FMT(
-                    FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
-                    strPtr(this->host), this->port, this->timeout);
-            }
-        }
+            tlsClientReadWait(this);
 
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
-        actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
 
-        cryptoError(actualBytes < 0, "unable to read from TLS");
-
-        // Update amount of buffer used
-        bufUsedInc(buffer, (size_t)actualBytes);
-
-        // If zero bytes were returned then the connection was closed
-        if (actualBytes == 0)
+        if (result <= 0)
         {
-            tlsClientClose(this);
-            break;
+            // Break if the error indicates that we should not continue trying
+            if (!tlsError(this, SSL_get_error(this->session, (int)result)))
+                break;
         }
+        // Update amount of buffer used
+        else
+            bufUsedInc(buffer, (size_t)result);
     }
     while (block && bufRemains(buffer) > 0);
 
-    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)result);
 }
 
 /***********************************************************************************************************************************
 Write to the tls session
 ***********************************************************************************************************************************/
+static bool
+tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(INT, writeResult);
+        FUNCTION_LOG_PARAM(INT, writeError);
+        FUNCTION_LOG_PARAM(SIZE, writeSize);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(writeSize > 0);
+
+    bool result = true;
+
+    // Handle errors
+    if (writeResult <= 0)
+    {
+        // If error = SSL_ERROR_NONE then this is the first write attempt so continue
+        if (writeError != SSL_ERROR_NONE)
+        {
+            // Error if the error indicates that we should not continue trying
+            if (!tlsError(this, writeError))
+                THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
+
+            // Wait for the socket to be readable for tls renegotiation
+            tlsClientReadWait(this);
+        }
+    }
+    else
+    {
+        if ((size_t)writeResult != writeSize)
+        {
+            THROW_FMT(
+                FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
+        }
+
+        result = false;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 void
 tlsClientWrite(THIS_VOID, const Buffer *buffer)
 {
@@ -364,7 +482,14 @@ tlsClientWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(this->session != NULL);
     ASSERT(buffer != NULL);
 
-    cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
+    int result = 0;
+    int error = SSL_ERROR_NONE;
+
+    while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
+    {
+        result = SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer));
+        error = SSL_get_error(this->session, result);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -451,12 +576,12 @@ tlsClientOpen(TlsClient *this)
                 TRY_BEGIN()
                 {
                     // Set hits that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-                    struct addrinfo hints;
-
-                    memset(&hints, 0, sizeof(hints));
-                    hints.ai_family = AF_UNSPEC;
-                    hints.ai_socktype = SOCK_STREAM;
-                    hints.ai_protocol = IPPROTO_TCP;
+                    struct addrinfo hints = (struct addrinfo)
+                    {
+                        .ai_family = AF_UNSPEC,
+                        .ai_socktype = SOCK_STREAM,
+                        .ai_protocol = IPPROTO_TCP,
+                    };
 
                     // Convert the port to a zero-terminated string for use with getaddrinfo()
                     char port[CVT_BASE10_BUFFER_SIZE];
@@ -529,7 +654,7 @@ tlsClientOpen(TlsClient *this)
                     // Retry if wait time has not expired
                     if (wait != NULL && waitMore(wait))
                     {
-                        LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                        LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                         retry = true;
 
                         tlsClientStatLocal.retry++;

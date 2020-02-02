@@ -43,49 +43,31 @@ testRun(void)
         // valgrind will accept
         if (TEST_64BIT())
         {
-            TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
+            TEST_ERROR(memAllocInternal((size_t)5629499534213120), MemoryError, "unable to allocate 5629499534213120 bytes");
             TEST_ERROR(memFreeInternal(NULL), AssertError, "assertion 'buffer != NULL' failed");
 
             // Check that bad realloc is caught
-            void *buffer = memAllocInternal(sizeof(size_t), false);
+            void *buffer = memAllocInternal(sizeof(size_t));
             TEST_ERROR(
-                memReAllocInternal(buffer, sizeof(size_t), (size_t)5629499534213120, false), MemoryError,
+                memReAllocInternal(buffer, (size_t)5629499534213120), MemoryError,
                 "unable to reallocate 5629499534213120 bytes");
             memFreeInternal(buffer);
         }
 
-        // Normal memory allocation
-        void *buffer = memAllocInternal(sizeof(size_t), false);
-        buffer = memReAllocInternal(buffer, sizeof(size_t), sizeof(size_t) * 2, false);
-        memFreeInternal(buffer);
+        // Memory allocation
+        void *buffer = memAllocInternal(sizeof(size_t));
 
-        // Zeroed memory allocation
-        unsigned char *buffer2 = memAllocInternal(sizeof(size_t), true);
+        // Memory reallocation
+        memset(buffer, 0xC7, sizeof(size_t));
+
+        unsigned char *buffer2 = memReAllocInternal(buffer, sizeof(size_t) * 2);
+
         int expectedTotal = 0;
-
-        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            expectedTotal += buffer2[charIdx] == 0;
-
-        TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
-
-        // Zeroed memory reallocation
-        memset(buffer2, 0xC7, sizeof(size_t));
-
-        buffer2 = memReAllocInternal(buffer2, sizeof(size_t), sizeof(size_t) * 2, true);
-
-        expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
             expectedTotal += buffer2[charIdx] == 0xC7;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all old bytes are filled");
-
-        expectedTotal = 0;
-
-        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            expectedTotal += (buffer2 + sizeof(size_t))[charIdx] == 0;
-
-        TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all new bytes are 0");
         memFreeInternal(buffer2);
     }
 
@@ -93,7 +75,7 @@ testRun(void)
     if (testBegin("memContextNew() and memContextFree()"))
     {
         // Make sure top context was created
-        TEST_RESULT_STR(memContextName(memContextTop()), "TOP", "top context should exist");
+        TEST_RESULT_Z(memContextName(memContextTop()), "TOP", "top context should exist");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, 0, "top context should init with zero children");
         TEST_RESULT_PTR(memContextTop()->contextChildList, NULL, "top context child list empty");
 
@@ -104,7 +86,7 @@ testRun(void)
         TEST_ERROR(memContextNew(""), AssertError, "assertion 'name[0] != '\\0'' failed");
 
         MemContext *memContext = memContextNew("test1");
-        TEST_RESULT_STR(memContextName(memContext), "test1", "test1 context name");
+        TEST_RESULT_Z(memContextName(memContext), "test1", "test1 context name");
         TEST_RESULT_PTR(memContext->contextParent, memContextTop(), "test1 context parent is top");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE, "initial top context child list size");
 
@@ -118,7 +100,7 @@ testRun(void)
             memContextNew("test-filler");
             TEST_RESULT_BOOL(
                 memContextTop()->contextChildList[contextIdx]->state == memContextStateActive, true, "new context is active");
-            TEST_RESULT_STR(memContextName(memContextTop()->contextChildList[contextIdx]), "test-filler", "new context name");
+            TEST_RESULT_Z(memContextName(memContextTop()->contextChildList[contextIdx]), "test-filler", "new context name");
         }
 
         // This forces the child context array to grow
@@ -138,7 +120,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             memContextTop()->contextChildList[1]->state == memContextStateActive,
             true, "new context in same index as freed context is active");
-        TEST_RESULT_STR(memContextName(memContextTop()->contextChildList[1]), "test-reuse", "new context name");
+        TEST_RESULT_Z(memContextName(memContextTop()->contextChildList[1]), "test-reuse", "new context name");
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, 2, "check context free idx");
 
         // Next context will be at the end
@@ -175,22 +157,14 @@ testRun(void)
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         memContextSwitch(memContextTop());
-        memNew(sizeof(size_t));
+        memNewPtrArray(1);
 
         MemContext *memContext = memContextNew("test-alloc");
         memContextSwitch(memContext);
 
         for (int allocIdx = 0; allocIdx <= MEM_CONTEXT_ALLOC_INITIAL_SIZE; allocIdx++)
         {
-            unsigned char *buffer = memNew(sizeof(size_t));
-
-            // Check that the buffer is zeroed
-            int expectedTotal = 0;
-
-            for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-                expectedTotal += buffer[charIdx] == 0;
-
-            TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
+            memNew(sizeof(size_t));
 
             TEST_RESULT_INT(
                 memContextCurrent()->allocListSize,
@@ -198,12 +172,11 @@ testRun(void)
                 "allocation list size");
         }
 
-
-        unsigned char *buffer = memNewRaw(sizeof(size_t));
+        unsigned char *buffer = memNew(sizeof(size_t));
 
         // Grow memory
         memset(buffer, 0xFE, sizeof(size_t));
-        buffer = memGrowRaw(buffer, sizeof(size_t) * 2);
+        buffer = memResize(buffer, sizeof(size_t) * 2);
 
         // Check that original portion of the buffer is preserved
         int expectedTotal = 0;
@@ -276,23 +249,36 @@ testRun(void)
         // Check normal block
         MEM_CONTEXT_BEGIN(memContext)
         {
-            TEST_RESULT_STR(memContextName(memContextCurrent()), "test-block", "context is now test-block");
+            TEST_RESULT_Z(memContextName(memContextCurrent()), "test-block", "context is now test-block");
         }
         MEM_CONTEXT_END();
 
-        TEST_RESULT_STR(memContextName(memContextCurrent()), "TOP", "context is now top");
+        TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context is now top");
 
         // Check block that errors
         TEST_ERROR(
             MEM_CONTEXT_BEGIN(memContext)
             {
-                TEST_RESULT_STR(memContextName(memContextCurrent()), "test-block", "context is now test-block");
+                TEST_RESULT_Z(memContextName(memContextCurrent()), "test-block", "context is now test-block");
                 THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
             AssertError, "error in test block");
 
-        TEST_RESULT_STR(memContextName(memContextCurrent()), "TOP", "context is now top");
+        TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context is now top");
+
+        // Reset temp mem context after a single interaction
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+            memNew(99);
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, true, "1 allocation");
+
+            MEM_CONTEXT_TEMP_RESET(1);
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     // *****************************************************************************************************************************
@@ -307,7 +293,7 @@ testRun(void)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
-            TEST_RESULT_STR(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
         }
         MEM_CONTEXT_NEW_END();
 
@@ -325,7 +311,7 @@ testRun(void)
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
                 memContext = MEM_CONTEXT_NEW();
-                TEST_RESULT_STR(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
                 THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
@@ -370,12 +356,12 @@ testRun(void)
 
                 // Null out the mem context in the parent so the move will fail
                 memContextCurrent()->contextChildList[1] = NULL;
-                TEST_ERROR(memContextMove(memContext, MEM_CONTEXT_OLD()), AssertError, "unable to find mem context in old parent");
+                TEST_ERROR(memContextMove(memContext, memContextPrior()), AssertError, "unable to find mem context in old parent");
 
                 // Set it back so the move will succeed
                 memContextCurrent()->contextChildList[1] = memContext;
-                TEST_RESULT_VOID(memContextMove(memContext, MEM_CONTEXT_OLD()), "move context");
-                TEST_RESULT_VOID(memContextMove(memContext, MEM_CONTEXT_OLD()), "move context again");
+                TEST_RESULT_VOID(memContextMove(memContext, memContextPrior()), "move context");
+                TEST_RESULT_VOID(memContextMove(memContext, memContextPrior()), "move context again");
 
                 // Move another context
                 MEM_CONTEXT_NEW_BEGIN("inner2")
@@ -385,7 +371,7 @@ testRun(void)
                 }
                 MEM_CONTEXT_NEW_END();
 
-                TEST_RESULT_VOID(memContextMove(memContext2, MEM_CONTEXT_OLD()), "move context");
+                TEST_RESULT_VOID(memContextMove(memContext2, memContextPrior()), "move context");
             }
             MEM_CONTEXT_TEMP_END();
 

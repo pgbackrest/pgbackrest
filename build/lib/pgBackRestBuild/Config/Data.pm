@@ -23,19 +23,20 @@
 #               setting CFGDEF_REQUIRED in the CFGDEF_COMMAND section.
 #   In CFGDEF_COMMAND section:
 #       true - the option must be set somehow for the command, either by default (CFGDEF_DEFAULT) or by the user.
-# 	        &CFGCMD_CHECK =>
-#             {
-#                 &CFGDEF_REQUIRED => true
-#             },
+#           &CFGCMD_CHECK =>
+#           {
+#               &CFGDEF_REQUIRED => true
+#           },
 #       false - mainly used for overriding the CFGDEF_REQUIRED in the global section.
 #
 # CFGDEF_DEFAULT:
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
-#   CFGDEF_COMMAND section.
+#   CFGDEF_COMMAND section. All boolean types require a default.
 #
 # CFGDEF_NEGATE:
-#   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
-#   no config section defined).  All config options are automatically negatable.
+#   The option can be negated with "no" e.g. --no-compress.  This applies to options that are only valid on the command line (i.e.
+#   no config section defined) and if not specifically defined, the default is false.  All config file boolean options are
+#   automatically negatable.
 #
 # CFGDEF_RESET:
 #   The option can be reset to default even if the default is undefined.
@@ -76,12 +77,8 @@ use pgBackRest::Version;
 ####################################################################################################################################
 use constant CFGCMD_ARCHIVE_GET                                     => 'archive-get';
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET);
-use constant CFGCMD_ARCHIVE_GET_ASYNC                               => 'archive-get-async';
-    push @EXPORT, qw(CFGCMD_ARCHIVE_GET_ASYNC);
 use constant CFGCMD_ARCHIVE_PUSH                                    => 'archive-push';
     push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH);
-use constant CFGCMD_ARCHIVE_PUSH_ASYNC                              => 'archive-push-async';
-    push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH_ASYNC);
 use constant CFGCMD_BACKUP                                          => 'backup';
     push @EXPORT, qw(CFGCMD_BACKUP);
 use constant CFGCMD_CHECK                                           => 'check';
@@ -92,10 +89,6 @@ use constant CFGCMD_HELP                                            => 'help';
     push @EXPORT, qw(CFGCMD_HELP);
 use constant CFGCMD_INFO                                            => 'info';
     push @EXPORT, qw(CFGCMD_INFO);
-use constant CFGCMD_LOCAL                                           => 'local';
-    push @EXPORT, qw(CFGCMD_LOCAL);
-use constant CFGCMD_REMOTE                                          => 'remote';
-    push @EXPORT, qw(CFGCMD_REMOTE);
 use constant CFGCMD_RESTORE                                         => 'restore';
     push @EXPORT, qw(CFGCMD_RESTORE);
 use constant CFGCMD_STANZA_CREATE                                   => 'stanza-create';
@@ -150,30 +143,21 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_C                                               => 'c';
-    push @EXPORT, qw(CFGOPT_C);
-use constant CFGOPT_COMMAND                                         => 'command';
-    push @EXPORT, qw(CFGOPT_COMMAND);
 use constant CFGOPT_PROCESS                                         => 'process';
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
     push @EXPORT, qw(CFGOPT_HOST_ID);
+use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
+    push @EXPORT, qw(CFGOPT_REMOTE_TYPE);
 
 # Command-line only storage options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_FILTER                                          => 'filter';
     push @EXPORT, qw(CFGOPT_FILTER);
+use constant CFGOPT_RECURSE                                         => 'recurse';
+    push @EXPORT, qw(CFGOPT_RECURSE);
 use constant CFGOPT_SORT                                            => 'sort';
     push @EXPORT, qw(CFGOPT_SORT);
-
-# Command-line only test options
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_TEST                                            => 'test';
-    push @EXPORT, qw(CFGOPT_TEST);
-use constant CFGOPT_TEST_DELAY                                      => 'test-delay';
-    push @EXPORT, qw(CFGOPT_TEST_DELAY);
-use constant CFGOPT_TEST_POINT                                      => 'test-point';
-    push @EXPORT, qw(CFGOPT_TEST_POINT);
 
 # General options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -207,10 +191,6 @@ use constant CFGOPT_LOG_PATH                                        => 'log-path
     push @EXPORT, qw(CFGOPT_LOG_PATH);
 use constant CFGOPT_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(CFGOPT_SPOOL_PATH);
-
-# Perl
-use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
-    push @EXPORT, qw(CFGOPT_PERL_OPTION);
 
 # Logging
 use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
@@ -287,10 +267,14 @@ use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_ENDPOINT);
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
     push @EXPORT, qw(CFGOPT_REPO_S3_HOST);
+use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
+    push @EXPORT, qw(CFGOPT_REPO_S3_PORT);
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
     push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
+use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
+    push @EXPORT, qw(CFGOPT_REPO_S3_URI_STYLE);
 use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
     push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_TLS);
 
@@ -370,21 +354,19 @@ use constant CFGOPT_PG_PORT                                         => CFGDEF_PR
     push @EXPORT, qw(CFGOPT_PG_PORT);
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
     push @EXPORT, qw(CFGOPT_PG_SOCKET_PATH);
+use constant CFGOPT_PG_USER                                         => CFGDEF_PREFIX_PG . '-user';
+    push @EXPORT, qw(CFGOPT_PG_USER);
 
 ####################################################################################################################################
 # Option values - for options that have a specific list of allowed values
 ####################################################################################################################################
 
-# Local/remote types
+# Storage types
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_LOCAL_TYPE_DB                                => 'db';
-    push @EXPORT, qw(CFGOPTVAL_LOCAL_TYPE_DB);
-use constant CFGOPTVAL_LOCAL_TYPE_BACKUP                            => 'backup';
-    push @EXPORT, qw(CFGOPTVAL_LOCAL_TYPE_BACKUP);
-use constant CFGOPTVAL_REMOTE_TYPE_DB                               => CFGOPTVAL_LOCAL_TYPE_DB;
-    push @EXPORT, qw(CFGOPTVAL_REMOTE_TYPE_DB);
-use constant CFGOPTVAL_REMOTE_TYPE_BACKUP                           => CFGOPTVAL_LOCAL_TYPE_BACKUP;
-    push @EXPORT, qw(CFGOPTVAL_REMOTE_TYPE_BACKUP);
+use constant CFGOPTVAL_STORAGE_TYPE_PG                              => 'pg';
+    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_DB);
+use constant CFGOPTVAL_STORAGE_TYPE_REPO                            => 'repo';
+    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_BACKUP);
 
 # Backup type
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -411,12 +393,19 @@ use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                        => 'none';
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
+# Repo S3 URI style
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPTVAL_REPO_S3_URI_STYLE_HOST                       => 'host';
+    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_HOST);
+use constant CFGOPTVAL_REPO_S3_URI_STYLE_PATH                       => 'path';
+    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_PATH);
+
 # Info output
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_INFO_OUTPUT_TEXT                             => 'text';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_TEXT);
-use constant CFGOPTVAL_INFO_OUTPUT_JSON                             => 'json';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_JSON);
+use constant CFGOPTVAL_OUTPUT_TEXT                                  => 'text';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_TEXT);
+use constant CFGOPTVAL_OUTPUT_JSON                                  => 'json';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_JSON);
 
 # Restore type
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -434,6 +423,8 @@ use constant CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                       => 'immediat
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
+use constant CFGOPTVAL_RESTORE_TYPE_STANDBY                         => 'standby';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_STANDBY);
 
 # Restore target action
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -479,14 +470,9 @@ use constant CFGDEF_LOG_FILE                                        => 'log-file
 
 # Defines the log level to use for default messages that are output for every command.  For example, the log message that lists all
 # the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info.  Allow
-# the log level to be lowered so these common messages will not be emmitted where they might be distracting.
+# the log level to be lowered so these common messages will not be emitted where they might be distracting.
 use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-level-default';
     push @EXPORT, qw(CFGDEF_LOG_LEVEL_DEFAULT);
-
-# Defines the max log level that may be assigned for the output type.  For instance, it's not OK for the local and remote processes
-# to log anything but errors to stderr because it will cause the process to error on exit.
-use constant CFGDEF_LOG_LEVEL_STDERR_MAX                            => 'log-level-stderr-max';
-    push @EXPORT, qw(CFGDEF_LOG_LEVEL_STDERR_MAX);
 
 # Does the command require a lock?  This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
 # acquired as soon at the command starts.
@@ -594,28 +580,9 @@ my $rhCommandDefine =
         &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
-    &CFGCMD_ARCHIVE_GET_ASYNC =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_FILE => true,
-        &CFGDEF_LOCK_REQUIRED => true,
-        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
-        &CFGDEF_PARAMETER_ALLOWED => true,
-    },
-
     &CFGCMD_ARCHIVE_PUSH =>
     {
         &CFGDEF_LOG_FILE => false,
-        &CFGDEF_LOCK_REMOTE_REQUIRED => true,
-        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
-        &CFGDEF_PARAMETER_ALLOWED => true,
-    },
-
-    &CFGCMD_ARCHIVE_PUSH_ASYNC =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_FILE => true,
-        &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
@@ -650,18 +617,6 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
-    },
-
-    &CFGCMD_LOCAL =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
-    },
-
-    &CFGCMD_REMOTE =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_RESTORE =>
@@ -724,15 +679,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -782,6 +733,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE =>
             {
                 &CFGDEF_DEFAULT => false,
+                &CFGDEF_INTERNAL => true,
             },
 
             &CFGCMD_STANZA_DELETE =>
@@ -817,7 +769,15 @@ my %hConfigDefine =
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => 'latest',
-            }
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_REQUIRED => false,
+                &CFGDEF_DEPEND =>
+                {
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
+                },
+            },
         }
     },
 
@@ -827,18 +787,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE =>
             {
                 &CFGDEF_REQUIRED => false
             },
@@ -945,6 +898,7 @@ my %hConfigDefine =
                     [
                         &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
                         &CFGOPTVAL_RESTORE_TYPE_XID,
                     ],
@@ -969,24 +923,6 @@ my %hConfigDefine =
                 ]
             },
 
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_LOCAL_TYPE_DB,
-                    &CFGOPTVAL_LOCAL_TYPE_BACKUP,
-                ],
-            },
-
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_REMOTE_TYPE_DB,
-                    &CFGOPTVAL_REMOTE_TYPE_BACKUP,
-                ],
-            },
-
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => CFGOPTVAL_RESTORE_TYPE_DEFAULT,
@@ -999,6 +935,7 @@ my %hConfigDefine =
                     &CFGOPTVAL_RESTORE_TYPE_NONE,
                     &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                     &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                    &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 ]
             }
         }
@@ -1011,11 +948,21 @@ my %hConfigDefine =
         {
             &CFGCMD_INFO =>
             {
-                &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
                 &CFGDEF_ALLOW_LIST =>
                 [
-                    &CFGOPTVAL_INFO_OUTPUT_TEXT,
-                    &CFGOPTVAL_INFO_OUTPUT_JSON,
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
+                ]
+            },
+
+            &CFGCMD_STORAGE_LIST =>
+            {
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
+                &CFGDEF_ALLOW_LIST =>
+                [
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
                 ]
             }
         }
@@ -1023,51 +970,64 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_C =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_REMOTE => {},
-        }
-    },
-
-    &CFGOPT_COMMAND =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-        }
-    },
-
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG > CFGDEF_INDEX_REPO ? CFGDEF_INDEX_PG : CFGDEF_INDEX_REPO],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_LOCAL => {},
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_RESTORE => {},
         },
     },
 
     &CFGOPT_PROCESS =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_RANGE => [0, 1024],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_REQUIRED => true,
-            },
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_REQUIRED => true,
-            },
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
+        },
+    },
+
+    &CFGOPT_REMOTE_TYPE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_STORAGE_TYPE_PG,
+            &CFGOPTVAL_STORAGE_TYPE_REPO,
+        ],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1083,12 +1043,23 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_RECURSE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
     &CFGOPT_SORT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => 'asc',
         &CFGDEF_ALLOW_LIST =>
         [
+            'none',
             'asc',
             'desc',
         ],
@@ -1096,43 +1067,6 @@ my %hConfigDefine =
         {
             &CFGCMD_STORAGE_LIST => {},
         }
-    },
-
-    # Command-line only test options
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_TEST =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-        }
-    },
-
-    &CFGOPT_TEST_DELAY =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => 5,
-        &CFGDEF_ALLOW_RANGE => [.1, 60],
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_TEST,
-            &CFGDEF_DEPEND_LIST => [true],
-        },
-        &CFGDEF_COMMAND => CFGOPT_TEST,
-    },
-
-    &CFGOPT_TEST_POINT =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_DEPEND => CFGOPT_TEST_DELAY,
-        &CFGDEF_COMMAND => CFGOPT_TEST,
     },
 
     # General options
@@ -1174,15 +1108,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1200,13 +1130,9 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
@@ -1234,9 +1160,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         }
@@ -1251,14 +1175,10 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1275,18 +1195,15 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1298,14 +1215,10 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1324,14 +1237,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1350,14 +1260,10 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1375,15 +1281,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1391,32 +1293,6 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
             &CFGCMD_STORAGE_LIST => {},
-        },
-    },
-
-    &CFGOPT_PERL_OPTION =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
         },
     },
 
@@ -1429,14 +1305,10 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1517,9 +1389,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -1530,7 +1400,6 @@ my %hConfigDefine =
                 &CFGDEF_INTERNAL => true,
             },
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE =>
             {
@@ -1564,12 +1433,9 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
@@ -1803,21 +1669,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_REQUIRED => false,
-            },
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_REQUIRED => false,
-            },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1861,6 +1717,18 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
+    &CFGOPT_REPO_S3_PORT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 443,
+        &CFGDEF_ALLOW_RANGE => [1, 65535],
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
     &CFGOPT_REPO_S3_REGION,
     {
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
@@ -1875,6 +1743,22 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_S3_URI_STYLE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => CFGOPTVAL_REPO_S3_URI_STYLE_HOST,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_REPO_S3_URI_STYLE_HOST,
+            &CFGOPTVAL_REPO_S3_URI_STYLE_PATH,
+        ],
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
 
     &CFGOPT_REPO_S3_VERIFY_TLS =>
@@ -1913,15 +1797,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -1947,8 +1827,6 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_LIST => [true],
                 },
             },
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_ARCHIVE_PUSH =>
             {
                 &CFGDEF_DEPEND =>
@@ -1957,7 +1835,6 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_LIST => [true],
                 },
             },
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
         },
     },
 
@@ -1970,9 +1847,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         }
@@ -1998,9 +1873,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -2024,21 +1897,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_DEFAULT => lc(OFF),
-            },
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_DEFAULT => lc(OFF),
-            },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -2058,15 +1921,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -2085,15 +1944,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -2139,7 +1994,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
         },
     },
 
@@ -2152,7 +2006,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
         },
     },
 
@@ -2351,6 +2204,7 @@ my %hConfigDefine =
                 &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                 &CFGOPTVAL_RESTORE_TYPE_NAME,
                 &CFGOPTVAL_RESTORE_TYPE_TIME,
+                &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 &CFGOPTVAL_RESTORE_TYPE_XID,
             ],
         },
@@ -2376,22 +2230,13 @@ my %hConfigDefine =
             {
                 &CFGDEF_INTERNAL => true,
             },
-            &CFGCMD_ARCHIVE_GET_ASYNC =>
-            {
-                &CFGDEF_INTERNAL => true,
-            },
             &CFGCMD_ARCHIVE_PUSH =>
-            {
-                &CFGDEF_INTERNAL => true,
-            },
-            &CFGCMD_ARCHIVE_PUSH_ASYNC =>
             {
                 &CFGDEF_INTERNAL => true,
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -2421,7 +2266,6 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
-            &CFGCMD_LOCAL => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
@@ -2503,28 +2347,12 @@ my %hConfigDefine =
             {
                 &CFGDEF_REQUIRED => false
             },
-            &CFGCMD_ARCHIVE_GET_ASYNC =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
             &CFGCMD_ARCHIVE_PUSH =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
-            &CFGCMD_ARCHIVE_PUSH_ASYNC =>
             {
                 &CFGDEF_REQUIRED => false
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -2549,8 +2377,6 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
@@ -2571,6 +2397,27 @@ my %hConfigDefine =
         {
             'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
             'db?-socket-path' => {&CFGDEF_RESET => false},
+        },
+    },
+
+    &CFGOPT_PG_USER =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_PATH
         },
     },
 );
@@ -2596,12 +2443,6 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT} = INFO;
-    }
-
-    # Default max stderr log level is TRACE
-    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX}))
-    {
-        $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX} = TRACE;
     }
 
     # Default lock required is false
@@ -2648,6 +2489,13 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
+    # Error if prefix and index total are not both defined
+    if ((defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && !defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})) ||
+        (!defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})))
+    {
+        confess &log(ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option '${strKey}'");
+    }
+
     # If the define is a scalar then copy the entire define from the referenced option
     if (defined($hConfigDefine{$strKey}{&CFGDEF_INHERIT}))
     {

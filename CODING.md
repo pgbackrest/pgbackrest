@@ -6,6 +6,42 @@
 
 Indentation is four spaces -- no tabs. Only file types that absolutely require tabs (e.g. `Makefile`) may use them.
 
+### Line Length
+
+With the exception of documentation code, no line of any code or test file shall exceed 132 characters. If a line break is required, then it shall be after the first function parenthesis:
+```
+// CORRECT - location of line break after first function parenthesis if line length is greater than 132
+StringList *removeList = infoBackupDataLabelList(
+    infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+
+// INCORRECT
+StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList,
+    fullIdx))));
+```
+If a conditional, then after a completed conditional, for example:
+```
+// CORRECT - location of line break after a completed conditional if line length is greater than 132
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+    archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+    archiveInfoPgHistory.version != backupInfoPgHistory.version)
+
+// INCORRECT
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.systemId !=
+    backupInfoPgHistory.systemId || archiveInfoPgHistory.version != backupInfoPgHistory.version)
+```
+
+### Inline Comment
+
+Inline comments shall start at character 69 and must not exceed the line length of 132. For example:
+```
+typedef struct InlineCommentExample
+{
+    const String *comment;                                          // Inline comment example
+    const String *longComment;                                      // Inline comment example that exceeds 132 characters should
+                                                                    // then go to next line but this should be avoided
+} InlineCommentExample;
+```
+
 ### Naming
 
 #### Variables
@@ -123,6 +159,12 @@ if (condition)
 }
 ```
 
+#### Hints, Warnings, and Errors
+
+Hints are to be formatted with capitalized `HINT:` followed by a space and a sentence. The sentence shall only begin with a capital letter if the first word is an acronym (e.g. TLS) or a proper name (e.g. PostgreSQL). The sentence must end with a period, question mark or exclamation point as appropriate.
+
+Warning and errors shall be lowercase with the exceptions for proper names and acronyms and end without punctuation.
+
 ## Language Elements
 
 ### Data Types
@@ -154,7 +196,7 @@ typedef struct StoragePathCreateParam
 
 #define storagePathCreateP(this, pathExp, ...)                              \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
-#define storagePathCreateNP(this, pathExp)                                  \
+#define storagePathCreateP(this, pathExp)                                  \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
@@ -163,7 +205,7 @@ Continuation characters should be aligned at column 132 (unlike the example abov
 
 This function can be called without variable parameters:
 ```c
-storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest");
 ```
 Or with variable parameters:
 ```c
@@ -177,7 +219,7 @@ If the majority of functions in a module or object are variadic it is best to pr
 
 #### Uncoverable Code
 
-The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws a error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
+The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws an error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
 ```c
 }   // {uncoverable - function throws error so never returns}
 ```

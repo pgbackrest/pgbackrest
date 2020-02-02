@@ -34,7 +34,7 @@ testRun(void)
         String *message = strNew("ACKBYACK");
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
         ioWriteFlush(execIoWrite(exec));
-        TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), strPtr(message), "read cat exec");
+        TEST_RESULT_STR(ioReadLine(execIoRead(exec)), message, "read cat exec");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -54,12 +54,15 @@ testRun(void)
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
+        StringList *option = strLstNew();
+        strLstAddZ(option, "-b");
+
+        TEST_ASSIGN(exec, execNew(strNew("cat"), option, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
         ioWriteFlush(execIoWrite(exec));
-        TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), "     1\tACKBYACK", "read cat exec");
+        TEST_RESULT_STR_Z(ioReadLine(execIoRead(exec)), "     1\tACKBYACK", "read cat exec");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // Run the same test as above but close all file descriptors first to ensure we don't accidentally close a required
@@ -73,12 +76,15 @@ testRun(void)
                 for (int fd = 0; fd < 64; fd++)
                     close(fd);
 
-                TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
+                StringList *option = strLstNew();
+                strLstAddZ(option, "-b");
+
+                TEST_ASSIGN(exec, execNew(strNew("cat"), option , strNew("cat"), 1000), "new cat exec");
                 TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
                 TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
                 ioWriteFlush(execIoWrite(exec));
-                TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), "     1\tACKBYACK", "read cat exec");
+                TEST_RESULT_STR_Z(ioReadLine(execIoRead(exec)), "     1\tACKBYACK", "read cat exec");
                 TEST_RESULT_VOID(execFree(exec), "free exec");
             }
             HARNESS_FORK_CHILD_END();
@@ -86,7 +92,10 @@ testRun(void)
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("sleep"), strLstAddZ(strLstNew(), "2"), strNew("sleep"), 1000), "new sleep exec");
+        option = strLstNew();
+        strLstAddZ(option, "2");
+
+        TEST_ASSIGN(exec, execNew(strNew("sleep"), option, strNew("sleep"), 1000), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");

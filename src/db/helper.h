@@ -1,0 +1,34 @@
+/***********************************************************************************************************************************
+Database Helper
+
+Helper functions for getting connections to PostgreSQL.
+***********************************************************************************************************************************/
+#ifndef DB_HELPER_H
+#define DB_HELPER_H
+
+#include <stdbool.h>
+
+#include "db/db.h"
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+typedef struct DbGetResult
+{
+    unsigned int primaryId;
+    Db *primary;
+    unsigned int standbyId;
+    Db *standby;
+} DbGetResult;
+
+DbGetResult dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_DB_GET_RESULT_TYPE                                                                                            \
+    DbGetResult
+#define FUNCTION_LOG_DB_GET_RESULT_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(&value, "DbGetResult", buffer, bufferSize)
+
+#endif

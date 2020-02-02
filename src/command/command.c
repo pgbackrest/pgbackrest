@@ -51,11 +51,14 @@ cmdBegin(bool logOption)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strNewFmt("%s command begin", cfgCommandName(cfgCommand()));
+            String *info = strNewFmt("%s command begin", strPtr(cfgCommandRoleName()));
 
             if (logOption)
             {
                 strCatFmt(info, " %s:", PROJECT_VERSION);
+
+                // Get command define id used to determine which options are valid for this command
+                ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
@@ -83,8 +86,10 @@ cmdBegin(bool logOption)
                 // Loop though options and add the ones that are interesting
                 for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    // Skip the option if it is not valid
-                    if (!cfgOptionValid(optionId))
+                    // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
+                    // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
+                    // the first command.  Displaying them is harmless but might cause confusion.
+                    if (!cfgDefOptionValid(commandDefId, cfgOptionDefIdFromId(optionId)))
                         continue;
 
                     // If option was negated
@@ -194,7 +199,7 @@ cmdEnd(int code, const String *errorMessage)
                 LOG_INFO(strPtr(httpClientStat));
 
             // Basic info on command end
-            String *info = strNewFmt("%s command end: ", cfgCommandName(cfgCommand()));
+            String *info = strNewFmt("%s command end: ", strPtr(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {

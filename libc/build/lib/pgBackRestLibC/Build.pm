@@ -19,14 +19,15 @@ use lib dirname($0) . '/../lib';
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Data;
 use pgBackRestBuild::Error::Data;
+
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 
 ####################################################################################################################################
 # Perl function and constant exports
@@ -74,8 +75,6 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             pageChecksum
-            pageChecksumBufferTest
-            pageChecksumTest
         )],
     },
 
@@ -83,7 +82,6 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             cfgCommandName
-            cfgOptionIndex
             cfgOptionIndexTotal
             cfgOptionName
         )],
@@ -106,8 +104,6 @@ my $rhExport =
     'crypto' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            CIPHER_MODE_ENCRYPT
-            CIPHER_MODE_DECRYPT
             cryptoHashOne
         )],
     },
@@ -119,37 +115,10 @@ my $rhExport =
         )],
     },
 
-    'encode' =>
-    {
-        &BLD_EXPORTTYPE_CONSTANT => [qw(
-            ENCODE_TYPE_BASE64
-        )],
-
-        &BLD_EXPORTTYPE_SUB => [qw(
-            decodeToBin
-            encodeToStr
-        )],
-    },
-
-    'lock' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            lockAcquire
-            lockRelease
-        )],
-    },
-
-    'random' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            cryptoRandomBytes
-        )],
-    },
-
     'storage' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            storagePosixPathRemove
+            storageRepoFree
         )],
     },
 
@@ -172,8 +141,8 @@ sub buildXsAll
     my @stryBuilt;
 
     # Storage
-    my $oStorage = new pgBackRest::Storage::Local(
-        $strBuildPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorage = new pgBackRestTest::Common::Storage(
+        $strBuildPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     # Build interface file
     my $strContent =

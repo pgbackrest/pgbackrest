@@ -19,8 +19,7 @@ Block Cipher
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_FILTER_TYPE                                   "cipherBlock"
-    STRING_STATIC(CIPHER_BLOCK_FILTER_TYPE_STR,                    CIPHER_BLOCK_FILTER_TYPE);
+STRING_EXTERN(CIPHER_BLOCK_FILTER_TYPE_STR,                         CIPHER_BLOCK_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -387,7 +386,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, mode);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_LOG_PARAM(BUFFER, pass);
+        FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, digestName);
     FUNCTION_LOG_END();
 
@@ -421,26 +420,65 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     MEM_CONTEXT_NEW_BEGIN("CipherBlock")
     {
         CipherBlock *driver = memNew(sizeof(CipherBlock));
-        driver->memContext = MEM_CONTEXT_NEW();
 
-        // Set mode, encrypt or decrypt
-        driver->mode = mode;
-
-        // Set cipher and digest
-        driver->cipher = cipher;
-        driver->digest = digest;
+        *driver = (CipherBlock)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .mode = mode,
+            .cipher = cipher,
+            .digest = digest,
+            .passSize = bufUsed(pass),
+        };
 
         // Store the passphrase
-        driver->passSize = bufUsed(pass);
-        driver->pass = memNewRaw(driver->passSize);
+        driver->pass = memNew(driver->passSize);
         memcpy(driver->pass, bufPtr(pass), driver->passSize);
+
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewUInt(mode));
+        varLstAdd(paramList, varNewUInt(cipherType));
+        // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
+        // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
+        varLstAdd(paramList, varNewStr(strNewBuf(pass)));
+        varLstAdd(paramList, digestName ? varNewStr(digestName) : NULL);
 
         // Create filter interface
         this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE_STR, driver, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            CIPHER_BLOCK_FILTER_TYPE_STR, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
             .inputSame = cipherBlockInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+cipherBlockNewVar(const VariantList *paramList)
+{
+    return cipherBlockNew(
+        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
+        BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
+}
+
+/***********************************************************************************************************************************
+Helper function to add a block cipher to an io object
+***********************************************************************************************************************************/
+IoFilterGroup *
+cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, mode);
+        FUNCTION_TEST_PARAM(STRING, pass);                          // Use FUNCTION_TEST so passphrase is not logged
+    FUNCTION_LOG_END();
+
+    ASSERT(filterGroup != NULL);
+    ASSERT((type == cipherTypeNone && pass == NULL) || (type != cipherTypeNone && pass != NULL));
+
+    if (type != cipherTypeNone)
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(mode, type, BUFSTR(pass), NULL));
+
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
 }

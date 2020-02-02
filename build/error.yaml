@@ -50,7 +50,6 @@ feature-not-supported: 67
 archive-command-invalid: 68
 link-expected: 69
 link-destination: 70
-tablespace-in-pgdata: 71
 host-invalid: 72
 path-missing: 73
 file-move: 74

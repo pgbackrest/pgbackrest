@@ -16,14 +16,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("check known values"))
     {
-        TEST_ERROR(cfgCommandId(BOGUS_STR), AssertError, "invalid command 'BOGUS'");
-        TEST_RESULT_INT(cfgCommandId("archive-push"), cfgCmdArchivePush, "command id from name");
+        TEST_ERROR(cfgCommandId(BOGUS_STR, true), AssertError, "invalid command 'BOGUS'");
+        TEST_RESULT_INT(cfgCommandId(BOGUS_STR, false), cfgCmdNone, "command none id from bogus");
+        TEST_RESULT_INT(cfgCommandId("archive-push", true), cfgCmdArchivePush, "command id from name");
 
         TEST_ERROR(
             cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "assertion 'commandId < cfgCmdNone' failed");
         TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
 
-        TEST_RESULT_STR(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
+        TEST_RESULT_Z(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
 
         TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptPgHost + 6), cfgDefOptPgHost, "option id to def id");
 
@@ -45,7 +46,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptPgPath), 8, "option index total");
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptLogLevelConsole), 1, "option index total");
 
-        TEST_RESULT_STR(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
+        TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
 
     // *****************************************************************************************************************************
@@ -55,37 +56,56 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command begins as none");
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "command set to backup");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command:role is backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
-        TEST_RESULT_INT(cfgCommandInternal(cfgCmdLocal), true, "local is internal");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleLocal), "command set to backup:local");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "command:role is backup:local");
         TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
-        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
-        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdBackup), true, "remote lock is required");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "remote lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
-        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdBackup), lockTypeBackup, "remote lock is type backup");
         TEST_RESULT_BOOL(cfgParameterAllowed(), false, "parameters not allowed");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to info");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");
-        TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelTrace, "max stderr log level is trace");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
-        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdInfo), false, "remote lock is not required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(), false, "remote lock is not required");
         TEST_RESULT_INT(cfgLockType(), lockTypeNone, "lock is type none");
-        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdInfo), lockTypeNone, "remote lock is type none");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate), "command set to stanza-create");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate, cfgCmdRoleDefault), "command set to stanza-create");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeAll, "lock is type all");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdLocal), "command set to local");
-        TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelError, "max stderr log level is error");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleAsync), "command set to archive-get:async");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
+
+        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARSTRDEF("info"));
+        cfgOptionValidSet(cfgOptLogLevelFile, true);
+
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command roles");
+
+        TEST_ERROR(cfgCommandRoleEnum(strNew(BOGUS_STR)), CommandInvalidError, "invalid command role 'BOGUS'");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command default role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("async")), cfgCmdRoleAsync, "command async role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("local")), cfgCmdRoleLocal, "command local role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("remote")), cfgCmdRoleRemote, "command remote role enum");
+
+        TEST_RESULT_STR(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "command default role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleAsync), "async", "command async role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleLocal), "local", "command local role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "command remote role str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help defaults to false");
@@ -93,14 +113,17 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        StringList *param = strLstNew();
+        strLstAddZ(param, "param");
+
         TEST_RESULT_INT(strLstSize(cfgCommandParam()), 0, "command param list defaults to empty");
-        TEST_RESULT_VOID(cfgCommandParamSet(strLstAddZ(strLstNew(), "param")), "set command param list");
+        TEST_RESULT_VOID(cfgCommandParamSet(param), "set command param list");
         TEST_RESULT_INT(strLstSize(cfgCommandParam()), 1, "command param list is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(cfgExe(), NULL, "exe defaults to null");
         TEST_RESULT_VOID(cfgExeSet(strNew("/path/to/exe")), "set exe");
-        TEST_RESULT_STR(strPtr(cfgExe()), "/path/to/exe", "exe is set");
+        TEST_RESULT_Z(strPtr(cfgExe()), "/path/to/exe", "exe is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), false, "negate defaults to false");
@@ -130,10 +153,10 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "online source is set");
         TEST_ERROR(
             cfgOptionDbl(cfgOptOnline), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeDouble' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeDouble' failed");
         TEST_ERROR(
             cfgOptionInt64(cfgOptOnline), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeInt64' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt64(1)), "set compress-level");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 1, "compress-level is set");
@@ -142,7 +165,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress source is set");
         TEST_ERROR(
             cfgOptionBool(cfgOptCompressLevel), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeBool' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeBool' failed");
 
         TEST_RESULT_VOID(
             cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
@@ -156,7 +179,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptProtocolTimeout), cfgSourceConfig, "protocol-timeout source is set");
         TEST_ERROR(
             cfgOptionKv(cfgOptProtocolTimeout), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeKeyValue' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeKeyValue' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceConfig, NULL), "set protocol-timeout to NULL");
         TEST_RESULT_PTR(cfgOption(cfgOptProtocolTimeout), NULL, "protocol-timeout is not set");
@@ -168,8 +191,8 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(kvKeyList(cfgOptionKv(cfgOptRecoveryOption))), 0, "recovery-option is set");
         TEST_ERROR(
             cfgOptionLst(cfgOptRecoveryOption), AssertError,
-            "assertion 'configOptionValue[optionId].value == NULL"
-                " || varType(configOptionValue[optionId].value) == varTypeVariantList' failed");
+            "assertion 'configStatic.option[optionId].value == NULL"
+                " || varType(configStatic.option[optionId].value) == varTypeVariantList' failed");
 
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include defaults to empty");
         TEST_ERROR(
@@ -179,18 +202,18 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include is set");
         TEST_ERROR(
             cfgOptionStr(cfgOptDbInclude), AssertError,
-            "assertion 'configOptionValue[optionId].value == NULL"
-                " || varType(configOptionValue[optionId].value) == varTypeString' failed");
+            "assertion 'configStatic.option[optionId].value == NULL"
+                " || varType(configStatic.option[optionId].value) == varTypeString' failed");
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptStanza), NULL, "stanza defaults to null");
         TEST_ERROR(
             cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'stanza' must be set with String variant");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptStanza, cfgSourceConfig, varNewStrZ("db")), "set stanza");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "stanza is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "stanza is set");
         TEST_ERROR(
             cfgOptionInt(cfgOptStanza), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgInit(), "config init resets value");
@@ -203,18 +226,18 @@ testRun(void)
         unsigned int port = 55555;
 
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
 
         cfgOptionValidSet(cfgOptRepoS3Host, true);
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "host.com", "check plain host");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "host.com", "check plain host");
         TEST_RESULT_UINT(port, 55555, "check that port was not updated");
 
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "myhost.com", "check host with port");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "myhost.com", "check host with port");
         TEST_RESULT_UINT(port, 777, "check that port was updated");
 
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port)), NULL, "check null host");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), NULL, "check null host");
         TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
@@ -237,11 +260,11 @@ testRun(void)
     if (testBegin("cfgOptionDefault() and cfgOptionDefaultSet()"))
     {
         TEST_RESULT_VOID(cfgInit(), "config init");
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "backup command");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "backup command");
 
         TEST_ERROR(
             strPtr(varStr(cfgOptionDefaultValue(cfgOptDbInclude))), AssertError, "default value not available for option type 4");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptType))), "incr", "backup type default");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptType)), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptCompress)), "true", "backup compress default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
         TEST_RESULT_INT(varIntForce(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
@@ -250,14 +273,14 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default")), "backup host default");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default2")), "reset backup host default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgHost))), "backup", "backup host value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgHost))), "backup-default2", "backup host default");
+        TEST_RESULT_STR_Z(varStr(cfgOption(cfgOptPgHost)), "backup", "backup host value");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptPgHost)), "backup-default2", "backup host default");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgSocketPath, cfgSourceDefault, NULL), "backup pg-socket-path set");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket")), "backup pg-socket-path default");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket2")), "reset backup pg-socket-path default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value default");
+        TEST_RESULT_STR_Z(varStr(cfgOption(cfgOptPgSocketPath)), "/to/socket2", "backup pg-socket-path value");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptPgSocketPath)), "/to/socket2", "backup pg-socket-path value default");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

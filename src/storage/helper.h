@@ -15,7 +15,9 @@ Storage path constants
     STRING_DECLARE(STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
 #define STORAGE_REPO_ARCHIVE                                        "<REPO:ARCHIVE>"
+    STRING_DECLARE(STORAGE_REPO_ARCHIVE_STR);
 #define STORAGE_REPO_BACKUP                                         "<REPO:BACKUP>"
+    STRING_DECLARE(STORAGE_REPO_BACKUP_STR);
 
 #define STORAGE_PATH_ARCHIVE                                        "archive"
     STRING_DECLARE(STORAGE_PATH_ARCHIVE_STR);
@@ -35,7 +37,9 @@ Functions
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 const Storage *storagePg(void);
+const Storage *storagePgId(unsigned int hostId);
 const Storage *storagePgWrite(void);
+const Storage *storagePgIdWrite(unsigned int hostId);
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
 const Storage *storageSpool(void);

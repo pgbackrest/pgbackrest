@@ -41,6 +41,8 @@ use constant TESTDEF_DB                                             => 'db';
     push @EXPORT, qw(TESTDEF_DB);
 use constant TESTDEF_CONTAINER                                      => 'container';
     push @EXPORT, qw(TESTDEF_CONTAINER);
+use constant TESTDEF_CONTAINER_REQUIRED                             => 'containerReq';
+    push @EXPORT, qw(TESTDEF_CONTAINER_REQUIRED);
 use constant TESTDEF_COVERAGE                                       => 'coverage';
     push @EXPORT, qw(TESTDEF_COVERAGE);
 use constant TESTDEF_EXPECT                                         => 'expect';
@@ -53,12 +55,16 @@ use constant TESTDEF_DEFINE_TEST                                    => 'define-t
     push @EXPORT, qw(TESTDEF_DEFINE_TEST);
 use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
     push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
+use constant TESTDEF_INCLUDE                                        => 'include';
+    push @EXPORT, qw(TESTDEF_INCLUDE);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
-use constant TESTDEF_PERL_REQ                                       => 'perlReq';
-    push @EXPORT, qw(TESTDEF_PERL_REQ);
+use constant TESTDEF_TYPE                                           => 'type';
+    push @EXPORT, qw(TESTDEF_TYPE);
+use constant TESTDEF_BIN_REQ                                        => 'binReq';
+    push @EXPORT, qw(TESTDEF_BIN_REQ);
 use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
 
@@ -95,7 +101,7 @@ sub testDefLoad
 
         my $bExpect = false;                                        # By default don't run expect tests
         my $bContainer = true;                                      # By default run tests in a single container
-        my $bIndividual = false;                                    # By default runs are all executed in the same contanier
+        my $bIndividual = false;                                    # By default runs are all executed in the same container
 
         if ($strModuleType eq TESTDEF_INTEGRATION)
         {
@@ -122,7 +128,8 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM)
+                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM,
+                    TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
@@ -135,8 +142,9 @@ sub testDefLoad
                 }
 
                 # Set module type variables
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TYPE} = $strModuleType;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
-                    $strModuleType eq TESTDEF_UNIT && $strTest !~ /\-perl$/ ? true : false;
+                    $strModuleType ne TESTDEF_INTEGRATION && $strTest !~ /perl$/ ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_EXPECT} = $bExpect;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;
@@ -180,6 +188,9 @@ sub testDefLoad
                         push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
                     }
                 }
+
+                # Set include list
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INCLUDE} = $hModuleTest->{&TESTDEF_INCLUDE};
             }
 
             $hModuleTest->{$strModule} = \@stryModuleTest;

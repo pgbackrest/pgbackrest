@@ -46,12 +46,12 @@ jsonToBoolInternal(const char *json, unsigned int *jsonPos)
 
     bool result;
 
-    if (strncmp(json + *jsonPos, "true", 4) == 0)
+    if (strncmp(json + *jsonPos, TRUE_Z, 4) == 0)
     {
         result = true;
         *jsonPos += 4;
     }
-    else if (strncmp(json + *jsonPos, "false", 5) == 0)
+    else if (strncmp(json + *jsonPos, FALSE_Z, 5) == 0)
     {
         result = false;
         *jsonPos += 5;
@@ -118,14 +118,14 @@ jsonToNumberInternal(const char *json, unsigned int *jsonPos)
         String *resultStr = strNewN(json + beginPos, *jsonPos - beginPos);
 
         // Convert the string to a integer variant
-        memContextSwitch(MEM_CONTEXT_OLD());
-
-        if (intSigned)
-            result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
-        else
-            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
-
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            if (intSigned)
+                result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
+            else
+                result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -317,7 +317,12 @@ jsonToStr(const String *json)
     unsigned int jsonPos = 0;
     jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
 
-    String *result = jsonToStrInternal(strPtr(json), &jsonPos);
+    String *result = NULL;
+
+    if (strncmp(strPtr(json), NULL_Z, 4) == 0)
+        jsonPos += 4;
+    else
+        result = jsonToStrInternal(strPtr(json), &jsonPos);
 
     jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
 
@@ -437,9 +442,11 @@ jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
                     jsonConsumeWhiteSpace(json, jsonPos);
                 }
 
-                memContextSwitch(MEM_CONTEXT_OLD());
-                varLstAdd(result, jsonToVarInternal(json, jsonPos));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    varLstAdd(result, jsonToVarInternal(json, jsonPos));
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 jsonConsumeWhiteSpace(json, jsonPos);
             }
@@ -524,7 +531,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         // Null
         case 'n':
         {
-            if (strncmp(json + *jsonPos, "null", 4) == 0)
+            if (strncmp(json + *jsonPos, NULL_Z, 4) == 0)
                 *jsonPos += 4;
             else
                 THROW_FMT(JsonFormatError, "expected null at '%s'", json + *jsonPos);
@@ -656,7 +663,7 @@ jsonFromStrInternal(String *json, const String *string)
     // If string is null
     if (string == NULL)
     {
-        strCat(json, "null");
+        strCat(json, NULL_Z);
     }
     // Else escape and output string
     else
@@ -726,27 +733,19 @@ jsonFromStr(const String *string)
 Internal recursive function to walk a KeyValue and return a json string
 ***********************************************************************************************************************************/
 static String *
-jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
+jsonFromKvInternal(const KeyValue *kv)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, kv);
-        FUNCTION_TEST_PARAM(STRING, indentSpace);
-        FUNCTION_TEST_PARAM(STRING, indentDepth);
     FUNCTION_TEST_END();
 
     ASSERT(kv != NULL);
-    ASSERT(indentSpace != NULL);
-    ASSERT(indentDepth != NULL);
 
     String *result = strNew("{");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const StringList *keyList = strLstSort(strLstNewVarLst(kvKeyList(kv)), sortOrderAsc);
-
-        // If not an empty list, then add indent formatting
-        if (strLstSize(keyList) > 0)
-            strCatFmt(result, "%s", strPtr(indentDepth));
 
         for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
         {
@@ -755,93 +754,89 @@ jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 
             // If going to add another key, prepend a comma
             if (keyIdx > 0)
-                strCatFmt(result, ",%s", strPtr(indentDepth));
+                strCat(result, ",");
 
             // Keys are always strings in the output, so add starting quote and colon.
-            // Note if indent is 0 then spaces do not surround the colon, else they do.
-            if (strSize(indentSpace) == 0)
-                strCatFmt(result, "\"%s\":", strPtr(key));
-            else
-                strCatFmt(result, "\"%s\" : ", strPtr(key));
+            strCatFmt(result, "\"%s\":", strPtr(key));
 
             // NULL value
             if (value == NULL)
-                strCat(result, "null");
-            // KeyValue
-            else if (varType(value) == varTypeKeyValue)
+                strCat(result, NULL_Z);
+            else
             {
-                strCat(indentDepth, strPtr(indentSpace));
-                strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
-            }
-            // VariantList
-            else if (varType(value) == varTypeVariantList)
-            {
-                // If the array is empty, then do not add formatting, else process the array.
-                if (varVarLst(value) == NULL)
-                    strCat(result, "null");
-                else if (varLstSize(varVarLst(value)) == 0)
-                    strCat(result, "[]");
-                else
+                switch (varType(value))
                 {
-                    strCat(indentDepth, strPtr(indentSpace));
-                    strCatFmt(result, "[%s", strPtr(indentDepth));
-
-                    for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                    case varTypeKeyValue:
                     {
-                        Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
-
-                        // If going to add another element, add a comma
-                        if (arrayIdx > 0)
-                            strCatFmt(result, ",%s", strPtr(indentDepth));
-
-                        // If array value is null
-                        if (arrayValue == NULL)
-                        {
-                            strCat(result, "null");
-                        }
-                        // If the type is a string, add leading and trailing double quotes
-                        else if (varType(arrayValue) == varTypeString)
-                        {
-                            jsonFromStrInternal(result, varStr(arrayValue));
-                        }
-                        else if (varType(arrayValue) == varTypeKeyValue)
-                        {
-                            strCat(indentDepth, strPtr(indentSpace));
-                            strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
-                        }
-                        else if (varType(arrayValue) == varTypeVariantList)
-                        {
-                            strCat(indentDepth, strPtr(indentSpace));
-                            strCat(result, strPtr(jsonFromVar(arrayValue, 0)));
-                        }
-                        // Numeric, Boolean or other type
-                        else
-                            strCat(result, strPtr(varStrForce(arrayValue)));
+                        strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)))));
+                        break;
                     }
 
-                    if (strSize(indentDepth) > strSize(indentSpace))
-                        strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+                    case varTypeVariantList:
+                    {
+                        // If the array is empty, then do not add formatting, else process the array.
+                        if (varVarLst(value) == NULL)
+                            strCat(result, NULL_Z);
+                        else if (varLstSize(varVarLst(value)) == 0)
+                            strCat(result, "[]");
+                        else
+                        {
+                            strCat(result, "[");
 
-                    strCatFmt(result, "%s]", strPtr(indentDepth));
+                            for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                            {
+                                Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
+
+                                // If going to add another element, add a comma
+                                if (arrayIdx > 0)
+                                    strCat(result, ",");
+
+                                // If array value is null
+                                if (arrayValue == NULL)
+                                {
+                                    strCat(result, NULL_Z);
+                                }
+                                // If the type is a string, add leading and trailing double quotes
+                                else if (varType(arrayValue) == varTypeString)
+                                {
+                                    jsonFromStrInternal(result, varStr(arrayValue));
+                                }
+                                else if (varType(arrayValue) == varTypeKeyValue)
+                                {
+                                    strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)))));
+                                }
+                                else if (varType(arrayValue) == varTypeVariantList)
+                                {
+                                    strCat(result, strPtr(jsonFromVar(arrayValue)));
+                                }
+                                // Numeric, Boolean or other type
+                                else
+                                    strCat(result, strPtr(varStrForce(arrayValue)));
+                            }
+
+                            strCat(result, "]");
+                        }
+
+                        break;
+                    }
+
+                    // String
+                    case varTypeString:
+                    {
+                        jsonFromStrInternal(result, varStr(value));
+                        break;
+                    }
+
+                    default:
+                    {
+                        strCat(result, strPtr(varStrForce(value)));
+                        break;
+                    }
                 }
             }
-            // String
-            else if (varType(value) == varTypeString)
-            {
-                jsonFromStrInternal(result, varStr(value));
-            }
-            // Numeric, Boolean or other type
-            else
-                strCat(result, strPtr(varStrForce(value)));
         }
-        if (strSize(indentDepth) > strSize(indentSpace))
-            strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
 
-        if (strLstSize(keyList) > 0)
-            strCatFmt(result, "%s}", strPtr(indentDepth));
-        else
-            result = strCat(result, "}");
-
+        result = strCat(result, "}");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -849,18 +844,17 @@ jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 }
 
 /***********************************************************************************************************************************
-Convert KeyValue object to JSON string. If indent = 0 then no pretty format.
+Convert KeyValue object to JSON string.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
 whitespace.
 ***********************************************************************************************************************************/
 String *
-jsonFromKv(const KeyValue *kv, unsigned int indent)
+jsonFromKv(const KeyValue *kv)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(KEY_VALUE, kv);
-        FUNCTION_LOG_PARAM(UINT, indent);
     FUNCTION_LOG_END();
 
     ASSERT(kv != NULL);
@@ -869,29 +863,14 @@ jsonFromKv(const KeyValue *kv, unsigned int indent)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *jsonStr = strNew("");
-        String *indentSpace = strNew("");
-        String *indentDepth = strNew("");
+        String *jsonStr = jsonFromKvInternal(kv);
 
-        // Set up the indent spacing (indent 0 will result in an empty string)
-        for (unsigned int indentIdx = 0; indentIdx < indent; indentIdx++)
-            strCat(indentSpace, " ");
-
-        // If indent > 0 (pretty printing) then add carriage return to the indent format
-        if (indent > 0)
-            strCat(indentDepth, "\n");
-
-        strCat(indentDepth, strPtr(indentSpace));
-        strCat(jsonStr, strPtr(jsonFromKvInternal(kv, indentSpace, indentDepth)));
-
-        // Add terminating linefeed for pretty print
-        if (indent > 0)
-            strCat(jsonStr, "\n");
-
-        // Duplicate the string into the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(jsonStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Duplicate the string into the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(jsonStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -899,17 +878,16 @@ jsonFromKv(const KeyValue *kv, unsigned int indent)
 }
 
 /***********************************************************************************************************************************
-Convert Variant object to JSON string. If indent = 0 then no pretty format.
+Convert Variant object to JSON string.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.
 ***********************************************************************************************************************************/
 String *
-jsonFromVar(const Variant *var, unsigned int indent)
+jsonFromVar(const Variant *var)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, var);
-        FUNCTION_LOG_PARAM(UINT, indent);
     FUNCTION_LOG_END();
 
     String *result = NULL;
@@ -917,23 +895,15 @@ jsonFromVar(const Variant *var, unsigned int indent)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *jsonStr = strNew("");
-        String *indentSpace = strNew("");
-        String *indentDepth = strNew("");
-
-        // Set up the indent spacing (indent 0 will result in an empty string)
-        for (unsigned int indentIdx = 0; indentIdx < indent; indentIdx++)
-            strCat(indentSpace, " ");
-
-        // If indent > 0 (pretty printing) then add carriage return to the indent format
-        if (indent > 0)
-            strCat(indentDepth, "\n");
-
-        strCat(indentDepth, strPtr(indentSpace));
 
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (var == NULL)
         {
             strCat(jsonStr, strPtr(NULL_STR));
+        }
+        else if (varType(var) == varTypeBool)
+        {
+            strCat(jsonStr, strPtr(jsonFromBool(varBool(var))));
         }
         else if (varType(var) == varTypeUInt)
         {
@@ -954,23 +924,40 @@ jsonFromVar(const Variant *var, unsigned int indent)
             // If not an empty array
             if (varLstSize(vl) > 0)
             {
-                // Add the indent formatting
-                strCatFmt(jsonStr, "[%s", strPtr(indentDepth));
+                strCat(jsonStr, "[");
 
                 // Currently only KeyValue and String lists are supported
                 for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
                 {
-                    // If going to add another key, append a comma and format for the next line
+                    // If going to add another key, append a comma
                     if (vlIdx > 0)
-                        strCatFmt(jsonStr, ",%s", strPtr(indentDepth));
+                        strCat(jsonStr, ",");
 
                     Variant *varSub = varLstGet(vl, vlIdx);
 
-                    if (varType(varSub) == varTypeKeyValue)
+                    if (varSub == NULL)
                     {
-                        // Update the depth before processing the contents of the list element
-                        strCat(indentDepth, strPtr(indentSpace));
-                        strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub), indentSpace, indentDepth)));
+                        strCat(jsonStr, NULL_Z);
+                    }
+                    else if (varType(varSub) == varTypeBool)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromBool(varBool(varSub))));
+                    }
+                    else if (varType(varSub) == varTypeKeyValue)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub))));
+                    }
+                    else if (varType(varSub) == varTypeVariantList)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromVar(varSub)));
+                    }
+                    else if (varType(varSub) == varTypeInt)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromInt(varInt(varSub))));
+                    }
+                    else if (varType(varSub) == varTypeInt64)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromInt64(varInt64(varSub))));
                     }
                     else if (varType(varSub) == varTypeUInt)
                     {
@@ -984,12 +971,8 @@ jsonFromVar(const Variant *var, unsigned int indent)
                         jsonFromStrInternal(jsonStr, varStr(varSub));
                 }
 
-                // Decrease the depth
-                if (strSize(indentDepth) > strSize(indentSpace))
-                    strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
-
                 // Close the array
-                strCatFmt(jsonStr, "%s]", strPtr(indentDepth));
+                strCat(jsonStr, "]");
             }
             // Else empty array
             else
@@ -997,19 +980,17 @@ jsonFromVar(const Variant *var, unsigned int indent)
         }
         else if (varType(var) == varTypeKeyValue)
         {
-            strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var), indentSpace, indentDepth)));
+            strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var))));
         }
         else
             THROW(JsonFormatError, "variant type is invalid");
 
-        // Add terminating linefeed for pretty print
-        if (indent > 0)
-            strCat(jsonStr, "\n");
-
-        // Duplicate the string into the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(jsonStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Duplicate the string into the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(jsonStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

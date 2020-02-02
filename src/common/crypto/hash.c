@@ -30,6 +30,12 @@ STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SH
 STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256);
 
 /***********************************************************************************************************************************
+Hashes for zero-length files (i.e., seed value)
+***********************************************************************************************************************************/
+STRING_EXTERN(HASH_TYPE_SHA1_ZERO_STR,                              HASH_TYPE_SHA1_ZERO);
+STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 #define CRYPTO_HASH_TYPE                                            CryptoHash
@@ -148,7 +154,11 @@ cryptoHashNew(const String *type)
     MEM_CONTEXT_NEW_BEGIN("CryptoHash")
     {
         CryptoHash *driver = memNew(sizeof(CryptoHash));
-        driver->memContext = MEM_CONTEXT_NEW();
+
+        *driver = (CryptoHash)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         // Lookup digest
         if ((driver->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)
@@ -163,12 +173,22 @@ cryptoHashNew(const String *type)
         // Initialize context
         cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(type));
+
         // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, .in = cryptoHashProcess, .result = cryptoHashResult);
+        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+cryptoHashNewVar(const VariantList *paramList)
+{
+    return cryptoHashNew(varStr(varLstGet(paramList, 0)));
 }
 
 /***********************************************************************************************************************************
@@ -196,9 +216,11 @@ cryptoHashOne(const String *type, const Buffer *message)
 
         const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = bufDup(buffer);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = bufDup(buffer);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -231,5 +253,5 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     // Calculate the HMAC
     HMAC(hashType, bufPtr(key), (int)bufUsed(key), bufPtr(message), bufUsed(message), bufPtr(result), NULL);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }

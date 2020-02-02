@@ -23,17 +23,23 @@ Archive info filename
 #define INFO_ARCHIVE_FILE                                           "archive.info"
 #define REGEX_ARCHIVE_DIR_DB_VERSION                                "^[0-9]+(\\.[0-9]+)*-[0-9]+$"
 
+#define INFO_ARCHIVE_PATH_FILE                                      STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE
+    STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_STR);
+#define INFO_ARCHIVE_PATH_FILE_COPY                                 INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT
+    STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
+
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
+InfoArchive *infoArchivePgSet(
+    InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
@@ -46,6 +52,14 @@ InfoPg *infoArchivePg(const InfoArchive *this);
 Destructor
 ***********************************************************************************************************************************/
 void infoArchiveFree(InfoArchive *this);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+InfoArchive *infoArchiveLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoArchiveSaveFile(
+    InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

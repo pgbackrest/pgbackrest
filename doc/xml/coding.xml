@@ -12,6 +12,50 @@
             <p>Indentation is four spaces -- no tabs.  Only file types that absolutely require tabs (e.g. `Makefile`) may use them.</p>
         </section>
 
+        <section id="line-length">
+            <title>Line Length</title>
+
+            <p>With the exception of documentation code, no line of any code or test file shall exceed 132 characters. If a line break is required, then it shall be after the first function parenthesis:</p>
+
+            <code-block>
+// CORRECT - location of line break after first function parenthesis if line length is greater than 132
+StringList *removeList = infoBackupDataLabelList(
+    infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+
+// INCORRECT
+StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList,
+    fullIdx))));
+            </code-block>
+
+            <p>If a conditional, then after a completed conditional, for example:</p>
+
+            <code-block>
+// CORRECT - location of line break after a completed conditional if line length is greater than 132
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+    archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+    archiveInfoPgHistory.version != backupInfoPgHistory.version)
+
+// INCORRECT
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.systemId !=
+    backupInfoPgHistory.systemId || archiveInfoPgHistory.version != backupInfoPgHistory.version)
+            </code-block>
+        </section>
+
+        <section id="inline-comment">
+            <title>Inline Comment</title>
+
+            <p>Inline comments shall start at character 69 and must not exceed the line length of 132. For example:</p>
+
+            <code-block>
+typedef struct InlineCommentExample
+{
+    const String *comment;                                          // Inline comment example
+    const String *longComment;                                      // Inline comment example that exceeds 132 characters should
+                                                                    // then go to next line but this should be avoided
+} InlineCommentExample;
+            </code-block>
+        </section>
+
         <section id="naming">
             <title>Naming</title>
 
@@ -162,6 +206,14 @@ if (condition)
 }
                 </code-block>
             </section>
+
+            <section id="hints-warnings-errors">
+                <title>Hints, Warnings, and Errors</title>
+
+                <p>Hints are to be formatted with capitalized <id>HINT:</id> followed by a space and a sentence. The sentence shall only begin with a capital letter if the first word is an acronym (e.g. TLS) or a proper name (e.g. PostgreSQL). The sentence must end with a period, question mark or exclamation point as appropriate.</p>
+
+                <p>Warning and errors shall be lowercase with the exceptions for proper names and acronyms and end without punctuation.</p>
+            </section>
         </section>
     </section>
 
@@ -205,7 +257,7 @@ typedef struct StoragePathCreateParam
 
 #define storagePathCreateP(this, pathExp, ...)                              \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
-#define storagePathCreateNP(this, pathExp)                                  \
+#define storagePathCreateP(this, pathExp)                                  \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
@@ -216,7 +268,7 @@ void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCr
             <p>This function can be called without variable parameters:</p>
 
             <code-block type="c">
-storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest");
             </code-block>
 
             <p>Or with variable parameters:</p>
@@ -238,7 +290,7 @@ storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mo
             <section id="uncoverable">
                 <title>Uncoverable Code</title>
 
-                <p>The <id>uncoverable</id> keyword marks code that can never be covered.  For instance, a function that never returns because it always throws a error.  Uncoverable code should be rare to non-existent outside the common libraries and test code.</p>
+                <p>The <id>uncoverable</id> keyword marks code that can never be covered.  For instance, a function that never returns because it always throws an error.  Uncoverable code should be rare to non-existent outside the common libraries and test code.</p>
 
                 <code-block type="c">
 }   // {uncoverable - function throws error so never returns}

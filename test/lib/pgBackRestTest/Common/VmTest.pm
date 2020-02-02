@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion;
 
@@ -31,14 +32,10 @@ use constant VM_CONTROL_MASTER                                      => 'control-
     push @EXPORT, qw(VM_CONTROL_MASTER);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
-# Will coverage testing be run for Perl?
-use constant VMDEF_COVERAGE_PERL                                    => 'coverage-perl';
 use constant VM_DEPRECATED                                          => 'deprecated';
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
-# Will static code analysis be run for C?
-use constant VMDEF_LINT_C                                           => 'lint-c';
 use constant VM_OS                                                  => 'os';
     push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
@@ -47,8 +44,8 @@ use constant VM_OS_REPO                                             => 'os-repo'
     push @EXPORT, qw(VM_OS_REPO);
 use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
-use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arch-path';
-    push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
+use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
+    push @EXPORT, qw(VMDEF_LCOV_VERSION);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
@@ -86,10 +83,15 @@ use constant VM_ARCH_AMD64                                          => 'amd64';
 use constant VM_ALL                                                 => 'all';
     push @EXPORT, qw(VM_ALL);
 
+use constant VM_NONE                                                => 'none';
+    push @EXPORT, qw(VM_NONE);
+
 use constant VM_CO6                                                 => 'co6';
     push @EXPORT, qw(VM_CO6);
 use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
+use constant VM_F30                                                 => 'f30';
+    push @EXPORT, qw(VM_F30);
 use constant VM_U12                                                 => 'u12';
     push @EXPORT, qw(VM_U12);
 use constant VM_U14                                                 => 'u14';
@@ -98,6 +100,8 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
+use constant VM_U19                                                 => 'u19';
+    push @EXPORT, qw(VM_U19);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -121,12 +125,32 @@ use constant VM3                                                    => VM_CO7;
 use constant VM4                                                    => VM_U18;
     push @EXPORT, qw(VM4);
 
-# List of default test VMs (in this order: newest, oldest, next newest, next oldest)
-use constant VM_LIST                                                => (VM4, VM1, VM3, VM2);
+# List of default test VMs
+use constant VM_LIST                                                => (VM2, VM1, VM3, VM4);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
 {
+    # None
+    &VM_NONE =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VM_DB =>
+        [
+            PG_VERSION_10,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_10,
+        ],
+    },
+
     # CentOS 6
     &VM_CO6 =>
     {
@@ -135,26 +159,26 @@ my $oyVm =
         &VM_IMAGE => 'centos:6',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
-        # &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
         [
-            PG_VERSION_90,
             PG_VERSION_91,
             PG_VERSION_92,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_90,
             PG_VERSION_91,
+            PG_VERSION_92,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_10,
         ],
     },
 
@@ -166,8 +190,6 @@ my $oyVm =
         &VM_IMAGE => 'centos:7',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
-        # &VMDEF_WITH_LZ4 => false,
 
         &VMDEF_DEBUG_INTEGRATION => false,
 
@@ -178,11 +200,40 @@ my $oyVm =
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_96,
+        ],
+    },
+
+    # Fedora 30
+    &VM_F30 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_RHEL,
+        &VM_OS => VM_OS_CENTOS,
+        &VM_IMAGE => 'fedora:30',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+
+        &VMDEF_DEBUG_INTEGRATION => false,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_11,
         ],
     },
 
@@ -195,7 +246,6 @@ my $oyVm =
         &VM_IMAGE => 'debian:8',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
 
         &VM_DB =>
         [
@@ -226,7 +276,6 @@ my $oyVm =
         &VM_IMAGE => 'debian:9',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/i386-linux-gnu/perl/5.24.1',
 
         &VM_DB_TEST =>
         [
@@ -237,6 +286,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -254,7 +304,6 @@ my $oyVm =
         &VM_IMAGE => 'i386/ubuntu:12.04',
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
         &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
@@ -271,7 +320,7 @@ my $oyVm =
         [
             PG_VERSION_83,
             PG_VERSION_84,
-            PG_VERSION_92,
+            PG_VERSION_90,
             PG_VERSION_93,
         ],
     },
@@ -285,7 +334,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:14.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
         &VM_DB =>
         [
@@ -299,6 +347,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB =>
@@ -316,7 +365,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:16.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
         &VMDEF_WITH_BACKTRACE => true,
 
@@ -330,6 +378,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -348,10 +397,7 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:18.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
-        &VMDEF_COVERAGE_PERL => true,
-        &VMDEF_LINT_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
         &VMDEF_WITH_BACKTRACE => true,
 
@@ -363,18 +409,49 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
         [
+            PG_VERSION_11,
+            PG_VERSION_12,
+        ],
+    },
+
+    # Ubuntu 19.04
+    &VM_U19 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
+        &VM_OS_REPO => 'disco',
+        &VM_IMAGE => 'ubuntu:19.04',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_LCOV_VERSION => '1.14',
+        &VMDEF_WITH_BACKTRACE => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_12,
         ],
     },
 };
 
 ####################################################################################################################################
-# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywere
+# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywhere
 ####################################################################################################################################
 foreach my $strVm (sort(keys(%{$oyVm})))
 {
@@ -390,7 +467,6 @@ foreach my $strVm (sort(keys(%{$oyVm})))
 foreach my $strPgVersion (versionSupport())
 {
     my $strVmPgVersionRun;
-    my $bVmCoveragePerl = false;
     my $bVmCoverageC = false;
 
     foreach my $strVm (VM_LIST)
@@ -398,11 +474,6 @@ foreach my $strPgVersion (versionSupport())
         if (vmCoverageC($strVm))
         {
             $bVmCoverageC = true;
-        }
-
-        if (vmCoveragePerl($strVm))
-        {
-            $bVmCoveragePerl = true;
         }
 
         foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
@@ -426,16 +497,43 @@ foreach my $strPgVersion (versionSupport())
         confess &log(ASSERT, "C coverage ${strErrorSuffix}");
     }
 
-    if (!$bVmCoveragePerl)
-    {
-        confess &log(ASSERT, "Perl coverage ${strErrorSuffix}");
-    }
-
     if (!defined($strVmPgVersionRun))
     {
         confess &log(ASSERT, "PostgreSQL ${strPgVersion} ${strErrorSuffix}");
     }
 }
+
+####################################################################################################################################
+# vmValid
+####################################################################################################################################
+sub vmValid
+{
+    my $strVm = shift;
+
+    if (!defined($oyVm->{$strVm}))
+    {
+        confess &log(ERROR, "no definition for vm '${strVm}'", ERROR_OPTION_INVALID_VALUE);
+    }
+}
+
+push @EXPORT, qw(vmValid);
+
+####################################################################################################################################
+# Which vm to use for the test matrix.  If one of the standard four, then use that, else use VM4.
+####################################################################################################################################
+sub vmTest
+{
+    my $strVm = shift;
+
+    if (grep(/^$strVm$/, VM_LIST))
+    {
+        return $strVm;
+    }
+
+    return VM4;
+}
+
+push @EXPORT, qw(vmTest);
 
 ####################################################################################################################################
 # vmGet
@@ -471,30 +569,6 @@ sub vmCoverageC
 }
 
 push @EXPORT, qw(vmCoverageC);
-
-####################################################################################################################################
-# vmCoveragePerl
-####################################################################################################################################
-sub vmCoveragePerl
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VMDEF_COVERAGE_PERL} ? true : false;
-}
-
-push @EXPORT, qw(vmCoveragePerl);
-
-####################################################################################################################################
-# vmLintC
-####################################################################################################################################
-sub vmLintC
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VMDEF_LINT_C} ? true : false;
-}
-
-push @EXPORT, qw(vmLintC);
 
 ####################################################################################################################################
 # Get vm architecture bits

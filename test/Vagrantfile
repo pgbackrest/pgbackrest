@@ -7,8 +7,11 @@ Vagrant.configure(2) do |config|
     config.vm.box = "ubuntu/bionic64"
     config.vm.box_version = "20180719.0.0"
 
-    # vagrant plugin install vagrant-disksize
-    config.disksize.size = '64GB'
+    # Increase disk size if the vagrant-disksize plugin is available
+    # To install the plugin: vagrant plugin install vagrant-disksize
+    if Vagrant.has_plugin?('vagrant-disksize')
+      config.disksize.size = '64GB'
+    end
 
     config.vm.provider :virtualbox do |vb|
         vb.name = "pgbackrest-test"
@@ -40,11 +43,19 @@ Vagrant.configure(2) do |config|
         echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
         /etc/init.d/networking restart
 
-        # Set time sync settings so builds don't fail with clock drift errors
+        # Set time sync settings so builds don't fail with clock skew errors. If a build does fail with "clock skew detected",
+        # rerun the following at the command line.
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Time Sync Settings' && date
         sudo /etc/init.d/virtualbox-guest-utils stop
         sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
+
+        # Create /tmp/pgbackrest and give ownership to root so we know unit tests are not writing there
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Create /tmp/pgbackrest owned by root' && date
+        sudo mkdir -p /tmp/pgbackrest
+        sudo chown root:root /tmp/pgbackrest
+        sudo chmod 700 /tmp/pgbackrest
 
         # Mount tmpfs at /home/vagrant/test for faster testing
         #---------------------------------------------------------------------------------------------------------------------------
@@ -55,27 +66,12 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
-        apt-get install -y libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl libxml-checker-perl libperl-critic-perl \
-            libdevel-nytprof-perl libyaml-libyaml-perl
+        apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-libyaml-perl
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
-        apt-get install -y devscripts build-essential lintian git lcov cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev liblz4-dev
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install AWS CLI' && date
-        apt-get install -y python-pip
-        pip install --upgrade awscli
-
-        # Configure AWS CLI
-        sudo -i -u vagrant aws configure set region us-east-1
-        sudo -i -u vagrant aws configure set aws_access_key_id accessKey1
-        sudo -i -u vagrant aws configure set aws_secret_access_key verySecretKey1
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Devel::Cover' && date
-        dpkg -i /backrest/test/package/u18-libdevel-cover-perl_1.29-2_amd64.deb
+        apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
+             libxml2-dev liblz4-dev libpq-dev valgrind lcov
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date
@@ -87,13 +83,10 @@ Vagrant.configure(2) do |config|
         apt-get install -y vim htop
 
         #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install TeX Live' && date
-        apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
-        apt-get install -y texlive-font-utils
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Create Postgres Group & pgBackRest User' && date
-        adduser --uid=5001 --ingroup=vagrant --disabled-password --gecos "" pgbackrest
+        # echo 'Install TeX Live' && date
+        # Not installed by default since latex is only needed for releases and PDF development/testing
+        # apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+        # apt-get install -y texlive-font-utils
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build VM Images' && date

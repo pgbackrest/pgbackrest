@@ -28,30 +28,12 @@ use pgBackRestTest::Common::VmTest;
 ####################################################################################################################################
 # User/group definitions
 ####################################################################################################################################
-use constant POSTGRES_GROUP                                         => 'postgres';
-    push @EXPORT, qw(POSTGRES_GROUP);
-use constant POSTGRES_GROUP_ID                                      => 5000;
-use constant POSTGRES_USER                                          => POSTGRES_GROUP;
-use constant POSTGRES_USER_ID                                       => 5000;
-
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
 use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
     push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
-
-use constant BACKREST_USER                                          => 'pgbackrest';
-    push @EXPORT, qw(BACKREST_USER);
-use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
-
-####################################################################################################################################
-# Package constants
-####################################################################################################################################
-use constant LIB_COVER_VERSION                                      => '1.29-2';
-    push @EXPORT, qw(LIB_COVER_VERSION);
-use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
-    push @EXPORT, qw(LIB_COVER_EXE);
 
 ####################################################################################################################################
 # Cert file constants
@@ -70,26 +52,9 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 use constant CONTAINER_DEBUG                                        => false;
 
 ####################################################################################################################################
-# Container Debug - speeds container debugging by splitting each section into a separate intermediate container
-####################################################################################################################################
-use constant CONTAINER_S3_SERVER_TAG                                => 's3-server-20180612A';
-
-####################################################################################################################################
 # Store cache container checksums
 ####################################################################################################################################
 my $hContainerCache;
-
-####################################################################################################################################
-# Generate Devel::Cover package name
-####################################################################################################################################
-sub packageDevelCover
-{
-    my $strArch = shift;
-
-    return 'libdevel-cover-perl_' . LIB_COVER_VERSION . "_${strArch}.deb";
-}
-
-push @EXPORT, qw(packageDevelCover);
 
 ####################################################################################################################################
 # Container repo - defines the Docker repository where the containers will be located
@@ -304,51 +269,6 @@ sub certSetup
 }
 
 ####################################################################################################################################
-# S3 server setup
-####################################################################################################################################
-sub s3ServerSetup
-{
-    my $strOS = shift;
-
-    # Install node.js
-    my $strScript = sectionHeader() .
-        "# Install node.js\n";
-
-    if ($strOS eq VM_CO7)
-    {
-        $strScript .=
-            "    wget -O /root/nodejs.sh https://rpm.nodesource.com/setup_6.x && \\\n" .
-            "    bash /root/nodejs.sh && \\\n" .
-            "    yum install -y nodejs";
-    }
-    else
-    {
-        $strScript .=
-            "    wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
-            "    bash /root/nodejs.sh && \\\n" .
-            "    wget -qO- https://deb.nodesource.com/setup_8.x | bash - && \\\n" .
-            "    apt-get install -y nodejs";
-    }
-
-    # Install Scality S3
-    $strScript .= sectionHeader() .
-        "# Install Scality S3\n";
-
-    $strScript .=
-        "    wget -O /root/scalitys3.tar.gz https://github.com/scality/S3/archive/GA6.4.2.1.tar.gz && \\\n" .
-        "    mkdir /root/scalitys3 && \\\n" .
-        "    tar -C /root/scalitys3 --strip-components 1 -xvf /root/scalitys3.tar.gz && \\\n" .
-        "    cd /root/scalitys3 && \\\n" .
-        "    npm install && \\\n" .
-        '    sed -i "0,/,/s//,\n    \"certFilePaths\":{\"key\":\"\/etc\/fake\-cert\/server.key\",\"cert\":' .
-            '\"\/etc\/fake\-cert\/server.crt\",\"ca\":\"\/etc\/fake\-cert\/ca.crt\"},/"' . " \\\n" .
-        '        ./config.json' . " && \\\n" .
-        '    sed -i "s/ort\"\: 8000/ort\"\: 443/" ./config.json';
-
-    return $strScript;
-}
-
-####################################################################################################################################
 # Entry point setup
 ####################################################################################################################################
 sub entryPointSetup
@@ -426,15 +346,20 @@ sub containerBuild
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strScript = sectionHeader() .
-            "# Install base packages\n";
+            "# Install packages\n";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
+            if ($strOS eq VM_CO6 || $strOS eq VM_CO7)
+            {
+                $strScript .=
+                    "    yum -y install epel-release && \\\n";
+            }
+
             $strScript .=
-                "    yum -y install epel-release && \\\n" .
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential valgrind git \\\n" .
-                "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL perl-YAML-LibYAML \\\n" .
+                "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
+                "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        zlib-devel libxml2-devel lz4-devel";
 
@@ -446,24 +371,16 @@ sub containerBuild
             {
                 $strScript .= ' perl-JSON-PP';
             }
-
-            if (vmCoverageC($strOS))
-            {
-                $strScript .= ' lcov';
-            }
         }
         else
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get -y install wget python && \\\n" .
-                "    wget --no-check-certificate -O /root/get-pip.py https://bootstrap.pypa.io/get-pip.py && \\\n" .
-                "    python /root/get-pip.py && \\\n" .
-                "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
-                "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
+                "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
+                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config";
 
             if ($strOS eq VM_U12)
             {
@@ -471,18 +388,14 @@ sub containerBuild
             }
             else
             {
-                $strScript .= ' liblz4-dev';
+                $strScript .= ' libjson-pp-perl liblz4-dev';
             }
+        }
 
-            if (vmLintC($strOS))
-            {
-                $strScript .= ' clang-6.0 clang-tools-6.0';
-            }
-
-            if (vmCoverageC($strOS))
-            {
-                $strScript .= ' lcov';
-            }
+        # If no specific version of lcov is requested then install the default package
+        if (!defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
+        {
+            $strScript .= ' lcov';
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -524,36 +437,56 @@ sub containerBuild
         $strScript .= certSetup($strOS);
 
         #---------------------------------------------------------------------------------------------------------------------------
+        if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
+        {
+            my $strLCovVersion = $oVm->{$strOS}{&VMDEF_LCOV_VERSION};
+            my $strLCovPath = "/root/lcov-${strLCovVersion}";
+
+            $strScript .= sectionHeader() .
+                "# Build lcov ${strLCovVersion}\n" .
+                "    wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v${strLCovVersion}/" .
+                    "lcov-${strLCovVersion}.tar.gz | tar zx -C /root && \\\n" .
+                "    make -C ${strLCovPath} install && \\\n" .
+                "    rm -rf ${strLCovPath}";
+        }
+
+        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
-            $strScript .=  sectionHeader() .
-                "# Create PostgreSQL user/group with known ids for testing\n" .
-                '    ' . groupCreate($strOS, POSTGRES_GROUP, POSTGRES_GROUP_ID) . " && \\\n" .
-                '    ' . userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
-
             $strScript .=  sectionHeader() .
                 "# Install PostgreSQL packages\n";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
+                $strScript .=
+                    "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
+
                 if ($strOS eq VM_CO6)
                 {
                     $strScript .=
-                        "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 && \\\n" .
                         "    rpm -ivh \\\n" .
-                        "        http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-6-x86_64/pgdg-redhat-repo-latest.noarch.rpm";
+                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-6-x86_64/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
                 elsif ($strOS eq VM_CO7)
                 {
                     $strScript .=
-                        "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 && \\\n" .
                         "    rpm -ivh \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm";
+                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
+                elsif ($strOS eq VM_F30)
+                {
+                    $strScript .=
+                        "    rpm -ivh \\\n" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/" .
+                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
+                }
+
+                $strScript .= "    yum -y install postgresql-devel";
             }
             else
             {
@@ -563,7 +496,7 @@ sub containerBuild
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y postgresql-common && \\\n" .
+                    "    apt-get install -y postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -600,19 +533,14 @@ sub containerBuild
             }
         }
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDeprecated)
-        {
-            $strScript .= sectionHeader() .
-                "# Install AWS CLI\n" .
-                "    pip install --upgrade --no-cache-dir pip==9.0.3 && \\\n" .
-                "    pip install --upgrade awscli";
-        }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDeprecated && $strOS ne VM_CO6 && $strOS ne VM_U12)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            $strScript .= s3ServerSetup($strOS);
+        $strScript .=  sectionHeader() .
+            "# Cleanup\n";
+
+            $strScript .= "    apt-get clean";
         }
 
         containerWrite(
@@ -624,41 +552,31 @@ sub containerBuild
         $strImage = "${strOS}-build";
         $strCopy = undef;
 
-        my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
-        my $bPkgDevelCoverBuild = vmCoveragePerl($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
-
         $strScript = sectionHeader() .
             "# Create test user\n" .
             '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
             '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
 
-        # Install Perl packages
+        # Fetch package source
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src";
-
-            # Build only when a new version has been specified
-            if ($bPkgDevelCoverBuild)
-            {
-                $strScript .=  sectionHeader() .
-                    "# Install Devel::Cover package source & build\n" .
-                    "    git clone https://salsa.debian.org/perl-team/modules/packages/libdevel-cover-perl.git" .
-                        " /root/libdevel-cover-perl && \\\n" .
-                    "    cd /root/libdevel-cover-perl && \\\n" .
-                    "    git checkout debian/" . LIB_COVER_VERSION . " && \\\n" .
-                    "    debuild -i -us -uc -b";
-            }
         }
         else
         {
+            # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.  Using
+            # 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    mkdir /root/package-src && \\\n" .
                 "    wget -O /root/package-src/pgbackrest-conf.patch " .
                     "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
                     "f=rpm/redhat/master/pgbackrest/master/pgbackrest-conf.patch;hb=refs/heads/master' && \\\n" .
+                "    wget -O /root/package-src/pgbackrest-libxmlinclude.patch " .
+                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest-libxmlinclude.patch;hb=refs/heads/master' && \\\n" .
                 "    wget -O /root/package-src/pgbackrest.spec " .
                     "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
                     "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'";
@@ -668,50 +586,6 @@ sub containerBuild
 
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
-        # Copy Devel::Cover to host so it can be installed in other containers (if it doesn't already exist)
-        if ($bPkgDevelCoverBuild)
-        {
-            executeTest('docker rm -f test-build', {bSuppressError => true});
-            executeTest(
-                "docker run -itd -h test-build --name=test-build" .
-                " -v ${strTempPath}:${strTempPath} " . containerRepo() . ":${strOS}-build",
-                {bSuppressStdErr => true});
-            executeTest(
-                "docker exec -i test-build " .
-                "bash -c 'cp /root/${strPkgDevelCover} ${strTempPath}/${strOS}-${strPkgDevelCover}'");
-            executeTest('docker rm -f test-build');
-
-            $oStorageDocker->move(
-                "test/.vagrant/docker/${strOS}-${strPkgDevelCover}", "test/package/${strOS}-${strPkgDevelCover}");
-        }
-
-        # S3 image
-        ###########################################################################################################################
-        if (!$bDeprecated)
-        {
-            $strImage = "${strOS}-s3-server";
-            $strScript = '';
-            $strCopy = undef;
-
-            $strScript = sectionHeader() .
-                "# Set worker clusters lower than the default for testing\n" .
-                "    cd /root/scalitys3 && \\\n" .
-                '    sed -i "s/clusters\"\: [0-9]*/clusters\"\: 2/" ./config.json';
-
-            if ($strOS ne VM_CO6 && $strOS ne VM_U12)
-            {
-                $strImageParent = containerRepo() . ":${strOS}-base";
-                $strScript .= "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
-            }
-            else
-            {
-                $strImageParent = containerRepo() . ':' . CONTAINER_S3_SERVER_TAG;
-            }
-
-            containerWrite(
-                $oStorageDocker, $strTempPath, $strOS, 'S3 Server', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
-        }
-
         # Test image
         ########################################################################################################################
         if (!$bDeprecated)
@@ -719,28 +593,8 @@ sub containerBuild
             $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-test";
 
-            if (vmCoveragePerl($strOS))
-            {
-                $oStorageDocker->copy(
-                    "test/package/${strOS}-${strPkgDevelCover}", "test/.vagrant/docker/${strOS}-${strPkgDevelCover}");
-
-                $strCopy =
-                    "# Copy Devel::Cover\n" .
-                    "COPY ${strOS}-${strPkgDevelCover} /tmp/${strPkgDevelCover}";
-
-                $strScript = sectionHeader() .
-                    "# Install packages\n" .
-                    "    apt-get install -y libjson-maybexs-perl";
-
-                $strScript .= sectionHeader() .
-                    "# Install Devel::Cover\n" .
-                    "    dpkg -i /tmp/${strPkgDevelCover}";
-            }
-            else
-            {
-                $strCopy = undef;
-                $strScript = '';
-            }
+            $strCopy = undef;
+            $strScript = '';
 
             #---------------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .
@@ -776,22 +630,6 @@ sub containerBuild
 
             $strScript .=
                 sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
-            if (!$bDeprecated)
-            {
-                $strScript .= sectionHeader() .
-                    "# Config AWS CLI\n" .
-                    '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
-                    '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
-                    '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
-            }
-
-            $strScript .= sectionHeader() .
-                "# Create pgbackrest user\n" .
-                '    ' . userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, TEST_GROUP);
-
-            $strScript .=
-                sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
             $strScript .=  sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .

@@ -24,7 +24,7 @@ common/object.h has numerous examples of this.
 /***********************************************************************************************************************************
 If param2 > param1 then assign it to param1
 
-Useful for ensuring coverage in cases where compared values may be always ascending or decending.
+Useful for ensuring coverage in cases where compared values may be always ascending or descending.
 ***********************************************************************************************************************************/
 #define MAX_ASSIGN(param1, param2)                                                                                                 \
     do                                                                                                                             \

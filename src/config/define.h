@@ -29,7 +29,6 @@ Define global section name
 Functions
 ***********************************************************************************************************************************/
 unsigned int cfgDefCommandTotal(void);
-void cfgDefCommandCheck(ConfigDefineCommand commandDefId);
 const char *cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId);
 const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
 

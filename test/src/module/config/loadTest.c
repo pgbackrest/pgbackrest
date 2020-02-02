@@ -3,6 +3,7 @@ Test Configuration Load
 ***********************************************************************************************************************************/
 #include "common/io/io.h"
 #include "common/log.h"
+#include "protocol/helper.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -34,36 +35,6 @@ testRun(void)
         TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
         TEST_RESULT_BOOL(logTimestamp, true, "timestamp logging is on");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdLocal);
-
-        cfgOptionValidSet(cfgOptLogLevelConsole, true);
-        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("info"));
-        cfgOptionValidSet(cfgOptLogLevelStderr, true);
-        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("error"));
-        cfgOptionValidSet(cfgOptLogLevelFile, true);
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("debug"));
-        cfgOptionValidSet(cfgOptLogTimestamp, true);
-        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(false));
-
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings no defaults");
-        TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
-        TEST_RESULT_INT(logLevelFile, logLevelDebug, "file logging is debugging");
-        TEST_RESULT_BOOL(logTimestamp, false, "timestamp logging is off");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdLocal);
-
-        cfgOptionValidSet(cfgOptLogLevelStderr, true);
-        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("info"));
-
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings reset stderr");
-
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
     }
 
     // *****************************************************************************************************************************
@@ -73,7 +44,7 @@ testRun(void)
         String *exeOther = strNew("/other/path/to/pgbackrest");
 
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
         cfgExeSet(exe);
 
         cfgOptionValidSet(cfgOptRepoHost, true);
@@ -84,12 +55,12 @@ testRun(void)
         cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoHostCmd)), strPtr(exe), "    check repo1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exe, "    check repo1-host-cmd");
 
         cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, varNewStr(exeOther));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoHostCmd)), strPtr(exeOther), "    check repo1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exeOther, "    check repo1-host-cmd");
 
         cfgOptionSet(cfgOptRepoHost, cfgSourceParam, NULL);
 
@@ -106,11 +77,10 @@ testRun(void)
         cfgOptionSet(cfgOptPgHost + cfgOptionIndexTotal(cfgOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd)), strPtr(exe), "    check pg1-host-cmd");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd + 1)), strPtr(exeOther), "    check pg2-host-cmd is already set");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd + 2)), NULL, "    check pg3-host-cmd is not set");
-        TEST_RESULT_STR(
-            strPtr(cfgOptionStr(cfgOptPgHostCmd + cfgOptionIndexTotal(cfgOptPgHost) - 1)), strPtr(exe), "    check pgX-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 1), exeOther, "    check pg2-host-cmd is already set");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 2), NULL, "    check pg3-host-cmd is not set");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + cfgOptionIndexTotal(cfgOptPgHost) - 1), exe, "    check pgX-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
@@ -148,7 +118,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
         cfgExeSet(exe);
 
         cfgOptionValidSet(cfgOptPgHost, true);
@@ -162,23 +132,19 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("help"));
         strLstAdd(argList, strNew("backup"));
         strLstAdd(argList, strNew("process-max"));
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load help config -- no retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdHelp, argList), "load help config -- no retention warning");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    command is help");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
-        strLstAdd(argList, strNew("expire"));
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -187,7 +153,7 @@ testRun(void)
 
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config no retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config no retention warning");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
 
         // Munge repo-type for coverage.  This will go away when there are multiple repos.
@@ -195,13 +161,11 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "load config no repo-type");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=incr"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
                 "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full'"
@@ -211,13 +175,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -228,7 +190,7 @@ testRun(void)
 
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -236,31 +198,27 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "    repo1-retention-archive set to retention-diff");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("--repo1-retention-archive=3"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("--repo1-retention-archive=3"));
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config with success");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config with success");
 
         // -------------------------------------------------------------------------------------------------------------------------
         setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
@@ -268,25 +226,22 @@ testRun(void)
 
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
         TEST_ERROR(
-            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            harnessCfgLoad(cfgCmdArchiveGet, argList), OptionInvalidValueError,
             "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches"
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
-                "\nHINT: remove dots from the bucket name");
+                "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                "\nHINT: remove dots from the bucket name.");
 
         // Invalid bucket name with verification disabled succeeds
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
@@ -294,24 +249,21 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--no-repo1-s3-verify-ssl"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "invalid bucket with no verification");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "bogus.bucket", "    check bucket value");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "invalid bucket with no verification");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "bogus.bucket", "    check bucket value");
 
         // Valid bucket name
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=cool-bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "valid bucket name");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "cool-bucket", "    check bucket value");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
@@ -320,13 +272,20 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogFile()"))
     {
-        cfgInit();
-        cfgOptionValidSet(cfgOptLogLevelFile, true);
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("detail"));
+        StringList *argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path=/path"));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
+        strLstAdd(argList, strNew("--log-path=/bogus"));
+        strLstAdd(argList, strNew("--log-level-file=info"));
+        strLstAdd(argList, strNew("backup"));
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
+        lockRelease(true);
 
         // On the error case is tested here, success is tested in cfgLoad()
-        TEST_RESULT_VOID(cfgLoadLogFile(strNew("/BOGUS")), "attempt to open bogus log file");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLogLevelFile)), "off", "log-level-file should now be off");
+        TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLogLevelFile), "off", "log-level-file should now be off");
     }
 
     // *****************************************************************************************************************************
@@ -409,6 +368,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--pg1-path=/path"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
@@ -418,18 +378,20 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strPtr(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
 
+        lockRelease(true);
+
         // Local command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--host-id=1"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
-        strLstAdd(argList, strNew("local"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(
@@ -439,16 +401,68 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
-        strLstAdd(argList, strNew("--type=backup"));
-        strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
         strLstAdd(argList, strNew("--process=0"));
-        strLstAdd(argList, strNew("remote"));
+        strLstAddZ(argList, CFGCMD_INFO ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(
-            lstat(strPtr(strNewFmt("%s/all-backup-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
+            lstat(strPtr(strNewFmt("%s/all-info-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote command without archive-async option");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-get-remote-001.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local command with archive-async option");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_LOCAL);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-push-async-local-001.log", testPath())), &statLog), 0,
+            "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-get command with async role");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-get-async.log", testPath())), &statLog), 0, "   check log file exists");
+
+        lockRelease(true);
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

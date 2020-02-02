@@ -11,12 +11,8 @@ Command constants
 ***********************************************************************************************************************************/
 #define CFGCMD_ARCHIVE_GET                                          "archive-get"
     STRING_DECLARE(CFGCMD_ARCHIVE_GET_STR);
-#define CFGCMD_ARCHIVE_GET_ASYNC                                    "archive-get-async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_GET_ASYNC_STR);
 #define CFGCMD_ARCHIVE_PUSH                                         "archive-push"
     STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_STR);
-#define CFGCMD_ARCHIVE_PUSH_ASYNC                                   "archive-push-async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_ASYNC_STR);
 #define CFGCMD_BACKUP                                               "backup"
     STRING_DECLARE(CFGCMD_BACKUP_STR);
 #define CFGCMD_CHECK                                                "check"
@@ -27,12 +23,8 @@ Command constants
     STRING_DECLARE(CFGCMD_HELP_STR);
 #define CFGCMD_INFO                                                 "info"
     STRING_DECLARE(CFGCMD_INFO_STR);
-#define CFGCMD_LOCAL                                                "local"
-    STRING_DECLARE(CFGCMD_LOCAL_STR);
 #define CFGCMD_LS                                                   "ls"
     STRING_DECLARE(CFGCMD_LS_STR);
-#define CFGCMD_REMOTE                                               "remote"
-    STRING_DECLARE(CFGCMD_REMOTE_STR);
 #define CFGCMD_RESTORE                                              "restore"
     STRING_DECLARE(CFGCMD_RESTORE_STR);
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
@@ -48,7 +40,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           16
 
 /***********************************************************************************************************************************
 Option constants
@@ -69,14 +61,10 @@ Option constants
     STRING_DECLARE(CFGOPT_BACKUP_STANDBY_STR);
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
     STRING_DECLARE(CFGOPT_BUFFER_SIZE_STR);
-#define CFGOPT_C                                                    "c"
-    STRING_DECLARE(CFGOPT_C_STR);
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
     STRING_DECLARE(CFGOPT_CHECKSUM_PAGE_STR);
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
     STRING_DECLARE(CFGOPT_CMD_SSH_STR);
-#define CFGOPT_COMMAND                                              "command"
-    STRING_DECLARE(CFGOPT_COMMAND_STR);
 #define CFGOPT_COMPRESS                                             "compress"
     STRING_DECLARE(CFGOPT_COMPRESS_STR);
 #define CFGOPT_COMPRESS_LEVEL                                       "compress-level"
@@ -129,8 +117,6 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
-#define CFGOPT_PERL_OPTION                                          "perl-option"
-    STRING_DECLARE(CFGOPT_PERL_OPTION_STR);
 #define CFGOPT_PG1_HOST                                             "pg1-host"
     STRING_DECLARE(CFGOPT_PG1_HOST_STR);
 #define CFGOPT_PG1_HOST_CMD                                         "pg1-host-cmd"
@@ -151,6 +137,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG1_PORT_STR);
 #define CFGOPT_PG1_SOCKET_PATH                                      "pg1-socket-path"
     STRING_DECLARE(CFGOPT_PG1_SOCKET_PATH_STR);
+#define CFGOPT_PG1_USER                                             "pg1-user"
+    STRING_DECLARE(CFGOPT_PG1_USER_STR);
 #define CFGOPT_PG2_HOST                                             "pg2-host"
     STRING_DECLARE(CFGOPT_PG2_HOST_STR);
 #define CFGOPT_PG2_HOST_CMD                                         "pg2-host-cmd"
@@ -171,6 +159,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG2_PORT_STR);
 #define CFGOPT_PG2_SOCKET_PATH                                      "pg2-socket-path"
     STRING_DECLARE(CFGOPT_PG2_SOCKET_PATH_STR);
+#define CFGOPT_PG2_USER                                             "pg2-user"
+    STRING_DECLARE(CFGOPT_PG2_USER_STR);
 #define CFGOPT_PG3_HOST                                             "pg3-host"
     STRING_DECLARE(CFGOPT_PG3_HOST_STR);
 #define CFGOPT_PG3_HOST_CMD                                         "pg3-host-cmd"
@@ -191,6 +181,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG3_PORT_STR);
 #define CFGOPT_PG3_SOCKET_PATH                                      "pg3-socket-path"
     STRING_DECLARE(CFGOPT_PG3_SOCKET_PATH_STR);
+#define CFGOPT_PG3_USER                                             "pg3-user"
+    STRING_DECLARE(CFGOPT_PG3_USER_STR);
 #define CFGOPT_PG4_HOST                                             "pg4-host"
     STRING_DECLARE(CFGOPT_PG4_HOST_STR);
 #define CFGOPT_PG4_HOST_CMD                                         "pg4-host-cmd"
@@ -211,6 +203,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG4_PORT_STR);
 #define CFGOPT_PG4_SOCKET_PATH                                      "pg4-socket-path"
     STRING_DECLARE(CFGOPT_PG4_SOCKET_PATH_STR);
+#define CFGOPT_PG4_USER                                             "pg4-user"
+    STRING_DECLARE(CFGOPT_PG4_USER_STR);
 #define CFGOPT_PG5_HOST                                             "pg5-host"
     STRING_DECLARE(CFGOPT_PG5_HOST_STR);
 #define CFGOPT_PG5_HOST_CMD                                         "pg5-host-cmd"
@@ -231,6 +225,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG5_PORT_STR);
 #define CFGOPT_PG5_SOCKET_PATH                                      "pg5-socket-path"
     STRING_DECLARE(CFGOPT_PG5_SOCKET_PATH_STR);
+#define CFGOPT_PG5_USER                                             "pg5-user"
+    STRING_DECLARE(CFGOPT_PG5_USER_STR);
 #define CFGOPT_PG6_HOST                                             "pg6-host"
     STRING_DECLARE(CFGOPT_PG6_HOST_STR);
 #define CFGOPT_PG6_HOST_CMD                                         "pg6-host-cmd"
@@ -251,6 +247,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG6_PORT_STR);
 #define CFGOPT_PG6_SOCKET_PATH                                      "pg6-socket-path"
     STRING_DECLARE(CFGOPT_PG6_SOCKET_PATH_STR);
+#define CFGOPT_PG6_USER                                             "pg6-user"
+    STRING_DECLARE(CFGOPT_PG6_USER_STR);
 #define CFGOPT_PG7_HOST                                             "pg7-host"
     STRING_DECLARE(CFGOPT_PG7_HOST_STR);
 #define CFGOPT_PG7_HOST_CMD                                         "pg7-host-cmd"
@@ -271,6 +269,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG7_PORT_STR);
 #define CFGOPT_PG7_SOCKET_PATH                                      "pg7-socket-path"
     STRING_DECLARE(CFGOPT_PG7_SOCKET_PATH_STR);
+#define CFGOPT_PG7_USER                                             "pg7-user"
+    STRING_DECLARE(CFGOPT_PG7_USER_STR);
 #define CFGOPT_PG8_HOST                                             "pg8-host"
     STRING_DECLARE(CFGOPT_PG8_HOST_STR);
 #define CFGOPT_PG8_HOST_CMD                                         "pg8-host-cmd"
@@ -291,6 +291,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG8_PORT_STR);
 #define CFGOPT_PG8_SOCKET_PATH                                      "pg8-socket-path"
     STRING_DECLARE(CFGOPT_PG8_SOCKET_PATH_STR);
+#define CFGOPT_PG8_USER                                             "pg8-user"
+    STRING_DECLARE(CFGOPT_PG8_USER_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -299,6 +301,10 @@ Option constants
     STRING_DECLARE(CFGOPT_PROTOCOL_TIMEOUT_STR);
 #define CFGOPT_RECOVERY_OPTION                                      "recovery-option"
     STRING_DECLARE(CFGOPT_RECOVERY_OPTION_STR);
+#define CFGOPT_RECURSE                                              "recurse"
+    STRING_DECLARE(CFGOPT_RECURSE_STR);
+#define CFGOPT_REMOTE_TYPE                                          "remote-type"
+    STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
 #define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
     STRING_DECLARE(CFGOPT_REPO1_CIPHER_PASS_STR);
 #define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
@@ -343,10 +349,14 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_S3_KEY_STR);
 #define CFGOPT_REPO1_S3_KEY_SECRET                                  "repo1-s3-key-secret"
     STRING_DECLARE(CFGOPT_REPO1_S3_KEY_SECRET_STR);
+#define CFGOPT_REPO1_S3_PORT                                        "repo1-s3-port"
+    STRING_DECLARE(CFGOPT_REPO1_S3_PORT_STR);
 #define CFGOPT_REPO1_S3_REGION                                      "repo1-s3-region"
     STRING_DECLARE(CFGOPT_REPO1_S3_REGION_STR);
 #define CFGOPT_REPO1_S3_TOKEN                                       "repo1-s3-token"
     STRING_DECLARE(CFGOPT_REPO1_S3_TOKEN_STR);
+#define CFGOPT_REPO1_S3_URI_STYLE                                   "repo1-s3-uri-style"
+    STRING_DECLARE(CFGOPT_REPO1_S3_URI_STYLE_STR);
 #define CFGOPT_REPO1_S3_VERIFY_TLS                                  "repo1-s3-verify-tls"
     STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_TLS_STR);
 #define CFGOPT_REPO1_TYPE                                           "repo1-type"
@@ -377,16 +387,10 @@ Option constants
     STRING_DECLARE(CFGOPT_TARGET_EXCLUSIVE_STR);
 #define CFGOPT_TARGET_TIMELINE                                      "target-timeline"
     STRING_DECLARE(CFGOPT_TARGET_TIMELINE_STR);
-#define CFGOPT_TEST                                                 "test"
-    STRING_DECLARE(CFGOPT_TEST_STR);
-#define CFGOPT_TEST_DELAY                                           "test-delay"
-    STRING_DECLARE(CFGOPT_TEST_DELAY_STR);
-#define CFGOPT_TEST_POINT                                           "test-point"
-    STRING_DECLARE(CFGOPT_TEST_POINT_STR);
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            166
+#define CFG_OPTION_TOTAL                                            172
 
 /***********************************************************************************************************************************
 Command enum
@@ -394,17 +398,13 @@ Command enum
 typedef enum
 {
     cfgCmdArchiveGet,
-    cfgCmdArchiveGetAsync,
     cfgCmdArchivePush,
-    cfgCmdArchivePushAsync,
     cfgCmdBackup,
     cfgCmdCheck,
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
-    cfgCmdLocal,
     cfgCmdLs,
-    cfgCmdRemote,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
@@ -428,10 +428,8 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
@@ -458,7 +456,6 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPerlOption,
     cfgOptPgHost,
     cfgOptPgHost2,
     cfgOptPgHost3,
@@ -539,10 +536,20 @@ typedef enum
     cfgOptPgSocketPath6,
     cfgOptPgSocketPath7,
     cfgOptPgSocketPath8,
+    cfgOptPgUser,
+    cfgOptPgUser2,
+    cfgOptPgUser3,
+    cfgOptPgUser4,
+    cfgOptPgUser5,
+    cfgOptPgUser6,
+    cfgOptPgUser7,
+    cfgOptPgUser8,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,
+    cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
@@ -565,8 +572,10 @@ typedef enum
     cfgOptRepoS3Host,
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
+    cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
+    cfgOptRepoS3UriStyle,
     cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,
@@ -582,9 +591,6 @@ typedef enum
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
-    cfgOptTest,
-    cfgOptTestDelay,
-    cfgOptTestPoint,
     cfgOptType,
 } ConfigOption;
 

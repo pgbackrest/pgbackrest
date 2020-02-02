@@ -18,6 +18,7 @@ typedef struct Storage Storage;
 #include "common/type/stringList.h"
 #include "common/io/filter/group.h"
 #include "common/time.h"
+#include "common/type/param.h"
 #include "storage/info.h"
 #include "storage/read.h"
 #include "storage/write.h"
@@ -33,12 +34,25 @@ typedef enum
     // noop.  We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
     // etc.) for storage that does not support paths.
     storageFeaturePath,
+
+    // Do paths need to be synced to ensure contents are durable?  storeageFeaturePath must also be enabled.
+    storageFeaturePathSync,
+
+    // Is the storage able to do compression and therefore store the file more efficiently than what was written?  If so, the size
+    // will need to checked after write to see if it is different.
+    storageFeatureCompress,
+
+    // Does the storage support hardlinks?  Hardlinks allow the same file to linked into multiple paths to save space.
+    storageFeatureHardLink,
+
+    // Does the storage support symlinks?  Symlinks allow paths/files/links to be accessed from another path.
+    storageFeatureSymLink,
 } StorageFeature;
 
 /***********************************************************************************************************************************
 storageCopy
 ***********************************************************************************************************************************/
-#define storageCopyNP(source, destination)                                                                                         \
+#define storageCopyP(source, destination)                                                                                          \
     storageCopy(source, destination)
 
 bool storageCopy(StorageRead *source, StorageWrite *destination);
@@ -48,36 +62,26 @@ storageExists
 ***********************************************************************************************************************************/
 typedef struct StorageExistsParam
 {
+    VAR_PARAM_HEADER;
     TimeMSec timeout;
 } StorageExistsParam;
 
 #define storageExistsP(this, pathExp, ...)                                                                                         \
-    storageExists(this, pathExp, (StorageExistsParam){__VA_ARGS__})
-#define storageExistsNP(this, pathExp)                                                                                             \
-    storageExists(this, pathExp, (StorageExistsParam){0})
+    storageExists(this, pathExp, (StorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
-
-/***********************************************************************************************************************************
-storageFeature
-***********************************************************************************************************************************/
-#define storageFeatureNP(this, feature)                                                                                            \
-    storageFeature(this, feature)
-
-bool storageFeature(const Storage *this, StorageFeature feature);
 
 /***********************************************************************************************************************************
 storageGet
 ***********************************************************************************************************************************/
 typedef struct StorageGetParam
 {
+    VAR_PARAM_HEADER;
     size_t exactSize;
 } StorageGetParam;
 
 #define storageGetP(file, ...)                                                                                                     \
-    storageGet(file, (StorageGetParam){__VA_ARGS__})
-#define storageGetNP(file)                                                                                                         \
-    storageGet(file, (StorageGetParam){0})
+    storageGet(file, (StorageGetParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 Buffer *storageGet(StorageRead *file, StorageGetParam param);
 
@@ -86,14 +90,14 @@ storageInfo
 ***********************************************************************************************************************************/
 typedef struct StorageInfoParam
 {
+    VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool followLink;
+    bool noPathEnforce;
 } StorageInfoParam;
 
 #define storageInfoP(this, fileExp, ...)                                                                                           \
-    storageInfo(this, fileExp, (StorageInfoParam){__VA_ARGS__})
-#define storageInfoNP(this, fileExp)                                                                                               \
-    storageInfo(this, fileExp, (StorageInfoParam){0})
+    storageInfo(this, fileExp, (StorageInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
@@ -104,13 +108,15 @@ typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *i
 
 typedef struct StorageInfoListParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnMissing;
+    bool recurse;
+    SortOrder sortOrder;
+    const String *expression;
 } StorageInfoListParam;
 
 #define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){__VA_ARGS__})
-#define storageInfoListNP(this, fileExp, callback, callbackData)                                                                   \
-    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){0})
+    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 bool storageInfoList(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
@@ -120,22 +126,21 @@ storageList
 ***********************************************************************************************************************************/
 typedef struct StorageListParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnMissing;
     bool nullOnMissing;
     const String *expression;
 } StorageListParam;
 
 #define storageListP(this, pathExp, ...)                                                                                           \
-    storageList(this, pathExp, (StorageListParam){__VA_ARGS__})
-#define storageListNP(this, pathExp)                                                                                               \
-    storageList(this, pathExp, (StorageListParam){0})
+    storageList(this, pathExp, (StorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
 
 /***********************************************************************************************************************************
 storageMove
 ***********************************************************************************************************************************/
-#define storageMoveNP(this, source, destination)                                                                                   \
+#define storageMoveP(this, source, destination)                                                                                    \
     storageMove(this, source, destination)
 
 void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
@@ -145,14 +150,13 @@ storageNewRead
 ***********************************************************************************************************************************/
 typedef struct StorageNewReadParam
 {
+    VAR_PARAM_HEADER;
     bool ignoreMissing;
-    IoFilterGroup *filterGroup;
+    bool compressible;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
-    storageNewRead(this, pathExp, (StorageNewReadParam){__VA_ARGS__})
-#define storageNewReadNP(this, pathExp)                                                                                            \
-    storageNewRead(this, pathExp, (StorageNewReadParam){0})
+    storageNewRead(this, pathExp, (StorageNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
@@ -161,54 +165,58 @@ storageNewWrite
 ***********************************************************************************************************************************/
 typedef struct StorageNewWriteParam
 {
-    mode_t modeFile;
-    mode_t modePath;
-    const String *user;
-    const String *group;
-    time_t timeModified;
+    VAR_PARAM_HEADER;
     bool noCreatePath;
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
-    IoFilterGroup *filterGroup;
+    bool compressible;
+    mode_t modeFile;
+    mode_t modePath;
+    time_t timeModified;
+    const String *user;
+    const String *group;
 } StorageNewWriteParam;
 
 #define storageNewWriteP(this, pathExp, ...)                                                                                       \
-    storageNewWrite(this, pathExp, (StorageNewWriteParam){__VA_ARGS__})
-#define storageNewWriteNP(this, pathExp)                                                                                           \
-    storageNewWrite(this, pathExp, (StorageNewWriteParam){0})
+    storageNewWrite(this, pathExp, (StorageNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
 
 /***********************************************************************************************************************************
 storagePath
 ***********************************************************************************************************************************/
-#define storagePathNP(this, pathExp)                                                                                               \
-    storagePath(this, pathExp)
+typedef struct StoragePathParam
+{
+    VAR_PARAM_HEADER;
+    bool noEnforce;
+} StoragePathParam;
 
-String *storagePath(const Storage *this, const String *pathExp);
+#define storagePathP(this, pathExp, ...)                                                                                                \
+    storagePath(this, pathExp, (StoragePathParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);
 
 /***********************************************************************************************************************************
 storagePathCreate
 ***********************************************************************************************************************************/
 typedef struct StoragePathCreateParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnExists;
     bool noParentCreate;
     mode_t mode;
 } StoragePathCreateParam;
 
 #define storagePathCreateP(this, pathExp, ...)                                                                                     \
-    storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
-#define storagePathCreateNP(this, pathExp)                                                                                         \
-    storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 /***********************************************************************************************************************************
 storagePathExists
 ***********************************************************************************************************************************/
-#define storagePathExistsNP(this, pathExp)                                                                                         \
+#define storagePathExistsP(this, pathExp)                                                                                          \
     storagePathExists(this, pathExp)
 
 bool storagePathExists(const Storage *this, const String *pathExp);
@@ -218,21 +226,20 @@ storagePathRemove
 ***********************************************************************************************************************************/
 typedef struct StoragePathRemoveParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnMissing;
     bool recurse;
 } StoragePathRemoveParam;
 
 #define storagePathRemoveP(this, pathExp, ...)                                                                                     \
-    storagePathRemove(this, pathExp, (StoragePathRemoveParam){__VA_ARGS__})
-#define storagePathRemoveNP(this, pathExp)                                                                                         \
-    storagePathRemove(this, pathExp, (StoragePathRemoveParam){0})
+    storagePathRemove(this, pathExp, (StoragePathRemoveParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
 
 /***********************************************************************************************************************************
 storagePathSync
 ***********************************************************************************************************************************/
-#define storagePathSyncNP(this, pathExp)                                                                                           \
+#define storagePathSyncP(this, pathExp)                                                                                            \
     storagePathSync(this, pathExp)
 
 void storagePathSync(const Storage *this, const String *pathExp);
@@ -240,7 +247,7 @@ void storagePathSync(const Storage *this, const String *pathExp);
 /***********************************************************************************************************************************
 storagePut
 ***********************************************************************************************************************************/
-#define storagePutNP(file, buffer)                                                                                                 \
+#define storagePutP(file, buffer)                                                                                                  \
     storagePut(file, buffer)
 
 void storagePut(StorageWrite *file, const Buffer *buffer);
@@ -250,19 +257,19 @@ storageRemove
 ***********************************************************************************************************************************/
 typedef struct StorageRemoveParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnMissing;
 } StorageRemoveParam;
 
 #define storageRemoveP(this, fileExp, ...)                                                                                         \
-    storageRemove(this, fileExp, (StorageRemoveParam){__VA_ARGS__})
-#define storageRemoveNP(this, fileExp)                                                                                             \
-    storageRemove(this, fileExp, (StorageRemoveParam){0})
+    storageRemove(this, fileExp, (StorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+bool storageFeature(const Storage *this, StorageFeature feature);
 const String *storageType(const Storage *this);
 
 /***********************************************************************************************************************************

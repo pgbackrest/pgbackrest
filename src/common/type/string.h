@@ -9,9 +9,12 @@ old context and then back. Below is a simplified example:
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
-        memContextSwitch(MEM_CONTEXT_OLD());  <--- switch to the old context so the duplication of the string is in that context
-        result = strDup(resultStr);           <--- recreates a copy of the string in the old context where "result" was created.
-        memContextSwitch(MEM_CONTEXT_TEMP()); <--- switch back to the temporary context
+
+        MEM_CONTEXT_PRIOR_BEGIN() <--- switch to the old context so the duplication of the string is in that context
+        {
+            result = strDup(resultStr); <--- recreates a copy of the string in the old context where "result" was created
+        }
+        MEM_CONTEXT_PRIOR_END(); <--- switch back to the temporary context
     }
     MEM_CONTEXT_TEMP_END(); <-- frees everything created inside this temporary memory context - i.e resultStr
 ***********************************************************************************************************************************/
@@ -54,6 +57,7 @@ String *strFirstLower(String *this);
 String *strUpper(String *this);
 String *strLower(String *this);
 String *strPath(const String *this);
+String *strPathAbsolute(const String *this, const String *base);
 const char *strPtr(const String *this);
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
@@ -104,22 +108,26 @@ By convention all string constant identifiers are appended with _STR.
 
 // Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \
-    const String *name = STRDEF(buffer)
+    const String *const name = STRDEF(buffer)
 
 // Used to declare String constants that will be local to the .c file.  Must be used in a .c file.
 #define STRING_STATIC(name, buffer)                                                                                                \
-    static const String *name = STRDEF(buffer)
+    static const String *const name = STRDEF(buffer)
 
 // Used to extern String constants declared with STRING_EXTERN().  Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
-    extern const String *name
+    extern const String *const name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
 STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
+STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
+STRING_DECLARE(DASH_STR);
+STRING_DECLARE(DOT_STR);
+STRING_DECLARE(DOTDOT_STR);
 STRING_DECLARE(EMPTY_STR);
 STRING_DECLARE(EQ_STR);
 STRING_DECLARE(FALSE_STR);

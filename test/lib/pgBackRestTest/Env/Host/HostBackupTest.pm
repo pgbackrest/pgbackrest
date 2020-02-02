@@ -15,6 +15,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl ':mode';
 use File::Basename qw(dirname);
+use File::stat qw{lstat};
 use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
@@ -27,9 +28,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::S3::Driver;
 use pgBackRest::Version;
+use pgBackRest::Storage::Base;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
@@ -78,14 +78,14 @@ sub new
     {
         $strName = HOST_BACKUP;
         $strImage = containerRepo() . ':' . testRunGet()->vm() . '-test';
-        $strUser = testRunGet()->backrestUser();
     }
     else
     {
         $strName = $$oParam{strName};
         $strImage = $$oParam{strImage};
-        $strUser = testRunGet()->pgUser();
     }
+
+    $strUser = testRunGet()->pgUser();
 
     # Create the host
     my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
@@ -169,8 +169,6 @@ sub backupBegin
         );
 
     # Set defaults
-    my $strTest = defined($$oParam{strTest}) ? $$oParam{strTest} : undef;
-    my $fTestDelay = defined($$oParam{fTestDelay}) ? $$oParam{fTestDelay} : .2;
     my $oExpectedManifest = defined($$oParam{oExpectedManifest}) ? $$oParam{oExpectedManifest} : undef;
 
     $strComment =
@@ -188,18 +186,11 @@ sub backupBegin
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
-        ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup' .
-        (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
+        ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
          oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     $oExecuteBackup->begin();
-
-    # Return at the test point if one was defined
-    if (defined($strTest))
-    {
-        $oExecuteBackup->end($strTest);
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -262,64 +253,67 @@ sub backupEnd
     }
 
     # Make sure tablespace links are correct
-    if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
+    if ($self->hasLink())
     {
-        my $hTablespaceManifest = storageRepo()->manifest(
-            STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
-
-        # Remove . and ..
-        delete($hTablespaceManifest->{'.'});
-        delete($hTablespaceManifest->{'..'});
-
-        # Iterate file links
-        for my $strFile (sort(keys(%{$hTablespaceManifest})))
+        if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
         {
-            # Make sure the link is in the expected manifest
-            my $hManifestTarget =
-                $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+            my $hTablespaceManifest = storageRepo()->manifest(
+                STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
 
-            if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
-                $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+            # Remove . and ..
+            delete($hTablespaceManifest->{'.'});
+            delete($hTablespaceManifest->{'..'});
+
+            # Iterate file links
+            for my $strFile (sort(keys(%{$hTablespaceManifest})))
             {
-                confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                # Make sure the link is in the expected manifest
+                my $hManifestTarget =
+                    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+                if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                    $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+                {
+                    confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                }
+
+                # Make sure the link really is a link
+                if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+                {
+                    confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+                }
+
+                # Make sure the link destination is correct
+                my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+                if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+                {
+                    confess &log(ERROR,
+                        "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                        "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                }
             }
 
-            # Make sure the link really is a link
-            if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+            # Iterate manifest targets
+            for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
             {
-                confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
-            }
+                my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+                my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
 
-            # Make sure the link destination is correct
-            my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
-
-            if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
-            {
-                confess &log(ERROR,
-                    "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
-                    "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                # Make sure the target exists as a link on disk
+                if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                    !defined($hTablespaceManifest->{$strTablespaceId}))
+                {
+                    confess &log(ERROR,
+                        "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+                }
             }
         }
-
-        # Iterate manifest targets
-        for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+        # Else there should not be a tablespace directory at all
+        elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
         {
-            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
-            my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
-
-            # Make sure the target exists as a link on disk
-            if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
-                !defined($hTablespaceManifest->{$strTablespaceId}))
-            {
-                confess &log(ERROR,
-                    "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
-            }
+            confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
         }
-    }
-    # Else there should not be a tablespace directory at all
-    elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
-    {
-        confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
     }
 
     # Check that latest link exists unless repo links are disabled
@@ -495,7 +489,8 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
+                    (storageRepo()->info(STORAGE_REPO_BACKUP .
+                        "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -909,11 +904,11 @@ sub stanzaDelete
     if (defined($self->{oLogTest}) && $self->synthetic())
     {
         $self->{oLogTest}->logAdd(
-            'ls ' . $self->repoPath() . '/backup/', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('backup/')));
+            'list backup', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('backup')));
         $self->{oLogTest}->logAdd(
-            'ls ' . $self->repoPath() . '/archive/', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('archive/')));
+            'list archive', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('archive')));
     }
 
     # Return from function and log return values if any
@@ -1017,10 +1012,12 @@ sub configCreate
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DETAIL);
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = lc(TRACE);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = testRunGet()->logLevelTestFile();
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_SUBPROCESS)} = 'y';
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_SUBPROCESS)} =
+        testRunGet()->logLevelTestFile() eq lc(OFF) ? 'n' : 'y';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_TIMESTAMP)} = 'n';
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BUFFER_SIZE)} = '64k';
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
@@ -1028,7 +1025,7 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
 
-    # Set to make sure that changinf the default works and to speed compression for testing
+    # Set to make sure that changing the default works and to speed compression for testing
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL)} = 3;
 
     # Only set network compress level if there is more than one host
@@ -1177,9 +1174,6 @@ sub configCreate
 
     # Write out the configuration file
     storageTest()->put($self->backrestConfig(), iniRender(\%oParamHash, true));
-
-    # Modify the file permissions so it can be read/saved by all test users
-    executeTest('sudo chmod 660 ' . $self->backrestConfig());
 }
 
 ####################################################################################################################################
@@ -1213,16 +1207,7 @@ sub configUpdate
         }
     }
 
-    # Modify the file permissions so it can be saved by all test users
-    executeTest(
-        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()));
-
     storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
-
-    # Fix permissions back to original
-    executeTest(
-        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()) .
-        ' && sudo chown ' . $self->userGet() . ' ' . $self->backrestConfig());
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1339,33 +1324,33 @@ sub infoMunge
                 foreach my $strSubKey (keys(%{$hParam->{$strSection}{$strKey}}))
                 {
                     # Munge the copy with the new parameter values
-                    $oMungeIni->set($strSection, $strKey, $strSubKey, $hParam->{$strSection}{$strKey}{$strSubKey});
+                    if (defined($hParam->{$strSection}{$strKey}{$strSubKey}))
+                    {
+                        $oMungeIni->set($strSection, $strKey, $strSubKey, $hParam->{$strSection}{$strKey}{$strSubKey});
+                    }
+                    else
+                    {
+                        $oMungeIni->remove($strSection, $strKey, $strSubKey);
+                    }
                 }
             }
             else
             {
                 # Munge the copy with the new parameter values
-                $oMungeIni->set($strSection, $strKey, undef, $hParam->{$strSection}{$strKey});
+                if (defined($hParam->{$strSection}{$strKey}))
+                {
+                    $oMungeIni->set($strSection, $strKey, undef, $hParam->{$strSection}{$strKey});
+                }
+                else
+                {
+                    $oMungeIni->remove($strSection, $strKey);
+                }
             }
         }
     }
 
-    # Modify the file/directory permissions so it can be saved
-    if ($self->isFS())
-    {
-        executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
-    }
-
     # Save the munged data to the file
     $oMungeIni->save();
-
-    # Fix permissions
-    if ($self->isFS())
-    {
-        executeTest(
-            "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
-            ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
-    }
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1406,23 +1391,9 @@ sub infoRestore
     {
         if ($bSave)
         {
-            # Modify the file/directory permissions so it can be saved
-            if ($self->isFS())
-            {
-                executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
-            }
-
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
-
-            # Fix permissions
-            if ($self->isFS())
-            {
-                executeTest(
-                    "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
-                    ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
-            }
         }
     }
     else
@@ -1535,16 +1506,7 @@ sub configRemap
     # Save backup config file (but not if this is the standby which is not the source of backups)
     if (defined($oHostBackup))
     {
-        # Modify the file permissions so it can be read/saved by all test users
-        executeTest(
-            'sudo chmod 660 ' . $oHostBackup->backrestConfig() . ' && sudo chmod 770 ' . dirname($oHostBackup->backrestConfig()));
-
         storageTest()->put($oHostBackup->backrestConfig(), iniRender($oRemoteConfig, true));
-
-        # Fix permissions
-        executeTest(
-            'sudo chmod 660 ' . $oHostBackup->backrestConfig() . ' && sudo chmod 770 ' . dirname($oHostBackup->backrestConfig()) .
-            ' && sudo chown ' . $oHostBackup->userGet() . ' ' . $oHostBackup->backrestConfig());
     }
 }
 
@@ -1575,6 +1537,7 @@ sub restore
         $strOptionalParam,
         $bTablespace,
         $strUser,
+        $strBackupExpected,
     ) =
         logDebugParam
         (
@@ -1595,6 +1558,7 @@ sub restore
             {name => 'strOptionalParam', optional => true},
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
+            {name => 'strBackupExpected', optional => true},
         );
 
     # Build link map options
@@ -1631,10 +1595,15 @@ sub restore
 
     if (!defined($rhExpectedManifest))
     {
+        if (!defined($strBackupExpected))
+        {
+            $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup;
+        }
+
         # Load the manifest
         my $oExpectedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet(
-                STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . qw{/} .
+                STORAGE_REPO_BACKUP . qw{/} . $strBackupExpected. qw{/} .
                     FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
@@ -1882,7 +1851,7 @@ sub restoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
+            my $oStat = lstat($oActualManifest->dbPathGet($strSectionPath, $strName));
 
             # When performing a selective restore, the files for the database(s) that are not restored are still copied but as empty
             # sparse files (blocks == 0). If the file is not a sparse file or is a link, then get the actual checksum for comparison
@@ -1917,6 +1886,13 @@ sub restoreCompare
                 delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REFERENCE});
             }
         }
+    }
+
+    # If PostgreSQL >= 12 don't compare postgresql.auto.conf since it will have recovery settings written into it
+    if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_12)
+    {
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/postgresql.auto.conf'});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, 'pg_data/postgresql.auto.conf');
     }
 
     # If the link section is empty then delete it and the default section
@@ -2049,8 +2025,8 @@ sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub bogusHost {return shift->{bBogusHost}}
 sub hardLink {return shift->{bHardLink}}
-sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
-sub isFS {storageRepo()->driver()->className() ne STORAGE_S3_DRIVER}
+sub hasLink {storageRepo()->capability(STORAGE_CAPABILITY_LINK)}
+sub isFS {storageRepo()->type() ne STORAGE_S3}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

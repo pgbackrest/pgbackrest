@@ -119,9 +119,13 @@ ioBufferNew(void)
     MEM_CONTEXT_NEW_BEGIN("IoBuffer")
     {
         IoBuffer *driver = memNew(sizeof(IoBuffer));
-        driver->memContext = memContextCurrent();
 
-        this = ioFilterNewP(BUFFER_FILTER_TYPE_STR, driver, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
+        *driver = (IoBuffer)
+        {
+            .memContext = memContextCurrent(),
+        };
+
+        this = ioFilterNewP(BUFFER_FILTER_TYPE_STR, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
     }
     MEM_CONTEXT_NEW_END();
 

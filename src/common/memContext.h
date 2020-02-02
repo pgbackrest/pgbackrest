@@ -32,7 +32,7 @@ Space is reserved for this many allocations when a context is created.  When mor
 Memory context management functions
 
 MemContext *context = memContextNew();
-MemContext *contextOld = memContextSwitch(context);
+MemContext *contextPrior = memContextSwitch(context);
 
 TRY_BEGIN()
 {
@@ -47,7 +47,7 @@ CATCH_ANY()
 }
 FINALLY
 {
-    memContextSwitch(context);
+    memContextSwitch(contextPrior);
 }
 TRY_END();
 
@@ -68,49 +68,84 @@ MemContext *memContextTop(void);
 const char *memContextName(MemContext *this);
 
 /***********************************************************************************************************************************
-Memory management
+Memory management functions
 
-These functions always new/free within the current memory context.
+All these functions operate in the current memory context, including memResize() and memFree().
 ***********************************************************************************************************************************/
+// Allocate memory in the current memory context
 void *memNew(size_t size);
-void *memNewRaw(size_t size);
-void *memGrowRaw(const void *buffer, size_t size);
+
+// Allocate requested number of pointers and initialize them to NULL
+void *memNewPtrArray(size_t size);
+
+// Reallocate to the new size.  Original buffer pointer is undefined on return.
+void *memResize(const void *buffer, size_t size);
+
+// Free memory allocation
 void memFree(void *buffer);
 
 /***********************************************************************************************************************************
-Ensure that the old memory context is restored after the block executes (even on error)
+Ensure that the prior memory context is restored after the block executes (even on error)
 
 MEM_CONTEXT_BEGIN(memContext)
 {
     <The mem context specified is now the current context>
-    <Old context can be accessed with the MEM_CONTEXT_OLD() macro>
+    <Prior context can be accessed with the memContextPrior() macro>
 }
 MEM_CONTEXT_END();
 
-<Old memory context is restored>
+<Prior memory context is restored>
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_BEGIN(memContext)                                                                                              \
 {                                                                                                                                  \
     /* Switch to the new memory context */                                                                                         \
-    MemContext *MEM_CONTEXT_memContextOld = memContextSwitch(memContext);                                                          \
+    MemContext *MEM_CONTEXT_memContextPrior = memContextSwitch(memContext);                                                        \
                                                                                                                                    \
     /* Try the statement block */                                                                                                  \
     TRY_BEGIN()
 
-#define MEM_CONTEXT_OLD()                                                                                                          \
-    MEM_CONTEXT_memContextOld
+#define memContextPrior()                                                                                                          \
+    MEM_CONTEXT_memContextPrior
 
 #define MEM_CONTEXT_END()                                                                                                          \
-    /* Switch back to the old context */                                                                                           \
+    /* Switch back to the prior context */                                                                                         \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-        memContextSwitch(MEM_CONTEXT_OLD());                                                                                       \
+        memContextSwitch(memContextPrior());                                                                                       \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
 
 /***********************************************************************************************************************************
-Create a new context and make sure it is freed on error and old context is restored in all cases
+Switch to prior context and ensure that the previous prior memory context is restored after the block executes (even on error)
+
+MEM_CONTEXT_PRIOR_BEGIN(memContext)
+{
+    <The mem context specified is now the prior context>
+}
+MEM_CONTEXT_PRIOR_END();
+
+<Previous prior memory context is restored>
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_PRIOR_BEGIN(memContext)                                                                                        \
+{                                                                                                                                  \
+    /* Switch to the new memory context */                                                                                         \
+    MemContext *MEM_CONTEXT_memContextRestore = memContextSwitch(memContextPrior());                                               \
+                                                                                                                                   \
+    /* Try the statement block */                                                                                                  \
+    TRY_BEGIN()
+
+#define MEM_CONTEXT_PRIOR_END()                                                                                                    \
+    /* Switch back to the prior context */                                                                                         \
+    FINALLY()                                                                                                                      \
+    {                                                                                                                              \
+        memContextSwitch(MEM_CONTEXT_memContextRestore);                                                                           \
+    }                                                                                                                              \
+    TRY_END();                                                                                                                     \
+}
+
+/***********************************************************************************************************************************
+Create a new context and make sure it is freed on error and prior context is restored in all cases
 
 MEM_CONTEXT_NEW_BEGIN(memContextName)
 {
@@ -119,12 +154,12 @@ MEM_CONTEXT_NEW_BEGIN(memContextName)
     ObjectType *object = memNew(sizeof(ObjectType));
     object->memContext = MEM_CONTEXT_NEW();
 
-    <Old context can be accessed with the MEM_CONTEXT_OLD() macro>
+    <Prior context can be accessed with the memContextPrior() macro>
     <On error the newly created context will be freed and the error rethrown>
 }
 MEM_CONTEXT_NEW_END();
 
-<Old memory context is restored>
+<Prior memory context is restored>
 
 Note that memory context names are expected to live for the lifetime of the context -- no copy is made.
 ***********************************************************************************************************************************/
@@ -140,7 +175,7 @@ Note that memory context names are expected to live for the lifetime of the cont
 #define MEM_CONTEXT_NEW_END()                                                                                                      \
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
-        memContextSwitch(MEM_CONTEXT_OLD());                                                                                       \
+        memContextSwitch(memContextPrior());                                                                                       \
         memContextFree(MEM_CONTEXT_NEW());                                                                                         \
         RETHROW();                                                                                                                 \
     }                                                                                                                              \
@@ -154,11 +189,11 @@ MEM_CONTEXT_TEMP_BEGIN()
 {
     <A temp memory context is now the current context>
     <Temp context can be accessed with the MEM_CONTEXT_TEMP() macro>
-    <Old context can be accessed with the MEM_CONTEXT_OLD() macro>
+    <Prior context can be accessed with the memContextPrior() macro>
 }
 MEM_CONTEXT_TEMP_END();
 
-<Old memory context is restored>
+<Prior memory context is restored>
 <Temp memory context is freed>
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_TEMP()                                                                                                         \
@@ -170,11 +205,34 @@ MEM_CONTEXT_TEMP_END();
                                                                                                                                    \
     MEM_CONTEXT_BEGIN(MEM_CONTEXT_TEMP())
 
+#define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
+{                                                                                                                                  \
+    MemContext *MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                   \
+    unsigned int MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                   \
+                                                                                                                                   \
+    MEM_CONTEXT_BEGIN(MEM_CONTEXT_TEMP())
+
+#define MEM_CONTEXT_TEMP_RESET(resetTotal)                                                                                         \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        MEM_CONTEXT_TEMP_loopTotal++;                                                                                              \
+                                                                                                                                   \
+        if (MEM_CONTEXT_TEMP_loopTotal >= resetTotal)                                                                              \
+        {                                                                                                                          \
+            memContextSwitch(memContextPrior());                                                                                   \
+            memContextFree(MEM_CONTEXT_TEMP());                                                                                    \
+            MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                       \
+            memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
+            MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
+        }                                                                                                                          \
+    }                                                                                                                              \
+    while (0)
+
 #define MEM_CONTEXT_TEMP_END()                                                                                                     \
-        /* Switch back to the old context and free temp context */                                                                 \
+        /* Switch back to the prior context and free temp context */                                                               \
         FINALLY()                                                                                                                  \
         {                                                                                                                          \
-            memContextSwitch(MEM_CONTEXT_OLD());                                                                                   \
+            memContextSwitch(memContextPrior());                                                                                   \
             memContextFree(MEM_CONTEXT_TEMP());                                                                                    \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
