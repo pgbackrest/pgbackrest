@@ -6699,7 +6699,7 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the lock directory.</p>
+                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the log directory.</p>
                     </release-item>
 
                     <release-item>
