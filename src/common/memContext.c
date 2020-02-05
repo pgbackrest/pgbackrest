@@ -198,7 +198,7 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
     // Try to find space for the new context
     for (; memContext->contextChildFreeIdx < memContext->contextChildListSize; memContext->contextChildFreeIdx++)
     {
-        if (!memContext->contextChildList[memContext->contextChildFreeIdx] ||
+        if (memContext->contextChildList[memContext->contextChildFreeIdx] == NULL ||
             (allowFree && memContext->contextChildList[memContext->contextChildFreeIdx]->state == memContextStateFree))
         {
             break;
