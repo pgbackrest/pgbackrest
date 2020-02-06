@@ -21,7 +21,7 @@ forkSafe(void)
 
     int result = fork();
 
-    THROW_ON_SYS_ERROR(result == -1, PathMissingError, "unable to fork");
+    THROW_ON_SYS_ERROR(result == -1, KernelError, "unable to fork");
 
     FUNCTION_LOG_RETURN(INT, result);
 }
@@ -40,6 +40,9 @@ forkDetach(void)
 
     // The process should never receive a SIGHUP but ignore it just in case
     signal(SIGHUP, SIG_IGN);
+
+    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD
+    signal(SIGCHLD, SIG_IGN);
 
     // Fork again and let the parent process terminate to ensure that we get rid of the session leading process. Only session
     // leaders may get a TTY again.

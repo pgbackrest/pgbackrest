@@ -7,6 +7,7 @@ Archive Get Command
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
@@ -233,7 +234,9 @@ cmdArchiveGet(void)
                     lockRelease(true);
 
                     // Fork off the async process
-                    if (forkSafe() == 0)
+                    pid_t pid = forkSafe();
+
+                    if (pid == 0)
                     {
                         // Disable logging and close log file
                         logClose();
@@ -246,6 +249,9 @@ cmdArchiveGet(void)
                             execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
                             "unable to execute asynchronous '" CFGCMD_ARCHIVE_GET "'");
                     }
+
+                    // The process that was just forked should return immediately
+                    THROW_ON_SYS_ERROR(waitpid(pid, NULL, WNOHANG) == -1, ExecuteError, "unable to wait for forked process");
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
