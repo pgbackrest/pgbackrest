@@ -42,7 +42,7 @@ forkDetach(void)
     signal(SIGHUP, SIG_IGN);
 
     // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD
-    signal(SIGCHLD, SIG_IGN);
+    // signal(SIGCHLD, SIG_IGN);
 
     // Fork again and let the parent process terminate to ensure that we get rid of the session leading process. Only session
     // leaders may get a TTY again.
