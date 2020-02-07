@@ -277,16 +277,16 @@ cmdArchivePush(void)
         {
             bool pushed = false;                                        // Has the WAL segment been pushed yet?
             bool forked = false;                                        // Has the async process been forked yet?
-            bool confessOnError = false;                                // Should we confess errors?
+            bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
 
             do
             {
-                // Check if the WAL segment has been pushed.  Errors will not be confessed on the first try to allow the async
-                // process a chance to fix them.
-                pushed = archiveAsyncStatus(archiveModePush, archiveFile, confessOnError);
+                // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
+                // a chance to fix them.
+                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError);
 
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
@@ -328,8 +328,8 @@ cmdArchivePush(void)
                     forked = true;
                 }
 
-                // Now that the async process has been launched, confess any errors that are found
-                confessOnError = true;
+                // Now that the async process has been launched, throw any errors that are found
+                throwOnError = true;
             }
             while (!pushed && waitMore(wait));
 
