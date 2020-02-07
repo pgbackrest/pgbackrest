@@ -43,7 +43,7 @@ forkDetach(void)
 
     // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD.  This means
     // that the child process will automatically be reaped by the kernel should it finish first rather than becoming defunct.
-    signal(SIGCHLD, SIG_IGN);
+    // signal(SIGCHLD, SIG_IGN);
 
     // Fork again and let the parent process terminate to ensure that we get rid of the session leading process. Only session
     // leaders may get a TTY again.
@@ -55,7 +55,7 @@ forkDetach(void)
         exit(0);
 
     // Reset SIGCHLD to the default handler so waitpid() calls in the process will work as expected
-    signal(SIGCHLD, SIG_DFL);
+    // signal(SIGCHLD, SIG_DFL);
 
     // Change the working directory to / so the original current working directory can be removed if needed
     THROW_ON_SYS_ERROR(chdir("/") == -1, PathMissingError, "unable to change directory to '/'");
