@@ -95,8 +95,14 @@ testRun(void)
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             BUFSTRDEF("25\nmessage"));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), true,
+             "error file was not removed");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), false,
+             "error file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(

@@ -52,12 +52,12 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
 Check for ok/error status files in the spool in/out directory
 ***********************************************************************************************************************************/
 bool
-archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError)
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(BOOL, confessOnError);
+        FUNCTION_LOG_PARAM(BOOL, throwOnError);
     FUNCTION_LOG_END();
 
     bool result = false;
@@ -139,7 +139,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             }
             else
             {
-                if (confessOnError)
+                if (throwOnError)
                 {
                     // Error status files must have content
                     if (strSize(content) == 0)
