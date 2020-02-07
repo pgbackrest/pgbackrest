@@ -250,8 +250,16 @@ cmdArchiveGet(void)
                             "unable to execute asynchronous '" CFGCMD_ARCHIVE_GET "'");
                     }
 
+#ifdef DEBUG
+                    TimeMSec timeBegin = timeMSec();
+#endif
+
                     // The process that was just forked should return immediately
                     THROW_ON_SYS_ERROR(waitpid(pid, NULL, WNOHANG) == -1, ExecuteError, "unable to wait for forked process");
+
+#ifdef DEBUG
+                    ASSERT(timeMSec() - timeBegin < 10);
+#endif
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.

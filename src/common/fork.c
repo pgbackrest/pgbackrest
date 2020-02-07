@@ -41,8 +41,9 @@ forkDetach(void)
     // The process should never receive a SIGHUP but ignore it just in case
     signal(SIGHUP, SIG_IGN);
 
-    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD
-    // signal(SIGCHLD, SIG_IGN);
+    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD.  This means
+    // that the child process will automatically be reaped by the kernel should it finish first rather than becoming defunct.
+    signal(SIGCHLD, SIG_IGN);
 
     // Fork again and let the parent process terminate to ensure that we get rid of the session leading process. Only session
     // leaders may get a TTY again.
@@ -53,7 +54,10 @@ forkDetach(void)
     if (fork() > 0)
         exit(0);
 
-    // Change the working directory to / so we won't error if the old working directory goes away
+    // Reset SIGCHLD to the default handler so waitpid() calls in the process will work as expected
+    signal(SIGCHLD, SIG_DFL);
+
+    // Change the working directory to / so the original current working directory can be removed if needed
     THROW_ON_SYS_ERROR(chdir("/") == -1, PathMissingError, "unable to change directory to '/'");
 
     // Close standard file handles
