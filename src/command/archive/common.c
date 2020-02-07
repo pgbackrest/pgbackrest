@@ -150,8 +150,9 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
                 }
 
                 // Remove the error if it will not be thrown to give the async process a chance to retry.  Otherwise, it could be a
-                // race between the foreground process retrying and the async process removing error files.
-                storageRemoveP(storageSpoolWrite(), errorFile, .errorOnMissing = false);
+                // race between the foreground process retrying and the async process removing error files. Ignore missing since the
+                // async process may have already removed the file.
+                storageRemoveP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
             }
         }
     }
