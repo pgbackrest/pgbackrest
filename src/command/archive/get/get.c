@@ -230,6 +230,9 @@ cmdArchiveGet(void)
                     for (unsigned int queueIdx = 0; queueIdx < strLstSize(queue); queueIdx++)
                         strLstAdd(commandExec, strLstGet(queue, queueIdx));
 
+                    // Clear errors for the current wal segment
+                    archiveAsyncErrorClear(archiveModeGet, walSegment);
+
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
