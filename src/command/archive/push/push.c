@@ -306,6 +306,12 @@ cmdArchivePush(void)
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
+                    // Remove error files since the async process will start.  The foreground process will wait for success or a new
+                    // error rather than reporting the old error again.
+                    storageRemoveP(
+                        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strPtr(archiveFile)));
+                    storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global" STATUS_EXT_ERROR));
+
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
