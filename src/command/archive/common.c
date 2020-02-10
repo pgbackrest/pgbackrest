@@ -137,22 +137,14 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 
                 result = true;
             }
-            else
+            else if (throwOnError)
             {
-                if (throwOnError)
-                {
-                    // Error status files must have content
-                    if (strSize(content) == 0)
-                        THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
+                // Error status files must have content
+                if (strSize(content) == 0)
+                    THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
 
-                    // Throw error using the code passed in the file
-                    THROW_CODE(code, strPtr(message));
-                }
-
-                // Remove the error if it will not be thrown to give the async process a chance to retry.  Otherwise, it could be a
-                // race between the foreground process retrying and the async process removing error files. Ignore missing since the
-                // async process may have already removed the file.
-                storageRemoveP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+                // Throw error using the code passed in the file
+                THROW_CODE(code, strPtr(message));
             }
         }
     }
