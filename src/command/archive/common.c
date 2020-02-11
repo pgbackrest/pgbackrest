@@ -265,13 +265,13 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 #endif
 
     // The process that was just forked should return immediately
-    THROW_ON_SYS_ERROR(waitpid(pid, NULL, WNOHANG) == -1, ExecuteError, "unable to wait for forked process");
+    THROW_ON_SYS_ERROR(waitpid(pid, NULL, 0) == -1, ExecuteError, "unable to wait for forked process");
 
 #ifdef DEBUG
     // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
     // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
     // waiting on the async process.
-    ASSERT(timeMSec() - timeBegin < 10);
+    ASSERT(timeMSec() - timeBegin < 500);
 #endif
 
     FUNCTION_LOG_RETURN_VOID();
