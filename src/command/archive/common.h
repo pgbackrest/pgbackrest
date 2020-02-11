@@ -66,6 +66,9 @@ bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool 
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
 void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
+// Execute the async process.  This function will only return in the calling process and the implementation is platform depedent.
+void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
+
 bool walIsPartial(const String *walSegment);
 bool walIsSegment(const String *walSegment);
 String *walPath(const String *walFile, const String *pgPath, const String *command);
