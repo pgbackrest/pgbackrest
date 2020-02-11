@@ -19,7 +19,7 @@ forkSafe(void)
 
     int result = fork();
 
-    THROW_ON_SYS_ERROR(result == -1, PathMissingError, "unable to fork");
+    THROW_ON_SYS_ERROR(result == -1, KernelError, "unable to fork");
 
     FUNCTION_LOG_RETURN(INT, result);
 }
