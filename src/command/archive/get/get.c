@@ -234,7 +234,7 @@ cmdArchiveGet(void)
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
-                    // Exec the async process
+                    // Execute the async process
                     archiveAsyncExec(archiveModeGet, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
