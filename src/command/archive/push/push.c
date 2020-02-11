@@ -305,6 +305,9 @@ cmdArchivePush(void)
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
+                    // Clear errors for the current archive file
+                    archiveAsyncErrorClear(archiveModePush, archiveFile);
+
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 

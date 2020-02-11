@@ -58,6 +58,10 @@ WAL segment constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Remove errors for an archive file.  This should be done before forking the async process to prevent a race condition where an
+// old error may be reported rather than waiting for the async process to succeed or fail.
+void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
+
 bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError);
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
 void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);

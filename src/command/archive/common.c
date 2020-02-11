@@ -33,7 +33,8 @@ Global error file constant
 #define STATUS_FILE_GLOBAL                                          "global"
     STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
 
-STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+#define STATUS_FILE_GLOBAL_ERROR                                    STATUS_FILE_GLOBAL STATUS_EXT_ERROR
+    STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
 
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
@@ -46,6 +47,22 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
+}
+
+/**********************************************************************************************************************************/
+void
+archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING, archiveFile);
+    FUNCTION_LOG_END();
+
+    storageRemoveP(
+        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strPtr(archiveFile)));
+    storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -137,22 +154,14 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 
                 result = true;
             }
-            else
+            else if (throwOnError)
             {
-                if (throwOnError)
-                {
-                    // Error status files must have content
-                    if (strSize(content) == 0)
-                        THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
+                // Error status files must have content
+                if (strSize(content) == 0)
+                    THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
 
-                    // Throw error using the code passed in the file
-                    THROW_CODE(code, strPtr(message));
-                }
-
-                // Remove the error if it will not be thrown to give the async process a chance to retry.  Otherwise, it could be a
-                // race between the foreground process retrying and the async process removing error files. Ignore missing since the
-                // async process may have already removed the file.
-                storageRemoveP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+                // Throw error using the code passed in the file
+                THROW_CODE(code, strPtr(message));
             }
         }
     }
