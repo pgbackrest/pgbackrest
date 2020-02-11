@@ -525,6 +525,7 @@ unit:
         binReq: true
 
         coverage:
+          command/archive/common: full
           command/archive/get/file: full
           command/archive/get/get: full
           command/archive/get/protocol: full
@@ -535,6 +536,7 @@ unit:
         binReq: true
 
         coverage:
+          command/archive/common: full
           command/archive/push/file: full
           command/archive/push/protocol: full
           command/archive/push/push: full

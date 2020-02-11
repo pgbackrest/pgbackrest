@@ -12,7 +12,6 @@ Archive Push Command
 #include "command/command.h"
 #include "command/control/common.h"
 #include "common/debug.h"
-#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
@@ -311,20 +310,8 @@ cmdArchivePush(void)
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
-                    // Fork off the async process
-                    if (forkSafe() == 0)
-                    {
-                        // Disable logging and close log file
-                        logClose();
-
-                        // Detach from parent process
-                        forkDetach();
-
-                        // Execute the binary.  This statement will not return if it is successful.
-                        THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
-                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_PUSH "'");
-                    }
+                    // Execute the async process
+                    archiveAsyncExec(archiveModePush, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.

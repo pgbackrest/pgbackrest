@@ -10,6 +10,7 @@ Archive Common
 
 #include "command/archive/common.h"
 #include "common/debug.h"
+#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -225,6 +226,35 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
             warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_LIST, commandExec);
+    FUNCTION_LOG_END();
+
+    ASSERT(commandExec != NULL);
+
+    // Fork off the async process
+    if (forkSafe() == 0)
+    {
+        // Disable logging and close log file
+        logClose();
+
+        // Detach from parent process
+        forkDetach();
+
+        // Execute the binary.  This statement will not return if it is successful.
+        THROW_ON_SYS_ERROR_FMT(
+            execvp(strPtr(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
