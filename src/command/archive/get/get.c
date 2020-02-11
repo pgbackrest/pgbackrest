@@ -7,7 +7,6 @@ Archive Get Command
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
@@ -15,7 +14,6 @@ Archive Get Command
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
 #include "common/debug.h"
-#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -236,33 +234,8 @@ cmdArchiveGet(void)
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
-                    // Fork off the async process
-                    pid_t pid = forkSafe();
-
-                    if (pid == 0)
-                    {
-                        // Disable logging and close log file
-                        logClose();
-
-                        // Detach from parent process
-                        forkDetach();
-
-                        // Execute the binary.  This statement will not return if it is successful.
-                        THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
-                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_GET "'");
-                    }
-
-#ifdef DEBUG
-                    TimeMSec timeBegin = timeMSec();
-#endif
-
-                    // The process that was just forked should return immediately
-                    THROW_ON_SYS_ERROR(waitpid(pid, NULL, WNOHANG) == -1, ExecuteError, "unable to wait for forked process");
-
-#ifdef DEBUG
-                    ASSERT(timeMSec() - timeBegin < 10);
-#endif
+                    // Exec the async process
+                    archiveAsyncExec(archiveModeGet, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
