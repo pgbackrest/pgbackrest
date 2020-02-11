@@ -311,7 +311,7 @@ cmdArchivePush(void)
                     lockRelease(true);
 
                     // Execute the async process
-                    archiveAsyncExec(archiveModeGet, commandExec);
+                    archiveAsyncExec(archiveModePush, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.

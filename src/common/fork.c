@@ -53,7 +53,7 @@ forkDetach(void)
     // Reset SIGCHLD to the default handler so waitpid() calls in the process will work as expected
     signal(SIGCHLD, SIG_DFL);
 
-    // Change the working directory to / so the original current working directory can be removed if needed
+    // Change the working directory to / so there is no dependency on the original working directory
     THROW_ON_SYS_ERROR(chdir("/") == -1, PathMissingError, "unable to change directory to '/'");
 
     // Close standard file handles
