@@ -1970,6 +1970,16 @@ testRun(void)
         TEST_ERROR(
             manifestTargetRemove(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
             "unable to remove 'pg_data/pg_hba.conf' from manifest target list");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load validation errors");
+
+        TEST_ERROR(
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={}"))), FormatError,
+            "missing timestamp for file 'pg_data/bogus'");
+        TEST_ERROR(
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}"))), FormatError,
+            "missing size for file 'pg_data/bogus'");
     }
 
     // *****************************************************************************************************************************

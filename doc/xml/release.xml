@@ -22,6 +22,16 @@
 
                         <p>Read HTTP content to eof when size/encoding not specified.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kacey.holston"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix resume when the resumable backup was created by <proper>Perl</proper>.</p>
+
+                        <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly.  Add validations to catch this case and continue gracefully.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -46,6 +56,16 @@
                         <p>Add more validations to the manifest on <cmd>backup</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christoph.berg"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <proper>lock-bot</proper> from adding comments to locked issues.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
         </release>
 
@@ -7930,6 +7950,11 @@
         <contributor id="christian.roux">
             <contributor-name-display>Christian ROUX</contributor-name-display>
             <contributor-id type="github">kikijolicoeur</contributor-id>
+        </contributor>
+
+        <contributor id="kacey.holston">
+            <contributor-name-display>Kacey Holston</contributor-name-display>
+            <contributor-id type="github">kaceymiri</contributor-id>
         </contributor>
 
         <contributor id="kyle.nevins">
