@@ -2009,8 +2009,7 @@ cmdRestore(void)
         userInit();
 
         // PostgreSQL must be local
-        if (!pgIsLocal(1))
-            THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
+        pgIsLocalVerify();
 
         // Validate restore path
         restorePathValidate();
