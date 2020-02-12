@@ -1368,9 +1368,25 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             {
                 .name = key,
                 .reference = varStr(kvGetDefault(fileKv, MANIFEST_KEY_REFERENCE_VAR, NULL)),
-                .size = varUInt64(kvGet(fileKv, MANIFEST_KEY_SIZE_VAR)),
-                .timestamp = (time_t)varUInt64(kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR)),
             };
+
+            // Timestamp is required so error if it is not present
+            const Variant *timestamp = kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR);
+
+            if (timestamp == NULL)
+                THROW_FMT(FormatError, "missing timestamp for file '%s'", strPtr(key));
+
+            file.timestamp = (time_t)varUInt64(timestamp);
+
+            // Size is required so error if it is not present.  Older versions removed the size before the backup to ensure that the
+            // manifest was updated during the backup, so size can be missing in partial manifests.  This error will prevent older
+            // partials from being resumed.
+            const Variant *size = kvGet(fileKv, MANIFEST_KEY_SIZE_VAR);
+
+            if (size == NULL)
+                THROW_FMT(FormatError, "missing size for file '%s'", strPtr(key));
+
+            file.size = varUInt64(size);
 
             // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
             // the repo-size is only stored in the manifest file if it is different than size.
