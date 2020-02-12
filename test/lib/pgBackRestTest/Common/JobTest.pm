@@ -461,7 +461,8 @@ sub run
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
-                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '');
+                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_CO6 ? ' -DDEBUG_EXEC_TIME' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =
