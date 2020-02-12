@@ -6,6 +6,7 @@ Archive Common
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
@@ -242,7 +243,9 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
     ASSERT(commandExec != NULL);
 
     // Fork off the async process
-    if (forkSafe() == 0)
+    pid_t pid = forkSafe();
+
+    if (pid == 0)
     {
         // Disable logging and close log file
         logClose();
@@ -255,6 +258,26 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
             execvp(strPtr(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
+
+#ifdef DEBUG_EXEC_TIME
+    // Get the time to measure how long it takes for the forked process to exit
+    TimeMSec timeBegin = timeMSec();
+#endif
+
+    // The process that was just forked should return immediately
+    int processStatus;
+
+    THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
+
+    // The first fork should exit with success.  If not, something went wrong during the second fork.
+    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+
+#ifdef DEBUG_EXEC_TIME
+    // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
+    // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
+    // waiting on the async process.
+    ASSERT(timeMSec() - timeBegin < 10);
+#endif
 
     FUNCTION_LOG_RETURN_VOID();
 }

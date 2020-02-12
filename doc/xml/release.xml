@@ -17,6 +17,16 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-ideator id="adam.brusselback"/>
+                             <release-item-ideator id="ejberdecia"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent defunct processes in asynchronous archive commands.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="christian.roux"/>
                         </release-item-contributor-list>
 
