@@ -76,8 +76,10 @@
                         <p>Add more validations to the manifest on <cmd>backup</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
+            </release-core-list>
 
-                <release-development-list>
+            <release-doc-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="christoph.berg"/>
@@ -85,8 +87,8 @@
 
                         <p>Prevent <proper>lock-bot</proper> from adding comments to locked issues.</p>
                     </release-item>
-                </release-development-list>
-            </release-core-list>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2020-01-27" version="2.23" title="Bug Fix">
