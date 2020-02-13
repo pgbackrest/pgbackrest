@@ -107,6 +107,9 @@ cmdArchiveGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // PostgreSQL must be local
+    pgIsLocalVerify();
+
     // Set the result assuming the archive file will not be found
     int result = 1;
 
@@ -314,6 +317,9 @@ void
 cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // PostgreSQL must be local
+    pgIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

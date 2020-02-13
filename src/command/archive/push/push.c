@@ -257,6 +257,9 @@ cmdArchivePush(void)
 
     ASSERT(cfgCommand() == cfgCmdArchivePush);
 
+    // PostgreSQL must be local
+    pgIsLocalVerify();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure there is a parameter to retrieve the WAL segment from
@@ -427,6 +430,9 @@ cmdArchivePushAsync(void)
     FUNCTION_LOG_VOID(logLevelDebug);
 
     ASSERT(cfgCommand() == cfgCmdArchivePush && cfgCommandRole() == cfgCmdRoleAsync);
+
+    // PostgreSQL must be local
+    pgIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

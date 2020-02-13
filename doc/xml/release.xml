@@ -27,6 +27,15 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="jesper.st.john"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when <cmd>archive-get</cmd>/<cmd>archive-push</cmd>/<cmd>restore</cmd> are not run on a <postgres/> host.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="christian.roux"/>
                         </release-item-contributor-list>
 

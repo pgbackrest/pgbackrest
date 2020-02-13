@@ -176,7 +176,18 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushProtocol()"))
     {
+        TEST_TITLE("command must be run on the pg host");
+
         StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleDefault, argList);
+
+        TEST_ERROR(cmdArchivePush(), HostInvalidError, "archive-push command must be run on the PostgreSQL host");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -412,9 +423,21 @@ testRun(void)
     {
         harnessLogLevelSet(logLevelDetail);
 
+        TEST_TITLE("command must be run on the pg host");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+
+        TEST_ERROR(cmdArchivePush(), HostInvalidError, "archive-push command must be run on the PostgreSQL host");
+
         // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAddZ(argList, "pgbackrest-bogus");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
