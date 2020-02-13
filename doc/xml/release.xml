@@ -37,6 +37,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="christian.roux"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Read HTTP content to eof when size/encoding not specified.</p>
