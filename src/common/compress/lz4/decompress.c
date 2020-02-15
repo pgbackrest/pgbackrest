@@ -14,6 +14,7 @@ LZ4 Decompress
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -24,6 +25,9 @@ Filter type constant
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define LZ4_DECOMPRESS_TYPE                                         Lz4Decompress
+#define LZ4_DECOMPRESS_PREFIX                                       lz4Decompress
+
 struct Lz4Decompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -35,46 +39,36 @@ struct Lz4Decompress
 };
 
 /***********************************************************************************************************************************
-New object
+Render as string for logging
 ***********************************************************************************************************************************/
-Lz4Decompress *
-lz4DecompressNew(bool raw)
+String *
+lz4DecompressToLog(const Lz4Decompress *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, raw);
-    FUNCTION_LOG_END();
-
-    Lz4Decompress *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Lz4Decompress")
-    {
-        // Allocate state and set context
-        this = memNew(sizeof(Lz4Decompress));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        // Create lz4 stream
-        lz4Error(LZ4F_createDecompressionContext(&this->context, LZ4F_VERSION));
-
-        // Set free callback to ensure lz4 context is freed
-        memContextCallbackSet(this->memContext, (MemContextCallback)lz4DecompressFree, this);
-
-        // Create filter interface
-        this->filter = ioFilterNewP(
-            LZ4_DECOMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)lz4DecompressDone,
-            .inOut = (IoFilterInterfaceProcessInOut)lz4DecompressProcess,
-            .inputSame = (IoFilterInterfaceInputSame)lz4DecompressInputSame);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(LZ4_DECOMPRESS, this);
+    return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
 }
+
+#define FUNCTION_LOG_LZ4_DECOMPRESS_TYPE                                                                                           \
+    Lz4Decompress *
+#define FUNCTION_LOG_LZ4_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Free decompression context
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(LZ4_DECOMPRESS, LOG, logLevelTrace)
+{
+    LZ4F_freeDecompressionContext(this->context);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data
 ***********************************************************************************************************************************/
-void
-lz4DecompressProcess(Lz4Decompress *this, const Buffer *compressed, Buffer *uncompressed)
+static void
+lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 {
+    THIS(Lz4Decompress);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(LZ4_DECOMPRESS, this);
         FUNCTION_LOG_PARAM(BUFFER, compressed);
@@ -112,9 +106,11 @@ lz4DecompressProcess(Lz4Decompress *this, const Buffer *compressed, Buffer *unco
 /***********************************************************************************************************************************
 Is decompress done?
 ***********************************************************************************************************************************/
-bool
-lz4DecompressDone(const Lz4Decompress *this)
+static bool
+lz4DecompressDone(const THIS_VOID)
 {
+    THIS(const Lz4Decompress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_DECOMPRESS, this);
     FUNCTION_TEST_END();
@@ -125,26 +121,13 @@ lz4DecompressDone(const Lz4Decompress *this)
 }
 
 /***********************************************************************************************************************************
-Get filter interface
-***********************************************************************************************************************************/
-IoFilter *
-lz4DecompressFilter(const Lz4Decompress *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LZ4_DECOMPRESS, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->filter);
-}
-
-/***********************************************************************************************************************************
 Is the same input required on the next process call?
 ***********************************************************************************************************************************/
-bool
-lz4DecompressInputSame(const Lz4Decompress *this)
+static bool
+lz4DecompressInputSame(const THIS_VOID)
 {
+    THIS(const Lz4Decompress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_DECOMPRESS, this);
     FUNCTION_TEST_END();
@@ -155,34 +138,38 @@ lz4DecompressInputSame(const Lz4Decompress *this)
 }
 
 /***********************************************************************************************************************************
-Render as string for logging
+New object
 ***********************************************************************************************************************************/
-String *
-lz4DecompressToLog(const Lz4Decompress *this)
+IoFilter *
+lz4DecompressNew(void)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
-}
+    FUNCTION_LOG_VOID(logLevelTrace);
 
-/***********************************************************************************************************************************
-Free memory
-***********************************************************************************************************************************/
-void
-lz4DecompressFree(Lz4Decompress *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(LZ4_DECOMPRESS, this);
-    FUNCTION_LOG_END();
+    IoFilter *this = NULL;
 
-    if (this != NULL)
+    MEM_CONTEXT_NEW_BEGIN("Lz4Decompress")
     {
-        LZ4F_freeDecompressionContext(this->context);
+        Lz4Decompress *driver = memNew(sizeof(Lz4Decompress));
 
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
+        *driver = (Lz4Decompress)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
+
+        // Create lz4 stream
+        lz4Error(LZ4F_createDecompressionContext(&driver->context, LZ4F_VERSION));
+
+        // Set free callback to ensure lz4 context is freed
+        memContextCallbackSet(driver->memContext, lz4DecompressFreeResource, driver);
+
+        // Create filter interface
+        this = ioFilterNewP(
+            LZ4_DECOMPRESS_FILTER_TYPE_STR, this, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
+            .inputSame = lz4DecompressInputSame);
     }
+    MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
 #endif // HAVE_LIBLZ4

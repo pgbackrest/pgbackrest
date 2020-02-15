@@ -14,6 +14,7 @@ LZ4 Compress
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -79,7 +80,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 
     Buffer *result = output;
 
-    if (required >= bufRemains(output) || lz4CompressInputSame(this))
+    if (required >= bufRemains(output) || this->inputSame)
     {
         // If buffer has not been allocated yet
         if (this->buffer == NULL)
@@ -105,8 +106,10 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 Compress data
 ***********************************************************************************************************************************/
 static void
-lz4CompressProcess(Lz4Compress *this, const Buffer *uncompressed, Buffer *compressed)
+lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 {
+    THIS(Lz4Compress);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(LZ4_COMPRESS, this);
         FUNCTION_LOG_PARAM(BUFFER, uncompressed);
@@ -119,7 +122,7 @@ lz4CompressProcess(Lz4Compress *this, const Buffer *uncompressed, Buffer *compre
     ASSERT(compressed != NULL);
     ASSERT(!this->flush || uncompressed == NULL);
 
-    if (lz4CompressInputSame(this))
+    if (this->inputSame)
     {
         // !!! flush buffer here
     }
@@ -155,8 +158,10 @@ lz4CompressProcess(Lz4Compress *this, const Buffer *uncompressed, Buffer *compre
 Is compress done?
 ***********************************************************************************************************************************/
 static bool
-lz4CompressDone(const Lz4Compress *this)
+lz4CompressDone(const THIS_VOID)
 {
+    THIS(const Lz4Compress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
     FUNCTION_TEST_END();
@@ -167,26 +172,13 @@ lz4CompressDone(const Lz4Compress *this)
 }
 
 /***********************************************************************************************************************************
-Get filter interface
-***********************************************************************************************************************************/
-static IoFilter *
-lz4CompressFilter(const Lz4Compress *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->filter);
-}
-
-/***********************************************************************************************************************************
 Is the same input required on the next process call?
 ***********************************************************************************************************************************/
 static bool
-lz4CompressInputSame(const Lz4Compress *this)
+lz4CompressInputSame(const THIS_VOID)
 {
+    THIS(const Lz4Compress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
     FUNCTION_TEST_END();
@@ -212,28 +204,32 @@ lz4CompressNew(int level)
 
     MEM_CONTEXT_NEW_BEGIN("Lz4Compress")
     {
-        Lz4Compress *this = NULL;
+        Lz4Compress *driver = memNew(sizeof(Lz4Compress));
 
-        // Allocate state and set context
-        this = memNew(sizeof(Lz4Compress));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->first = true;
+        *driver = (Lz4Compress)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .first = true,
+        };
 
         // Create lz4 context
-        lz4Error(LZ4F_createCompressionContext(&this->context, LZ4F_VERSION));
+        lz4Error(LZ4F_createCompressionContext(&driver->context, LZ4F_VERSION));
 
         // Set free callback to ensure lz4 context is freed
-        memContextCallbackSet(this->memContext, (MemContextCallback)lz4CompressFree, this);
+        memContextCallbackSet(driver->memContext, lz4CompressFreeResource, driver);
+
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewInt(level));
 
         // Create filter interface
-        this->filter = ioFilterNewP(
-            LZ4_COMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)lz4CompressDone,
-            .inOut = (IoFilterInterfaceProcessInOut)lz4CompressProcess,
-            .inputSame = (IoFilterInterfaceInputSame)lz4CompressInputSame);
+        this = ioFilterNewP(
+            LZ4_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
+            .inputSame = lz4CompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN(LZ4_COMPRESS, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
 #endif // HAVE_LIBLZ4
