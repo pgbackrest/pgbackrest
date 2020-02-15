@@ -16,9 +16,10 @@ typedef struct Lz4Compress Lz4Compress;
 #include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilter *lz4CompressNew(int level);
+IoFilter *lz4CompressNewVar(const VariantList *paramList);
 
 #endif
 

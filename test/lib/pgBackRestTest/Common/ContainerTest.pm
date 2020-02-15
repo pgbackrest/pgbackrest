@@ -388,7 +388,7 @@ sub containerBuild
             }
             else
             {
-                $strScript .= ' libjson-pp-perl liblz4-dev';
+                $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
             }
         }
 

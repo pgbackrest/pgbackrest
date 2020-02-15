@@ -7,6 +7,7 @@ LZ4 Compress
 
 #include <stdio.h>
 #include <lz4frame.h>
+#include <string.h>
 
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
@@ -15,6 +16,13 @@ LZ4 Compress
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+
+/***********************************************************************************************************************************
+Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
+***********************************************************************************************************************************/
+#ifndef LZ4F_HEADER_SIZE_MAX
+    #define LZ4F_HEADER_SIZE_MAX                                    19
+#endif
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -37,8 +45,7 @@ struct Lz4Compress
     bool first;                                                     // Is this the first call to process?
 
     bool inputSame;                                                 // Is the same input required on the next process call?
-    bool flush;                                                     // Is input complete and flushing in progress?
-    bool done;                                                      // Is compression done?
+    bool flushing;                                                  // Is input complete and flushing in progress?
 };
 
 /***********************************************************************************************************************************
@@ -48,8 +55,8 @@ static String *
 lz4CompressToLog(const Lz4Compress *this)
 {
     return strNewFmt(
-        "{first: %s, inputSame: %s, done: %s, flushing: %s}", cvtBoolToConstZ(this->first), cvtBoolToConstZ(this->inputSame),
-        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->done));
+        "{first: %s, inputSame: %s, flushing: %s}", cvtBoolToConstZ(this->first), cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->flushing));
 }
 
 #define FUNCTION_LOG_LZ4_COMPRESS_TYPE                                                                                             \
@@ -67,20 +74,21 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(LZ4_COMPRESS, LOG, logLevelTrace)
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
-Return a buffer where output will be written
+Compress data
 ***********************************************************************************************************************************/
+// Helper to return a buffer where output will be written
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(LZ4_COMPRESS, this);
-        FUNCTION_LOG_PARAM(SIZE, required);
-        FUNCTION_LOG_PARAM(BUFFER, output);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
+        FUNCTION_TEST_PARAM(SIZE, required);
+        FUNCTION_TEST_PARAM(BUFFER, output);
+    FUNCTION_TEST_END();
 
     Buffer *result = output;
 
-    if (required >= bufRemains(output) || this->inputSame)
+    if (required >= bufRemains(output) || (this->buffer != NULL && bufUsed(this->buffer) > 0))
     {
         // If buffer has not been allocated yet
         if (this->buffer == NULL)
@@ -95,16 +103,43 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
         else if (required >= bufRemains(this->buffer))
             bufResize(this->buffer, bufUsed(this->buffer) + required);
 
-        this->inputSame = true;
         result = this->buffer;
     }
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Compress data
-***********************************************************************************************************************************/
+// Helper to copy data to compressed buffer
+static void
+lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
+        FUNCTION_TEST_PARAM(BUFFER, output);
+        FUNCTION_TEST_PARAM(BUFFER, compressed);
+    FUNCTION_TEST_END();
+
+    if (bufRemains(compressed) >= bufUsed(output))
+    {
+        bufCat(compressed, output);
+        bufUsedZero(output);
+
+        this->inputSame = false;
+    }
+    else
+    {
+        size_t catSize = bufRemains(compressed);
+        bufCatSub(compressed, output, 0, catSize);
+
+        memmove(bufPtr(output), bufPtr(output) + catSize, bufUsed(output) - catSize);
+        bufUsedSet(output, bufUsed(output) - catSize);
+
+        this->inputSame = true;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static void
 lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 {
@@ -117,21 +152,23 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->done);
+    ASSERT(!(this->flushing && !this->inputSame));
     ASSERT(this->context != NULL);
     ASSERT(compressed != NULL);
-    ASSERT(!this->flush || uncompressed == NULL);
+    ASSERT(!this->flushing || uncompressed == NULL);
 
     if (this->inputSame)
     {
-        // !!! flush buffer here
+        lz4CompressCopy(this, this->buffer, compressed);
     }
     else
     {
+        Buffer *output = NULL;
+
         // If first call to process then begin compression
         if (this->first)
         {
-            Buffer *output = lz4CompressBuffer(this, 15, compressed);
+            output = lz4CompressBuffer(this, LZ4F_HEADER_SIZE_MAX, compressed);
             bufUsedInc(output, LZ4F_compressBegin(this->context, bufRemainsPtr(output), bufRemains(output), NULL));
 
             this->first = false;
@@ -140,15 +177,25 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
         // Normal processing call
         if (uncompressed != NULL)
         {
-            // Buffer *output = lz4CompressBuffer(this, LZ4F_compressBound(bufUsed(uncompressed), NULL), compressed);
-            // bufUsedInc(
-            //     output, LZ4F_compressUpdate(this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), NULL));
+            output = lz4CompressBuffer(this, LZ4F_compressBound(bufUsed(uncompressed), NULL), compressed);
+            bufUsedInc(
+                output,
+                LZ4F_compressUpdate(
+                    this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), bufUsed(uncompressed),
+                    NULL));
         }
         // Else flush remaining output
         else
         {
-            this->flush = true;
+            output = lz4CompressBuffer(this, LZ4F_compressBound(0, NULL), compressed);
+            bufUsedInc(output, LZ4F_compressEnd(this->context, bufRemainsPtr(output), bufRemains(output), NULL));
+
+            this->flushing = true;
         }
+
+        // If the output buffer was allocated locally it will need to be copied to the compressed buffer
+        if (output != compressed)
+            lz4CompressCopy(this, output, compressed);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -168,7 +215,7 @@ lz4CompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(this->flushing && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -230,6 +277,12 @@ lz4CompressNew(int level)
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+lz4CompressNewVar(const VariantList *paramList)
+{
+    return lz4CompressNew(varIntForce(varLstGet(paramList, 0)));
 }
 
 #endif // HAVE_LIBLZ4
