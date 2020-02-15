@@ -22,7 +22,7 @@ testRun(void)
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
-    if (testBegin("archiveAsyncStatus()"))
+    if (testBegin("archiveAsyncErrorClear() and archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
@@ -43,6 +43,20 @@ testRun(void)
         mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "status file not present");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("clear archive file errors");
+
+        const String *errorSegment = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment));
+        const String *errorGlobal = strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
+
+        storagePutP(storageNewWriteP(storageSpoolWrite(), errorSegment), NULL);
+        storagePutP(storageNewWriteP(storageSpoolWrite(), errorGlobal), NULL);
+
+        TEST_RESULT_VOID(archiveAsyncErrorClear(archiveModePush, segment), "clear error");
+
+        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorSegment), false, "    check segment error");
+        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorGlobal), false, "    check global error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(

@@ -1515,7 +1515,11 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         {
             LOG_WARN(PG_FILE_POSTGRESQLAUTOCONF " does not exist -- creating to contain recovery settings");
         }
-        // Else the file does exist so cleanup old recovery options that could interfere with the current recovery
+        // Else the file does exist so comment out old recovery options that could interfere with the current recovery. Don't
+        // comment out *all* recovery options because some should only be commented out if there is a new option to replace it, e.g.
+        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commnented out -- this
+        // may not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
+        // does not have dependencies on other options.
         else
         {
             // Generate a regexp that will match on all current recovery_target settings
@@ -2005,8 +2009,7 @@ cmdRestore(void)
         userInit();
 
         // PostgreSQL must be local
-        if (!pgIsLocal(1))
-            THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
+        pgIsLocalVerify();
 
         // Validate restore path
         restorePathValidate();

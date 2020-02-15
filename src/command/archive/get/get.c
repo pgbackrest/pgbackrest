@@ -14,7 +14,6 @@ Archive Get Command
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
 #include "common/debug.h"
-#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -108,6 +107,9 @@ cmdArchiveGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // PostgreSQL must be local
+    pgIsLocalVerify();
+
     // Set the result assuming the archive file will not be found
     int result = 1;
 
@@ -140,7 +142,7 @@ cmdArchiveGet(void)
             bool found = false;                                         // Has the WAL segment been found yet?
             bool queueFull = false;                                     // Is the queue half or more full?
             bool forked = false;                                        // Has the async process been forked yet?
-            bool confessOnError = false;                                // Should we confess errors?
+            bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
@@ -149,7 +151,7 @@ cmdArchiveGet(void)
             {
                 // Check for errors or missing files.  For archive-get ok indicates that the process succeeded but there is no WAL
                 // file to download.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, confessOnError))
+                if (archiveAsyncStatus(archiveModeGet, walSegment, throwOnError))
                 {
                     storageRemoveP(
                         storageSpoolWrite(),
@@ -229,23 +231,14 @@ cmdArchiveGet(void)
                     for (unsigned int queueIdx = 0; queueIdx < strLstSize(queue); queueIdx++)
                         strLstAdd(commandExec, strLstGet(queue, queueIdx));
 
+                    // Clear errors for the current wal segment
+                    archiveAsyncErrorClear(archiveModeGet, walSegment);
+
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
-                    // Fork off the async process
-                    if (forkSafe() == 0)
-                    {
-                        // Disable logging and close log file
-                        logClose();
-
-                        // Detach from parent process
-                        forkDetach();
-
-                        // Execute the binary.  This statement will not return if it is successful.
-                        THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
-                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_GET "'");
-                    }
+                    // Execute the async process
+                    archiveAsyncExec(archiveModeGet, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
@@ -256,8 +249,8 @@ cmdArchiveGet(void)
                 if (found)
                     break;
 
-                // Now that the async process has been launched, confess any errors that are found
-                confessOnError = true;
+                // Now that the async process has been launched, throw any errors that are found
+                throwOnError = true;
             }
             while (waitMore(wait));
         }
@@ -324,6 +317,9 @@ void
 cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // PostgreSQL must be local
+    pgIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

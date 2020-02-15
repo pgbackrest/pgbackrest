@@ -17,10 +17,40 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-ideator id="adam.brusselback"/>
+                             <release-item-ideator id="ejberdecia"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent defunct processes in asynchronous archive commands.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jesper.st.john"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when <cmd>archive-get</cmd>/<cmd>archive-push</cmd>/<cmd>restore</cmd> are not run on a <postgres/> host.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="christian.roux"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Read HTTP content to eof when size/encoding not specified.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kacey.holston"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix resume when the resumable backup was created by <proper>Perl</proper>.</p>
+
+                        <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly.  Add validations to catch this case and continue gracefully.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -47,6 +77,18 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christoph.berg"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <proper>lock-bot</proper> from adding comments to locked issues.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2020-01-27" version="2.23" title="Bug Fix">
@@ -6699,7 +6741,7 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the lock directory.</p>
+                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the log directory.</p>
                     </release-item>
 
                     <release-item>
@@ -7930,6 +7972,11 @@
         <contributor id="christian.roux">
             <contributor-name-display>Christian ROUX</contributor-name-display>
             <contributor-id type="github">kikijolicoeur</contributor-id>
+        </contributor>
+
+        <contributor id="kacey.holston">
+            <contributor-name-display>Kacey Holston</contributor-name-display>
+            <contributor-id type="github">kaceymiri</contributor-id>
         </contributor>
 
         <contributor id="kyle.nevins">
