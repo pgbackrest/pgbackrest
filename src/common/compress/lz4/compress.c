@@ -40,6 +40,7 @@ struct Lz4Compress
 {
     MemContext *memContext;                                         // Context to store data
     LZ4F_compressionContext_t context;                              // LZ4 compression context
+    LZ4F_preferences_t prefs;                                       // Preferences -- just compress level set
     IoFilter *filter;                                               // Filter interface
     Buffer *buffer;                                                 // For when the output buffer can't accept all compressed data
     bool first;                                                     // Is this the first call to process?
@@ -55,8 +56,8 @@ static String *
 lz4CompressToLog(const Lz4Compress *this)
 {
     return strNewFmt(
-        "{first: %s, inputSame: %s, flushing: %s}", cvtBoolToConstZ(this->first), cvtBoolToConstZ(this->inputSame),
-        cvtBoolToConstZ(this->flushing));
+        "{level: %d, first: %s, inputSame: %s, flushing: %s}", this->prefs.compressionLevel,
+        cvtBoolToConstZ(this->first), cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->flushing));
 }
 
 #define FUNCTION_LOG_LZ4_COMPRESS_TYPE                                                                                             \
@@ -76,7 +77,9 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 /***********************************************************************************************************************************
 Compress data
 ***********************************************************************************************************************************/
-// Helper to return a buffer where output will be written
+// Helper to return a buffer where output will be written.  If there is enought space in the provided output buffer then use it,
+// otherwise allocate an internal buffer the hold the compressed data.  Once we start using the internal buffer we'll need to
+// continue using it until it is flushed.
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 {
@@ -88,19 +91,11 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 
     Buffer *result = output;
 
-    if (required >= bufRemains(output) || (this->buffer != NULL && bufUsed(this->buffer) > 0))
+    // Is an internal buffer required to hold the compressed data?
+    if (bufUsed(this->buffer) > 0 || required >= bufRemains(output))
     {
-        // If buffer has not been allocated yet
-        if (this->buffer == NULL)
-        {
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                this->buffer = bufNew(required);
-            }
-            MEM_CONTEXT_END();
-        }
-        // Else buffer is not large enough
-        else if (required >= bufRemains(this->buffer))
+        // Reallocate buffer if it is not large enough
+        if (required >= bufRemains(this->buffer))
             bufResize(this->buffer, bufUsed(this->buffer) + required);
 
         result = this->buffer;
@@ -119,6 +114,7 @@ lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
         FUNCTION_TEST_PARAM(BUFFER, compressed);
     FUNCTION_TEST_END();
 
+    // The compressed buffer can hold all the output
     if (bufRemains(compressed) >= bufUsed(output))
     {
         bufCat(compressed, output);
@@ -126,6 +122,7 @@ lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
 
         this->inputSame = false;
     }
+    // Else copy as much as possible and set inputSame to copy more once the compressed buffer has been flushed
     else
     {
         size_t catSize = bufRemains(compressed);
@@ -157,6 +154,7 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     ASSERT(compressed != NULL);
     ASSERT(!this->flushing || uncompressed == NULL);
 
+    // Copy overflow output to the compressed buffer
     if (this->inputSame)
     {
         lz4CompressCopy(this, this->buffer, compressed);
@@ -169,7 +167,8 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
         if (this->first)
         {
             output = lz4CompressBuffer(this, LZ4F_HEADER_SIZE_MAX, compressed);
-            bufUsedInc(output, LZ4F_compressBegin(this->context, bufRemainsPtr(output), bufRemains(output), NULL));
+            bufUsedInc(
+                output, lz4Error(LZ4F_compressBegin(this->context, bufRemainsPtr(output), bufRemains(output), &this->prefs)));
 
             this->first = false;
         }
@@ -177,18 +176,20 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
         // Normal processing call
         if (uncompressed != NULL)
         {
-            output = lz4CompressBuffer(this, LZ4F_compressBound(bufUsed(uncompressed), NULL), compressed);
+            output = lz4CompressBuffer(this, lz4Error(LZ4F_compressBound(bufUsed(uncompressed), &this->prefs)), compressed);
+
             bufUsedInc(
                 output,
-                LZ4F_compressUpdate(
-                    this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), bufUsed(uncompressed),
-                    NULL));
+                lz4Error(
+                    LZ4F_compressUpdate(
+                        this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), bufUsed(uncompressed),
+                        NULL)));
         }
         // Else flush remaining output
         else
         {
-            output = lz4CompressBuffer(this, LZ4F_compressBound(0, NULL), compressed);
-            bufUsedInc(output, LZ4F_compressEnd(this->context, bufRemainsPtr(output), bufRemains(output), NULL));
+            output = lz4CompressBuffer(this, lz4Error(LZ4F_compressBound(0, &this->prefs)), compressed);
+            bufUsedInc(output, lz4Error(LZ4F_compressEnd(this->context, bufRemainsPtr(output), bufRemains(output), NULL)));
 
             this->flushing = true;
         }
@@ -256,7 +257,9 @@ lz4CompressNew(int level)
         *driver = (Lz4Compress)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .prefs = {.compressionLevel = level},
             .first = true,
+            .buffer = bufNew(0),
         };
 
         // Create lz4 context

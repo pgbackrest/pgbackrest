@@ -35,6 +35,8 @@ struct Lz4Decompress
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
+    size_t inputOffset;                                             // Current offset from the start of the buffer
+    bool frameDone;                                                 // Has the current frame completed?
     bool done;                                                      // Is decompression done?
 };
 
@@ -44,7 +46,9 @@ Render as string for logging
 String *
 lz4DecompressToLog(const Lz4Decompress *this)
 {
-    return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+    return strNewFmt(
+        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
+        cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_LZ4_DECOMPRESS_TYPE                                                                                           \
@@ -65,40 +69,51 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 Decompress data
 ***********************************************************************************************************************************/
 static void
-lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
+lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
 {
     THIS(Lz4Decompress);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(LZ4_DECOMPRESS, this);
         FUNCTION_LOG_PARAM(BUFFER, compressed);
-        FUNCTION_LOG_PARAM(BUFFER, uncompressed);
+        FUNCTION_LOG_PARAM(BUFFER, decompressed);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->context != NULL);
-    ASSERT(compressed != NULL);
-    ASSERT(uncompressed != NULL);
+    ASSERT(decompressed != NULL);
 
-    // if (!this->inputSame)
-    // {
-    //     this->stream->avail_in = (unsigned int)bufUsed(compressed);
-    //     this->stream->next_in = bufPtr(compressed);
-    // }
-    //
-    // this->stream->avail_out = (unsigned int)bufRemains(uncompressed);
-    // this->stream->next_out = bufPtr(uncompressed) + bufUsed(uncompressed);
-    //
-    // this->result = lz4Error(inflate(this->stream, Z_NO_FLUSH));
-    //
-    // // Set buffer used space
-    // bufUsedSet(uncompressed, bufSize(uncompressed) - (size_t)this->stream->avail_out);
-    //
-    // // Is decompression done?
-    // this->done = this->result == Z_STREAM_END;
-    //
-    // // Is the same input expected on the next call?
-    // this->inputSame = this->done ? false : this->stream->avail_in != 0;
+    // When there is no more input then decompression is done
+    if (compressed == NULL)
+    {
+        // If the current frame being decompressed was not completed then error
+        if (!this->frameDone)
+            THROW(FormatError, "unexpected eof in compressed data");
+
+        this->done = true;
+    }
+    else
+    {
+        size_t srcSize = bufUsed(compressed) - this->inputOffset;
+        size_t dstSize = bufRemains(decompressed);
+
+        this->frameDone = !lz4Error(
+            LZ4F_decompress(
+                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtr(compressed) + this->inputOffset, &srcSize, NULL));
+
+        bufUsedInc(decompressed, dstSize);
+
+        if (srcSize < bufUsed(compressed) - this->inputOffset)
+        {
+            this->inputOffset += srcSize;
+            this->inputSame = true;
+        }
+        else
+        {
+            this->inputOffset = 0;
+            this->inputSame = false;
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -164,7 +179,7 @@ lz4DecompressNew(void)
 
         // Create filter interface
         this = ioFilterNewP(
-            LZ4_DECOMPRESS_FILTER_TYPE_STR, this, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
+            LZ4_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
             .inputSame = lz4DecompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
