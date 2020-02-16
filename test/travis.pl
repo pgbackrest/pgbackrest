@@ -133,7 +133,7 @@ eval
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
     processExec(
         'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl' .
-            ' pkg-config',
+            ' pkg-config liblz4-dev liblz4-tool',
         {bSuppressStdErr => true});
     processEnd();
 

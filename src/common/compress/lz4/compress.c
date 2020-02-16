@@ -246,7 +246,7 @@ lz4CompressNew(int level)
         FUNCTION_LOG_PARAM(INT, level);
     FUNCTION_LOG_END();
 
-    ASSERT(level >= -1 && level <= 9);
+    ASSERT(level >= 0);
 
     IoFilter *this = NULL;
 
