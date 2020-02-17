@@ -483,8 +483,10 @@ sub containerBuild
                     $strScript .=
                         "    rpm -ivh \\\n" .
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/" .
-                            "pgdg-fedora-repo-latest.noarch.rpm";
+                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
+
+                $strScript .= "    yum -y install postgresql-devel";
             }
             else
             {
@@ -528,28 +530,9 @@ sub containerBuild
                         $strScript .= " postgresql-${strDbVersion}";
                     }
                 }
-
-                # Add development libs/headers for most recent version of PostgreSQL
-                if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-                {
-                    my $strDbVersionNoDot = @{$oOS->{&VM_DB}}[-1];
-                    $strDbVersionNoDot =~ s/\.//;
-
-                    $strScript .=  " postgresql${strDbVersionNoDot}-devel";
-                }
-
-                if ($strOS eq VM_F30)
-                {
-                    my $strDbVersionNoDot = @{$oOS->{&VM_DB}}[-1];
-                    $strDbVersionNoDot =~ s/\.//;
-
-                    $strScript .= sectionHeader() .
-                        "# Create a link for pg_config\n";
-
-                    $strScript .= "    ln -s /usr/pgsql-${strDbVersionNoDot}/bin/pg_config /usr/bin/pg_config";
-                }
             }
         }
+
 
         #---------------------------------------------------------------------------------------------------------------------------
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)

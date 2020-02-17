@@ -182,10 +182,9 @@ testRun(void)
             bufEq(decompressed, testDecompress(lz4DecompressNew(), compressed, bufSize(compressed), 1024 * 256)), true,
             "zero data - decompress large in/small out buffer");
 
-        // !!! THIS IS NOT TRUE IN ALL CASES
-        // TEST_RESULT_BOOL(
-        //     bufEq(compressed, testCompress(lz4CompressNew(9), decompressed, 1024, 1024)), false,
-        //     "compress using different level -- should not be equal in size");
+        TEST_RESULT_BOOL(
+            bufEq(compressed, testCompress(lz4CompressNew(9), decompressed, 1024, 1024)), false,
+            "compress using different level -- should not be equal in size");
 
 #endif // HAVE_LIBLZ4
     }
