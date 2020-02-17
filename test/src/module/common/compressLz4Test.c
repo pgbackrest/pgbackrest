@@ -129,11 +129,12 @@ testRun(void)
             "compress small in/small out buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressed output can be decompressed with lz4 tool");
-
-        storagePutP(storageNewWriteP(storageTest, STRDEF("test.lz4")), compressed);
-        TEST_SYSTEM("lz4 -dc {[path]}/test.lz4 > {[path]}/test.out");
-        TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
+        // !!! UNCOMMENT WHEN LZ4 TOOL IS AVAILABLE ON ALL PLATFORMS
+        // TEST_TITLE("compressed output can be decompressed with lz4 tool");
+        //
+        // storagePutP(storageNewWriteP(storageTest, STRDEF("test.lz4")), compressed);
+        // TEST_SYSTEM("lz4 -dc {[path]}/test.lz4 > {[path]}/test.out");
+        // TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decompress simple data");

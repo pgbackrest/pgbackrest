@@ -14,6 +14,7 @@ services:
 matrix:
   include:
     - env: PGB_CI="test --vm=u12"
+    - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
     - env: PGB_CI="test --vm=co6 --param=module=mock --param=module=real"
     - env: PGB_CI="test --vm=u18 --param=container-only"
     - env: PGB_CI=" doc --vm=u18"
