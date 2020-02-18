@@ -6,8 +6,7 @@ Archive Push File
 #include "command/archive/push/file.h"
 #include "command/archive/common.h"
 #include "command/control/common.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
+#include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -116,8 +115,8 @@ archivePushFile(
             // If the file will be compressed then add compression filter
             if (isSegment && compress)
             {
-                strCat(archiveDestination, "." GZIP_EXT);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), gzipCompressNew(compressLevel, false));
+                compressExtCat(archiveDestination);
+                compressFilterAdd(ioReadFilterGroup(storageReadIo(source)));
                 compressible = false;
             }
 

@@ -7,6 +7,7 @@ Configuration Load
 #include <sys/stat.h>
 
 #include "command/command.h"
+#include "common/compress/helper.h"
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -315,6 +316,10 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Update options that have complex rules
             cfgLoadUpdateOption();
+
+            // Init compression helper
+            if (cfgOptionValid(cfgOptCompress))
+                compressInit(cfgOptionBool(cfgOptCompress), STRDEF("gz"), cfgOptionInt(cfgOptCompressLevel));
         }
     }
     MEM_CONTEXT_TEMP_END();

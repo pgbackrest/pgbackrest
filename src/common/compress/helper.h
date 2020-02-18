@@ -1,21 +1,37 @@
 /***********************************************************************************************************************************
-LZ4 Common
+Compression Helper
 ***********************************************************************************************************************************/
-#ifndef COMMON_COMPRESS_LZ4_COMMON_H
-#define COMMON_COMPRESS_LZ4_COMMON_H
+#ifndef COMMON_COMPRESS_HELPER_H
+#define COMMON_COMPRESS_HELPER_H
+
+#include <stdbool.h>
+
+#include <common/type/string.h>
+#include <common/io/filter/group.h>
 
 /***********************************************************************************************************************************
-LZ4 extension
+Available compression types
 ***********************************************************************************************************************************/
-#define LZ4_EXT                                                     "lz4"
-
-#ifdef HAVE_LIBLZ4
+typedef enum
+{
+    compressTypeNone,
+    compressTypeGzip,
+    compressTypeLz4,
+} CompressType;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-size_t lz4Error(size_t error);
+// Init compression settings from options
+void compressInit(bool compress, const String *type, int level);
 
-#endif // HAVE_LIBLZ4
+// Add compression filter to a filter group based on current settings.  If compression type is none then no filter will be added.
+bool compressFilterAdd(IoFilterGroup *filterGroup);
+
+// Get extension for the current compression type
+const char *compressExtZ(void);
+
+// Add extension for current compression type to the file
+void compressExtCat(String *file);
 
 #endif

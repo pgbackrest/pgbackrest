@@ -5,6 +5,7 @@ Harness for Loading Test Configurations
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
+#include "common/compress/helper.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -24,6 +25,9 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
     configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
+
+    if (cfgOptionValid(cfgOptCompress))
+        compressInit(cfgOptionBool(cfgOptCompress), STRDEF("gz"), cfgOptionInt(cfgOptCompressLevel));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

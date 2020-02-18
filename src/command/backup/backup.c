@@ -17,6 +17,7 @@ Backup Command
 #include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/compress/helper.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
@@ -926,7 +927,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    compress ? "." GZIP_EXT : ""),
+                    compressExtZ()),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -936,10 +937,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add compression
             if (compress)
-            {
-                ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew((int)cfgOptionUInt(cfgOptCompressLevel), false));
-            }
+                compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)));
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
