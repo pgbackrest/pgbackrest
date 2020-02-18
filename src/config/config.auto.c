@@ -240,6 +240,7 @@ STRING_EXTERN(CFGOPT_CMD_SSH_STR,                                   CFGOPT_CMD_S
 STRING_EXTERN(CFGOPT_COMPRESS_STR,                                  CFGOPT_COMPRESS);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_STR,                            CFGOPT_COMPRESS_LEVEL);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_NETWORK_STR,                    CFGOPT_COMPRESS_LEVEL_NETWORK);
+STRING_EXTERN(CFGOPT_COMPRESS_TYPE_STR,                             CFGOPT_COMPRESS_TYPE);
 STRING_EXTERN(CFGOPT_CONFIG_STR,                                    CFGOPT_CONFIG);
 STRING_EXTERN(CFGOPT_CONFIG_INCLUDE_PATH_STR,                       CFGOPT_CONFIG_INCLUDE_PATH);
 STRING_EXTERN(CFGOPT_CONFIG_PATH_STR,                               CFGOPT_CONFIG_PATH);
@@ -507,6 +508,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS_LEVEL_NETWORK)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressLevelNetwork)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_COMPRESS_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressType)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

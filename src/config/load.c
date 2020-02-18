@@ -317,9 +317,8 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Update options that have complex rules
             cfgLoadUpdateOption();
 
-            // Init compression helper
-            if (cfgOptionValid(cfgOptCompress))
-                compressInit(cfgOptionBool(cfgOptCompress), STRDEF("gz"), cfgOptionInt(cfgOptCompressLevel));
+            // Error now if an invalid compression type was selected, i.e. not compiled into this binary
+            compressTypeEnum(cfgOptionStr(cfgOptCompressType));
         }
     }
     MEM_CONTEXT_TEMP_END();

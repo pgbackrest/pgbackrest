@@ -169,6 +169,8 @@ use constant CFGOPT_DB_TIMEOUT                                      => 'db-timeo
     push @EXPORT, qw(CFGOPT_DB_TIMEOUT);
 use constant CFGOPT_COMPRESS                                        => 'compress';
     push @EXPORT, qw(CFGOPT_COMPRESS);
+use constant CFGOPT_COMPRESS_TYPE                                   => 'compress-type';
+    push @EXPORT, qw(CFGOPT_COMPRESS_TYPE);
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
     push @EXPORT, qw(CFGOPT_COMPRESS_LEVEL);
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
@@ -1164,6 +1166,24 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         }
+    },
+
+    &CFGOPT_COMPRESS_TYPE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'gz',
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_COMPRESS,
+            &CFGDEF_DEPEND_LIST => [true],
+        },
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'gz',
+            'lz4',
+        ],
+        &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },
 
     &CFGOPT_COMPRESS_LEVEL =>

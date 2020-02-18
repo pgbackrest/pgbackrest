@@ -26,8 +26,8 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
 
-    if (cfgOptionValid(cfgOptCompress))
-        compressInit(cfgOptionBool(cfgOptCompress), STRDEF("gz"), cfgOptionInt(cfgOptCompressLevel));
+    // Error now if an invalid compression type was selected, i.e. not compiled into this binary
+    compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

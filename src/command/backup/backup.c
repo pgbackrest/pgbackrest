@@ -921,13 +921,13 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         {
             // Create file
             const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(name));
-            bool compress = cfgOptionBool(cfgOptCompress);
+            CompressType compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    compressExtZ()),
+                    compressExtZ(compressType)),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -936,8 +936,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
 
             // Add compression
-            if (compress)
-                compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)));
+            compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)), compressType, cfgOptionInt(cfgOptCompressLevel));
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(

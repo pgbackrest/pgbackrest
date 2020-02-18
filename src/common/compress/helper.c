@@ -12,80 +12,67 @@ Compression Helper
 #include "common/log.h"
 #include "version.h"
 
-/***********************************************************************************************************************************
-Compression options for use by helper functions
-***********************************************************************************************************************************/
-static struct CompressHelperLocal
-{
-    CompressType type;
-    int level;
-} compressHelperLocal;
-
 /**********************************************************************************************************************************/
-void
-compressInit(bool compress, const String *type, int level)
+CompressType
+compressTypeEnum(const String *type)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BOOL, compress);
-        FUNCTION_LOG_PARAM(STRING, type);
-        FUNCTION_LOG_PARAM(INT, level);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, type);
+    FUNCTION_TEST_END();
 
-    ASSERT(!compress || type != NULL);
+    CompressType result = compressTypeNone;
 
-    compressHelperLocal = (struct CompressHelperLocal){.type = compressTypeNone};
-
-    if (compress)
+    if (type != NULL)
     {
         if (strEqZ(type, GZIP_EXT))
-            compressHelperLocal.type = compressTypeGzip;
+            result = compressTypeGzip;
         else if (strEqZ(type, LZ4_EXT))
         {
 #ifdef HAVE_LIBLZ4
-            compressHelperLocal.type = compressTypeLz4;
+            result = compressTypeLz4;
 #else
             THROW(OptionInvalidValueError, PROJECT_NAME " not compiled with " LZ4_EXT " support");
 #endif
         }
         else
             THROW_FMT(AssertError, "invalid compression type '%s'", strPtr(type));
-
-        compressHelperLocal.level = level;
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
 bool
-compressFilterAdd(IoFilterGroup *filterGroup)
+compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(INT, level);
     FUNCTION_LOG_END();
 
     bool result = false;
 
-    if (compressHelperLocal.type != compressTypeNone)
+    if (type != compressTypeNone)
     {
-        switch (compressHelperLocal.type)
+        switch (type)
         {
             case compressTypeGzip:
             {
-                ioFilterGroupAdd(filterGroup, gzipCompressNew(compressHelperLocal.level, false));
+                ioFilterGroupAdd(filterGroup, gzipCompressNew(level, false));
                 break;
             }
 
 #ifdef HAVE_LIBLZ4
             case compressTypeLz4:
             {
-                ioFilterGroupAdd(filterGroup, lz4CompressNew(compressHelperLocal.level));
+                ioFilterGroupAdd(filterGroup, lz4CompressNew(level));
                 break;
             }
 #endif
 
             default:
-                THROW_FMT(AssertError, "invalid compression type %u", compressHelperLocal.type);
+                THROW_FMT(AssertError, "invalid compression type %u", type);
         }
 
         result = true;
@@ -97,13 +84,16 @@ compressFilterAdd(IoFilterGroup *filterGroup)
 
 /**********************************************************************************************************************************/
 const char *
-compressExtZ(void)
+compressExtZ(CompressType type)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, file);
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
 
     const char *result = NULL;
 
-    switch (compressHelperLocal.type)
+    switch (type)
     {
         case compressTypeNone:
         {
@@ -126,7 +116,7 @@ compressExtZ(void)
 #endif
 
         default:
-            THROW_FMT(AssertError, "invalid compression type %u", compressHelperLocal.type);
+            THROW_FMT(AssertError, "invalid compression type %u", type);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -134,15 +124,16 @@ compressExtZ(void)
 
 /**********************************************************************************************************************************/
 void
-compressExtCat(String *file)
+compressExtCat(String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, file);
+        FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
     ASSERT(file != NULL);
 
-    strCat(file, compressExtZ());
+    strCat(file, compressExtZ(type));
 
     FUNCTION_TEST_RETURN_VOID();
 }

@@ -126,9 +126,18 @@
 
                     <!-- CONFIG - GENERAL SECTION - COMPRESS -->
                     <config-key id="compress" name="Compress">
-                        <summary>Use gzip file compression.</summary>
+                        <summary>Use file compression.</summary>
 
-                        <text>Backup files are compatible with command-line gzip tools.</text>
+                        <text>!!!Backup files are compatible with command-line gzip tools.</text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - COMPRESS-TYPE -->
+                    <config-key id="compress-type" name="Compress Type">
+                        <summary>!!!.</summary>
+
+                        <text>!!!.</text>
 
                         <example>n</example>
                     </config-key>

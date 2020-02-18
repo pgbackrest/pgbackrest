@@ -22,16 +22,16 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Init compression settings from options
-void compressInit(bool compress, const String *type, int level);
+// Get enum from a compression type string
+CompressType compressTypeEnum(const String *type);
 
-// Add compression filter to a filter group based on current settings.  If compression type is none then no filter will be added.
-bool compressFilterAdd(IoFilterGroup *filterGroup);
+// Add compression filter to a filter group.  If compression type is none then no filter will be added.
+bool compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level);
 
 // Get extension for the current compression type
-const char *compressExtZ(void);
+const char *compressExtZ(CompressType type);
 
 // Add extension for current compression type to the file
-void compressExtCat(String *file);
+void compressExtCat(String *file, CompressType type);
 
 #endif

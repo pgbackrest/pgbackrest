@@ -11,6 +11,9 @@ sub libcAutoConstant
 {
     return
     {
+        CFGOPTVAL_COMPRESS_TYPE_GZ                                       => 'gz',
+        CFGOPTVAL_COMPRESS_TYPE_LZ4                                      => 'lz4',
+
         CFGOPTVAL_INFO_OUTPUT_TEXT                                       => 'text',
         CFGOPTVAL_INFO_OUTPUT_JSON                                       => 'json',
 
@@ -83,6 +86,8 @@ sub libcAutoExportTag
 
         config =>
         [
+            'CFGOPTVAL_COMPRESS_TYPE_GZ',
+            'CFGOPTVAL_COMPRESS_TYPE_LZ4',
             'CFGOPTVAL_INFO_OUTPUT_TEXT',
             'CFGOPTVAL_INFO_OUTPUT_JSON',
             'CFGOPTVAL_LS_OUTPUT_TEXT',
@@ -144,6 +149,7 @@ sub libcAutoExportTag
             'CFGOPT_COMPRESS',
             'CFGOPT_COMPRESS_LEVEL',
             'CFGOPT_COMPRESS_LEVEL_NETWORK',
+            'CFGOPT_COMPRESS_TYPE',
             'CFGOPT_CONFIG',
             'CFGOPT_CONFIG_INCLUDE_PATH',
             'CFGOPT_CONFIG_PATH',
