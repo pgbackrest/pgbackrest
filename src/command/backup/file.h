@@ -4,6 +4,7 @@ Backup File
 #ifndef COMMAND_BACKUP_FILE_H
 #define COMMAND_BACKUP_FILE_H
 
+#include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/type/keyValue.h"
 
@@ -33,8 +34,8 @@ typedef struct BackupFileResult
 
 BackupFileResult backupFile(
     const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,
-    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, bool repoFileCompress,
-    unsigned int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass);
+    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, CompressType repoFileCompressType,
+    int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

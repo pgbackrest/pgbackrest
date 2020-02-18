@@ -42,8 +42,8 @@ Copy a file from the PostgreSQL data directory to the repository
 BackupFileResult
 backupFile(
     const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,
-    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, bool repoFileCompress,
-    unsigned int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass)
+    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, CompressType repoFileCompressType,
+    int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pgFile);                         // Database file to copy to the repo
@@ -54,8 +54,8 @@ backupFile(
         FUNCTION_LOG_PARAM(UINT64, pgFileChecksumPageLsnLimit);     // Upper LSN limit to which page checksums must be valid
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Destination in the repo to copy the pg file
         FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exist in a prior backup in the set?
-        FUNCTION_LOG_PARAM(BOOL, repoFileCompress);                 // Compress destination file
-        FUNCTION_LOG_PARAM(UINT, repoFileCompressLevel);            // Compression level for destination file
+        FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
+        FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
         FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
@@ -74,7 +74,7 @@ backupFile(
     {
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), repoFileCompress ? "." GZIP_EXT : "");
+            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), compressExtZ(repoFileCompressType));
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.
@@ -148,7 +148,7 @@ backupFile(
                                 ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
                         }
 
-                        if (repoFileCompress)
+                        if (repoFileCompressType != compressTypeNone)
                             ioFilterGroupAdd(ioReadFilterGroup(read), gzipDecompressNew(false));
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
@@ -190,7 +190,7 @@ backupFile(
         if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
         {
             // Is the file compressible during the copy?
-            bool compressible = !repoFileCompress && cipherType == cipherTypeNone;
+            bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
             // Setup pg file for read
             StorageRead *read = storageNewReadP(
@@ -207,8 +207,7 @@ backupFile(
             }
 
             // Add compression
-            if (repoFileCompress)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipCompressNew((int)repoFileCompressLevel, false));
+            compressFilterAdd(ioReadFilterGroup(storageReadIo(read)), repoFileCompressType, repoFileCompressLevel);
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)

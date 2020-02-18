@@ -1421,8 +1421,8 @@ typedef struct BackupJobData
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const bool compress;                                            // Is the backup compressed?
-    const unsigned int compressLevel;                               // Compress level if backup is compressed
+    const CompressType compressType;                                // Backup compression type
+    const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
     const uint64_t lsnStart;                                        // Starting lsn for the backup
 
@@ -1472,8 +1472,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
-                protocolCommandParamAdd(command, VARBOOL(jobData->compress));
-                protocolCommandParamAdd(command, VARUINT(jobData->compressLevel));
+                protocolCommandParamAdd(command, VARUINT(jobData->compressType));
+                protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
@@ -1564,8 +1564,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         {
             .backupLabel = backupLabel,
             .backupStandby = backupStandby,
-            .compress = cfgOptionBool(cfgOptCompress),
-            .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
+            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+            .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
@@ -1649,7 +1649,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
+        const char *const compressExt = compressExtZ(jobData.compressType);
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1773,7 +1773,11 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         if (archiveCompressed)
                             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
                         else
-                            ioFilterGroupAdd(filterGroup, gzipCompressNew(cfgOptionInt(cfgOptCompressLevel), false));
+                        {
+                            compressFilterAdd(
+                                filterGroup, compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+                                cfgOptionInt(cfgOptCompressLevel));
+                        }
                     }
 
                     // Encrypt with backup key if encrypted
@@ -1852,7 +1856,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
         // is required.  We can't just do a straight copy since the destination needs to be compressed and that must happen before
-        // encryption in order to be efficient.
+        // encryption in order to be efficient. Compression will always be gzip for compatability and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
         StorageRead *manifestRead = storageNewReadP(
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)));

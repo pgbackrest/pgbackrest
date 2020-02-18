@@ -57,7 +57,7 @@ testRun(void)
             TEST_RESULT_STR(
                 ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), LZ4_COMPRESS_FILTER_TYPE_STR, "   check filter type");
 #else
-            TEST_ERROR(compressInit(true, strNew(LZ4_EXT), 2), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
+            TEST_ERROR(compressTypeEnum(STRDEF("lz4")), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif
         }
 

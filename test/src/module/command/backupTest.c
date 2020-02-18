@@ -456,8 +456,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(missingFile));       // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -531,8 +531,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -573,8 +573,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -712,8 +712,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(true));             // repoFileCompress
-        varLstAdd(paramList, varNewUInt(3));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeGzip)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -830,8 +830,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));                // repoFile
         varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));                // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                    // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
