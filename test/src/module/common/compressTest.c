@@ -17,6 +17,7 @@ testRun(void)
         {
             TEST_RESULT_UINT(compressTypeEnum(NULL), compressTypeNone, "check enum");
             TEST_RESULT_Z(compressExtZ(compressTypeNone), "", "check ext");
+            TEST_RESULT_UINT(compressTypeFromName(STRDEF("file")), compressTypeNone, "check type from name");
 
             IoFilterGroup *filterGroup = ioFilterGroupNew();
             TEST_RESULT_VOID(compressFilterAdd(filterGroup, compressTypeNone, 0), "try to add compress filter");
@@ -28,6 +29,7 @@ testRun(void)
         {
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGzip, "check enum");
             TEST_RESULT_Z(compressExtZ(compressTypeGzip), ".gz", "check ext");
+            TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGzip, "check type from name");
 
             IoFilterGroup *filterGroup = ioFilterGroupNew();
             TEST_RESULT_VOID(compressFilterAdd(filterGroup, compressTypeGzip, 6), "try to add compress filter");
@@ -47,6 +49,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4 compression");
         {
+            TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.lz4")), compressTypeLz4, "check type from name");
+
 #ifdef HAVE_LIBLZ4
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("lz4")), compressTypeLz4, "check enum");
             TEST_RESULT_Z(compressExtZ(compressTypeLz4), ".lz4", "check ext");
