@@ -27,8 +27,7 @@ Older versions of lz4 do not define the max header size.  This seems to be the m
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define LZ4_COMPRESS_FILTER_TYPE                                    "lz4Compress"
-    STRING_STATIC(LZ4_COMPRESS_FILTER_TYPE_STR,                     LZ4_COMPRESS_FILTER_TYPE);
+STRING_EXTERN(LZ4_COMPRESS_FILTER_TYPE_STR,                         LZ4_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -36,7 +35,7 @@ Object type
 #define LZ4_COMPRESS_TYPE                                           Lz4Compress
 #define LZ4_COMPRESS_PREFIX                                         lz4Compress
 
-struct Lz4Compress
+typedef struct
 {
     MemContext *memContext;                                         // Context to store data
     LZ4F_compressionContext_t context;                              // LZ4 compression context
@@ -47,7 +46,7 @@ struct Lz4Compress
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flushing;                                                  // Is input complete and flushing in progress?
-};
+} Lz4Compress;
 
 /***********************************************************************************************************************************
 Render as string for logging

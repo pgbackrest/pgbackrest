@@ -19,8 +19,7 @@ LZ4 Decompress
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define LZ4_DECOMPRESS_FILTER_TYPE                                  "lz4Decompress"
-    STRING_STATIC(LZ4_DECOMPRESS_FILTER_TYPE_STR,                   LZ4_DECOMPRESS_FILTER_TYPE);
+STRING_EXTERN(LZ4_DECOMPRESS_FILTER_TYPE_STR,                       LZ4_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -28,7 +27,7 @@ Object type
 #define LZ4_DECOMPRESS_TYPE                                         Lz4Decompress
 #define LZ4_DECOMPRESS_PREFIX                                       lz4Decompress
 
-struct Lz4Decompress
+typedef struct
 {
     MemContext *memContext;                                         // Context to store data
     LZ4F_decompressionContext_t context;                            // LZ4 decompression context
@@ -38,7 +37,7 @@ struct Lz4Decompress
     size_t inputOffset;                                             // Current offset from the start of the buffer
     bool frameDone;                                                 // Has the current frame completed?
     bool done;                                                      // Is decompression done?
-};
+} Lz4Decompress;
 
 /***********************************************************************************************************************************
 Render as string for logging

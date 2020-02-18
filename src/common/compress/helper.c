@@ -85,7 +85,7 @@ compressFilterAdd(IoFilterGroup *filterGroup)
 #endif
 
             default:
-                THROW_FMT(AssertError, "invalid compression type '%u'", compressHelperLocal.type);
+                THROW_FMT(AssertError, "invalid compression type %u", compressHelperLocal.type);
         }
 
         result = true;
