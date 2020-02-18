@@ -87,7 +87,6 @@ const char *
 compressExtZ(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, file);
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 

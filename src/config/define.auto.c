@@ -643,7 +643,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Use file compression.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!Backup files are compatible with command-line gzip tools."
+            "Backup files are compatible with command-line compression tools."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -755,10 +755,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("File compression type.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!."
+            "The following compression types are supported:\n"
+            "\n"
+            "* gz - gzip compression format\n"
+            "* lz4 - lz4 compression format (not available on all platforms)"
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

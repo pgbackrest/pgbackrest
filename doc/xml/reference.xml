@@ -128,16 +128,20 @@
                     <config-key id="compress" name="Compress">
                         <summary>Use file compression.</summary>
 
-                        <text>!!!Backup files are compatible with command-line gzip tools.</text>
+                        <text>Backup files are compatible with command-line compression tools.</text>
 
                         <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - COMPRESS-TYPE -->
                     <config-key id="compress-type" name="Compress Type">
-                        <summary>!!!.</summary>
+                        <summary>File compression type.</summary>
 
-                        <text>!!!.</text>
+                        <text>The following compression types are supported:
+                        <ul>
+                            <li><id>gz</id> - gzip compression format</li>
+                            <li><id>lz4</id> - lz4 compression format (not available on all platforms)</li>
+                        </ul></text>
 
                         <example>n</example>
                     </config-key>
