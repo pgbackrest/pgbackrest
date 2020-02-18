@@ -408,6 +408,18 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
                         strPtr(backupLabelPrior));
                     cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
+
+                    // If compression must be reenabled then set the compress type to default.  This is not ideal because another
+                    // type of compression may have been used for the previous backup.
+                    if (manifestPriorData->backupOptionCompress)
+                    {
+                        cfgOptionSet(
+                            cfgOptCompressType, cfgSourceParam,
+                            VARSTRZ(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressType)));
+                    }
+                    // Else set compression type to none
+                    else
+                        cfgOptionSet(cfgOptCompressType, cfgSourceParam, NULL);
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
@@ -1755,7 +1767,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {
                     // Is the archive file compressed?
-                    bool archiveCompressed = strEndsWithZ(archiveFile, "." GZIP_EXT);
+                    CompressType archiveCompressType = compressTypeFromName(archiveFile);
 
                     // Open the archive file
                     StorageRead *read = storageNewReadP(
@@ -1768,9 +1780,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         infoArchiveCipherPass(infoArchive));
 
                     // Compress or decompress if archive and backup do not have the same compression settings
-                    if (archiveCompressed != cfgOptionBool(cfgOptCompress))
+                    if ((archiveCompressType != compressTypeNone) != cfgOptionBool(cfgOptCompress))
                     {
-                        if (archiveCompressed)
+                        if (archiveCompressType != compressTypeNone)
                             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
                         else
                         {

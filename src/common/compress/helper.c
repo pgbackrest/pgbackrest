@@ -42,6 +42,24 @@ compressTypeEnum(const String *type)
 }
 
 /**********************************************************************************************************************************/
+CompressType
+compressTypeFromName(const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    CompressType result = compressTypeNone;
+
+    if (strEndsWithZ(name, "." GZIP_EXT))
+        result = compressTypeGzip;
+    else if (strEndsWithZ(name, "." LZ4_EXT))
+        result = compressTypeLz4;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 bool
 compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level)
 {

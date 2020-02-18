@@ -1779,6 +1779,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -1852,6 +1853,7 @@ testRun(void)
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
+                "P00   WARN: diff backup cannot alter compress option to 'false', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"

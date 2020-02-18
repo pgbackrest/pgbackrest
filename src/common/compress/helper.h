@@ -25,6 +25,10 @@ Functions
 // Get enum from a compression type string
 CompressType compressTypeEnum(const String *type);
 
+// Get compression type from a (file) name by checking the extension.  If the extension is not a supported compression type then
+// compressType none is returned, even if the file is compressed with some unknown type.
+CompressType compressTypeFromName(const String *name);
+
 // Add compression filter to a filter group.  If compression type is none then no filter will be added.
 bool compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level);
 
