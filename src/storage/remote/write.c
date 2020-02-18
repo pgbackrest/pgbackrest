@@ -90,7 +90,7 @@ storageWriteRemoteOpen(THIS_VOID)
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
 
-        // If the file is compressible add cecompression filter locally
+        // If the file is compressible add compression filter locally
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
