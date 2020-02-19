@@ -580,10 +580,14 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip pg_internal.init since it is recreated on startup
-            if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
+            if ((pgVersion <= PG_VERSION_84 || buildData.dbPath) && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT))
             {
-                FUNCTION_TEST_RETURN_VOID();
-                return;
+                if (strSize(info->name) == (sizeof(PG_FILE_PGINTERNALINIT) - 1) ||
+                    regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1)))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
             }
 
             // Skip files in the root data path
