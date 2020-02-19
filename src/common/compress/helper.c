@@ -8,8 +8,10 @@ Compression Helper
 #include "common/compress/helper.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
+#include "common/compress/lz4/decompress.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "version.h"
@@ -123,6 +125,45 @@ compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level)
             case compressTypeLz4:
             {
                 ioFilterGroupAdd(filterGroup, lz4CompressNew(level));
+                break;
+            }
+#endif
+
+            default:
+                THROW_FMT(AssertError, "invalid compression type %u", type);
+        }
+
+        result = true;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+bool
+decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_LOG_PARAM(ENUM, type);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    if (type != compressTypeNone)
+    {
+        switch (type)
+        {
+            case compressTypeGzip:
+            {
+                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+                break;
+            }
+
+#ifdef HAVE_LIBLZ4
+            case compressTypeLz4:
+            {
+                ioFilterGroupAdd(filterGroup, lz4DecompressNew());
                 break;
             }
 #endif

@@ -35,6 +35,9 @@ CompressType compressTypeFromName(const String *name);
 // Add compression filter to a filter group.  If compression type is none then no filter will be added.
 bool compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level);
 
+// Add decompression filter to a filter group.  If compression type is none then no filter will be added.
+bool decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type);
+
 // Get extension for the current compression type
 const char *compressExtZ(CompressType type);
 

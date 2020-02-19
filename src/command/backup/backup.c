@@ -18,7 +18,6 @@ Backup Command
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/helper.h"
-#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
@@ -1769,8 +1768,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {
-                    // Is the archive file compressed?
+                    // Get compression type of the WAL segment and backup
                     CompressType archiveCompressType = compressTypeFromName(archiveFile);
+                    CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
                     // Open the archive file
                     StorageRead *read = storageNewReadP(
@@ -1782,17 +1782,14 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
                         infoArchiveCipherPass(infoArchive));
 
-                    // Compress or decompress if archive and backup do not have the same compression settings
-                    if (archiveCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                    // Compress/decompress if archive and backup do not have the same compression settings
+                    if (archiveCompressType != backupCompressType)
                     {
                         if (archiveCompressType != compressTypeNone)
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
-                        else
-                        {
-                            compressFilterAdd(
-                                filterGroup, compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
-                                cfgOptionInt(cfgOptCompressLevel));
-                        }
+                            decompressFilterAdd(ioReadFilterGroup(storageReadIo(read)), archiveCompressType);
+
+                        if (backupCompressType != compressTypeNone)
+                            compressFilterAdd(filterGroup, backupCompressType, cfgOptionInt(cfgOptCompressLevel));
                     }
 
                     // Encrypt with backup key if encrypted
