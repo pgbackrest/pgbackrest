@@ -49,6 +49,14 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strip extension");
+        {
+            TEST_ERROR(compressExtStrip(STRDEF("file"), compressTypeGzip), FormatError, "'file' must have '.gz' extension");
+            TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file"), compressTypeNone), "file", "nothing to strip");
+            TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file.gz"), compressTypeGzip), "file", "strip gz");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4 compression");
         {
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.lz4")), compressTypeLz4, "check type from name");
