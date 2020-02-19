@@ -7,9 +7,6 @@ Backup File
 
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -148,8 +145,8 @@ backupFile(
                                 ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
                         }
 
-                        if (repoFileCompressType != compressTypeNone)
-                            ioFilterGroupAdd(ioReadFilterGroup(read), gzipDecompressNew(false));
+                        // Decompress the file if compressed
+                        decompressFilterAdd(ioReadFilterGroup(read), repoFileCompressType);
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());

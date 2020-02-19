@@ -316,7 +316,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
         varLstAdd(paramList, varNewBool(false));
@@ -347,7 +347,7 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
         varLstAdd(paramList, varNewBool(false));

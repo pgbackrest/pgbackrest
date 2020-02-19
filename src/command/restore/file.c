@@ -8,8 +8,6 @@ Restore File
 #include <utime.h>
 
 #include "command/restore/file.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -25,7 +23,7 @@ Copy a file from the backup to the specified destination
 ***********************************************************************************************************************************/
 bool
 restoreFile(
-    const String *repoFile, const String *repoFileReference, bool repoFileCompressed, const String *pgFile,
+    const String *repoFile, const String *repoFileReference, CompressType repoFileCompressType, const String *pgFile,
     const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified, mode_t pgFileMode,
     const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
     const String *cipherPass)
@@ -33,7 +31,7 @@ restoreFile(
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
         FUNCTION_LOG_PARAM(STRING, repoFileReference);
-        FUNCTION_LOG_PARAM(BOOL, repoFileCompressed);
+        FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);
         FUNCTION_LOG_PARAM(STRING, pgFile);
         FUNCTION_LOG_PARAM(STRING, pgFileChecksum);
         FUNCTION_LOG_PARAM(BOOL, pgFileZero);
@@ -153,11 +151,7 @@ restoreFile(
                 }
 
                 // Add decompression filter
-                if (repoFileCompressed)
-                {
-                    ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
-                    compressible = false;
-                }
+                compressible = !decompressFilterAdd(filterGroup, repoFileCompressType);
 
                 // Add sha1 filter
                 ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
@@ -171,7 +165,7 @@ restoreFile(
                         storageRepo(),
                         strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(repoFileReference), strPtr(repoFile),
-                            repoFileCompressed ? "." GZIP_EXT : ""),
+                            compressExtZ(repoFileCompressType)),
                         .compressible = compressible),
                     pgFileWrite);
 

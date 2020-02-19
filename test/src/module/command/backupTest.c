@@ -70,17 +70,19 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             const String *manifestName = info->name;
 
             // If the file is compressed then decompress to get the real size
-            if (strEndsWithZ(info->name, "." GZIP_EXT))
+            CompressType compressType = compressTypeFromName(info->name);
+
+            if (compressType != compressTypeNone)
             {
                 ASSERT(data->storage != NULL);
 
                 StorageRead *read = storageNewReadP(
                     data->storage,
                     data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                decompressFilterAdd(ioReadFilterGroup(storageReadIo(read)), compressType);
                 size = bufUsed(storageGetP(read));
 
-                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZIP_EXT));
+                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen(compressExtZ(compressType)));
             }
 
             strCatFmt(data->content, ", s=%" PRIu64, size);
@@ -188,7 +190,7 @@ typedef struct TestBackupPqScriptParam
     bool backupStandby;
     bool errorAfterStart;
     bool noWal;                                                     // Don't write test WAL segments
-    bool walCompress;                                               // Compress the archive files
+    CompressType walCompressType;                                   // Compress type for the archive files
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
@@ -241,10 +243,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
-                    strPtr(walChecksum), param.walCompress ? "." GZIP_EXT : ""));
+                    strPtr(walChecksum), compressExtZ(param.walCompressType)));
 
-            if (param.walCompress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew(1, false));
+            compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)), param.walCompressType, 1);
 
             storagePutP(write, walBuffer);
         }
@@ -1981,7 +1982,7 @@ testRun(void)
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompress = true);
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGzip);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
@@ -2117,7 +2118,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompress = true, .walTotal = 3);
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGzip, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features

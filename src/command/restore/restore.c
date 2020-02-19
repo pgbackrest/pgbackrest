@@ -1962,8 +1962,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 protocolCommandParamAdd(
                     command, file->reference != NULL ?
                         VARSTR(file->reference) : VARSTR(manifestData(jobData->manifest)->backupLabel));
-                protocolCommandParamAdd(
-                    command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompressType != compressTypeNone));
+                protocolCommandParamAdd(command, VARUINT(manifestData(jobData->manifest)->backupOptionCompressType));
                 protocolCommandParamAdd(command, VARSTR(restoreFilePgPath(jobData->manifest, file->name)));
                 protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
                 protocolCommandParamAdd(command, VARBOOL(restoreFileZeroed(file->name, jobData->zeroExp)));
