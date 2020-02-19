@@ -408,7 +408,6 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
-                    // type of compression may have been used for the previous backup.
                     if (manifestPriorData->backupOptionCompressType != compressTypeNone)
                     {
                         cfgOptionSet(
