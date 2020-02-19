@@ -229,11 +229,6 @@ cfgLoadUpdateOption(void)
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
-    // The compress option is no longer used but can't be removed or easily deprecated.  For now, just mark it invalid and update
-    // the value of compress-type to none when compress is false. !!! HAVE NOT DONE THIS LAST PART YET
-    cfgOptionValidSet(cfgOptCompress, false);
-    cfgOptionSet(cfgOptCompress, cfgSourceParam, NULL);
-
     FUNCTION_LOG_RETURN_VOID();
 }
 
