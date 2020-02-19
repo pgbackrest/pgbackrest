@@ -41,4 +41,7 @@ const char *compressExtZ(CompressType type);
 // Add extension for current compression type to the file
 void compressExtCat(String *file, CompressType type);
 
+// Remove the specified compression extension.  Error when the extension is not correct.
+String *compressExtStrip(const String *file, CompressType type);
+
 #endif

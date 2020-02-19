@@ -18,8 +18,6 @@ Backup Command
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/helper.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
@@ -125,8 +123,9 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strPtr(strLstGet(historyYearList, 0))),
                     .expression = strNewFmt(
-                        "%s\\.manifest\\." GZIP_EXT "$",
-                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)))),
+                        "%s\\.manifest\\.%s$",
+                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                        compressTypeZ(compressTypeGzip))),
                 sortOrderDesc);
 
             if (strLstSize(historyList) > 0)
@@ -588,9 +587,11 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeFile:
         {
-            // If the backup is compressed then strip off the extension before doing the lookup !!! Fix this
-            if (resumeData->compressType != compressTypeNone)
-                manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZIP_EXT));
+            // If the file is compressed then strip off the extension before doing the lookup
+            CompressType fileCompressType = compressTypeFromName(manifestName);
+
+            if (fileCompressType != compressTypeNone)
+                manifestName = compressExtStrip(manifestName, fileCompressType);
 
             // Find the file in both manifests
             const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
@@ -599,7 +600,9 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // Check if the file can be resumed or must be removed
             const char *removeReason = NULL;
 
-            if (file == NULL)
+            if (fileCompressType != resumeData->compressType)
+                removeReason = "mismatched compression type";
+            else if (file == NULL)
                 removeReason = "missing in manifest";
             else if (file->reference != NULL)
                 removeReason = "reference in manifest";
@@ -1880,10 +1883,10 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         StorageWrite *manifestWrite = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZIP_EXT, strPtr(strSubN(backupLabel, 0, 4)),
-                    strPtr(backupLabel)));
+                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
+                    strPtr(backupLabel), compressExtZ(compressTypeGzip)));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzipCompressNew(9, false));
+        compressFilterAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressTypeGzip, 9);
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,

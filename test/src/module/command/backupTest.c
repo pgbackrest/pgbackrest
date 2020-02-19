@@ -1689,6 +1689,12 @@ testRun(void)
             // File is not in manifest
             storagePutP(
                 storageNewWriteP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strPtr(resumeLabel))),
+                NULL);
+
+            // File has incorrect compression type
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strPtr(resumeLabel))),
                 NULL);
 
@@ -1720,6 +1726,8 @@ testRun(void)
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
                 "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
+                    " (mismatched compression type)\n"
+                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed backup"
                     " (missing in manifest)\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed"
                     " backup (no checksum in resumed manifest)\n"

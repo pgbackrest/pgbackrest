@@ -3,6 +3,8 @@ Compression Helper
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
+
 #include "common/compress/helper.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
@@ -189,4 +191,21 @@ compressExtCat(String *file, CompressType type)
     strCat(file, compressExtZ(type));
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+String *
+compressExtStrip(const String *file, CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, file);
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(file != NULL);
+
+    if (!strEndsWithZ(file, compressExtZ(type)))
+        THROW_FMT(FormatError, "'%s' must have '%s' extension", strPtr(file), compressExtZ(type));
+
+    FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strlen(compressExtZ(type))));
 }
