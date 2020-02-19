@@ -24,8 +24,8 @@ testRun(void)
         cfgInit();
         cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
 
-        cfgOptionValidSet(cfgOptCompress, true);
-        cfgOptionSet(cfgOptCompress, cfgSourceParam, varNewBool(true));
+        cfgOptionValidSet(cfgOptArchiveAsync, true);
+        cfgOptionSet(cfgOptArchiveAsync, cfgSourceParam, varNewBool(true));
 
         StringList *commandParamList = strLstNew();
         strLstAddZ(commandParamList, "param1");
@@ -35,14 +35,14 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --compress");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async");
 
         strLstAddZ(commandParamList, "param 2");
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameters");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --compress");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async");
 
         cfgInit();
         cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
@@ -62,8 +62,6 @@ testRun(void)
 
         cfgOptionValidSet(cfgOptRepoS3Key, true);
         cfgOptionSet(cfgOptRepoS3Key, cfgSourceConfig, varNewStr(strNew("SECRET-STUFF")));
-
-        cfgOptionValidSet(cfgOptCompress, true);
 
         cfgOptionValidSet(cfgOptDbInclude, true);
         StringList *list = strLstNew();

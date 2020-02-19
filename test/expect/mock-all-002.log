@@ -1747,7 +1747,7 @@ diff backup - remove files (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
+P00   WARN: diff backup cannot alter compress option to 'gz', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192

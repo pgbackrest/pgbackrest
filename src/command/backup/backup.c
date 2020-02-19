@@ -408,10 +408,6 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         strPtr(cfgOptionStr(cfgOptType)), compressTypeZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))),
                         strPtr(backupLabelPrior));
 
-                    // !!! NOT SURE IF WE SHOULD SET THIS OPTION OR MAKE A NOTE TO IGNORE IT
-                    cfgOptionSet(
-                        cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompressType != compressTypeNone));
-
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
                     // type of compression may have been used for the previous backup.
@@ -521,7 +517,7 @@ typedef struct BackupResumeData
 {
     Manifest *manifest;                                             // New manifest
     const Manifest *manifestResume;                                 // Resumed manifest
-    const bool compressed;                                          // Is the backup compressed?
+    const CompressType compressType;                                // Backup compression type
     const bool delta;                                               // Is this a delta backup?
     const String *backupPath;                                       // Path to the current level of the backup being cleaned
     const String *manifestParentName;                               // Parent manifest name used to construct manifest name
@@ -592,8 +588,8 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeFile:
         {
-            // If the backup is compressed then strip off the extension before doing the lookup
-            if (resumeData->compressed)
+            // If the backup is compressed then strip off the extension before doing the lookup !!! Fix this
+            if (resumeData->compressType != compressTypeNone)
                 manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZIP_EXT));
 
             // Find the file in both manifests
@@ -807,7 +803,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             {
                 .manifest = manifest,
                 .manifestResume = manifestResume,
-                .compressed = cfgOptionBool(cfgOptCompress),
+                .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
                 .delta = cfgOptionBool(cfgOptDelta),
                 .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)),
             };
@@ -1784,7 +1780,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         infoArchiveCipherPass(infoArchive));
 
                     // Compress or decompress if archive and backup do not have the same compression settings
-                    if ((archiveCompressType != compressTypeNone) != cfgOptionBool(cfgOptCompress))
+                    if (archiveCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                     {
                         if (archiveCompressType != compressTypeNone)
                             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
@@ -1814,7 +1810,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             storageRepoWrite(),
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                cfgOptionBool(cfgOptCompress) ? "." GZIP_EXT : "")));
+                                compressExtZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))))));
 
                     // Add to manifest
                     ManifestFile file =
