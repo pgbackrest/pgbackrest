@@ -1270,7 +1270,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompress = true;
+        manifestResume->data.backupOptionCompressType = compressTypeGzip;
 
         manifestSave(
             manifestResume,
@@ -1282,12 +1282,12 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new compression 'false' does not match resumable compression 'true'");
+                " new compression 'none' does not match resumable compression 'gz'");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupOptionCompress = false;
+        manifestResume->data.backupOptionCompressType = compressTypeNone;
     }
 
     // *****************************************************************************************************************************
@@ -1427,7 +1427,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
+            "P00   WARN: diff backup cannot alter compress option to 'gz', reset to value in [FULL-1]\n"
             "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1631,7 +1631,7 @@ testRun(void)
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGzip;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1796,7 +1796,7 @@ testRun(void)
 
             manifestResumeData->backupType = backupTypeDiff;
             manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGzip;
             const String *resumeLabel = backupLabelCreate(backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1853,7 +1853,7 @@ testRun(void)
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
-                "P00   WARN: diff backup cannot alter compress option to 'false', reset to value in 20191003-105320F\n"
+                "P00   WARN: diff backup cannot alter compress option to 'none', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"

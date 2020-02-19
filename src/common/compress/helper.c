@@ -42,6 +42,42 @@ compressTypeEnum(const String *type)
 }
 
 /**********************************************************************************************************************************/
+const char *
+compressTypeZ(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    const char *result = NULL;
+
+    switch (type)
+    {
+        case compressTypeNone:
+        {
+            result = "none";
+            break;
+        }
+
+        case compressTypeGzip:
+        {
+            result = GZIP_EXT;
+            break;
+        }
+
+        case compressTypeLz4:
+        {
+            result = LZ4_EXT;
+            break;
+        }
+    }
+
+    CHECK(result != NULL);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 CompressType
 compressTypeFromName(const String *name)
 {

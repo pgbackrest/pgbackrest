@@ -360,7 +360,7 @@ cmdArchivePush(void)
                 String *warning = archivePushFile(
                     walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), archiveInfo.archiveCipherPass,
-                    cfgOptionBool(cfgOptCompress), cfgOptionInt(cfgOptCompressLevel));
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel));
 
                 // If a warning was returned then log it
                 if (warning != NULL)

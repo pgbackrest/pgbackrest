@@ -1025,13 +1025,13 @@ manifestNewBuild(
 
 /**********************************************************************************************************************************/
 void
-manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress)
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(TIME, copyStart);
-        FUNCTION_LOG_PARAM(TIME, compress);
+        FUNCTION_LOG_PARAM(ENUM, compressType);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -1049,7 +1049,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compres
 
         // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
         // processing begins
-        this->data.backupOptionCompress = compress;
+        this->data.backupOptionCompressType = compressType;
     }
     MEM_CONTEXT_END();
 
@@ -1656,7 +1656,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             else if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR))
                 manifest->data.backupOptionArchiveCopy = jsonToBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_STR))
-                manifest->data.backupOptionCompress = jsonToBool(value);
+                manifest->data.backupOptionCompressType = jsonToBool(value) ? compressTypeGzip : compressTypeNone;
             else if (strEq(key, MANIFEST_KEY_OPTION_HARDLINK_STR))
                 manifest->data.backupOptionHardLink = jsonToBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ONLINE_STR))
@@ -1941,7 +1941,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(manifest->data.backupOptionCompress));
+            jsonFromBool(manifest->data.backupOptionCompressType != compressTypeNone));
 
         if (manifest->data.backupOptionCompressLevel != NULL)
         {

@@ -1162,7 +1162,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860, false), "validate manifest");
         TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_BOOL(manifest->data.backupOptionCompress, false, "check compress");
+        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeNone, "check compress");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in past does not force delta");
@@ -1183,7 +1183,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, true), "validate manifest");
         TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_BOOL(manifest->data.backupOptionCompress, true, "check compress");
+        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGzip, "check compress");
 
         TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
     }

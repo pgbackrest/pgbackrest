@@ -401,21 +401,25 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     strPtr(manifestData(result)->backrestVersion));
 
                 // Warn if compress option changed
-                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
+                if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter compress option to '%s', reset to value in %s",
-                        strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
+                        strPtr(cfgOptionStr(cfgOptType)), compressTypeZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))),
                         strPtr(backupLabelPrior));
-                    cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
 
-                    // If compression must be reenabled then set the compress type to default.  This is not ideal because another
+                    // !!! NOT SURE IF WE SHOULD SET THIS OPTION OR MAKE A NOTE TO IGNORE IT
+                    cfgOptionSet(
+                        cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompressType != compressTypeNone));
+
+                    // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
+                    // could store compression type on a per file basis, but it seems simplest and safest for now.
                     // type of compression may have been used for the previous backup.
-                    if (manifestPriorData->backupOptionCompress)
+                    if (manifestPriorData->backupOptionCompressType != compressTypeNone)
                     {
                         cfgOptionSet(
                             cfgOptCompressType, cfgSourceParam,
-                            VARSTRZ(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressType)));
+                            VARSTRZ(compressTypeZ(manifestPriorData->backupOptionCompressType)));
                     }
                     // Else set compression type to none
                     else
@@ -728,12 +732,12 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
                         // Check compression. Compression can't be changed between backups so resume won't work either.
-                        else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
+                        else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                         {
                             reason = strNewFmt(
                                 "new compression '%s' does not match resumable compression '%s'",
-                                cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                                cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
+                                compressTypeZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))),
+                                compressTypeZ(manifestResumeData->backupOptionCompressType));
                         }
                         else
                             usable = true;
@@ -1968,7 +1972,8 @@ cmdBackup(void)
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
-        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), cfgOptionBool(cfgOptCompress));
+        manifestBuildValidate(
+            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
