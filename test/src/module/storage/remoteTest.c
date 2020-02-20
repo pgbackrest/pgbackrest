@@ -449,6 +449,8 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+        ioFilterGroupAdd(filterGroup, lz4CompressNew(1));
+        ioFilterGroupAdd(filterGroup, lz4DecompressNew());
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
         TEST_RESULT_BOOL(
@@ -460,8 +462,8 @@ testRun(void)
                 "TESTBRBLOCK4\n"
                 "DATABRBLOCK0\n"
                 "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzipCompress\":null,\"gzipDecompress\":null"
-                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
-                    ",\"size\":8}}\n",
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"lz4Compress\":null,\"lz4Decompress\":null"
+                    ",\"pageChecksum\":{\"align\":false,\"valid\":false},\"size\":8}}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);

@@ -256,7 +256,7 @@ lz4CompressNew(int level)
         *driver = (Lz4Compress)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .prefs = {.compressionLevel = level},
+            .prefs = {.compressionLevel = level, .frameInfo = {.contentChecksumFlag = LZ4F_contentChecksumEnabled}},
             .first = true,
             .buffer = bufNew(0),
         };
