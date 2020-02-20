@@ -82,14 +82,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress => 'gz'},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress => 'gz'},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress => 'gz'},
-        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress => 'gz'},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => 'gz'},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress => 'gz'},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress => 'lz4'},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => 'lz4'},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress => LZ4},
+        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => LZ4},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => LZ4},
     )
     {
         # Only run tests for this vm
@@ -105,7 +105,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});

@@ -1,5 +1,5 @@
-run 001 - rmt 0, cmp 0, error version, s3 0, enc 1
-==================================================
+run 001 - rmt 0, cmp none, error version, s3 0, enc 1
+=====================================================
 
 stanza-create db - create required data for stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-create

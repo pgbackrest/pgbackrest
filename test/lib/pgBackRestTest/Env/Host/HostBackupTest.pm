@@ -1034,7 +1034,14 @@ sub configCreate
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK)} = 1;
     }
 
-    if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
+    if (defined($oParam->{strCompressType}))
+    {
+        if ($oParam->{strCompressType} ne CFGOPTVAL_COMPRESS_TYPE_GZ)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_TYPE)} = $oParam->{strCompressType};
+        }
+    }
+    else
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
     }

@@ -96,7 +96,7 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+             bCompress => $bCompress ? GZ : undef, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
         my $bTestLocal = $self->runCurrent() == 1;

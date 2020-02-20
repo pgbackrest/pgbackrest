@@ -43,6 +43,11 @@ use constant ENCRYPTION_KEY_MANIFEST                             => 'manifest';
 use constant ENCRYPTION_KEY_BACKUPSET                            => 'backupset';
     push @EXPORT, qw(ENCRYPTION_KEY_BACKUPSET);
 
+use constant GZ                                                     => CFGOPTVAL_COMPRESS_TYPE_GZ;
+    push @EXPORT, qw(GZ);
+use constant LZ4                                                    => CFGOPTVAL_COMPRESS_TYPE_LZ4;
+    push @EXPORT, qw(LZ4);
+
 ####################################################################################################################################
 # setup
 ####################################################################################################################################
@@ -127,7 +132,7 @@ sub setup
     # Create db master config
     $oHostDbMaster->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
-        bCompress => $$oConfigParam{bCompress},
+        strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
         bS3 => $$oConfigParam{bS3}});
@@ -136,7 +141,7 @@ sub setup
     if (defined($oHostBackup))
     {
         $oHostBackup->configCreate({
-            bCompress => $$oConfigParam{bCompress},
+            strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
             bS3 => $$oConfigParam{bS3}});
     }
@@ -151,7 +156,7 @@ sub setup
     {
         $oHostDbStandby->configCreate({
             strBackupSource => $$oConfigParam{strBackupSource},
-            bCompress => $$oConfigParam{bCompress},
+            strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }

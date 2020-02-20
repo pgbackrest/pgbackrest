@@ -87,7 +87,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.

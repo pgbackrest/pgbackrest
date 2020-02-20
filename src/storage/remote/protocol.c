@@ -6,6 +6,8 @@ Remote Storage Protocol Handler
 #include "command/backup/pageChecksum.h"
 #include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
+#include "common/compress/lz4/compress.h"
+#include "common/compress/lz4/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -76,6 +78,10 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
             ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
         else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, gzipDecompressNewVar(filterParam));
+        else if (strEq(filterKey, LZ4_COMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, lz4CompressNewVar(filterParam));
+        else if (strEq(filterKey, LZ4_DECOMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, lz4DecompressNew());
         else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
         else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))
