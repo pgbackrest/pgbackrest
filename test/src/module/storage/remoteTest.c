@@ -449,8 +449,10 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+#ifdef HAVE_LIBLZ4
         ioFilterGroupAdd(filterGroup, lz4CompressNew(1));
         ioFilterGroupAdd(filterGroup, lz4DecompressNew());
+#endif
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
         TEST_RESULT_BOOL(
@@ -462,7 +464,10 @@ testRun(void)
                 "TESTBRBLOCK4\n"
                 "DATABRBLOCK0\n"
                 "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzipCompress\":null,\"gzipDecompress\":null"
-                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"lz4Compress\":null,\"lz4Decompress\":null"
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\""
+#ifdef HAVE_LIBLZ4
+                    ",\"lz4Compress\":null,\"lz4Decompress\":null"
+#endif
                     ",\"pageChecksum\":{\"align\":false,\"valid\":false},\"size\":8}}\n",
             "check result");
 
