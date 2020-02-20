@@ -594,7 +594,8 @@ memContextPush(MemContext *this)
 }
 
 /**********************************************************************************************************************************/
-void memContextPop(void)
+void
+memContextPop(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -623,7 +624,8 @@ void memContextPop(void)
 }
 
 /**********************************************************************************************************************************/
-void memContextKeep(void)
+void
+memContextKeep(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -643,7 +645,8 @@ void memContextKeep(void)
 }
 
 /**********************************************************************************************************************************/
-void memContextDiscard(void)
+void
+memContextDiscard(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -713,7 +716,8 @@ memContextPrior(void)
 }
 
 /**********************************************************************************************************************************/
-void memContextClean(unsigned int tryDepth)
+void
+memContextClean(unsigned int tryDepth)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, tryDepth);
