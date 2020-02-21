@@ -408,15 +408,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
-                    if (manifestPriorData->backupOptionCompressType != compressTypeNone)
-                    {
-                        cfgOptionSet(
-                            cfgOptCompressType, cfgSourceParam,
-                            VARSTRZ(compressTypeZ(manifestPriorData->backupOptionCompressType)));
-                    }
-                    // Else set compression type to none
-                    else
-                        cfgOptionSet(cfgOptCompressType, cfgSourceParam, NULL);
+                    cfgOptionSet(
+                        cfgOptCompressType, cfgSourceParam, VARSTRZ(compressTypeZ(manifestPriorData->backupOptionCompressType)));
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that

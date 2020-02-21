@@ -229,6 +229,19 @@ cfgLoadUpdateOption(void)
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
+    // If not compress then set compress-type to none.  Eventually the compress option will be deprecated and removed so this
+    // reduces code churn when that happens.  This should be the *only* reference to the config option remaining in the code.
+    if (cfgOptionValid(cfgOptCompress) && !cfgOptionBool(cfgOptCompress))
+    {
+        cfgOptionValidSet(cfgOptCompressType, true);
+        cfgOptionSet(cfgOptCompressType, cfgSourceDefault, VARSTRDEF(compressTypeZ(compressTypeNone)));
+    }
+
+    // Check that the selected compress type has been compiled into this binary
+    if (cfgOptionTest(cfgOptCompressType))
+        // !!! Replace this with something like compressTypeEnum()
+        compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -316,9 +329,6 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Update options that have complex rules
             cfgLoadUpdateOption();
-
-            // Error now if an invalid compression type was selected, i.e. not compiled into this binary
-            compressTypeEnum(cfgOptionStr(cfgOptCompressType));
         }
     }
     MEM_CONTEXT_TEMP_END();

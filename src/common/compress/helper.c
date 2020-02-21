@@ -16,6 +16,11 @@ Compression Helper
 #include "common/log.h"
 #include "version.h"
 
+/***********************************************************************************************************************************
+Compression type constants
+***********************************************************************************************************************************/
+#define COMPRESS_TYPE_NONE                                          "none"
+
 /**********************************************************************************************************************************/
 CompressType
 compressTypeEnum(const String *type)
@@ -24,9 +29,11 @@ compressTypeEnum(const String *type)
         FUNCTION_TEST_PARAM(STRING, type);
     FUNCTION_TEST_END();
 
+    ASSERT(type != NULL);
+
     CompressType result = compressTypeNone;
 
-    if (type != NULL)
+    if (!strEqZ(type, COMPRESS_TYPE_NONE))
     {
         if (strEqZ(type, GZIP_EXT))
             result = compressTypeGzip;
