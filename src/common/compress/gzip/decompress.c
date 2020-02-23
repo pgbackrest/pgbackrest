@@ -161,7 +161,7 @@ gzipDecompressNew(void)
         };
 
         // Create gzip stream
-        gzipError(driver->result = inflateInit2(&driver->stream, WANT_GZIP));
+        gzipError(driver->result = inflateInit2(&driver->stream, WANT_GZIP | WINDOW_BITS));
 
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipDecompressFreeResource, driver);
