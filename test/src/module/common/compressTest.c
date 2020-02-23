@@ -100,9 +100,9 @@ testRun(void)
 
             // TEST_ERROR(compressExtZ((CompressType)999999), AssertError, "invalid compression type 999999");
 
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-            TEST_ERROR(compressFilterAdd(filterGroup, (CompressType)999999, 0), AssertError, "invalid compression type 999999");
-            TEST_ERROR(decompressFilterAdd(filterGroup, (CompressType)999999), AssertError, "invalid compression type 999999");
+            // IoFilterGroup *filterGroup = ioFilterGroupNew();
+            // TEST_ERROR(compressFilterAdd(filterGroup, (CompressType)999999, 0), AssertError, "invalid compression type 999999");
+            // TEST_ERROR(decompressFilterAdd(filterGroup, (CompressType)999999), AssertError, "invalid compression type 999999");
         }
     }
 

@@ -6,8 +6,7 @@ Remote Storage Read
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -65,7 +64,7 @@ storageReadRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add compression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzipCompressNew((int)this->interface.compressLevel));
+            compressFilterAdd(ioReadFilterGroup(storageReadIo(this->read)), compressTypeGzip, (int)this->interface.compressLevel);
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
@@ -79,7 +78,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         // If the file is compressible add decompression filter locally
         if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzipDecompressNew());
+            decompressFilterAdd(ioReadFilterGroup(storageReadIo(this->read)), compressTypeGzip);
     }
     MEM_CONTEXT_TEMP_END();
 

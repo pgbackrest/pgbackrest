@@ -4,10 +4,7 @@ Remote Storage Protocol Handler
 #include "build.auto.h"
 
 #include "command/backup/pageChecksum.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
-#include "common/compress/lz4/compress.h"
-#include "common/compress/lz4/decompress.h"
+#include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -74,16 +71,10 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         const String *filterKey = varStr(varLstGet(kvKeyList(filterKv), 0));
         const VariantList *filterParam = varVarLst(kvGet(filterKv, VARSTR(filterKey)));
 
-        if (strEq(filterKey, GZIP_COMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
-        else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzipDecompressNew());
-#ifdef HAVE_LIBLZ4
-        else if (strEq(filterKey, LZ4_COMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, lz4CompressNewVar(filterParam));
-        else if (strEq(filterKey, LZ4_DECOMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, lz4DecompressNew());
-#endif
+        IoFilter *filter = compressFilterVar(filterKey, filterParam);
+
+        if (filter != NULL)
+            ioFilterGroupAdd(filterGroup, filter);
         else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
         else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))

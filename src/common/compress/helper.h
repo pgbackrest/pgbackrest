@@ -11,15 +11,15 @@ Available compression types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    compressTypeNone,
-    compressTypeGzip,
-    compressTypeLz4,
+    compressTypeNone,                                               // No compression
+    compressTypeGzip,                                               // gzip
+    compressTypeLz4,                                                // lz4
 
     // These types have not been implemented but are included here so older versions can identify compression types added by future
     // versions. In that sense this list is speculative, but these seem to be all the types that are likely to be added.
-    compressTypeZst,
-    compressTypeXz,
-    compressTypeBz2,
+    compressTypeZst,                                                // zstandard
+    compressTypeXz,                                                 // xz/lzma
+    compressTypeBz2,                                                // bzip2
 } CompressType;
 
 #include <common/type/string.h>
@@ -44,8 +44,17 @@ const char *compressTypeZ(CompressType type);
 // compressType none is returned, even if the file is compressed with some unknown type.
 CompressType compressTypeFromName(const String *name);
 
+// Compression filter for the specified type.  If compress type is none then NULL is returned.
+IoFilter *compressFilter(CompressType type, int level);
+
 // Add compression filter to a filter group. If compression type is none then no filter will be added.
 bool compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level);
+
+// Compression/decompression filter based on string type and a parameter list
+IoFilter *compressFilterVar(const String *filterType, const VariantList *filterParamList);
+
+// Decompression filter for the specified type.  If compress type is none then NULL is returned.
+IoFilter *decompressFilter(CompressType type);
 
 // Add decompression filter to a filter group. If compression type is none then no filter will be added.
 bool decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type);
