@@ -27,6 +27,8 @@ testRun(void)
             filterGroup = ioFilterGroupNew();
             TEST_RESULT_VOID(decompressFilterAdd(filterGroup, compressTypeNone), "try to add decompress filter");
             TEST_RESULT_UINT(lstSize(filterGroup->filterList), 0, "   check no filter was added");
+
+            TEST_RESULT_PTR(compressFilterVar(STRDEF("none"), NULL), NULL, "try to add none filter var");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -43,11 +45,21 @@ testRun(void)
             TEST_RESULT_STR(
                 ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), GZIP_COMPRESS_FILTER_TYPE_STR, "   check filter type");
 
+            IoFilter *filter = NULL;
+            VariantList *paramList = varLstNew();
+            varLstAdd(paramList, varNewInt(3));
+
+            TEST_ASSIGN(filter, compressFilterVar(GZIP_COMPRESS_FILTER_TYPE_STR, paramList), "try to add compress filter var");
+            TEST_RESULT_STR(ioFilterType(filter), GZIP_COMPRESS_FILTER_TYPE_STR, "   check filter type");
+
             filterGroup = ioFilterGroupNew();
             TEST_RESULT_VOID(decompressFilterAdd(filterGroup, compressTypeGzip), "try to add decompress filter");
             TEST_RESULT_UINT(lstSize(filterGroup->filterList), 1, "   check filter was added");
             TEST_RESULT_STR(
                 ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), GZIP_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
+
+            TEST_ASSIGN(filter, compressFilterVar(GZIP_DECOMPRESS_FILTER_TYPE_STR, NULL), "try to add decompress filter var");
+            TEST_RESULT_STR(ioFilterType(filter), GZIP_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------

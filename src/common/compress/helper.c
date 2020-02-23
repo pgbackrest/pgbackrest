@@ -184,6 +184,8 @@ compressFilterVar(const String *filterType, const VariantList *filterParamList)
         FUNCTION_LOG_PARAM(VARIANT_LIST, filterParamList);
     FUNCTION_LOG_END();
 
+    ASSERT(filterType != NULL);
+
     IoFilter *result = NULL;
 
     for (CompressType compressType = compressTypeNone + 1; compressType < COMPRESS_LIST_SIZE; compressType++)
