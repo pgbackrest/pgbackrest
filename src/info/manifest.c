@@ -581,8 +581,13 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strPtr(manifestName));
             }
 
-            // Skip pg_internal.init since it is recreated on startup
-            if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
+            // Skip pg_internal.init since it is recreated on startup.  It's also possible, (though unlikely) that a temp file with
+            // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
+            // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
+            // the likelihood of needing the regexp should be very small.
+            if ((pgVersion <= PG_VERSION_84 || buildData.dbPath) && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
+                (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
+                    regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
                 FUNCTION_TEST_RETURN_VOID();
                 return;
