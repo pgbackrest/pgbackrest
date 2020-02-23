@@ -11,6 +11,7 @@ sub libcAutoConstant
 {
     return
     {
+        CFGOPTVAL_COMPRESS_TYPE_NONE                                     => 'none',
         CFGOPTVAL_COMPRESS_TYPE_GZ                                       => 'gz',
         CFGOPTVAL_COMPRESS_TYPE_LZ4                                      => 'lz4',
 
@@ -86,6 +87,7 @@ sub libcAutoExportTag
 
         config =>
         [
+            'CFGOPTVAL_COMPRESS_TYPE_NONE',
             'CFGOPTVAL_COMPRESS_TYPE_GZ',
             'CFGOPTVAL_COMPRESS_TYPE_LZ4',
             'CFGOPTVAL_INFO_OUTPUT_TEXT',

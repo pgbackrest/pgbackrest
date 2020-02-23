@@ -15,7 +15,7 @@ testRun(void)
     {
         TEST_TITLE("no compression");
         {
-            TEST_RESULT_UINT(compressTypeEnum(NULL), compressTypeNone, "check enum");
+            TEST_RESULT_UINT(compressTypeEnum(STRDEF("none")), compressTypeNone, "check enum");
             TEST_RESULT_Z(compressExtZ(compressTypeNone), "", "check ext");
             TEST_RESULT_Z(compressTypeZ(compressTypeNone), "none", "check type z");
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file")), compressTypeNone, "check type from name");

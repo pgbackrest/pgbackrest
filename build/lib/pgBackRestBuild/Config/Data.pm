@@ -1180,6 +1180,7 @@ my %hConfigDefine =
         },
         &CFGDEF_ALLOW_LIST =>
         [
+            'none',
             'gz',
             'lz4',
         ],

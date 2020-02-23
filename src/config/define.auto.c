@@ -776,6 +776,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
             (
+                "none",
                 "gz",
                 "lz4"
             )

@@ -481,7 +481,7 @@ sub backupCompare
         # Determine repo size if compression or encryption is enabled
         my $strCompressType = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE};
 
-        if ($strCompressType ne 'none' ||
+        if ($strCompressType ne CFGOPTVAL_COMPRESS_TYPE_NONE ||
             (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
                 defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS})))
         {
@@ -490,7 +490,8 @@ sub backupCompare
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
                     (storageRepo()->info(STORAGE_REPO_BACKUP .
-                        "/${strBackup}/${strFileKey}" . ($strCompressType eq 'none' ? '' : ".${strCompressType}")))->{size};
+                        "/${strBackup}/${strFileKey}" .
+                        ($strCompressType eq CFGOPTVAL_COMPRESS_TYPE_NONE ? '' : ".${strCompressType}")))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -1799,6 +1800,8 @@ sub restoreCompare
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
     $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS_TYPE, undef,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE});
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 

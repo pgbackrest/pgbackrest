@@ -1654,9 +1654,9 @@ testRun(void)
             "option-buffer-size=16384\n"                                                                                           \
             "option-checksum-page=false\n"                                                                                         \
             "option-compress=true\n"                                                                                               \
-            "option-compress-type=\"gz\"\n"                                                                                        \
             "option-compress-level=3\n"                                                                                            \
             "option-compress-level-network=6\n"                                                                                    \
+            "option-compress-type=\"gz\"\n"                                                                                        \
             "option-delta=false\n"                                                                                                 \
             "option-hardlink=true\n"                                                                                               \
             "option-online=false\n"                                                                                                \
