@@ -267,6 +267,16 @@ testRun(void)
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compress-type=none when compress=n");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
+        strLstAdd(argList, strNew("--no-" CFGOPT_COMPRESS));
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    check compres-type=none");
     }
 
     // *****************************************************************************************************************************

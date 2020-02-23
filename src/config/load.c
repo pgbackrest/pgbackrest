@@ -229,16 +229,16 @@ cfgLoadUpdateOption(void)
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
-    // If not compress then set compress-type to none.  Eventually the compress option will be deprecated and removed so this
-    // reduces code churn when that happens.  This should be the *only* reference to the config option remaining in the code.
+    // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
     if (cfgOptionValid(cfgOptCompress))
     {
-        // Check that the selected compress type has been compiled into this binary
+        // If compression enabled check that the selected compress type has been compiled into this binary
         if (cfgOptionBool(cfgOptCompress))
         {
-            // !!! Replace this with something like compressTypeValid()
             compressTypeEnum(cfgOptionStr(cfgOptCompressType));
         }
+        // Else set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
+        // when that happens.
         else
             cfgOptionSet(cfgOptCompressType, cfgSourceDefault, VARSTRDEF(compressTypeZ(compressTypeNone)));
     }
