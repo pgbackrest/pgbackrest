@@ -153,7 +153,7 @@ compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level)
         {
             case compressTypeGzip:
             {
-                ioFilterGroupAdd(filterGroup, gzipCompressNew(level, false));
+                ioFilterGroupAdd(filterGroup, gzipCompressNew(level));
                 break;
             }
 
@@ -192,7 +192,7 @@ decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type)
         {
             case compressTypeGzip:
             {
-                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+                ioFilterGroupAdd(filterGroup, gzipDecompressNew());
                 break;
             }
 

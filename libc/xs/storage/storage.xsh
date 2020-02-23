@@ -135,14 +135,9 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gzip"))
     {
         if (strEqZ(varStr(varLstGet(paramList, 0)), "compress"))
-        {
-            ioFilterGroupAdd(
-                filterGroup, gzipCompressNew(varUIntForce(varLstGet(paramList, 2)), varBoolForce(varLstGet(paramList, 1))));
-        }
+            ioFilterGroupAdd(filterGroup, gzipCompressNew(varUIntForce(varLstGet(paramList, 2))));
         else
-        {
-            ioFilterGroupAdd(filterGroup, gzipDecompressNew(varBoolForce(varLstGet(paramList, 1))));
-        }
+            ioFilterGroupAdd(filterGroup, gzipDecompressNew());
     }
     else
         THROW_FMT(AssertError, "unable to add invalid filter '%s'", strPtr(filter));

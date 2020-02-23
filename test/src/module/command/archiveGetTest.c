@@ -202,7 +202,7 @@ testRun(void)
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
-        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
+        ioFilterGroupAdd(filterGroup, gzipCompressNew(3);
         ioFilterGroupAdd(
             filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
         storagePutP(destination, buffer);

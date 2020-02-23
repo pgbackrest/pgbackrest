@@ -160,11 +160,10 @@ gzipCompressInputSame(const THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 IoFilter *
-gzipCompressNew(int level, bool raw)
+gzipCompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
-        FUNCTION_LOG_PARAM(BOOL, raw);
     FUNCTION_LOG_END();
 
     ASSERT(level >= -1 && level <= 9);
@@ -182,7 +181,7 @@ gzipCompressNew(int level, bool raw)
         };
 
         // Create gzip stream
-        gzipError(deflateInit2(&driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
+        gzipError(deflateInit2(&driver->stream, level, Z_DEFLATED, WANT_GZIP | WINDOW_BITS, MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipCompressFreeResource, driver);
@@ -190,7 +189,6 @@ gzipCompressNew(int level, bool raw)
         // Create param list
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewInt(level));
-        varLstAdd(paramList, varNewBool(raw));
 
         // Create filter interface
         this = ioFilterNewP(
@@ -205,5 +203,5 @@ gzipCompressNew(int level, bool raw)
 IoFilter *
 gzipCompressNewVar(const VariantList *paramList)
 {
-    return gzipCompressNew(varIntForce(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
+    return gzipCompressNew(varIntForce(varLstGet(paramList, 0)));
 }

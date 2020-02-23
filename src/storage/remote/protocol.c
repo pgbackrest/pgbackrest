@@ -77,7 +77,7 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         if (strEq(filterKey, GZIP_COMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
         else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzipDecompressNewVar(filterParam));
+            ioFilterGroupAdd(filterGroup, gzipDecompressNew());
 #ifdef HAVE_LIBLZ4
         else if (strEq(filterKey, LZ4_COMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, lz4CompressNewVar(filterParam));

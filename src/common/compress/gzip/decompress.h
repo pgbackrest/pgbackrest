@@ -17,7 +17,6 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoFilter *gzipDecompressNew(bool raw);
-IoFilter *gzipDecompressNewVar(const VariantList *paramList);
+IoFilter *gzipDecompressNew(void);
 
 #endif
