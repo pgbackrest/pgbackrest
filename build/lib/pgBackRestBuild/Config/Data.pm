@@ -1173,11 +1173,6 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => 'gz',
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_COMPRESS,
-            &CFGDEF_DEPEND_LIST => [true],
-        },
         &CFGDEF_ALLOW_LIST =>
         [
             'none',

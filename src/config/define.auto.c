@@ -781,12 +781,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "lz4"
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgDefOptCompress,
-                "1"
-            )
-
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("gz")
         )
     )

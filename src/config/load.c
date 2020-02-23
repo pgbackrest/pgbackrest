@@ -231,16 +231,17 @@ cfgLoadUpdateOption(void)
 
     // If not compress then set compress-type to none.  Eventually the compress option will be deprecated and removed so this
     // reduces code churn when that happens.  This should be the *only* reference to the config option remaining in the code.
-    if (cfgOptionValid(cfgOptCompress) && !cfgOptionBool(cfgOptCompress))
+    if (cfgOptionValid(cfgOptCompress))
     {
-        cfgOptionValidSet(cfgOptCompressType, true);
-        cfgOptionSet(cfgOptCompressType, cfgSourceDefault, VARSTRDEF(compressTypeZ(compressTypeNone)));
+        // Check that the selected compress type has been compiled into this binary
+        if (cfgOptionBool(cfgOptCompress))
+        {
+            // !!! Replace this with something like compressTypeValid()
+            compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+        }
+        else
+            cfgOptionSet(cfgOptCompressType, cfgSourceDefault, VARSTRDEF(compressTypeZ(compressTypeNone)));
     }
-
-    // Check that the selected compress type has been compiled into this binary
-    if (cfgOptionTest(cfgOptCompressType))
-        // !!! Replace this with something like compressTypeEnum()
-        compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
     FUNCTION_LOG_RETURN_VOID();
 }
