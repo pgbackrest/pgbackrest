@@ -79,7 +79,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 StorageRead *read = storageNewReadP(
                     data->storage,
                     data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                decompressFilterAdd(ioReadFilterGroup(storageReadIo(read)), compressType);
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressType));
                 size = bufUsed(storageGetP(read));
 
                 manifestName = strSubN(info->name, 0, strSize(info->name) - strlen(compressExtZ(compressType)));
@@ -245,7 +245,8 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                     STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
                     strPtr(walChecksum), compressExtZ(param.walCompressType)));
 
-            compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)), param.walCompressType, 1);
+            if (param.walCompressType != compressTypeNone)
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(param.walCompressType, 1));
 
             storagePutP(write, walBuffer);
         }

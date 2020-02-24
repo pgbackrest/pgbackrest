@@ -20,15 +20,9 @@ testRun(void)
             TEST_RESULT_Z(compressTypeZ(compressTypeNone), "none", "check type z");
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file")), compressTypeNone, "check type from name");
 
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(compressFilterAdd(filterGroup, compressTypeNone, 0), "try to add compress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 0, "   check no filter was added");
-
-            filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(decompressFilterAdd(filterGroup, compressTypeNone), "try to add decompress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 0, "   check no filter was added");
-
-            TEST_RESULT_PTR(compressFilterVar(STRDEF("none"), NULL), NULL, "try to add none filter var");
+            TEST_RESULT_PTR(compressFilter(compressTypeNone, 0), NULL, "no compress filter");
+            TEST_RESULT_PTR(compressFilterVar(STRDEF("none"), NULL), NULL, "no filter var");
+            TEST_RESULT_PTR(decompressFilter(compressTypeNone), NULL, "no decompress filter");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -39,24 +33,20 @@ testRun(void)
             TEST_RESULT_Z(compressTypeZ(compressTypeGzip), "gz", "check type z");
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGzip, "check type from name");
 
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(compressFilterAdd(filterGroup, compressTypeGzip, 6), "try to add compress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 1, "   check filter was added");
-            TEST_RESULT_STR(
-                ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), GZIP_COMPRESS_FILTER_TYPE_STR, "   check filter type");
-
             IoFilter *filter = NULL;
+            TEST_ASSIGN(filter, compressFilter(compressTypeGzip, 6), "compress filter");
+            TEST_RESULT_PTR_NE(filter, NULL, "   check filter is not null");
+            TEST_RESULT_STR(ioFilterType(filter), GZIP_COMPRESS_FILTER_TYPE_STR, "   check filter type");
+
             VariantList *paramList = varLstNew();
             varLstAdd(paramList, varNewInt(3));
 
             TEST_ASSIGN(filter, compressFilterVar(GZIP_COMPRESS_FILTER_TYPE_STR, paramList), "try to add compress filter var");
             TEST_RESULT_STR(ioFilterType(filter), GZIP_COMPRESS_FILTER_TYPE_STR, "   check filter type");
 
-            filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(decompressFilterAdd(filterGroup, compressTypeGzip), "try to add decompress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 1, "   check filter was added");
-            TEST_RESULT_STR(
-                ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), GZIP_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
+            TEST_ASSIGN(filter, decompressFilter(compressTypeGzip), "decompress filter");
+            TEST_RESULT_PTR_NE(filter, NULL, "   check filter is not null");
+            TEST_RESULT_STR(ioFilterType(filter), GZIP_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
 
             TEST_ASSIGN(filter, compressFilterVar(GZIP_DECOMPRESS_FILTER_TYPE_STR, NULL), "try to add decompress filter var");
             TEST_RESULT_STR(ioFilterType(filter), GZIP_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
@@ -87,18 +77,6 @@ testRun(void)
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("lz4")), compressTypeLz4, "check enum");
             TEST_RESULT_Z(compressExtZ(compressTypeLz4), ".lz4", "check ext");
             TEST_RESULT_Z(compressTypeZ(compressTypeLz4), "lz4", "check type z");
-
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(compressFilterAdd(filterGroup, compressTypeLz4, 1), "try to add compress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 1, "   check filter was added");
-            TEST_RESULT_STR(
-                ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), LZ4_COMPRESS_FILTER_TYPE_STR, "   check filter type");
-
-            filterGroup = ioFilterGroupNew();
-            TEST_RESULT_VOID(decompressFilterAdd(filterGroup, compressTypeLz4), "try to add decompress filter");
-            TEST_RESULT_UINT(lstSize(filterGroup->filterList), 1, "   check filter was added");
-            TEST_RESULT_STR(
-                ioFilterType(ioFilterGroupGet(filterGroup, 0)->filter), LZ4_DECOMPRESS_FILTER_TYPE_STR, "   check filter type");
 #else
             TEST_ERROR(compressTypeEnum(STRDEF("lz4")), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif
@@ -109,12 +87,6 @@ testRun(void)
         {
             TEST_ERROR(compressTypeEnum(strNew(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
             TEST_ERROR(compressTypeEnum(STRDEF("zst")), OptionInvalidValueError, "pgBackRest not compiled with zst support");
-
-            // TEST_ERROR(compressExtZ((CompressType)999999), AssertError, "invalid compression type 999999");
-
-            // IoFilterGroup *filterGroup = ioFilterGroupNew();
-            // TEST_ERROR(compressFilterAdd(filterGroup, (CompressType)999999, 0), AssertError, "invalid compression type 999999");
-            // TEST_ERROR(decompressFilterAdd(filterGroup, (CompressType)999999), AssertError, "invalid compression type 999999");
         }
     }
 

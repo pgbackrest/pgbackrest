@@ -151,7 +151,11 @@ restoreFile(
                 }
 
                 // Add decompression filter
-                compressible = !decompressFilterAdd(filterGroup, repoFileCompressType);
+                if (repoFileCompressType != compressTypeNone)
+                {
+                    ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
+                    compressible = false;
+                }
 
                 // Add sha1 filter
                 ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));

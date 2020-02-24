@@ -91,7 +91,11 @@ storageWriteRemoteOpen(THIS_VOID)
 
         // If the file is compressible add compression filter locally
         if (this->interface.compressible)
-            compressFilterAdd(ioWriteFilterGroup(storageWriteIo(this->write)), compressTypeGzip, (int)this->interface.compressLevel);
+        {
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(storageWriteIo(this->write)), compressFilter(compressTypeGzip,
+                    (int)this->interface.compressLevel));
+        }
 
         // Set free callback to ensure remote file is freed
         memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);

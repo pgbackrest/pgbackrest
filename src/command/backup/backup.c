@@ -942,7 +942,11 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
 
             // Add compression
-            compressFilterAdd(ioWriteFilterGroup(storageWriteIo(write)), compressType, cfgOptionInt(cfgOptCompressLevel));
+            if (compressType != compressTypeNone)
+            {
+                ioFilterGroupAdd(
+                    ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+            }
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
@@ -1778,10 +1782,10 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                     if (archiveCompressType != backupCompressType)
                     {
                         if (archiveCompressType != compressTypeNone)
-                            decompressFilterAdd(ioReadFilterGroup(storageReadIo(read)), archiveCompressType);
+                            ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
 
                         if (backupCompressType != compressTypeNone)
-                            compressFilterAdd(filterGroup, backupCompressType, cfgOptionInt(cfgOptCompressLevel));
+                            ioFilterGroupAdd(filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
                     }
 
                     // Encrypt with backup key if encrypted
@@ -1875,7 +1879,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                     STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
                     strPtr(backupLabel), compressExtZ(compressTypeGzip)));
 
-        compressFilterAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressTypeGzip, 9);
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGzip, 9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,

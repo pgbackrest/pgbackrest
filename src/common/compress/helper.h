@@ -47,17 +47,11 @@ CompressType compressTypeFromName(const String *name);
 // Compression filter for the specified type.  If compress type is none then NULL is returned.
 IoFilter *compressFilter(CompressType type, int level);
 
-// Add compression filter to a filter group. If compression type is none then no filter will be added.
-bool compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level);
-
 // Compression/decompression filter based on string type and a parameter list
 IoFilter *compressFilterVar(const String *filterType, const VariantList *filterParamList);
 
 // Decompression filter for the specified type.  If compress type is none then NULL is returned.
 IoFilter *decompressFilter(CompressType type);
-
-// Add decompression filter to a filter group. If compression type is none then no filter will be added.
-bool decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type);
 
 // Get extension for the current compression type
 const char *compressExtZ(CompressType type);

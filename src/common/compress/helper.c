@@ -156,26 +156,6 @@ compressFilter(CompressType type, int level)
 }
 
 /**********************************************************************************************************************************/
-bool
-compressFilterAdd(IoFilterGroup *filterGroup, CompressType type, int level)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(INT, level);
-    FUNCTION_LOG_END();
-
-    ASSERT(type < COMPRESS_LIST_SIZE);
-
-    IoFilter *filter = compressFilter(type, level);
-
-    if (filter != NULL)
-        ioFilterGroupAdd(filterGroup, filter);
-
-    FUNCTION_LOG_RETURN(BOOL, filter != NULL);
-}
-
-/**********************************************************************************************************************************/
 IoFilter *
 compressFilterVar(const String *filterType, const VariantList *filterParamList)
 {
@@ -229,25 +209,6 @@ decompressFilter(CompressType type)
         result = compressHelperLocal[type].decompressNew();
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-bool
-decompressFilterAdd(IoFilterGroup *filterGroup, CompressType type)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_LOG_PARAM(ENUM, type);
-    FUNCTION_LOG_END();
-
-    ASSERT(type < COMPRESS_LIST_SIZE);
-
-    IoFilter *filter = decompressFilter(type);
-
-    if (filter != NULL)
-        ioFilterGroupAdd(filterGroup, filter);
-
-    FUNCTION_LOG_RETURN(BOOL, filter != NULL);
 }
 
 /**********************************************************************************************************************************/

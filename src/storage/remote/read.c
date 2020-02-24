@@ -64,7 +64,10 @@ storageReadRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add compression filter on the remote
         if (this->interface.compressible)
-            compressFilterAdd(ioReadFilterGroup(storageReadIo(this->read)), compressTypeGzip, (int)this->interface.compressLevel);
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGzip, (int)this->interface.compressLevel));
+        }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
@@ -78,7 +81,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         // If the file is compressible add decompression filter locally
         if (this->interface.compressible)
-            decompressFilterAdd(ioReadFilterGroup(storageReadIo(this->read)), compressTypeGzip);
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGzip));
     }
     MEM_CONTEXT_TEMP_END();
 

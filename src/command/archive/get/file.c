@@ -159,8 +159,13 @@ archiveGetFile(
             }
 
             // If file is compressed then add the decompression filter
-            compressible = !decompressFilterAdd(
-                ioWriteFilterGroup(storageWriteIo(destination)), compressTypeFromName(archiveGetCheckResult.archiveFileActual));
+            CompressType compressType = compressTypeFromName(archiveGetCheckResult.archiveFileActual);
+
+            if (compressType != compressTypeNone)
+            {
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilter(compressType));
+                compressible = false;
+            }
 
             // Copy the file
             storageCopyP(

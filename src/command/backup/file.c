@@ -146,7 +146,8 @@ backupFile(
                         }
 
                         // Decompress the file if compressed
-                        decompressFilterAdd(ioReadFilterGroup(read), repoFileCompressType);
+                        if (repoFileCompressType != compressTypeNone)
+                            ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
@@ -187,7 +188,7 @@ backupFile(
         if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
         {
             // Is the file compressible during the copy?
-            bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
+            bool compressible = true;
 
             // Setup pg file for read
             StorageRead *read = storageNewReadP(
@@ -204,7 +205,12 @@ backupFile(
             }
 
             // Add compression
-            compressFilterAdd(ioReadFilterGroup(storageReadIo(read)), repoFileCompressType, repoFileCompressLevel);
+            if (repoFileCompressType != compressTypeNone)
+            {
+                ioFilterGroupAdd(
+                    ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
+                compressible = false;
+            }
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)
@@ -212,6 +218,7 @@ backupFile(
                 ioFilterGroupAdd(
                     ioReadFilterGroup(
                         storageReadIo(read)), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
+                compressible = false;
             }
 
             // Setup the repo file for write

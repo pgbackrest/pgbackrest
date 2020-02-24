@@ -39,7 +39,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
                     StorageRead *read = storageNewReadP(
                         data->storage,
                         data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                    decompressFilterAdd(ioReadFilterGroup(storageReadIo(read)), compressTypeGzip);
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGzip));
                     size = bufUsed(storageGetP(read));
                 }
 
