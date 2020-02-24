@@ -242,7 +242,7 @@ cfgLoadUpdateOption(void)
         // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
         // when that happens.
         if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
-            cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARSTRDEF(compressTypeZ(compressTypeNone)));
+            cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(compressTypeNone)));
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
         cfgOptionValidSet(cfgOptCompress, false);
@@ -251,7 +251,7 @@ cfgLoadUpdateOption(void)
 
     // Check that selected compress type has been compiled into this binary
     if (cfgOptionValid(cfgOptCompressType))
-        compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+        compressTypePresent(compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
 
     FUNCTION_LOG_RETURN_VOID();
 }

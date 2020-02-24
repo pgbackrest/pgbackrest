@@ -71,7 +71,7 @@ backupFile(
     {
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), compressExtZ(repoFileCompressType));
+            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), strPtr(compressExtStr(repoFileCompressType)));
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.

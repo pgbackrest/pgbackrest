@@ -169,7 +169,7 @@ restoreFile(
                         storageRepo(),
                         strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(repoFileReference), strPtr(repoFile),
-                            compressExtZ(repoFileCompressType)),
+                            strPtr(compressExtStr(repoFileCompressType))),
                         .compressible = compressible),
                     pgFileWrite);
 

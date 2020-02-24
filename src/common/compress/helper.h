@@ -37,8 +37,11 @@ Functions
 // Get enum from a compression type string
 CompressType compressTypeEnum(const String *type);
 
-// Get string representation of a compression type. This should be the extension.
-const char *compressTypeZ(CompressType type);
+// Check that a valid compress type is compiled into this binary.  Errors when the compress type is not present.
+void compressTypePresent(CompressType type);
+
+// Get string representation of a compression type. This is the the extension without the period.
+const String *compressTypeStr(CompressType type);
 
 // Get compression type from a (file) name by checking the extension. If the extension is not a supported compression type then
 // compressType none is returned, even if the file is compressed with some unknown type.
@@ -54,7 +57,7 @@ IoFilter *compressFilterVar(const String *filterType, const VariantList *filterP
 IoFilter *decompressFilter(CompressType type);
 
 // Get extension for the current compression type
-const char *compressExtZ(CompressType type);
+const String *compressExtStr(CompressType type);
 
 // Add extension for current compression type to the file
 void compressExtCat(String *file, CompressType type);

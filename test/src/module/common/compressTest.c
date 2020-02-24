@@ -16,8 +16,8 @@ testRun(void)
         TEST_TITLE("no compression");
         {
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("none")), compressTypeNone, "check enum");
-            TEST_RESULT_Z(compressExtZ(compressTypeNone), "", "check ext");
-            TEST_RESULT_Z(compressTypeZ(compressTypeNone), "none", "check type z");
+            TEST_RESULT_STR_Z(compressExtStr(compressTypeNone), "", "check ext");
+            TEST_RESULT_STR_Z(compressTypeStr(compressTypeNone), "none", "check type z");
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file")), compressTypeNone, "check type from name");
 
             TEST_RESULT_PTR(compressFilter(compressTypeNone, 0), NULL, "no compress filter");
@@ -29,8 +29,8 @@ testRun(void)
         TEST_TITLE("gzip compression");
         {
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGzip, "check enum");
-            TEST_RESULT_Z(compressExtZ(compressTypeGzip), ".gz", "check ext");
-            TEST_RESULT_Z(compressTypeZ(compressTypeGzip), "gz", "check type z");
+            TEST_RESULT_STR_Z(compressExtStr(compressTypeGzip), ".gz", "check ext");
+            TEST_RESULT_STR_Z(compressTypeStr(compressTypeGzip), "gz", "check type z");
             TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGzip, "check type from name");
 
             IoFilter *filter = NULL;
@@ -75,10 +75,10 @@ testRun(void)
 
 #ifdef HAVE_LIBLZ4
             TEST_RESULT_UINT(compressTypeEnum(STRDEF("lz4")), compressTypeLz4, "check enum");
-            TEST_RESULT_Z(compressExtZ(compressTypeLz4), ".lz4", "check ext");
-            TEST_RESULT_Z(compressTypeZ(compressTypeLz4), "lz4", "check type z");
+            TEST_RESULT_STR_Z(compressExtStr(compressTypeLz4), ".lz4", "check ext");
+            TEST_RESULT_STR_Z(compressTypeStr(compressTypeLz4), "lz4", "check type z");
 #else
-            TEST_ERROR(compressTypeEnum(STRDEF("lz4")), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
+            TEST_ERROR(decompressFilter(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif
         }
 
@@ -86,7 +86,7 @@ testRun(void)
         TEST_TITLE("bogus compression");
         {
             TEST_ERROR(compressTypeEnum(strNew(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
-            TEST_ERROR(compressTypeEnum(STRDEF("zst")), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+            TEST_ERROR(decompressFilter(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
         }
     }
 

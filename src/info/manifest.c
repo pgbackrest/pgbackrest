@@ -1974,7 +1974,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,
-            jsonFromStr(STR(compressTypeZ(manifest->data.backupOptionCompressType))));
+            jsonFromStr(compressTypeStr(manifest->data.backupOptionCompressType)));
 
         if (manifest->data.backupOptionDelta != NULL)
         {

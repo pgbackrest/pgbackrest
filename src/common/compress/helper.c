@@ -84,16 +84,7 @@ compressTypeEnum(const String *type)
     for (; result < COMPRESS_LIST_SIZE; result++)
     {
         if (strEq(type, compressHelperLocal[result].type))
-        {
-            if (result != compressTypeNone && compressHelperLocal[result].compressNew == NULL)
-            {
-                THROW_FMT(
-                    OptionInvalidValueError, PROJECT_NAME " not compiled with %s support",
-                    strPtr(compressHelperLocal[result].type));
-            }
-
             break;
-        }
     }
 
     if (result == COMPRESS_LIST_SIZE)
@@ -103,8 +94,7 @@ compressTypeEnum(const String *type)
 }
 
 /**********************************************************************************************************************************/
-const char *
-compressTypeZ(CompressType type)
+void compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -112,7 +102,27 @@ compressTypeZ(CompressType type)
 
     ASSERT(type < COMPRESS_LIST_SIZE);
 
-    FUNCTION_TEST_RETURN(strPtr(compressHelperLocal[type].type));
+    if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, PROJECT_NAME " not compiled with %s support",
+            strPtr(compressHelperLocal[type].type));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+const String *
+compressTypeStr(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < COMPRESS_LIST_SIZE);
+
+    FUNCTION_TEST_RETURN(compressHelperLocal[type].type);
 }
 
 /**********************************************************************************************************************************/
@@ -146,6 +156,7 @@ compressFilter(CompressType type, int level)
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
+    compressTypePresent(type);
 
     IoFilter *result = NULL;
 
@@ -172,6 +183,8 @@ compressFilterVar(const String *filterType, const VariantList *filterParamList)
     {
         if (strBeginsWith(filterType, compressHelperLocal[compressType].type))
         {
+            compressTypePresent(compressType);
+
             switch (strPtr(filterType)[strSize(compressHelperLocal[compressType].type)])
             {
                 case 'C':
@@ -202,6 +215,7 @@ decompressFilter(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
+    compressTypePresent(type);
 
     IoFilter *result = NULL;
 
@@ -212,8 +226,8 @@ decompressFilter(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-const char *
-compressExtZ(CompressType type)
+const String *
+compressExtStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -221,7 +235,7 @@ compressExtZ(CompressType type)
 
     ASSERT(type < COMPRESS_LIST_SIZE);
 
-    FUNCTION_TEST_RETURN(strPtr(compressHelperLocal[type].ext));
+    FUNCTION_TEST_RETURN(compressHelperLocal[type].ext);
 }
 
 /**********************************************************************************************************************************/
@@ -235,7 +249,7 @@ compressExtCat(String *file, CompressType type)
 
     ASSERT(file != NULL);
 
-    strCat(file, compressExtZ(type));
+    strCat(file, strPtr(compressExtStr(type)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -251,8 +265,8 @@ compressExtStrip(const String *file, CompressType type)
 
     ASSERT(file != NULL);
 
-    if (!strEndsWithZ(file, compressExtZ(type)))
-        THROW_FMT(FormatError, "'%s' must have '%s' extension", strPtr(file), compressExtZ(type));
+    if (!strEndsWith(file, compressExtStr(type)))
+        THROW_FMT(FormatError, "'%s' must have '%s' extension", strPtr(file), strPtr(compressExtStr(type)));
 
-    FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strlen(compressExtZ(type))));
+    FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
 }

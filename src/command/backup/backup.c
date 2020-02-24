@@ -124,7 +124,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     .expression = strNewFmt(
                         "%s\\.manifest\\.%s$",
                         strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                        compressTypeZ(compressTypeGzip))),
+                        strPtr(compressTypeStr(compressTypeGzip)))),
                 sortOrderDesc);
 
             if (strLstSize(historyList) > 0)
@@ -403,13 +403,13 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter compress option to '%s', reset to value in %s",
-                        strPtr(cfgOptionStr(cfgOptType)), compressTypeZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))),
-                        strPtr(backupLabelPrior));
+                        strPtr(cfgOptionStr(cfgOptType)),
+                        strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))), strPtr(backupLabelPrior));
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
                     cfgOptionSet(
-                        cfgOptCompressType, cfgSourceParam, VARSTRZ(compressTypeZ(manifestPriorData->backupOptionCompressType)));
+                        cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
@@ -726,8 +726,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                         {
                             reason = strNewFmt(
                                 "new compression '%s' does not match resumable compression '%s'",
-                                compressTypeZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))),
-                                compressTypeZ(manifestResumeData->backupOptionCompressType));
+                                strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                strPtr(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                         }
                         else
                             usable = true;
@@ -933,7 +933,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    compressExtZ(compressType)),
+                    strPtr(compressExtStr(compressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -1659,7 +1659,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = compressExtZ(jobData.compressType);
+        const char *const compressExt = strPtr(compressExtStr(jobData.compressType));
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1806,7 +1806,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             storageRepoWrite(),
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                compressExtZ(compressTypeEnum(cfgOptionStr(cfgOptCompressType))))));
+                                strPtr(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
 
                     // Add to manifest
                     ManifestFile file =
@@ -1877,7 +1877,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
-                    strPtr(backupLabel), compressExtZ(compressTypeGzip)));
+                    strPtr(backupLabel), strPtr(compressExtStr(compressTypeGzip))));
 
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGzip, 9));
 
