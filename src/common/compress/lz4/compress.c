@@ -281,10 +281,4 @@ lz4CompressNew(int level)
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-IoFilter *
-lz4CompressNewVar(const VariantList *paramList)
-{
-    return lz4CompressNew(varIntForce(varLstGet(paramList, 0)));
-}
-
 #endif // HAVE_LIBLZ4

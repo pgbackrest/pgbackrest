@@ -156,14 +156,10 @@ compressFilter(CompressType type, int level)
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    IoFilter *result = NULL;
-
-    if (type != compressTypeNone)
-        result = compressHelperLocal[type].compressNew(level);
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(compressHelperLocal[type].compressNew(level));
 }
 
 /**********************************************************************************************************************************/
@@ -215,14 +211,10 @@ decompressFilter(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    IoFilter *result = NULL;
-
-    if (type != compressTypeNone)
-        result = compressHelperLocal[type].decompressNew();
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(compressHelperLocal[type].decompressNew());
 }
 
 /**********************************************************************************************************************************/

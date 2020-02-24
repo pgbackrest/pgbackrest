@@ -20,7 +20,6 @@ Filter type constant
 Constructors
 ***********************************************************************************************************************************/
 IoFilter *lz4CompressNew(int level);
-IoFilter *lz4CompressNewVar(const VariantList *paramList);
 
 #endif
 

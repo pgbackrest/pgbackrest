@@ -258,31 +258,19 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
-        total: 1
-
-        coverage:
-          common/compress/helper: full
-
-        include:
-          - common/io/filter/group
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress-gzip
         total: 3
 
         coverage:
           common/compress/gzip/common: full
           common/compress/gzip/compress: full
           common/compress/gzip/decompress: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress-lz4
-        total: 3
-
-        coverage:
           common/compress/lz4/common: full
           common/compress/lz4/compress: full
           common/compress/lz4/decompress: full
+          common/compress/helper: full
+
+        include:
+          - common/io/filter/group
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto

@@ -18,6 +18,5 @@ Filter type constant
 Constructor
 ***********************************************************************************************************************************/
 IoFilter *gzipCompressNew(int level);
-IoFilter *gzipCompressNewVar(const VariantList *paramList);
 
 #endif
