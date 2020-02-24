@@ -155,7 +155,7 @@ sub run
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                " --compress --compress-type=${strCompressType} ${strWalPath}/${strSourceFile}",
+                " --compress-type=${strCompressType} ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");
 
@@ -221,7 +221,7 @@ sub run
 
         # Push the WAL
         $oHostDbMaster->executeSimple(
-            "${strCommandPush} --compress --compress-type=${strCompressType} --archive-async --process-max=2" .
+            "${strCommandPush} --compress-type=${strCompressType} --archive-async --process-max=2" .
                 " ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");

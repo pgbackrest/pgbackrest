@@ -272,8 +272,8 @@ testRun(void)
         TEST_TITLE("compress-type=none when compress=n");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
-        strLstAdd(argList, strNew("--no-" CFGOPT_COMPRESS));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    check compress-type=none");
@@ -282,8 +282,8 @@ testRun(void)
         TEST_TITLE("compress-type=gz when compress=y");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
-        strLstAdd(argList, strNew("--" CFGOPT_COMPRESS));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS);
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    check compress-type=gz");
@@ -292,12 +292,12 @@ testRun(void)
         TEST_TITLE("warn when compress-type and compress both set");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
-        strLstAdd(argList, strNew("--no-" CFGOPT_COMPRESS));
-        strLstAdd(argList, strNew("--" CFGOPT_COMPRESS_TYPE "=lz4"));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS_TYPE "=gz");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "lz4", "    check compress-type=lz4");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    check compress-type=gz");
 
         harnessLogResult(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
