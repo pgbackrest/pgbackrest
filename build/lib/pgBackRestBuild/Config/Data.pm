@@ -1161,10 +1161,8 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => true,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
-            &CFGCMD_RESTORE => {},
         }
     },
 
@@ -1188,18 +1186,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_DEFAULT => 6,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        }
+        &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },
 
     &CFGOPT_COMPRESS_LEVEL_NETWORK =>

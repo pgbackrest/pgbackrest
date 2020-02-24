@@ -648,10 +648,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -681,15 +679,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -766,10 +757,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST

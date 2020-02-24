@@ -1211,7 +1211,14 @@ sub configUpdate
     {
         foreach my $strKey (keys(%{$hParam->{$strSection}}))
         {
-            $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            if (defined($hParam->{$strSection}{$strKey}))
+            {
+                $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            }
+            else
+            {
+                delete($oConfig->{$strSection}{$strKey});
+            }
         }
     }
 

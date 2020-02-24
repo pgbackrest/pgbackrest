@@ -275,8 +275,33 @@ testRun(void)
         strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
         strLstAdd(argList, strNew("--no-" CFGOPT_COMPRESS));
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "load config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    check compres-type=none");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    check compress-type=none");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compress-type=gz when compress=y");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
+        strLstAdd(argList, strNew("--" CFGOPT_COMPRESS));
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    check compress-type=gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn when compress-type and compress both set");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("--" CFGOPT_STANZA "=db"));
+        strLstAdd(argList, strNew("--no-" CFGOPT_COMPRESS));
+        strLstAdd(argList, strNew("--" CFGOPT_COMPRESS_TYPE "=lz4"));
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "lz4", "    check compress-type=lz4");
+
+        harnessLogResult(
+            "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
+            "            HINT: 'compress-type' is preferred and 'compress' is deprecated.");
     }
 
     // *****************************************************************************************************************************

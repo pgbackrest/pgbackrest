@@ -813,8 +813,15 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         # Enable compression to ensure a warning is raised
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => $strCompressType}});
+        if ($strCompressType eq GZ)
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => undef}});
+        }
+        else
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => undef}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => $strCompressType}});
+        }
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)

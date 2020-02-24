@@ -230,18 +230,28 @@ cfgLoadUpdateOption(void)
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
-    if (cfgOptionValid(cfgOptCompress))
+    if (cfgOptionValid(cfgOptCompress) && cfgOptionSource(cfgOptCompress) != cfgSourceDefault)
     {
-        // If compression enabled check that the selected compress type has been compiled into this binary
-        if (cfgOptionBool(cfgOptCompress))
+        if (cfgOptionSource(cfgOptCompressType) != cfgSourceDefault)
         {
-            compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+            LOG_WARN(
+                "'" CFGOPT_COMPRESS "' and '" CFGOPT_COMPRESS_TYPE "' options should not both be set\n"
+                "HINT: '" CFGOPT_COMPRESS_TYPE "' is preferred and '" CFGOPT_COMPRESS "' is deprecated.");
         }
-        // Else set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
+
+        // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
         // when that happens.
-        else
-            cfgOptionSet(cfgOptCompressType, cfgSourceDefault, VARSTRDEF(compressTypeZ(compressTypeNone)));
+        if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
+            cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARSTRDEF(compressTypeZ(compressTypeNone)));
+
+        // Now invalidate compress so it can't be used and won't be passed to child processes
+        cfgOptionValidSet(cfgOptCompress, false);
+        cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
     }
+
+    // Check that selected compress type has been compiled into this binary
+    if (cfgOptionValid(cfgOptCompressType))
+        compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
     FUNCTION_LOG_RETURN_VOID();
 }
