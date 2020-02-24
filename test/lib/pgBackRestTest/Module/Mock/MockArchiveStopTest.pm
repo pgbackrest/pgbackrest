@@ -66,7 +66,7 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin(
-                "rmt ${bRemote}, cmp " . (defined($strCompressType) ? $strCompressType : 'none') . ", error " .
+                "rmt ${bRemote}, cmp " . (defined($strCompressType) ? $strCompressType : NONE) . ", error " .
                 ($iError ? 'connect' : 'version') . ", s3 ${bS3}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config

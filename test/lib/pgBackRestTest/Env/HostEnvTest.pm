@@ -43,6 +43,8 @@ use constant ENCRYPTION_KEY_MANIFEST                             => 'manifest';
 use constant ENCRYPTION_KEY_BACKUPSET                            => 'backupset';
     push @EXPORT, qw(ENCRYPTION_KEY_BACKUPSET);
 
+use constant NONE                                                   => CFGOPTVAL_COMPRESS_TYPE_NONE;
+    push @EXPORT, qw(NONE);
 use constant GZ                                                     => CFGOPTVAL_COMPRESS_TYPE_GZ;
     push @EXPORT, qw(GZ);
 use constant LZ4                                                    => CFGOPTVAL_COMPRESS_TYPE_LZ4;
