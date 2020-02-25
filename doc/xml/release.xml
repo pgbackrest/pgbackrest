@@ -86,6 +86,16 @@
                         <p>Add more validations to the manifest on <cmd>backup</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add extra second to PITR wait time after auto selection of backup set for restore before selecting the table in an attempt to fix flapping test.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -99,6 +109,7 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
         </release>
 
         <release date="2020-01-27" version="2.23" title="Bug Fix">
