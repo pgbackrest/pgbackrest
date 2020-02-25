@@ -290,6 +290,12 @@ testRun(void)
         TEST_ERROR(compressExtStrip(STRDEF("file"), compressTypeGzip), FormatError, "'file' must have '.gz' extension");
         TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file"), compressTypeNone), "file", "nothing to strip");
         TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file.gz"), compressTypeGzip), "file", "strip gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressLevelDefault()");
+
+        TEST_RESULT_INT(compressLevelDefault(compressTypeNone), 0, "none level=0");
+        TEST_RESULT_INT(compressLevelDefault(compressTypeGzip), 6, "gz level=6");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
