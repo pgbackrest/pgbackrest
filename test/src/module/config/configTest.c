@@ -267,7 +267,6 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptType)), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptArchiveAsync)), false, "archive async default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
-        TEST_RESULT_INT(varIntForce(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbInclude), NULL, "backup db-include default is null");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");

@@ -158,7 +158,7 @@ int
 compressLevelDefault(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
