@@ -188,6 +188,7 @@
 
         <!-- Database cluster commmands -->
         <variable key="pg-cluster-wait">sleep 2</variable>
+        <variable key="pg-cluster-wait-more">sleep 3</variable>
 
         <variable key="pg-cluster-create" if="{[os-type-is-debian]}">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
 
@@ -2031,7 +2032,7 @@
             </execute>
 
             <execute user="postgres" show="n">
-                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
+                <exe-cmd>{[pg-cluster-wait-more]}</exe-cmd>
             </execute>
 
             <execute user="postgres" output="y">
