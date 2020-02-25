@@ -454,14 +454,15 @@ sub run
                 # Flags that are common to all builds
                 my $strCommonFlags =
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200809L -D_FILE_OFFSET_BITS=64' .
-                        ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
+                        ' `pkg-config libxml-2.0 --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                         ' -I`pg_config --includedir`' .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
-                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '');
+                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_CO6 ? ' -DDEBUG_EXEC_TIME' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =

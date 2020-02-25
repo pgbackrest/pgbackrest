@@ -252,6 +252,10 @@ testRun(void)
         // global directory
         storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".1")), NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow"), .modeFile = 0400,
+            .timeModified = 1565282114), NULL);
         storagePutP(
             storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/t1_1"), .modeFile = 0400, .timeModified = 1565282114), NULL);
 
@@ -282,6 +286,7 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/global/pg_internal.init.allow={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/global/t1_1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_notify/BOGUS={\"size\":0,\"timestamp\":1565282102}\n"
@@ -419,6 +424,7 @@ testRun(void)
                 "pg_data/base/1/t1_1.1={\"size\":0,\"timestamp\":1565282113}\n"
                 "pg_data/base/1/t8888888_8888888_vm={\"size\":0,\"timestamp\":1565282113}\n"
                 "pg_data/base/1/t8888888_8888888_vm.999999={\"size\":0,\"timestamp\":1565282113}\n"
+                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"master\":true,\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"master\":true,\"size\":9,\"timestamp\":1565282117}\n"
@@ -537,6 +543,7 @@ testRun(void)
                 "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -625,6 +632,7 @@ testRun(void)
                 "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -705,6 +713,7 @@ testRun(void)
                 "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -852,6 +861,7 @@ testRun(void)
                 "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_data/global/pg_control={\"master\":true,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/global/pg_internal.init.allow={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
                 "pg_data/pg_hba.conf={\"master\":true,\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
@@ -903,6 +913,7 @@ testRun(void)
 
         storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true);
         storagePathRemoveP(storageTest, STRDEF("ts/2"), .recurse = true);
+        storageRemoveP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow"), .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 12, online");
@@ -1767,6 +1778,34 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest validation");
+
+        // Munge files to produce errors
+        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL);
+
+        TEST_ERROR(
+            manifestValidate(manifest, false), FormatError,
+            "manifest validation failed:\n"
+            "missing checksum for file 'pg_data/postgresql.conf'");
+
+        TEST_ERROR(
+            manifestValidate(manifest, true), FormatError,
+            "manifest validation failed:\n"
+            "invalid checksum '6e99b589e550e68e934fd235ccba59fe5b592a9e' for zero size file 'pg_data/base/32768/33000.32767'\n"
+            "missing checksum for file 'pg_data/postgresql.conf'\n"
+            "repo size must be > 0 for file 'pg_data/postgresql.conf'");
+
+        // Undo changes made to files
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL);
+        manifestFileUpdate(
+            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
+            false, NULL);
+
+        TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
@@ -1846,7 +1885,7 @@ testRun(void)
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, NULL, false, false, NULL),
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
             "update file");
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),
@@ -1942,6 +1981,16 @@ testRun(void)
         TEST_ERROR(
             manifestTargetRemove(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
             "unable to remove 'pg_data/pg_hba.conf' from manifest target list");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load validation errors");
+
+        TEST_ERROR(
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={}"))), FormatError,
+            "missing timestamp for file 'pg_data/bogus'");
+        TEST_ERROR(
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}"))), FormatError,
+            "missing size for file 'pg_data/bogus'");
     }
 
     // *****************************************************************************************************************************

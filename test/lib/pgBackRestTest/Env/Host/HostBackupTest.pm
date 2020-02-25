@@ -1537,6 +1537,7 @@ sub restore
         $strOptionalParam,
         $bTablespace,
         $strUser,
+        $strBackupExpected,
     ) =
         logDebugParam
         (
@@ -1557,6 +1558,7 @@ sub restore
             {name => 'strOptionalParam', optional => true},
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
+            {name => 'strBackupExpected', optional => true},
         );
 
     # Build link map options
@@ -1593,10 +1595,15 @@ sub restore
 
     if (!defined($rhExpectedManifest))
     {
+        if (!defined($strBackupExpected))
+        {
+            $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup;
+        }
+
         # Load the manifest
         my $oExpectedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet(
-                STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . qw{/} .
+                STORAGE_REPO_BACKUP . qw{/} . $strBackupExpected. qw{/} .
                     FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 

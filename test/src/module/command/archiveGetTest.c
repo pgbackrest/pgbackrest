@@ -330,6 +330,21 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command must be run on the pg host");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+        strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        strLstAddZ(argList, "000000010000000100000001");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
+
         // Create pg_control file and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -347,7 +362,7 @@ testRun(void)
 
         // Get a single segment
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstDup(argCleanList);
+        argList = strLstDup(argCleanList);
         strLstAddZ(argList, "000000010000000100000001");
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
@@ -474,7 +489,21 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdArchiveGet()"))
     {
+        TEST_TITLE("command must be run on the pg host");
+
         StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "pg_wal/000000010000000100000001");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleDefault, argList);
+
+        TEST_ERROR(cmdArchiveGet(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
         strLstAddZ(argList, "pgbackrest-bogus");                    // Break this until async tests are setup correctly
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));

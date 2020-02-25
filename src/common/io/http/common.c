@@ -43,7 +43,7 @@ httpLastModifiedToTime(const String *lastModified)
         result = epochFromParts(
             cvtZToInt(strPtr(strSubN(lastModified, 12, 4))), (int)monthIdx + 1, cvtZToInt(strPtr(strSubN(lastModified, 5, 2))),
             cvtZToInt(strPtr(strSubN(lastModified, 17, 2))), cvtZToInt(strPtr(strSubN(lastModified, 20, 2))),
-            cvtZToInt(strPtr(strSubN(lastModified, 23, 2))));
+            cvtZToInt(strPtr(strSubN(lastModified, 23, 2))), 0);
     }
     MEM_CONTEXT_TEMP_END();
 

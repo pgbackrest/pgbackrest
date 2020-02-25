@@ -12,7 +12,131 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.23dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.24dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-ideator id="adam.brusselback"/>
+                             <release-item-ideator id="ejberdecia"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent defunct processes in asynchronous archive commands.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jesper.st.john"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when <cmd>archive-get</cmd>/<cmd>archive-push</cmd>/<cmd>restore</cmd> are not run on a <postgres/> host.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christian.roux"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Read HTTP content to eof when size/encoding not specified.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kacey.holston"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix resume when the resumable backup was created by <proper>Perl</proper>.</p>
+
+                        <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly.  Add validations to catch this case and continue gracefully.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Auto-select backup set on restore when time target is specified.</p>
+
+                        <p>Auto-selection is performed only when <br-option>--set</br-option> is not specified. If a backup set for the given target time cannot not be found, the latest (default) backup set will be used.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="michael.paquier"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip <file>pg_internal.init</file> temp file during backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add more validations to the manifest on <cmd>backup</cmd>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christoph.berg"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <proper>lock-bot</proper> from adding comments to locked issues.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2020-01-27" version="2.23" title="Bug Fix">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitaliy.kukharik"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix missing files corrupting the manifest.</p>
+
+                        <p>If a file was removed by <postgres/> during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest.  If this happened then the backup would error when restored.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <file>pkg-config</file> instead of <file>xml2-config</file> for <proper>libxml2</proper> build options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Validate checksums are set in the manifest on <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2020-01-21" version="2.22" title="Bug Fix">
@@ -6627,7 +6751,7 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the lock directory.</p>
+                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the log directory.</p>
                     </release-item>
 
                     <release-item>
@@ -7855,6 +7979,16 @@
             <contributor-id type="github">keithf4</contributor-id>
         </contributor>
 
+        <contributor id="christian.roux">
+            <contributor-name-display>Christian ROUX</contributor-name-display>
+            <contributor-id type="github">kikijolicoeur</contributor-id>
+        </contributor>
+
+        <contributor id="kacey.holston">
+            <contributor-name-display>Kacey Holston</contributor-name-display>
+            <contributor-id type="github">kaceymiri</contributor-id>
+        </contributor>
+
         <contributor id="kyle.nevins">
             <contributor-name-display>Kyle Nevins</contributor-name-display>
             <contributor-id type="github">kyle-nevins</contributor-id>
@@ -7913,6 +8047,11 @@
         <contributor id="mibiio">
             <contributor-name-display>mibiio</contributor-name-display>
             <contributor-id type="github">mibiio</contributor-id>
+        </contributor>
+
+        <contributor id="michael.paquier">
+            <contributor-name-display>Michael Paquier</contributor-name-display>
+            <contributor-id type="github">michaelpq</contributor-id>
         </contributor>
 
         <contributor id="michael.renner">

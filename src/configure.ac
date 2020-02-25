@@ -1,22 +1,10 @@
 # Initialize configuration
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.23dev])
+AC_INIT([pgBackRest], [2.24dev])
 AC_CONFIG_SRCDIR([version.h])
 
 # Check compiler
 AC_PROG_CC_C99
-
-# Wrap AC_PATH_PROGS to check if the value is already set before looking for programs. AC_PATH_PROGS preserves the value only if it
-# looks like an absolute path.
-AC_DEFUN([BRAC_PATH_PROGS],
-[if test -z "$$1"; then
-    AC_PATH_PROGS($@)
-else
-    # Report the value of $1 in configure's output
-    AC_MSG_CHECKING([for $1])
-    AC_MSG_RESULT([$$1])
-fi
-])
 
 # Enable internal test code and assertions by undefining NDEBUG
 warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
@@ -43,7 +31,7 @@ else
 fi
 
 # Set includes
-AC_SUBST(CINCLUDE, "-I. -I../libc")
+AC_SUBST(CINCLUDE, "-I.")
 
 # Check required pq library
 AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])
@@ -54,25 +42,17 @@ AC_CHECK_LIB([crypto], [EVP_get_digestbyname], [], [AC_MSG_ERROR([library 'crypt
 AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([library 'ssl' is required])])
 
 # Check required xml library
-BRAC_PATH_PROGS(XML2_CONFIG, [xml2-config])
-AC_ARG_VAR(XML2_CONFIG, [path to xml2-config utility])dnl
+AC_ARG_VAR(XML2_CONFIG, [path to xml2 config utility])dnl
 
-if test -n "$XML2_CONFIG"; then
-    for ac_option in `$XML2_CONFIG --cflags`; do
-        case $ac_option in
-            -I*|-D*) CPPFLAGS="$CPPFLAGS $ac_option";;
-        esac
-    done
-        for pgac_option in `$XML2_CONFIG --libs`; do
-        case $ac_option in
-            -L*) LDFLAGS="$LDFLAGS $ac_option";;
-        esac
-    done
+if test -z "$XML2_CONFIG"; then
+    XML2_CONFIG="pkg-config libxml-2.0"
 fi
+
+CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags`"
 
 AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
 AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required])])
-AC_SUBST(CLIBRARY, "$CLIBRARY `$XML2_CONFIG --cflags`")
+AC_SUBST(CLIBRARY, "$CLIBRARY `pkg-config libxml-2.0 --cflags`")
 
 # Check required gzip library
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])

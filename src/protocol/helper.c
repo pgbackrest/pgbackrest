@@ -12,7 +12,9 @@ Protocol Helper
 #include "config/config.h"
 #include "config/exec.h"
 #include "config/protocol.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -102,6 +104,18 @@ pgIsLocal(unsigned int hostId)
     ASSERT(hostId > 0);
 
     FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
+}
+
+/**********************************************************************************************************************************/
+void
+pgIsLocalVerify(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!pgIsLocal(1))
+        THROW_FMT(HostInvalidError, "%s command must be run on the " PG_NAME " host", cfgCommandName(cfgCommand()));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

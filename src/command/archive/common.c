@@ -6,10 +6,12 @@ Archive Common
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
 #include "common/debug.h"
+#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -33,7 +35,8 @@ Global error file constant
 #define STATUS_FILE_GLOBAL                                          "global"
     STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
 
-STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+#define STATUS_FILE_GLOBAL_ERROR                                    STATUS_FILE_GLOBAL STATUS_EXT_ERROR
+    STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
 
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
@@ -48,16 +51,32 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
     FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
 }
 
+/**********************************************************************************************************************************/
+void
+archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING, archiveFile);
+    FUNCTION_LOG_END();
+
+    storageRemoveP(
+        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strPtr(archiveFile)));
+    storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Check for ok/error status files in the spool in/out directory
 ***********************************************************************************************************************************/
 bool
-archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError)
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(BOOL, confessOnError);
+        FUNCTION_LOG_PARAM(BOOL, throwOnError);
     FUNCTION_LOG_END();
 
     bool result = false;
@@ -137,7 +156,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
                 result = true;
             }
-            else if (confessOnError)
+            else if (throwOnError)
             {
                 // Error status files must have content
                 if (strSize(content) == 0)
@@ -208,6 +227,57 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
             warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_LIST, commandExec);
+    FUNCTION_LOG_END();
+
+    ASSERT(commandExec != NULL);
+
+    // Fork off the async process
+    pid_t pid = forkSafe();
+
+    if (pid == 0)
+    {
+        // Disable logging and close log file
+        logClose();
+
+        // Detach from parent process
+        forkDetach();
+
+        // Execute the binary.  This statement will not return if it is successful.
+        THROW_ON_SYS_ERROR_FMT(
+            execvp(strPtr(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
+    }
+
+#ifdef DEBUG_EXEC_TIME
+    // Get the time to measure how long it takes for the forked process to exit
+    TimeMSec timeBegin = timeMSec();
+#endif
+
+    // The process that was just forked should return immediately
+    int processStatus;
+
+    THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
+
+    // The first fork should exit with success.  If not, something went wrong during the second fork.
+    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+
+#ifdef DEBUG_EXEC_TIME
+    // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
+    // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
+    // waiting on the async process.
+    ASSERT(timeMSec() - timeBegin < 10);
+#endif
 
     FUNCTION_LOG_RETURN_VOID();
 }

@@ -180,6 +180,9 @@ void manifestLinkCheck(const Manifest *this);
 Manifest *manifestMove(Manifest *this, MemContext *parentNew);
 void manifestSave(Manifest *this, IoWrite *write);
 
+// Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
+void manifestValidate(Manifest *this, bool strict);
+
 /***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/

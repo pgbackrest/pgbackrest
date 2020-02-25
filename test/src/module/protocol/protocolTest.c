@@ -136,6 +136,8 @@ testRun(void)
         TEST_ERROR_FMT(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg1 is local");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -145,8 +147,25 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(1), true, "pg is local");
+        TEST_RESULT_VOID(pgIsLocalVerify(), "verify pg is local");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg1 is not local");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=test1");
+        strLstAddZ(argList, "--pg1-path=/path/to");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_BOOL(pgIsLocal(1), false, "pg is remote");
+        TEST_ERROR_FMT(pgIsLocalVerify(), HostInvalidError, "restore command must be run on the PostgreSQL host");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg7 is not local");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");

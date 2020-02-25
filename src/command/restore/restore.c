@@ -59,6 +59,8 @@ Recovery constants
     STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
 #define RECOVERY_TYPE_STANDBY                                       "standby"
     STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
+#define RECOVERY_TYPE_TIME                                          "time"
+    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -107,6 +109,95 @@ restorePathValidate(void)
 }
 
 /***********************************************************************************************************************************
+Get epoch time from formatted string
+***********************************************************************************************************************************/
+static time_t
+getEpoch(const String *targetTime)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, targetTime);
+    FUNCTION_LOG_END();
+
+    ASSERT(targetTime != NULL);
+
+    time_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
+        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
+        const String *expression = STRDEF(
+            "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\\,|\\.)[0-9]{1,6})?((\\+|\\-)[0-9]{2}(:?)([0-9]{2})?)?$");
+
+        RegExp *regExp = regExpNew(expression);
+
+        // If the target-recovery time matches the regular expression then validate it
+        if (regExpMatch(regExp, targetTime))
+        {
+            // Strip off the date and time and put the remainder into another string
+            String *datetime = strSubN(targetTime, 0, 19);
+
+            int dtYear = cvtZToInt(strPtr(strSubN(datetime, 0, 4)));
+            int dtMonth = cvtZToInt(strPtr(strSubN(datetime, 5, 2)));
+            int dtDay = cvtZToInt(strPtr(strSubN(datetime, 8, 2)));
+            int dtHour = cvtZToInt(strPtr(strSubN(datetime, 11, 2)));
+            int dtMinute = cvtZToInt(strPtr(strSubN(datetime, 14, 2)));
+            int dtSecond = cvtZToInt(strPtr(strSubN(datetime, 17, 2)));
+
+            // Confirm date and time parts are valid
+            datePartsValid(dtYear, dtMonth, dtDay);
+            timePartsValid(dtHour, dtMinute, dtSecond);
+
+            String *timeTargetZone = strSub(targetTime, 19);
+
+            // Find the + or - indicating a timezone offset was provided (there may be milliseconds before the timezone, so need to
+            // skip). If a timezone offset was not provided, then local time is assumed.
+            int idxSign = strChr(timeTargetZone, '+');
+
+            if (idxSign == -1)
+                idxSign = strChr(timeTargetZone, '-');
+
+            if (idxSign != -1)
+            {
+                String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
+
+                // Include the sign with the hour
+                int tzHour = cvtZToInt(strPtr(strSubN(timezoneOffset, 0, 3)));
+                int tzMinute = 0;
+
+                // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
+                // the hour
+                if (strSize(timezoneOffset) > 3)
+                    tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
+
+                result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
+            }
+            // If there is no timezone offset, then assume it is local time
+            else
+            {
+                // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
+                // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
+                // 2019-09-14 21:02:49 - an hour too late)
+                result = mktime(
+                    &(struct tm){.tm_sec = dtSecond, .tm_min = dtMinute, .tm_hour = dtHour, .tm_mday = dtDay, .tm_mon = dtMonth - 1,
+                    .tm_year = dtYear - 1900, .tm_isdst = -1});
+            }
+        }
+        else
+        {
+            LOG_WARN_FMT(
+                "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
+                "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
+                " - if timezone is ommitted, local time is assumed (for UTC use +00)",
+                strPtr(targetTime));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(TIME, result);
+}
+
+/***********************************************************************************************************************************
 Get the backup set to restore
 ***********************************************************************************************************************************/
 static String *
@@ -130,7 +221,42 @@ restoreBackupSet(InfoBackup *infoBackup)
             if (infoBackupDataTotal(infoBackup) == 0)
                 THROW(BackupSetInvalidError, "no backup sets to restore");
 
-            backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+            time_t timeTargetEpoch = 0;
+
+            // If the recovery type is time, attempt to determine the backup set
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            {
+                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+
+                // Try to find the newest backup set with a stop time before the target recovery time
+                if (timeTargetEpoch != 0)
+                {
+                    // Search current backups from newest to oldest
+                    for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
+                    {
+                        // Get the backup data
+                        InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
+
+                        // If the end of the backup is before the target time, then select this backup
+                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        {
+                            backupSet = backupData.backupLabel;
+                            break;
+                        }
+                    }
+
+                    if (backupSet == NULL)
+                    {
+                        LOG_WARN_FMT(
+                            "unable to find backup set with stop time less than '%s', latest backup set will be used",
+                            strPtr(cfgOptionStr(cfgOptTarget)));
+                    }
+                }
+            }
+
+            // If a backup set was not found or the recovery type was not time, then use the latest backup
+            if (backupSet == NULL)
+                backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
         // Otherwise check to make sure the specified backup set is valid
         else
@@ -783,15 +909,15 @@ restoreCleanBuild(Manifest *manifest)
             {
                 .manifest = manifest,
                 .target = manifestTarget(manifest, targetIdx),
+                .delta = delta,
+                .fileIgnore = strLstNew(),
             };
 
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
-            cleanData->delta = delta;
 
             // Ignore backup.manifest while cleaning since it may exist from an prior incomplete restore
-            cleanData->fileIgnore = strLstNew();
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
@@ -1389,7 +1515,11 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         {
             LOG_WARN(PG_FILE_POSTGRESQLAUTOCONF " does not exist -- creating to contain recovery settings");
         }
-        // Else the file does exist so cleanup old recovery options that could interfere with the current recovery
+        // Else the file does exist so comment out old recovery options that could interfere with the current recovery. Don't
+        // comment out *all* recovery options because some should only be commented out if there is a new option to replace it, e.g.
+        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commnented out -- this
+        // may not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
+        // does not have dependencies on other options.
         else
         {
             // Generate a regexp that will match on all current recovery_target settings
@@ -1879,8 +2009,7 @@ cmdRestore(void)
         userInit();
 
         // PostgreSQL must be local
-        if (!pgIsLocal(1))
-            THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
+        pgIsLocalVerify();
 
         // Validate restore path
         restorePathValidate();
@@ -1902,6 +2031,9 @@ cmdRestore(void)
         jobData.manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
+        manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);

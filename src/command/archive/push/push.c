@@ -12,7 +12,6 @@ Archive Push Command
 #include "command/command.h"
 #include "command/control/common.h"
 #include "common/debug.h"
-#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
@@ -258,6 +257,9 @@ cmdArchivePush(void)
 
     ASSERT(cfgCommand() == cfgCmdArchivePush);
 
+    // PostgreSQL must be local
+    pgIsLocalVerify();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure there is a parameter to retrieve the WAL segment from
@@ -277,16 +279,16 @@ cmdArchivePush(void)
         {
             bool pushed = false;                                        // Has the WAL segment been pushed yet?
             bool forked = false;                                        // Has the async process been forked yet?
-            bool confessOnError = false;                                // Should we confess errors?
+            bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
 
             do
             {
-                // Check if the WAL segment has been pushed.  Errors will not be confessed on the first try to allow the async
-                // process a chance to fix them.
-                pushed = archiveAsyncStatus(archiveModePush, archiveFile, confessOnError);
+                // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
+                // a chance to fix them.
+                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError);
 
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
@@ -305,31 +307,22 @@ cmdArchivePush(void)
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
+                    // Clear errors for the current archive file
+                    archiveAsyncErrorClear(archiveModePush, archiveFile);
+
                     // Release the lock so the child process can acquire it
                     lockRelease(true);
 
-                    // Fork off the async process
-                    if (forkSafe() == 0)
-                    {
-                        // Disable logging and close log file
-                        logClose();
-
-                        // Detach from parent process
-                        forkDetach();
-
-                        // Execute the binary.  This statement will not return if it is successful.
-                        THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
-                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_PUSH "'");
-                    }
+                    // Execute the async process
+                    archiveAsyncExec(archiveModePush, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
                     forked = true;
                 }
 
-                // Now that the async process has been launched, confess any errors that are found
-                confessOnError = true;
+                // Now that the async process has been launched, throw any errors that are found
+                throwOnError = true;
             }
             while (!pushed && waitMore(wait));
 
@@ -437,6 +430,9 @@ cmdArchivePushAsync(void)
     FUNCTION_LOG_VOID(logLevelDebug);
 
     ASSERT(cfgCommand() == cfgCmdArchivePush && cfgCommandRole() == cfgCmdRoleAsync);
+
+    // PostgreSQL must be local
+    pgIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

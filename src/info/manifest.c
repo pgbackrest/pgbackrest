@@ -579,8 +579,13 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strPtr(manifestName));
             }
 
-            // Skip pg_internal.init since it is recreated on startup
-            if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
+            // Skip pg_internal.init since it is recreated on startup.  It's also possible, (though unlikely) that a temp file with
+            // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
+            // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
+            // the likelihood of needing the regexp should be very small.
+            if ((pgVersion <= PG_VERSION_84 || buildData.dbPath) && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
+                (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
+                    regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
                 FUNCTION_TEST_RETURN_VOID();
                 return;
@@ -1368,9 +1373,25 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             {
                 .name = key,
                 .reference = varStr(kvGetDefault(fileKv, MANIFEST_KEY_REFERENCE_VAR, NULL)),
-                .size = varUInt64(kvGet(fileKv, MANIFEST_KEY_SIZE_VAR)),
-                .timestamp = (time_t)varUInt64(kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR)),
             };
+
+            // Timestamp is required so error if it is not present
+            const Variant *timestamp = kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR);
+
+            if (timestamp == NULL)
+                THROW_FMT(FormatError, "missing timestamp for file '%s'", strPtr(key));
+
+            file.timestamp = (time_t)varUInt64(timestamp);
+
+            // Size is required so error if it is not present.  Older versions removed the size before the backup to ensure that the
+            // manifest was updated during the backup, so size can be missing in partial manifests.  This error will prevent older
+            // partials from being resumed.
+            const Variant *size = kvGet(fileKv, MANIFEST_KEY_SIZE_VAR);
+
+            if (size == NULL)
+                THROW_FMT(FormatError, "missing size for file '%s'", strPtr(key));
+
+            file.size = varUInt64(size);
 
             // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
             // the repo-size is only stored in the manifest file if it is different than size.
@@ -2257,6 +2278,52 @@ manifestSave(Manifest *this, IoWrite *write)
 
         // Save manifest
         infoSave(this->info, write, manifestSaveCallback, &saveData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestValidate(Manifest *this, bool strict)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(BOOL, strict);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *error = strNew("");
+
+        // Validate files
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(this, fileIdx);
+
+            // All files must have a checksum
+            if (file->checksumSha1[0] == '\0')
+                strCatFmt(error, "\nmissing checksum for file '%s'", strPtr(file->name));
+
+            // These are strict checks to be performed only after a backup and before the final manifest save
+            if (strict)
+            {
+                // Zero-length files must have a specific checksum
+                if (file->size == 0 && !strEqZ(HASH_TYPE_SHA1_ZERO_STR, file->checksumSha1))
+                    strCatFmt(error, "\ninvalid checksum '%s' for zero size file '%s'", file->checksumSha1, strPtr(file->name));
+
+                // Non-zero size files must have non-zero repo size
+                if (file->sizeRepo == 0 && file->size != 0)
+                    strCatFmt(error, "\nrepo size must be > 0 for file '%s'", strPtr(file->name));
+            }
+        }
+
+        // Throw exception when there are errors
+        if (strSize(error) > 0)
+            THROW_FMT(FormatError, "manifest validation failed:%s", strPtr(error));
     }
     MEM_CONTEXT_TEMP_END();
 
