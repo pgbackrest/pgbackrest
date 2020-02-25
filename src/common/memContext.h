@@ -198,7 +198,7 @@ nearest try block.
 Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerplate for every memory context block.
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
-// memContextDisard before the parent context can be popped off the stack.
+// memContextDisard() before the parent context can be popped off the stack.
 MemContext *memContextNew(const char *name);
 
 // Push a switchable type mem context onto the stack which will then become the current mem context. Only context of type switch can

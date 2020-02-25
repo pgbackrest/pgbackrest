@@ -66,8 +66,8 @@ Memory context stack types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    memContextStackTypeSwitch = 0,                                  // context can be switched to to allocate mem for new variables
-    memContextStackTypeNew,                                         // context to be tracked for error handling - cannot switch to
+    memContextStackTypeSwitch = 0,                                  // Context can be switched to to allocate mem for new variables
+    memContextStackTypeNew,                                         // Context to be tracked for error handling - cannot switch to
 } MemContextStackType;
 
 /***********************************************************************************************************************************
