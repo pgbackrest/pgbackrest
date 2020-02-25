@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.25dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-02-25" version="2.24" title="Auto-Select Backup Set for Time Target">
             <release-core-list>
                 <release-bug-list>

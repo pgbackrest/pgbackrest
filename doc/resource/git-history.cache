@@ -1,5 +1,10 @@
 [
     {
+        "commit": "495dec44f0f512478ac942091ca2a29c60ad4911",
+        "date": "2020-02-25 17:05:45 -0500",
+        "subject": "v2.24: Auto-Select Backup Set for Time Target"
+    },
+    {
         "commit": "ace41d57d1a76d031350f3ba458ba1d1e393866d",
         "date": "2020-02-25 09:34:27 -0500",
         "subject": "Clarify that gzip is always used to compress history files."
