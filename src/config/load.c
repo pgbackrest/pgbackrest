@@ -253,6 +253,8 @@ cfgLoadUpdateOption(void)
     if (cfgOptionValid(cfgOptCompressType))
         compressTypePresent(compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
 
+    // !!! UPDATE COMPRESS-LEVEL DEFAULTS HERE
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
