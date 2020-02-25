@@ -37,75 +37,6 @@ Space is reserved for this many allocations when a context is created.  When mor
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
 
 /***********************************************************************************************************************************
-Memory context management functions
-
-memContextPush(memContextNew());
-
-<Do something with the memory context, e.g. allocation memory with memNew()>
-<Current memory context can be accessed with memContextCurrent()>
-<Prior memory context can be accessed with memContextPrior()>
-
-memContextPop();
-
-<The memory context must now be kept or discarded>
-memContextKeep()/memContextDiscard();
-
-There is no need to implement any error handling.  The mem context system will automatically clean up any mem contexts that were
-created but not marked as keep when an error occurs and reset the current mem context to whatever it was at the beginning of the
-nearest try block.
-
-Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerplate for every memory context block.
-***********************************************************************************************************************************/
-// Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
-// memContextDisard before the parent context can be popped off the stack.
-MemContext *memContextNew(const char *name);
-
-// Push a mem context onto the stack which will then become the current mem context
-void memContextPush(MemContext *this);
-
-// Pop a mem context off the stack and make the prior mem context the current mem context. If the top of the stack is a new mem
-// context that has not been kept/discarded then an error will be thrown in debug builds.
-void memContextPop(void);
-
-// Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs. If the top of the stack
-// is not a new context then an error will be thrown in debug builds.
-void memContextKeep(void);
-
-// Discard a context created by memContextNew(). If the top of the stack is not a new context then an error will be thrown in debug
-// builds.
-void memContextDiscard(void);
-
-// Move mem context to a new parent. This is generally used to move objects to a new context once they have been successfully
-// created.
-void memContextMove(MemContext *this, MemContext *parentNew);
-
-// Set a function that will be called when this mem context is freed
-void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
-
-// Clear the callback function so it won't be called when the mem context is freed.  This is usually done in the object free method
-// after resources have been freed but before memContextFree() is called.  The goal is to prevent the object free method from being
-// called more than once.
-void memContextCallbackClear(MemContext *this);
-
-// Free a memory context
-void memContextFree(MemContext *this);
-
-/***********************************************************************************************************************************
-Memory context getters
-***********************************************************************************************************************************/
-// Current memory context
-MemContext *memContextCurrent(void);
-
-// Prior context, i.e. the context that was current before the last memContextPush()
-MemContext *memContextPrior(void);
-
-// "top" context
-MemContext *memContextTop(void);
-
-// Mem context name
-const char *memContextName(MemContext *this);
-
-/***********************************************************************************************************************************
 Memory management functions
 
 All these functions operate in the current memory context, including memResize() and memFree().
@@ -245,6 +176,78 @@ MEM_CONTEXT_TEMP_END();
         memContextDiscard();                                                                                                       \
     }                                                                                                                              \
     while (0)
+
+/***********************************************************************************************************************************
+Memory context management functions
+
+memContextPush(memContextNew());
+
+<Do something with the memory context, e.g. allocation memory with memNew()>
+<Current memory context can be accessed with memContextCurrent()>
+<Prior memory context can be accessed with memContextPrior()>
+
+memContextPop();
+
+<The memory context must now be kept or discarded>
+memContextKeep()/memContextDiscard();
+
+There is no need to implement any error handling.  The mem context system will automatically clean up any mem contexts that were
+created but not marked as keep when an error occurs and reset the current mem context to whatever it was at the beginning of the
+nearest try block.
+
+Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerplate for every memory context block.
+***********************************************************************************************************************************/
+// Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
+// memContextDisard before the parent context can be popped off the stack.
+MemContext *memContextNew(const char *name);
+
+// Push a switchable type mem context onto the stack which will then become the current mem context. Only context of type switch can
+// become the current mem context.
+void memContextPush(MemContext *this);
+
+// Pop a mem context off the stack and make the prior (first switchable mem context) the current mem context. If the top of the
+// stack is a type new mem context (new context must be kept or discarded) then an error will be thrown in debug builds.
+void memContextPop(void);
+
+// Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs. The context will be
+// removed from the stack but the mem context itself will no longer be directly "free-able" (it will be freed indirectly when its
+// parent context is freed). If the top of the stack (which is assumed to be the memContext to keep) is not a type new context then
+// an error will be thrown in debug builds.
+void memContextKeep(void);
+
+// Discard a context created by memContextNew(). Discarding will free the mem context and then remove it from the top of the stack.
+// If the top of the stack is not a type new context then an error will be thrown in debug builds.
+void memContextDiscard(void);
+
+// Move mem context to a new parent. This is generally used to move objects to a new context once they have been successfully
+// created.
+void memContextMove(MemContext *this, MemContext *parentNew);
+
+// Set a function that will be called when this mem context is freed
+void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
+
+// Clear the callback function so it won't be called when the mem context is freed.  This is usually done in the object free method
+// after resources have been freed but before memContextFree() is called.  The goal is to prevent the object free method from being
+// called more than once.
+void memContextCallbackClear(MemContext *this);
+
+// Free a memory context
+void memContextFree(MemContext *this);
+
+/***********************************************************************************************************************************
+Memory context getters
+***********************************************************************************************************************************/
+// Current memory context
+MemContext *memContextCurrent(void);
+
+// Prior context, i.e. the context that was current before the last memContextPush()
+MemContext *memContextPrior(void);
+
+// "top" context
+MemContext *memContextTop(void);
+
+// Mem context name
+const char *memContextName(MemContext *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

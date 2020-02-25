@@ -62,6 +62,15 @@ generally used to allocate memory that exists for the life of the program.
 MemContext contextTop = {.state = memContextStateActive, .name = "TOP"};
 
 /***********************************************************************************************************************************
+Memory context stack types
+***********************************************************************************************************************************/
+typedef enum
+{
+    memContextStackTypeSwitch = 0,                                  // context can be switched to to allocate mem for new variables
+    memContextStackTypeNew,                                         // context to be tracked for error handling - cannot switch to
+} MemContextStackType;
+
+/***********************************************************************************************************************************
 Mem context stack used to pop mem contexts and cleanup after an error
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_STACK_MAX                                       128
@@ -69,7 +78,7 @@ Mem context stack used to pop mem contexts and cleanup after an error
 static struct MemContextStack
 {
     MemContext *memContext;
-    bool new;
+    MemContextStackType type;
     unsigned int tryDepth;
 } memContextStack[MEM_CONTEXT_STACK_MAX] = {{.memContext = &contextTop}};
 
@@ -289,7 +298,7 @@ memContextNew(const char *name)
     memContextStack[memContextMaxStackIdx] = (struct MemContextStack)
     {
         .memContext = this,
-        .new = true,
+        .type = memContextStackTypeNew,
         .tryDepth = errorTryDepth(),
     };
 
@@ -583,10 +592,11 @@ memContextPush(MemContext *this)
     memContextMaxStackIdx++;
     memContextCurrentStackIdx = memContextMaxStackIdx;
 
+    // Add memContext to the stack as a context that can be used for memory allocation
     memContextStack[memContextCurrentStackIdx] = (struct MemContextStack)
     {
         .memContext = this,
-        .new = false,
+        .type = memContextStackTypeSwitch,
         .tryDepth = errorTryDepth(),
     };
 
@@ -603,7 +613,7 @@ memContextPop(void)
 
     // Generate a detailed error to help with debugging
 #ifdef DEBUG
-    if (memContextStack[memContextMaxStackIdx].new)
+    if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
     {
         THROW_FMT(
             AssertError, "current context expected but new context '%s' found",
@@ -616,8 +626,9 @@ memContextPop(void)
     memContextMaxStackIdx--;
     memContextCurrentStackIdx--;
 
-    // Keep going until we find a mem context that is not new to be the current context
-    while (memContextStack[memContextCurrentStackIdx].new)
+    // memContext of type New cannot be the current context so keep going until we find a memContext we can switch to as the current
+    // context
+    while (memContextStack[memContextCurrentStackIdx].type == memContextStackTypeNew)
         memContextCurrentStackIdx--;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -631,7 +642,7 @@ memContextKeep(void)
 
     // Generate a detailed error to help with debugging
 #ifdef DEBUG
-    if (!memContextStack[memContextMaxStackIdx].new)
+    if (memContextStack[memContextMaxStackIdx].type != memContextStackTypeNew)
     {
         THROW_FMT(
             AssertError, "new context expected but current context '%s' found",
@@ -652,7 +663,7 @@ memContextDiscard(void)
 
     // Generate a detailed error to help with debugging
 #ifdef DEBUG
-    if (!memContextStack[memContextMaxStackIdx].new)
+    if (memContextStack[memContextMaxStackIdx].type != memContextStackTypeNew)
     {
         THROW_FMT(
             AssertError, "new context expected but current context '%s' found",
@@ -709,7 +720,7 @@ memContextPrior(void)
 
     unsigned int priorIdx = 1;
 
-    while (memContextStack[memContextCurrentStackIdx - priorIdx].new)
+    while (memContextStack[memContextCurrentStackIdx - priorIdx].type == memContextStackTypeNew)
         priorIdx++;
 
     FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
@@ -729,7 +740,7 @@ memContextClean(unsigned int tryDepth)
     while (memContextStack[memContextMaxStackIdx].tryDepth >= tryDepth)
     {
         // Free memory contexts that were not kept
-        if (memContextStack[memContextMaxStackIdx].new)
+        if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
         {
             memContextFree(memContextStack[memContextMaxStackIdx].memContext);
         }
@@ -738,7 +749,7 @@ memContextClean(unsigned int tryDepth)
         {
             memContextCurrentStackIdx--;
 
-            while (memContextStack[memContextCurrentStackIdx].new)
+            while (memContextStack[memContextCurrentStackIdx].type == memContextStackTypeNew)
                 memContextCurrentStackIdx--;
         }
 
