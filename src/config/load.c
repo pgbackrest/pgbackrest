@@ -7,7 +7,7 @@ Configuration Load
 #include <sys/stat.h>
 
 #include "command/command.h"
-#include "common/compress/helper.h"
+#include "common/compress/helper.intern.h"
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -253,7 +253,13 @@ cfgLoadUpdateOption(void)
     if (cfgOptionValid(cfgOptCompressType))
         compressTypePresent(compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
 
-    // !!! UPDATE COMPRESS-LEVEL DEFAULTS HERE
+    // Update compress-level default based on the compression type
+    if (cfgOptionValid(cfgOptCompressLevel) && cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+    {
+        cfgOptionSet(
+            cfgOptCompressLevel, cfgSourceDefault,
+            VARINT(compressLevelDefault(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))));
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

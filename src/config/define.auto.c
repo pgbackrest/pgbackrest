@@ -662,7 +662,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     CFGDEFDATA_OPTION
     (
         CFGDEFDATA_OPTION_NAME("compress-level")
-        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
@@ -686,7 +686,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 9)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("6")
         )
     )
 

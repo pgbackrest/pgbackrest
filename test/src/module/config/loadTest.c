@@ -276,7 +276,8 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    check compress-type=none");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    compress-type=none");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "    compress-level=0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=gz when compress=y");
@@ -284,9 +285,11 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS_LEVEL "=9");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    check compress-type=gz");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 9, "    compress-level=9");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");
@@ -297,7 +300,8 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_COMPRESS_TYPE "=gz");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    check compress-type=gz");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "    compress-level=6");
 
         harnessLogResult(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"

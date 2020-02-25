@@ -26,12 +26,16 @@ Compression type constants
 #define BZ2_EXT                                                     "bz2"
 #define XZ_EXT                                                      "xz"
 
+/***********************************************************************************************************************************
+Configuration for supported and future compression types
+***********************************************************************************************************************************/
 static const struct compressHelperLocal
 {
-    const String *const type;
-    const String *const ext;
-    IoFilter *(*compressNew)(int);
-    IoFilter *(*decompressNew)(void);
+    const String *const type;                                       // Compress type -- must be extension without period prefixed
+    const String *const ext;                                        // File extension with period prefixed
+    IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
+    IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
+    int levelDefault;                                               // Default compression level
 } compressHelperLocal[] =
 {
     {
@@ -43,6 +47,7 @@ static const struct compressHelperLocal
         .ext = STRDEF("." GZIP_EXT),
         .compressNew = gzipCompressNew,
         .decompressNew = gzipDecompressNew,
+        .levelDefault = 6,
     },
     {
         .type = STRDEF(LZ4_EXT),
@@ -50,6 +55,7 @@ static const struct compressHelperLocal
 #ifdef HAVE_LIBLZ4
         .compressNew = lz4CompressNew,
         .decompressNew = lz4DecompressNew,
+        .levelDefault = 1,
 #endif
     },
     {
@@ -148,11 +154,26 @@ compressTypeFromName(const String *name)
 }
 
 /**********************************************************************************************************************************/
+int
+compressLevelDefault(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < COMPRESS_LIST_SIZE);
+    compressTypePresent(type);
+
+    FUNCTION_TEST_RETURN(compressHelperLocal[type].levelDefault);
+}
+
+/**********************************************************************************************************************************/
 IoFilter *
 compressFilter(CompressType type, int level)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(INT, level);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(INT, level);
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
@@ -207,7 +228,7 @@ IoFilter *
 decompressFilter(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
     ASSERT(type < COMPRESS_LIST_SIZE);
