@@ -198,25 +198,26 @@ nearest try block.
 Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerplate for every memory context block.
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
-// memContextDisard() before the parent context can be popped off the stack.
+// memContextDisard() before switching back from the parent context.
 MemContext *memContextNew(const char *name);
 
-// Push a switchable type mem context onto the stack which will then become the current mem context. Only context of type switch can
-// become the current mem context.
+// Switch to a context making it the current mem context
 void memContextSwitch(MemContext *this);
 
-// Pop a mem context off the stack and make the prior (first switchable mem context) the current mem context. If the top of the
-// stack is a type new mem context (new context must be kept or discarded) then an error will be thrown in debug builds.
+// Switch back to the context that was current before the last switch.  This is the same context that will be returned from
+// memContextPrior().  If the last function called was memContextNew(), then memContextKeep()/memContextDiscard() must be called
+// before calling memContextSwitchBack(), otherwise an error will occur in debug builds and the behavior is undefined in production
+// builds.
 void memContextSwitchBack(void);
 
-// Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs. The context will be
-// removed from the stack but the mem context itself will no longer be directly "free-able" (it will be freed indirectly when its
-// parent context is freed). If the top of the stack (which is assumed to be the memContext to keep) is not a type new context then
-// an error will be thrown in debug builds.
+// Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs.  If the context was
+// switched after the call to memContextNew(), then it must be switched back before calling memContextKeep() or an error will occur
+// in debug builds and the behavior is undefined in production builds.
 void memContextKeep(void);
 
-// Discard a context created by memContextNew(). Discarding will free the mem context and then remove it from the top of the stack.
-// If the top of the stack is not a type new context then an error will be thrown in debug builds.
+// Discard a context created by memContextNew(). If the context was switched after the call to memContextNew(), then it must be
+// switched back before calling memContextKeep() or an error will occur in debug builds and the behavior is undefined in production
+// builds.
 void memContextDiscard(void);
 
 // Move mem context to a new parent. This is generally used to move objects to a new context once they have been successfully
@@ -243,7 +244,8 @@ MemContext *memContextCurrent(void);
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 MemContext *memContextPrior(void);
 
-// "top" context
+// "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
+// good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
 MemContext *memContextTop(void);
 
 // Mem context name
