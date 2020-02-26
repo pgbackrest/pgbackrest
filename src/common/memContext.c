@@ -576,7 +576,7 @@ memContextMove(MemContext *this, MemContext *parentNew)
 
 /**********************************************************************************************************************************/
 void
-memContextPush(MemContext *this)
+memContextSwitch(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -605,7 +605,7 @@ memContextPush(MemContext *this)
 
 /**********************************************************************************************************************************/
 void
-memContextPop(void)
+memContextSwitchBack(void)
 {
     FUNCTION_TEST_VOID();
 

@@ -69,11 +69,11 @@ MEM_CONTEXT_END();
     do                                                                                                                             \
     {                                                                                                                              \
         /* Switch to the new memory context */                                                                                     \
-        memContextPush(memContext);
+        memContextSwitch(memContext);
 
 #define MEM_CONTEXT_END()                                                                                                          \
         /* Switch back to the prior context */                                                                                     \
-        memContextPop();                                                                                                           \
+        memContextSwitchBack();                                                                                                    \
     }                                                                                                                              \
     while(0)
 
@@ -120,10 +120,10 @@ Note that memory context names are expected to live for the lifetime of the cont
     do                                                                                                                             \
     {                                                                                                                              \
         MemContext *MEM_CONTEXT_NEW() = memContextNew(memContextName);                                                             \
-        memContextPush(MEM_CONTEXT_NEW());
+        memContextSwitch(MEM_CONTEXT_NEW());
 
 #define MEM_CONTEXT_NEW_END()                                                                                                      \
-        memContextPop();                                                                                                           \
+        memContextSwitchBack();                                                                                                    \
         memContextKeep();                                                                                                          \
     }                                                                                                                              \
     while(0)
@@ -149,7 +149,7 @@ MEM_CONTEXT_TEMP_END();
     do                                                                                                                             \
     {                                                                                                                              \
         MemContext *MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                               \
-        memContextPush(MEM_CONTEXT_TEMP());
+        memContextSwitch(MEM_CONTEXT_TEMP());
 
 #define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
     MEM_CONTEXT_TEMP_BEGIN()                                                                                                       \
@@ -162,17 +162,17 @@ MEM_CONTEXT_TEMP_END();
                                                                                                                                    \
         if (MEM_CONTEXT_TEMP_loopTotal >= resetTotal)                                                                              \
         {                                                                                                                          \
-            memContextPop();                                                                                                       \
+            memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
             MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                       \
-            memContextPush(MEM_CONTEXT_TEMP());                                                                                    \
+            memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
 
 #define MEM_CONTEXT_TEMP_END()                                                                                                     \
-        memContextPop();                                                                                                           \
+        memContextSwitchBack();                                                                                                    \
         memContextDiscard();                                                                                                       \
     }                                                                                                                              \
     while (0)
@@ -180,13 +180,13 @@ MEM_CONTEXT_TEMP_END();
 /***********************************************************************************************************************************
 Memory context management functions
 
-memContextPush(memContextNew());
+memContextSwitch(memContextNew());
 
 <Do something with the memory context, e.g. allocation memory with memNew()>
 <Current memory context can be accessed with memContextCurrent()>
 <Prior memory context can be accessed with memContextPrior()>
 
-memContextPop();
+memContextSwitchBack();
 
 <The memory context must now be kept or discarded>
 memContextKeep()/memContextDiscard();
@@ -203,11 +203,11 @@ MemContext *memContextNew(const char *name);
 
 // Push a switchable type mem context onto the stack which will then become the current mem context. Only context of type switch can
 // become the current mem context.
-void memContextPush(MemContext *this);
+void memContextSwitch(MemContext *this);
 
 // Pop a mem context off the stack and make the prior (first switchable mem context) the current mem context. If the top of the
 // stack is a type new mem context (new context must be kept or discarded) then an error will be thrown in debug builds.
-void memContextPop(void);
+void memContextSwitchBack(void);
 
 // Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs. The context will be
 // removed from the stack but the mem context itself will no longer be directly "free-able" (it will be freed indirectly when its
@@ -240,7 +240,7 @@ Memory context getters
 // Current memory context
 MemContext *memContextCurrent(void);
 
-// Prior context, i.e. the context that was current before the last memContextPush()
+// Prior context, i.e. the context that was current before the last memContextSwitch()
 MemContext *memContextPrior(void);
 
 // "top" context

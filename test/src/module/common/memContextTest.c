@@ -19,7 +19,7 @@ testFree(void *thisVoid)
 
     TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
 
-    TEST_ERROR(memContextPush(this), AssertError, "cannot switch to inactive context");
+    TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
     TEST_ERROR(memContextName(this), AssertError, "cannot get name for inactive context");
 
     memContextCallbackArgument = this;
@@ -91,7 +91,7 @@ testRun(void)
         TEST_RESULT_PTR(memContext->contextParent, memContextTop(), "test1 context parent is top");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE, "initial top context child list size");
 
-        memContextPush(memContext);
+        memContextSwitch(memContext);
 
         TEST_ERROR(memContextKeep(), AssertError, "new context expected but current context 'test1' found");
         TEST_ERROR(memContextDiscard(), AssertError, "new context expected but current context 'test1' found");
@@ -100,7 +100,7 @@ testRun(void)
         // Create enough mem contexts to use up the initially allocated block
         for (int contextIdx = 1; contextIdx < MEM_CONTEXT_INITIAL_SIZE; contextIdx++)
         {
-            memContextPush(memContextTop());
+            memContextSwitch(memContextTop());
             memContextNew("test-filler");
             memContextKeep();
             TEST_RESULT_BOOL(
@@ -136,7 +136,7 @@ testRun(void)
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, MEM_CONTEXT_INITIAL_SIZE + 2, "check context free idx");
 
         // Create a child context to test recursive free
-        memContextPush(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
+        memContextSwitch(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
         memContextNew("test-reuse");
         memContextKeep();
         TEST_RESULT_PTR_NE(
@@ -149,7 +149,7 @@ testRun(void)
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free current context 'test5'");
 
-        memContextPush(memContextTop());
+        memContextSwitch(memContextTop());
         memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
 
         TEST_ERROR(
@@ -166,13 +166,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
-        memContextPush(memContextTop());
+        memContextSwitch(memContextTop());
         memNewPtrArray(1);
 
         MemContext *memContext = memContextNew("test-alloc");
-        TEST_ERROR(memContextPop(), AssertError, "current context expected but new context 'test-alloc' found");
+        TEST_ERROR(memContextSwitchBack(), AssertError, "current context expected but new context 'test-alloc' found");
         memContextKeep();
-        memContextPush(memContext);
+        memContextSwitch(memContext);
 
         for (int allocIdx = 0; allocIdx <= MEM_CONTEXT_ALLOC_INITIAL_SIZE; allocIdx++)
         {
@@ -220,7 +220,7 @@ testRun(void)
         TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
 
-        memContextPush(memContextTop());
+        memContextSwitch(memContextTop());
         memContextFree(memContext);
     }
 
@@ -257,7 +257,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("MEM_CONTEXT_BEGIN() and MEM_CONTEXT_END()"))
     {
-        memContextPush(memContextTop());
+        memContextSwitch(memContextTop());
         MemContext *memContext = memContextNew("test-block");
         memContextKeep();
 
