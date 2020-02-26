@@ -17,7 +17,7 @@ sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
 
 Coverage testing is an important component of pgBackRest testing and is integrated directly into the test harness. Unfortunately, the default version of lcov is often not compatible with gcc. lcov 1.14 works up to gcc 8.
 
-pgbackrest-dev => Build lcov 2.14
+pgbackrest-dev => Build lcov 1.14
 ```
 curl -fsSL \
        https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz | \
