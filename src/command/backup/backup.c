@@ -1864,7 +1864,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
         // is required.  We can't just do a straight copy since the destination needs to be compressed and that must happen before
-        // encryption in order to be efficient. Compression will always be gzip for compatability and since it is always available.
+        // encryption in order to be efficient. Compression will always be gz for compatibility and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
         StorageRead *manifestRead = storageNewReadP(
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)));

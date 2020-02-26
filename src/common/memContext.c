@@ -13,7 +13,12 @@ Memory Context Manager
 /***********************************************************************************************************************************
 Memory context states
 ***********************************************************************************************************************************/
-typedef enum {memContextStateFree = 0, memContextStateFreeing, memContextStateActive} MemContextState;
+typedef enum
+{
+    memContextStateFree = 0,
+    memContextStateFreeing,
+    memContextStateActive
+} MemContextState;
 
 /***********************************************************************************************************************************
 Contains information about a memory allocation
@@ -185,7 +190,7 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
     // Try to find space for the new context
     for (; memContext->contextChildFreeIdx < memContext->contextChildListSize; memContext->contextChildFreeIdx++)
     {
-        if (!memContext->contextChildList[memContext->contextChildFreeIdx] ||
+        if (memContext->contextChildList[memContext->contextChildFreeIdx] == NULL ||
             (allowFree && memContext->contextChildList[memContext->contextChildFreeIdx]->state == memContextStateFree))
         {
             break;

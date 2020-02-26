@@ -1,5 +1,189 @@
 [
     {
+        "commit": "495dec44f0f512478ac942091ca2a29c60ad4911",
+        "date": "2020-02-25 17:05:45 -0500",
+        "subject": "v2.24: Auto-Select Backup Set for Time Target"
+    },
+    {
+        "commit": "ace41d57d1a76d031350f3ba458ba1d1e393866d",
+        "date": "2020-02-25 09:34:27 -0500",
+        "subject": "Clarify that gzip is always used to compress history files."
+    },
+    {
+        "commit": "cc743f2e04db05cc3277e43023ebd8e2007ef4ed",
+        "date": "2020-02-21 11:51:39 -0500",
+        "subject": "Skip pg_internal.init temp file during backup.",
+        "body": "If PostgreSQL crashes it can leave behind a pg_internal.init temp file with the pid as the extension, as discussed in https://www.postgresql.org/message-id/flat/20200131045352.GB2631%40paquier.xyz#7700b9481ef5b0dd5f09cc410b4750f6.  On restart this file is not cleaned up so it can persist for the lifetime of the cluster or until another process with the same id happens to write pg_internal.init.\n\nThis is arguably a bug in PostgreSQL, but in any case it makes sense not to backup this file."
+    },
+    {
+        "commit": "48d0f77fe3e6edf7347b49d9e8c67052db00355b",
+        "date": "2020-02-21 11:31:31 -0500",
+        "subject": "Remove dead LibC macros.",
+        "body": "These macros were made obsolete when code was removed from LibC after the C migration was completed."
+    },
+    {
+        "commit": "dfc5f6723379526fd3c5fe5de61a37793e2cced8",
+        "date": "2020-02-17 17:12:22 -0600",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "ea0af890d82b2b335cc4d9a9dcc29d440a583706",
+        "date": "2020-02-12 17:27:44 -0700",
+        "subject": "Reclassify release note to documentation improvement."
+    },
+    {
+        "commit": "c6b89d74ec5a21fc644f8f5106ee42def1135c98",
+        "date": "2020-02-12 17:20:21 -0700",
+        "subject": "Add reviewer."
+    },
+    {
+        "commit": "6353e9428df1d241b97d02c843f1a737e7c36c85",
+        "date": "2020-02-12 17:18:48 -0700",
+        "subject": "Error when archive-get/archive-push/restore are not run on a PostgreSQL host.",
+        "body": "This error was lost during the migration to C.  The error that occurred instead (generally an SSH auth error) was hard to debug.\n\nRestore the original behavior by throwing an error immediately if pg1-host is configured for any of these commands.  reset-pg1-host can be used to suppress the error when required."
+    },
+    {
+        "commit": "dac8119bf11e74b7d393b601bcfbe447a80e85e4",
+        "date": "2020-02-12 15:47:07 -0700",
+        "subject": "Add pgIsLocalVerify().",
+        "body": "This functionality is required in commands other than restore, so centralize it."
+    },
+    {
+        "commit": "e2c304d4738144f1c5c72d43d70ec5c9e67d052b",
+        "date": "2020-02-12 12:17:23 -0700",
+        "subject": "Prevent defunct processes in asynchronous archive commands.",
+        "body": "The main improvement is a double-fork to prevent zombie processes if the parent process exits after the (child) async process. This is a real possibility since the parent process sticks around to monitor the results of the async process.\n\nIn the first fork, ignore SIGCHLD in the very unlikely case that the async process exits before the first fork. This is probably only possible if the async process exits immediately, perhaps due to a chdir() failure. Set SIGCHLD back to default in the async process so waitpid() will work as expected.\n\nAlso update the comment on chdir() to more accurately reflect what is happening.\n\nFinally, add a test in certain debug builds to ensure the first fork exits very quickly. This only works when valgrind is not in use because valgrind makes forking so slow that it is hard to tell if the async process performed work or not (in the case that the second fork goes missing and the async process is a direct child)."
+    },
+    {
+        "commit": "1fa3ae2fcd5b90a6f2a4e5dc83b3580297e83c1b",
+        "date": "2020-02-11 19:54:17 -0700",
+        "subject": "Prevent lock-bot from marking locked issues as \"resolved\".",
+        "body": "This is certainly not true in all cases, e.g. an issue may be closed if it is added to the backlog."
+    },
+    {
+        "commit": "1be9e6854e8ab4bc21d693371a09290a6c3d5db6",
+        "date": "2020-02-11 19:52:23 -0700",
+        "subject": "Prevent lock-bot from adding comments to locked issues.",
+        "body": "This will hopefully prevent users from getting notifications when an issue is locked."
+    },
+    {
+        "commit": "43936c58a894187b41501ba5acaf16e92842c261",
+        "date": "2020-02-11 19:44:06 -0700",
+        "subject": "Fix resume when the resumable backup was created by Perl.",
+        "body": "In this case the resumable backup should be ignored, but the C code was not able to load the partial manifest written by Perl since the format differs slightly. Add validations to catch this case and continue gracefully."
+    },
+    {
+        "commit": "44adf21c834ca8624b47dc6dbc2794bc429463ad",
+        "date": "2020-02-10 21:30:43 -0700",
+        "subject": "Consolidate archive async exec code.",
+        "body": "Move duplicated code to the common module.  This will reduce copy and paste between the get and push modules when changes are made."
+    },
+    {
+        "commit": "0eaedc9a6ae98eaf4e733a3f63cb462a5ebcfa05",
+        "date": "2020-02-10 19:17:11 -0700",
+        "subject": "Improve async archive error file removal.",
+        "body": "2a06df93 removed the error file so an old error would not be reported before the async process had a chance to try again.  However, if the async process was already running this might lead to a timeout error before reporting the correct error.\n\nInstead, remove the error files once we know that the async process will start, i.e. after the archive lock has been acquired.\n\nThis effectively reverts 2a06df93."
+    },
+    {
+        "commit": "8cfbc294fcc066fce594c09649865f3d88bb2364",
+        "date": "2020-02-10 18:48:47 -0700",
+        "subject": "Fix incorrect error code."
+    },
+    {
+        "commit": "1ce71b1e9b5e0613182d64673e9f730efd0e8176",
+        "date": "2020-02-10 17:44:39 -0700",
+        "subject": "Add missing linefeed."
+    },
+    {
+        "commit": "71b4cc56cbcf20ce6a39e2155e0d9da11c83aaf8",
+        "date": "2020-02-06 21:11:15 -0800",
+        "subject": "Rename confessOnError to throwOnError.",
+        "body": "Confess is awfully Perl-ish and was likely copied verbatim during the migration.  Rename to what we do now, i.e. throw."
+    },
+    {
+        "commit": "2a06df93f379bdc28a6c5084d204cb1e5391dbb3",
+        "date": "2020-02-06 20:59:04 -0800",
+        "subject": "Remove async archive error file when not throwing an error.",
+        "body": "This ensures that the error will not be thrown before the async process has a chance to retry."
+    },
+    {
+        "commit": "3721e57a0ec709326c28eb6d31f9b4fe9e3fd7b5",
+        "date": "2020-02-06 18:28:54 -0800",
+        "subject": "Clarify why some recovery options are not commented out for PG >= 12."
+    },
+    {
+        "commit": "efff54490f456b653e51abb05507b0917792376e",
+        "date": "2020-02-04 21:19:21 -0800",
+        "subject": "Fix release note typo."
+    },
+    {
+        "commit": "296aec03be7c924f2689e091e667e80daf06e6f7",
+        "date": "2020-01-31 07:50:03 -0700",
+        "subject": "Update contributor name."
+    },
+    {
+        "commit": "0f8ec3e478cc17243bc3f043a13f5da73f98de66",
+        "date": "2020-01-30 14:51:26 -0700",
+        "subject": "Read HTTP content to eof when size/encoding not specified.",
+        "body": "Generally, the content-size or content-encoding headers will be used to specify how much content should be expected.\n\nThere is a special case where the server sends 'Connection:close' without the content headers and the content may be read up until eof.\n\nThis appears to be an atypical usage but it is required by the specification."
+    },
+    {
+        "commit": "856980ae99efe088e0cf10588c2a18cd78ff32e6",
+        "date": "2020-01-30 14:38:05 -0700",
+        "subject": "Auto-select backup set on restore when time target is specified.",
+        "body": "Auto-selection is performed only when --set is not specified. If a backup set for the given target time cannot not be found, the latest (default) backup set will be used.\n\nCurrently a limited number of date formats are recognized and timezone names are not allowed, only timezone offsets."
+    },
+    {
+        "commit": "f46d1fa74c4c0cef7a0ac00f3e43ebeecdc1315e",
+        "date": "2020-01-30 11:28:30 -0700",
+        "subject": "Add timezone calculations to time module.",
+        "body": "Add tzPartsValid() and tzOffsetSecond() to calculate timezone offsets from user provided values.\n\nUpdate epochFromParts() to accept a timezone offset in seconds."
+    },
+    {
+        "commit": "dbaa5e3473ebfb4651e879edaab6817fdd79092a",
+        "date": "2020-01-29 08:21:36 -0700",
+        "subject": "Add linefeeds to function declarations."
+    },
+    {
+        "commit": "80687cbe740ad786a15db5e76777f24fd7cb8c69",
+        "date": "2020-01-28 10:19:58 -0700",
+        "subject": "Free TLS connection in common/io-http test.",
+        "body": "The test that checks for no output from the server was leaving a connection open which valgrind was complaining about.\n\nWait on the server long enough to cause the error on the client then close the connection to free the memory."
+    },
+    {
+        "commit": "846efaa40f2a04273a61057a3684973098deb690",
+        "date": "2020-01-28 07:36:20 -0700",
+        "subject": "Revert 'Add lib path for libpq in case it is in a non-standard location.`",
+        "body": "Putting this before AC_CHECK_LIB breaks on many systems because the location of pg_config is not yet known."
+    },
+    {
+        "commit": "324f7cebe04e97a9ec34e325f6fbd927f77edb2c",
+        "date": "2020-01-27 17:50:07 -0700",
+        "subject": "Designated initializer cleanup.",
+        "body": "Cleanup designated initializers created in b134175f by moving struct members in or out for clarity."
+    },
+    {
+        "commit": "24d2494c8209079d0288784de38e9045d5c6cb95",
+        "date": "2020-01-27 11:25:24 -0700",
+        "subject": "Fix incomplete comment."
+    },
+    {
+        "commit": "0a845214a1d306d16dce5618f2f998f8f6e6778d",
+        "date": "2020-01-26 23:10:29 -0700",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "697150eaf875742a4522e2ed8c00dfaf0489c4ac",
+        "date": "2020-01-26 23:07:07 -0700",
+        "subject": "Add more validations to the manifest on backup.",
+        "body": "Validate that checksums exist for zero size files.  This means that the checksums for zero size files are explicitly set by backup even though they'll always be the same.  Also validate that zero length files have the correct checksum.\n\nValidate that repo size is > 0 if size is > 0.  No matter what compression type is used a non-zero amount of data cannot be stored in zero bytes."
+    },
+    {
+        "commit": "bb45a80d46b738a9b6672fc77158585395b04473",
+        "date": "2020-01-26 22:47:53 -0700",
+        "subject": "Begin v2.24 development."
+    },
+    {
         "commit": "2358d3448507f5dc4fd50edf65172285bca69c4b",
         "date": "2020-01-26 22:38:21 -0700",
         "subject": "v2.23: Bug Fix"
