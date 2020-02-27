@@ -2035,7 +2035,7 @@
             </execute>
 
             <execute user="postgres" output="y">
-                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
+                <exe-cmd>psql -c "select message from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
             </execute>
         </execute-list>
