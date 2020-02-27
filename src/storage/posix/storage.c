@@ -77,13 +77,14 @@ storagePosixExists(THIS_VOID, const String *file, StorageInterfaceExistsParam pa
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storagePosixInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 

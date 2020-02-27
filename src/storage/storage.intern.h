@@ -53,18 +53,6 @@ typedef String *StoragePathExpressionCallback(const String *expression, const St
 /***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
-// Does a file exist? This function is only for files, not paths.
-typedef struct StorageInterfaceExistsParam
-{
-    VAR_PARAM_HEADER;
-} StorageInterfaceExistsParam;
-
-typedef bool StorageInterfaceExists(void *thisVoid, const String *file, StorageInterfaceExistsParam param);
-
-#define storageInterfaceExistsP(thisVoid, file, ...)                                                                               \
-    STORAGE_COMMON_INTERFACE(thisVoid).exists(thisVoid, file, (StorageInterfaceExistsParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
 // Get information about a file
 typedef struct StorageInterfaceInfoParam
 {
@@ -74,7 +62,7 @@ typedef struct StorageInterfaceInfoParam
     bool followLink;
 } StorageInterfaceInfoParam;
 
-typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, StorageInterfaceInfoParam param);
+typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, StorageInfoType type, StorageInterfaceInfoParam param);
 
 #define storageInterfaceInfoP(thisVoid, file, ...)                                                                                 \
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
@@ -257,7 +245,6 @@ typedef struct StorageInterface
     uint64_t feature;
 
     // Required functions
-    StorageInterfaceExists *exists;
     StorageInterfaceInfo *info;
     StorageInterfaceInfoList *infoList;
     StorageInterfaceList *list;

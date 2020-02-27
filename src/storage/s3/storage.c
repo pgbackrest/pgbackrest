@@ -530,40 +530,15 @@ storageS3ListInternal(
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageS3Exists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = httpClientResponseCodeOk(storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true).httpClient);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 static StorageInfo
-storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(ENUM, type);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
@@ -579,9 +554,13 @@ storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
     if (httpClientResponseCodeOk(httpResult.httpClient))
     {
         result.exists = true;
-        result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+
+        if (type >= storageTypeBasic)
+        {
+            result.type = storageTypeFile;
+            result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+            result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        }
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -911,7 +890,6 @@ New object
 ***********************************************************************************************************************************/
 static const StorageInterface storageInterfaceS3 =
 {
-    .exists = storageS3Exists,
     .info = storageS3Info,
     .infoList = storageS3InfoList,
     .list = storageS3List,

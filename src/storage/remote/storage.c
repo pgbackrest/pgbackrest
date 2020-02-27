@@ -112,13 +112,14 @@ storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
 }
 
 static StorageInfo
-storageRemoteInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storageRemoteInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
@@ -449,7 +450,6 @@ New object
 ***********************************************************************************************************************************/
 static const StorageInterface storageInterfaceRemote =
 {
-    .exists = storageRemoteExists,
     .info = storageRemoteInfo,
     .infoList = storageRemoteInfoList,
     .list = storageRemoteList,
