@@ -129,6 +129,8 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     STRING_STATIC(MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,            MANIFEST_KEY_OPTION_CHECKSUM_PAGE);
 #define MANIFEST_KEY_OPTION_COMPRESS                                "option-compress"
     STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_STR,                 MANIFEST_KEY_OPTION_COMPRESS);
+#define MANIFEST_KEY_OPTION_COMPRESS_TYPE                           "option-compress-type"
+    STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,            MANIFEST_KEY_OPTION_COMPRESS_TYPE);
 #define MANIFEST_KEY_OPTION_COMPRESS_LEVEL                          "option-compress-level"
     STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,           MANIFEST_KEY_OPTION_COMPRESS_LEVEL);
 #define MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK                  "option-compress-level-network"
@@ -1030,13 +1032,13 @@ manifestNewBuild(
 
 /**********************************************************************************************************************************/
 void
-manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress)
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(TIME, copyStart);
-        FUNCTION_LOG_PARAM(TIME, compress);
+        FUNCTION_LOG_PARAM(ENUM, compressType);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -1054,7 +1056,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compres
 
         // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
         // processing begins
-        this->data.backupOptionCompress = compress;
+        this->data.backupOptionCompressType = compressType;
     }
     MEM_CONTEXT_END();
 
@@ -1660,8 +1662,13 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 manifest->data.backupOptionArchiveCheck = jsonToBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR))
                 manifest->data.backupOptionArchiveCopy = jsonToBool(value);
+            // Historically this option meant to add gz compression
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_STR))
-                manifest->data.backupOptionCompress = jsonToBool(value);
+                manifest->data.backupOptionCompressType = jsonToBool(value) ? compressTypeGz : compressTypeNone;
+            // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
+            // value does not get overwritten.  Since options are stored in alpha order this should always be true.
+            else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR))
+                manifest->data.backupOptionCompressType = compressTypeEnum(jsonToStr(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_HARDLINK_STR))
                 manifest->data.backupOptionHardLink = jsonToBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ONLINE_STR))
@@ -1944,9 +1951,11 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 jsonFromVar(manifest->data.backupOptionChecksumPage));
         }
 
+        // Set the option when compression is turned on.  In older versions this also implied gz compression but in newer versions
+        // the type option must also be set if compression is not gz.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(manifest->data.backupOptionCompress));
+            jsonFromBool(manifest->data.backupOptionCompressType != compressTypeNone));
 
         if (manifest->data.backupOptionCompressLevel != NULL)
         {
@@ -1961,6 +1970,11 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
                 jsonFromVar(manifest->data.backupOptionCompressLevelNetwork));
         }
+
+        // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
+        infoSaveValue(
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,
+            jsonFromStr(compressTypeStr(manifest->data.backupOptionCompressType)));
 
         if (manifest->data.backupOptionDelta != NULL)
         {

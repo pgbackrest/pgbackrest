@@ -258,12 +258,13 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
-        total: 3
+        total: 2
 
         coverage:
           common/compress/gz/common: full
           common/compress/gz/compress: full
           common/compress/gz/decompress: full
+          common/compress/helper: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto

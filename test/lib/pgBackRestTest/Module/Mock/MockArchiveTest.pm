@@ -40,15 +40,15 @@ sub archiveCheck
     my $self = shift;
     my $strArchiveFile = shift;
     my $strArchiveChecksum = shift;
-    my $bCompress = shift;
+    my $strCompressType = shift;
     my $strSpoolPath = shift;
 
     # Build the archive name to check for at the destination
     my $strArchiveCheck = PG_VERSION_94 . "-1/${strArchiveFile}-${strArchiveChecksum}";
 
-    if ($bCompress)
+    if (defined($strCompressType))
     {
-        $strArchiveCheck .= '.gz';
+        $strArchiveCheck .= ".${strCompressType}";
     }
 
     my $oWait = waitInit(5);
@@ -82,14 +82,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false},
-        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  GZ},
+        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -99,12 +99,13 @@ sub run
         my $bRemote = $rhRun->{remote};
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
+        my $strCompressType = $rhRun->{compress};
 
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
@@ -153,12 +154,13 @@ sub run
         my $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --compress ${strWalPath}/${strSourceFile}",
+            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                " --compress-type=${strCompressType} ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
-        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.gz");
+        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");
 
         # Test that the WAL was pushed
-        $self->archiveCheck($strSourceFile, $strArchiveChecksum, true);
+        $self->archiveCheck($strSourceFile, $strArchiveChecksum, $strCompressType);
 
         # Remove from archive_status
         storageTest()->remove("${strWalPath}/archive_status/${strSourceFile}.ready");
@@ -211,7 +213,7 @@ sub run
 
             $strArchiveTmp =
                 $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-                    substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}." . COMPRESS_EXT . qw{.} .
+                    substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}.${strCompressType}" . qw{.} .
                     STORAGE_TEMP_EXT;
 
             storageTest()->put($strArchiveTmp, 'JUNK');
@@ -219,9 +221,10 @@ sub run
 
         # Push the WAL
         $oHostDbMaster->executeSimple(
-            "${strCommandPush} --compress --archive-async --process-max=2 ${strWalPath}/${strSourceFile}",
+            "${strCommandPush} --compress-type=${strCompressType} --archive-async --process-max=2" .
+                " ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
-        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}." . COMPRESS_EXT);
+        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");
 
         # Make sure the temp file no longer exists if it was created
         if (defined($strArchiveTmp))
@@ -242,7 +245,7 @@ sub run
         }
 
         # Test that the WAL was pushed
-        $self->archiveCheck($strSourceFile, $strArchiveChecksum, true, $oHostDbMaster->spoolPath());
+        $self->archiveCheck($strSourceFile, $strArchiveChecksum, $strCompressType, $oHostDbMaster->spoolPath());
 
         # Remove from archive_status
         storageTest()->remove("${strWalPath}/archive_status/${strSourceFile}.ready");
@@ -381,7 +384,7 @@ sub run
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
             {oLogTest => $self->expect()});
-        $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum, false);
+        $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum);
 
         push(@stryExpectedWAL, "${strSourceFile}.partial-${strArchiveChecksum}");
 
@@ -390,8 +393,7 @@ sub run
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}.partial", {oLogTest => $self->expect()});
-        $self->archiveCheck(
-            "${strSourceFile}.partial", $strArchiveChecksum, false);
+        $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum);
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL with different checksum');

@@ -56,7 +56,6 @@ testRun(void)
         TEST_ERROR(cfgDefOptionDefault(
             cfgDefCmdBackup, cfgDefOptionTotal()), AssertError,
             "assertion 'optionDefId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
 
@@ -135,11 +134,11 @@ testRun(void)
 
         TEST_RESULT_Z(cfgDefOptionHelpSection(cfgDefOptCompress), "general", "compress option help section");
         TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptCompress), "Use gzip file compression.",
+            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptCompress), "Use file compression.",
             "backup command, compress option help summary");
         TEST_RESULT_Z(
             cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptCompress),
-            "Backup files are compatible with command-line gzip tools.", "backup command, compress option help description");
+            "Backup files are compatible with command-line compression tools.", "backup command, compress option help description");
         TEST_RESULT_Z(
             cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
         TEST_RESULT_Z(

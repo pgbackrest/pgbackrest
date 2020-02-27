@@ -71,6 +71,8 @@ Option constants
     STRING_DECLARE(CFGOPT_COMPRESS_LEVEL_STR);
 #define CFGOPT_COMPRESS_LEVEL_NETWORK                               "compress-level-network"
     STRING_DECLARE(CFGOPT_COMPRESS_LEVEL_NETWORK_STR);
+#define CFGOPT_COMPRESS_TYPE                                        "compress-type"
+    STRING_DECLARE(CFGOPT_COMPRESS_TYPE_STR);
 #define CFGOPT_CONFIG                                               "config"
     STRING_DECLARE(CFGOPT_CONFIG_STR);
 #define CFGOPT_CONFIG_INCLUDE_PATH                                  "config-include-path"
@@ -390,7 +392,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            172
+#define CFG_OPTION_TOTAL                                            173
 
 /***********************************************************************************************************************************
 Command enum
@@ -433,6 +435,7 @@ typedef enum
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
+    cfgOptCompressType,
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,

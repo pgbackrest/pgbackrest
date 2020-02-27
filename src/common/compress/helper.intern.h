@@ -1,19 +1,15 @@
 /***********************************************************************************************************************************
-Archive Push File
+Compression Helper Internal
 ***********************************************************************************************************************************/
-#ifndef COMMAND_ARCHIVE_PUSH_FILE_H
-#define COMMAND_ARCHIVE_PUSH_FILE_H
+#ifndef COMMON_COMPRESS_HELPER_INTERN_H
+#define COMMON_COMPRESS_HELPER_INTERN_H
 
 #include "common/compress/helper.h"
-#include "common/crypto/common.h"
-#include "common/type/string.h"
-#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-String *archivePushFile(
-    const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CipherType cipherType, const String *cipherPass, CompressType compressType, int compressLevel);
+// Default compression level for a compression type, used while loading the configuration
+int compressLevelDefault(CompressType type);
 
 #endif

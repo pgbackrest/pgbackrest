@@ -61,6 +61,7 @@ typedef enum
     cfgDefOptCompress,
     cfgDefOptCompressLevel,
     cfgDefOptCompressLevelNetwork,
+    cfgDefOptCompressType,
     cfgDefOptConfig,
     cfgDefOptConfigIncludePath,
     cfgDefOptConfigPath,

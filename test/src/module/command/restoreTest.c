@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
-#include "common/compress/gz/compress.h"
+#include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/io.h"
 #include "common/io/bufferRead.h"
@@ -196,7 +196,7 @@ testRun(void)
         StorageWrite *ceRepoFile = storageNewWriteP(
             storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(repoFileReferenceFull), strPtr(repoFile1)));
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
-        ioFilterGroupAdd(filterGroup, gzCompressNew(3));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
 
         storagePutP(ceRepoFile, BUFSTRDEF("acefile"));
@@ -316,7 +316,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
         varLstAdd(paramList, varNewBool(false));
@@ -347,7 +347,7 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
         varLstAdd(paramList, varNewBool(false));

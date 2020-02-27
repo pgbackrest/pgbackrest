@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "common/compress/gz/compress.h"
+#include "common/compress/helper.h"
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
@@ -202,7 +202,7 @@ testRun(void)
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
-        ioFilterGroupAdd(filterGroup, gzCompressNew(3));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(
             filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
         storagePutP(destination, buffer);

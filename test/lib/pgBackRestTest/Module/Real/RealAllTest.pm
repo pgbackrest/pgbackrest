@@ -58,15 +58,15 @@ sub run
     foreach my $strBackupDestination (
         $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
-        my $bCompress = $bHostBackup && !$bHostStandby;
-        my $bRepoEncrypt = ($bCompress && !$bS3) ? true : false;
+        my $strCompressType = $bHostBackup && !$bHostStandby ? GZ : NONE;
+        my $bRepoEncrypt = ($strCompressType ne NONE && !$bS3) ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
         my $hyVm = vmGet();
         my $strDbVersionMostRecent = ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1];
 
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}, " .
+            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}, s3 ${bS3}, " .
                 "enc ${bRepoEncrypt}",
             # Use the most recent db version on the expect vm for expect testing
             $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
@@ -96,7 +96,7 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+             strCompressType => $strCompressType, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
         my $bTestLocal = $self->runCurrent() == 1;
@@ -412,7 +412,7 @@ sub run
 
         # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
-        if ($bTestExtra && $bCompress && $strBackupDestination eq HOST_BACKUP)
+        if ($bTestExtra && $strCompressType ne NONE && $strBackupDestination eq HOST_BACKUP)
         {
             &log(INFO, '    multiple wal switches to exercise async archiving');
             $oHostDbMaster->sqlExecute("create table wal_activity (id int)");

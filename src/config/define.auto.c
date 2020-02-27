@@ -640,10 +640,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Use gzip file compression.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Use file compression.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Backup files are compatible with command-line gzip tools."
+            "Backup files are compatible with command-line compression tools."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -662,7 +662,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     CFGDEFDATA_OPTION
     (
         CFGDEFDATA_OPTION_NAME("compress-level")
-        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
@@ -686,7 +686,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 9)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("6")
         )
     )
 
@@ -730,6 +729,45 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 9)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("3")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("compress-type")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("File compression type.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The following compression types are supported:\n"
+            "\n"
+            "* gz - gzip compression format"
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "none",
+                "gz"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("gz")
         )
     )
 

@@ -53,14 +53,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt =>  true},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt => false},
-        {vm => VM2, remote => false, s3 =>  true, encrypt =>  true},
-        {vm => VM2, remote =>  true, s3 => false, encrypt => false},
-        {vm => VM3, remote => false, s3 => false, encrypt => false},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true},
-        {vm => VM4, remote => false, s3 =>  true, encrypt => false},
-        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true},
+        {vm => VM1, remote => false, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
+        {vm => VM2, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM2, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, compress =>  GZ},
+        {vm => VM4, remote => false, s3 =>  true, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -70,13 +70,15 @@ sub run
         my $bRemote = $rhRun->{remote};
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
+        my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
+        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt,
+            strCompressType => $strCompressType});
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_MISSING,
@@ -192,7 +194,7 @@ sub run
         $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
         $self->testResult(
             sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
-            '000000010000000100000001-' . $self->walGenerateContentChecksum(PG_VERSION_94) . '.' . COMPRESS_EXT,
+            '000000010000000100000001-' . $self->walGenerateContentChecksum(PG_VERSION_94) . ".${strCompressType}",
             'check that WAL is in the archive at -2');
 
         # Create the tablespace directory and perform a backup
