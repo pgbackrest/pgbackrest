@@ -62,11 +62,28 @@ generally used to allocate memory that exists for the life of the program.
 MemContext contextTop = {.state = memContextStateActive, .name = "TOP"};
 
 /***********************************************************************************************************************************
-Current context
-
-All memory allocations will be done from the current context.  Initialized to top context at execution start.
+Memory context stack types
 ***********************************************************************************************************************************/
-MemContext *contextCurrent = &contextTop;
+typedef enum
+{
+    memContextStackTypeSwitch = 0,                                  // Context can be switched to to allocate mem for new variables
+    memContextStackTypeNew,                                         // Context to be tracked for error handling - cannot switch to
+} MemContextStackType;
+
+/***********************************************************************************************************************************
+Mem context stack used to pop mem contexts and cleanup after an error
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_STACK_MAX                                       128
+
+static struct MemContextStack
+{
+    MemContext *memContext;
+    MemContextStackType type;
+    unsigned int tryDepth;
+} memContextStack[MEM_CONTEXT_STACK_MAX] = {{.memContext = &contextTop}};
+
+static unsigned int memContextCurrentStackIdx = 0;
+static unsigned int memContextMaxStackIdx = 0;
 
 /***********************************************************************************************************************************
 Wrapper around malloc() with error handling
@@ -227,9 +244,7 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
     FUNCTION_TEST_RETURN(memContext->contextChildFreeIdx);
 }
 
-/***********************************************************************************************************************************
-Create a new memory context
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 MemContext *
 memContextNew(const char *name)
 {
@@ -243,6 +258,7 @@ memContextNew(const char *name)
     ASSERT(name[0] != '\0');
 
     // Find space for the new context
+    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     unsigned int contextIdx = memContextNewIndex(contextCurrent, true);
 
     // If the context has not been allocated yet
@@ -276,13 +292,21 @@ memContextNew(const char *name)
     // Possible free context must be in the next position
     contextCurrent->contextChildFreeIdx++;
 
+    // Add to the mem context stack so it will be automatically freed on error if memContextKeep() has not been called
+    memContextMaxStackIdx++;
+
+    memContextStack[memContextMaxStackIdx] = (struct MemContextStack)
+    {
+        .memContext = this,
+        .type = memContextStackTypeNew,
+        .tryDepth = errorTryDepth(),
+    };
+
     // Return context
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Register a callback to be called just before the context is freed
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)
 {
@@ -314,10 +338,7 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Clear the mem context callback.  This is usually done in the object free method after resources have been freed but before
-memContextFree() is called.  The goal is to prevent the object free method from being called more than once.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 memContextCallbackClear(MemContext *this)
 {
@@ -349,6 +370,8 @@ memContextAllocFind(void)
     FUNCTION_TEST_VOID();
 
     // Find space for the new allocation
+    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
+
     for (; contextCurrent->allocFreeIdx < contextCurrent->allocListSize; contextCurrent->allocFreeIdx++)
         if (!contextCurrent->allocList[contextCurrent->allocFreeIdx].active)
             break;
@@ -406,6 +429,7 @@ memFind(const void *buffer)
     ASSERT(buffer != NULL);
 
     // Find memory allocation
+    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     unsigned int allocIdx;
 
     for (allocIdx = 0; allocIdx < contextCurrent->allocListSize; allocIdx++)
@@ -471,7 +495,7 @@ memResize(const void *buffer, size_t size)
     ASSERT(buffer != NULL);
 
     // Find the allocation
-    MemContextAlloc *alloc = &(contextCurrent->allocList[memFind(buffer)]);
+    MemContextAlloc *alloc = &(memContextStack[memContextCurrentStackIdx].memContext->allocList[memFind(buffer)]);
 
     // Grow the buffer
     alloc->buffer = memReAllocInternal(alloc->buffer, size);
@@ -492,6 +516,7 @@ memFree(void *buffer)
 
     // Find the allocation
     unsigned int allocIdx = memFind(buffer);
+    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     MemContextAlloc *alloc = &(contextCurrent->allocList[allocIdx]);
 
     // Free the buffer
@@ -505,11 +530,7 @@ memFree(void *buffer)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Move a context to a new parent context
-
-This is generally used to move objects to a new context once they have been successfully created.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 memContextMove(MemContext *this, MemContext *parentNew)
 {
@@ -553,10 +574,8 @@ memContextMove(MemContext *this, MemContext *parentNew)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Switch to the specified context and return the old context
-***********************************************************************************************************************************/
-MemContext *
+/**********************************************************************************************************************************/
+void
 memContextSwitch(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -564,20 +583,101 @@ memContextSwitch(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(memContextCurrentStackIdx < MEM_CONTEXT_STACK_MAX - 1);
 
     // Error if context is not active
     if (this->state != memContextStateActive)
         THROW(AssertError, "cannot switch to inactive context");
 
-    MemContext *memContextOld = contextCurrent;
-    contextCurrent = this;
+    memContextMaxStackIdx++;
+    memContextCurrentStackIdx = memContextMaxStackIdx;
 
-    FUNCTION_TEST_RETURN(memContextOld);
+    // Add memContext to the stack as a context that can be used for memory allocation
+    memContextStack[memContextCurrentStackIdx] = (struct MemContextStack)
+    {
+        .memContext = this,
+        .type = memContextStackTypeSwitch,
+        .tryDepth = errorTryDepth(),
+    };
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Return the top context
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+void
+memContextSwitchBack(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(memContextCurrentStackIdx > 0);
+
+    // Generate a detailed error to help with debugging
+#ifdef DEBUG
+    if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
+    {
+        THROW_FMT(
+            AssertError, "current context expected but new context '%s' found",
+            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+    }
+#endif
+
+    ASSERT(memContextCurrentStackIdx == memContextMaxStackIdx);
+
+    memContextMaxStackIdx--;
+    memContextCurrentStackIdx--;
+
+    // memContext of type New cannot be the current context so keep going until we find a memContext we can switch to as the current
+    // context
+    while (memContextStack[memContextCurrentStackIdx].type == memContextStackTypeNew)
+        memContextCurrentStackIdx--;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+memContextKeep(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Generate a detailed error to help with debugging
+#ifdef DEBUG
+    if (memContextStack[memContextMaxStackIdx].type != memContextStackTypeNew)
+    {
+        THROW_FMT(
+            AssertError, "new context expected but current context '%s' found",
+            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+    }
+#endif
+
+    memContextMaxStackIdx--;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+memContextDiscard(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Generate a detailed error to help with debugging
+#ifdef DEBUG
+    if (memContextStack[memContextMaxStackIdx].type != memContextStackTypeNew)
+    {
+        THROW_FMT(
+            AssertError, "new context expected but current context '%s' found",
+            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+    }
+#endif
+
+    memContextFree(memContextStack[memContextMaxStackIdx].memContext);
+    memContextMaxStackIdx--;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 MemContext *
 memContextTop(void)
 {
@@ -585,19 +685,15 @@ memContextTop(void)
     FUNCTION_TEST_RETURN(&contextTop);
 }
 
-/***********************************************************************************************************************************
-Return the current context
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 MemContext *
 memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(contextCurrent);
+    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx].memContext);
 }
 
-/***********************************************************************************************************************************
-Return the context name
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 memContextName(MemContext *this)
 {
@@ -614,9 +710,56 @@ memContextName(MemContext *this)
     FUNCTION_TEST_RETURN(this->name);
 }
 
-/***********************************************************************************************************************************
-memContextFree - free all memory used by the context and all child contexts
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+MemContext *
+memContextPrior(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(memContextCurrentStackIdx > 0);
+
+    unsigned int priorIdx = 1;
+
+    while (memContextStack[memContextCurrentStackIdx - priorIdx].type == memContextStackTypeNew)
+        priorIdx++;
+
+    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
+}
+
+/**********************************************************************************************************************************/
+void
+memContextClean(unsigned int tryDepth)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, tryDepth);
+    FUNCTION_TEST_END();
+
+    ASSERT(tryDepth > 0);
+
+    // Iterate through everything pushed to the stack since the last try
+    while (memContextStack[memContextMaxStackIdx].tryDepth >= tryDepth)
+    {
+        // Free memory contexts that were not kept
+        if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
+        {
+            memContextFree(memContextStack[memContextMaxStackIdx].memContext);
+        }
+        // Else find the prior context and make it the current context
+        else
+        {
+            memContextCurrentStackIdx--;
+
+            while (memContextStack[memContextCurrentStackIdx].type == memContextStackTypeNew)
+                memContextCurrentStackIdx--;
+        }
+
+        memContextMaxStackIdx--;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 void
 memContextFree(MemContext *this)
 {
@@ -630,7 +773,7 @@ memContextFree(MemContext *this)
     if (this->state != memContextStateFreeing)
     {
         // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-        if (this == contextCurrent && this != &contextTop)
+        if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
             THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 
         // Error if context is not active

@@ -36,7 +36,7 @@ Simplifies switching to a temp memory context in functions and includes error ha
     MemContext *MEM_CONTEXT_XS_TEMP() = memContextNew("temporary");                                                                \
                                                                                                                                    \
     /* Switch to temp memory context */                                                                                            \
-    MemContext *MEM_CONTEXT_memContextPrior = memContextSwitch(MEM_CONTEXT_XS_TEMP());                                             \
+    memContextSwitch(MEM_CONTEXT_XS_TEMP());                                                                                       \
                                                                                                                                    \
     /* Store any errors to be croaked to Perl at the end */                                                                        \
     bool MEM_CONTEXT_XS_croak = false;                                                                                             \
@@ -53,8 +53,8 @@ Simplifies switching to a temp memory context in functions and includes error ha
     /* Free the context on error */                                                                                                \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-        memContextSwitch(memContextPrior());                                                                                       \
-        memContextFree(MEM_CONTEXT_XS_TEMP());                                                                                     \
+        memContextSwitchBack();                                                                                                    \
+        memContextDiscard();                                                                                                       \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
