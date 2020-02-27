@@ -164,10 +164,9 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            StorageInfo info = storageInfoP(
-                this, pathExp, .type = storageInfoTypeExists, .ignoreMissing = true, .followLink = true);
+            StorageInfo info = storageInfoP(this, pathExp, .type = storageInfoTypeBasic, .ignoreMissing = true, .followLink = true);
 
-            // File exists
+            // Only exists if it is a file
             result = info.exists && info.type == storageTypeFile;
         }
         while (!result && wait != NULL && waitMore(wait));

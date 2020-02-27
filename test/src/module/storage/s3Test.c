@@ -200,7 +200,11 @@ testS3Server(void)
 
         // File exists
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL, storageS3UriStyleHost));
-        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            200, "OK",
+            "content-length:999\r\n"
+            "Last-Modified: Wed, 21 Oct 2015 07:28:00 GMT",
+            NULL));
 
         // Info()
         // -------------------------------------------------------------------------------------------------------------------------

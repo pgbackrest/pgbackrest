@@ -113,9 +113,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileExists = strNewFmt("%s/exists", testPath());
+        String *pathExists = strNewFmt("%s/pathExists", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
+        TEST_SYSTEM_FMT("mkdir %s", strPtr(pathExists));
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, pathExists), false, "not a file");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
@@ -444,6 +447,14 @@ testRun(void)
         TEST_ERROR_FMT(
             storageMoveP(storageTest, source, destination), FileMissingError,
             "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
+
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, sourceFile), "create path");
+
+        TEST_ERROR_FMT(
+            storageMoveP(storageTest, source, destination), FileMissingError,
+            "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
+
+        TEST_RESULT_VOID(storagePathRemoveP(storageTest, sourceFile), "remove path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, fileNoPerm);
