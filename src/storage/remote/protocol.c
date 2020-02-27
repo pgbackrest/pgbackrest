@@ -25,7 +25,6 @@ Remote Storage Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
@@ -202,11 +201,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
-        {
-            protocolServerResponse(server, VARBOOL(storageInterfaceExistsP(driver, varStr(varLstGet(paramList, 0)))));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
+        if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
             protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
             protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
@@ -216,7 +211,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
             StorageInfo info = storageInterfaceInfoP(
-                driver, varStr(varLstGet(paramList, 0)), .followLink = varBool(varLstGet(paramList, 1)));
+                driver, varStr(varLstGet(paramList, 0)), (StorageInfoType)varUIntForce(varLstGet(paramList, 1)),
+                .followLink = varBool(varLstGet(paramList, 2)));
 
             protocolServerResponse(server, VARBOOL(info.exists));
 

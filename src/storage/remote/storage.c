@@ -30,35 +30,6 @@ struct StorageRemote
 };
 
 /**********************************************************************************************************************************/
-static bool
-storageRemoteExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
-        protocolCommandParamAdd(command, VARSTR(file));
-
-        result = varBool(protocolClientExecute(this->client, command, true));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 // Helper to convert protocol storage type to an enum
 static StorageType
 storageRemoteInfoParseType(const char type)
@@ -131,6 +102,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoType type, StorageIn
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
         protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARUINT(type));
         protocolCommandParamAdd(command, VARBOOL(param.followLink));
 
         result.exists = varBool(protocolClientExecute(this->client, command, true));

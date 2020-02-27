@@ -57,7 +57,7 @@ storageNew(
     ASSERT(type != NULL);
     ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
-    ASSERT(interface.exists != NULL);
+    ASSERT(interface.info != NULL);
     ASSERT(interface.list != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
@@ -157,9 +157,6 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path to the file
-        String *path = storagePathP(this, pathExp);
-
         // Create Wait object of timeout > 0
         Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
 
@@ -167,7 +164,11 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            result = storageInterfaceExistsP(this->driver, path);
+            StorageInfo info = storageInfoP(
+                this, pathExp, .type = storageInfoTypeExists, .ignoreMissing = true, .followLink = true);
+
+            // File exists
+            result = info.exists && info.type == storageTypeFile;
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -247,6 +248,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(ENUM, param.type);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
@@ -263,7 +265,11 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
         // Call driver function
-        result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
+        result = storageInterfaceInfoP(
+            this->driver, file,
+            param.type == storageInfoTypeDefault ?
+                (storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic) : param.type,
+            .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)

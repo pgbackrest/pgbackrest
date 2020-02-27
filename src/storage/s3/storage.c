@@ -555,7 +555,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterf
     {
         result.exists = true;
 
-        if (type >= storageTypeBasic)
+        if (type >= storageInfoTypeBasic)
         {
             result.type = storageTypeFile;
             result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));

@@ -43,39 +43,6 @@ struct StoragePosix
 };
 
 /**********************************************************************************************************************************/
-static bool
-storagePosixExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    // Attempt to stat the file to determine if it exists
-    struct stat statFile;
-
-    // Any error other than entry not found should be reported
-    if (stat(strPtr(file), &statFile) == -1)
-    {
-        if (errno != ENOENT)
-            THROW_SYS_ERROR_FMT(FileOpenError, "unable to stat '%s'", strPtr(file));
-    }
-    // Else found
-    else
-        result = !S_ISDIR(statFile.st_mode);
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 static StorageInfo
 storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
 {
@@ -105,36 +72,44 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
     else
     {
         result.exists = true;
-        result.groupId = statFile.st_gid;
-        result.group = groupNameFromId(result.groupId);
-        result.userId = statFile.st_uid;
-        result.user = userNameFromId(result.userId);
-        result.timeModified = statFile.st_mtime;
 
-        if (S_ISREG(statFile.st_mode))
+        if (type >= storageInfoTypeBasic)
         {
-            result.type = storageTypeFile;
-            result.size = (uint64_t)statFile.st_size;
+            result.timeModified = statFile.st_mtime;
+
+            if (S_ISREG(statFile.st_mode))
+            {
+                result.type = storageTypeFile;
+                result.size = (uint64_t)statFile.st_size;
+            }
+            else if (S_ISDIR(statFile.st_mode))
+                result.type = storageTypePath;
+            else if (S_ISLNK(statFile.st_mode))
+                result.type = storageTypeLink;
+            else
+                result.type = storageTypeSpecial;
         }
-        else if (S_ISDIR(statFile.st_mode))
-            result.type = storageTypePath;
-        else if (S_ISLNK(statFile.st_mode))
+
+        if (type >= storageInfoTypeDetail)
         {
-            result.type = storageTypeLink;
+            result.groupId = statFile.st_gid;
+            result.group = groupNameFromId(result.groupId);
+            result.userId = statFile.st_uid;
+            result.user = userNameFromId(result.userId);
+            result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 
-            char linkDestination[PATH_MAX];
-            ssize_t linkDestinationSize = 0;
+            if (result.type == storageTypeLink)
+            {
+                char linkDestination[PATH_MAX];
+                ssize_t linkDestinationSize = 0;
 
-            THROW_ON_SYS_ERROR_FMT(
-                (linkDestinationSize = readlink(strPtr(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
-                FileReadError, "unable to get destination for link '%s'", strPtr(file));
+                THROW_ON_SYS_ERROR_FMT(
+                    (linkDestinationSize = readlink(strPtr(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
+                    FileReadError, "unable to get destination for link '%s'", strPtr(file));
 
-            result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
+                result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
+            }
         }
-        else
-            result.type = storageTypeSpecial;
-
-        result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -162,7 +137,7 @@ storagePosixInfoListEntry(
     {
         String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
 
-        StorageInfo storageInfo = storageInterfaceInfoP(this, pathInfo);
+        StorageInfo storageInfo = storageInterfaceInfoP(this, pathInfo, storageInfoTypeDetail);
 
         if (storageInfo.exists)
         {
@@ -339,7 +314,9 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, Sto
             // Determine which file/path is missing
             if (errno == ENOENT)
             {
-                if (!storageInterfaceExistsP(this, sourceFile))
+                StorageInfo info = storageInterfaceInfoP(this, sourceFile, storageInfoTypeBasic, .followLink = true);
+
+                if (!info.exists || info.type != storageTypeFile)
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
@@ -486,7 +463,7 @@ storagePosixPathExists(THIS_VOID,  const String *path, StorageInterfacePathExist
     if (stat(strPtr(path), &statPath) == -1)
     {
         if (errno != ENOENT)
-            THROW_SYS_ERROR_FMT(PathOpenError, "unable to stat '%s'", strPtr(path));
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_INFO, strPtr(path));
     }
     // Else found
     else
@@ -633,9 +610,8 @@ New object
 ***********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
-    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress),
+    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress | 1 << storageFeatureInfoDetail),
 
-    .exists = storagePosixExists,
     .info = storagePosixInfo,
     .infoList = storagePosixInfoList,
     .list = storagePosixList,

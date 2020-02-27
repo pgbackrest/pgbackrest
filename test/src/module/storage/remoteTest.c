@@ -95,20 +95,6 @@ testRun(void)
 
         storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TEST"));
         TEST_RESULT_BOOL(storageExistsP(storageRemote, strNew("test.txt")), true, "file exists");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
-        cfgOptionValidSet(cfgOptRemoteType, true);
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -247,6 +233,7 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(BOGUS_STR));
+        varLstAdd(paramList, varNewUInt(storageInfoTypeBasic));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
@@ -257,8 +244,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with a file");
 
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+        cfgOptionValidSet(cfgOptRemoteType, true);
+
         paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
+        varLstAdd(paramList, varNewUInt(storageInfoTypeDetail));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");

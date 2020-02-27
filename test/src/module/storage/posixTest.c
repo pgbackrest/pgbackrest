@@ -81,7 +81,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->write, true, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
-        TEST_RESULT_PTR(storageInterface(storageTest).exists, storageTest->interface.exists, "    check interface");
+        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->interface.info, "    check interface");
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
         TEST_RESULT_PTR(storageType(storageTest), storageTest->type, "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
@@ -106,10 +106,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageExistsP(storageTest, fileNoPerm), FileOpenError,
-            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+            "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
         TEST_ERROR_FMT(
             storagePathExistsP(storageTest, fileNoPerm), PathOpenError,
-            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+            "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileExists = strNewFmt("%s/exists", testPath());

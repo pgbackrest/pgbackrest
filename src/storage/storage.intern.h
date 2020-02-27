@@ -64,8 +64,8 @@ typedef struct StorageInterfaceInfoParam
 
 typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, StorageInfoType type, StorageInterfaceInfoParam param);
 
-#define storageInterfaceInfoP(thisVoid, file, ...)                                                                                 \
-    STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceInfoP(thisVoid, file, type, ...)                                                                           \
+    STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, type, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Get a list of files

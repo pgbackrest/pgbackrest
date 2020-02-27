@@ -13,8 +13,6 @@ Constants
 ***********************************************************************************************************************************/
 #define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK"
 
-#define PROTOCOL_COMMAND_STORAGE_EXISTS                             "storageExists"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
 #define PROTOCOL_COMMAND_STORAGE_FEATURE                            "storageFeature"
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_FEATURE_STR);
 #define PROTOCOL_COMMAND_STORAGE_INFO                               "storageInfo"
