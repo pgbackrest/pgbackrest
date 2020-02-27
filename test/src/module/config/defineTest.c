@@ -106,7 +106,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoHost), false, "option not secure");
 
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptType), cfgDefOptTypeString, "string type");
-        TEST_RESULT_INT(cfgDefOptionType(cfgDefOptCompress), cfgDefOptTypeBoolean, "boolean type");
+        TEST_RESULT_INT(cfgDefOptionType(cfgDefOptDelta), cfgDefOptTypeBoolean, "boolean type");
 
         TEST_ERROR(
             cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptionTotal()), AssertError,
@@ -132,15 +132,16 @@ testRun(void)
             "pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.",
             "backup command help description");
 
-        TEST_RESULT_Z(cfgDefOptionHelpSection(cfgDefOptCompress), "general", "compress option help section");
+        TEST_RESULT_Z(cfgDefOptionHelpSection(cfgDefOptDelta), "general", "delta option help section");
         TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptCompress), "Use file compression.",
-            "backup command, compress option help summary");
-        TEST_RESULT_Z(
-            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptCompress),
-            "Backup files are compatible with command-line compression tools.", "backup command, compress option help description");
+            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptBufferSize), "Buffer size for file operations.",
+            "backup command, delta option help summary");
         TEST_RESULT_Z(
             cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
+        TEST_RESULT_Z(
+            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptLogSubprocess),
+            "Enable file logging for any subprocesses created by this process using the log level specified by log-level-file.",
+            "backup command, log-subprocess option help description");
         TEST_RESULT_Z(
             cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptType),
             "The following backup types are supported:\n"
