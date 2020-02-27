@@ -155,7 +155,7 @@ restoreFile(
                 // Add decompression filter
                 if (repoFileCompressed)
                 {
-                    ioFilterGroupAdd(filterGroup, gzDecompressNew(false));
+                    ioFilterGroupAdd(filterGroup, gzDecompressNew());
                     compressible = false;
                 }
 

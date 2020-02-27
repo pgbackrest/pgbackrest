@@ -117,7 +117,7 @@ archivePushFile(
             if (isSegment && compress)
             {
                 strCat(archiveDestination, "." GZ_EXT);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), gzCompressNew(compressLevel, false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), gzCompressNew(compressLevel));
                 compressible = false;
             }
 

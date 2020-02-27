@@ -92,14 +92,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("gzWindowBits"))
-    {
-
-        TEST_RESULT_INT(gzWindowBits(true), -15, "raw window bits");
-        TEST_RESULT_INT(gzWindowBits(false), 31, "gz window bits");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("GzCompress and GzDecompress"))
     {
         const char *simpleData = "A simple string";
@@ -110,45 +102,42 @@ testRun(void)
         varLstAdd(compressParamList, varNewUInt(3));
         varLstAdd(compressParamList, varNewBool(false));
 
-        VariantList *decompressParamList = varLstNew();
-        varLstAdd(decompressParamList, varNewBool(false));
-
         TEST_ASSIGN(
             compressed, testCompress(gzCompressNewVar(compressParamList), decompressed, 1024, 1024),
             "simple data - compress large in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1024, 1)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3), decompressed, 1024, 1)), true,
             "simple data - compress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1, 1024)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3), decompressed, 1, 1024)), true,
             "simple data - compress small in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1, 1)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3), decompressed, 1, 1)), true,
             "simple data - compress small in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzDecompressNewVar(decompressParamList), compressed, 1024, 1024)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(), compressed, 1024, 1024)), true,
             "simple data - decompress large in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1024, 1)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(), compressed, 1024, 1)), true,
             "simple data - decompress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1, 1024)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(), compressed, 1, 1024)), true,
             "simple data - decompress small in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1, 1)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(), compressed, 1, 1)), true,
             "simple data - decompress small in/small out buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on no compression data");
 
-        TEST_ERROR(testDecompress(gzDecompressNew(true), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
+        TEST_ERROR(testDecompress(gzDecompressNew(), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on truncated compression data");
@@ -157,7 +146,7 @@ testRun(void)
         bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
 
         TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
-        TEST_ERROR(testDecompress(gzDecompressNew(false), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
+        TEST_ERROR(testDecompress(gzDecompressNew(), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
         // Compress a large zero input buffer into small output buffer
         // -------------------------------------------------------------------------------------------------------------------------
@@ -166,18 +155,18 @@ testRun(void)
         bufUsedSet(decompressed, bufSize(decompressed));
 
         TEST_ASSIGN(
-            compressed, testCompress(gzCompressNew(3, true), decompressed, bufSize(decompressed), 1024),
+            compressed, testCompress(gzCompressNew(3), decompressed, bufSize(decompressed), 1024),
             "zero data - compress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzDecompressNew(true), compressed, bufSize(compressed), 1024 * 256)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(), compressed, bufSize(compressed), 1024 * 256)), true,
             "zero data - decompress large in/small out buffer");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("gzDecompressToLog() and gzCompressToLog()"))
     {
-        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew(false));
+        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew());
 
         TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
 

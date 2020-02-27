@@ -162,7 +162,7 @@ archiveGetFile(
             // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZ_EXT))
             {
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzDecompressNew(false));
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzDecompressNew());
                 compressible = false;
             }
 

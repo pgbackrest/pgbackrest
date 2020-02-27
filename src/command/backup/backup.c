@@ -936,10 +936,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add compression
             if (compress)
-            {
-                ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew((int)cfgOptionUInt(cfgOptCompressLevel), false));
-            }
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew((int)cfgOptionUInt(cfgOptCompressLevel)));
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
@@ -1774,9 +1771,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                     if (archiveCompressed != cfgOptionBool(cfgOptCompress))
                     {
                         if (archiveCompressed)
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew(false));
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
                         else
-                            ioFilterGroupAdd(filterGroup, gzCompressNew(cfgOptionInt(cfgOptCompressLevel), false));
+                            ioFilterGroupAdd(filterGroup, gzCompressNew(cfgOptionInt(cfgOptCompressLevel)));
                     }
 
                     // Encrypt with backup key if encrypted
@@ -1870,7 +1867,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                     STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZ_EXT, strPtr(strSubN(backupLabel, 0, 4)),
                     strPtr(backupLabel)));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzCompressNew(9, false));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzCompressNew(9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,

@@ -10,12 +10,6 @@ Gz Common
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define WINDOW_BITS                                                 15
-#define WANT_GZ                                                     16
-
-/***********************************************************************************************************************************
 Process gz errors
 ***********************************************************************************************************************************/
 int
@@ -88,17 +82,4 @@ gzError(int error)
     }
 
     return error;
-}
-
-/***********************************************************************************************************************************
-Get gz window bits
-
-Window bits define how large the compression window is.  Larger window sizes generally result in better compression so we'll always
-use the largest size.  When raw is specified disable the gz header and produce raw compressed output (this is indicated by passing
-negative window bits).
-***********************************************************************************************************************************/
-int
-gzWindowBits(bool raw)
-{
-    return raw ? -WINDOW_BITS : WANT_GZ | WINDOW_BITS;
 }

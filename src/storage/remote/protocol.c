@@ -75,7 +75,7 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         if (strEq(filterKey, GZ_COMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, gzCompressNewVar(filterParam));
         else if (strEq(filterKey, GZ_DECOMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzDecompressNewVar(filterParam));
+            ioFilterGroupAdd(filterGroup, gzDecompressNew());
         else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
         else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))

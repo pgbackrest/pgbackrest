@@ -149,7 +149,7 @@ backupFile(
                         }
 
                         if (repoFileCompress)
-                            ioFilterGroupAdd(ioReadFilterGroup(read), gzDecompressNew(false));
+                            ioFilterGroupAdd(ioReadFilterGroup(read), gzDecompressNew());
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
@@ -208,7 +208,7 @@ backupFile(
 
             // Add compression
             if (repoFileCompress)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzCompressNew((int)repoFileCompressLevel, false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzCompressNew((int)repoFileCompressLevel));
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)

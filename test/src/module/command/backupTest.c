@@ -77,7 +77,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 StorageRead *read = storageNewReadP(
                     data->storage,
                     data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew(false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
                 size = bufUsed(storageGetP(read));
 
                 manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZ_EXT));
@@ -244,7 +244,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                     strPtr(walChecksum), param.walCompress ? "." GZ_EXT : ""));
 
             if (param.walCompress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew(1, false));
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew(1));
 
             storagePutP(write, walBuffer);
         }

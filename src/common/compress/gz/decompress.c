@@ -143,11 +143,9 @@ gzDecompressInputSame(const THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 IoFilter *
-gzDecompressNew(bool raw)
+gzDecompressNew(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, raw);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     IoFilter *this = NULL;
 
@@ -163,27 +161,17 @@ gzDecompressNew(bool raw)
         };
 
         // Create gz stream
-        gzError(driver->result = inflateInit2(&driver->stream, gzWindowBits(raw)));
+        gzError(driver->result = inflateInit2(&driver->stream, WANT_GZ | WINDOW_BITS));
 
         // Set free callback to ensure gz context is freed
         memContextCallbackSet(driver->memContext, gzDecompressFreeResource, driver);
 
-        // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewBool(raw));
-
         // Create filter interface
         this = ioFilterNewP(
-            GZ_DECOMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzDecompressDone, .inOut = gzDecompressProcess,
+            GZ_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
             .inputSame = gzDecompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
-}
-
-IoFilter *
-gzDecompressNewVar(const VariantList *paramList)
-{
-    return gzDecompressNew(varBool(varLstGet(paramList, 0)));
 }

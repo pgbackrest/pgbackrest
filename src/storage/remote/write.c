@@ -70,7 +70,7 @@ storageWriteRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add decompression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzDecompressNew(true));
+            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzDecompressNew());
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
@@ -92,10 +92,7 @@ storageWriteRemoteOpen(THIS_VOID)
 
         // If the file is compressible add compression filter locally
         if (this->interface.compressible)
-        {
-            ioFilterGroupAdd(
-                ioWriteFilterGroup(storageWriteIo(this->write)), gzCompressNew((int)this->interface.compressLevel, true));
-        }
+            ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(this->write)), gzCompressNew((int)this->interface.compressLevel));
 
         // Set free callback to ensure remote file is freed
         memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);
