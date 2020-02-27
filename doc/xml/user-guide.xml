@@ -1915,7 +1915,7 @@
 <!-- CSHANG Begin: temporary debug code -->
             <execute user="root" output="y">
                 <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                <exe-highlight>online</exe-highlight>
+                <exe-highlight>online|running</exe-highlight>
             </execute>
 <!-- CSHANG End: temporary debug code -->
             <execute user="postgres" output="y">
@@ -2041,7 +2041,7 @@
 <!-- CSHANG Begin: temporary debug code -->
             <execute user="root" output="y">
                 <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                <exe-highlight>online</exe-highlight>
+                <exe-highlight>online|running</exe-highlight>
             </execute>
 <!-- CSHANG End: temporary debug code -->
             <execute user="postgres" output="y">
