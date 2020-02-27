@@ -36,7 +36,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     }
 
     ioWriteClose(write);
-    memContextFree(((GzipCompress *)ioFilterDriver(compress))->memContext);
+    ioFilterFree(compress);
 
     return compressed;
 }
@@ -64,7 +64,7 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
 
     ioReadClose(read);
     bufFree(output);
-    memContextFree(((GzipDecompress *)ioFilterDriver(decompress))->memContext);
+    ioFilterFree(decompress);
 
     return decompressed;
 }
@@ -177,33 +177,33 @@ testRun(void)
     if (testBegin("gz"))
     {
         // Run standard test suite
-        testSuite(compressTypeGzip, "gzip -dc");
+        testSuite(compressTypeGz, "gzip -dc");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("gzipError()");
+        TEST_TITLE("gzError()");
 
-        TEST_RESULT_INT(gzipError(Z_OK), Z_OK, "check ok");
-        TEST_RESULT_INT(gzipError(Z_STREAM_END), Z_STREAM_END, "check stream end");
-        TEST_ERROR(gzipError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
-        TEST_ERROR(gzipError(Z_ERRNO), AssertError, "zlib threw error: [-1] file error");
-        TEST_ERROR(gzipError(Z_STREAM_ERROR), FormatError, "zlib threw error: [-2] stream error");
-        TEST_ERROR(gzipError(Z_DATA_ERROR), FormatError, "zlib threw error: [-3] data error");
-        TEST_ERROR(gzipError(Z_MEM_ERROR), MemoryError, "zlib threw error: [-4] insufficient memory");
-        TEST_ERROR(gzipError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
-        TEST_ERROR(gzipError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
-        TEST_ERROR(gzipError(999), AssertError, "zlib threw error: [999] unknown error");
+        TEST_RESULT_INT(gzError(Z_OK), Z_OK, "check ok");
+        TEST_RESULT_INT(gzError(Z_STREAM_END), Z_STREAM_END, "check stream end");
+        TEST_ERROR(gzError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
+        TEST_ERROR(gzError(Z_ERRNO), AssertError, "zlib threw error: [-1] file error");
+        TEST_ERROR(gzError(Z_STREAM_ERROR), FormatError, "zlib threw error: [-2] stream error");
+        TEST_ERROR(gzError(Z_DATA_ERROR), FormatError, "zlib threw error: [-3] data error");
+        TEST_ERROR(gzError(Z_MEM_ERROR), MemoryError, "zlib threw error: [-4] insufficient memory");
+        TEST_ERROR(gzError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
+        TEST_ERROR(gzError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
+        TEST_ERROR(gzError(999), AssertError, "zlib threw error: [999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("gzipDecompressToLog() and gzipCompressToLog()");
+        TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
 
-        GzipDecompress *decompress = (GzipDecompress *)ioFilterDriver(gzipDecompressNew());
+        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew());
 
-        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
     // *****************************************************************************************************************************
@@ -251,7 +251,7 @@ testRun(void)
         TEST_TITLE("compressTypeEnum()");
 
         TEST_RESULT_UINT(compressTypeEnum(STRDEF("none")), compressTypeNone, "none enum");
-        TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGzip, "gz enum");
+        TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGz, "gz enum");
         TEST_ERROR(compressTypeEnum(strNew(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ testRun(void)
         TEST_TITLE("compressTypeFromName()");
 
         TEST_RESULT_UINT(compressTypeFromName(STRDEF("file")), compressTypeNone, "type from name");
-        TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGzip, "type from name");
+        TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGz, "type from name");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressFilterVar()");
@@ -275,27 +275,27 @@ testRun(void)
         TEST_TITLE("compressExtStr()");
 
         TEST_RESULT_STR_Z(compressExtStr(compressTypeNone), "", "one ext");
-        TEST_RESULT_STR_Z(compressExtStr(compressTypeGzip), ".gz", "gz ext");
+        TEST_RESULT_STR_Z(compressExtStr(compressTypeGz), ".gz", "gz ext");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressExtCat()");
 
         String *file = strNew("file");
-        TEST_RESULT_VOID(compressExtCat(file, compressTypeGzip), "cat gzip ext");
-        TEST_RESULT_STR_Z(file, "file.gz", "    check gzip ext");
+        TEST_RESULT_VOID(compressExtCat(file, compressTypeGz), "cat gz ext");
+        TEST_RESULT_STR_Z(file, "file.gz", "    check gz ext");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressExtStrip()");
 
-        TEST_ERROR(compressExtStrip(STRDEF("file"), compressTypeGzip), FormatError, "'file' must have '.gz' extension");
+        TEST_ERROR(compressExtStrip(STRDEF("file"), compressTypeGz), FormatError, "'file' must have '.gz' extension");
         TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file"), compressTypeNone), "file", "nothing to strip");
-        TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file.gz"), compressTypeGzip), "file", "strip gz");
+        TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file.gz"), compressTypeGz), "file", "strip gz");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressLevelDefault()");
 
         TEST_RESULT_INT(compressLevelDefault(compressTypeNone), 0, "none level=0");
-        TEST_RESULT_INT(compressLevelDefault(compressTypeGzip), 6, "gz level=6");
+        TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "gz level=6");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

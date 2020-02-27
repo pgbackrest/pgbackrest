@@ -447,8 +447,8 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGzip, 3));
-        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGzip));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
         TEST_RESULT_BOOL(

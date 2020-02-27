@@ -6,9 +6,9 @@ Compression Helper
 #include <string.h>
 
 #include "common/compress/helper.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/compress/lz4/decompress.h"
@@ -43,10 +43,10 @@ static const struct compressHelperLocal
         .ext = STRDEF(""),
     },
     {
-        .type = STRDEF(GZIP_EXT),
-        .ext = STRDEF("." GZIP_EXT),
-        .compressNew = gzipCompressNew,
-        .decompressNew = gzipDecompressNew,
+        .type = STRDEF(GZ_EXT),
+        .ext = STRDEF("." GZ_EXT),
+        .compressNew = gzCompressNew,
+        .decompressNew = gzDecompressNew,
         .levelDefault = 6,
     },
     {

@@ -196,7 +196,7 @@ testRun(void)
         StorageWrite *ceRepoFile = storageNewWriteP(
             storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(repoFileReferenceFull), strPtr(repoFile1)));
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGzip, 3));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
 
         storagePutP(ceRepoFile, BUFSTRDEF("acefile"));

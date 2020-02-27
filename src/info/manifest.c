@@ -1662,9 +1662,9 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 manifest->data.backupOptionArchiveCheck = jsonToBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR))
                 manifest->data.backupOptionArchiveCopy = jsonToBool(value);
-            // Historically this option meant to add gzip compression
+            // Historically this option meant to add gz compression
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_STR))
-                manifest->data.backupOptionCompressType = jsonToBool(value) ? compressTypeGzip : compressTypeNone;
+                manifest->data.backupOptionCompressType = jsonToBool(value) ? compressTypeGz : compressTypeNone;
             // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
             // value does not get overwritten.  Since options are stored in alpha order this should always be true.
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR))

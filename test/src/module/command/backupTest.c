@@ -714,7 +714,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeGzip)); // repoFileCompress
+        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
         varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
@@ -1272,7 +1272,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompressType = compressTypeGzip;
+        manifestResume->data.backupOptionCompressType = compressTypeGz;
 
         manifestSave(
             manifestResume,
@@ -1633,7 +1633,7 @@ testRun(void)
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
-            manifestResumeData->backupOptionCompressType = compressTypeGzip;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1806,7 +1806,7 @@ testRun(void)
 
             manifestResumeData->backupType = backupTypeDiff;
             manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
-            manifestResumeData->backupOptionCompressType = compressTypeGzip;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1983,7 +1983,7 @@ testRun(void)
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGzip);
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
@@ -2119,7 +2119,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGzip, .walTotal = 3);
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features

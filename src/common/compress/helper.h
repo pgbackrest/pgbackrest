@@ -12,7 +12,7 @@ Available compression types
 typedef enum
 {
     compressTypeNone,                                               // No compression
-    compressTypeGzip,                                               // gzip
+    compressTypeGz,                                                 // gzip
     compressTypeLz4,                                                // lz4
 
     // These types have not been implemented but are included here so older versions can identify compression types added by future

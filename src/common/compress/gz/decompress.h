@@ -1,22 +1,22 @@
 /***********************************************************************************************************************************
-Gzip Decompress
+Gz Decompress
 
-Decompress IO from the gzip format.
+Decompress IO from the gz format.
 ***********************************************************************************************************************************/
-#ifndef COMMON_COMPRESS_GZIP_DECOMPRESS_H
-#define COMMON_COMPRESS_GZIP_DECOMPRESS_H
+#ifndef COMMON_COMPRESS_GZ_DECOMPRESS_H
+#define COMMON_COMPRESS_GZ_DECOMPRESS_H
 
 #include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define GZIP_DECOMPRESS_FILTER_TYPE                                 "gzDecompress"
-    STRING_DECLARE(GZIP_DECOMPRESS_FILTER_TYPE_STR);
+#define GZ_DECOMPRESS_FILTER_TYPE                                   "gzDecompress"
+    STRING_DECLARE(GZ_DECOMPRESS_FILTER_TYPE_STR);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoFilter *gzipDecompressNew(void);
+IoFilter *gzDecompressNew(void);
 
 #endif

@@ -261,9 +261,9 @@ unit:
         total: 3
 
         coverage:
-          common/compress/gzip/common: full
-          common/compress/gzip/compress: full
-          common/compress/gzip/decompress: full
+          common/compress/gz/common: full
+          common/compress/gz/compress: full
+          common/compress/gz/decompress: full
           common/compress/lz4/common: full
           common/compress/lz4/compress: full
           common/compress/lz4/decompress: full

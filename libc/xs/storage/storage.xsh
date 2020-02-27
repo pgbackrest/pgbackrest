@@ -2,8 +2,8 @@
 Storage XS Header
 ***********************************************************************************************************************************/
 #include "common/assert.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/filter/size.h"
 #include "common/memContext.h"
@@ -132,12 +132,12 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     {
         ioFilterGroupAdd(filterGroup, ioSizeNew());
     }
-    else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gzip"))
+    else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gz"))
     {
         if (strEqZ(varStr(varLstGet(paramList, 0)), "compress"))
-            ioFilterGroupAdd(filterGroup, gzipCompressNew(varUIntForce(varLstGet(paramList, 2))));
+            ioFilterGroupAdd(filterGroup, gzCompressNew(varUIntForce(varLstGet(paramList, 2))));
         else
-            ioFilterGroupAdd(filterGroup, gzipDecompressNew());
+            ioFilterGroupAdd(filterGroup, gzDecompressNew());
     }
     else
         THROW_FMT(AssertError, "unable to add invalid filter '%s'", strPtr(filter));

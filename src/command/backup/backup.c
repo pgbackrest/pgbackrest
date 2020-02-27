@@ -124,7 +124,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     .expression = strNewFmt(
                         "%s\\.manifest\\.%s$",
                         strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                        strPtr(compressTypeStr(compressTypeGzip)))),
+                        strPtr(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
             if (strLstSize(historyList) > 0)
@@ -1877,9 +1877,9 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
-                    strPtr(backupLabel), strPtr(compressExtStr(compressTypeGzip))));
+                    strPtr(backupLabel), strPtr(compressExtStr(compressTypeGz))));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGzip, 9));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
