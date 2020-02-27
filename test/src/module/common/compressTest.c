@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Gzip
+Test Compression
 ***********************************************************************************************************************************/
 #include "common/io/filter/group.h"
 #include "common/io/bufferRead.h"
@@ -35,7 +35,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     }
 
     ioWriteClose(write);
-    memContextFree(((GzipCompress *)ioFilterDriver(compress))->memContext);
+    memContextFree(((GzCompress *)ioFilterDriver(compress))->memContext);
 
     return compressed;
 }
@@ -63,7 +63,7 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
 
     ioReadClose(read);
     bufFree(output);
-    memContextFree(((GzipDecompress *)ioFilterDriver(decompress))->memContext);
+    memContextFree(((GzDecompress *)ioFilterDriver(decompress))->memContext);
 
     return decompressed;
 }
@@ -77,30 +77,30 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("gzipError"))
+    if (testBegin("gzError"))
     {
-        TEST_RESULT_INT(gzipError(Z_OK), Z_OK, "check ok");
-        TEST_RESULT_INT(gzipError(Z_STREAM_END), Z_STREAM_END, "check stream end");
-        TEST_ERROR(gzipError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
-        TEST_ERROR(gzipError(Z_ERRNO), AssertError, "zlib threw error: [-1] file error");
-        TEST_ERROR(gzipError(Z_STREAM_ERROR), FormatError, "zlib threw error: [-2] stream error");
-        TEST_ERROR(gzipError(Z_DATA_ERROR), FormatError, "zlib threw error: [-3] data error");
-        TEST_ERROR(gzipError(Z_MEM_ERROR), MemoryError, "zlib threw error: [-4] insufficient memory");
-        TEST_ERROR(gzipError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
-        TEST_ERROR(gzipError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
-        TEST_ERROR(gzipError(999), AssertError, "zlib threw error: [999] unknown error");
+        TEST_RESULT_INT(gzError(Z_OK), Z_OK, "check ok");
+        TEST_RESULT_INT(gzError(Z_STREAM_END), Z_STREAM_END, "check stream end");
+        TEST_ERROR(gzError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
+        TEST_ERROR(gzError(Z_ERRNO), AssertError, "zlib threw error: [-1] file error");
+        TEST_ERROR(gzError(Z_STREAM_ERROR), FormatError, "zlib threw error: [-2] stream error");
+        TEST_ERROR(gzError(Z_DATA_ERROR), FormatError, "zlib threw error: [-3] data error");
+        TEST_ERROR(gzError(Z_MEM_ERROR), MemoryError, "zlib threw error: [-4] insufficient memory");
+        TEST_ERROR(gzError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
+        TEST_ERROR(gzError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
+        TEST_ERROR(gzError(999), AssertError, "zlib threw error: [999] unknown error");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("gzipWindowBits"))
+    if (testBegin("gzWindowBits"))
     {
 
-        TEST_RESULT_INT(gzipWindowBits(true), -15, "raw window bits");
-        TEST_RESULT_INT(gzipWindowBits(false), 31, "gzip window bits");
+        TEST_RESULT_INT(gzWindowBits(true), -15, "raw window bits");
+        TEST_RESULT_INT(gzWindowBits(false), 31, "gz window bits");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("GzipCompress and GzipDecompress"))
+    if (testBegin("GzCompress and GzDecompress"))
     {
         const char *simpleData = "A simple string";
         Buffer *compressed = NULL;
@@ -114,41 +114,41 @@ testRun(void)
         varLstAdd(decompressParamList, varNewBool(false));
 
         TEST_ASSIGN(
-            compressed, testCompress(gzipCompressNewVar(compressParamList), decompressed, 1024, 1024),
+            compressed, testCompress(gzCompressNewVar(compressParamList), decompressed, 1024, 1024),
             "simple data - compress large in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzipCompressNew(3, false), decompressed, 1024, 1)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1024, 1)), true,
             "simple data - compress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzipCompressNew(3, false), decompressed, 1, 1024)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1, 1024)), true,
             "simple data - compress small in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(compressed, testCompress(gzipCompressNew(3, false), decompressed, 1, 1)), true,
+            bufEq(compressed, testCompress(gzCompressNew(3, false), decompressed, 1, 1)), true,
             "simple data - compress small in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNewVar(decompressParamList), compressed, 1024, 1024)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNewVar(decompressParamList), compressed, 1024, 1024)), true,
             "simple data - decompress large in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1024, 1)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1024, 1)), true,
             "simple data - decompress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1, 1024)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1, 1024)), true,
             "simple data - decompress small in/large out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1, 1)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(false), compressed, 1, 1)), true,
             "simple data - decompress small in/small out buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on no compression data");
 
-        TEST_ERROR(testDecompress(gzipDecompressNew(true), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
+        TEST_ERROR(testDecompress(gzDecompressNew(true), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on truncated compression data");
@@ -157,7 +157,7 @@ testRun(void)
         bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
 
         TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
-        TEST_ERROR(testDecompress(gzipDecompressNew(false), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
+        TEST_ERROR(testDecompress(gzDecompressNew(false), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
         // Compress a large zero input buffer into small output buffer
         // -------------------------------------------------------------------------------------------------------------------------
@@ -166,24 +166,24 @@ testRun(void)
         bufUsedSet(decompressed, bufSize(decompressed));
 
         TEST_ASSIGN(
-            compressed, testCompress(gzipCompressNew(3, true), decompressed, bufSize(decompressed), 1024),
+            compressed, testCompress(gzCompressNew(3, true), decompressed, bufSize(decompressed), 1024),
             "zero data - compress large in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(true), compressed, bufSize(compressed), 1024 * 256)), true,
+            bufEq(decompressed, testDecompress(gzDecompressNew(true), compressed, bufSize(compressed), 1024 * 256)), true,
             "zero data - decompress large in/small out buffer");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("gzipDecompressToLog() and gzipCompressToLog()"))
+    if (testBegin("gzDecompressToLog() and gzCompressToLog()"))
     {
-        GzipDecompress *decompress = (GzipDecompress *)ioFilterDriver(gzipDecompressNew(false));
+        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew(false));
 
-        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
 
         decompress->inputSame = true;
         decompress->done = true;
-        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

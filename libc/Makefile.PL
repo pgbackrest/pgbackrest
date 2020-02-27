@@ -43,9 +43,9 @@ my @stryCFile =
     'LibC.c',
 
     'command/command.c',
-    'common/compress/gzip/common.c',
-    'common/compress/gzip/compress.c',
-    'common/compress/gzip/decompress.c',
+    'common/compress/gz/common.c',
+    'common/compress/gz/compress.c',
+    'common/compress/gz/decompress.c',
     'common/crypto/cipherBlock.c',
     'common/crypto/common.c',
     'common/crypto/hash.c',

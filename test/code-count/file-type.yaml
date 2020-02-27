@@ -615,27 +615,27 @@ src/common/assert.h:
   class: core
   type: c/h
 
-src/common/compress/gzip/common.c:
+src/common/compress/gz/common.c:
   class: core
   type: c
 
-src/common/compress/gzip/common.h:
+src/common/compress/gz/common.h:
   class: core
   type: c/h
 
-src/common/compress/gzip/compress.c:
+src/common/compress/gz/compress.c:
   class: core
   type: c
 
-src/common/compress/gzip/compress.h:
+src/common/compress/gz/compress.h:
   class: core
   type: c/h
 
-src/common/compress/gzip/decompress.c:
+src/common/compress/gz/decompress.c:
   class: core
   type: c
 
-src/common/compress/gzip/decompress.h:
+src/common/compress/gz/decompress.h:
   class: core
   type: c/h
 
@@ -1779,7 +1779,7 @@ test/src/module/common/assertOnTest.c:
   class: test/module
   type: c
 
-test/src/module/common/compressGzipTest.c:
+test/src/module/common/compressTest.c:
   class: test/module
   type: c
 

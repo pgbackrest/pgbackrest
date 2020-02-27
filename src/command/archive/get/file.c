@@ -6,8 +6,8 @@ Archive Get File
 #include "command/archive/get/file.h"
 #include "command/archive/common.h"
 #include "command/control/common.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/group.h"
@@ -160,9 +160,9 @@ archiveGetFile(
             }
 
             // If file is compressed then add the decompression filter
-            if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
+            if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZ_EXT))
             {
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzipDecompressNew(false));
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzDecompressNew(false));
                 compressible = false;
             }
 

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
-Gzip Common
+Gz Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
 #include <zlib.h>
 
-#include "common/compress/gzip/common.h"
+#include "common/compress/gz/common.h"
 #include "common/debug.h"
 #include "common/memContext.h"
 
@@ -13,13 +13,13 @@ Gzip Common
 Constants
 ***********************************************************************************************************************************/
 #define WINDOW_BITS                                                 15
-#define WANT_GZIP                                                   16
+#define WANT_GZ                                                     16
 
 /***********************************************************************************************************************************
-Process gzip errors
+Process gz errors
 ***********************************************************************************************************************************/
 int
-gzipError(int error)
+gzError(int error)
 {
     if (error != Z_OK && error != Z_STREAM_END)
     {
@@ -91,14 +91,14 @@ gzipError(int error)
 }
 
 /***********************************************************************************************************************************
-Get gzip window bits
+Get gz window bits
 
 Window bits define how large the compression window is.  Larger window sizes generally result in better compression so we'll always
-use the largest size.  When raw is specified disable the gzip header and produce raw compressed output (this is indicated by passing
+use the largest size.  When raw is specified disable the gz header and produce raw compressed output (this is indicated by passing
 negative window bits).
 ***********************************************************************************************************************************/
 int
-gzipWindowBits(bool raw)
+gzWindowBits(bool raw)
 {
-    return raw ? -WINDOW_BITS : WANT_GZIP | WINDOW_BITS;
+    return raw ? -WINDOW_BITS : WANT_GZ | WINDOW_BITS;
 }

@@ -3,8 +3,8 @@ Remote Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/debug.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
@@ -70,7 +70,7 @@ storageWriteRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add decompression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzipDecompressNew(true));
+            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzDecompressNew(true));
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
@@ -94,7 +94,7 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
-                ioWriteFilterGroup(storageWriteIo(this->write)), gzipCompressNew((int)this->interface.compressLevel, true));
+                ioWriteFilterGroup(storageWriteIo(this->write)), gzCompressNew((int)this->interface.compressLevel, true));
         }
 
         // Set free callback to ensure remote file is freed

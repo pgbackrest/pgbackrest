@@ -4,8 +4,8 @@ Remote Storage Protocol Handler
 #include "build.auto.h"
 
 #include "command/backup/pageChecksum.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -72,10 +72,10 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         const String *filterKey = varStr(varLstGet(kvKeyList(filterKv), 0));
         const VariantList *filterParam = varVarLst(kvGet(filterKv, VARSTR(filterKey)));
 
-        if (strEq(filterKey, GZIP_COMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
-        else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, gzipDecompressNewVar(filterParam));
+        if (strEq(filterKey, GZ_COMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, gzCompressNewVar(filterParam));
+        else if (strEq(filterKey, GZ_DECOMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, gzDecompressNewVar(filterParam));
         else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
         else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))

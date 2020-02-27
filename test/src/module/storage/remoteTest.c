@@ -447,8 +447,8 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
-        ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+        ioFilterGroupAdd(filterGroup, gzCompressNew(3, false));
+        ioFilterGroupAdd(filterGroup, gzDecompressNew(false));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
         TEST_RESULT_BOOL(
@@ -459,7 +459,7 @@ testRun(void)
                 "BRBLOCK4\n"
                 "TESTBRBLOCK4\n"
                 "DATABRBLOCK0\n"
-                "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzipCompress\":null,\"gzipDecompress\":null"
+                "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzCompress\":null,\"gzDecompress\":null"
                     ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
                     ",\"size\":8}}\n",
             "check result");

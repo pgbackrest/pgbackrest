@@ -8,8 +8,8 @@ Restore File
 #include <utime.h>
 
 #include "command/restore/file.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -155,7 +155,7 @@ restoreFile(
                 // Add decompression filter
                 if (repoFileCompressed)
                 {
-                    ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+                    ioFilterGroupAdd(filterGroup, gzDecompressNew(false));
                     compressible = false;
                 }
 
@@ -171,7 +171,7 @@ restoreFile(
                         storageRepo(),
                         strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(repoFileReference), strPtr(repoFile),
-                            repoFileCompressed ? "." GZIP_EXT : ""),
+                            repoFileCompressed ? "." GZ_EXT : ""),
                         .compressible = compressible),
                     pgFileWrite);
 

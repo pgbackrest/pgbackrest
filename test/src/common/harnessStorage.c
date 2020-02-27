@@ -4,7 +4,7 @@ Storage Test Harness
 #include <inttypes.h>
 
 #include "common/debug.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
@@ -39,7 +39,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
                     StorageRead *read = storageNewReadP(
                         data->storage,
                         data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew(false));
                     size = bufUsed(storageGetP(read));
                 }
 

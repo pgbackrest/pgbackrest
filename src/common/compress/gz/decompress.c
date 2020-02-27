@@ -1,13 +1,13 @@
 /***********************************************************************************************************************************
-Gzip Decompress
+Gz Decompress
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
 #include <stdio.h>
 #include <zlib.h>
 
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
@@ -17,15 +17,15 @@ Gzip Decompress
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-STRING_EXTERN(GZIP_DECOMPRESS_FILTER_TYPE_STR,                      GZIP_DECOMPRESS_FILTER_TYPE);
+STRING_EXTERN(GZ_DECOMPRESS_FILTER_TYPE_STR,                        GZ_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define GZIP_DECOMPRESS_TYPE                                        GzipDecompress
-#define GZIP_DECOMPRESS_PREFIX                                      gzipDecompress
+#define GZ_DECOMPRESS_TYPE                                          GzDecompress
+#define GZ_DECOMPRESS_PREFIX                                        gzDecompress
 
-typedef struct GzipDecompress
+typedef struct GzDecompress
 {
     MemContext *memContext;                                         // Context to store data
     z_stream stream;                                                // Decompression stream state
@@ -33,28 +33,28 @@ typedef struct GzipDecompress
     int result;                                                     // Result of last operation
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool done;                                                      // Is decompression done?
-} GzipDecompress;
+} GzDecompress;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 String *
-gzipDecompressToLog(const GzipDecompress *this)
+gzDecompressToLog(const GzDecompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 
-#define FUNCTION_LOG_GZIP_DECOMPRESS_TYPE                                                                                          \
-    GzipDecompress *
-#define FUNCTION_LOG_GZIP_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzipDecompressToLog, buffer, bufferSize)
+#define FUNCTION_LOG_GZ_DECOMPRESS_TYPE                                                                                            \
+    GzDecompress *
+#define FUNCTION_LOG_GZ_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzDecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free inflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZIP_DECOMPRESS, LOG, logLevelTrace)
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZ_DECOMPRESS, LOG, logLevelTrace)
 {
     inflateEnd(&this->stream);
 }
@@ -64,12 +64,12 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 Decompress data
 ***********************************************************************************************************************************/
 void
-gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
+gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 {
-    THIS(GzipDecompress);
+    THIS(GzDecompress);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(GZIP_DECOMPRESS, this);
+        FUNCTION_LOG_PARAM(GZ_DECOMPRESS, this);
         FUNCTION_LOG_PARAM(BUFFER, compressed);
         FUNCTION_LOG_PARAM(BUFFER, uncompressed);
     FUNCTION_LOG_END();
@@ -91,7 +91,7 @@ gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);
     this->stream.next_out = bufPtr(uncompressed) + bufUsed(uncompressed);
 
-    this->result = gzipError(inflate(&this->stream, Z_NO_FLUSH));
+    this->result = gzError(inflate(&this->stream, Z_NO_FLUSH));
 
     // Set buffer used space
     bufUsedSet(uncompressed, bufSize(uncompressed) - (size_t)this->stream.avail_out);
@@ -109,12 +109,12 @@ gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 Is decompress done?
 ***********************************************************************************************************************************/
 bool
-gzipDecompressDone(const THIS_VOID)
+gzDecompressDone(const THIS_VOID)
 {
-    THIS(const GzipDecompress);
+    THIS(const GzDecompress);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(GZIP_DECOMPRESS, this);
+        FUNCTION_TEST_PARAM(GZ_DECOMPRESS, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -126,12 +126,12 @@ gzipDecompressDone(const THIS_VOID)
 Is the same input required on the next process call?
 ***********************************************************************************************************************************/
 bool
-gzipDecompressInputSame(const THIS_VOID)
+gzDecompressInputSame(const THIS_VOID)
 {
-    THIS(const GzipDecompress);
+    THIS(const GzDecompress);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(GZIP_DECOMPRESS, this);
+        FUNCTION_TEST_PARAM(GZ_DECOMPRESS, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -143,7 +143,7 @@ gzipDecompressInputSame(const THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 IoFilter *
-gzipDecompressNew(bool raw)
+gzDecompressNew(bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BOOL, raw);
@@ -151,22 +151,22 @@ gzipDecompressNew(bool raw)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("GzipDecompress")
+    MEM_CONTEXT_NEW_BEGIN("GzDecompress")
     {
         // Allocate state and set context
-        GzipDecompress *driver = memNew(sizeof(GzipDecompress));
+        GzDecompress *driver = memNew(sizeof(GzDecompress));
 
-        *driver = (GzipDecompress)
+        *driver = (GzDecompress)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .stream = {.zalloc = NULL},
         };
 
-        // Create gzip stream
-        gzipError(driver->result = inflateInit2(&driver->stream, gzipWindowBits(raw)));
+        // Create gz stream
+        gzError(driver->result = inflateInit2(&driver->stream, gzWindowBits(raw)));
 
-        // Set free callback to ensure gzip context is freed
-        memContextCallbackSet(driver->memContext, gzipDecompressFreeResource, driver);
+        // Set free callback to ensure gz context is freed
+        memContextCallbackSet(driver->memContext, gzDecompressFreeResource, driver);
 
         // Create param list
         VariantList *paramList = varLstNew();
@@ -174,8 +174,8 @@ gzipDecompressNew(bool raw)
 
         // Create filter interface
         this = ioFilterNewP(
-            GZIP_DECOMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzipDecompressDone, .inOut = gzipDecompressProcess,
-            .inputSame = gzipDecompressInputSame);
+            GZ_DECOMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzDecompressDone, .inOut = gzDecompressProcess,
+            .inputSame = gzDecompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -183,7 +183,7 @@ gzipDecompressNew(bool raw)
 }
 
 IoFilter *
-gzipDecompressNewVar(const VariantList *paramList)
+gzDecompressNewVar(const VariantList *paramList)
 {
-    return gzipDecompressNew(varBool(varLstGet(paramList, 0)));
+    return gzDecompressNew(varBool(varLstGet(paramList, 0)));
 }
