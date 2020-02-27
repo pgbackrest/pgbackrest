@@ -59,7 +59,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    // Execute the real expiration and deletion only if the dry-run mode is disabled
+    // Execute the real expiration and deletion only if the dry-run option is disabled
     if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
     {
         storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
@@ -367,7 +367,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                                 LOG_INFO_FMT("remove archive path: %s", strPtr(fullPath));
 
-                                // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                // Execute the real expiration and deletion only if the dry-run option is disabled
                                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                                     storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                             }
@@ -663,7 +663,7 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        // Store the new backup info only if not in dry-run mode
+        // Store the new backup info only if the dry-run mode is disabled
         if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
         {
             infoBackupSaveFile(
