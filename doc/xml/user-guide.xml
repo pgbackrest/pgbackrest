@@ -1912,7 +1912,12 @@
             <execute user="postgres" show="n">
                 <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
             </execute>
-
+<!-- CSHANG Begin: temporary debug code -->
+            <execute user="root" output="y">
+                <exe-cmd>{[pg-cluster-check]}</exe-cmd>
+                <exe-highlight>online</exe-highlight>
+            </execute>
+<!-- CSHANG End: temporary debug code -->
             <execute user="postgres" output="y">
                 <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
@@ -2033,9 +2038,14 @@
             <execute user="postgres" show="n">
                 <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
             </execute>
-
+<!-- CSHANG Begin: temporary debug code -->
+            <execute user="root" output="y">
+                <exe-cmd>{[pg-cluster-check]}</exe-cmd>
+                <exe-highlight>online</exe-highlight>
+            </execute>
+<!-- CSHANG End: temporary debug code -->
             <execute user="postgres" output="y">
-                <exe-cmd>psql -c "select message from important_table"</exe-cmd>
+                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
             </execute>
         </execute-list>
