@@ -460,8 +460,8 @@ testRun(void)
                 "TESTBRBLOCK4\n"
                 "DATABRBLOCK0\n"
                 "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzCompress\":null,\"gzDecompress\":null"
-                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\""
-                    ",\"pageChecksum\":{\"align\":false,\"valid\":false},\"size\":8}}\n",
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
+                    ",\"size\":8}}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);

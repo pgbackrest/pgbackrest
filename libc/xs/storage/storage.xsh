@@ -135,7 +135,7 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gz"))
     {
         if (strEqZ(varStr(varLstGet(paramList, 0)), "compress"))
-            ioFilterGroupAdd(filterGroup, gzCompressNew(varUIntForce(varLstGet(paramList, 2))));
+            ioFilterGroupAdd(filterGroup, gzCompressNew(varUIntForce(varLstGet(paramList, 1))));
         else
             ioFilterGroupAdd(filterGroup, gzDecompressNew());
     }

@@ -269,9 +269,6 @@ unit:
           common/compress/lz4/decompress: full
           common/compress/helper: full
 
-        include:
-          - common/io/filter/group
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
         total: 3
