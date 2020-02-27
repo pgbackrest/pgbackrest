@@ -716,6 +716,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
@@ -741,6 +742,24 @@ testRun(void)
             storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152500I/" BACKUP_MANIFEST_FILE,
             strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
 
+        TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
+            true, "  archive sub path not removed");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            true, "  backup not removed");
+        harnessLogResult(
+            "P00   INFO: expire full backup 20181119-152138F\n"
+            "P00   INFO: remove expired backup 20181119-152138F");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=2");
+        strLstAddZ(argList, "--repo1-retention-diff=3");
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
@@ -752,9 +771,36 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
+        strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive path and remove path");
+        TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
+            true, "  archive path not removed");
+        TEST_RESULT_BOOL(
+            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath)))),
+            true, "  backup not removed");
+        harnessLogResult(strPtr(strNewFmt(
+            "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
+            "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00   INFO: remove expired backup 20181119-152800F\n"
+            "P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=1");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
             false, "  archive path removed");
