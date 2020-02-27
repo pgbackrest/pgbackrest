@@ -83,6 +83,8 @@ Option constants
     STRING_DECLARE(CFGOPT_DB_TIMEOUT_STR);
 #define CFGOPT_DELTA                                                "delta"
     STRING_DECLARE(CFGOPT_DELTA_STR);
+#define CFGOPT_DRY_RUN                                              "dry-run"
+    STRING_DECLARE(CFGOPT_DRY_RUN_STR);
 #define CFGOPT_EXCLUDE                                              "exclude"
     STRING_DECLARE(CFGOPT_EXCLUDE_STR);
 #define CFGOPT_FILTER                                               "filter"
@@ -390,7 +392,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            172
+#define CFG_OPTION_TOTAL                                            173
 
 /***********************************************************************************************************************************
 Command enum
@@ -439,6 +441,7 @@ typedef enum
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
+    cfgOptDryRun,
     cfgOptExclude,
     cfgOptFilter,
     cfgOptForce,
