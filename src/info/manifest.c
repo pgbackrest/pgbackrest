@@ -1791,8 +1791,8 @@ manifestNewLoad(IoRead *read)
         // Make sure the base path exists
         manifestTargetBase(this);
 
-        // Free the context holding temporary load data
-        memContextFree(loadData.memContext);
+        // Discard the context holding temporary load data
+        memContextDiscard();
     }
     MEM_CONTEXT_NEW_END();
 

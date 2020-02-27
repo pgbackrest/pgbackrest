@@ -67,7 +67,7 @@
         <p>Coverage testing is an important component of <backrest/> testing and is integrated directly into the test harness.  Unfortunately, the default version of <proper>lcov</proper> is often not compatible with <proper>gcc</proper>.  <proper>lcov 1.14</proper> works up to <proper>gcc 8</proper>.</p>
 
         <execute-list host="{[host-contrib]}">
-            <title>Build lcov 2.14</title>
+            <title>Build lcov 1.14</title>
 
             <execute pre="y">
                 <exe-cmd>
