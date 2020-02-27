@@ -59,9 +59,8 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    // execute the real expiration and deletion
-    // only if the dry-run mode is disabled
-    if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+    // Execute the real expiration and deletion only if the dry-run mode is disabled
+    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
     {
         storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
         storageRemoveP(
@@ -368,9 +367,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                                 LOG_INFO_FMT("remove archive path: %s", strPtr(fullPath));
 
-                                // execute the real expiration and deletion
-                                // only if the dry-run mode is disabled
-                                if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+                                // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                                     storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                             }
 
@@ -514,9 +512,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 // Remove the entire directory if all archive is expired
                                 if (removeArchive)
                                 {
-                                    // execute the real expiration and deletion
-                                    // only if the dry-run mode is disabled
-                                    if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+                                    // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                                     {
                                         storagePathRemoveP(
                                             storageRepoWrite(),
@@ -564,8 +561,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
-                                            // // execute the real expiration and deletion only if the dry-run mode is disabled
-                                            if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+                                            // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                                             {
                                                 storageRemoveP(
                                                     storageRepoWrite(),
@@ -632,8 +629,8 @@ removeExpiredBackup(InfoBackup *infoBackup)
         {
             LOG_INFO_FMT("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
 
-            // execute the real expiration and deletion only if the dry-run mode is disabled
-            if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+            // Execute the real expiration and deletion only if the dry-run mode is disabled
+            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
             {
                 storagePathRemoveP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
@@ -666,8 +663,8 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        // store the new backup info only if not in dry-run mode
-        if ( ! cfgOptionBool(cfgOptDryRun) )
+        // Store the new backup info only if not in dry-run mode
+        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
         {
             infoBackupSaveFile(
                 infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
