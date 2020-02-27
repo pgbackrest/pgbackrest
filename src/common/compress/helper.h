@@ -1,5 +1,8 @@
 /***********************************************************************************************************************************
 Compression Helper
+
+Abstract compression types so that the calling code does not need to worry about the individual characteristics of the compression
+type. All compress calls should use this module rather than the individual filters, even if a specific compression type is required.
 ***********************************************************************************************************************************/
 #ifndef COMMON_COMPRESS_HELPER_H
 #define COMMON_COMPRESS_HELPER_H
