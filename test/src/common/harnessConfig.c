@@ -5,7 +5,6 @@ Harness for Loading Test Configurations
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
-#include "common/compress/helper.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
