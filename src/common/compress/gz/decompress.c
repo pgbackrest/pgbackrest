@@ -38,7 +38,7 @@ typedef struct GzDecompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *
+static String *
 gzDecompressToLog(const GzDecompress *this)
 {
     return strNewFmt(
@@ -63,7 +63,7 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 /***********************************************************************************************************************************
 Decompress data
 ***********************************************************************************************************************************/
-void
+static void
 gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 {
     THIS(GzDecompress);
@@ -108,7 +108,7 @@ gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 /***********************************************************************************************************************************
 Is decompress done?
 ***********************************************************************************************************************************/
-bool
+static bool
 gzDecompressDone(const THIS_VOID)
 {
     THIS(const GzDecompress);
@@ -125,7 +125,7 @@ gzDecompressDone(const THIS_VOID)
 /***********************************************************************************************************************************
 Is the same input required on the next process call?
 ***********************************************************************************************************************************/
-bool
+static bool
 gzDecompressInputSame(const THIS_VOID)
 {
     THIS(const GzDecompress);
