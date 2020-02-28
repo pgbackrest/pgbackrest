@@ -643,7 +643,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Use file compression.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Backup files are compatible with command-line compression tools."
+            "Backup files are compatible with command-line compression tools.\n"
+            "\n"
+            "This option is now deprecated. The compress-type should be used instead."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -671,10 +673,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Compression level for stored files.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("File compression level.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Sets the zlib level to be used for file compression when compress=y."
+            "Sets the level to be used for file compression when compress-type does not equal none or compress=y (deprecated)."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -702,13 +704,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Compression level for network transfer when compress=n.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Network compression level.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Sets the zlib level to be used for protocol compression when compress=n and the database cluster is not on the same "
-                "host as the repository. Protocol compression is used to reduce network traffic but can be disabled by setting "
-                "compress-level-network=0. When compress=y the compress-level-network setting is ignored and compress-level is "
-                "used instead so that the file is only compressed once. SSH compression is always disabled."
+            "Sets the network compression level when compress-type=none and the command is not run on the same host as the "
+                "repository. Compression is used to reduce network traffic but can be disabled by setting "
+                "compress-level-network=0. When compress-type does not equal none the compress-level-network setting is ignored "
+                "and compress-level is used instead so that the file is only compressed once. SSH compression is always disabled."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
