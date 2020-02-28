@@ -22,6 +22,10 @@ bool regExpMatch(RegExp *this, const String *string);
 void regExpFree(RegExp *this);
 
 bool regExpMatchOne(const String *expression, const String *string);
+
+// Return the common prefix of a regular expression, if it has one. The common prefix consists of fixed characters that must always
+// be found at the beginning of the string to be matched. Escaped characters will not be included in the prefix. If there is no
+// usable prefix then NULL is returned.
 String *regExpPrefix(const String *expression);
 
 /***********************************************************************************************************************************
