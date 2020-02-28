@@ -768,7 +768,7 @@ sub end
                 containerRemove("test-$self->{iVmIdx}");
             }
 
-            executeTest(($self->{oTest}->{&TEST_VM} eq VM_NONE ? "" : "sudo ") . "rm -rf ${strHostTestPath}");
+            executeTest("rm -rf ${strHostTestPath}");
         }
 
         $bDone = true;

@@ -11,7 +11,7 @@ Storage info type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageInfoTypeDefault,
+    storageInfoTypeDefault = 0,
     storageInfoTypeExists,
     storageInfoTypeBasic,
     storageInfoTypeDetail,

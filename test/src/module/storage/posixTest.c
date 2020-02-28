@@ -286,7 +286,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePosixInfoListEntry(
-                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"), storageInfoTypeBasic,
                 hrnStorageInfoListCallback, &callbackData),
             "missing path");
         TEST_RESULT_STR_Z(callbackData.content, "", "    check content");

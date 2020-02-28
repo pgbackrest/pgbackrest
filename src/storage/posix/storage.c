@@ -116,14 +116,19 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
 }
 
 /**********************************************************************************************************************************/
+// Helper function to get info for a file if it exists.  This logic can't live directly in storagePosixInfoList() because there is
+// a race condition where a file might exist while listing the directory but it is gone before stat() can be called.  In order to
+// get complete test coverage this function must be split out.
 static void
 storagePosixInfoListEntry(
-    StoragePosix *this, const String *path, const String *name, StorageInfoListCallback callback, void *callbackData)
+    StoragePosix *this, const String *path, const String *name, StorageInfoType type, StorageInfoListCallback callback,
+    void *callbackData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_POSIX, this);
         FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(FUNCTIONP, callback);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
     FUNCTION_TEST_END();
@@ -133,17 +138,13 @@ storagePosixInfoListEntry(
     ASSERT(name != NULL);
     ASSERT(callback != NULL);
 
-    if (!strEqZ(name, ".."))
+    StorageInfo storageInfo = storageInterfaceInfoP(
+        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name)), type);
+
+    if (storageInfo.exists)
     {
-        String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
-
-        StorageInfo storageInfo = storageInterfaceInfoP(this, pathInfo, storageInfoTypeDetail);
-
-        if (storageInfo.exists)
-        {
-            storageInfo.name = name;
-            callback(callbackData, &storageInfo);
-        }
+        storageInfo.name = name;
+        callback(callbackData, &storageInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -194,8 +195,21 @@ storagePosixInfoList(
 
                 while (dirEntry != NULL)
                 {
-                    // Get info and perform callback
-                    storagePosixInfoListEntry(this, path, STR(dirEntry->d_name), callback, callbackData);
+                    const String *name = STR(dirEntry->d_name);
+
+                    // Always skip ..
+                    if (!strEq(name, DOTDOT_STR))
+                    {
+                        // If only making a list of files that exist then no need to go get detailed info which requires calling
+                        // stat() and is therefore relatively slow
+                        if (type == storageInfoTypeExists)
+                        {
+                            callback(callbackData, &(StorageInfo){.name = name, .exists = true});
+                        }
+                        // Else more info is required which requires a call to stat()
+                        else
+                            storagePosixInfoListEntry(this, path, name, type, callback, callbackData);
+                    }
 
                     // Get next entry
                     dirEntry = readdir(dir);
