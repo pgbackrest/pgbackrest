@@ -3660,7 +3660,7 @@ fi
 CLIBRARY="$CLIBRARY `pkg-config libxml-2.0 --cflags`"
 
 
-# Check required gzip library
+# Check required gz library
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for deflate in -lz" >&5
 $as_echo_n "checking for deflate in -lz... " >&6; }
 if ${ac_cv_lib_z_deflate+:} false; then :

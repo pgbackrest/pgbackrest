@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
-#include "common/compress/gzip/compress.h"
+#include "common/compress/gz/compress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/io.h"
 #include "common/io/bufferRead.h"
@@ -196,7 +196,7 @@ testRun(void)
         StorageWrite *ceRepoFile = storageNewWriteP(
             storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(repoFileReferenceFull), strPtr(repoFile1)));
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
-        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
+        ioFilterGroupAdd(filterGroup, gzCompressNew(3));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
 
         storagePutP(ceRepoFile, BUFSTRDEF("acefile"));

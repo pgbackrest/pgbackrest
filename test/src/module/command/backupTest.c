@@ -70,17 +70,17 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             const String *manifestName = info->name;
 
             // If the file is compressed then decompress to get the real size
-            if (strEndsWithZ(info->name, "." GZIP_EXT))
+            if (strEndsWithZ(info->name, "." GZ_EXT))
             {
                 ASSERT(data->storage != NULL);
 
                 StorageRead *read = storageNewReadP(
                     data->storage,
                     data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
                 size = bufUsed(storageGetP(read));
 
-                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZIP_EXT));
+                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZ_EXT));
             }
 
             strCatFmt(data->content, ", s=%" PRIu64, size);
@@ -241,10 +241,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
-                    strPtr(walChecksum), param.walCompress ? "." GZIP_EXT : ""));
+                    strPtr(walChecksum), param.walCompress ? "." GZ_EXT : ""));
 
             if (param.walCompress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew(1, false));
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew(1));
 
             storagePutP(write, walBuffer);
         }

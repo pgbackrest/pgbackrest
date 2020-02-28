@@ -257,13 +257,13 @@ unit:
           common/io/http/query: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress-gzip
-        total: 4
+      - name: compress
+        total: 3
 
         coverage:
-          common/compress/gzip/common: full
-          common/compress/gzip/compress: full
-          common/compress/gzip/decompress: full
+          common/compress/gz/common: full
+          common/compress/gz/compress: full
+          common/compress/gz/decompress: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto

@@ -7,9 +7,9 @@ Backup File
 
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -74,7 +74,7 @@ backupFile(
     {
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), repoFileCompress ? "." GZIP_EXT : "");
+            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), repoFileCompress ? "." GZ_EXT : "");
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.
@@ -149,7 +149,7 @@ backupFile(
                         }
 
                         if (repoFileCompress)
-                            ioFilterGroupAdd(ioReadFilterGroup(read), gzipDecompressNew(false));
+                            ioFilterGroupAdd(ioReadFilterGroup(read), gzDecompressNew());
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
@@ -208,7 +208,7 @@ backupFile(
 
             // Add compression
             if (repoFileCompress)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipCompressNew((int)repoFileCompressLevel, false));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzCompressNew((int)repoFileCompressLevel));
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)

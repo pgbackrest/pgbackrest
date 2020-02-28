@@ -419,7 +419,7 @@ sub reconstruct
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
+                [{strClass => STORAGE_FILTER_GZ, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
             strCipherPass => $self->cipherPassSub()});
         $oFileIo->open();
 
