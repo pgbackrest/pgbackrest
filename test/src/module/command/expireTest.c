@@ -798,9 +798,10 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "test code path from backup command - expire backups and remove archive path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
             false, "  archive path removed");
@@ -819,6 +820,15 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
             "20181119-152900F, 20181119-152900F_20181119-152500I", "  remaining current backups correct");
+
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=1");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
+        harnessLogResult(
+            strPtr(strNewFmt("P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
