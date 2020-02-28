@@ -263,11 +263,11 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
         // Call driver function
+        if (param.type == storageInfoTypeDefault)
+            param.type = storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic;
+
         result = storageInterfaceInfoP(
-            this->driver, file,
-            param.type == storageInfoTypeDefault ?
-                (storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic) : param.type,
-            .followLink = param.followLink);
+            this->driver, file, param.type, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -473,8 +473,8 @@ storageInfoList(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Info type
-        StorageInfoType type = param.type == storageInfoTypeDefault ?
-            (storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic) : param.type;
+        if (param.type == storageInfoTypeDefault)
+            param.type = storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic;
 
         // Build the path
         String *path = storagePathP(this, pathExp);
@@ -487,7 +487,7 @@ storageInfoList(
                 .storage = this,
                 .callbackFunction = callback,
                 .callbackData = callbackData,
-                .type = type,
+                .type = param.type,
                 .expressionStr = param.expression,
                 .sortOrder = param.sortOrder,
                 .recurse = param.recurse,
@@ -497,10 +497,10 @@ storageInfoList(
             if (data.expressionStr != NULL)
                 data.expression = regExpNew(param.expression);
 
-            result = storageInfoListSort(this, path, type, param.expression, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListSort(this, path, param.type, param.expression, param.sortOrder, storageInfoListCallback, &data);
         }
         else
-            result = storageInfoListSort(this, path, type, NULL, param.sortOrder, callback, callbackData);
+            result = storageInfoListSort(this, path, param.type, NULL, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
