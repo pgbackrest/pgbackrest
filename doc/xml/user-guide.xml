@@ -1854,10 +1854,18 @@
         <execute-list host="{[host-pg1]}">
             <title>Get the time from <postgres/></title>
 
+            <execute user="postgres" show="n">
+                <exe-cmd>sleep 1</exe-cmd>
+            </execute>
+
             <execute user="postgres" output="y" filter="n" variable-key="time-recovery-timestamp">
                 <exe-cmd>
                     psql -Atc "select current_timestamp"
                 </exe-cmd>
+            </execute>
+
+            <execute user="postgres" show="n">
+                <exe-cmd>sleep 1</exe-cmd>
             </execute>
         </execute-list>
 
