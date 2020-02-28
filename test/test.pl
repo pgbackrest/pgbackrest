@@ -687,9 +687,7 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
-            executeTest(
-                ($strVm eq VM_NONE ? "" : "sudo ") . "rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
-                    ($bDev ? '' : " ${strTestPath}/gcov-*"));
+            executeTest("rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
