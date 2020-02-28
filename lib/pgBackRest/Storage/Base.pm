@@ -50,8 +50,8 @@ use constant CIPHER_MAGIC                                           => 'Salted__
 ####################################################################################################################################
 use constant STORAGE_FILTER_CIPHER_BLOCK                            => 'pgBackRest::Storage::Filter::CipherBlock';
     push @EXPORT, qw(STORAGE_FILTER_CIPHER_BLOCK);
-use constant STORAGE_FILTER_GZIP                                    => 'pgBackRest::Storage::Filter::Gzip';
-    push @EXPORT, qw(STORAGE_FILTER_GZIP);
+use constant STORAGE_FILTER_GZ                                      => 'pgBackRest::Storage::Filter::Gz';
+    push @EXPORT, qw(STORAGE_FILTER_GZ);
 use constant STORAGE_FILTER_SHA                                     => 'pgBackRest::Storage::Filter::Sha';
     push @EXPORT, qw(STORAGE_FILTER_SHA);
 

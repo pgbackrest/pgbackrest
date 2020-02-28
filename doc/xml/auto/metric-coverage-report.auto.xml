@@ -111,7 +111,7 @@
 </table-row>
 
 <table-row>
-    <table-cell>common/compress/gzip</table-cell>
+    <table-cell>common/compress/gz</table-cell>
     <table-cell>16/16 (100.0%)</table-cell>
     <table-cell>24/24 (100.0%)</table-cell>
     <table-cell>163/163 (100.0%)</table-cell>

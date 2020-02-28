@@ -79,8 +79,8 @@ testRun(void)
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
                 "bogus=bogus\n"
-                "no-compress=y\n"
-                "reset-compress=y\n"
+                "no-delta=y\n"
+                "reset-delta=y\n"
                 "archive-copy=y\n"
                 "online=y\n"
                 "pg1-path=/not/path/to/db\n"
@@ -91,7 +91,7 @@ testRun(void)
             storageNewWriteP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
             BUFSTRDEF(
                 "[db:backup]\n"
-                "compress=n\n"
+                "delta=n\n"
                 "recovery-option=a=b\n"));
 
         storagePut(
@@ -109,16 +109,16 @@ testRun(void)
                 strNew(
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "P00   WARN: configuration file contains invalid option 'bogus'\n"
-                    "P00   WARN: configuration file contains negate option 'no-compress'\n"
-                    "P00   WARN: configuration file contains reset option 'reset-compress'\n"
+                    "P00   WARN: configuration file contains negate option 'no-delta'\n"
+                    "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "    delta not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "    archive-copy is not set");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
@@ -685,29 +685,29 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--no-compress"));
-        strLstAdd(argList, strNew("--reset-compress"));
+        strLstAdd(argList, strNew("--no-delta"));
+        strLstAdd(argList, strNew("--reset-delta"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'compress' cannot be negated and reset");
+            "option 'delta' cannot be negated and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--reset-compress"));
-        strLstAdd(argList, strNew("--no-compress"));
+        strLstAdd(argList, strNew("--reset-delta"));
+        strLstAdd(argList, strNew("--no-delta"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'compress' cannot be negated and reset");
+            "option 'delta' cannot be negated and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--compress"));
-        strLstAdd(argList, strNew("--compress"));
+        strLstAdd(argList, strNew("--delta"));
+        strLstAdd(argList, strNew("--delta"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'compress' cannot be set multiple times");
+            "option 'delta' cannot be set multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1017,11 +1017,11 @@ testRun(void)
             storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
-                "compress=bogus\n"));
+                "delta=bogus\n"));
 
         TEST_ERROR(configParse(
             strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "boolean option 'compress' must be 'y' or 'n'");
+            "boolean option 'delta' must be 'y' or 'n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1034,11 +1034,11 @@ testRun(void)
             storageNewWriteP(storageLocalWrite(), configFile),
             BUFSTRDEF(
                 "[global]\n"
-                "compress=\n"));
+                "delta=\n"));
 
         TEST_ERROR(configParse(
             strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "section 'global', key 'compress' must have a value");
+            "section 'global', key 'delta' must have a value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1177,8 +1177,6 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), true, "    compress is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceDefault, "    compress is source default");
         TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
 
@@ -1197,7 +1195,7 @@ testRun(void)
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
-        setenv("PGBACKREST_NO_COMPRESS", "xxx", true);
+        setenv("PGBACKREST_NO_DELTA", "xxx", true);
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
         setenv("PGBACKREST_ONLINE", "y", true);
@@ -1216,8 +1214,8 @@ testRun(void)
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
                 "bogus=bogus\n"
-                "no-compress=y\n"
-                "reset-compress=y\n"
+                "no-delta=y\n"
+                "reset-delta=y\n"
                 "archive-copy=y\n"
                 "start-fast=y\n"
                 "online=y\n"
@@ -1226,7 +1224,7 @@ testRun(void)
                 "buffer-size=65536\n"
                 "\n"
                 "[db:backup]\n"
-                "compress=n\n"
+                "delta=n\n"
                 "recovery-option=a=b\n"
                 "\n"
                 "[db]\n"
@@ -1239,12 +1237,12 @@ testRun(void)
             strPtr(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
-                    "P00   WARN: environment contains invalid negate option 'no-compress'\n"
+                    "P00   WARN: environment contains invalid negate option 'no-delta'\n"
                     "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "P00   WARN: configuration file contains invalid option 'bogus'\n"
-                    "P00   WARN: configuration file contains negate option 'no-compress'\n"
-                    "P00   WARN: configuration file contains reset option 'reset-compress'\n"
+                    "P00   WARN: configuration file contains negate option 'no-delta'\n"
+                    "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
@@ -1259,8 +1257,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    start-fast not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceConfig, "    start-fast is config param");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta not set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "    archive-copy is not set");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
@@ -1275,7 +1273,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
         unsetenv("PGBACKREST_BOGUS");
-        unsetenv("PGBACKREST_NO_COMPRESS");
+        unsetenv("PGBACKREST_NO_DELTA");
         unsetenv("PGBACKREST_RESET_REPO1_HOST");
         unsetenv("PGBACKREST_TARGET");
         unsetenv("PGBACKREST_ONLINE");

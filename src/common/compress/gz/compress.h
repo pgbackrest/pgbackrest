@@ -1,23 +1,23 @@
 /***********************************************************************************************************************************
-Gzip Compress
+Gz Compress
 
-Compress IO using the gzip format.
+Compress IO using the gz format.
 ***********************************************************************************************************************************/
-#ifndef COMMON_COMPRESS_GZIP_COMPRESS_H
-#define COMMON_COMPRESS_GZIP_COMPRESS_H
+#ifndef COMMON_COMPRESS_GZ_COMPRESS_H
+#define COMMON_COMPRESS_GZ_COMPRESS_H
 
 #include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define GZIP_COMPRESS_FILTER_TYPE                                   "gzipCompress"
-    STRING_DECLARE(GZIP_COMPRESS_FILTER_TYPE_STR);
+#define GZ_COMPRESS_FILTER_TYPE                                     "gzCompress"
+    STRING_DECLARE(GZ_COMPRESS_FILTER_TYPE_STR);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoFilter *gzipCompressNew(int level, bool raw);
-IoFilter *gzipCompressNewVar(const VariantList *paramList);
+IoFilter *gzCompressNew(int level);
+IoFilter *gzCompressNewVar(const VariantList *paramList);
 
 #endif

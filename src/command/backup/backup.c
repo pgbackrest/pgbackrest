@@ -17,9 +17,9 @@ Backup Command
 #include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/compress/gzip/common.h"
-#include "common/compress/gzip/compress.h"
-#include "common/compress/gzip/decompress.h"
+#include "common/compress/gz/common.h"
+#include "common/compress/gz/compress.h"
+#include "common/compress/gz/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
@@ -124,7 +124,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strPtr(strLstGet(historyYearList, 0))),
                     .expression = strNewFmt(
-                        "%s\\.manifest\\." GZIP_EXT "$",
+                        "%s\\.manifest\\." GZ_EXT "$",
                         strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)))),
                 sortOrderDesc);
 
@@ -577,7 +577,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         {
             // If the backup is compressed then strip off the extension before doing the lookup
             if (resumeData->compressed)
-                manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZIP_EXT));
+                manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZ_EXT));
 
             // Find the file in both manifests
             const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
@@ -926,7 +926,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    compress ? "." GZIP_EXT : ""),
+                    compress ? "." GZ_EXT : ""),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -936,10 +936,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add compression
             if (compress)
-            {
-                ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew((int)cfgOptionUInt(cfgOptCompressLevel), false));
-            }
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew((int)cfgOptionUInt(cfgOptCompressLevel)));
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
@@ -1652,7 +1649,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
+        const char *const compressExt = jobData.compress ? "." GZ_EXT : "";
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1758,7 +1755,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {
                     // Is the archive file compressed?
-                    bool archiveCompressed = strEndsWithZ(archiveFile, "." GZIP_EXT);
+                    bool archiveCompressed = strEndsWithZ(archiveFile, "." GZ_EXT);
 
                     // Open the archive file
                     StorageRead *read = storageNewReadP(
@@ -1774,9 +1771,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                     if (archiveCompressed != cfgOptionBool(cfgOptCompress))
                     {
                         if (archiveCompressed)
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
                         else
-                            ioFilterGroupAdd(filterGroup, gzipCompressNew(cfgOptionInt(cfgOptCompressLevel), false));
+                            ioFilterGroupAdd(filterGroup, gzCompressNew(cfgOptionInt(cfgOptCompressLevel)));
                     }
 
                     // Encrypt with backup key if encrypted
@@ -1797,7 +1794,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             storageRepoWrite(),
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                cfgOptionBool(cfgOptCompress) ? "." GZIP_EXT : "")));
+                                cfgOptionBool(cfgOptCompress) ? "." GZ_EXT : "")));
 
                     // Add to manifest
                     ManifestFile file =
@@ -1867,10 +1864,10 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         StorageWrite *manifestWrite = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZIP_EXT, strPtr(strSubN(backupLabel, 0, 4)),
+                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZ_EXT, strPtr(strSubN(backupLabel, 0, 4)),
                     strPtr(backupLabel)));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzipCompressNew(9, false));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzCompressNew(9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,

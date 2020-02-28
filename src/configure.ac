@@ -54,7 +54,7 @@ AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is req
 AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required])])
 AC_SUBST(CLIBRARY, "$CLIBRARY `pkg-config libxml-2.0 --cflags`")
 
-# Check required gzip library
+# Check required gz library
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 
 # Write output
