@@ -58,6 +58,7 @@ storageNew(
     ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
+    ASSERT(interface.infoList != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
     ASSERT(interface.pathRemove != NULL);

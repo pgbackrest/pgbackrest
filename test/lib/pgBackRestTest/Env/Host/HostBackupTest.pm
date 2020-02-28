@@ -1593,14 +1593,17 @@ sub restore
     # Load the expected manifest if it was not defined
     my $oExpectedManifest = undef;
 
+    # If an expected backup is defined, then the strBackup should be the default to allow the restore process to select the backup
+    # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
+    if (!defined($strBackupExpected))
+    {
+        $strBackupExpected = $strBackup eq cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? $oHostBackup->backupLast() :
+            $strBackup;
+    }
+
     if (!defined($rhExpectedManifest))
     {
-        if (!defined($strBackupExpected))
-        {
-            $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup;
-        }
-
-        # Load the manifest
+        # Load the manifest from the backup expected to be chosen/processed by restore
         my $oExpectedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet(
                 STORAGE_REPO_BACKUP . qw{/} . $strBackupExpected. qw{/} .
@@ -1681,7 +1684,7 @@ sub restore
 
     if (!defined($iExpectedExitStatus))
     {
-        $self->restoreCompare($strBackup, dclone($rhExpectedManifest), $bTablespace);
+        $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
 
         if (defined($self->{oLogTest}))
         {
