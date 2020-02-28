@@ -1593,7 +1593,8 @@ sub restore
     # Load the expected manifest if it was not defined
     my $oExpectedManifest = undef;
 
-    # If an expected backup was not defined, set it based on the backup passed
+    # If an expected backup is defined, then the strBackup should be the default to allow the restore process to select the backup
+    # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
     if (!defined($strBackupExpected))
     {
         $strBackupExpected = $strBackup eq cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? $oHostBackup->backupLast() :
