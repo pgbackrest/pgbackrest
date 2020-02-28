@@ -1859,6 +1859,10 @@
                     psql -Atc "select current_timestamp"
                 </exe-cmd>
             </execute>
+
+            <execute user="postgres" show="n">
+                <exe-cmd>sleep 1</exe-cmd>
+            </execute>
         </execute-list>
 
         <p>Now that the time has been recorded the table is dropped.  In practice finding the exact time that the table was dropped is a lot harder than in this example.  It may not be possible to find the exact time, but some forensic work should be able to get you close.</p>
@@ -1912,12 +1916,7 @@
             <execute user="postgres" show="n">
                 <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
             </execute>
-<!-- CSHANG Begin: temporary debug code -->
-            <execute user="root" output="y">
-                <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                <exe-highlight>online|running</exe-highlight>
-            </execute>
-<!-- CSHANG End: temporary debug code -->
+
             <execute user="postgres" output="y">
                 <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
@@ -2038,12 +2037,7 @@
             <execute user="postgres" show="n">
                 <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
             </execute>
-<!-- CSHANG Begin: temporary debug code -->
-            <execute user="root" output="y">
-                <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                <exe-highlight>online|running</exe-highlight>
-            </execute>
-<!-- CSHANG End: temporary debug code -->
+
             <execute user="postgres" output="y">
                 <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
