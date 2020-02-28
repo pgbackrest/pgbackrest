@@ -128,7 +128,9 @@
                     <config-key id="compress" name="Compress">
                         <summary>Use file compression.</summary>
 
-                        <text>Backup files are compatible with command-line compression tools.</text>
+                        <text>Backup files are compatible with command-line compression tools.
+
+                        This option is now deprecated. The <setting>compress-type</setting> should be used instead.</text>
 
                         <example>n</example>
                     </config-key>
@@ -148,9 +150,9 @@
 
                     <!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL KEY -->
                     <config-key id="compress-level" name="Compress Level">
-                        <summary>Compression level for stored files.</summary>
+                        <summary>File compression level.</summary>
 
-                        <text>Sets the zlib level to be used for file compression when <setting>compress=y</setting>.</text>
+                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</text>
 
                         <allow>0-9</allow>
                         <example>9</example>
@@ -158,9 +160,9 @@
 
                     <!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL-NETWORK KEY -->
                     <config-key id="compress-level-network" name="Network Compress Level">
-                        <summary>Compression level for network transfer when <setting>compress=n</setting>.</summary>
+                        <summary>Network compression level.</summary>
 
-                        <text>Sets the zlib level to be used for protocol compression when <setting>compress=n</setting> and the database cluster is not on the same host as the repository.  Protocol compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>.  When <setting>compress=y</setting> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.</text>
+                        <text>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository.  Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>.  When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.</text>
 
                         <allow>0-9</allow>
                         <example>1</example>

@@ -1154,6 +1154,7 @@ my %hConfigDefine =
         },
     },
 
+    # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption().
     &CFGOPT_COMPRESS =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
