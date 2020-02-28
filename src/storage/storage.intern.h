@@ -25,7 +25,6 @@ Error messages
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"
 
-// !!! THIS SHOULD BE "STORAGE_ERROR_LIST"
 #define STORAGE_ERROR_LIST_INFO                                     "unable to list file info for path '%s'"
 #define STORAGE_ERROR_LIST_INFO_MISSING                             "unable to list file info for missing path '%s'"
 
