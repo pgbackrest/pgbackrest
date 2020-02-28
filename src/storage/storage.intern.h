@@ -25,9 +25,6 @@ Error messages
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"
 
-// !!! REMOVE THIS
-#define STORAGE_ERROR_LIST                                          "unable to list files for path '%s'"
-
 // !!! THIS SHOULD BE "STORAGE_ERROR_LIST"
 #define STORAGE_ERROR_LIST_INFO                                     "unable to list file info for path '%s'"
 #define STORAGE_ERROR_LIST_INFO_MISSING                             "unable to list file info for missing path '%s'"
@@ -131,6 +128,9 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
 typedef struct StorageInterfaceInfoListParam
 {
     VAR_PARAM_HEADER;
+
+    // Regular expression used to filter the results
+    const String *expression;
 } StorageInterfaceInfoListParam;
 
 typedef bool StorageInterfaceInfoList(

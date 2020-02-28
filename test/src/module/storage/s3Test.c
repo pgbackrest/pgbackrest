@@ -295,7 +295,7 @@ testS3Server(void)
 
         // list a file in root with expression
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -347,7 +347,7 @@ testS3Server(void)
 
         // list files with expression
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL, storageS3UriStyleHost));
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,

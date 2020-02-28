@@ -325,13 +325,14 @@ storageInfoListSortCallback(void *data, const StorageInfo *info)
 
 static bool
 storageInfoListSort(
-    const Storage *this, const String *path, StorageInfoType type, SortOrder sortOrder, StorageInfoListCallback callback,
-    void *callbackData)
+    const Storage *this, const String *path, StorageInfoType type, const String *expression, SortOrder sortOrder,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(ENUM, sortOrder);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
@@ -347,7 +348,7 @@ storageInfoListSort(
         // If no sorting then use the callback directly
         if (sortOrder == sortOrderNone)
         {
-            result = storageInterfaceInfoListP(this->driver, path, type, callback, callbackData);
+            result = storageInterfaceInfoListP(this->driver, path, type, callback, callbackData, .expression = expression);
         }
         // Else sort the info before sending it to the callback
         else
@@ -359,7 +360,8 @@ storageInfoListSort(
                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
-            result = storageInterfaceInfoListP(this->driver, path, type, storageInfoListSortCallback, &data);
+            result = storageInterfaceInfoListP(
+                this->driver, path, type, storageInfoListSortCallback, &data, .expression = expression);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -387,6 +389,7 @@ typedef struct StorageInfoListData
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
     StorageInfoType type;                                           // Info type
+    const String *expressionStr;                                    // Filter string
     RegExp *expression;                                             // Filter for names
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
@@ -433,8 +436,8 @@ storageInfoListCallback(void *data, const StorageInfo *info)
             data.subPath = infoUpdate.name;
 
             storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.type, data.sortOrder,
-                storageInfoListCallback, &data);
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.type, data.expressionStr,
+                data.sortOrder, storageInfoListCallback, &data);
         }
 
         if (listData->sortOrder == sortOrderDesc)
@@ -485,18 +488,19 @@ storageInfoList(
                 .callbackFunction = callback,
                 .callbackData = callbackData,
                 .type = type,
+                .expressionStr = param.expression,
                 .sortOrder = param.sortOrder,
                 .recurse = param.recurse,
                 .path = path,
             };
 
-            if (param.expression != NULL)
+            if (data.expressionStr != NULL)
                 data.expression = regExpNew(param.expression);
 
-            result = storageInfoListSort(this, path, type, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListSort(this, path, type, param.expression, param.sortOrder, storageInfoListCallback, &data);
         }
         else
-            result = storageInfoListSort(this, path, type, param.sortOrder, callback, callbackData);
+            result = storageInfoListSort(this, path, type, NULL, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));

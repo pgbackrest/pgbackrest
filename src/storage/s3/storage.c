@@ -555,12 +555,12 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterf
     {
         result.exists = true;
 
-        if (type >= storageInfoTypeBasic)
-        {
-            result.type = storageTypeFile;
-            result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-            result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
-        }
+        // Currently basic is the only way this can be called
+        ASSERT(type >= storageInfoTypeBasic);
+
+        result.type = storageTypeFile;
+        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -640,7 +640,7 @@ storageS3InfoList(
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -650,7 +650,7 @@ storageS3InfoList(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         StorageS3InfoListData data = {.type = type, .callback = callback, .callbackData = callbackData};
-        storageS3ListInternal(this, path, false, false, storageS3InfoListCallback, &data);
+        storageS3ListInternal(this, path, param.expression, false, storageS3InfoListCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();
 

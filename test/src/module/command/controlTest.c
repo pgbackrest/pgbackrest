@@ -92,7 +92,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageData, strNew("lockpath/all" STOP_FILE_EXT)), "remove stop file");
         TEST_RESULT_INT(system(strPtr(strNewFmt("chmod 444 %s", strPtr(lockPath)))), 0, "change perms");
         TEST_ERROR_FMT(
-            cmdStop(), FileOpenError, "unable to stat '%s/all.stop': [13] Permission denied", strPtr(lockPath));
+            cmdStop(), FileOpenError, "unable to get info for path/file '%s/all.stop': [13] Permission denied", strPtr(lockPath));
         TEST_RESULT_INT(system(strPtr(strNewFmt("chmod 700 %s", strPtr(lockPath)))), 0, "change perms");
         TEST_RESULT_VOID(
             storagePathRemoveP(storageData, lockPath, .recurse = true, .errorOnMissing = true), "    remove the lock path");

@@ -73,22 +73,22 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
     {
         result.exists = true;
 
-        if (type >= storageInfoTypeBasic)
-        {
-            result.timeModified = statFile.st_mtime;
+        // Currently basic is the only way this can be called
+        ASSERT(type >= storageInfoTypeBasic);
 
-            if (S_ISREG(statFile.st_mode))
-            {
-                result.type = storageTypeFile;
-                result.size = (uint64_t)statFile.st_size;
-            }
-            else if (S_ISDIR(statFile.st_mode))
-                result.type = storageTypePath;
-            else if (S_ISLNK(statFile.st_mode))
-                result.type = storageTypeLink;
-            else
-                result.type = storageTypeSpecial;
+        result.timeModified = statFile.st_mtime;
+
+        if (S_ISREG(statFile.st_mode))
+        {
+            result.type = storageTypeFile;
+            result.size = (uint64_t)statFile.st_size;
         }
+        else if (S_ISDIR(statFile.st_mode))
+            result.type = storageTypePath;
+        else if (S_ISLNK(statFile.st_mode))
+            result.type = storageTypeLink;
+        else
+            result.type = storageTypeSpecial;
 
         if (type >= storageInfoTypeDetail)
         {
