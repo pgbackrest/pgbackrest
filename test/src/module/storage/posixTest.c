@@ -377,7 +377,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_MISSING,
+            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
              strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         TEST_RESULT_PTR(storageListP(storageTest, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
@@ -386,12 +386,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
@@ -613,14 +613,14 @@ testRun(void)
             strPtr(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove1)))), 0, "top path can be removed");
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileRemove = strNewFmt("%s/remove.txt", strPtr(pathRemove2));

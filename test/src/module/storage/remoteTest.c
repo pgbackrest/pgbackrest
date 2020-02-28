@@ -310,6 +310,7 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
+        varLstAdd(paramList, varNewUInt(storageInfoTypeDetail));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
         TEST_RESULT_STR_Z(
@@ -342,17 +343,6 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(strLstSort(storageListP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ","),
             "testy,testy2\"" , "list 2 paths");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo", testPath())));
-        varLstAdd(paramList, varNewStr(strNew("^testy$")));
-
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[\"testy\"]}\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************

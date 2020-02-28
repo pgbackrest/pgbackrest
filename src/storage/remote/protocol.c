@@ -28,7 +28,6 @@ Constants
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
@@ -225,19 +224,11 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
             bool result = storageInterfaceInfoListP(
-                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
+                driver, varStr(varLstGet(paramList, 0)), (StorageInfoType)varUIntForce(varLstGet(paramList, 1)),
+                storageRemoteProtocolInfoListCallback, server);
 
             protocolServerWriteLine(server, NULL);
             protocolServerResponse(server, VARBOOL(result));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
-        {
-            protocolServerResponse(
-                server,
-                varNewVarLst(
-                    varLstNewStrLst(
-                        storageInterfaceListP(
-                            driver, varStr(varLstGet(paramList, 0)), .expression = varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {

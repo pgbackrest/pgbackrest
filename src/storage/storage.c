@@ -58,7 +58,6 @@ storageNew(
     ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
-    ASSERT(interface.list != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
     ASSERT(interface.pathRemove != NULL);
@@ -326,11 +325,13 @@ storageInfoListSortCallback(void *data, const StorageInfo *info)
 
 static bool
 storageInfoListSort(
-    const Storage *this, const String *path, SortOrder sortOrder, StorageInfoListCallback callback, void *callbackData)
+    const Storage *this, const String *path, StorageInfoType type, SortOrder sortOrder, StorageInfoListCallback callback,
+    void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(ENUM, sortOrder);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
@@ -346,7 +347,7 @@ storageInfoListSort(
         // If no sorting then use the callback directly
         if (sortOrder == sortOrderNone)
         {
-            result = storageInterfaceInfoListP(this->driver, path, callback, callbackData);
+            result = storageInterfaceInfoListP(this->driver, path, type, callback, callbackData);
         }
         // Else sort the info before sending it to the callback
         else
@@ -358,7 +359,7 @@ storageInfoListSort(
                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
-            result = storageInterfaceInfoListP(this->driver, path, storageInfoListSortCallback, &data);
+            result = storageInterfaceInfoListP(this->driver, path, type, storageInfoListSortCallback, &data);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -385,6 +386,7 @@ typedef struct StorageInfoListData
     const Storage *storage;                                         // Storage object;
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
+    StorageInfoType type;                                           // Info type
     RegExp *expression;                                             // Filter for names
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
@@ -431,8 +433,8 @@ storageInfoListCallback(void *data, const StorageInfo *info)
             data.subPath = infoUpdate.name;
 
             storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.sortOrder, storageInfoListCallback,
-                &data);
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.type, data.sortOrder,
+                storageInfoListCallback, &data);
         }
 
         if (listData->sortOrder == sortOrderDesc)
@@ -451,6 +453,7 @@ storageInfoList(
         FUNCTION_LOG_PARAM(STRING, pathExp);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        FUNCTION_LOG_PARAM(ENUM, param.type);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
@@ -466,6 +469,10 @@ storageInfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Info type
+        StorageInfoType type = param.type == storageInfoTypeDefault ?
+            (storageFeature(this, storageFeatureInfoDetail) ? storageInfoTypeDetail : storageInfoTypeBasic) : param.type;
+
         // Build the path
         String *path = storagePathP(this, pathExp);
 
@@ -477,6 +484,7 @@ storageInfoList(
                 .storage = this,
                 .callbackFunction = callback,
                 .callbackData = callbackData,
+                .type = type,
                 .sortOrder = param.sortOrder,
                 .recurse = param.recurse,
                 .path = path,
@@ -485,10 +493,10 @@ storageInfoList(
             if (param.expression != NULL)
                 data.expression = regExpNew(param.expression);
 
-            result = storageInfoListSort(this, path, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListSort(this, path, type, param.sortOrder, storageInfoListCallback, &data);
         }
         else
-            result = storageInfoListSort(this, path, param.sortOrder, callback, callbackData);
+            result = storageInfoListSort(this, path, type, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
@@ -501,6 +509,26 @@ storageInfoList(
 /***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
+static void
+storageListCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    // Skip . path
+    if (strEq(info->name, DOT_STR))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    strLstAdd((StringList *)data, info->name);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
@@ -520,23 +548,16 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
-        String *path = storagePathP(this, pathExp);
+        result = strLstNew();
 
-        // Get the list
-        result = storageInterfaceListP(this->driver, path, .expression = param.expression);
-
-        // If the path does not exist
-        if (result == NULL)
+        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
+        // the caller don't care if the path is missing.
+        if (!storageInfoListP(
+                this, pathExp, storageListCallback, result, .type = storageInfoTypeExists, .errorOnMissing = param.errorOnMissing,
+                .expression = param.expression))
         {
-            // Error if requested
-            if (param.errorOnMissing)
-                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_MISSING, strPtr(path));
-
-            // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
-            // when they don't care if the path is missing.
-            if (!param.nullOnMissing)
-                result = strLstNew();
+            if (param.nullOnMissing)
+                result = NULL;
         }
 
         // Move list up to the old context

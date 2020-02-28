@@ -569,6 +569,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterf
 /**********************************************************************************************************************************/
 typedef struct StorageS3InfoListData
 {
+    StorageInfoType type;                                           // Amount of info to set
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
@@ -609,12 +610,18 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
     StorageInfo info =
     {
-        .type = type,
         .name = name,
-        .size = type == storageTypeFile ? cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0,
-        .timeModified = type == storageTypeFile ?
-            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0,
+        .exists = true,
     };
+
+    if (data->type >= storageInfoTypeBasic)
+    {
+        info.type = type;
+        info.size = type == storageTypeFile ?
+            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0;
+        info.timeModified = type == storageTypeFile ?
+            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+    }
 
     data->callback(data->callbackData, &info);
 
@@ -623,7 +630,8 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
 static bool
 storageS3InfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StorageS3);
 
@@ -641,63 +649,12 @@ storageS3InfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageS3InfoListData data = {.callback = callback, .callbackData = callbackData};
+        StorageS3InfoListData data = {.type = type, .callback = callback, .callbackData = callbackData};
         storageS3ListInternal(this, path, false, false, storageS3InfoListCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
-}
-
-/**********************************************************************************************************************************/
-static void
-storageS3ListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-    (void)type;
-    (void)xml;
-
-    strLstAdd((StringList *)callbackData, name);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static StringList *
-storageS3List(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = strLstNew();
-
-        storageS3ListInternal(this, path, param.expression, false, storageS3ListCallback, result);
-        strLstMove(result, memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -892,7 +849,6 @@ static const StorageInterface storageInterfaceS3 =
 {
     .info = storageS3Info,
     .infoList = storageS3InfoList,
-    .list = storageS3List,
     .newRead = storageS3NewRead,
     .newWrite = storageS3NewWrite,
     .pathRemove = storageS3PathRemove,

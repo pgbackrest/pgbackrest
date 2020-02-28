@@ -134,7 +134,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoType type, StorageIn
 /**********************************************************************************************************************************/
 static bool
 storageRemoteInfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StorageRemote);
 
@@ -156,6 +157,7 @@ storageRemoteInfoList(
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
         protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARUINT(type));
 
         // Send command
         protocolClientWriteCommand(this->client, command);
@@ -181,36 +183,6 @@ storageRemoteInfoList(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-static StringList *
-storageRemoteList(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARSTR(param.expression));
-
-        result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -424,7 +396,6 @@ static const StorageInterface storageInterfaceRemote =
 {
     .info = storageRemoteInfo,
     .infoList = storageRemoteInfoList,
-    .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,

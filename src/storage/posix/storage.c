@@ -151,13 +151,15 @@ storagePosixInfoListEntry(
 
 static bool
 storagePosixInfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
@@ -215,77 +217,8 @@ storagePosixInfoList(
 }
 
 /**********************************************************************************************************************************/
-static StringList *
-storagePosixList(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    StringList *result = NULL;
-    DIR *dir = NULL;
-
-    TRY_BEGIN()
-    {
-        // Open the directory for read
-        dir = opendir(strPtr(path));
-
-        // If the directory could not be opened process errors but ignore missing directories when specified
-        if (!dir)
-        {
-            if (errno != ENOENT)
-                THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST, strPtr(path));
-        }
-        else
-        {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                // Prepare regexp if an expression was passed
-                RegExp *regExp = param.expression == NULL ? NULL : regExpNew(param.expression);
-
-                // Create the string list now that we know the directory is valid
-                result = strLstNew();
-
-                // Read the directory entries
-                struct dirent *dirEntry = readdir(dir);
-
-                while (dirEntry != NULL)
-                {
-                    const String *entry = STR(dirEntry->d_name);
-
-                    // Exclude current/parent directory and apply the expression if specified
-                    if (!strEqZ(entry, ".") && !strEqZ(entry, "..") && (regExp == NULL || regExpMatch(regExp, entry)))
-                        strLstAdd(result, entry);
-
-                    dirEntry = readdir(dir);
-                }
-
-                // Move finished list up to the old context
-                strLstMove(result, memContextPrior());
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-    }
-    FINALLY()
-    {
-        if (dir != NULL)
-            closedir(dir);
-    }
-    TRY_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
-}
-
-/**********************************************************************************************************************************/
 static bool
-storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param)
+storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param)
 {
     THIS(StoragePosix);
 
@@ -473,6 +406,46 @@ storagePosixPathExists(THIS_VOID,  const String *path, StorageInterfacePathExist
 }
 
 /**********************************************************************************************************************************/
+typedef struct StoragePosixPathRemoveData
+{
+    StoragePosix *driver;                                           // Driver
+    const String *path;                                             // Path
+} StoragePosixPathRemoveData;
+
+static void
+storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    if (!strEqZ(info->name, "."))
+    {
+        StoragePosixPathRemoveData *data = callbackData;
+
+        String *file = strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name));
+
+        // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
+        if (unlink(strPtr(file)) == -1)
+        {
+            // These errors indicate that the entry is actually a path so we'll try to delete it that way
+            if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
+            {
+                storageInterfacePathRemoveP(data->driver, strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)), true);
+            }
+            // Else error
+            else
+                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static bool
 storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
@@ -495,29 +468,14 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         // Recurse if requested
         if (recurse)
         {
-            // Get a list of files in this path
-            StringList *fileList = storageInterfaceListP(this, path);
-
-            // Only continue if the path exists
-            if (fileList != NULL)
+            StoragePosixPathRemoveData data =
             {
-                // Delete all paths and files
-                for (unsigned int fileIdx = 0; fileIdx < strLstSize(fileList); fileIdx++)
-                {
-                    String *file = strNewFmt("%s/%s", strPtr(path), strPtr(strLstGet(fileList, fileIdx)));
+                .driver = this,
+                .path = path,
+            };
 
-                    // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
-                    if (unlink(strPtr(file)) == -1)
-                    {
-                        // These errors indicate that the entry is actually a path so we'll try to delete it that way
-                        if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-                            storageInterfacePathRemoveP(this, file, true);
-                        // Else error
-                        else
-                            THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));
-                    }
-                }
-            }
+            // Remove all sub paths/files
+            storageInterfaceInfoListP(this, path, storageInfoTypeExists, storagePosixPathRemoveCallback, &data);
         }
 
         // Delete the path
@@ -614,7 +572,6 @@ static const StorageInterface storageInterfacePosix =
 
     .info = storagePosixInfo,
     .infoList = storagePosixInfoList,
-    .list = storagePosixList,
     .move = storagePosixMove,
     .newRead = storagePosixNewRead,
     .newWrite = storagePosixNewWrite,

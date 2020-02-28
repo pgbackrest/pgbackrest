@@ -25,9 +25,10 @@ Error messages
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"
 
+// !!! REMOVE THIS
 #define STORAGE_ERROR_LIST                                          "unable to list files for path '%s'"
-#define STORAGE_ERROR_LIST_MISSING                                  "unable to list files for missing path '%s'"
 
+// !!! THIS SHOULD BE "STORAGE_ERROR_LIST"
 #define STORAGE_ERROR_LIST_INFO                                     "unable to list file info for path '%s'"
 #define STORAGE_ERROR_LIST_INFO_MISSING                             "unable to list file info for missing path '%s'"
 
@@ -66,21 +67,6 @@ typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, Sto
 
 #define storageInterfaceInfoP(thisVoid, file, type, ...)                                                                           \
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, type, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// Get a list of files
-typedef struct StorageInterfaceListParam
-{
-    VAR_PARAM_HEADER;
-
-    // Regular expression used to filter the results
-    const String *expression;
-} StorageInterfaceListParam;
-
-typedef StringList *StorageInterfaceList(void *thisVoid, const String *path, StorageInterfaceListParam param);
-
-#define storageInterfaceListP(thisVoid, path, ...)                                                                                 \
-    STORAGE_COMMON_INTERFACE(thisVoid).list(thisVoid, path, (StorageInterfaceListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
@@ -148,11 +134,12 @@ typedef struct StorageInterfaceInfoListParam
 } StorageInterfaceInfoListParam;
 
 typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param);
+    void *thisVoid, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param);
 
-#define storageInterfaceInfoListP(thisVoid, path, callback, callbackData, ...)                                                     \
+#define storageInterfaceInfoListP(thisVoid, path, type, callback, callbackData, ...)                                               \
     STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
-        thisVoid, path, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+        thisVoid, path, type, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Remove a path (and optionally recurse)
@@ -247,7 +234,6 @@ typedef struct StorageInterface
     // Required functions
     StorageInterfaceInfo *info;
     StorageInterfaceInfoList *infoList;
-    StorageInterfaceList *list;
     StorageInterfaceNewRead *newRead;
     StorageInterfaceNewWrite *newWrite;
     StorageInterfacePathRemove *pathRemove;

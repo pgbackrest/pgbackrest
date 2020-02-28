@@ -113,6 +113,7 @@ typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *i
 typedef struct StorageInfoListParam
 {
     VAR_PARAM_HEADER;
+    StorageInfoType type;
     bool errorOnMissing;
     bool recurse;
     SortOrder sortOrder;
