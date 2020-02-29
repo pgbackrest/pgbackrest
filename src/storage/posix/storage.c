@@ -74,21 +74,22 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
         result.exists = true;
 
         // Currently basic is the only way this can be called
-        ASSERT(type >= storageInfoTypeBasic);
-
-        result.timeModified = statFile.st_mtime;
-
-        if (S_ISREG(statFile.st_mode))
+        if (type >= storageInfoTypeBasic)
         {
-            result.type = storageTypeFile;
-            result.size = (uint64_t)statFile.st_size;
+            result.timeModified = statFile.st_mtime;
+
+            if (S_ISREG(statFile.st_mode))
+            {
+                result.type = storageTypeFile;
+                result.size = (uint64_t)statFile.st_size;
+            }
+            else if (S_ISDIR(statFile.st_mode))
+                result.type = storageTypePath;
+            else if (S_ISLNK(statFile.st_mode))
+                result.type = storageTypeLink;
+            else
+                result.type = storageTypeSpecial;
         }
-        else if (S_ISDIR(statFile.st_mode))
-            result.type = storageTypePath;
-        else if (S_ISLNK(statFile.st_mode))
-            result.type = storageTypeLink;
-        else
-            result.type = storageTypeSpecial;
 
         if (type >= storageInfoTypeDetail)
         {
@@ -261,9 +262,8 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
             // Determine which file/path is missing
             if (errno == ENOENT)
             {
-                StorageInfo info = storageInterfaceInfoP(this, sourceFile, storageInfoTypeBasic, .followLink = true);
-
-                if (!info.exists || info.type != storageTypeFile)
+                // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
+                if (!storageInterfaceInfoP(this, sourceFile, storageInfoTypeExists).exists)
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))

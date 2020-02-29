@@ -7,13 +7,21 @@ Storage Info
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
-Storage info type
+Specify the amount of information required when calling functions that return StorageInfo
 ***********************************************************************************************************************************/
 typedef enum
 {
+    // The info type is determined by driver capabilities.  This mimics the prior behavior where drivers would always return as
+    // much information as they could.
     storageInfoTypeDefault = 0,
+
+    // Only test for existence.  All drivers support this type.
     storageInfoTypeExists,
+
+    // Basic information.  All drivers support this type.
     storageInfoTypeBasic,
+
+    // Detailed information that is generally only available from filesystems such as Posix
     storageInfoTypeDetail,
 } StorageInfoType;
 

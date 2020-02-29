@@ -448,14 +448,6 @@ testRun(void)
             storageMoveP(storageTest, source, destination), FileMissingError,
             "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
 
-        TEST_RESULT_VOID(storagePathCreateP(storageTest, sourceFile), "create path");
-
-        TEST_ERROR_FMT(
-            storageMoveP(storageTest, source, destination), FileMissingError,
-            "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
-
-        TEST_RESULT_VOID(storagePathRemoveP(storageTest, sourceFile), "remove path");
-
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, fileNoPerm);
 
