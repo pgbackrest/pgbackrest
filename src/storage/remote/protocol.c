@@ -31,7 +31,6 @@ STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COM
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR,             PROTOCOL_COMMAND_STORAGE_PATH_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR,               PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_REMOVE_STR,                  PROTOCOL_COMMAND_STORAGE_REMOVE);
@@ -344,13 +343,6 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 varUIntForce(varLstGet(paramList, 3)));
 
             protocolServerResponse(server, NULL);
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR))
-        {
-            // Not all drivers implement pathExists()
-            CHECK(interface.pathExists != NULL);
-
-            protocolServerResponse(server, VARBOOL(storageInterfacePathExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {

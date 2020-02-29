@@ -276,35 +276,6 @@ storageRemotePathCreate(
 
 /**********************************************************************************************************************************/
 static bool
-storageRemotePathExists(THIS_VOID, const String *path, StorageInterfacePathExistsParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-
-        result = varBool(protocolClientExecute(this->client, command, true));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-static bool
 storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
     THIS(StorageRemote);
@@ -399,7 +370,6 @@ static const StorageInterface storageInterfaceRemote =
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,
-    .pathExists = storageRemotePathExists,
     .pathRemove = storageRemotePathRemove,
     .pathSync = storageRemotePathSync,
     .remove = storageRemoteRemove,

@@ -832,17 +832,11 @@ storagePathExists(const Storage *this, const String *pathExp)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathExists != NULL);
+    ASSERT(storageFeature(this, storageFeaturePath));
 
-    bool result = false;
+    StorageInfo info = storageInfoP(this, pathExp, .type = storageInfoTypeBasic, .ignoreMissing = true, .followLink = true);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = storageInterfacePathExistsP(this->driver, storagePathP(this, pathExp));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, info.exists && info.type == storageTypePath);
 }
 
 /***********************************************************************************************************************************

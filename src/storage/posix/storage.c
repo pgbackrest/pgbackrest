@@ -387,39 +387,6 @@ storagePosixPathCreate(
 }
 
 /**********************************************************************************************************************************/
-static bool
-storagePosixPathExists(THIS_VOID,  const String *path, StorageInterfacePathExistsParam param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    bool result = false;
-
-    // Attempt to stat the file to determine if it exists
-    struct stat statPath;
-
-    // Any error other than entry not found should be reported
-    if (stat(strPtr(path), &statPath) == -1)
-    {
-        if (errno != ENOENT)
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_INFO, strPtr(path));
-    }
-    // Else found
-    else
-        result = S_ISDIR(statPath.st_mode);
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 typedef struct StoragePosixPathRemoveData
 {
     StoragePosix *driver;                                           // Driver
@@ -590,7 +557,6 @@ static const StorageInterface storageInterfacePosix =
     .newRead = storagePosixNewRead,
     .newWrite = storagePosixNewWrite,
     .pathCreate = storagePosixPathCreate,
-    .pathExists = storagePosixPathExists,
     .pathRemove = storagePosixPathRemove,
     .pathSync = storagePosixPathSync,
     .remove = storagePosixRemove,

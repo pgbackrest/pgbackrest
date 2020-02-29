@@ -199,18 +199,6 @@ typedef void StorageInterfacePathCreate(
         thisVoid, path, errorOnExists, noParentCreate, mode, (StorageInterfacePathCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Does a path exist?
-typedef struct StorageInterfacePathExistsParam
-{
-    VAR_PARAM_HEADER;
-} StorageInterfacePathExistsParam;
-
-typedef bool StorageInterfacePathExists(void *thisVoid, const String *path, StorageInterfacePathExistsParam param);
-
-#define storageInterfacePathExistsP(thisVoid, path, ...)                                                                           \
-    STORAGE_COMMON_INTERFACE(thisVoid).pathExists(thisVoid, path, (StorageInterfacePathExistsParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
 // Sync a path
 typedef struct StorageInterfacePathSyncParam
 {
@@ -241,7 +229,6 @@ typedef struct StorageInterface
     // Optional functions
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
-    StorageInterfacePathExists *pathExists;
     StorageInterfacePathSync *pathSync;
 } StorageInterface;
 

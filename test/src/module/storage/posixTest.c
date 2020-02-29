@@ -108,7 +108,7 @@ testRun(void)
             storageExistsP(storageTest, fileNoPerm), FileOpenError,
             "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
         TEST_ERROR_FMT(
-            storagePathExistsP(storageTest, fileNoPerm), PathOpenError,
+            storagePathExistsP(storageTest, fileNoPerm), FileOpenError,
             "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------

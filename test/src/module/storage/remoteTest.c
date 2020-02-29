@@ -83,20 +83,6 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
-    // Do these tests against a pg remote for coverage
-    // *****************************************************************************************************************************
-    if (testBegin("storageExists()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storagePgGet(1, false), "get remote pg storage");
-        storagePathCreateP(storageTest, strNew("pg"));
-
-        TEST_RESULT_BOOL(storageExistsP(storageRemote, strNew("test.txt")), false, "file does not exist");
-
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TEST"));
-        TEST_RESULT_BOOL(storageExistsP(storageRemote, strNew("test.txt")), true, "file exists");
-    }
-
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
@@ -244,6 +230,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with a file");
 
+        // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
+        // id has already been created.  This will just test that the pg storage is selected to provide coverage.
         cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
         cfgOptionValidSet(cfgOptRemoteType, true);
 
@@ -323,26 +311,6 @@ testRun(void)
             "check result");
 
         bufUsedSet(serverWrite, 0);
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storageList()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateP(storageTest, strNew("repo"));
-
-        TEST_RESULT_PTR(storageListP(storageRemote, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
-        TEST_RESULT_UINT(strLstSize(storageListP(storageRemote, NULL)), 0, "empty list for missing dir");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("repo/testy"));
-        TEST_RESULT_STR_Z(strLstJoin(storageListP(storageRemote, NULL), ","), "testy" , "list path");
-
-        storagePathCreateP(storageTest, strNew("repo/testy2\""));
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ","),
-            "testy,testy2\"" , "list 2 paths");
     }
 
     // *****************************************************************************************************************************
@@ -621,28 +589,6 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp")))), "", "check file");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storagePathExists()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateP(storageTest, strNew("repo"));
-
-        TEST_RESULT_BOOL(storagePathExistsP(storageRemote, strNew("missing")), false, "path does not exist");
-        TEST_RESULT_BOOL(storagePathExistsP(storageRemote, NULL), true, "path exists");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR, paramList, server), true, "protocol path exists");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
