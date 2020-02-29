@@ -61,7 +61,6 @@ testRun(void)
         TEST_RESULT_PTR(regExpPrefix(strNew("ABC")), NULL, "expression without begin anchor has no prefix");
         TEST_RESULT_PTR(regExpPrefix(strNew("^.")), NULL, "expression with no regular character has no prefix");
 
-        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC^")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC$")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC*")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC+")), "ABC", "prefix stops at special character");
@@ -73,6 +72,11 @@ testRun(void)
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC ")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC|")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC\\")), "ABC", "prefix stops at special character");
+
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC^")), NULL, "no prefix when more than one begin anchor");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC|^DEF")), NULL, "no prefix when more than one begin anchor");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC[^DEF]")), "ABC", "prefix when ^ used for exclusion");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC\\^DEF]")), "ABC", "prefix when ^ is escaped");
 
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABCDEF")), "ABCDEF", "prefix is entire expression");
     }
