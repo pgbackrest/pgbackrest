@@ -204,13 +204,13 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("protocol output that is not tested elsewhere");
+        TEST_TITLE("protocol output that is not tested elsewhere (basic)");
 
-        info = (StorageInfo){.type = storageTypeLink, .linkDestination = STRDEF("../")};
+        info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
         TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
         ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -219,7 +219,7 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(BOGUS_STR));
-        varLstAdd(paramList, varNewUInt(storageInfoTypeBasic));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
@@ -228,7 +228,7 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check protocol function directly with a file");
+        TEST_TITLE("check protocol function directly with a file (basic level)");
 
         // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
         // id has already been created.  This will just test that the pg storage is selected to provide coverage.
@@ -237,7 +237,7 @@ testRun(void)
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
-        varLstAdd(paramList, varNewUInt(storageInfoTypeDetail));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
@@ -245,7 +245,26 @@ testRun(void)
             strNewBuf(serverWrite),
             hrnReplaceKey(
                 "{\"out\":true}\n"
-                ".f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
+                ".f\n.1555160001\n.6\n"
+                "{}\n"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file (detail level)");
+
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
+        varLstAdd(paramList, varNewBool(false));
+
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            hrnReplaceKey(
+                "{\"out\":true}\n"
+                ".f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 "{}\n"),
             "check result");
 
@@ -298,14 +317,14 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
-        varLstAdd(paramList, varNewUInt(storageInfoTypeDetail));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
-                ".\".\"\n.p\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n.1555160000\n"
-                ".\"test\"\n.f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
+                ".\".\"\n.p\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
+                ".\"test\"\n.f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 ".\n"
                 "{\"out\":true}\n"),
             "check result");

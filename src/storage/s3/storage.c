@@ -531,21 +531,21 @@ storageS3ListInternal(
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
+storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, level);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    StorageInfo result = {0};
+    StorageInfo result = {.level = level};
 
     // Attempt to get file info
     StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
@@ -556,7 +556,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterf
         result.exists = true;
 
         // Currently basic is the only way this can be called
-        ASSERT(type >= storageInfoTypeBasic);
+        ASSERT(result.level >= storageInfoLevelBasic);
 
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
@@ -569,7 +569,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoType type, StorageInterf
 /**********************************************************************************************************************************/
 typedef struct StorageS3InfoListData
 {
-    StorageInfoType type;                                           // Amount of info to set
+    StorageInfoLevel level;                                         // Level of info to set
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
@@ -614,7 +614,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
         .exists = true,
     };
 
-    if (data->type >= storageInfoTypeBasic)
+    if (data->level >= storageInfoLevelBasic)
     {
         info.type = type;
         info.size = type == storageTypeFile ?
@@ -630,7 +630,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
 static bool
 storageS3InfoList(
-    THIS_VOID, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
     StorageInterfaceInfoListParam param)
 {
     THIS(StorageS3);
@@ -638,6 +638,7 @@ storageS3InfoList(
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(STRING, param.expression);
@@ -649,7 +650,7 @@ storageS3InfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageS3InfoListData data = {.type = type, .callback = callback, .callbackData = callbackData};
+        StorageS3InfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
         storageS3ListInternal(this, path, param.expression, false, storageS3InfoListCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();

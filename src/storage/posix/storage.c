@@ -44,21 +44,21 @@ struct StoragePosix
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInterfaceInfoParam param)
+storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    StorageInfo result = {0};
+    StorageInfo result = {.level = level};
 
     // Attempt to stat the file
     struct stat statFile;
@@ -74,7 +74,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
         result.exists = true;
 
         // Currently basic is the only way this can be called
-        if (type >= storageInfoTypeBasic)
+        if (result.level >= storageInfoLevelBasic)
         {
             result.timeModified = statFile.st_mtime;
 
@@ -91,7 +91,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
                 result.type = storageTypeSpecial;
         }
 
-        if (type >= storageInfoTypeDetail)
+        if (result.level >= storageInfoLevelDetail)
         {
             result.groupId = statFile.st_gid;
             result.group = groupNameFromId(result.groupId);
@@ -122,14 +122,14 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoType type, StorageInt
 // get complete test coverage this function must be split out.
 static void
 storagePosixInfoListEntry(
-    StoragePosix *this, const String *path, const String *name, StorageInfoType type, StorageInfoListCallback callback,
+    StoragePosix *this, const String *path, const String *name, StorageInfoLevel level, StorageInfoListCallback callback,
     void *callbackData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_POSIX, this);
         FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(ENUM, level);
         FUNCTION_TEST_PARAM(FUNCTIONP, callback);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
     FUNCTION_TEST_END();
@@ -140,7 +140,7 @@ storagePosixInfoListEntry(
     ASSERT(callback != NULL);
 
     StorageInfo storageInfo = storageInterfaceInfoP(
-        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name)), type);
+        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name)), level);
 
     if (storageInfo.exists)
     {
@@ -153,7 +153,7 @@ storagePosixInfoListEntry(
 
 static bool
 storagePosixInfoList(
-    THIS_VOID, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
     StorageInterfaceInfoListParam param)
 {
     THIS(StoragePosix);
@@ -161,7 +161,7 @@ storagePosixInfoList(
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
@@ -203,13 +203,13 @@ storagePosixInfoList(
                     {
                         // If only making a list of files that exist then no need to go get detailed info which requires calling
                         // stat() and is therefore relatively slow
-                        if (type == storageInfoTypeExists)
+                        if (level == storageInfoLevelExists)
                         {
-                            callback(callbackData, &(StorageInfo){.name = name, .exists = true});
+                            callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
                         }
                         // Else more info is required which requires a call to stat()
                         else
-                            storagePosixInfoListEntry(this, path, name, type, callback, callbackData);
+                            storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
                     }
 
                     // Get next entry
@@ -263,7 +263,7 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
             if (errno == ENOENT)
             {
                 // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
-                if (!storageInterfaceInfoP(this, sourceFile, storageInfoTypeExists).exists)
+                if (!storageInterfaceInfoP(this, sourceFile, storageInfoLevelExists).exists)
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
@@ -456,7 +456,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
             };
 
             // Remove all sub paths/files
-            storageInterfaceInfoListP(this, path, storageInfoTypeExists, storagePosixPathRemoveCallback, &data);
+            storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
         }
 
         // Delete the path

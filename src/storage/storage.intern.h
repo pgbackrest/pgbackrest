@@ -59,10 +59,11 @@ typedef struct StorageInterfaceInfoParam
     bool followLink;
 } StorageInterfaceInfoParam;
 
-typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, StorageInfoType type, StorageInterfaceInfoParam param);
+typedef StorageInfo StorageInterfaceInfo(
+    void *thisVoid, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param);
 
-#define storageInterfaceInfoP(thisVoid, file, type, ...)                                                                           \
-    STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, type, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceInfoP(thisVoid, file, level, ...)                                                                          \
+    STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, level, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
@@ -133,12 +134,12 @@ typedef struct StorageInterfaceInfoListParam
 } StorageInterfaceInfoListParam;
 
 typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoType type, StorageInfoListCallback callback, void *callbackData,
+    void *thisVoid, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
     StorageInterfaceInfoListParam param);
 
-#define storageInterfaceInfoListP(thisVoid, path, type, callback, callbackData, ...)                                               \
+#define storageInterfaceInfoListP(thisVoid, path, level, callback, callbackData, ...)                                              \
     STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
-        thisVoid, path, type, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+        thisVoid, path, level, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Remove a path (and optionally recurse)
