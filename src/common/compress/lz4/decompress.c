@@ -93,6 +93,7 @@ lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
     }
     else
     {
+        // Decompress as much data as possible
         size_t srcSize = bufUsed(compressed) - this->inputOffset;
         size_t dstSize = bufRemains(decompressed);
 
@@ -102,11 +103,13 @@ lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
 
         bufUsedInc(decompressed, dstSize);
 
+        // If the compressed data was not fully processed then update the offset and set inputSame
         if (srcSize < bufUsed(compressed) - this->inputOffset)
         {
             this->inputOffset += srcSize;
             this->inputSame = true;
         }
+        // Else all compressed data was processed
         else
         {
             this->inputOffset = 0;
@@ -170,10 +173,10 @@ lz4DecompressNew(void)
             .memContext = MEM_CONTEXT_NEW(),
         };
 
-        // Create lz4 stream
+        // Create lz4 context
         lz4Error(LZ4F_createDecompressionContext(&driver->context, LZ4F_VERSION));
 
-        // Set free callback to ensure lz4 context is freed
+        // Set callback to ensure lz4 context is freed
         memContextCallbackSet(driver->memContext, lz4DecompressFreeResource, driver);
 
         // Create filter interface

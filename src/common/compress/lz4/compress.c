@@ -76,9 +76,9 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 /***********************************************************************************************************************************
 Compress data
 ***********************************************************************************************************************************/
-// Helper to return a buffer where output will be written.  If there is enought space in the provided output buffer then use it,
+// Helper to return a buffer where output will be written.  If there is enough space in the provided output buffer then use it,
 // otherwise allocate an internal buffer the hold the compressed data.  Once we start using the internal buffer we'll need to
-// continue using it until it is flushed.
+// continue using it until it is completely flushed.
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 {
@@ -103,9 +103,9 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
     FUNCTION_TEST_RETURN(result);
 }
 
-// Helper to copy data to compressed buffer
+// Helper to flush output data to compressed buffer
 static void
-lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
+lz4CompressFlush(Lz4Compress *this, Buffer *output, Buffer *compressed)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
@@ -113,7 +113,7 @@ lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
         FUNCTION_TEST_PARAM(BUFFER, compressed);
     FUNCTION_TEST_END();
 
-    // The compressed buffer can hold all the output
+    // If the compressed buffer can hold all the output
     if (bufRemains(compressed) >= bufUsed(output))
     {
         bufCat(compressed, output);
@@ -121,7 +121,7 @@ lz4CompressCopy(Lz4Compress *this, Buffer *output, Buffer *compressed)
 
         this->inputSame = false;
     }
-    // Else copy as much as possible and set inputSame to copy more once the compressed buffer has been flushed
+    // Else flush as much as possible and set inputSame to flush more once the compressed buffer has been emptied
     else
     {
         size_t catSize = bufRemains(compressed);
@@ -153,10 +153,10 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     ASSERT(compressed != NULL);
     ASSERT(!this->flushing || uncompressed == NULL);
 
-    // Copy overflow output to the compressed buffer
+    // Flush overflow output to the compressed buffer
     if (this->inputSame)
     {
-        lz4CompressCopy(this, this->buffer, compressed);
+        lz4CompressFlush(this, this->buffer, compressed);
     }
     else
     {
@@ -193,9 +193,9 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
             this->flushing = true;
         }
 
-        // If the output buffer was allocated locally it will need to be copied to the compressed buffer
+        // If the output buffer was allocated locally it will need to be flushed to the compressed buffer
         if (output != compressed)
-            lz4CompressCopy(this, output, compressed);
+            lz4CompressFlush(this, output, compressed);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -264,7 +264,7 @@ lz4CompressNew(int level)
         // Create lz4 context
         lz4Error(LZ4F_createCompressionContext(&driver->context, LZ4F_VERSION));
 
-        // Set free callback to ensure lz4 context is freed
+        // Set callback to ensure lz4 context is freed
         memContextCallbackSet(driver->memContext, lz4CompressFreeResource, driver);
 
         // Create param list
