@@ -43,6 +43,14 @@
         <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link>. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
+!!!
+
+*
+
+* Before starting work on an existing on an issue create a card for it an move to "in progress".
+* If only a card exists then move it to "in progress" and covert the card to an issue (or reopen the original issues if it was closed when the card was created).
+* When submitting a PR link it to the original issue.
+
     <!-- ======================================================================================================================= -->
     <section id="environment">
         <title>Building a Development Environment</title>
