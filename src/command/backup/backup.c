@@ -398,11 +398,11 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
                     strPtr(manifestData(result)->backrestVersion));
 
-                // Warn if compress option changed
+                // Warn if compress-type option changed
                 if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
-                        "%s backup cannot alter compress option to '%s', reset to value in %s",
+                        "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
                         strPtr(cfgOptionStr(cfgOptType)),
                         strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))), strPtr(backupLabelPrior));
 

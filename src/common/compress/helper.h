@@ -31,7 +31,8 @@ typedef enum
 
 /***********************************************************************************************************************************
 Compression types as a regexp. Ideally this would be generated automatically at build time from the known compression types but
-there shouldn't be a lot of churn, so just define it statically.
+there shouldn't be a lot of churn, so just define it statically.  If a supported type is not in this list then it should cause an
+integration test to fail.
 ***********************************************************************************************************************************/
 #define COMPRESS_TYPE_REGEXP                                        "(\\.gz|\\.lz4|\\.zst|\\.xz|\\.bz2)"
 
@@ -69,11 +70,5 @@ void compressExtCat(String *file, CompressType type);
 
 // Remove the specified compression extension. Error when the extension is not correct.
 String *compressExtStrip(const String *file, CompressType type);
-
-/***********************************************************************************************************************************
-Internal Functions
-***********************************************************************************************************************************/
-// Default compression level for a compression type, used while loading the configuration
-int compressLevelDefault(CompressType type);
 
 #endif
