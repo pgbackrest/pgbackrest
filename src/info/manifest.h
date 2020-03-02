@@ -68,8 +68,8 @@ typedef struct ManifestData
     const Variant *backupOptionBufferSize;                          // Buffer size used for file/protocol operations
     const Variant *backupOptionChecksumPage;                        // Will page checksums be verified?
     CompressType backupOptionCompressType;                          // Compression type used for the backup
-    const Variant *backupOptionCompressLevel;                       // Level to use for compression (if type not none)
-    const Variant *backupOptionCompressLevelNetwork;                // Level to use for network compression
+    const Variant *backupOptionCompressLevel;                       // Level used for compression (if type not none)
+    const Variant *backupOptionCompressLevelNetwork;                // Level used for network compression
     const Variant *backupOptionDelta;                               // Will a checksum delta be performed?
     bool backupOptionHardLink;                                      // Will hardlinks be created in the backup?
     bool backupOptionOnline;                                        // Will an online backup be performed?

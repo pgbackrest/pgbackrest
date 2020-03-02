@@ -130,7 +130,7 @@
 
                         <text>Backup files are compatible with command-line compression tools.
 
-                        This option is now deprecated. The <setting>compress-type</setting> should be used instead.</text>
+                        This option is now deprecated. The <setting>compress-type</setting> option should be used instead.</text>
 
                         <example>n</example>
                     </config-key>

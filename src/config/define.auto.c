@@ -645,7 +645,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Backup files are compatible with command-line compression tools.\n"
             "\n"
-            "This option is now deprecated. The compress-type should be used instead."
+            "This option is now deprecated. The compress-type option should be used instead."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
