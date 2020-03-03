@@ -214,7 +214,6 @@ pageLsn(const unsigned char *page)
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
     FUNCTION_TEST_END();
 
-    // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
     FUNCTION_TEST_RETURN((uint64_t)((PageHeader)page)->pd_lsn.walid << 32 | ((PageHeader)page)->pd_lsn.xrecoff);
 }
 
