@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 PostgreSQL Types
 
+Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+Portions Copyright (c) 1994, Regents of the University of California
+
 Despite the .auto.h suffix this file is not automatically generated, though it could be.  We use this suffix to emphasize that the
 types have been copied from PostgreSQL and to exclude this file from project code counts.
 
