@@ -390,8 +390,8 @@ typedef struct StorageInfoListData
     const Storage *storage;                                         // Storage object;
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
-    const String *expressionStr;                                    // Filter string
-    RegExp *expression;                                             // Filter for names
+    const String *expression;                                       // Filter for names
+    RegExp *regExp;                                                 // Compiled filter for names
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
@@ -425,7 +425,7 @@ storageInfoListCallback(void *data, const StorageInfo *info)
         infoUpdate.name = strNewFmt("%s/%s", strPtr(listData->subPath), strPtr(infoUpdate.name));
 
     // Only continue if there is no expression or the expression matches
-    if (listData->expression == NULL || regExpMatch(listData->expression, infoUpdate.name))
+    if (listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name))
     {
         if (listData->sortOrder != sortOrderDesc)
             listData->callbackFunction(listData->callbackData, &infoUpdate);
@@ -437,7 +437,7 @@ storageInfoListCallback(void *data, const StorageInfo *info)
             data.subPath = infoUpdate.name;
 
             storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expressionStr,
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expression,
                 data.sortOrder, storageInfoListCallback, &data);
         }
 
@@ -488,14 +488,14 @@ storageInfoList(
                 .storage = this,
                 .callbackFunction = callback,
                 .callbackData = callbackData,
-                .expressionStr = param.expression,
+                .expression = param.expression,
                 .sortOrder = param.sortOrder,
                 .recurse = param.recurse,
                 .path = path,
             };
 
-            if (data.expressionStr != NULL)
-                data.expression = regExpNew(param.expression);
+            if (data.expression != NULL)
+                data.regExp = regExpNew(param.expression);
 
             result = storageInfoListSort(
                 this, path, param.level, param.expression, param.sortOrder, storageInfoListCallback, &data);
