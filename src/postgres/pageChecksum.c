@@ -70,44 +70,8 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 #include "common/error.h"
 #include "common/log.h"
 #include "postgres/interface.h"
+#include "postgres/interface/static.auto.h"
 #include "postgres/pageChecksum.h"
-
-/***********************************************************************************************************************************
-For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
-***********************************************************************************************************************************/
-typedef struct
-{
-    uint32_t walid;                                                 // high bits
-    uint32_t xrecoff;                                               // low bits
-} PageWalRecPtr;
-
-/***********************************************************************************************************************************
-Space management information generic to any page.  Only values required for pgBackRest are represented here.
-
-    pd_lsn - identifies wal record for last change to this page.
-    pd_checksum - page checksum, if set.
-
-The LSN is used by the buffer manager to enforce the basic rule of WAL: "thou shalt write wal before data".  A dirty buffer cannot
-be dumped to disk until wal has been flushed at least as far as the page's LSN.
-
-pd_checksum stores the page checksum, if it has been set for this page; zero is a valid value for a checksum. If a checksum is not
-in use then we leave the field unset. This will typically mean the field is zero though non-zero values may also be present if
-databases have been pg_upgraded from releases prior to 9.3, when the same byte offset was used to store the current timelineid when
-the page was last updated. Note that there is no indication on a page as to whether the checksum is valid or not, a deliberate
-design choice which avoids the problem of relying on the page contents to decide whether to verify it. Hence there are no flag bits
-relating to checksums.
-***********************************************************************************************************************************/
-typedef struct PageHeaderData
-{
-    // LSN is member of *any* block, not only page-organized ones
-    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
-    uint16_t pd_checksum;                                           // checksum
-    uint16_t pd_flags;                                              // flag bits, see below
-    uint16_t pd_lower;                                              // offset to start of free space
-    uint16_t pd_upper;                                              // offset to end of free space
-} PageHeaderData;
-
-typedef PageHeaderData *PageHeader;
 
 /***********************************************************************************************************************************
 pageChecksumBlock - block checksum algorithm
@@ -214,7 +178,7 @@ pageLsn(const unsigned char *page)
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN((uint64_t)((PageHeader)page)->pd_lsn.walid << 32 | ((PageHeader)page)->pd_lsn.xrecoff);
+    FUNCTION_TEST_RETURN((uint64_t)((PageHeader)page)->pd_lsn.xlogid << 32 | ((PageHeader)page)->pd_lsn.xrecoff);
 }
 
 /***********************************************************************************************************************************
@@ -238,7 +202,7 @@ pageChecksumTest(
         // This is a new page so don't test checksum
         ((PageHeader)page)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn
-        (((PageHeader)page)->pd_lsn.walid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
+        (((PageHeader)page)->pd_lsn.xlogid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
         // Checksum is valid if a full page
         (pageSize == PG_PAGE_SIZE_DEFAULT && ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize)));
 }

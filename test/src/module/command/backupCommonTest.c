@@ -5,26 +5,8 @@ Test Common Functions and Definitions for Backup and Expire Commands
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "postgres/interface.h"
+#include "postgres/interface/static.auto.h"
 #include "storage/posix/storage.h"
-
-/***********************************************************************************************************************************
-Need these structures to mock up test data
-***********************************************************************************************************************************/
-typedef struct
-{
-    uint32_t walid;                                                 // high bits
-    uint32_t xrecoff;                                               // low bits
-} PageWalRecPtr;
-
-typedef struct PageHeaderData
-{
-    // LSN is member of *any* block, not only page-organized ones
-    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
-    uint16_t pd_checksum;                                           // checksum
-    uint16_t pd_flags;                                              // flag bits, see below
-    uint16_t pd_lower;                                              // offset to start of free space
-    uint16_t pd_upper;                                              // offset to end of free space
-} PageHeaderData;
 
 /***********************************************************************************************************************************
 Test Run
@@ -150,9 +132,9 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
-                .walid = 0xF0F0F0F0,
+                .xlogid = 0xF0F0F0F0,
                 .xrecoff = 0xF0F0F0F0,
             },
         };
@@ -183,9 +165,9 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
-                .walid = 0xF0F0F0F0,
+                .xlogid = 0xF0F0F0F0,
                 .xrecoff = 0xF0F0F0F0,
             },
         };
@@ -194,9 +176,9 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
-                .walid = 0xFACEFACE,
+                .xlogid = 0xFACEFACE,
                 .xrecoff = 0x00000000,
             },
         };
@@ -205,7 +187,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
                 .xrecoff = 0x2,
             },
@@ -215,7 +197,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
                 .xrecoff = 0x3,
             },
@@ -225,7 +207,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
                 .xrecoff = 0x4,
             },
@@ -238,7 +220,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
                 .xrecoff = 0x6,
             },
@@ -248,7 +230,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)) = (PageHeaderData)
         {
             .pd_upper = 0x01,
-            .pd_lsn = (PageWalRecPtr)
+            .pd_lsn = (PageXLogRecPtr)
             {
                 .xrecoff = 0x7,
             },

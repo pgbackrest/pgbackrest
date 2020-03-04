@@ -67,7 +67,7 @@ testRun(void)
             pageChecksumTest(testPage(0), 9999, TEST_PAGE_SIZE, 0xFFFF, 0xFFFF), false, "badchecksum, page 9999");
 
         // Update LSNs and check that page checksums past the ignore limits are successful
-        ((PageHeader)testPage(0))->pd_lsn.walid = 0x8888;
+        ((PageHeader)testPage(0))->pd_lsn.xlogid = 0x8888;
         ((PageHeader)testPage(0))->pd_lsn.xrecoff = 0x8888;
 
         TEST_RESULT_UINT(pageLsn(testPage(0)), 0x0000888800008888, "check page lsn");
