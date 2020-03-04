@@ -13,8 +13,5 @@ uint16_t pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned 
 uint64_t pageLsn(const unsigned char *page);
 bool pageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset);
-bool pageChecksumBufferTest(
-    const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
-    uint32_t ignoreWalId, uint32_t ignoreWalOffset);
 
 #endif

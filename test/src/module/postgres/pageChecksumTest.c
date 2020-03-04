@@ -80,51 +80,5 @@ testRun(void)
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8889, 0x8889), false, "bad checksum before ignore limit");
     }
 
-    // *****************************************************************************************************************************
-    if (testBegin("pageChecksumBufferTest()"))
-    {
-        // Check that assertion fails if page buffer and page size are not divisible
-        TEST_ERROR(
-            pageChecksumBufferTest(testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE - 1, 0, TEST_PAGE_SIZE, 0, 0),
-            AssertError, "assertion 'pageBufferSize % pageSize == 0' failed");
-
-        // Create pages that will pass the test (starting with block 0)
-        for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
-        {
-            // Don't fill with zero because zeroes will succeed on the pd_upper check
-            memset(testPage(pageIdx), 0x77, TEST_PAGE_SIZE);
-
-            ((PageHeader)testPage(pageIdx))->pd_checksum = pageChecksum(testPage(pageIdx), pageIdx, TEST_PAGE_SIZE);
-        }
-
-        TEST_RESULT_BOOL(
-            pageChecksumBufferTest(testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE, 0, TEST_PAGE_SIZE, 0xFFFFFFFF, 0xFFFFFFFF),
-            true, "valid page buffer starting at block 0");
-
-        // Create pages that will pass the test (beginning with block <> 0)
-        unsigned int blockBegin = 999;
-
-        for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
-        {
-            ((PageHeader)testPage(pageIdx))->pd_checksum = pageChecksum(
-                    testPage(pageIdx), pageIdx + blockBegin, TEST_PAGE_SIZE);
-        }
-
-        TEST_RESULT_BOOL(
-            pageChecksumBufferTest(
-                testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE, blockBegin, TEST_PAGE_SIZE, 0xFFFFFFFF, 0xFFFFFFFF),
-            true, "valid page buffer starting at block 999");
-
-        // Break the checksum for a page and make sure it is found
-        unsigned int pageInvalid = 7;
-        ASSERT(pageInvalid < TEST_PAGE_TOTAL);
-        ((PageHeader)testPage(pageInvalid))->pd_checksum = 0xEEEE;
-
-        TEST_RESULT_BOOL(
-            pageChecksumBufferTest(
-                testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE, blockBegin, TEST_PAGE_SIZE, 0xFFFFFFFF, 0xFFFFFFFF),
-            false, "invalid page buffer");
-    }
-
     FUNCTION_HARNESS_RESULT_VOID();
 }
