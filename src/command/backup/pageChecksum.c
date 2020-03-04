@@ -99,7 +99,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             unsigned int pageNo = this->pageNoOffset + pageIdx;
             size_t pageSize = this->align || pageIdx < pageTotal - 1 ? this->pageSize : pageRemainder;
 
-            if (!pageChecksumTest(
+            if (!pgPageChecksumTest(
                     pagePtr, pageNo, (unsigned int)pageSize, (unsigned int)(this->lsnLimit >> 32),
                     (unsigned int)(this->lsnLimit & 0xFFFFFFFF)))
             {
@@ -112,7 +112,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                     // Add page number and lsn to the error list
                     VariantList *pair = varLstNew();
                     varLstAdd(pair, varNewUInt(pageNo));
-                    varLstAdd(pair, varNewUInt64(pageLsn(pagePtr)));
+                    varLstAdd(pair, varNewUInt64(pgPageLsn(pagePtr)));
                     varLstAdd(this->error, varNewVarLst(pair));
                 }
                 MEM_CONTEXT_END();

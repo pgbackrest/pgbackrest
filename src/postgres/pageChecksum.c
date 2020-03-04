@@ -142,7 +142,7 @@ The checksum includes the block number (to detect the case where a page is someh
 (excluding the checksum itself), and the page data.
 ***********************************************************************************************************************************/
 uint16_t
-pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
+pgPageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
@@ -172,7 +172,7 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
 Return the lsn for a page
 ***********************************************************************************************************************************/
 uint64_t
-pageLsn(const unsigned char *page)
+pgPageLsn(const unsigned char *page)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
@@ -185,7 +185,7 @@ pageLsn(const unsigned char *page)
 pageChecksumTest - test if checksum is valid for a single page
 ***********************************************************************************************************************************/
 bool
-pageChecksumTest(
+pgPageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     FUNCTION_TEST_BEGIN();
@@ -204,5 +204,5 @@ pageChecksumTest(
         // LSN is after the backup started so checksum is not tested because pages may be torn
         (((PageHeader)page)->pd_lsn.xlogid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
         // Checksum is valid if a full page
-        (pageSize == PG_PAGE_SIZE_DEFAULT && ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize)));
+        (pageSize == PG_PAGE_SIZE_DEFAULT && ((PageHeader)page)->pd_checksum == pgPageChecksum(page, blockNo, pageSize)));
 }

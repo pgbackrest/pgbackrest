@@ -74,7 +74,7 @@ my $rhExport =
     'checksum' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            pageChecksum
+            pgPageChecksum
         )],
     },
 

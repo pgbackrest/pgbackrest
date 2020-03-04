@@ -78,7 +78,7 @@ sub libcAutoExportTag
     {
         checksum =>
         [
-            'pageChecksum',
+            'pgPageChecksum',
         ],
 
         config =>
