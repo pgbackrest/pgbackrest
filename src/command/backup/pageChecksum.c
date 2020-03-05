@@ -95,6 +95,10 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     {
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
+            // Get a non-const pointer which is required by pgPageChecksumTest() below. ??? This is not entirely kosher since we are
+            // being passed a const buffer and we should deinitely not be modifying the contents.  When pgPageChecksumTest() returns
+            // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
+            // before passing it into pgPageChecksumTest()?
             unsigned char *pagePtr = bufPtr(input) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
             unsigned int pageNo = this->pageNoOffset + pageIdx;
             size_t pageSize = this->align || pageIdx < pageTotal - 1 ? PG_PAGE_SIZE_DEFAULT : pageRemainder;

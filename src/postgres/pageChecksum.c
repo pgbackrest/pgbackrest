@@ -101,7 +101,7 @@ do { \
 } while (0)
 
 static uint32_t
-pageChecksumBlock(const unsigned char *page)
+pageChecksumBlock(unsigned char *page)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
@@ -141,7 +141,7 @@ The checksum includes the block number (to detect the case where a page is someh
 (excluding the checksum itself), and the page data.
 ***********************************************************************************************************************************/
 uint16_t
-pgPageChecksum(const unsigned char *page, unsigned int blockNo)
+pgPageChecksum(unsigned char *page, unsigned int blockNo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
@@ -184,7 +184,7 @@ pageChecksumTest - test if checksum is valid for a single page
 ***********************************************************************************************************************************/
 bool
 pgPageChecksumTest(
-    const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
+    unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, page);
