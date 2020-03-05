@@ -113,7 +113,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0};
 
         IoWrite *write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -143,10 +143,7 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(
-                varVarLst(
-                    jsonToVar(
-                        strNewFmt("[0,%u,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)))));
+            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -237,8 +234,7 @@ testRun(void)
         };
 
         write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -256,8 +252,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
         write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -275,8 +270,7 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
         write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");

@@ -1284,7 +1284,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0, 0), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1306,7 +1306,7 @@ testRun(void)
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
 
         TEST_RESULT_UINT(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0, 0), 0, "log noop result");
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0), 0, "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }

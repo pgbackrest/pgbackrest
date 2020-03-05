@@ -49,7 +49,7 @@ sub pageBuild
     my $iWalOffset = shift;
 
     my $tPage = defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) . substr($tPageSource, 8) : $tPageSource;
-    my $iChecksum = pgPageChecksum($tPage, $iBlockNo, length($tPage));
+    my $iChecksum = pgPageChecksum($tPage, $iBlockNo);
 
     return substr($tPage, 0, 8) . pack('S', $iChecksum) . substr($tPage, 10);
 }
