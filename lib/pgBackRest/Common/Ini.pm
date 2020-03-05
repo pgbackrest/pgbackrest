@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
@@ -17,7 +18,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -563,7 +563,7 @@ sub hash
 
     # Set the new checksum
     $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
-        cryptoHashOne('sha1', JSON::PP->new()->canonical()->allow_nonref()->encode($self->{oContent}));
+        sha1_hex(JSON::PP->new()->canonical()->allow_nonref()->encode($self->{oContent}));
 
     return $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
 }

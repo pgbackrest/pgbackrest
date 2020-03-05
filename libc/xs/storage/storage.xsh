@@ -124,10 +124,6 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
                 varUInt64Force(varLstGet(paramList, 0)) ? cipherModeEncrypt : cipherModeDecrypt,
                 cipherType(varStr(varLstGet(paramList, 1))), BUFSTR(varStr(varLstGet(paramList, 2))), NULL));
     }
-    else if (strEqZ(filter, "pgBackRest::Storage::Filter::Sha"))
-    {
-        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-    }
     else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
     {
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -151,11 +147,7 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
 {
     const Variant *result;
 
-    if (strEqZ(filter, "pgBackRest::Storage::Filter::Sha"))
-    {
-        result = ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR);
-    }
-    else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
+    if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
     {
         result = ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR);
     }
@@ -182,11 +174,7 @@ storageFilterXsResultAll(const IoFilterGroup *filterGroup)
         const String *filter = varStr(varLstGet(filterList, filterIdx));
         const String *filterPerl = NULL;
 
-        if (strEq(filter, CRYPTO_HASH_FILTER_TYPE_STR))
-        {
-            filterPerl = strNew("pgBackRest::Storage::Filter::Sha");
-        }
-        else if (strEq(filter, SIZE_FILTER_TYPE_STR))
+        if (strEq(filter, SIZE_FILTER_TYPE_STR))
         {
             filterPerl = strNew("pgBackRest::Common::Io::Handle");
         }

@@ -9,6 +9,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA qw(sha1_hex);
 use File::Basename qw(dirname);
 use Fcntl qw(:mode);
 use File::stat qw{lstat};
@@ -172,17 +173,20 @@ sub hashSize
     my $lSize;
 
     # Is this an IO object or a file expression?
-    my $oFileIo = ref($xFileExp) ? $xFileExp : $self->openRead($xFileExp, {bIgnoreMissing => $bIgnoreMissing});
+    my $rtContent = $self->get($xFileExp, {bIgnoreMissing => $bIgnoreMissing});
 
-    # Add size and sha filters
-    $oFileIo->{oStorageCRead}->filterAdd(COMMON_IO_HANDLE, undef);
-    $oFileIo->{oStorageCRead}->filterAdd(STORAGE_FILTER_SHA, undef);
-
-    # Read the file and set results if it exists
-    if ($self->{oStorageC}->readDrain($oFileIo->{oStorageCRead}))
+    if (defined($rtContent))
     {
-        $strHash = $oFileIo->result(STORAGE_FILTER_SHA);
-        $lSize = $oFileIo->result(COMMON_IO_HANDLE);
+        if (defined($$rtContent))
+        {
+            $strHash = sha1_hex($$rtContent);
+            $lSize = length($$rtContent);
+        }
+        else
+        {
+            $strHash = sha1_hex('');
+            $lSize = 0;
+        }
     }
 
     # Return from function and log return values if any

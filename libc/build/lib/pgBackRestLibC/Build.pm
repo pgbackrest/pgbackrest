@@ -94,13 +94,6 @@ my $rhExport =
         )],
     },
 
-    'crypto' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            cryptoHashOne
-        )],
-    },
-
     'debug' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(

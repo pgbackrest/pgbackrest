@@ -323,11 +323,6 @@ sub libcAutoExportTag
             'cfgOptionTotal',
         ],
 
-        crypto =>
-        [
-            'cryptoHashOne',
-        ],
-
         debug =>
         [
             'libcUvSize',
