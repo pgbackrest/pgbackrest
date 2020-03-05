@@ -27,10 +27,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgPageChecksum()"))
     {
-        // Checksum for 0x00 fill, page 0x00
-        memset(testPage(0), 0, PG_PAGE_SIZE_DEFAULT);
-        TEST_RESULT_U16_HEX(pgPageChecksum(testPage(0), 0), 0xC6AA, "check for 0x00 filled page, block 0");
-
         // Checksum for 0xFF fill, page 0x00
         memset(testPage(0), 0xFF, PG_PAGE_SIZE_DEFAULT);
         TEST_RESULT_U16_HEX(pgPageChecksum(testPage(0), 0), 0x0E1C, "check for 0xFF filled page, block 0");
