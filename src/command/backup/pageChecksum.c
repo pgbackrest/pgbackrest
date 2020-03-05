@@ -9,8 +9,8 @@ Page Checksum Filter
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
-#include "postgres/pageChecksum.h"
 #include "postgres/interface.h"
+#include "postgres/interface/static.auto.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -100,12 +100,22 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
             // before passing it into pgPageChecksumTest()?
             unsigned char *pagePtr = bufPtr(input) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
-            unsigned int pageNo = this->pageNoOffset + pageIdx;
-            size_t pageSize = this->align || pageIdx < pageTotal - 1 ? PG_PAGE_SIZE_DEFAULT : pageRemainder;
 
-            if (!pgPageChecksumTest(
-                    pagePtr, pageNo, (unsigned int)pageSize, (unsigned int)(this->lsnLimit >> 32),
-                    (unsigned int)(this->lsnLimit & 0xFFFFFFFF)))
+            // Get a pointer to the page header at the beginning of the page
+            const PageHeaderData *pageHeader = (const PageHeaderData *)pagePtr;
+
+            // Get the page lsn
+            uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
+
+            // Block number relative to all segments in the relation
+            unsigned int blockNo = this->pageNoOffset + pageIdx;
+
+            if (// This is a new page so don't test checksum
+                !(pageHeader->pd_upper == 0 ||
+                // LSN is after the backup started so checksum is not tested because pages may be torn
+                pageLsn >= this->lsnLimit ||
+                // Checksum is valid if a full page
+                ((this->align || pageIdx < pageTotal - 1) && pageHeader->pd_checksum == pgPageChecksum(pagePtr, blockNo))))
             {
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {
@@ -115,8 +125,8 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 
                     // Add page number and lsn to the error list
                     VariantList *pair = varLstNew();
-                    varLstAdd(pair, varNewUInt(pageNo));
-                    varLstAdd(pair, varNewUInt64(pgPageLsn(pagePtr)));
+                    varLstAdd(pair, varNewUInt(blockNo));
+                    varLstAdd(pair, varNewUInt64(pageLsn));
                     varLstAdd(this->error, varNewVarLst(pair));
                 }
                 MEM_CONTEXT_END();

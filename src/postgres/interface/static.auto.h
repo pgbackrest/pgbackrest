@@ -20,6 +20,9 @@ which could have a large impact on dependencies.  Hopefully that won't happen of
 Note when adding new types it is safer to add them to version.auto.c unless they are needed for code that must be compatible across
 all versions of PostgreSQL supported by pgBackRest.
 ***********************************************************************************************************************************/
+#ifndef POSTGRES_INTERFACE_STATICAUTO_H
+#define POSTGRES_INTERFACE_STATICAUTO_H
+
 #include "common/assert.h"
 #include "postgres/interface.h"
 
@@ -44,6 +47,10 @@ typedef uint16_t uint16;
 // uint32 type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32_t uint32;
+
+// uint64 type
+// ---------------------------------------------------------------------------------------------------------------------------------
+typedef uint64_t uint64;
 
 // TransactionId type
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -130,6 +137,11 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
+// PageXLogRecPtrGet macro
+// ---------------------------------------------------------------------------------------------------------------------------------
+#define PageXLogRecPtrGet(val) \
+	((uint64) (val).xlogid << 32 | (val).xrecoff)
+
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -204,3 +216,5 @@ typedef PageHeaderData *PageHeader;
  *		returns true if page has not been initialized (by PageInit)
  */
 #define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
+
+#endif

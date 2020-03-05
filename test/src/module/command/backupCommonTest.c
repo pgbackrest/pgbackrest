@@ -122,6 +122,39 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
+        // Single valid page
+        // -------------------------------------------------------------------------------------------------------------------------
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has good checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xlogid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
+
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
+
+        write = ioBufferWriteNew(bufferOut);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            "{\"align\":true,\"valid\":true}", "single valid page");
+
         // Single checksum error
         // -------------------------------------------------------------------------------------------------------------------------
         buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
