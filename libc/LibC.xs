@@ -55,7 +55,6 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
-#include "postgres/pageChecksum.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
@@ -99,7 +98,6 @@ INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs
 INCLUDE: xs/crypto/hash.xs
 INCLUDE: xs/postgres/client.xs
-INCLUDE: xs/postgres/pageChecksum.xs
 INCLUDE: xs/storage/storage.xs
 INCLUDE: xs/storage/storageRead.xs
 INCLUDE: xs/storage/storageWrite.xs
