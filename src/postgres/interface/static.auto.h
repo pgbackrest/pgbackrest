@@ -20,6 +20,18 @@ which could have a large impact on dependencies.  Hopefully that won't happen of
 Note when adding new types it is safer to add them to version.auto.c unless they are needed for code that must be compatible across
 all versions of PostgreSQL supported by pgBackRest.
 ***********************************************************************************************************************************/
+#include "common/assert.h"
+#include "postgres/interface.h"
+
+/***********************************************************************************************************************************
+Define Assert() as ASSERT()
+***********************************************************************************************************************************/
+#define Assert(condition)                                           ASSERT(condition)
+
+/***********************************************************************************************************************************
+Define BLCKSZ as PG_PAGE_SIZE_DEFAULT
+***********************************************************************************************************************************/
+#define BLCKSZ                                                      PG_PAGE_SIZE_DEFAULT
 
 /***********************************************************************************************************************************
 Types from src/include/c.h
@@ -184,3 +196,11 @@ typedef struct PageHeaderData
 // PageHeader type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef PageHeaderData *PageHeader;
+
+// PageIsNew macro
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * PageIsNew
+ *		returns true if page has not been initialized (by PageInit)
+ */
+#define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)

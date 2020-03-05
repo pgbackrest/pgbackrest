@@ -1,16 +1,20 @@
 /***********************************************************************************************************************************
-Checksum Implementation for Data Pages
+PostgreSQL Page Interface
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_PAGECHECKSUM_H
-#define POSTGRES_PAGECHECKSUM_H
+#include "build.auto.h"
 
-#include <stdint.h>
+#include <string.h>
+
+#include "postgres/interface/static.auto.h"
 
 /***********************************************************************************************************************************
-Functions
+Include the page checksum code
 ***********************************************************************************************************************************/
-uint64_t pgPageLsn(const unsigned char *page);
-bool pgPageChecksumTest(
-    unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset);
+#include "postgres/interface/pageChecksum.auto.c"
 
-#endif
+/**********************************************************************************************************************************/
+uint16_t
+pgPageChecksum(unsigned char *page, uint32_t blockNo)
+{
+    return pg_checksum_page((char *)page, blockNo);
+}

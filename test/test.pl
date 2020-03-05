@@ -582,7 +582,7 @@ eval
                     buildMakefile(
                         $oStorageBackRest,
                         ${$oStorageBackRest->get("src/Makefile.in")},
-                        {rhOption => {'postgres/pageChecksum.o' => '@COPTIMIZE_PAGE_CHECKSUM@'}})))
+                        {rhOption => {'postgres/interface/page.o' => '@COPTIMIZE_PAGE_CHECKSUM@'}})))
                 {
                     push(@stryBuilt, $strBuilt);
                     push(@stryBuiltAll, @stryBuilt);
