@@ -43,7 +43,7 @@ gzCompressToLog(const GzCompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->done), this->stream.avail_in);
+        cvtBoolToConstZ(this->flush), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_COMPRESS_TYPE                                                                                              \
