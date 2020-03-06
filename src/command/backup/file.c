@@ -201,7 +201,7 @@ backupFile(
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)), pageChecksumNew(segmentNumber(pgFile), PG_SEGMENT_PAGE_DEFAULT,
-                    PG_PAGE_SIZE_DEFAULT, pgFileChecksumPageLsnLimit));
+                    pgFileChecksumPageLsnLimit));
             }
 
             // Add compression

@@ -9,7 +9,8 @@ Page Checksum Filter
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
-#include "postgres/pageChecksum.h"
+#include "postgres/interface.h"
+#include "postgres/interface/static.auto.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -24,7 +25,6 @@ typedef struct PageChecksum
     MemContext *memContext;                                         // Mem context of filter
 
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
-    size_t pageSize;                                                // Page size
     uint64_t lsnLimit;                                              // Lower limit of pages that could be torn
 
     bool valid;                                                     // Is the relation structure valid?
@@ -66,10 +66,10 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     ASSERT(input != NULL);
 
     // Calculate total pages in the buffer
-    unsigned int pageTotal = (unsigned int)(bufUsed(input) / this->pageSize);
+    unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % this->pageSize);
+    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
 
     if (pageRemainder != 0)
     {
@@ -95,13 +95,27 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     {
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
-            unsigned char *pagePtr = bufPtr(input) + (pageIdx * this->pageSize);
-            unsigned int pageNo = this->pageNoOffset + pageIdx;
-            size_t pageSize = this->align || pageIdx < pageTotal - 1 ? this->pageSize : pageRemainder;
+            // Get a non-const pointer which is required by pgPageChecksumTest() below. ??? This is not entirely kosher since we are
+            // being passed a const buffer and we should deinitely not be modifying the contents.  When pgPageChecksumTest() returns
+            // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
+            // before passing it into pgPageChecksumTest()?
+            unsigned char *pagePtr = bufPtr(input) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            if (!pageChecksumTest(
-                    pagePtr, pageNo, (unsigned int)pageSize, (unsigned int)(this->lsnLimit >> 32),
-                    (unsigned int)(this->lsnLimit & 0xFFFFFFFF)))
+            // Get a pointer to the page header at the beginning of the page
+            const PageHeaderData *pageHeader = (const PageHeaderData *)pagePtr;
+
+            // Get the page lsn
+            uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
+
+            // Block number relative to all segments in the relation
+            unsigned int blockNo = this->pageNoOffset + pageIdx;
+
+            if (// This is a new page so don't test checksum
+                !(pageHeader->pd_upper == 0 ||
+                // LSN is after the backup started so checksum is not tested because pages may be torn
+                pageLsn >= this->lsnLimit ||
+                // Checksum is valid if a full page
+                ((this->align || pageIdx < pageTotal - 1) && pageHeader->pd_checksum == pgPageChecksum(pagePtr, blockNo))))
             {
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {
@@ -111,8 +125,8 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 
                     // Add page number and lsn to the error list
                     VariantList *pair = varLstNew();
-                    varLstAdd(pair, varNewUInt(pageNo));
-                    varLstAdd(pair, varNewUInt64(pageLsn(pagePtr)));
+                    varLstAdd(pair, varNewUInt(blockNo));
+                    varLstAdd(pair, varNewUInt64(pageLsn));
                     varLstAdd(this->error, varNewVarLst(pair));
                 }
                 MEM_CONTEXT_END();
@@ -206,12 +220,11 @@ pageChecksumResult(THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 IoFilter *
-pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pageSize, uint64_t lsnLimit)
+pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
-        FUNCTION_LOG_PARAM(SIZE, pageSize);
         FUNCTION_LOG_PARAM(UINT64, lsnLimit);
     FUNCTION_LOG_END();
 
@@ -225,7 +238,6 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
         {
             .memContext = memContextCurrent(),
             .pageNoOffset = segmentNo * segmentPageTotal,
-            .pageSize = pageSize,
             .lsnLimit = lsnLimit,
             .valid = true,
             .align = true,
@@ -235,7 +247,6 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewUInt(segmentNo));
         varLstAdd(paramList, varNewUInt(segmentPageTotal));
-        varLstAdd(paramList, varNewUInt64(pageSize));
         varLstAdd(paramList, varNewUInt64(lsnLimit));
 
         this = ioFilterNewP(
@@ -250,6 +261,5 @@ IoFilter *
 pageChecksumNewVar(const VariantList *paramList)
 {
     return pageChecksumNew(
-        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUIntForce(varLstGet(paramList, 2)),
-        varUInt64(varLstGet(paramList, 3)));
+        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)));
 }

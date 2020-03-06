@@ -79,11 +79,6 @@ sub libcAutoExportTag
 {
     return
     {
-        checksum =>
-        [
-            'pageChecksum',
-        ],
-
         config =>
         [
             'CFGOPTVAL_COMPRESS_TYPE_NONE',

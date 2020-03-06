@@ -23,7 +23,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -45,13 +44,13 @@ sub pageBuild
 {
     my $tPageSource = shift;
     my $iBlockNo = shift;
+    my $iChecksum = shift;
     my $iWalId = shift;
     my $iWalOffset = shift;
 
-    my $tPage = defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) . substr($tPageSource, 8) : $tPageSource;
-    my $iChecksum = pageChecksum($tPage, $iBlockNo, length($tPage));
-
-    return substr($tPage, 0, 8) . pack('S', $iChecksum) . substr($tPage, 10);
+    return
+        (defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) : substr($tPageSource, 0, 8)) . pack('S', $iChecksum) .
+        substr($tPageSource, 10);
 }
 
 ####################################################################################################################################
@@ -186,10 +185,10 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
         my $tPageValid =
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 2) .
-            pageBuild($tBasePage, 0, 0xFFFFFFFF, 0xFFFFFFFF);
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 2, 0x1b97) .
+            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '7a16d165e4775f7c92e8cdf60c0af57313f0bf90',
@@ -198,24 +197,24 @@ sub run
         my $iBlockOffset = 32767 * 131072;
 
         my $tPageValidSeg32767 =
-            pageBuild($tBasePage, $iBlockOffset + 0) .
-            pageBuild($tBasePage, $iBlockOffset + 1) .
+            pageBuild($tBasePage, $iBlockOffset + 0, 0xf7de) .
+            pageBuild($tBasePage, $iBlockOffset + 1, 0xf7df) .
             ("\0" x 8192) .
-            pageBuild($tBasePage, 0, 0xFFFFFFFF, 0xFFFFFFFF);
+            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
             '6e99b589e550e68e934fd235ccba59fe5b592a9e', $lTime);
 
         my $tPageInvalid33001 =
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 2) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 6) .
-            pageBuild($tBasePage, 0);
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 2, 0x1b97) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 6, 0x1b9b) .
+            pageBuild($tBasePage, 0, 0x1b99);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33001', $tPageInvalid33001,

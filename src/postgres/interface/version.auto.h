@@ -1,5 +1,8 @@
 /***********************************************************************************************************************************
-PostgreSQL Types
+PostgreSQL Types That Vary By Version
+
+Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+Portions Copyright (c) 1994, Regents of the University of California
 
 Despite the .auto.h suffix this file is not automatically generated, though it could be.  We use this suffix to emphasize that the
 types have been copied from PostgreSQL and to exclude this file from project code counts.
@@ -21,6 +24,7 @@ If a comment has syntax only changes, then the new version of the comment can be
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
 should be created.  See the CheckPoint type difference between 9.5 and 9.6 as an example.
 ***********************************************************************************************************************************/
+#include "postgres/interface/static.auto.h"
 
 /***********************************************************************************************************************************
 Types from src/include/c.h
@@ -33,46 +37,6 @@ Types from src/include/c.h
 #elif PG_VERSION >= PG_VERSION_83
 
 typedef int64_t int64;
-
-#endif
-
-// uint16 type
-// ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-typedef uint16_t uint16;
-
-#endif
-
-// uint32 type
-// ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-typedef uint32_t uint32;
-
-#endif
-
-// uint64 type
-// ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-typedef uint64_t uint64;
-
-#endif
-
-// transactionId type
-// ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-typedef uint32 TransactionId;
 
 #endif
 
