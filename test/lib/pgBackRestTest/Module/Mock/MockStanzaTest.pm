@@ -83,7 +83,7 @@ sub run
             strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_LOG_LEVEL_FILE) . '=info'});
 
         # Generate pg_control for stanza-create
-        storageDb()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
+        storageTest()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
 
         # Fail stanza upgrade before stanza-create has been performed
@@ -119,7 +119,7 @@ sub run
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        storageDb()->pathCreate("${strWalPath}/archive_status", {bCreateParent => true});
+        storageTest()->pathCreate("${strWalPath}/archive_status", {bCreateParent => true});
 
         # Stanza Create fails - missing archive.info from non-empty archive dir
         #--------------------------------------------------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ sub run
 
         # Upgrade the DB by copying new pg_control
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
-        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
+        forceStorageMode(storageTest(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
         $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_ARCHIVE_MISMATCH);
@@ -184,7 +184,7 @@ sub run
 
         # Copy the new pg_control back so the tests can continue with the upgraded stanza
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
-        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
+        forceStorageMode(storageTest(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Copy pg_control for 9.5
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_95);
-        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
+        forceStorageMode(storageTest(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
 
         $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});

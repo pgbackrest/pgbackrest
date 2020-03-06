@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
@@ -28,44 +29,17 @@ use constant STORAGE_POSIX                                          => 'posix';
     push @EXPORT, qw(STORAGE_POSIX);
 
 ####################################################################################################################################
-# Compress constants
-####################################################################################################################################
-use constant STORAGE_COMPRESS                                       => 'compress';
-    push @EXPORT, qw(STORAGE_COMPRESS);
-use constant STORAGE_DECOMPRESS                                     => 'decompress';
-    push @EXPORT, qw(STORAGE_DECOMPRESS);
-
-####################################################################################################################################
-# Cipher constants
-####################################################################################################################################
-use constant STORAGE_ENCRYPT                                        => 'encrypt';
-    push @EXPORT, qw(STORAGE_ENCRYPT);
-use constant STORAGE_DECRYPT                                        => 'decrypt';
-    push @EXPORT, qw(STORAGE_DECRYPT);
-use constant CIPHER_MAGIC                                           => 'Salted__';
-    push @EXPORT, qw(CIPHER_MAGIC);
-
-####################################################################################################################################
 # Filter constants
 ####################################################################################################################################
 use constant STORAGE_FILTER_CIPHER_BLOCK                            => 'pgBackRest::Storage::Filter::CipherBlock';
     push @EXPORT, qw(STORAGE_FILTER_CIPHER_BLOCK);
-use constant STORAGE_FILTER_GZ                                      => 'pgBackRest::Storage::Filter::Gz';
-    push @EXPORT, qw(STORAGE_FILTER_GZ);
 
 ####################################################################################################################################
 # Capability constants
 ####################################################################################################################################
-# Can the size in the storage be different than what was written?  For example, a ZFS filesystem could be doing compression of a
-# backup where compression was not enabled.  This affects how repo-size is calculated.  If the file system only stores what was
-# written or won't report differently then we can save some time by just setting repo-size to size.
-use constant STORAGE_CAPABILITY_SIZE_DIFF                           => 'size-diff';
-    push @EXPORT, qw(STORAGE_CAPABILITY_SIZE_DIFF);
-
+# Does the storage support symlinks and hardlinks?
 use constant STORAGE_CAPABILITY_LINK                                => 'link';
     push @EXPORT, qw(STORAGE_CAPABILITY_LINK);
-use constant STORAGE_CAPABILITY_PATH_SYNC                           => 'path-sync';
-    push @EXPORT, qw(STORAGE_CAPABILITY_PATH_SYNC);
 
 ####################################################################################################################################
 # new
@@ -233,6 +207,58 @@ sub get
     (
         $strOperation,
         {name => 'rtContent', value => defined($oFileIo) ? \$tContent : undef, trace => true},
+    );
+}
+
+####################################################################################################################################
+# Calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from openRead/openWrite
+# must be passed instead of file names.
+####################################################################################################################################
+sub hashSize
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xFileExp,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hashSize', \@_,
+            {name => 'xFileExp'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
+        );
+
+    # Set operation variables
+    my $strHash;
+    my $lSize;
+
+    # Is this an IO object or a file expression?
+    my $rtContent = $self->get($xFileExp, {bIgnoreMissing => $bIgnoreMissing});
+
+    if (defined($rtContent))
+    {
+        if (defined($$rtContent))
+        {
+            $strHash = sha1_hex($$rtContent);
+            $lSize = length($$rtContent);
+        }
+        else
+        {
+            $strHash = sha1_hex('');
+            $lSize = 0;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strHash', value => $strHash},
+        {name => 'lSize', value => $lSize}
     );
 }
 

@@ -92,14 +92,11 @@ sub exists
             {name => 'strFileExp'},
         );
 
-    # Check exists
-    my $bExists = $self->{oStorageC}->exists($strFileExp);
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bExists', value => $bExists ? true : false}
+        {name => 'bExists', value => defined($self->info($strFileExp, {bIgnoreMissing => true}))}
     );
 }
 
@@ -147,58 +144,6 @@ sub get
 }
 
 ####################################################################################################################################
-# Calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from openRead/openWrite
-# must be passed instead of file names.
-####################################################################################################################################
-sub hashSize
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xFileExp,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->hashSize', \@_,
-            {name => 'xFileExp'},
-            {name => 'bIgnoreMissing', optional => true, default => false},
-        );
-
-    # Set operation variables
-    my $strHash;
-    my $lSize;
-
-    # Is this an IO object or a file expression?
-    my $rtContent = $self->get($xFileExp, {bIgnoreMissing => $bIgnoreMissing});
-
-    if (defined($rtContent))
-    {
-        if (defined($$rtContent))
-        {
-            $strHash = sha1_hex($$rtContent);
-            $lSize = length($$rtContent);
-        }
-        else
-        {
-            $strHash = sha1_hex('');
-            $lSize = 0;
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strHash', value => $strHash},
-        {name => 'lSize', value => $lSize}
-    );
-}
-
-####################################################################################################################################
 # Get information for path/file
 ####################################################################################################################################
 sub info
@@ -233,112 +178,6 @@ sub info
         $strOperation,
         {name => 'rhInfo', value => $rhInfo, trace => true}
     );
-}
-
-####################################################################################################################################
-# linkCreate - create a link
-####################################################################################################################################
-sub linkCreate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strSourcePathFileExp,
-        $strDestinationLinkExp,
-        $bHard,
-        $bRelative,
-        $bPathCreate,
-        $bIgnoreExists,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->linkCreate', \@_,
-            {name => 'strSourcePathFileExp'},
-            {name => 'strDestinationLinkExp'},
-            {name => 'bHard', optional=> true, default => false},
-            {name => 'bRelative', optional=> true, default => false},
-            {name => 'bPathCreate', optional=> true, default => true},
-            {name => 'bIgnoreExists', optional => true, default => false},
-        );
-
-    # Get source and destination paths
-    my $strSourcePathFile = $self->pathGet($strSourcePathFileExp);
-    my $strDestinationLink = $self->pathGet($strDestinationLinkExp);
-
-    # Generate relative path if requested
-    if ($bRelative)
-    {
-        # Determine how much of the paths are common
-        my @strySource = split('/', $strSourcePathFile);
-        my @stryDestination = split('/', $strDestinationLink);
-
-        while (defined($strySource[0]) && defined($stryDestination[0]) && $strySource[0] eq $stryDestination[0])
-        {
-            shift(@strySource);
-            shift(@stryDestination);
-        }
-
-        # Add relative path sections
-        $strSourcePathFile = '';
-
-        for (my $iIndex = 0; $iIndex < @stryDestination - 1; $iIndex++)
-        {
-            $strSourcePathFile .= '../';
-        }
-
-        # Add path to source
-        $strSourcePathFile .= join('/', @strySource);
-
-        logDebugMisc
-        (
-            $strOperation, 'apply relative path',
-            {name => 'strSourcePathFile', value => $strSourcePathFile, trace => true}
-        );
-    }
-
-    if (!($bHard ? link($strSourcePathFile, $strDestinationLink) : symlink($strSourcePathFile, $strDestinationLink)))
-    {
-        my $strMessage = "unable to create link '${strDestinationLink}'";
-
-        # If parent path or source is missing
-        if ($OS_ERROR{ENOENT})
-        {
-            # Check if source is missing
-            if (!$self->exists($strSourcePathFile))
-            {
-                confess &log(ERROR, "${strMessage} because source '${strSourcePathFile}' does not exist", ERROR_FILE_MISSING);
-            }
-
-            if (!$bPathCreate)
-            {
-                confess &log(ERROR, "${strMessage} because parent does not exist", ERROR_PATH_MISSING);
-            }
-
-            # Create parent path
-            $self->pathCreate(dirname($strDestinationLink), {bIgnoreExists => true, bCreateParent => true});
-
-            # Create link
-            $self->linkCreate($strSourcePathFile, $strDestinationLink, {bHard => $bHard});
-        }
-        # Else if link already exists
-        elsif ($OS_ERROR{EEXIST})
-        {
-            if (!$bIgnoreExists)
-            {
-                confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
-            }
-        }
-        else
-        {
-            logErrorResult(ERROR_PATH_CREATE, ${strMessage}, $OS_ERROR);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -443,42 +282,6 @@ sub manifestJson
 }
 
 ####################################################################################################################################
-# move - move path/file
-####################################################################################################################################
-sub move
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strSourceFileExp,
-        $strDestinationFileExp,
-        $bPathCreate,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->move', \@_,
-            {name => 'strSourceFileExp'},
-            {name => 'strDestinationFileExp'},
-        );
-
-    # Get source and destination paths
-    my $strSourceFile = $self->pathGet($strSourceFileExp);
-    my $strDestinationFile = $self->pathGet($strDestinationFileExp);
-
-    # Move the file
-    if (!rename($strSourceFile, $strDestinationFile))
-    {
-        logErrorResult(ERROR_FILE_MOVE, "unable to move '${strSourceFile}' to '${strDestinationFile}'", $OS_ERROR);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
 # Open file for reading
 ####################################################################################################################################
 sub openRead
@@ -560,7 +363,7 @@ sub openWrite
             {name => 'strGroup', optional => true},
             {name => 'lTimestamp', optional => true, default => '0'},
             {name => 'bAtomic', optional => true, default => false},
-            {name => 'bPathCreate', optional => true, default => false},
+            {name => 'bPathCreate', optional => true, default => true},
             {name => 'rhyFilter', optional => true},
             {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
         );
@@ -590,226 +393,6 @@ sub openWrite
     (
         $strOperation,
         {name => 'oFileIo', value => new pgBackRest::Storage::StorageWrite($self, $oFileIo), trace => true},
-    );
-}
-
-####################################################################################################################################
-# Change ownership of path/file
-####################################################################################################################################
-sub owner
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathFileExp,
-        $strUser,
-        $strGroup
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->owner', \@_,
-            {name => 'strPathFileExp'},
-            {name => 'strUser', required => false},
-            {name => 'strGroup', required => false}
-        );
-
-    # Only proceed if user or group was specified
-    if (defined($strUser) || defined($strGroup))
-    {
-        my $strPathFile = $self->pathGet($strPathFileExp);
-        my $strMessage = "unable to set ownership for '${strPathFile}'";
-        my $iUserId;
-        my $iGroupId;
-
-        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
-        # both user and group be set.
-        my $oStat = lstat($strPathFile);
-
-        if (!defined($oStat))
-        {
-            confess &log(ERROR, "unable to stat '${strPathFile}': No such file or directory", ERROR_FILE_MISSING);
-        }
-
-        if (!defined($strUser))
-        {
-            $iUserId = $oStat->uid;
-        }
-
-        if (!defined($strGroup))
-        {
-            $iGroupId = $oStat->gid;
-        }
-
-        # Lookup user if specified
-        if (defined($strUser))
-        {
-            $iUserId = getpwnam($strUser);
-
-            if (!defined($iUserId))
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because user '${strUser}' does not exist");
-            }
-        }
-
-        # Lookup group if specified
-        if (defined($strGroup))
-        {
-            $iGroupId = getgrnam($strGroup);
-
-            if (!defined($iGroupId))
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because group '${strGroup}' does not exist");
-            }
-        }
-
-        # Set ownership on the file if the user or group would be changed
-        if ($iUserId != $oStat->uid || $iGroupId != $oStat->gid)
-        {
-            if (!chown($iUserId, $iGroupId, $strPathFile))
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
-            }
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
-}
-
-####################################################################################################################################
-# Generate an absolute path from an absolute base path and a relative path
-####################################################################################################################################
-sub pathAbsolute
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strBasePath,
-        $strPath
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathAbsolute', \@_,
-            {name => 'strBasePath', trace => true},
-            {name => 'strPath', trace => true}
-        );
-
-    # Working variables
-    my $strAbsolutePath;
-
-    # If the path is already absolute
-    if (index($strPath, '/') == 0)
-    {
-        $strAbsolutePath = $strPath;
-    }
-    # Else make it absolute using the base path
-    else
-    {
-        # Make sure the absolute path is really absolute
-        if (index($strBasePath, '/') != 0 || index($strBasePath, '/..') != -1)
-        {
-            confess &log(ERROR, "${strBasePath} is not an absolute path", ERROR_PATH_TYPE);
-        }
-
-        while (index($strPath, '..') == 0)
-        {
-            $strBasePath = dirname($strBasePath);
-            $strPath = substr($strPath, 2);
-
-            if (index($strPath, '/') == 0)
-            {
-                $strPath = substr($strPath, 1);
-            }
-        }
-
-        $strAbsolutePath = "${strBasePath}/${strPath}";
-    }
-
-    # Make sure the result is really an absolute path
-    if (index($strAbsolutePath, '/') != 0 || index($strAbsolutePath, '/..') != -1)
-    {
-        confess &log(ERROR, "result ${strAbsolutePath} was not an absolute path", ERROR_PATH_TYPE);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strAbsolutePath', value => $strAbsolutePath, trace => true}
-    );
-}
-
-####################################################################################################################################
-# Create a path
-####################################################################################################################################
-sub pathCreate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-        $strMode,
-        $bIgnoreExists,
-        $bCreateParent,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathCreate', \@_,
-            {name => 'strPathExp'},
-            {name => 'strMode', optional => true},
-            {name => 'bIgnoreExists', optional => true, default => false},
-            {name => 'bCreateParent', optional => true, default => false},
-        );
-
-    # Create path
-    $self->{oStorageC}->pathCreate($strPathExp, $strMode, $bIgnoreExists, $bCreateParent);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
-}
-
-####################################################################################################################################
-# Check if path exists
-####################################################################################################################################
-sub pathExists
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathExists', \@_,
-            {name => 'strPathExp'},
-        );
-
-    # Check exists
-    my $bExists = $self->{oStorageC}->pathExists($strPathExp);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bExists', value => $bExists ? true : false}
     );
 }
 
@@ -867,31 +450,6 @@ sub pathRemove
         );
 
     $self->{oStorageC}->pathRemove($strPathExp, $bIgnoreMissing, $bRecurse);
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# Sync path so newly added file entries are not lost
-####################################################################################################################################
-sub pathSync
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathSync', \@_,
-            {name => 'strPathExp'},
-        );
-
-    $self->{oStorageC}->pathSync($strPathExp);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -963,92 +521,6 @@ sub remove
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# encrypted - determine if the file is encrypted or not
-####################################################################################################################################
-sub encrypted
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileExp,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->encrypted', \@_,
-            {name => 'strFileExp'},
-            {name => 'bIgnoreMissing', optional => true, default => false},
-        );
-
-    my $bEncrypted = false;
-
-    # Open the file via the driver
-    my $oFileIo = new pgBackRest::Storage::StorageRead(
-        $self, pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $strFileExp, $bIgnoreMissing));
-
-    # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
-    # should be encrypted based on the repo
-    if (!$oFileIo->open())
-    {
-        if (defined($self->cipherType()))
-        {
-            $bEncrypted = true;
-        }
-    }
-    else
-    {
-        # If the file does exist, then read the magic signature
-        my $tMagicSignature = '';
-        my $lSizeRead = $oFileIo->read(\$tMagicSignature, length(CIPHER_MAGIC));
-        $oFileIo->close();
-
-        if (substr($tMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
-        {
-            $bEncrypted = true;
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bEncrypted', value => $bEncrypted}
-    );
-}
-
-####################################################################################################################################
-# encryptionValid - determine if encryption set properly based on the value passed
-####################################################################################################################################
-sub encryptionValid
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $bEncrypted,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->encryptionValid', \@_,
-            {name => 'bEncrypted'},
-        );
-
-    my $bValid = ($bEncrypted && defined($self->cipherType())) || (!$bEncrypted && !defined($self->cipherType()));
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bValid', value => $bValid ? true : false}
-    );
 }
 
 ####################################################################################################################################

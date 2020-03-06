@@ -221,7 +221,7 @@ sub stanzaSet
             new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
         $oBackupInfo =
-            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP), false, false,
+            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP), false,
             {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
     }
     # Else get the info data from disk
@@ -260,7 +260,6 @@ sub stanzaSet
     # Get the archive and directory paths for the stanza
     $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
     $$oStanza{strBackupClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP);
-    storageRepo()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
@@ -300,15 +299,6 @@ sub stanzaCreate
     # Generate pg_control for stanza-create
     $self->controlGenerate($strDbPath, $strDbVersion);
     executeTest('chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
-
-    # Create the stanza repo paths if they don't exist
-    if (!cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
-    {
-        storageTest()->pathCreate(
-            cfgOption(CFGOPT_REPO_PATH) . "/archive/$strStanza", {bIgnoreExists => true, bCreateParent => true});
-        storageTest()->pathCreate(
-            cfgOption(CFGOPT_REPO_PATH) . "/backup/$strStanza", {bIgnoreExists => true, bCreateParent => true});
-    }
 
     # Create the stanza and set the local stanza object
     $self->stanzaSet($strStanza, $strDbVersion, false);
@@ -398,7 +388,6 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    storageRepo()->pathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
@@ -558,8 +547,6 @@ sub archiveCreate
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        storageRepo()->pathCreate($strPath, {bIgnoreExists => true});
-
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
 
         storageRepo()->put($strFile, 'ARCHIVE', {strCipherPass => $strCipherPass});

@@ -84,23 +84,6 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
-bool
-exists(self, fileExp)
-PREINIT:
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-INPUT:
-    pgBackRest::LibC::Storage self
-    const String *fileExp = STR_NEW_SV($arg);
-CODE:
-    RETVAL = storageExistsP(self, fileExp);
-OUTPUT:
-    RETVAL
-CLEANUP:
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-
-####################################################################################################################################
 SV *
 get(self, read)
 PREINIT:
@@ -216,47 +199,6 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
-void
-pathCreate(self, pathExp, mode, ignoreExists, createParent)
-PREINIT:
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-INPUT:
-    pgBackRest::LibC::Storage self
-    const String *pathExp = STR_NEW_SV($arg);
-    const String *mode = STR_NEW_SV($arg);
-    bool ignoreExists
-    bool createParent
-CODE:
-    if (storageFeature(self, storageFeaturePath))
-        storagePathCreateP(
-            self, pathExp, .mode = mode ? cvtZToMode(strPtr(mode)) : 0, .errorOnExists = !ignoreExists,
-            .noParentCreate = !createParent);
-CLEANUP:
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-
-####################################################################################################################################
-bool
-pathExists(self, pathExp)
-PREINIT:
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-INPUT:
-    pgBackRest::LibC::Storage self
-    const String *pathExp = STR_NEW_SV($arg);
-CODE:
-    RETVAL = true;
-
-    if (storageFeature(self, storageFeaturePath))
-        RETVAL = storagePathExistsP(self, pathExp);
-OUTPUT:
-    RETVAL
-CLEANUP:
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-
-####################################################################################################################################
 SV *
 pathGet(self, pathExp)
 PREINIT:
@@ -288,21 +230,6 @@ INPUT:
 CODE:
     storagePathRemoveP(
         self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false, .recurse = recurse);
-CLEANUP:
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-
-####################################################################################################################################
-void
-pathSync(self, pathExp)
-PREINIT:
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-INPUT:
-    pgBackRest::LibC::Storage self
-    const String *pathExp = STR_NEW_SV($arg);
-CODE:
-    storagePathSyncP(self, pathExp);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();

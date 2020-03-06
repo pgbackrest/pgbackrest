@@ -158,37 +158,27 @@ sub loadVersion
     my $bCopy = shift;
     my $bIgnoreError = shift;
 
-    # Make sure the file encryption setting is valid for the repo
-    if ($self->{oStorage}->encryptionValid($self->{oStorage}->encrypted($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
-        {bIgnoreMissing => $bIgnoreError})))
+    # Load main
+    my $rstrContent = $self->{oStorage}->get(
+        $self->{oStorage}->openRead($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
+        {bIgnoreMissing => $bIgnoreError, strCipherPass => $self->{strCipherPass}}));
+
+    # If the file exists then attempt to parse it
+    if (defined($rstrContent))
     {
-        # Load main
-        my $rstrContent = $self->{oStorage}->get(
-            $self->{oStorage}->openRead($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
-            {bIgnoreMissing => $bIgnoreError, strCipherPass => $self->{strCipherPass}}));
+        my $rhContent = iniParse($$rstrContent, {bIgnoreInvalid => $bIgnoreError});
 
-        # If the file exists then attempt to parse it
-        if (defined($rstrContent))
+        # If the content is valid then check the header
+        if (defined($rhContent))
         {
-            my $rhContent = iniParse($$rstrContent, {bIgnoreInvalid => $bIgnoreError});
+            $self->{oContent} = $rhContent;
 
-            # If the content is valid then check the header
-            if (defined($rhContent))
+            # If the header is invalid then undef content
+            if (!$self->headerCheck({bIgnoreInvalid => $bIgnoreError}))
             {
-                $self->{oContent} = $rhContent;
-
-                # If the header is invalid then undef content
-                if (!$self->headerCheck({bIgnoreInvalid => $bIgnoreError}))
-                {
-                    delete($self->{oContent});
-                }
+                delete($self->{oContent});
             }
         }
-    }
-    else
-    {
-        confess &log(ERROR, "unable to parse '$self->{strFileName}" . ($bCopy ? INI_COPY_EXT : '') . "'" .
-            "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
     }
 
     return defined($self->{oContent});
@@ -423,10 +413,20 @@ sub save
 
         # Save the file
         $self->{oStorage}->put($self->{strFileName}, iniRender($self->{oContent}), {strCipherPass => $self->{strCipherPass}});
-        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+
+        if ($self->{oStorage}->can('pathSync'))
+        {
+            $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+        }
+
         $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}),
             {strCipherPass => $self->{strCipherPass}});
-        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+
+        if ($self->{oStorage}->can('pathSync'))
+        {
+            $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+        }
+
         $self->{bModified} = false;
 
         # Indicate the file now exists

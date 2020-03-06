@@ -180,9 +180,9 @@ sub run
             $strCommandGet . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG", {oLogTest => $self->expect()});
 
         # Check that the destination file exists
-        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
+        if (storageTest()->exists("${strWalPath}/RECOVERYXLOG"))
         {
-            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
+            my ($strActualChecksum) = storageTest()->hashSize("${strWalPath}/RECOVERYXLOG");
 
             if ($strActualChecksum ne $strArchiveChecksum)
             {
@@ -344,9 +344,9 @@ sub run
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists
-        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
+        if (storageTest()->exists("${strWalPath}/RECOVERYXLOG"))
         {
-            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
+            my ($strActualChecksum) = storageTest()->hashSize("${strWalPath}/RECOVERYXLOG");
 
             if ($strActualChecksum ne $strArchiveChecksum)
             {
@@ -369,7 +369,7 @@ sub run
             $strCommandGet . " --archive-async 00000002.history ${strWalPath}/00000002.history",
             {oLogTest => $self->expect()});
 
-        if (${storageDb()->get("${strWalPath}/00000002.history")} ne 'HISTORYDATA')
+        if (${storageTest()->get("${strWalPath}/00000002.history")} ne 'HISTORYDATA')
         {
             confess 'history contents do not match original';
         }

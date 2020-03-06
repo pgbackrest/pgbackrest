@@ -142,7 +142,7 @@ sub run
                                               '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
         # Load sample page
-        my $tBasePage = ${storageLocal()->get($self->dataPath() . '/page.bin')};
+        my $tBasePage = ${storageTest()->get($self->dataPath() . '/page.bin')};
         my $iBasePageChecksum = 0x1B99;
 
         # Create base path
@@ -477,7 +477,7 @@ sub run
                 strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
-        storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        storageTest->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
@@ -680,7 +680,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
         # Change the content of the changecontent file to be the same size but leave the timestamp the same on the file
-        storageDb()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
+        storageTest()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
         utime($lTime, $lTime, $oHostDbMaster->dbBasePath() . '/changecontent.txt')
             or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changecontent.txt');
 

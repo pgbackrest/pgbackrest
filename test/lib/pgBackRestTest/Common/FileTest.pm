@@ -168,7 +168,7 @@ sub forceStorageMode
         );
 
     # Mode commands are ignored on S3
-    if ($oStorage->type() ne STORAGE_S3)
+    if (!$oStorage->can('type') || $oStorage->type() ne STORAGE_S3)
     {
         executeTest('chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }

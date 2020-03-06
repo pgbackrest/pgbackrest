@@ -102,12 +102,6 @@ sub new
         $self->{strRepoPath} = '/';
     }
 
-    # Create the repo-path if on a local filesystem
-    if ($$oParam{strBackupDestination} eq $self->nameGet() && $oParam->{bRepoLocal})
-    {
-        storageTest()->pathCreate($self->repoPath(), {strMode => '0770'});
-    }
-
     # Set log/lock paths
     $self->{strLogPath} = $self->testPath() . '/' . HOST_PATH_LOG;
     storageTest()->pathCreate($self->{strLogPath}, {strMode => '0770'});
@@ -309,8 +303,11 @@ sub backupEnd
                 }
             }
         }
-        # Else there should not be a tablespace directory at all
-        elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
+        # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
+        elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
+               storageTest()->pathExists(
+                   storageRepo()->pathGet(
+                       STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
         {
             confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
         }

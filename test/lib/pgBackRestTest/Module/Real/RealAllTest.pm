@@ -324,7 +324,7 @@ sub run
                 'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
-            storageLocal()->pathCreate(
+            storageTest()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
@@ -774,7 +774,7 @@ sub run
         # Version <= 8.4 always places a PG_VERSION file in the tablespace
         if ($oHostDbMaster->pgVersion() <= PG_VERSION_84)
         {
-            if (!storageLocal()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
+            if (!storageTest()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
             {
                 confess &log(ASSERT, "unable to find '" . DB_FILE_PGVERSION . "' in tablespace path '${strTablespacePath}'");
             }
@@ -792,14 +792,14 @@ sub run
                 '/PG_' . $oHostDbMaster->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
 
             # Check that path exists
-            if (!storageLocal()->pathExists($strTablespacePath))
+            if (!storageTest()->pathExists($strTablespacePath))
             {
                 confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
             }
         }
 
         # Make sure there are some files in the tablespace path (exclude PG_VERSION if <= 8.4 since that was tested above)
-        if (grep(!/^PG\_VERSION$/i, storageLocal()->list($strTablespacePath)) == 0)
+        if (grep(!/^PG\_VERSION$/i, storageTest()->list($strTablespacePath)) == 0)
         {
             confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
         }
@@ -869,7 +869,7 @@ sub run
             # Save recovery file to test so we can use it in the next test
             $strRecoveryFile = $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
 
-            storageLocal()->copy(
+            storageTest()->copy(
                 $oHostDbMaster->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
             $oHostDbMaster->clusterStart();
@@ -891,12 +891,12 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            storageLocal()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
+            storageTest()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
             # Also touch recovery.signal when required
             if ($oHostDbMaster->pgVersion() >= PG_VERSION_12)
             {
-                storageDb()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
+                storageTest()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
             }
 
             $oHostDbMaster->restore(

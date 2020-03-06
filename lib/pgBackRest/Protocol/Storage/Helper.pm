@@ -35,38 +35,6 @@ use constant STORAGE_REPO_BACKUP                                    => '<REPO:BA
 my $hStorage;
 
 ####################################################################################################################################
-# storageDb - get db storage
-####################################################################################################################################
-sub storageDb
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageDb', \@_,
-        );
-
-    # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_DB}))
-    {
-        $hStorage->{&STORAGE_DB} = new pgBackRest::Storage::Storage(
-            STORAGE_DB, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oStorageDb', value => $hStorage->{&STORAGE_DB}, trace => true},
-    );
-}
-
-push @EXPORT, qw(storageDb);
-
-####################################################################################################################################
 # storageRepo - get repository storage
 ####################################################################################################################################
 sub storageRepo
