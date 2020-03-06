@@ -1106,8 +1106,8 @@ sub configCreate
 
         if (defined($oHostDb2))
         {
-            # Add an invalid replica to simulate more than one replica. A warning should be thrown by dbObjectGet when a stanza is
-            # created and a valid replica should be chosen.
+            # Add an invalid replica to simulate more than one replica. A warning should be thrown when a stanza is created and a
+            # valid replica should be chosen.
             my $iInvalidReplica = 2;
             $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iInvalidReplica))} = BOGUS;
             $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iInvalidReplica))} =

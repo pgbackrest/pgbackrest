@@ -52,8 +52,6 @@ use constant STORAGE_FILTER_CIPHER_BLOCK                            => 'pgBackRe
     push @EXPORT, qw(STORAGE_FILTER_CIPHER_BLOCK);
 use constant STORAGE_FILTER_GZ                                      => 'pgBackRest::Storage::Filter::Gz';
     push @EXPORT, qw(STORAGE_FILTER_GZ);
-use constant STORAGE_FILTER_SHA                                     => 'pgBackRest::Storage::Filter::Sha';
-    push @EXPORT, qw(STORAGE_FILTER_SHA);
 
 ####################################################################################################################################
 # Capability constants

@@ -11,15 +11,16 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Fcntl qw(O_RDONLY);
 use File::Basename qw(basename);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
@@ -69,6 +70,116 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
+    );
+}
+
+####################################################################################################################################
+# get into from pg_control
+####################################################################################################################################
+my $oPgControlVersionHash =
+{
+    # iControlVersion => {iCatalogVersion => strDbVersion}
+    833 => {200711281 => PG_VERSION_83},
+    843 => {200904091 => PG_VERSION_84},
+    903 =>
+    {
+        201008051 => PG_VERSION_90,
+        201105231 => PG_VERSION_91,
+    },
+    922 => {201204301 => PG_VERSION_92},
+    937 => {201306121 => PG_VERSION_93},
+    942 =>
+    {
+        201409291 => PG_VERSION_94,
+        201510051 => PG_VERSION_95,
+    },
+    960 =>
+    {
+        201608131 => PG_VERSION_96,
+    },
+    1002 =>
+    {
+        201707211 => PG_VERSION_10,
+    },
+    1100 =>
+    {
+        201809051 => PG_VERSION_11,
+    },
+    1201 =>
+    {
+        201909212 => PG_VERSION_12,
+    },
+};
+
+sub info
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbPath
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->info', \@_,
+            {name => 'strDbPath', default => cfgOption(CFGOPT_PG_PATH)}
+        );
+
+    # Open the control file and read system id and versions
+    #-----------------------------------------------------------------------------------------------------------------------
+    my $strControlFile = "${strDbPath}/" . DB_FILE_PGCONTROL;
+    my $hFile;
+    my $tBlock;
+
+    sysopen($hFile, $strControlFile, O_RDONLY)
+        or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+    # Read system identifier
+    sysread($hFile, $tBlock, 8) == 8
+        or confess &log(ERROR, "unable to read database system identifier");
+
+    $self->{info}{$strDbPath}{ullDbSysId} = unpack('Q', $tBlock);
+
+    # Read control version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read control version");
+
+    $self->{info}{$strDbPath}{iDbControlVersion} = unpack('L', $tBlock);
+
+    # Read catalog version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read catalog version");
+
+    $self->{info}{$strDbPath}{iDbCatalogVersion} = unpack('L', $tBlock);
+
+    # Close the control file
+    close($hFile);
+
+    # Get PostgreSQL version
+    $self->{info}{$strDbPath}{strDbVersion} =
+        $oPgControlVersionHash->{$self->{info}{$strDbPath}{iDbControlVersion}}
+            {$self->{info}{$strDbPath}{iDbCatalogVersion}};
+
+    if (!defined($self->{info}{$strDbPath}{strDbVersion}))
+    {
+        confess &log(
+            ERROR,
+            'unexpected control version = ' . $self->{info}{$strDbPath}{iDbControlVersion} .
+            ' and catalog version = ' . $self->{info}{$strDbPath}{iDbCatalogVersion} . "\n" .
+            'HINT: is this version of PostgreSQL supported?',
+            ERROR_VERSION_NOT_SUPPORTED);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strDbVersion', value => $self->{info}{$strDbPath}{strDbVersion}},
+        {name => 'iDbControlVersion', value => $self->{info}{$strDbPath}{iDbControlVersion}},
+        {name => 'iDbCatalogVersion', value => $self->{info}{$strDbPath}{iDbCatalogVersion}},
+        {name => 'ullDbSysId', value => $self->{info}{$strDbPath}{ullDbSysId}}
     );
 }
 
@@ -124,15 +235,13 @@ sub stanzaSet
             {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
     }
 
-    my ($oDb) = dbObjectGet();
     if (cfgOption(CFGOPT_ONLINE))
     {
-        # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
-        $oDb->configValidate();
+        confess &log(ERROR, "this function may not be used for online tests");
     }
 
     # Get the database info for the stanza
-    (my $strVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId}) = $oDb->info();
+    (my $strVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId}) = $self->info();
     $$oStanza{strDbVersion} = $strDbVersion;
 
     if ($bStanzaUpgrade)
