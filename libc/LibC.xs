@@ -67,7 +67,6 @@ XSH includes
 These includes define data structures that are required for the C to Perl interface but are not part of the regular C source.
 ***********************************************************************************************************************************/
 #include "xs/config/configTest.xsh"
-#include "xs/postgres/client.xsh"
 #include "xs/storage/storage.xsh"
 #include "xs/storage/storageRead.xsh"
 #include "xs/storage/storageWrite.xsh"
@@ -94,7 +93,6 @@ OUTPUT:
 INCLUDE: xs/config/config.xs
 INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs
-INCLUDE: xs/postgres/client.xs
 INCLUDE: xs/storage/storage.xs
 INCLUDE: xs/storage/storageRead.xs
 INCLUDE: xs/storage/storageWrite.xs

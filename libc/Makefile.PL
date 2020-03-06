@@ -98,7 +98,6 @@ my @stryCFile =
     'protocol/parallel.c',
     'protocol/parallelJob.c',
     'protocol/server.c',
-    'postgres/client.c',
     'storage/posix/read.c',
     'storage/posix/storage.c',
     'storage/posix/write.c',

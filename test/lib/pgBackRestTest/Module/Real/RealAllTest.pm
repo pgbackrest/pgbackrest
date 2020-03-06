@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -39,6 +38,11 @@ use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
+
+####################################################################################################################################
+# Backup advisory lock
+####################################################################################################################################
+use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';
 
 ####################################################################################################################################
 # run
