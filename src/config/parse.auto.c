@@ -192,6 +192,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevelNetwork,
     },
 
+    // compress-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_COMPRESS_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptCompressType,
+    },
+    {
+        .name = "reset-" CFGOPT_COMPRESS_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressType,
+    },
+
     // config option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2338,6 +2350,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
+    cfgOptCompressType,
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,

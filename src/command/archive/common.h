@@ -17,6 +17,7 @@ typedef enum
     archiveModeGet,
 } ArchiveMode;
 
+#include "common/compress/helper.h"
 #include "common/type/stringList.h"
 #include "storage/storage.h"
 
@@ -52,7 +53,7 @@ WAL segment constants
 // WAL segment directory/file
 #define WAL_SEGMENT_DIR_REGEXP                                      "^[0-F]{16}$"
     STRING_DECLARE(WAL_SEGMENT_DIR_REGEXP_STR);
-#define WAL_SEGMENT_FILE_REGEXP                                     "^[0-F]{24}-[0-f]{40}(\\.gz){0,1}$"
+#define WAL_SEGMENT_FILE_REGEXP                                     "^[0-F]{24}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$"
     STRING_DECLARE(WAL_SEGMENT_FILE_REGEXP_STR);
 
 /***********************************************************************************************************************************

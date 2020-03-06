@@ -169,6 +169,8 @@ use constant CFGOPT_DB_TIMEOUT                                      => 'db-timeo
     push @EXPORT, qw(CFGOPT_DB_TIMEOUT);
 use constant CFGOPT_COMPRESS                                        => 'compress';
     push @EXPORT, qw(CFGOPT_COMPRESS);
+use constant CFGOPT_COMPRESS_TYPE                                   => 'compress-type';
+    push @EXPORT, qw(CFGOPT_COMPRESS_TYPE);
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
     push @EXPORT, qw(CFGOPT_COMPRESS_LEVEL);
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
@@ -1152,6 +1154,7 @@ my %hConfigDefine =
         },
     },
 
+    # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption().
     &CFGOPT_COMPRESS =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1164,11 +1167,24 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_COMPRESS_TYPE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'gz',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'none',
+            'gz',
+        ],
+        &CFGDEF_COMMAND => CFGOPT_COMPRESS,
+    },
+
     &CFGOPT_COMPRESS_LEVEL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_DEFAULT => 6,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },

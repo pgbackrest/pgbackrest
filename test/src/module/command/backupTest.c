@@ -52,17 +52,19 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             const String *manifestName = info->name;
 
             // If the file is compressed then decompress to get the real size
-            if (strEndsWithZ(info->name, "." GZ_EXT))
+            CompressType compressType = compressTypeFromName(info->name);
+
+            if (compressType != compressTypeNone)
             {
                 ASSERT(data->storage != NULL);
 
                 StorageRead *read = storageNewReadP(
                     data->storage,
                     data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressType));
                 size = bufUsed(storageGetP(read));
 
-                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZ_EXT));
+                manifestName = strSubN(info->name, 0, strSize(info->name) - strSize(compressExtStr(compressType)));
             }
 
             strCatFmt(data->content, ", s=%" PRIu64, size);
@@ -170,7 +172,7 @@ typedef struct TestBackupPqScriptParam
     bool backupStandby;
     bool errorAfterStart;
     bool noWal;                                                     // Don't write test WAL segments
-    bool walCompress;                                               // Compress the archive files
+    CompressType walCompressType;                                   // Compress type for the archive files
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
@@ -223,10 +225,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
-                    strPtr(walChecksum), param.walCompress ? "." GZ_EXT : ""));
+                    strPtr(walChecksum), strPtr(compressExtStr(param.walCompressType))));
 
-            if (param.walCompress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew(1));
+            if (param.walCompressType != compressTypeNone)
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(param.walCompressType, 1));
 
             storagePutP(write, walBuffer);
         }
@@ -438,8 +440,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(missingFile));       // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -513,8 +515,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -555,8 +557,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -694,8 +696,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(true));             // repoFileCompress
-        varLstAdd(paramList, varNewUInt(3));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
+        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -812,8 +814,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));                // repoFile
         varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));                // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                    // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
@@ -1252,7 +1254,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompress = true;
+        manifestResume->data.backupOptionCompressType = compressTypeGz;
 
         manifestSave(
             manifestResume,
@@ -1264,12 +1266,12 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new compression 'false' does not match resumable compression 'true'");
+                " new compression 'none' does not match resumable compression 'gz'");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupOptionCompress = false;
+        manifestResume->data.backupOptionCompressType = compressTypeNone;
     }
 
     // *****************************************************************************************************************************
@@ -1409,7 +1411,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
+            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
             "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1613,7 +1615,7 @@ testRun(void)
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1671,6 +1673,12 @@ testRun(void)
             // File is not in manifest
             storagePutP(
                 storageNewWriteP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strPtr(resumeLabel))),
+                NULL);
+
+            // File has incorrect compression type
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strPtr(resumeLabel))),
                 NULL);
 
@@ -1702,6 +1710,8 @@ testRun(void)
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
                 "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
+                    " (mismatched compression type)\n"
+                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed backup"
                     " (missing in manifest)\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed"
                     " backup (no checksum in resumed manifest)\n"
@@ -1761,6 +1771,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -1777,7 +1788,7 @@ testRun(void)
 
             manifestResumeData->backupType = backupTypeDiff;
             manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1834,6 +1845,7 @@ testRun(void)
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
+                "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
@@ -1953,7 +1965,7 @@ testRun(void)
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompress = true);
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
@@ -2089,7 +2101,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompress = true, .walTotal = 3);
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features

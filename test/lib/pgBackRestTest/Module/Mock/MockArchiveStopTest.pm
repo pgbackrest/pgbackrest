@@ -44,14 +44,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  true, error => 0},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress => false, error => 1},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress => false, error => 0},
-        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>  true, error => 0},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => false, error => 0},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>  true, error => 1},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>  true, error => 0},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => false, error => 0},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>    GZ, error => 0},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 1},
+        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  NONE, error => 0},
+        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>    GZ, error => 0},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>    GZ, error => 1},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 0},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  NONE, error => 0},
     )
     {
         # Only run tests for this vm
@@ -61,20 +61,21 @@ sub run
         my $bRemote = $rhRun->{remote};
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
-        my $bCompress = $rhRun->{compress};
+        my $strCompressType = $rhRun->{compress};
         my $iError = $rhRun->{error};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version') . ", s3 ${bS3}, " .
-            "enc ${bEncrypt}")) {next}
+        if (!$self->begin(
+                "rmt ${bRemote}, cmp ${strCompressType}, error " . ($iError ? 'connect' : 'version') .
+                    ", s3 ${bS3}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true, bS3 => $bS3,
-            bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, strCompressType => $strCompressType, bArchiveAsync => true,
+            bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Create compression extension
-        my $strCompressExt = $bCompress ? qw{.} . COMPRESS_EXT : '';
+        my $strCompressExt = $strCompressType ne NONE ? ".${strCompressType}" : '';
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';

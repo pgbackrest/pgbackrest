@@ -62,14 +62,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true},
-        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false},
-        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true},
-        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false},
-        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false},
-        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true},
+        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress =>  GZ},
+        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false, compress =>  GZ},
+        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true, compress =>  GZ},
+        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress =>  GZ},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -80,13 +80,14 @@ sub run
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
         my $bDeltaBackup = $rhRun->{delta};
+        my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -114,6 +115,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 16384;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = CFGOPTVAL_COMPRESS_TYPE_NONE;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL} = 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL_NETWORK} = $bRemote ? 1 : 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
@@ -809,8 +811,15 @@ sub run
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
-        # Enable compression to ensure a warning is raised
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
+        # Enable compression to ensure a warning is raised (reset when gz to avoid log churn since it is the default)
+        if ($strCompressType eq GZ)
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => undef}});
+        }
+        else
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => $strCompressType}});
+        }
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
@@ -841,6 +850,7 @@ sub run
 
         # Now the compression and hardlink changes will take effect
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = $strCompressType;
 
         if (!$bS3)
         {

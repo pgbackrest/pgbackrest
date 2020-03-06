@@ -199,9 +199,3 @@ gzCompressNew(int level)
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
-
-IoFilter *
-gzCompressNewVar(const VariantList *paramList)
-{
-    return gzCompressNew(varIntForce(varLstGet(paramList, 0)));
-}

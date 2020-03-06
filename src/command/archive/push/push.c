@@ -11,6 +11,7 @@ Archive Push Command
 #include "command/archive/push/protocol.h"
 #include "command/command.h"
 #include "command/control/common.h"
+#include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -359,7 +360,7 @@ cmdArchivePush(void)
                 String *warning = archivePushFile(
                     walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), archiveInfo.archiveCipherPass,
-                    cfgOptionBool(cfgOptCompress), cfgOptionInt(cfgOptCompressLevel));
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel));
 
                 // If a warning was returned then log it
                 if (warning != NULL)
@@ -384,7 +385,7 @@ typedef struct ArchivePushAsyncData
     const StringList *walFileList;                                  // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
     CipherType cipherType;                                          // Cipher type
-    bool compress;                                                  // Compress wal files
+    CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
 } ArchivePushAsyncData;
@@ -415,7 +416,7 @@ static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int cl
         protocolCommandParamAdd(command, VARSTR(walFile));
         protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
         protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveCipherPass));
-        protocolCommandParamAdd(command, VARBOOL(jobData->compress));
+        protocolCommandParamAdd(command, VARUINT(jobData->compressType));
         protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
@@ -445,7 +446,7 @@ cmdArchivePushAsync(void)
         ArchivePushAsyncData jobData =
         {
             .walPath = strLstGet(commandParam, 0),
-            .compress = cfgOptionBool(cfgOptCompress),
+            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
         };
 

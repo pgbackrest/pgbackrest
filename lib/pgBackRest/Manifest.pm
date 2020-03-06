@@ -108,6 +108,8 @@ use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-'
     push @EXPORT, qw(MANIFEST_KEY_CHECKSUM_PAGE);
 use constant MANIFEST_KEY_COMPRESS                                  => 'option-' . cfgOptionName(CFGOPT_COMPRESS);
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
+use constant MANIFEST_KEY_COMPRESS_TYPE                             => 'option-' . cfgOptionName(CFGOPT_COMPRESS_TYPE);
+    push @EXPORT, qw(MANIFEST_KEY_COMPRESS_TYPE);
 use constant MANIFEST_KEY_COMPRESS_LEVEL                            => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL);
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS_LEVEL);
 use constant MANIFEST_KEY_COMPRESS_LEVEL_NETWORK                    => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK);

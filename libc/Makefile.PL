@@ -46,6 +46,7 @@ my @stryCFile =
     'common/compress/gz/common.c',
     'common/compress/gz/compress.c',
     'common/compress/gz/decompress.c',
+    'common/compress/helper.c',
     'common/crypto/cipherBlock.c',
     'common/crypto/common.c',
     'common/crypto/hash.c',

@@ -476,9 +476,9 @@ sub backupCompare
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
         # Determine repo size if compression or encryption is enabled
-        my $bCompressed = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS};
+        my $strCompressType = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE};
 
-        if ($bCompressed ||
+        if ($strCompressType ne CFGOPTVAL_COMPRESS_TYPE_NONE ||
             (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
                 defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS})))
         {
@@ -487,7 +487,8 @@ sub backupCompare
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
                     (storageRepo()->info(STORAGE_REPO_BACKUP .
-                        "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->{size};
+                        "/${strBackup}/${strFileKey}" .
+                        ($strCompressType eq CFGOPTVAL_COMPRESS_TYPE_NONE ? '' : ".${strCompressType}")))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -1031,9 +1032,9 @@ sub configCreate
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK)} = 1;
     }
 
-    if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
+    if (defined($oParam->{strCompressType}) && $oParam->{strCompressType} ne CFGOPTVAL_COMPRESS_TYPE_GZ)
     {
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_TYPE)} = $oParam->{strCompressType};
     }
 
     if ($self->isHostBackup())
@@ -1200,7 +1201,14 @@ sub configUpdate
     {
         foreach my $strKey (keys(%{$hParam->{$strSection}}))
         {
-            $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            if (defined($hParam->{$strSection}{$strKey}))
+            {
+                $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            }
+            else
+            {
+                delete($oConfig->{$strSection}{$strKey});
+            }
         }
     }
 
@@ -1792,6 +1800,8 @@ sub restoreCompare
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
     $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS_TYPE, undef,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE});
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
