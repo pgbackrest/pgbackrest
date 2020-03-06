@@ -93,7 +93,8 @@ compressTypeEnum(const String *type)
 }
 
 /**********************************************************************************************************************************/
-void compressTypePresent(CompressType type)
+void
+compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);

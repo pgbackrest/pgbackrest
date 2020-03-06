@@ -87,7 +87,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -811,14 +811,13 @@ sub run
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
-        # Enable compression to ensure a warning is raised
+        # Enable compression to ensure a warning is raised (reset when gz to avoid log churn since it is the default)
         if ($strCompressType eq GZ)
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => undef}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => undef}});
         }
         else
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => undef}});
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS_TYPE) => $strCompressType}});
         }
 

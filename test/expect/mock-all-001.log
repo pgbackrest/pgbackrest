@@ -58,7 +58,7 @@ backrest-checksum="[CHECKSUM]"
 full backup - create pg_stat link, pg_clog dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --manifest-save-threshold=3 --buffer-size=[BUFFER-SIZE] --checksum-page --process-max=1 --repo1-type=cifs --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --manifest-save-threshold=3 --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --repo1-type=cifs --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --checksum-page --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --manifest-save-threshold=3 --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --repo1-type=cifs --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
@@ -92,8 +92,8 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -240,7 +240,7 @@ P00   INFO: stop command end: completed successfully
 full backup - global stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00  ERROR: [062]: stop file exists for all stanzas
@@ -262,7 +262,7 @@ P00   INFO: stop command end: completed successfully
 full backup - stanza stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00  ERROR: [062]: stop file exists for stanza db
@@ -290,7 +290,7 @@ P00   INFO: start command end: completed successfully
 full backup - resume (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --force --checksum-page --delta --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --checksum-page --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
@@ -335,8 +335,8 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -756,7 +756,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -797,8 +797,8 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -948,7 +948,7 @@ backrest-checksum="[CHECKSUM]"
 incr backup - resume and add tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --delta --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
@@ -1011,8 +1011,8 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -1172,7 +1172,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - drop tablespace 11 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --delta --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1228,8 +1228,8 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -1539,7 +1539,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add files and remove tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-DIFF-1], version = 0.00
@@ -1585,8 +1585,8 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -1739,7 +1739,7 @@ backrest-checksum="[CHECKSUM]"
 incr backup - update files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
@@ -1804,8 +1804,8 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -1959,7 +1959,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - updates since last full (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --delta --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -2020,8 +2020,8 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail

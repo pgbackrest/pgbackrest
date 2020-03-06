@@ -46,12 +46,12 @@ sub run
     (
         {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>    GZ, error => 0},
         {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 1},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress => undef, error => 0},
+        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  NONE, error => 0},
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>    GZ, error => 0},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => undef, error => 0},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  NONE, error => 0},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>    GZ, error => 1},
         {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 0},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => undef, error => 0},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  NONE, error => 0},
     )
     {
         # Only run tests for this vm
@@ -66,8 +66,8 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin(
-                "rmt ${bRemote}, cmp " . (defined($strCompressType) ? $strCompressType : NONE) . ", error " .
-                ($iError ? 'connect' : 'version') . ", s3 ${bS3}, enc ${bEncrypt}")) {next}
+                "rmt ${bRemote}, cmp ${strCompressType}, error " . ($iError ? 'connect' : 'version') .
+                    ", s3 ${bS3}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
@@ -75,7 +75,7 @@ sub run
             bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Create compression extension
-        my $strCompressExt = defined($strCompressType) ? ".${strCompressType}" : '';
+        my $strCompressExt = $strCompressType ne NONE ? ".${strCompressType}" : '';
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
