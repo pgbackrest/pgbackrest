@@ -27,11 +27,13 @@ Compression type constants
 /***********************************************************************************************************************************
 Configuration for supported and future compression types
 ***********************************************************************************************************************************/
-static const struct compressHelperLocal
+static const struct CompressHelperLocal
 {
     const String *const type;                                       // Compress type -- must be extension without period prefixed
     const String *const ext;                                        // File extension with period prefixed
+    const char *compressType;                                       // Type of the compression filter
     IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
+    const char *decompressType;                                     // Type of the decompression filter
     IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
     int levelDefault;                                               // Default compression level
 } compressHelperLocal[] =
@@ -43,7 +45,9 @@ static const struct compressHelperLocal
     {
         .type = STRDEF(GZ_EXT),
         .ext = STRDEF("." GZ_EXT),
+        .compressType = GZ_COMPRESS_FILTER_TYPE,
         .compressNew = gzCompressNew,
+        .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
         .decompressNew = gzDecompressNew,
         .levelDefault = 6,
     },
@@ -66,7 +70,7 @@ static const struct compressHelperLocal
 };
 
 #define COMPRESS_LIST_SIZE                                                                                                         \
-    (sizeof(compressHelperLocal) / sizeof(struct compressHelperLocal))
+    (sizeof(compressHelperLocal) / sizeof(struct CompressHelperLocal))
 
 /**********************************************************************************************************************************/
 CompressType
@@ -190,26 +194,18 @@ compressFilterVar(const String *filterType, const VariantList *filterParamList)
 
     IoFilter *result = NULL;
 
-    for (CompressType compressType = compressTypeNone + 1; compressType < COMPRESS_LIST_SIZE; compressType++)
+    for (CompressType compressIdx = compressTypeNone + 1; compressIdx < COMPRESS_LIST_SIZE; compressIdx++)
     {
-        if (strBeginsWith(filterType, compressHelperLocal[compressType].type))
+        const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
+
+        if (compress->compressType != NULL && strEqZ(filterType, compress->compressType))
         {
-            compressTypePresent(compressType);
-
-            switch (strPtr(filterType)[strSize(compressHelperLocal[compressType].type)])
-            {
-                case 'C':
-                {
-                    result = compressHelperLocal[compressType].compressNew(varIntForce(varLstGet(filterParamList, 0)));
-                    break;
-                }
-
-                case 'D':
-                {
-                    result = compressHelperLocal[compressType].decompressNew();
-                    break;
-                }
-            }
+            result = compress->compressNew(varIntForce(varLstGet(filterParamList, 0)));
+            break;
+        }
+        else if (compress->decompressType != NULL && strEqZ(filterType, compress->decompressType))
+        {
+            result = compress->decompressNew();
             break;
         }
     }
