@@ -247,43 +247,6 @@ sub run
             $strDescription = 'Expire all archive except for the current database';
 
             $oExpireTest->process($self->stanza(), 2, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            $self->optionTestClear(CFGOPT_DB_TIMEOUT);
-            $self->optionTestClear(CFGOPT_PG_PATH);
-            $self->optionTestClear(CFGOPT_ONLINE);
-            $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
-            $self->optionTestSet(CFGOPT_REPO_RETENTION_FULL, 1);
-            $self->optionTestSet(CFGOPT_REPO_RETENTION_DIFF, 1);
-            $self->optionTestSet(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
-            $self->optionTestSet(CFGOPT_REPO_RETENTION_ARCHIVE, 1);
-            $self->configTestLoad(CFGCMD_EXPIRE);
-
-            $strDescription = 'Expiration cannot occur due to info file db mismatch';
-
-            # Mismatched version
-            $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB =>
-                    {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93,
-                        &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => $self->dbSysId(PG_VERSION_95)},
-                 &INFO_ARCHIVE_SECTION_DB_HISTORY =>
-                    {'3' =>
-                        {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93,
-                            &INFO_ARCHIVE_KEY_DB_ID => $self->dbSysId(PG_VERSION_95)}}});
-
-            # Restore the info file
-            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
-
-            # Mismatched system ID
-            $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB =>
-                    {&INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
-                 &INFO_ARCHIVE_SECTION_DB_HISTORY =>
-                    {'3' =>
-                        {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_95, &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
-
-            # Restore the info file
-            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
         }
     }
 }
