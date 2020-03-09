@@ -19,7 +19,11 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/repo/create.h"
+#include "command/repo/get.h"
 #include "command/repo/ls.h"
+#include "command/repo/put.h"
+#include "command/repo/rm.h"
 #include "command/restore/restore.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
@@ -158,11 +162,43 @@ main(int argListSize, const char *argList[])
                     break;
                 }
 
+                // Repository create command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoCreate:
+                {
+                    cmdRepoCreate();
+                    break;
+                }
+
+                // Repository get file command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoGet:
+                {
+                    result = cmdStorageGet();
+                    break;
+                }
+
                 // Repository list paths/files command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
                 {
                     cmdStorageList();
+                    break;
+                }
+
+                // Repository put file command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoPut:
+                {
+                    cmdStoragePut();
+                    break;
+                }
+
+                // Repository remove paths/files command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoRm:
+                {
+                    cmdStorageRemove();
                     break;
                 }
 

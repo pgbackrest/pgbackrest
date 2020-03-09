@@ -141,6 +141,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptChecksumPage,
     },
 
+    // cipher-pass option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_CIPHER_PASS,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptCipherPass,
+    },
+
     // cmd-ssh option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -304,6 +312,13 @@ static const struct option optionList[] =
         .name = CFGOPT_HOST_ID,
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptHostId,
+    },
+
+    // ignore-missing option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_IGNORE_MISSING,
+        .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
     },
 
     // link-all option
@@ -1686,6 +1701,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProtocolTimeout,
     },
 
+    // raw option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_RAW,
+        .val = PARSE_OPTION_FLAG | cfgOptRaw,
+    },
+
     // recovery-option option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2346,6 +2368,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptBackupStandby,
     cfgOptBufferSize,
     cfgOptChecksumPage,
+    cfgOptCipherPass,
     cfgOptCmdSsh,
     cfgOptCompress,
     cfgOptCompressLevel,
@@ -2360,6 +2383,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptExclude,
     cfgOptFilter,
     cfgOptHostId,
+    cfgOptIgnoreMissing,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,
@@ -2464,6 +2488,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
+    cfgOptRaw,
     cfgOptRecurse,
     cfgOptRemoteType,
     cfgOptRepoCipherType,

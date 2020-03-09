@@ -894,6 +894,17 @@
 
         <operation-general title="General Options">
             <option-list>
+                <!-- OPERATION - GENERAL - CIPHER-PASS OPTION -->
+                <option id="cipher-pass" name="Ad Hoc Cipher Passphrase">
+                    <summary>Cipher passphrase for current command.</summary>
+
+                    <text>Specify an ad hoc cipher passphrase for the current command.
+
+                    <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+
+                    <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
+                </option>
+
                 <!-- OPERATION - GENERAL - CONFIG OPTION -->
                 <option id="config" name="Config">
                     <summary><backrest/> configuration file.</summary>
@@ -921,6 +932,15 @@
                     For example, passing only <code>--config-path=/conf/pgbackrest</code> results in the  <br-option>--config</br-option> default being set to <code>/conf/pgbackrest/pgbackrest.conf</code> and the <br-option>--config-include-path</br-option> default being set to  <code>/conf/pgbackrest/conf.d</code>.</text>
 
                     <example>/conf/pgbackrest</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - RAW -->
+                <option id="raw" name="Raw Data">
+                    <summary>Do not transform data.</summary>
+
+                    <text>Do not transform (i.e, encrypt, decompress, etc.) data for the current command.</text>
+
+                    <example>y</example>
                 </option>
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
@@ -1057,6 +1077,53 @@
                 </command-example-list>
             </command>
 
+            <!-- OPERATION - REPO-CREATE COMMAND -->
+            <command id="repo-create" name="Create Repository">
+                <summary>Create the repository.</summary>
+
+                <text>Creates the bucket if <setting>repo-type=s3</setting>.
+
+                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+
+                <command-example-list>
+                    <command-example title="Create repository">
+                        <text><code-block title="">
+                            {[backrest-exe]} repo-create
+                        </code-block>
+
+                        Create the repository.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
+            <!-- OPERATION - REPO-GET COMMAND -->
+            <command id="repo-get" name="Repository Get File">
+                <summary>Get a file from the repository.</summary>
+
+                <text>Similar to the unix <cmd>cat</cmd> command but options are different.</text>
+
+                <option-list>
+                    <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
+                    <option id="ignore-missing" name="Ignore Missing">
+                        <summary>Ignore missing source file.</summary>
+
+                        <text>Exit with 1 if the source file is missing but don't throw an error.</text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
+
+                <command-example-list>
+                    <command-example title="Get a file from the repository">
+                        <text><code-block title="">
+                            {[backrest-exe]} repo-get backup/demo/file.txt
+                        </code-block>
+
+                        Get a file from the demo stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
             <!-- OPERATION - REPO-LS COMMAND -->
             <command id="repo-ls" name="Repository List Paths/Files">
                 <summary>List paths/files in the repository.</summary>
@@ -1117,6 +1184,55 @@
                         </code-block>
 
                         List all backups in the demo stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
+            <!-- OPERATION - REPO-PUT COMMAND -->
+            <command id="repo-put" name="Repository Put File">
+                <summary>Put a file in the repository.</summary>
+
+                <text>Similar to the unix <cmd>tee</cmd> command but options and behavior are different.
+
+                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+
+                <command-example-list>
+                    <command-example title="Put a file in the repository">
+                        <text><code-block title="">
+                            cat file.txt {[backrest-exe]} repo-put backup/demo/file.txt
+                        </code-block>
+
+                        Put a file in the demo stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
+            <!-- OPERATION - RM COMMAND -->
+            <command id="repo-rm" name="Repository Remove Paths/Files">
+                <summary>Remove paths/files in the repository.</summary>
+
+                <text>Similar to the unix <cmd>rm</cmd> command but options are different.
+
+                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+
+                <option-list>
+                    <!-- OPERATION - RM COMMAND - RECURSE OPTION -->
+                    <option id="recurse" name="Recurse Subpaths">
+                        <summary>Remove all sub file/paths.</summary>
+
+                        <text>All subpaths and their files will be removed.</text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
+
+                <command-example-list>
+                    <command-example title="Remove backup">
+                        <text><code-block title="">
+                            {[backrest-exe]} rm --recurse backup/demo/20190718-155825F
+                        </code-block>
+
+                        Remove 20190718-155825F backup in the demo stanza.</text>
                     </command-example>
                 </command-example-list>
             </command>
