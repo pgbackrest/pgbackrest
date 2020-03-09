@@ -97,7 +97,7 @@
 </table-row>
 
 <table-row>
-    <table-cell>command/storage</table-cell>
+    <table-cell>command/repo</table-cell>
     <table-cell>3/3 (100.0%)</table-cell>
     <table-cell>28/28 (100.0%)</table-cell>
     <table-cell>76/76 (100.0%)</table-cell>

@@ -18,7 +18,7 @@ typedef enum
     cfgDefCmdExpire,
     cfgDefCmdHelp,
     cfgDefCmdInfo,
-    cfgDefCmdLs,
+    cfgDefCmdRepoLs,
     cfgDefCmdRestore,
     cfgDefCmdStanzaCreate,
     cfgDefCmdStanzaDelete,

@@ -89,6 +89,8 @@ use constant CFGCMD_HELP                                            => 'help';
     push @EXPORT, qw(CFGCMD_HELP);
 use constant CFGCMD_INFO                                            => 'info';
     push @EXPORT, qw(CFGCMD_INFO);
+use constant CFGCMD_REPO_LS                                         => 'repo-ls';
+    push @EXPORT, qw(CFGCMD_REPO_LS);
 use constant CFGCMD_RESTORE                                         => 'restore';
     push @EXPORT, qw(CFGCMD_RESTORE);
 use constant CFGCMD_STANZA_CREATE                                   => 'stanza-create';
@@ -101,8 +103,6 @@ use constant CFGCMD_START                                           => 'start';
     push @EXPORT, qw(CFGCMD_START);
 use constant CFGCMD_STOP                                            => 'stop';
     push @EXPORT, qw(CFGCMD_STOP);
-use constant CFGCMD_STORAGE_LIST                                    => 'ls';
-    push @EXPORT, qw(CFGCMD_STORAGE_LIST);
 use constant CFGCMD_VERSION                                         => 'version';
     push @EXPORT, qw(CFGCMD_VERSION);
 
@@ -621,6 +621,14 @@ my $rhCommandDefine =
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
     },
 
+    &CFGCMD_REPO_LS =>
+    {
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+        &CFGDEF_PARAMETER_ALLOWED => true,
+    },
+
     &CFGCMD_RESTORE =>
     {
     },
@@ -651,14 +659,6 @@ my $rhCommandDefine =
     {
     },
 
-    &CFGCMD_STORAGE_LIST =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_FILE => false,
-        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
-        &CFGDEF_PARAMETER_ALLOWED => true,
-    },
-
     &CFGCMD_VERSION =>
     {
         &CFGDEF_LOG_FILE => false,
@@ -686,13 +686,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -958,7 +958,7 @@ my %hConfigDefine =
                 ]
             },
 
-            &CFGCMD_STORAGE_LIST =>
+            &CFGCMD_REPO_LS =>
             {
                 &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
                 &CFGDEF_ALLOW_LIST =>
@@ -1000,11 +1000,11 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1025,11 +1025,11 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1041,7 +1041,7 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_STORAGE_LIST => {},
+            &CFGCMD_REPO_LS => {},
         }
     },
 
@@ -1051,7 +1051,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_STORAGE_LIST => {},
+            &CFGCMD_REPO_LS => {},
         }
     },
 
@@ -1067,7 +1067,7 @@ my %hConfigDefine =
         ],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_STORAGE_LIST => {},
+            &CFGCMD_REPO_LS => {},
         }
     },
 
@@ -1115,11 +1115,11 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1135,10 +1135,10 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1202,11 +1202,11 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1222,13 +1222,13 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1245,13 +1245,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1289,13 +1289,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1312,11 +1312,11 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1403,6 +1403,7 @@ my %hConfigDefine =
                 &CFGDEF_INTERNAL => true,
             },
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE =>
             {
@@ -1418,7 +1419,6 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1439,10 +1439,10 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
         &CFGDEF_DEPEND =>
         {
@@ -1677,13 +1677,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1805,13 +1805,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1881,13 +1881,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1905,13 +1905,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1929,13 +1929,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1952,13 +1952,13 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_REPO_LS => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-            &CFGCMD_STORAGE_LIST => {},
         }
     },
 

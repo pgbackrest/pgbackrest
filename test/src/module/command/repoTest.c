@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Storage Commands
+Test Repo Commands
 ***********************************************************************************************************************************/
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
@@ -25,7 +25,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
         strLstAddZ(argList, "--output=text");
         strLstAddZ(argList, "--sort=none");
-        harnessCfgLoad(cfgCmdLs, argList);
+        harnessCfgLoad(cfgCmdRepoLs, argList);
 
         // Missing directory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "bbb");
-        harnessCfgLoad(cfgCmdLs, argListTmp);
+        harnessCfgLoad(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -146,7 +146,7 @@ testRun(void)
         // Too many paths
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argListTmp, "ccc");
-        harnessCfgLoad(cfgCmdLs, argListTmp);
+        harnessCfgLoad(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
         TEST_ERROR(storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "only one path may be specified");

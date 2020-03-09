@@ -23,8 +23,8 @@ Command constants
     STRING_DECLARE(CFGCMD_HELP_STR);
 #define CFGCMD_INFO                                                 "info"
     STRING_DECLARE(CFGCMD_INFO_STR);
-#define CFGCMD_LS                                                   "ls"
-    STRING_DECLARE(CFGCMD_LS_STR);
+#define CFGCMD_REPO_LS                                              "repo-ls"
+    STRING_DECLARE(CFGCMD_REPO_LS_STR);
 #define CFGCMD_RESTORE                                              "restore"
     STRING_DECLARE(CFGCMD_RESTORE_STR);
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
@@ -406,7 +406,7 @@ typedef enum
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
-    cfgCmdLs,
+    cfgCmdRepoLs,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,

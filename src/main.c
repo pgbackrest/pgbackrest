@@ -19,11 +19,11 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/repo/ls.h"
 #include "command/restore/restore.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
-#include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -158,6 +158,14 @@ main(int argListSize, const char *argList[])
                     break;
                 }
 
+                // Repository list paths/files command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoLs:
+                {
+                    cmdStorageList();
+                    break;
+                }
+
                 // Restore command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
@@ -203,14 +211,6 @@ main(int argListSize, const char *argList[])
                 case cfgCmdStop:
                 {
                     cmdStop();
-                    break;
-                }
-
-                // Storage list command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdLs:
-                {
-                    cmdStorageList();
                     break;
                 }
 

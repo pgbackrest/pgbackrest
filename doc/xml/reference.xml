@@ -1057,6 +1057,70 @@
                 </command-example-list>
             </command>
 
+            <!-- OPERATION - REPO-LS COMMAND -->
+            <command id="repo-ls" name="Repository List Paths/Files">
+                <summary>List paths/files in the repository.</summary>
+
+                <text>Similar to the unix <cmd>ls</cmd> command but options and output are different.  Only information provided by repository storage drivers is available: <id>name</id>, <id>type</id>, <id>size</id>, (modify) <id>time</id>, and <id>destination</id> (for drivers that support links).</text>
+
+                <option-list>
+                    <!-- OPERATION - LS COMMAND - FILTER OPTION -->
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter output with a regular expression.</summary>
+
+                        <text>The filter is applied against the file/path names before they are output.</text>
+
+                        <example>(F|D|I)$</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>The following output types are supported:
+                        <ul>
+                            <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
+                            <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul></text>
+
+                        <example>json</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
+                    <option id="recurse" name="Recurse Subpaths">
+                        <summary>Include all subpaths in output.</summary>
+
+                        <text>All subpaths and their files will be included in the output.</text>
+
+                        <example>y</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - SORT OPTION -->
+                    <option id="sort" name="Sort Output">
+                        <summary>Sort output ascending, descending, or none.</summary>
+
+                        <text>The following sort types are supported:
+                        <ul>
+                            <li><id>asc</id> - sort ascending.</li>
+                            <li><id>desc</id> - sort descending.</li>
+                            <li><id>none</id> - no sorting.</li>
+                        </ul></text>
+
+                        <example>desc</example>
+                    </option>
+                </option-list>
+
+                <command-example-list>
+                    <command-example title="List all backups in a stanza">
+                        <text><code-block title="">
+                            {[backrest-exe]} repo-ls backup/demo
+                        </code-block>
+
+                        List all backups in the demo stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
             <!-- OPERATION - RESTORE COMMAND -->
             <command id="restore" name="Restore">
                 <summary>Restore a database cluster.</summary>
@@ -1273,69 +1337,6 @@
                 </command-example-list>
             </command>
 
-            <!-- OPERATION - LS COMMAND -->
-            <command id="ls" name="Storage List">
-                <summary>List paths/files in the repository.</summary>
-
-                <text>This is intended to be a general purpose list function, but for now it only works on the repository.</text>
-
-                <option-list>
-                    <!-- OPERATION - LS COMMAND - FILTER OPTION -->
-                    <option id="filter" name="Filter Output">
-                        <summary>Filter output with a regular expression.</summary>
-
-                        <text>The filter is applied against the file/path names before they are output.</text>
-
-                        <example>(F|D|I)$</example>
-                    </option>
-
-                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
-                    <option id="output" name="Output">
-                        <summary>Output format.</summary>
-
-                        <text>The following output types are supported:
-                        <ul>
-                            <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
-                            <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
-                        </ul></text>
-
-                        <example>json</example>
-                    </option>
-
-                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
-                    <option id="recurse" name="Recurse Subpaths">
-                        <summary>Include all subpaths in output.</summary>
-
-                        <text>All subpaths and their files will be included in the output.</text>
-
-                        <example>y</example>
-                    </option>
-
-                    <!-- OPERATION - LS COMMAND - SORT OPTION -->
-                    <option id="sort" name="Sort Output">
-                        <summary>Sort output ascending, descending, or none.</summary>
-
-                        <text>The following sort types are supported:
-                        <ul>
-                            <li><id>asc</id> - sort ascending.</li>
-                            <li><id>desc</id> - sort descending.</li>
-                            <li><id>none</id> - no sorting.</li>
-                        </ul></text>
-
-                        <example>desc</example>
-                    </option>
-                </option-list>
-
-                <command-example-list>
-                    <command-example title="List all backups in a stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} ls backup/demo
-                        </code-block>
-
-                        List all backups in the demo stanza.</text>
-                    </command-example>
-                </command-example-list>
-            </command>
 
             <!-- OPERATION - VERSION COMMAND -->
             <command id="version" name="Version">

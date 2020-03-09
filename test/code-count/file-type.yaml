@@ -547,6 +547,14 @@ src/command/remote/remote.h:
   class: core
   type: c/h
 
+src/command/repo/ls.c:
+  class: core
+  type: c
+
+src/command/repo/ls.h:
+  class: core
+  type: c/h
+
 src/command/restore/file.c:
   class: core
   type: c
@@ -600,14 +608,6 @@ src/command/stanza/upgrade.c:
   type: c
 
 src/command/stanza/upgrade.h:
-  class: core
-  type: c/h
-
-src/command/storage/list.c:
-  class: core
-  type: c
-
-src/command/storage/list.h:
   class: core
   type: c/h
 

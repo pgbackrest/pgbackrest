@@ -14,7 +14,7 @@ STRING_EXTERN(CFGCMD_CHECK_STR,                                     CFGCMD_CHECK
 STRING_EXTERN(CFGCMD_EXPIRE_STR,                                    CFGCMD_EXPIRE);
 STRING_EXTERN(CFGCMD_HELP_STR,                                      CFGCMD_HELP);
 STRING_EXTERN(CFGCMD_INFO_STR,                                      CFGCMD_INFO);
-STRING_EXTERN(CFGCMD_LS_STR,                                        CFGCMD_LS);
+STRING_EXTERN(CFGCMD_REPO_LS_STR,                                   CFGCMD_REPO_LS);
 STRING_EXTERN(CFGCMD_RESTORE_STR,                                   CFGCMD_RESTORE);
 STRING_EXTERN(CFGCMD_STANZA_CREATE_STR,                             CFGCMD_STANZA_CREATE);
 STRING_EXTERN(CFGCMD_STANZA_DELETE_STR,                             CFGCMD_STANZA_DELETE);
@@ -121,7 +121,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
     CONFIG_COMMAND
     (
-        CONFIG_COMMAND_NAME(CFGCMD_LS)
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_LS)
 
         CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
