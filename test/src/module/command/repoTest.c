@@ -37,7 +37,12 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
-        TEST_RESULT_STR_Z(strNewBuf(output), "{}", "    check output");
+        TEST_RESULT_STR_Z(
+            strNewBuf(output),
+                "{"
+                    "\".\":{\"type\":\"path\"}"
+                "}",
+            "    check output");
 
         // Empty directory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -76,7 +81,7 @@ testRun(void)
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
-        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
                 "{"
@@ -150,6 +155,21 @@ testRun(void)
 
         output = bufNew(0);
         TEST_ERROR(storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "only one path may be specified");
+
+        // File
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--repo-path=%s/repo/aaa", testPath()));
+        strLstAddZ(argList, "--output=json");
+        harnessCfgLoad(cfgCmdRepoLs, argList);
+
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
+        TEST_RESULT_STR_Z(
+            strNewBuf(output),
+                "{"
+                    "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
+                "}",
+            "    check output");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
