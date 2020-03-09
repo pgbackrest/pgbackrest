@@ -55,7 +55,6 @@ sub codeCountScan
                  $strFile =~ '\.eps$' ||
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
-                 $strFile eq 'libc/typemap' ||
                  $strFile eq 'test/Vagrantfile' ||
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
@@ -83,13 +82,12 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' || $strFile =~ '^libc/build/' || $strFile eq 'libc/Makefile.PL' ||
-               $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' || $strFile eq 'src/configure.ac')
+        elsif ($strFile =~ '^build/' ||  $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
+               $strFile eq 'src/configure.ac')
         {
             $strClass = 'build';
         }
-        elsif ($strFile =~ '^test/lib/pgBackRestTest/Module/' || $strFile =~ '^test/src/module/' ||
-               $strFile =~ '^libc/t/')
+        elsif ($strFile =~ '^test/lib/pgBackRestTest/Module/' || $strFile =~ '^test/src/module/')
         {
             $strClass = 'test/module';
         }

@@ -19,14 +19,13 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 
+use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
@@ -39,17 +38,6 @@ use pgBackRestTest::Common::VmTest;
 sub run
 {
     my $self = shift;
-
-    # Archive and backup info file names
-    my $strArchiveInfoFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE;
-    my $strArchiveInfoCopyFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT;
-    my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
-    my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
-
-    my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
-    my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
-    my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
-    my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
     foreach my $rhRun
     (
@@ -80,9 +68,20 @@ sub run
             true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt,
             strCompressType => $strCompressType});
 
+        # Archive and backup info file names
+        my $strArchiveInfoFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE);
+        my $strArchiveInfoCopyFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
+        my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
+
+        my $strBackupInfoFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO);
+        my $strBackupInfoCopyFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO . INI_COPY_EXT);
+        my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+        my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_MISSING,
-            strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_LOG_LEVEL_FILE) . '=info'});
+            strOptionalParam => '--no-online --log-level-file=info'});
 
         # Generate pg_control for stanza-create
         storageTest()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
@@ -91,17 +90,17 @@ sub run
         # Fail stanza upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-online'});
 
         # Create the stanza successfully without force
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
 
         # Rerun stanza-create and confirm it does not fail
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
             'do not fail on rerun of stanza-create - info files exist and DB section ok',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            {strOptionalParam => '--no-online'});
 
         # Stanza Create fails when not using force - database mismatch with pg_control file
         #--------------------------------------------------------------------------------------------------------------------------
@@ -109,15 +108,14 @@ sub run
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
         $oHostBackup->stanzaCreate('fail on database mismatch and warn force option deprecated',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) .
-            ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-online --force'});
 
         # Restore pg_control
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-online'});
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -140,7 +138,7 @@ sub run
         if (!$bEncrypt)
         {
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-online'});
         }
 
         # Restore info files from copy
@@ -170,8 +168,7 @@ sub run
         #  Save a pre-upgrade copy of archive info fo testing db-id mismatch
         forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
-        $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-' .
-            cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-online'});
 
         # Make sure that WAL from the old version can still be retrieved
         #--------------------------------------------------------------------------------------------------------------------------
@@ -193,7 +190,7 @@ sub run
         # Push a WAL segment so have a valid file in the latest DB archive dir only
         $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
         $self->testResult(
-            sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
+            sub {storageRepo()->list($oHostBackup->repoArchivePath(PG_VERSION_94 . '-2/0000000100000001'))},
             '000000010000000100000001-' . $self->walGenerateContentChecksum(PG_VERSION_94) . ".${strCompressType}",
             'check that WAL is in the archive at -2');
 
@@ -201,8 +198,7 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
         $oHostBackup->backup(
-            'full', 'create first full backup ',
-            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)}, false);
+            'full', 'create first full backup ', {strOptionalParam => '--repo1-retention-full=2 --no-online'}, false);
 
         # Upgrade the stanza
         #--------------------------------------------------------------------------------------------------------------------------
@@ -210,8 +206,7 @@ sub run
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageTest(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
-
-        $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-online'});
 
         # Copy archive.info and restore really old version
         forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
@@ -219,16 +214,15 @@ sub run
         forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoFile, {bRecurse => false});
 
         #  Confirm versions
-        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
-        my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
+        my $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
+        my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
         $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
             PG_VERSION_93)}, true, 'archive at old pg version');
         $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
             PG_VERSION_95)}, true, 'backup at new pg version');
 
         $oHostBackup->stanzaUpgrade(
-            'upgrade fails with mismatched db-ids',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            'upgrade fails with mismatched db-ids', {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-online'});
 
         # Restore archive.info
         forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
@@ -239,8 +233,8 @@ sub run
         $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
-        my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
-            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)});
+        my $oExecuteBackup = $oHostBackup->backupBegin(
+            'diff', 'diff changed to full backup', {strOptionalParam => '--repo1-retention-full=2 --no-online'});
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Delete the stanza

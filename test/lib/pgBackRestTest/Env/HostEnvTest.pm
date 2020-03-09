@@ -2,7 +2,7 @@
 # FullCommonTest.pm - Common code for backup tests
 ####################################################################################################################################
 package pgBackRestTest::Env::HostEnvTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -18,9 +18,9 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
@@ -42,11 +42,6 @@ use constant ENCRYPTION_KEY_MANIFEST                             => 'manifest';
     push @EXPORT, qw(ENCRYPTION_KEY_MANIFEST);
 use constant ENCRYPTION_KEY_BACKUPSET                            => 'backupset';
     push @EXPORT, qw(ENCRYPTION_KEY_BACKUPSET);
-
-use constant NONE                                                   => CFGOPTVAL_COMPRESS_TYPE_NONE;
-    push @EXPORT, qw(NONE);
-use constant GZ                                                     => CFGOPTVAL_COMPRESS_TYPE_GZ;
-    push @EXPORT, qw(GZ);
 
 ####################################################################################################################################
 # setup
@@ -151,6 +146,13 @@ sub setup
         $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
     }
 
+    storageRepoCommandSet(
+        $self->backrestExeHelper() .
+            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
+            ' --log-level-stderr=error' .
+            ($oConfigParam->{bS3} ? ' --no-repo1-s3-verify-tls --repo1-s3-host=' . $oHostS3->ipGet() : ''),
+        $oConfigParam->{bS3} ? STORAGE_OBJECT : STORAGE_POSIX);
+
     # Create db-standby config
     if (defined($oHostDbStandby))
     {
@@ -161,37 +163,10 @@ sub setup
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }
 
-    # Set options needed for storage helper
-    $self->optionTestSet(CFGOPT_PG_PATH, $oHostDbMaster->dbBasePath());
-    $self->optionTestSet(CFGOPT_REPO_PATH, $oHostBackup->repoPath());
-    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-
-    # Configure the repo to be encrypted if required
-    if ($bRepoEncrypt)
-    {
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
-    }
-
-    # Set S3 options
-    if (defined($oHostS3))
-    {
-        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
-        $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
-        $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
-        $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
-    }
-
-    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
     # Create S3 bucket
     if (defined($oHostS3))
     {
-        storageRepo()->{oStorageC}->bucketCreate();
+        storageRepo()->create();
     }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;

@@ -731,9 +731,6 @@
                 <exe-cmd>mkdir -p /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /build/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
                 <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">

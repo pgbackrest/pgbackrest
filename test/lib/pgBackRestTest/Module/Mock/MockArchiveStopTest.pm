@@ -20,12 +20,11 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
@@ -86,7 +85,7 @@ sub run
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
         # Create the archive info file
-        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-online'});
 
         # Push a WAL segment
         &log(INFO, '    push first WAL');
@@ -96,7 +95,7 @@ sub run
         if ($iError == 0)
         {
             $oHostBackup->infoMunge(
-                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+                $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
                  &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
         }
@@ -120,13 +119,12 @@ sub run
         # Fix the database version
         if ($iError == 0)
         {
-            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {storageRepo()->list(
-                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
+            sub {storageRepo()->list($oHostBackup->repoArchivePath(PG_VERSION_94 . '-1/0000000100000001'))},
             "000000010000000100000001-${strWalHash}${strCompressExt}",
             'segment 2-4 not pushed', {iWaitSeconds => 5});
 
@@ -134,8 +132,7 @@ sub run
         $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
-            sub {storageRepo()->list(
-                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
+            sub {storageRepo()->list($oHostBackup->repoArchivePath(PG_VERSION_94 . '-1/0000000100000001'))},
             "(000000010000000100000001-${strWalHash}${strCompressExt}, " .
                 "000000010000000100000005-${strWalHash}${strCompressExt})",
             'segment 5 is pushed', {iWaitSeconds => 5});

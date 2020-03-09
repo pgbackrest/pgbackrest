@@ -19,10 +19,8 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -137,9 +135,9 @@ sub new
     # Init object and store variables
     eval
     {
-        $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => $oStorage, strCipherPass => $oStorage->cipherPassUser(),
-            strCipherPassSub => $strCipherPassSub});
+        $self = $class->SUPER::new(
+            $oStorage, $strBackupInfoFile,
+            {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do

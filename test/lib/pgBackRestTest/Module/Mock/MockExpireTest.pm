@@ -21,49 +21,16 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::ExpireEnvTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
-
-####################################################################################################################################
-# initStanzaOption
-####################################################################################################################################
-sub initStanzaOption
-{
-    my $self = shift;
-    my $strDbBasePath = shift;
-    my $strRepoPath = shift;
-    my $oHostS3 = shift;
-
-    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-    $self->optionTestSet(CFGOPT_PG_PATH, $strDbBasePath);
-    $self->optionTestSet(CFGOPT_REPO_PATH, $strRepoPath);
-    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
-
-    $self->optionTestSetBool(CFGOPT_ONLINE, false);
-
-    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
-    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
-
-    if (defined($oHostS3))
-    {
-        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
-        $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
-        $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
-        $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
-    }
-}
 
 ####################################################################################################################################
 # run
@@ -103,12 +70,9 @@ sub run
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
                 true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
-            $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
-            $self->configTestLoad(CFGCMD_STANZA_CREATE);
-
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -202,12 +166,9 @@ sub run
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
                 true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
-            $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
-            $self->configTestLoad(CFGCMD_STANZA_CREATE);
-
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 

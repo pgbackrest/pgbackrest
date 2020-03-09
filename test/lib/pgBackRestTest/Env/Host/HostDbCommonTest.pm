@@ -21,10 +21,9 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBackupTest;

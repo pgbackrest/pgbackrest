@@ -23,8 +23,8 @@ use pgBackRest::Common::Log;
 use constant STORAGE_LOCAL                                          => '<LOCAL>';
     push @EXPORT, qw(STORAGE_LOCAL);
 
-use constant STORAGE_S3                                             => 's3';
-    push @EXPORT, qw(STORAGE_S3);
+use constant STORAGE_OBJECT                                         => 'object';
+    push @EXPORT, qw(STORAGE_OBJECT);
 use constant STORAGE_POSIX                                          => 'posix';
     push @EXPORT, qw(STORAGE_POSIX);
 
@@ -68,145 +68,6 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-
-####################################################################################################################################
-# Copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed instead of
-# file names.
-####################################################################################################################################
-sub copy
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xSourceFile,
-        $xDestinationFile,
-        $bSourceOpen,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile', required => false},
-            {name => 'xDestinationFile'},
-            {name => 'bSourceOpen', optional => true, default => false},
-        );
-
-    # Is source/destination an IO object or a file expression?
-    my $oSourceFileIo = defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile)) : undef;
-
-    # Does the source file exist?
-    my $bResult = false;
-
-    # Copy if the source file exists
-    if (defined($oSourceFileIo))
-    {
-        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
-
-        # Use C copy if source and destination are C objects
-        if (defined($oSourceFileIo->{oStorageCRead}) && defined($oDestinationFileIo->{oStorageCWrite}))
-        {
-            $bResult = $self->{oStorageC}->copy(
-                $oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
-        }
-        else
-        {
-            # Open the source file if it is a C object
-            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? ($bSourceOpen || $oSourceFileIo->open()) : true;
-
-            if ($bResult)
-            {
-                # Open the destination file if it is a C object
-                if (defined($oDestinationFileIo->{oStorageCWrite}))
-                {
-                    $oDestinationFileIo->open();
-                }
-
-                # Copy the data
-                do
-                {
-                    # Read data
-                    my $tBuffer = '';
-
-                    $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-                    $oDestinationFileIo->write(\$tBuffer);
-                }
-                while (!$oSourceFileIo->eof());
-
-                # Close files
-                $oSourceFileIo->close();
-                $oDestinationFileIo->close();
-            }
-        }
-    }
-
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bResult', value => $bResult, trace => true},
-    );
-}
-
-####################################################################################################################################
-# get - reads a buffer from storage all at once
-####################################################################################################################################
-sub get
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xFile,
-        $strCipherPass,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->get', \@_,
-            {name => 'xFile', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, redact => true},
-        );
-
-    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or
-    # if the repo has a user passphrase defined - else pass undef
-    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead(
-        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()})) : undef;
-
-    # Read only if there is something to read from
-    my $tContent;
-    my $lSize = 0;
-
-    if (defined($oFileIo))
-    {
-        my $lSizeRead;
-
-        do
-        {
-            $lSizeRead = $oFileIo->read(\$tContent, $self->{lBufferMax});
-            $lSize += $lSizeRead;
-        }
-        while ($lSizeRead != 0);
-
-        # Close the file
-        $oFileIo->close();
-
-        # If nothing was read then set to undef
-        if ($lSize == 0)
-        {
-            $tContent = undef;
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'rtContent', value => defined($oFileIo) ? \$tContent : undef, trace => true},
     );
 }
 
@@ -325,59 +186,6 @@ sub pathAbsolute
     (
         $strOperation,
         {name => 'strAbsolutePath', value => $strAbsolutePath, trace => true}
-    );
-}
-
-####################################################################################################################################
-# put - writes a buffer out to storage all at once
-####################################################################################################################################
-sub put
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xFile,
-        $xContent,
-        $strCipherPass,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->put', \@_,
-            {name => 'xFile', trace => true},
-            {name => 'xContent', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, trace => true, redact => true},
-        );
-
-    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or if
-    # the repo has a user passphrase defined - else pass undef
-    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite(
-        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()});
-
-    # Determine size of content
-    my $lSize = defined($xContent) ? length(ref($xContent) ? $$xContent : $xContent) : 0;
-
-    # Write only if there is something to write
-    if ($lSize > 0)
-    {
-        $oFileIo->write(ref($xContent) ? $xContent : \$xContent);
-    }
-    # Else open the file so a zero length file is created (since file is not opened until first write)
-    else
-    {
-        $oFileIo->open();
-    }
-
-    # Close the file
-    $oFileIo->close();
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'lSize', value => $lSize, trace => true},
     );
 }
 

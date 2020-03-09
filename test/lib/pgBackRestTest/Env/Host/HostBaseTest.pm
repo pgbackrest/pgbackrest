@@ -17,7 +17,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;

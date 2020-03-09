@@ -14,16 +14,21 @@ use File::Basename;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Manifest;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # Latest backup link constant
 ####################################################################################################################################
 use constant LINK_LATEST                                            => 'latest';
     push @EXPORT, qw(LINK_LATEST);
+
+use constant CFGOPTVAL_BACKUP_TYPE_FULL                             => 'full';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_FULL);
+use constant CFGOPTVAL_BACKUP_TYPE_DIFF                             => 'diff';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_DIFF);
+use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_INCR);
 
 ####################################################################################################################################
 # backupRegExpGet
@@ -200,6 +205,7 @@ sub backupLabel
     (
         $strOperation,
         $oStorageRepo,
+        $strRepoBackupPath,
         $strType,
         $strBackupLabelLast,
         $lTimestampStart
@@ -208,6 +214,7 @@ sub backupLabel
         (
             __PACKAGE__ . '::backupLabelFormat', \@_,
             {name => 'oStorageRepo', trace => true},
+            {name => 'strRepoBackupPath', trace => true},
             {name => 'strType', trace => true},
             {name => 'strBackupLabelLast', required => false, trace => true},
             {name => 'lTimestampStart', trace => true}
@@ -221,15 +228,15 @@ sub backupLabel
     # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
     # be skipped by dealing with any backup label collisions here.
     if ($oStorageRepo->list(
-        STORAGE_REPO_BACKUP,
+        $strRepoBackupPath,
              {strExpression =>
                 ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
                 ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
         $oStorageRepo->list(
-            STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
+            "${strRepoBackupPath}/" . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
              {strExpression =>
                 ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
-                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . COMPRESS_EXT . qw{$}),
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.gz$'),
                 bIgnoreMissing => true}))
     {
         waitRemainder();

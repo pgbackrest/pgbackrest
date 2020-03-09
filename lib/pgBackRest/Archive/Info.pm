@@ -19,13 +19,11 @@ use File::Basename qw(dirname basename);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
-use pgBackRest::Config::Config;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 
@@ -95,9 +93,9 @@ sub new
     # Init object and store variables
     eval
     {
-        $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => storageRepo(), strCipherPass => storageRepo()->cipherPassUser(),
-            strCipherPassSub => $strCipherPassSub});
+        $self = $class->SUPER::new(
+            storageRepo(), $strArchiveInfoFile,
+                {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do

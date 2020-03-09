@@ -74,17 +74,13 @@ sub new
     my $self = {};
     bless $self, $class;
 
-    # Load Storage::Helper module
-    require pgBackRest::Storage::Helper;
-    pgBackRest::Storage::Helper->import();
-
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{oStorage},
         $self->{strFileName},
         my $bLoad,
         my $strContent,
-        $self->{oStorage},
         $self->{iInitFormat},
         $self->{strInitVersion},
         my $bIgnoreMissing,
@@ -94,21 +90,16 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'oStorage', trace => true},
             {name => 'strFileName', trace => true},
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'strContent', optional => true, trace => true},
-            {name => 'oStorage', optional => true, default => storageLocal(), trace => true},
             {name => 'iInitFormat', optional => true, default => REPOSITORY_FORMAT, trace => true},
             {name => 'strInitVersion', optional => true, default => PROJECT_VERSION, trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
             {name => 'strCipherPass', optional => true, trace => true},
             {name => 'strCipherPassSub', optional => true, trace => true},
         );
-
-    if (defined($self->{oStorage}->cipherPassUser()) && !defined($self->{strCipherPass}))
-    {
-        confess &log(ERROR, 'passphrase is required when storage is encrypted', ERROR_CRYPTO);
-    }
 
     # Set changed to false
     $self->{bModified} = false;
@@ -138,11 +129,6 @@ sub new
         if (defined($self->{strCipherPass}) && defined($strCipherPassSub))
         {
             $self->set(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS, undef, $strCipherPassSub);
-        }
-        elsif ((defined($self->{strCipherPass}) && !defined($strCipherPassSub)) ||
-            (!defined($self->{strCipherPass}) && defined($strCipherPassSub)))
-        {
-            confess &log(ASSERT, 'a user passphrase and sub passphrase are both required when encrypting');
         }
     }
 

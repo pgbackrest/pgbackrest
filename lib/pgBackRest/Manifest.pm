@@ -18,8 +18,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -94,31 +92,31 @@ use constant MANIFEST_KEY_TYPE                                      => 'backup-t
     push @EXPORT, qw(MANIFEST_KEY_TYPE);
 
 # Options that were set when the backup was made
-use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . cfgOptionName(CFGOPT_BACKUP_STANDBY);
+use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-backup-standby';
     push @EXPORT, qw(MANIFEST_KEY_BACKUP_STANDBY);
 use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
     push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
-use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-' . cfgOptionName(CFGOPT_ARCHIVE_CHECK);
+use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-archive-check';
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_CHECK);
-use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-' .cfgOptionName(CFGOPT_ARCHIVE_COPY);
+use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-archive-copy';
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_COPY);
-use constant MANIFEST_KEY_BUFFER_SIZE                               => 'option-' . cfgOptionName(CFGOPT_BUFFER_SIZE);
+use constant MANIFEST_KEY_BUFFER_SIZE                               => 'option-buffer-size';
     push @EXPORT, qw(MANIFEST_KEY_BUFFER_SIZE);
-use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-' . cfgOptionName(CFGOPT_CHECKSUM_PAGE);
+use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-checksum-page';
     push @EXPORT, qw(MANIFEST_KEY_CHECKSUM_PAGE);
-use constant MANIFEST_KEY_COMPRESS                                  => 'option-' . cfgOptionName(CFGOPT_COMPRESS);
+use constant MANIFEST_KEY_COMPRESS                                  => 'option-compress';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
-use constant MANIFEST_KEY_COMPRESS_TYPE                             => 'option-' . cfgOptionName(CFGOPT_COMPRESS_TYPE);
+use constant MANIFEST_KEY_COMPRESS_TYPE                             => 'option-compress-type';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS_TYPE);
-use constant MANIFEST_KEY_COMPRESS_LEVEL                            => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL);
+use constant MANIFEST_KEY_COMPRESS_LEVEL                            => 'option-compress-level';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS_LEVEL);
-use constant MANIFEST_KEY_COMPRESS_LEVEL_NETWORK                    => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK);
+use constant MANIFEST_KEY_COMPRESS_LEVEL_NETWORK                    => 'option-compress-level-network';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS_LEVEL_NETWORK);
-use constant MANIFEST_KEY_ONLINE                                    => 'option-' . cfgOptionName(CFGOPT_ONLINE);
+use constant MANIFEST_KEY_ONLINE                                    => 'option-online';
     push @EXPORT, qw(MANIFEST_KEY_ONLINE);
-use constant MANIFEST_KEY_DELTA                                     => 'option-' . cfgOptionName(CFGOPT_DELTA);
+use constant MANIFEST_KEY_DELTA                                     => 'option-delta';
     push @EXPORT, qw(MANIFEST_KEY_DELTA);
-use constant MANIFEST_KEY_PROCESS_MAX                               => 'option-' . cfgOptionName(CFGOPT_PROCESS_MAX);
+use constant MANIFEST_KEY_PROCESS_MAX                               => 'option-process-max';
     push @EXPORT, qw(MANIFEST_KEY_PROCESS_MAX);
 
 # Information about the database that was backed up
@@ -320,8 +318,8 @@ sub new
         );
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, oStorage => $oStorage, strCipherPass => $strCipherPass,
-        strCipherPassSub => $strCipherPassSub});
+    my $self = $class->SUPER::new(
+        $oStorage, $strFileName, {bLoad => $bLoad, strCipherPass => $strCipherPass, strCipherPassSub => $strCipherPassSub});
 
     # If manifest not loaded from a file then the db version and catalog version must be set
     if (!$bLoad)
@@ -1111,9 +1109,6 @@ sub build
         # consistent anyway and the one-second resolution problem is the least of our worries).
         my $lTimeBegin = waitRemainder($bOnline);
 
-        # Check that links are valid
-        $self->linkCheck();
-
         if (defined($oLastManifest))
         {
             $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef,
@@ -1242,52 +1237,6 @@ sub build
         $strOperation,
         {name => 'bDelta', value => $bDelta, trace => true},
     );
-}
-
-####################################################################################################################################
-# linkCheck
-#
-# Check all link targets and make sure none of them are a subset of another link.  In theory it would be possible to resolve the
-# dependencies and generate a valid backup/restore but it's really complicated and there don't seem to be any compelling use cases.
-####################################################################################################################################
-sub linkCheck
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->linkCheck');
-
-    # Working variable
-    my $strBasePath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
-
-    foreach my $strTargetParent ($self->keys(MANIFEST_SECTION_BACKUP_TARGET))
-    {
-        if ($self->isTargetLink($strTargetParent))
-        {
-            my $strParentPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_PATH);
-            my $strParentFile = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_FILE, false);
-
-            foreach my $strTargetChild ($self->keys(MANIFEST_SECTION_BACKUP_TARGET))
-            {
-                if ($self->isTargetLink($strTargetChild) && $strTargetParent ne $strTargetChild)
-                {
-                    my $strChildPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetChild, MANIFEST_SUBKEY_PATH);
-                    my $strChildFile = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_FILE, false);
-
-                    if (!(defined($strParentFile) && defined($strChildFile)) &&
-                        index(
-                            storageLocal()->pathAbsolute($strBasePath, $strChildPath) . '/',
-                            storageLocal()->pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
-                    {
-                        confess &log(ERROR, 'link ' . $self->dbPathGet($strBasePath, $strTargetChild) .
-                                            " (${strChildPath}) references a subdirectory of or" .
-                                            " the same directory as link " . $self->dbPathGet($strBasePath, $strTargetParent) .
-                                            " (${strParentPath})", ERROR_LINK_DESTINATION);
-                    }
-                }
-            }
-        }
-    }
 }
 
 ####################################################################################################################################

@@ -17,10 +17,9 @@ use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Handle;
+use pgBackRest::Common::Io::Process;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::StorageRead;
-use pgBackRest::Storage::StorageWrite;
 
 ####################################################################################################################################
 # new
@@ -36,31 +35,23 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{strCommand},
         $self->{strType},
-        $self->{strPath},
         $self->{lBufferMax},
+        $self->{iTimeoutIo},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'strCommand'},
             {name => 'strType'},
-            {name => 'strPath', optional => true},
-            {name => 'lBufferMax', optional => true, default => 65536},
+            {name => 'lBufferMax'},
+            {name => 'iTimeoutIo'},
             {name => 'strDefaultPathMode', optional => true, default => '0750'},
             {name => 'strDefaultFileMode', optional => true, default => '0640'},
         );
-
-    # Create C storage object
-    $self->{oStorageC} = pgBackRest::LibC::Storage->new($self->{strType}, $self->{strPath});
-
-    # Get encryption settings
-    if ($self->{strType} eq '<REPO>')
-    {
-        $self->{strCipherType} = $self->{oStorageC}->cipherType();
-        $self->{strCipherPass} = $self->{oStorageC}->cipherPass();
-    }
 
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
@@ -71,6 +62,103 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# Escape characteres that have special meaning on the command line
+####################################################################################################################################
+sub escape
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strValue,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->escape', \@_,
+            {name => 'strValue', trace => true},
+        );
+
+    $strValue =~ s/\\/\\\\/g;
+    $strValue =~ s/\</\\\</g;
+    $strValue =~ s/\>/\\\>/g;
+    $strValue =~ s/\!/\\\!/g;
+    $strValue =~ s/\*/\\\*/g;
+    $strValue =~ s/\(/\\\(/g;
+    $strValue =~ s/\)/\\\)/g;
+    $strValue =~ s/\&/\\\&/g;
+    $strValue =~ s/\'/\\\'/g;
+    $strValue =~ s/\;/\\\;/g;
+    $strValue =~ s/\?/\\\?/g;
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strValue', value => $strValue},
+    );
+}
+
+####################################################################################################################################
+# Execute command and return the output
+####################################################################################################################################
+sub exec
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->exec', \@_,
+            {name => 'strCommand'},
+        );
+
+    $strCommand = "$self->{strCommand} ${strCommand}";
+    my $oBuffer = new pgBackRest::Common::Io::Buffered(
+        new pgBackRest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
+    my $oProcess = new pgBackRest::Common::Io::Process($oBuffer, $strCommand);
+
+    my $tResult;
+
+    while (!$oBuffer->eof())
+    {
+        $oBuffer->read(\$tResult, $self->{lBufferMax}, false);
+    }
+
+    $oProcess->close();
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'tResult', value => $tResult},
+        {name => 'iExitStatus', value => $oProcess->exitStatus()},
+    );
+}
+
+####################################################################################################################################
+# Create storage
+####################################################################################################################################
+sub create
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->create');
+
+    $self->exec("repo-create");
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -96,7 +184,7 @@ sub exists
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bExists', value => defined($self->info($strFileExp, {bIgnoreMissing => true}))}
+        {name => 'bExists', value => $self->info($strFileExp, {bIgnoreMissing => true})->{type} eq 'f'}
     );
 }
 
@@ -113,33 +201,49 @@ sub get
         $strOperation,
         $xFile,
         $strCipherPass,
+        $bRaw,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->get', \@_,
-            {name => 'xFile', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
+            {name => 'xFile', required => false},
+            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'bRaw', optional => true, default => false},
         );
 
-    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or
-    # if the repo has a user passphrase defined - else pass undef
-    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead($xFile, {strCipherPass => $strCipherPass})) : undef;
+    # If openRead() was called first set values from that call
+    my $strFile = $xFile;
+    my $bIgnoreMissing = false;
 
-    # Get the file contents
-    my $bEmpty = false;
-    my $tContent = $self->{oStorageC}->get($oFileIo->{oStorageCRead});
-
-    if (defined($tContent) && length($tContent) == 0)
+    if (ref($xFile))
     {
-        $tContent = undef;
-        $bEmpty = true;
+        $strFile = $xFile->{strFile};
+        $bIgnoreMissing = $xFile->{bIgnoreMissing};
+        $strCipherPass = $xFile->{strCipherPass};
+    }
+
+    # Check invalid params
+    if ($bRaw && defined($strCipherPass))
+    {
+        confess &log(ERROR, 'bRaw and strCipherPass cannot both be set');
+    }
+
+    # Get file
+    my ($tResult, $iExitStatus) = $self->exec(
+        (defined($strCipherPass) ? ' --cipher-pass=' . $self->escape($strCipherPass) : '') . ($bRaw ? ' --raw' : '') .
+        ($bIgnoreMissing ? ' --ignore-missing' : '') . ' repo-get ' . $self->escape($strFile));
+
+    # Error if missing an not ignored
+    if ($iExitStatus == 1 && !$bIgnoreMissing)
+    {
+        confess &log(ERROR, "unable to open '${strFile}'", ERROR_FILE_OPEN);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'rtContent', value => defined($tContent) || $bEmpty ? \$tContent : undef, trace => true},
+        {name => 'rtContent', value => $iExitStatus == 0 ? \$tResult : undef, trace => true},
     );
 }
 
@@ -164,19 +268,11 @@ sub info
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
-    my $rhInfo;
-    my $strJson = $self->{oStorageC}->info($strPathFileExp, $bIgnoreMissing);
-
-    if (defined($strJson))
-    {
-        $rhInfo = $self->{oJSON}->decode($strJson);
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'rhInfo', value => $rhInfo, trace => true}
+        {name => 'rhInfo', value => $self->manifest($strPathFileExp, {bRecurse => false})->{'.'}, trace => true}
     );
 }
 
@@ -207,11 +303,14 @@ sub list
 
     # Get file list
     my $rstryFileList = [];
-    my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', $strExpression);
+    my $rhManifest = $self->manifest($strPathExp, {bRecurse => false});
 
-    if (defined($strFileList) && $strFileList ne '[]')
+    foreach my $strKey ($strSortOrder eq 'reverse' ? sort {$b cmp $a} keys(%{$rhManifest}) : sort keys(%{$rhManifest}))
     {
-        $rstryFileList = $self->{oJSON}->decode($strFileList);
+        next if $strKey eq '.';
+        next if defined($strExpression) && $strKey !~ $strExpression;
+
+        push(@{$rstryFileList}, $strKey);
     }
 
     # Return from function and log return values if any
@@ -234,50 +333,54 @@ sub manifest
     (
         $strOperation,
         $strPathExp,
-        $strFilter,
+        $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPathExp'},
-            {name => 'strFilter', optional => true, trace => true},
+            {name => 'bRecurse', optional => true, default => true},
         );
 
-    my $hManifest = $self->{oJSON}->decode($self->manifestJson($strPathExp, {strFilter => $strFilter}));
+    my $rhManifest = $self->{oJSON}->decode(
+        $self->exec("--output=json " . ($bRecurse ? ' --recurse' : '') . " repo-ls " . $self->escape($strPathExp)));
+
+    # Transform the manifest to the old format
+    foreach my $strKey (keys(%{$rhManifest}))
+    {
+        if ($rhManifest->{$strKey}{type} eq 'file')
+        {
+            $rhManifest->{$strKey}{type} = 'f';
+
+            if (defined($rhManifest->{$strKey}{time}))
+            {
+                $rhManifest->{$strKey}{modified_time} = $rhManifest->{$strKey}{time};
+                delete($rhManifest->{$strKey}{time});
+            }
+        }
+        elsif ($rhManifest->{$strKey}{type} eq 'path')
+        {
+            $rhManifest->{$strKey}{type} = 'd';
+        }
+        elsif ($rhManifest->{$strKey}{type} eq 'link')
+        {
+            $rhManifest->{$strKey}{type} = 'l';
+        }
+        elsif ($rhManifest->{$strKey}{type} eq 'special')
+        {
+            $rhManifest->{$strKey}{type} = 's';
+        }
+        else
+        {
+            confess "invalid file type '$rhManifest->{type}'";
+        }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'hManifest', value => $hManifest, trace => true}
-    );
-}
-
-sub manifestJson
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-        $strFilter,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->manifestJson', \@_,
-            {name => 'strPathExp'},
-            {name => 'strFilter', optional => true, trace => true},
-        );
-
-    my $strManifestJson = $self->{oStorageC}->manifest($strPathExp, $strFilter);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strManifestJson', value => $strManifestJson, trace => true}
+        {name => 'rhManifest', value => $rhManifest, trace => true}
     );
 }
 
@@ -292,137 +395,24 @@ sub openRead
     my
     (
         $strOperation,
-        $xFileExp,
+        $strFile,
         $bIgnoreMissing,
-        $rhyFilter,
         $strCipherPass,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->openRead', \@_,
-            {name => 'xFileExp'},
+            {name => 'strFile'},
             {name => 'bIgnoreMissing', optional => true, default => false},
-            {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
+            {name => 'strCipherPass', optional => true, redact => true},
         );
-
-    # Open the file
-    my $oFileIo = pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $xFileExp, $bIgnoreMissing);
-
-    # If cipher is set then decryption is the first filter applied to the read
-    if (defined($self->cipherType()))
-    {
-        $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $strCipherPass]));
-    }
-
-    # Apply any other filters
-    if (defined($rhyFilter))
-    {
-        foreach my $rhFilter (@{$rhyFilter})
-        {
-            $oFileIo->filterAdd(
-                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode($rhFilter->{rxyParam}) : undef);
-        }
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oFileIo', value => new pgBackRest::Storage::StorageRead($self, $oFileIo), trace => true},
-    );
-}
-
-####################################################################################################################################
-# Open file for writing
-####################################################################################################################################
-sub openWrite
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xFileExp,
-        $strMode,
-        $strUser,
-        $strGroup,
-        $lTimestamp,
-        $bAtomic,
-        $bPathCreate,
-        $rhyFilter,
-        $strCipherPass,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->openWrite', \@_,
-            {name => 'xFileExp'},
-            {name => 'strMode', optional => true, default => $self->{strDefaultFileMode}},
-            {name => 'strUser', optional => true},
-            {name => 'strGroup', optional => true},
-            {name => 'lTimestamp', optional => true, default => '0'},
-            {name => 'bAtomic', optional => true, default => false},
-            {name => 'bPathCreate', optional => true, default => true},
-            {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
-        );
-
-    # Open the file
-    my $oFileIo = pgBackRest::LibC::StorageWrite->new(
-        $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
-
-    # Apply any other filters
-    if (defined($rhyFilter))
-    {
-        foreach my $rhFilter (@{$rhyFilter})
-        {
-            $oFileIo->filterAdd(
-                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode($rhFilter->{rxyParam}) : undef);
-        }
-    }
-
-    # If cipher is set then encryption is the last filter applied to the write
-    if (defined($self->cipherType()))
-    {
-        $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([true, $self->cipherType(), $strCipherPass]));
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oFileIo', value => new pgBackRest::Storage::StorageWrite($self, $oFileIo), trace => true},
-    );
-}
-
-####################################################################################################################################
-# Resolve a path expression into an absolute path
-####################################################################################################################################
-sub pathGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathGet', \@_,
-            {name => 'strPathExp'},
-        );
-
-    # Check exists
-    my $strPath = $self->{oStorageC}->pathGet($strPathExp);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strPath', value => $strPath, trace => true}
+        {name => 'rhFileIo', value => {strFile => $strFile, bIgnoreMissing => $bIgnoreMissing, strCipherPass => $strCipherPass},
+            trace => true},
     );
 }
 
@@ -437,19 +427,17 @@ sub pathRemove
     my
     (
         $strOperation,
-        $strPathExp,
-        $bIgnoreMissing,
+        $strPath,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->pathRemove', \@_,
-            {name => 'strPathExp'},
-            {name => 'bIgnoreMissing', optional => true, default => true},
+            {name => 'strPath'},
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    $self->{oStorageC}->pathRemove($strPathExp, $bIgnoreMissing, $bRecurse);
+    $self->exec("repo-rm " . ($bRecurse ? '--recurse ' : '') . $self->escape($strPath));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -466,31 +454,54 @@ sub put
     my
     (
         $strOperation,
-        $xFile,
-        $xContent,
+        $strFile,
+        $tContent,
         $strCipherPass,
+        $bRaw,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->put', \@_,
-            {name => 'xFile', trace => true},
-            {name => 'xContent', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), trace => true, redact => true},
+            {name => 'strFile'},
+            {name => 'tContent', required => false},
+            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'bRaw', optional => true, default => false},
         );
 
-    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or if
-    # the repo has a user passphrase defined - else pass undef
-    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile, {strCipherPass => $strCipherPass});
+    # Check invalid params
+    if ($bRaw && defined($strCipherPass))
+    {
+        confess &log(ERROR, 'bRaw and strCipherPass cannot both be set');
+    }
 
-    # Write the content
-    my $lSize = $self->{oStorageC}->put($oFileIo->{oStorageCWrite}, ref($xContent) ? $$xContent : $xContent);
+    # Put file
+    my $strCommand =
+        "$self->{strCommand}" . (defined($strCipherPass) ? ' --cipher-pass=' . $self->escape($strCipherPass) : '') .
+            ($bRaw ? ' --raw' : '') . ' repo-put ' . $self->escape($strFile);
+
+    my $oBuffer = new pgBackRest::Common::Io::Buffered(
+        new pgBackRest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
+    my $oProcess = new pgBackRest::Common::Io::Process($oBuffer, $strCommand);
+
+    if (defined($tContent))
+    {
+        $oBuffer->write(\$tContent);
+    }
+
+    close($oBuffer->handleWrite());
+
+    my $tResult;
+
+    while (!$oBuffer->eof())
+    {
+        $oBuffer->read(\$tResult, $self->{lBufferMax}, false);
+    }
+
+    close($oBuffer->handleRead());
+    $oProcess->close();
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'lSize', value => $lSize, trace => true},
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -504,20 +515,15 @@ sub remove
     my
     (
         $strOperation,
-        $xFileExp,
-        $bIgnoreMissing,
+        $strFile,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
             {name => 'xFileExp'},
-            {name => 'bIgnoreMissing', optional => true, default => true},
         );
 
-    foreach my $strFileExp (ref($xFileExp) ? @{$xFileExp} : ($xFileExp))
-    {
-        $self->{oStorageC}->remove($strFileExp, $bIgnoreMissing);
-    }
+    $self->exec("repo-rm " . $self->escape($strFile));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -527,8 +533,6 @@ sub remove
 # Getters
 ####################################################################################################################################
 sub capability {shift->type() eq STORAGE_POSIX}
-sub type {shift->{oStorageC}->type()}
-sub cipherType {shift->{strCipherType}}
-sub cipherPassUser {shift->{strCipherPass}}
+sub type {shift->{strType}}
 
 1;
