@@ -2042,8 +2042,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-#AC_USE_SYSTEM_EXTENSIONS
-
 # Check compiler
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3151,8 +3149,7 @@ fi
 
 if test "$enable_test" != yes
 then
-
-$as_echo "#define NDEBUG /**/" >>confdefs.h
+    $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
     # Enable optimizations if not testing and they have not been disabled
@@ -3181,9 +3178,8 @@ fi
 CINCLUDE="-I."
 
 
-# Check required pq library
+# Check required pq library using pg_config
 LIBS="$LIBS -L`pg_config --libdir`"
-#LDFLAGS="$LDFLAGS -L`pg_config --libdir`"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
