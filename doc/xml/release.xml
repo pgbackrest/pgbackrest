@@ -14,6 +14,19 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.25dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="luca.ferrari"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Implement <br-option>--dry-run</br-option> for the <cmd>expire</cmd> command.</p>
+
+                        <p>Using this option, <backrest/> will not effectively expire archives or backups, rather <backrest/> will simply inform you about which archives and backups would be expired.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
