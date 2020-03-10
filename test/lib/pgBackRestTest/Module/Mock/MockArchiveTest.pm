@@ -83,14 +83,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress => LZ4},
         {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>  GZ},
         {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  GZ},
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => LZ4},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
         {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => LZ4},
     )
     {
         # Only run tests for this vm

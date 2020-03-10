@@ -43,12 +43,12 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>    GZ, error => 0},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>   LZ4, error => 0},
         {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 1},
         {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  NONE, error => 0},
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>    GZ, error => 0},
         {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  NONE, error => 0},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>    GZ, error => 1},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>   LZ4, error => 1},
         {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 0},
         {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  NONE, error => 0},
     )

@@ -49,6 +49,9 @@ sub run
 {
     my $self = shift;
 
+    # Should the test use lz4 compression?
+    my $bLz4Compress = true;
+
     foreach my $bS3 (false, true)
     {
     foreach my $bHostBackup ($bS3 ? (true) : (false, true))
@@ -60,8 +63,14 @@ sub run
     foreach my $strBackupDestination (
         $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
-        my $strCompressType = $bHostBackup && !$bHostStandby ? GZ : NONE;
+        my $strCompressType = $bHostBackup && !$bHostStandby ? (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : GZ) : NONE;
         my $bRepoEncrypt = ($strCompressType ne NONE && !$bS3) ? true : false;
+
+        # If compression was used then switch it for the next test that uses compression
+        if ($strCompressType ne NONE)
+        {
+            $bLz4Compress = !$bLz4Compress;
+        }
 
         # Increment the run, log, and decide whether this unit test should be run
         my $hyVm = vmGet();

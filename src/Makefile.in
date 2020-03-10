@@ -83,6 +83,9 @@ SRCS = \
 	common/compress/gz/common.c \
 	common/compress/gz/compress.c \
 	common/compress/gz/decompress.c \
+	common/compress/lz4/common.c \
+	common/compress/lz4/compress.c \
+	common/compress/lz4/decompress.c \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
@@ -331,8 +334,17 @@ common/compress/gz/compress.o: common/compress/gz/compress.c build.auto.h common
 common/compress/gz/decompress.o: common/compress/gz/decompress.c build.auto.h common/assert.h common/compress/gz/common.h common/compress/gz/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/stringz.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/compress/gz/decompress.c -o common/compress/gz/decompress.o
 
-common/compress/helper.o: common/compress/helper.c build.auto.h common/assert.h common/compress/gz/common.h common/compress/gz/compress.h common/compress/gz/decompress.h common/compress/helper.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringz.h common/type/variant.h common/type/variantList.h version.h
+common/compress/helper.o: common/compress/helper.c build.auto.h common/assert.h common/compress/gz/common.h common/compress/gz/compress.h common/compress/gz/decompress.h common/compress/helper.h common/compress/lz4/common.h common/compress/lz4/compress.h common/compress/lz4/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringz.h common/type/variant.h common/type/variantList.h version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/compress/helper.c -o common/compress/helper.o
+
+common/compress/lz4/common.o: common/compress/lz4/common.c build.auto.h common/assert.h common/compress/lz4/common.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h common/type/stringz.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/compress/lz4/common.c -o common/compress/lz4/common.o
+
+common/compress/lz4/compress.o: common/compress/lz4/compress.c build.auto.h common/assert.h common/compress/lz4/common.h common/compress/lz4/compress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/stringz.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/compress/lz4/compress.c -o common/compress/lz4/compress.o
+
+common/compress/lz4/decompress.o: common/compress/lz4/decompress.c build.auto.h common/assert.h common/compress/lz4/common.h common/compress/lz4/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/stringz.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/compress/lz4/decompress.c -o common/compress/lz4/decompress.o
 
 common/crypto/cipherBlock.o: common/crypto/cipherBlock.c build.auto.h common/assert.h common/crypto/cipherBlock.h common/crypto/common.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/io/filter/group.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/stringz.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/crypto/cipherBlock.c -o common/crypto/cipherBlock.o

@@ -1,0 +1,11 @@
+--- pgbackrest.spec
++++ pgbackrest.spec
+@@ -9,7 +9,7 @@
+ Source0:	https://github.com/pgbackrest/pgbackrest/archive/release/%{version}.tar.gz
+ Source1:	pgbackrest-conf.patch
+ Patch0:		pgbackrest-libxmlinclude.patch
+-BuildRequires:	openssl-devel zlib-devel postgresql%{pgmajorversion}-devel
++BuildRequires:	openssl-devel zlib-devel postgresql%{pgmajorversion}-devel lz4-devel
+ Requires:	postgresql-libs
+ 
+ 

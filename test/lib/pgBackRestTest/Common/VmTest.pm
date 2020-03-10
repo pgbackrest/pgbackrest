@@ -48,6 +48,8 @@ use constant VMDEF_LCOV_VERSION                                     => 'lcov-ver
     push @EXPORT, qw(VMDEF_LCOV_VERSION);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
+use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
+    push @EXPORT, qw(VMDEF_WITH_LZ4);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -302,6 +304,7 @@ my $oyVm =
         &VM_IMAGE => 'i386/ubuntu:12.04',
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
         [
@@ -590,6 +593,18 @@ sub vmWithBackTrace
 }
 
 push @EXPORT, qw(vmWithBackTrace);
+
+####################################################################################################################################
+# Does the VM support liblz4?
+####################################################################################################################################
+sub vmWithLz4
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_WITH_LZ4}) ? $oyVm->{$strVm}{&VMDEF_WITH_LZ4} : true);
+}
+
+push @EXPORT, qw(vmWithLz4);
 
 ####################################################################################################################################
 # Will integration tests be run in debug mode?

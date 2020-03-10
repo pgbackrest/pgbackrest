@@ -1294,6 +1294,7 @@ my %hConfigDefine =
         [
             'none',
             'gz',
+            'lz4',
         ],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },

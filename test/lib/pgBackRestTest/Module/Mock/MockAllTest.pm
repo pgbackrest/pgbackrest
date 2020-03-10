@@ -60,13 +60,13 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress =>  GZ},
+        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress => LZ4},
         {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false, compress =>  GZ},
         {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true, compress =>  GZ},
         {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false, compress =>  GZ},
         {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true, compress =>  GZ},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress =>  GZ},
-        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress => LZ4},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress => LZ4},
         {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true, compress =>  GZ},
     )
     {

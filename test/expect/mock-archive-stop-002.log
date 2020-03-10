@@ -1,5 +1,5 @@
-run 002 - rmt 1, cmp gz, error connect, s3 1, enc 0
-===================================================
+run 002 - rmt 1, cmp lz4, error connect, s3 1, enc 0
+====================================================
 
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create

@@ -1,5 +1,5 @@
-run 004 - bkp 1, sby 0, dst backup, cmp gz, s3 0, enc 1
-=======================================================
+run 004 - bkp 1, sby 0, dst backup, cmp lz4, s3 0, enc 1
+========================================================
 
 stanza-create db - main create stanza info files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
@@ -108,6 +108,7 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -137,6 +138,7 @@ pg1-port=6543
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
@@ -181,6 +183,7 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -211,6 +214,7 @@ archive-async=y
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
@@ -271,6 +275,7 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -301,6 +306,7 @@ archive-async=y
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail

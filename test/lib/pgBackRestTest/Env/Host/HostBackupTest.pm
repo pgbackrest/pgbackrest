@@ -91,6 +91,8 @@ use constant NONE                                                   => 'none';
     push @EXPORT, qw(NONE);
 use constant GZ                                                     => 'gz';
     push @EXPORT, qw(GZ);
+use constant LZ4                                                    => 'lz4';
+    push @EXPORT, qw(LZ4);
 
 ####################################################################################################################################
 # new

@@ -181,7 +181,7 @@ eval
 
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool";
         }
         else
         {
