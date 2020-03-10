@@ -1539,7 +1539,7 @@
 
             <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
 
-            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process.</p>
+            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process. To determine what will be expired without actually expiring anything, the <br-option>dry-run</br-option> option can be provided on the command line with the <cmd>expire</cmd> command.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
@@ -1573,7 +1573,17 @@
             </execute-list>
 
             <execute-list host="{[host-pg1]}">
-                <title>Expire archive</title>
+                <title>Expire archive (dry-run)</title>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
+                        --repo1-retention-archive-type=diff --repo1-retention-archive=1 --dry-run expire</exe-cmd>
+                    <exe-highlight>archive retention on backup {[backup-diff-first]}|remove archive</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Expire archive (actual)</title>
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
