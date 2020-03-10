@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # COMMON LOG MODULE
 ####################################################################################################################################
-package BackRestDoc::Common::Log;
+package pgBackRestDoc::Common::Log;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,8 +15,8 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday usleep);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # Boolean constants
@@ -751,7 +751,7 @@ sub log
     # Return a typed exception if code is defined
     if (defined($iCode))
     {
-        $oErrorLast = new BackRestDoc::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
+        $oErrorLast = new pgBackRestDoc::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
         return $oErrorLast;
     }
 

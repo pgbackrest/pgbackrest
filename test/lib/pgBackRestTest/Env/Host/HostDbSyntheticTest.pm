@@ -19,9 +19,9 @@ use File::stat;
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DbVersion;

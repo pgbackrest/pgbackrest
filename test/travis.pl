@@ -23,8 +23,8 @@ use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;

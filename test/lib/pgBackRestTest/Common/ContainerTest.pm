@@ -20,8 +20,8 @@ use Getopt::Long qw(GetOptions);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;

@@ -12,8 +12,8 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Io::Handle;
 use pgBackRestTest::Common::StorageBase;

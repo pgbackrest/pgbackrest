@@ -19,9 +19,9 @@ use Storable qw(dclone);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;

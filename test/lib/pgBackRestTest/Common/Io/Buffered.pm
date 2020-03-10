@@ -14,8 +14,8 @@ use Exporter qw(import);
 use IO::Select;
 use Time::HiRes qw(gettimeofday);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Io::Base;
 use pgBackRestTest::Common::Io::Handle;

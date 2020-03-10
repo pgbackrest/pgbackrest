@@ -17,7 +17,7 @@ use IPC::Open3;
 use POSIX ':sys_wait_h';
 use Symbol 'gensym';
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Io::Handle;
 use pgBackRestTest::Common::Io::Buffered;

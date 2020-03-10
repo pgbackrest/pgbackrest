@@ -6,7 +6,7 @@
 # performed on the proper database.
 ####################################################################################################################################
 package pgBackRestTest::Env::ArchiveInfo;
-use parent 'BackRestDoc::Common::Ini';
+use parent 'pgBackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -17,9 +17,9 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::StorageBase;

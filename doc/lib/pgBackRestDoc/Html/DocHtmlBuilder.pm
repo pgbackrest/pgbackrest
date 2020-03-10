@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC HTML BUILDER MODULE
 ####################################################################################################################################
-package BackRestDoc::Html::DocHtmlBuilder;
+package pgBackRestDoc::Html::DocHtmlBuilder;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -10,9 +10,9 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
-use BackRestDoc::Html::DocHtmlElement;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Html::DocHtmlElement;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -52,7 +52,7 @@ sub new
             {name => 'strCss', required => false},
         );
 
-    $self->{oBody} = new BackRestDoc::Html::DocHtmlElement(HTML_BODY);
+    $self->{oBody} = new pgBackRestDoc::Html::DocHtmlElement(HTML_BODY);
 
     # Return from function and log return values if any
     return logDebugReturn

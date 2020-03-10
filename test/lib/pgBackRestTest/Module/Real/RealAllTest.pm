@@ -15,9 +15,9 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DbVersion;
@@ -779,7 +779,7 @@ sub run
         else
         {
             # Backup info will have the catalog number
-            my $oBackupInfo = new BackRestDoc::Common::Ini(
+            my $oBackupInfo = new pgBackRestDoc::Common::Ini(
                 storageRepo(), $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
                 {bLoad => false, strContent => ${storageRepo()->get($oHostBackup->repoBackupPath(FILE_BACKUP_INFO))}});
 

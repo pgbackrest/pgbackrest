@@ -13,8 +13,8 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Io::Base;
 

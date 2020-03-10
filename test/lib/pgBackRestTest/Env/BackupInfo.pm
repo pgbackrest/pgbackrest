@@ -2,7 +2,7 @@
 # BACKUP INFO MODULE
 ####################################################################################################################################
 package pgBackRestTest::Env::BackupInfo;
-use parent 'BackRestDoc::Common::Ini';
+use parent 'pgBackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -14,9 +14,9 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;

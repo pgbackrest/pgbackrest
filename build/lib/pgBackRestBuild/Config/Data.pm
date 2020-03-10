@@ -68,8 +68,8 @@ use Storable qw(dclone);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Wait;
 

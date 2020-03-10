@@ -13,8 +13,8 @@ use Exporter qw(import);
 use File::Basename qw(basename);
 use Storable qw(dclone);
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;

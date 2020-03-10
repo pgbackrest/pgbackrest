@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # COMMON INI MODULE
 ####################################################################################################################################
-package BackRestDoc::Common::Ini;
+package pgBackRestDoc::Common::Ini;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -17,9 +17,9 @@ use Storable qw(dclone);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # Boolean constants

@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC LATEX MODULE
 ####################################################################################################################################
-package BackRestDoc::Latex::DocLatex;
+package pgBackRestDoc::Latex::DocLatex;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -19,15 +19,15 @@ use Storable qw(dclone);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ExecuteTest;
 
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Latex::DocLatexSection;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Latex::DocLatexSection;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -113,7 +113,7 @@ sub process
         eval
         {
             my $oDocLatexSection =
-                new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
+                new pgBackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
 
             # Save the html page
             $strLatex .= $oDocLatexSection->process();
@@ -130,7 +130,7 @@ sub process
                 $self->{oManifest}->cacheReset($$oRenderOut{source});
 
                 my $oDocLatexSection =
-                    new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
+                    new pgBackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
 
                 # Save the html page
                 $strLatex .= $oDocLatexSection->process();

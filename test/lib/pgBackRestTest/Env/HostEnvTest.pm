@@ -16,7 +16,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DbVersion;

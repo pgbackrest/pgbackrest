@@ -20,10 +20,10 @@ use Storable qw(dclone);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::StorageBase;
@@ -1426,13 +1426,13 @@ sub infoMunge
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = new BackRestDoc::Common::Ini(
+        $self->{hInfoFile}{$strFileName} = new pgBackRestDoc::Common::Ini(
         storageRepo(), $strFileName,
         {strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});
     }
 
     # Make a copy of the original file contents
-    my $oMungeIni = new BackRestDoc::Common::Ini(
+    my $oMungeIni = new pgBackRestDoc::Common::Ini(
         storageRepo(), $strFileName,
         {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}),
         strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});

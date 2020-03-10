@@ -13,7 +13,7 @@ use File::Basename qw(dirname);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday usleep);
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # Wait constants

@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC MARKDOWN MODULE
 ####################################################################################################################################
-package BackRestDoc::Markdown::DocMarkdown;
+package pgBackRestDoc::Markdown::DocMarkdown;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -19,11 +19,11 @@ use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
 
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
-use BackRestDoc::Markdown::DocMarkdownRender;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Markdown::DocMarkdownRender;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -84,7 +84,7 @@ sub process
 
         # Save the html page
         $self->{oManifest}->storage()->put(
-            $strFile, $self->{oManifest}->variableReplace((new BackRestDoc::Markdown::DocMarkdownRender($self->{oManifest},
+            $strFile, $self->{oManifest}->variableReplace((new pgBackRestDoc::Markdown::DocMarkdownRender($self->{oManifest},
             $strRenderOutId, $self->{bExe}))->process()));
     }
 

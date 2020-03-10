@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # DOC EXECUTE MODULE
 ####################################################################################################################################
-package BackRestDoc::Common::DocExecute;
-use parent 'BackRestDoc::Common::DocRender';
+package pgBackRestDoc::Common::DocExecute;
+use parent 'pgBackRestDoc::Common::DocRender';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -23,11 +23,11 @@ use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
 use pgBackRestTest::Common::HostGroupTest;
 
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # User that's building the docs

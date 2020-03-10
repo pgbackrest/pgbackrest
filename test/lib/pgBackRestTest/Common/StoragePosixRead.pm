@@ -11,8 +11,8 @@ use English '-no_match_vars';
 
 use Fcntl qw(O_RDONLY);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # CONSTRUCTOR

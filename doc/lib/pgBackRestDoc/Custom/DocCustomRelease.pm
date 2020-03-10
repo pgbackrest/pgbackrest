@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC RELEASE MODULE
 ####################################################################################################################################
-package BackRestDoc::Custom::DocCustomRelease;
+package pgBackRestDoc::Custom::DocCustomRelease;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -16,9 +16,9 @@ use pgBackRest::Version;
 
 use pgBackRestBuild::Config::Data;
 
-use BackRestDoc::Common::DocRender;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::DocRender;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # XML node constants
@@ -321,11 +321,11 @@ sub docGet
     my @hyGitLog = @{(JSON::PP->new()->allow_nonref())->decode(${$oStorageDoc->get("resource/git-history.cache")})};
 
     # Get renderer
-    my $oRender = new BackRestDoc::Common::DocRender('text');
+    my $oRender = new pgBackRestDoc::Common::DocRender('text');
     $oRender->tagSet('backrest', PROJECT_NAME);
 
     # Create the doc
-    my $oDoc = new BackRestDoc::Common::Doc();
+    my $oDoc = new pgBackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $self->{oDoc}->paramGet('title'));
     $oDoc->paramSet('toc-number', $self->{oDoc}->paramGet('toc-number'));
 

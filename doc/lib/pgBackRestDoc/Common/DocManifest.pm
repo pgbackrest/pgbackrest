@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC MANIFEST MODULE
 ####################################################################################################################################
-package BackRestDoc::Common::DocManifest;
+package pgBackRestDoc::Common::DocManifest;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,8 +13,8 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use JSON::PP;
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # File constants
@@ -95,7 +95,7 @@ sub new
     $self->{strExeCacheDeploy} = $self->{strDocPath} . "/resource/exe.cache";
 
     # Load the manifest
-    $self->{oManifestXml} = new BackRestDoc::Common::Doc("$self->{strDocPath}/manifest.xml");
+    $self->{oManifestXml} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/manifest.xml");
 
     # Iterate the sources
     $self->{oManifest} = {};
@@ -119,7 +119,7 @@ sub new
             next;
         }
 
-        $$oSourceHash{doc} = new BackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
+        $$oSourceHash{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
 
         # Read variables from source
         $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $rhVariableOverride);

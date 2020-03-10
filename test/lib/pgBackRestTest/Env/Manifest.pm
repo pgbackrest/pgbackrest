@@ -2,7 +2,7 @@
 # MANIFEST MODULE
 ####################################################################################################################################
 package pgBackRestTest::Env::Manifest;
-use parent 'BackRestDoc::Common::Ini';
+use parent 'pgBackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,9 +13,9 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use Time::Local qw(timelocal);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::StorageRepo;

@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # DOC LATEX SECTION MODULE
 ####################################################################################################################################
-package BackRestDoc::Latex::DocLatexSection;
-use parent 'BackRestDoc::Common::DocExecute';
+package pgBackRestDoc::Latex::DocLatexSection;
+use parent 'pgBackRestDoc::Common::DocExecute';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -11,10 +11,10 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # CONSTRUCTOR

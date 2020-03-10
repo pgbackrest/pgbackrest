@@ -13,8 +13,8 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # Constants

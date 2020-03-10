@@ -11,9 +11,9 @@ use English '-no_match_vars';
 
 use File::Basename qw(dirname);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::StorageBase;
 

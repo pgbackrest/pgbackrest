@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC RENDER MODULE
 ####################################################################################################################################
-package BackRestDoc::Common::DocRender;
+package pgBackRestDoc::Common::DocRender;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,9 +12,9 @@ use Exporter qw(import);
 use JSON::PP;
 use Storable qw(dclone);
 
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # XML tag/param constants
@@ -197,7 +197,7 @@ sub new
         if ($self->{oManifest}->isBackRest())
         {
             $self->{oReference} =
-                new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+                new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
         }
 
         if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference' && $self->{oManifest}->isBackRest())
@@ -217,11 +217,11 @@ sub new
         }
         elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
-            require BackRestDoc::Custom::DocCustomRelease;
-            BackRestDoc::Custom::DocCustomRelease->import();
+            require pgBackRestDoc::Custom::DocCustomRelease;
+            pgBackRestDoc::Custom::DocCustomRelease->import();
 
             $self->{oDoc} =
-                (new BackRestDoc::Custom::DocCustomRelease(
+                (new pgBackRestDoc::Custom::DocCustomRelease(
                     ${$self->{oManifest}->sourceGet('release')}{doc},
                     defined($self->{oManifest}->variableGet('dev')) && $self->{oManifest}->variableGet('dev') eq 'y'))->docGet();
         }

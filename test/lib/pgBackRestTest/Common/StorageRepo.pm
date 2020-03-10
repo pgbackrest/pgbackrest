@@ -19,8 +19,8 @@ use JSON::PP;
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::Io::Handle;
 use pgBackRestTest::Common::Io::Process;

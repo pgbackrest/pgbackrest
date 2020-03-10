@@ -7,10 +7,10 @@
         <variable key="project-tagline">Reliable PostgreSQL Backup &amp; Restore</variable>
         <variable key="version" eval="y">use pgBackRest::Version; PROJECT_VERSION</variable>
         <variable key="version-stable" eval="y">
-            use BackRestDoc::Custom::DocCustomRelease;
+            use pgBackRestDoc::Custom::DocCustomRelease;
 
-            (new BackRestDoc::Custom::DocCustomRelease(
-                new BackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->currentStableVersion();
+            (new pgBackRestDoc::Custom::DocCustomRelease(
+                new pgBackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->currentStableVersion();
         </variable>
         <variable key="project-exe">pgbackrest</variable>
         <variable key="project-url-root">/</variable>
@@ -27,15 +27,15 @@
         <variable key="release-date-static">n</variable>
         <variable key="release-date" eval="y">
             use Time::Local;
-            use BackRestDoc::Custom::DocCustomRelease;
+            use pgBackRestDoc::Custom::DocCustomRelease;
 
             my ($second, $minute , $hour, $mday, $month, $year) = localtime();
             $year += 1900;
 
             if ('{[release-date-static]}' eq 'y')
             {
-                my $strDate = (new BackRestDoc::Custom::DocCustomRelease(
-                    new BackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->releaseLast()->paramGet('date');
+                my $strDate = (new pgBackRestDoc::Custom::DocCustomRelease(
+                    new pgBackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->releaseLast()->paramGet('date');
 
                 if ($strDate eq 'XXXX-XX-XX')
                 {

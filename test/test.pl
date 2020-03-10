@@ -29,9 +29,9 @@ use lib dirname(dirname($0)) . '/doc/lib';
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
@@ -597,14 +597,14 @@ eval
             &log(INFO, "check version info");
 
             # Load the doc modules dynamically since they are not supported on all systems
-            require BackRestDoc::Common::Doc;
-            BackRestDoc::Common::Doc->import();
-            require BackRestDoc::Custom::DocCustomRelease;
-            BackRestDoc::Custom::DocCustomRelease->import();
+            require pgBackRestDoc::Common::Doc;
+            pgBackRestDoc::Common::Doc->import();
+            require pgBackRestDoc::Custom::DocCustomRelease;
+            pgBackRestDoc::Custom::DocCustomRelease->import();
 
             my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
             my $oRelease =
-                (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+                (new pgBackRestDoc::Custom::DocCustomRelease(new pgBackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
             my $strVersion = $oRelease->paramGet('version');
             $bVersionDev = false;
             $strVersionBase = $strVersion;

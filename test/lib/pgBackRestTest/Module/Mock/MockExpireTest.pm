@@ -14,9 +14,9 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::BackupInfo;

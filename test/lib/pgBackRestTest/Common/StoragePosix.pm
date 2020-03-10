@@ -16,8 +16,8 @@ use File::Basename qw(basename dirname);
 use Fcntl qw(:mode);
 use File::stat qw{lstat};
 
-use BackRestDoc::Common::Exception;
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StoragePosixRead;

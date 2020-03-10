@@ -21,9 +21,9 @@ use IPC::Open3;
 use POSIX ':sys_wait_h';
 use Symbol 'gensym';
 
-use BackRestDoc::Common::Ini;
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;

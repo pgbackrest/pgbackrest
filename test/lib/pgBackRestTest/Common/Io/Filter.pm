@@ -12,7 +12,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Scalar::Util qw(blessed);
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # new

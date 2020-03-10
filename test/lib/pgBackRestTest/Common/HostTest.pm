@@ -14,8 +14,8 @@ use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use BackRestDoc::Common::Log;
-use BackRestDoc::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ExecuteTest;
 

@@ -17,7 +17,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Version;
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;

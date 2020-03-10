@@ -10,7 +10,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT =  qw();
 
-use BackRestDoc::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # PostgreSQL version numbers
