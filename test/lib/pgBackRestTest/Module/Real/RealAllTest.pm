@@ -13,11 +13,10 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DbVersion;

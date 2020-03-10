@@ -27,11 +27,10 @@ use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
@@ -453,7 +452,7 @@ eval
 
             # Auto-generate version for configure.ac script
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^lib\/pgBackRest\/Version\.pm/, @stryModifiedList))
+            if (!$bSmart || grep(/^src\/version\.h/, @stryModifiedList))
             {
                 my $strConfigureAcOld = ${$oStorageTest->get("${strBackRestBase}/src/configure.ac")};
                 my $strConfigureAcNew;
@@ -622,27 +621,6 @@ eval
             elsif ($strVersion ne PROJECT_VERSION)
             {
                 confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
-            }
-
-            # Update version for the C code based on the current Perl version
-            #-----------------------------------------------------------------------------------------------------------------------
-            my $strCVersionFile = "${strBackRestBase}/src/version.h";
-            my $strCVersionOld = ${$oStorageTest->get($strCVersionFile)};
-            my $strCVersionNew;
-
-            foreach my $strLine (split("\n", $strCVersionOld))
-            {
-                if ($strLine =~ /^#define PROJECT_VERSION/)
-                {
-                    $strLine = '#define PROJECT_VERSION' . (' ' x 45) . '"' . PROJECT_VERSION . '"';
-                }
-
-                $strCVersionNew .= "${strLine}\n";
-            }
-
-            if ($strCVersionNew ne $strCVersionOld)
-            {
-                $oStorageTest->put($strCVersionFile, $strCVersionNew);
             }
         }
 
@@ -851,7 +829,7 @@ eval
             {
                 my $strPackagePath = "${strVagrantPath}/package";
                 my $strPackageSmart = "${strPackagePath}/build.timestamp";
-                my @stryPackageSrcPath = ('lib');
+                my @stryPackageSrcPath = ('src');
 
                 # Find the lastest modified time for additional dirs that affect the package build
                 foreach my $strPackageSrcPath (@stryPackageSrcPath)

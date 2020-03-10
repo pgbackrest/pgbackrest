@@ -15,8 +15,6 @@ use File::Copy;
 use POSIX qw(strftime);
 use Storable qw(dclone);
 
-use pgBackRest::Version;
-
 use pgBackRestTest::Common::ExecuteTest;
 
 use pgBackRestDoc::Common::DocConfig;
@@ -24,6 +22,7 @@ use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Markdown::DocMarkdownRender;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # CONSTRUCTOR

@@ -18,11 +18,10 @@ use File::Basename qw(dirname basename);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;

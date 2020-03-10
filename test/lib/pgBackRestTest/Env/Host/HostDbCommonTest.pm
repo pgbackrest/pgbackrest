@@ -16,12 +16,11 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;

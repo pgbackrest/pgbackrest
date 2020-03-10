@@ -15,12 +15,11 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Html::DocHtmlBuilder;
 use pgBackRestDoc::Html::DocHtmlElement;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Generate an lcov configuration file

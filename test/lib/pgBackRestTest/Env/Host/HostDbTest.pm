@@ -16,11 +16,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(basename);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DbVersion;

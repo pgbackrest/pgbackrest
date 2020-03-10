@@ -12,13 +12,12 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Version;
-
 use pgBackRestBuild::Config::Data;
 
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # XML node constants

@@ -15,11 +15,10 @@ use File::Basename qw(dirname);
 use JSON::PP;
 use Storable qw(dclone);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Boolean constants

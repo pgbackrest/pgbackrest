@@ -15,11 +15,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
@@ -159,8 +158,6 @@ sub process
     # Initialize test storage
     $oStorage = new pgBackRestTest::Common::Storage(
         $self->testPath(), new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
-
-    projectBinSet($self->{strBackRestExe});
 
     # Init, run, and end the test(s)
     $self->initModule();

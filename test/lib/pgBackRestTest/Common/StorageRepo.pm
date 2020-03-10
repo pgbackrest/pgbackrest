@@ -17,10 +17,9 @@ use Fcntl qw(:mode);
 use File::stat qw{lstat};
 use JSON::PP;
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::Io::Handle;
 use pgBackRestTest::Common::Io::Process;

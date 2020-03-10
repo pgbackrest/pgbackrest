@@ -24,8 +24,6 @@ use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/test/lib';
 
-use pgBackRest::Version;
-
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
@@ -41,6 +39,7 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Html::DocHtmlSite;
 use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Usage

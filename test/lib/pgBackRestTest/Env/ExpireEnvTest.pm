@@ -14,11 +14,10 @@ use Carp qw(confess);
 use Fcntl qw(O_RDONLY);
 use File::Basename qw(basename);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;

@@ -66,10 +66,9 @@ use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
 use Storable qw(dclone);
 
-use pgBackRest::Version;
-
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::Wait;
 

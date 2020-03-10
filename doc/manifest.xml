@@ -5,7 +5,7 @@
     <variable-list>
         <variable key="project">pgBackRest</variable>
         <variable key="project-tagline">Reliable PostgreSQL Backup &amp; Restore</variable>
-        <variable key="version" eval="y">use pgBackRest::Version; PROJECT_VERSION</variable>
+        <variable key="version" eval="y">use pgBackRestDoc::ProjectInfo; PROJECT_VERSION</variable>
         <variable key="version-stable" eval="y">
             use pgBackRestDoc::Custom::DocCustomRelease;
 
