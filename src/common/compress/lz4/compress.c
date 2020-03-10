@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 LZ4 Compress
 
-Developed using against version r131 using the documentation in https://github.com/lz4/lz4/blob/r131/lib/lz4frame.h.
+Developed against version r131 using the documentation in https://github.com/lz4/lz4/blob/r131/lib/lz4frame.h.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -37,15 +37,15 @@ Object type
 #define LZ4_COMPRESS_TYPE                                           Lz4Compress
 #define LZ4_COMPRESS_PREFIX                                         lz4Compress
 
-typedef struct
+typedef struct Lz4Compress
 {
     MemContext *memContext;                                         // Context to store data
     LZ4F_compressionContext_t context;                              // LZ4 compression context
     LZ4F_preferences_t prefs;                                       // Preferences -- just compress level set
     IoFilter *filter;                                               // Filter interface
+
     Buffer *buffer;                                                 // For when the output buffer can't accept all compressed data
     bool first;                                                     // Is this the first call to process?
-
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flushing;                                                  // Is input complete and flushing in progress?
 } Lz4Compress;
@@ -79,7 +79,7 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 Compress data
 ***********************************************************************************************************************************/
 // Helper to return a buffer where output will be written.  If there is enough space in the provided output buffer then use it,
-// otherwise allocate an internal buffer the hold the compressed data.  Once we start using the internal buffer we'll need to
+// otherwise allocate an internal buffer to hold the compressed data.  Once we start using the internal buffer we'll need to
 // continue using it until it is completely flushed.
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)

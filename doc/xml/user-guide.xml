@@ -763,13 +763,13 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config</exe-cmd>
+                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config liblz4-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install make gcc postgresql-devel openssl-devel libxml2-devel
+                    yum install make gcc postgresql-devel openssl-devel libxml2-devel lz4-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

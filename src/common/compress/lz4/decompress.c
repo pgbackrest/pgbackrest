@@ -27,7 +27,7 @@ Object type
 #define LZ4_DECOMPRESS_TYPE                                         Lz4Decompress
 #define LZ4_DECOMPRESS_PREFIX                                       lz4Decompress
 
-typedef struct
+typedef struct Lz4Decompress
 {
     MemContext *memContext;                                         // Context to store data
     LZ4F_decompressionContext_t context;                            // LZ4 decompression context
@@ -97,9 +97,9 @@ lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
         size_t srcSize = bufUsed(compressed) - this->inputOffset;
         size_t dstSize = bufRemains(decompressed);
 
-        this->frameDone = !lz4Error(
+        this->frameDone = lz4Error(
             LZ4F_decompress(
-                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtr(compressed) + this->inputOffset, &srcSize, NULL));
+                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtr(compressed) + this->inputOffset, &srcSize, NULL)) == 0;
 
         bufUsedInc(decompressed, dstSize);
 
