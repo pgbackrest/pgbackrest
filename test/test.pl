@@ -27,11 +27,11 @@ use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
 use pgBackRest::Version;
+
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
@@ -54,6 +54,7 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Usage

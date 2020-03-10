@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Process Execution, Management, and IO
 ####################################################################################################################################
-package pgBackRest::Common::Io::Process;
-use parent 'pgBackRest::Common::Io::Filter';
+package pgBackRestTest::Common::Io::Process;
+use parent 'pgBackRestTest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,10 +15,11 @@ use IPC::Open3 qw(open3);
 use POSIX qw(:sys_wait_h);
 use Symbol 'gensym';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Io::Buffered;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::Io::Buffered;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Amount of time to attempt to retrieve errors when a process terminates unexpectedly
@@ -100,8 +101,8 @@ sub error
 
                 # Drain the stderr stream
                 my $strError;
-                my $oIoError = new pgBackRest::Common::Io::Buffered(
-                    new pgBackRest::Common::Io::Handle($self->id(), $self->{fhReadError}), 5, $self->bufferMax());
+                my $oIoError = new pgBackRestTest::Common::Io::Buffered(
+                    new pgBackRestTest::Common::Io::Handle($self->id(), $self->{fhReadError}), 5, $self->bufferMax());
 
                 while (defined(my $strLine = $oIoError->readLine(true, false)))
                 {

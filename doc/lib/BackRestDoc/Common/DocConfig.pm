@@ -11,10 +11,12 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRestBuild::Config::Data;
 use pgBackRest::Version;
+
+use pgBackRestBuild::Config::Data;
+
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # Help types

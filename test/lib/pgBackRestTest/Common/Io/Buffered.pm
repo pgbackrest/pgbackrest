@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Buffered Handle IO
 ####################################################################################################################################
-package pgBackRest::Common::Io::Buffered;
-use parent 'pgBackRest::Common::Io::Filter';
+package pgBackRestTest::Common::Io::Buffered;
+use parent 'pgBackRestTest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -14,11 +14,12 @@ use Exporter qw(import);
 use IO::Select;
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Io::Base;
-use pgBackRest::Common::Io::Handle;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::Io::Base;
+use pgBackRestTest::Common::Io::Handle;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Package name constant

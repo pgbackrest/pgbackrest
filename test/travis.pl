@@ -21,9 +21,10 @@ use Pod::Usage qw(pod2usage);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;

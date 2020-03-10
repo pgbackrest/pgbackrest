@@ -32,9 +32,9 @@ use BackRestDoc::Html::DocHtmlSite;
 use BackRestDoc::Latex::DocLatex;
 use BackRestDoc::Markdown::DocMarkdown;
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;

@@ -13,24 +13,24 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Info;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::DbVersion;
-use pgBackRest::InfoCommon;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
 
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::InfoCommon;
+use pgBackRestTest::Env::Manifest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageBase;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # run
@@ -214,8 +214,8 @@ sub run
         forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoFile, {bRecurse => false});
 
         #  Confirm versions
-        my $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
-        my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
+        my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
+        my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
             PG_VERSION_93)}, true, 'archive at old pg version');
         $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,

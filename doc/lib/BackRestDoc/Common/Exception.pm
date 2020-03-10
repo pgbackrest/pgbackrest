@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # COMMON EXCEPTION MODULE
 ####################################################################################################################################
-package pgBackRest::Common::Exception;
+package BackRestDoc::Common::Exception;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -159,16 +159,6 @@ sub code
 }
 
 ####################################################################################################################################
-# Is this a C error?
-####################################################################################################################################
-sub errorC
-{
-    my $self = shift;
-
-    return $self->{bErrorC};
-}
-
-####################################################################################################################################
 # extra
 ####################################################################################################################################
 sub extra
@@ -211,7 +201,7 @@ sub isException
         # If a standard Exception
         if (blessed($$roException))
         {
-            return $$roException->isa('pgBackRest::Common::Exception') ? 1 : 0;
+            return $$roException->isa('BackRestDoc::Common::Exception') ? 1 : 0;
         }
         # Else if a specially formatted string from the C library
         elsif ($$roException =~ /^PGBRCLIB\:[0-9]+\:/)
@@ -226,7 +216,7 @@ sub isException
             my $strMessage = join(':', @stryException);
 
             # Create exception
-            $$roException = new pgBackRest::Common::Exception("ERROR", $iCode, $strMessage, $strTrace, undef, 1);
+            $$roException = new BackRestDoc::Common::Exception("ERROR", $iCode, $strMessage, $strTrace, undef, 1);
 
             return 1;
         }

@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Base Storage Module
 ####################################################################################################################################
-package pgBackRest::Storage::Base;
+package pgBackRestTest::Common::StorageBase;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,9 +13,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Io::Base;
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::Io::Base;
 
 ####################################################################################################################################
 # Storage constants

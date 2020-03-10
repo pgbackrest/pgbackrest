@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # MANIFEST MODULE
 ####################################################################################################################################
-package pgBackRest::Manifest;
-use parent 'pgBackRest::Common::Ini';
+package pgBackRestTest::Env::Manifest;
+use parent 'BackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,12 +13,13 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use Time::Local qw(timelocal);
 
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # File/path constants

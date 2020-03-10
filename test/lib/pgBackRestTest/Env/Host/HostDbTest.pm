@@ -16,20 +16,21 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(basename);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
-use pgBackRest::DbVersion;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
+
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
-use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # Db defaults

@@ -5,8 +5,8 @@
 # regarding the stanza database version, database WAL segment system id and other information to ensure that archiving is being
 # performed on the proper database.
 ####################################################################################################################################
-package pgBackRest::Archive::Info;
-use parent 'pgBackRest::Common::Ini';
+package pgBackRestTest::Env::ArchiveInfo;
+use parent 'BackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -17,21 +17,35 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 
-use pgBackRest::Archive::Common;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
-use pgBackRest::InfoCommon;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::StorageBase;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::InfoCommon;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant ARCHIVE_INFO_FILE                                      => 'archive.info';
     push @EXPORT, qw(ARCHIVE_INFO_FILE);
+
+####################################################################################################################################
+# RegEx constants
+####################################################################################################################################
+use constant REGEX_ARCHIVE_DIR_DB_VERSION                           => '^[0-9]+(\.[0-9]+)*-[0-9]+$';
+    push @EXPORT, qw(REGEX_ARCHIVE_DIR_DB_VERSION);
+use constant REGEX_ARCHIVE_DIR_WAL                                  => '^[0-F]{16}$';
+    push @EXPORT, qw(REGEX_ARCHIVE_DIR_WAL);
+
+####################################################################################################################################
+# WAL segment size
+####################################################################################################################################
+use constant PG_WAL_SEGMENT_SIZE                                    => 16777216;
+    push @EXPORT, qw(PG_WAL_SEGMENT_SIZE);
 
 ####################################################################################################################################
 # Archive info constants

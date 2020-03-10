@@ -15,8 +15,9 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Log;
 use pgBackRest::Version;
+
+use BackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;

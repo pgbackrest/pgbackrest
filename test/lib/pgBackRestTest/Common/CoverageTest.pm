@@ -15,10 +15,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
 use pgBackRest::Version;
 
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 use BackRestDoc::Html::DocHtmlBuilder;
 use BackRestDoc::Html::DocHtmlElement;
 

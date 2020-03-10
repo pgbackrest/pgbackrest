@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Base Filter Module
 ####################################################################################################################################
-package pgBackRest::Common::Io::Filter;
+package pgBackRestTest::Common::Io::Filter;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,7 +12,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Scalar::Util qw(blessed);
 
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # new

@@ -12,14 +12,13 @@ use Data::Dumper;
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-
 use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Common::DocRender;
 use BackRestDoc::Html::DocHtmlBuilder;
 use BackRestDoc::Html::DocHtmlElement;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # CONSTRUCTOR

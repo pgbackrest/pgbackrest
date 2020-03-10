@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # COMMON INI MODULE
 ####################################################################################################################################
-package pgBackRest::Common::Ini;
+package BackRestDoc::Common::Ini;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,10 +15,11 @@ use File::Basename qw(dirname);
 use JSON::PP;
 use Storable qw(dclone);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
 use pgBackRest::Version;
+
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # Boolean constants

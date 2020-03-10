@@ -2,7 +2,7 @@
 # Posix File Write
 ####################################################################################################################################
 package pgBackRestTest::Common::StoragePosixWrite;
-use parent 'pgBackRest::Common::Io::Handle';
+use parent 'pgBackRestTest::Common::Io::Handle';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,11 +12,11 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
 
-use pgBackRest::Common::Io::Handle;
-use pgBackRest::Storage::Base;
+use pgBackRestTest::Common::Io::Handle;
+use pgBackRestTest::Common::StorageBase;
 
 ####################################################################################################################################
 # CONSTRUCTOR

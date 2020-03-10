@@ -17,20 +17,20 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Backup::Common;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
-use pgBackRestTest::Env::Host::HostBaseTest;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
+use pgBackRestTest::Env::Host::HostBaseTest;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # S3 defaults

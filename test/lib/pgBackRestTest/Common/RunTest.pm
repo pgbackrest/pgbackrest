@@ -15,11 +15,11 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
 use pgBackRest::Version;
+
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
@@ -28,6 +28,7 @@ use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required

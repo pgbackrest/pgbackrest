@@ -11,7 +11,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Scalar::Util qw(blessed);
 
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # Html Element Types

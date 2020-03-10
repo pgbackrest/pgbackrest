@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # BACKUP INFO MODULE
 ####################################################################################################################################
-package pgBackRest::Backup::Info;
-use parent 'pgBackRest::Common::Ini';
+package pgBackRestTest::Env::BackupInfo;
+use parent 'BackRestDoc::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -14,14 +14,24 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Common;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::InfoCommon;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::InfoCommon;
+use pgBackRestTest::Env::Manifest;
+
+####################################################################################################################################
+# Backup type constants
+####################################################################################################################################
+use constant CFGOPTVAL_BACKUP_TYPE_FULL                             => 'full';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_FULL);
+use constant CFGOPTVAL_BACKUP_TYPE_DIFF                             => 'diff';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_DIFF);
+use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_INCR);
 
 ####################################################################################################################################
 # File/path constants
@@ -479,7 +489,7 @@ sub backupArchiveDbHistoryId
     my @stryArchiveBackup;
 
     # Build the db list from the history in the backup info and archive info file
-    my $oArchiveInfo = new pgBackRest::Archive::Info($strPathBackupArchive, true);
+    my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($strPathBackupArchive, true);
     my $hDbListArchive = $oArchiveInfo->dbHistoryList();
     my $hDbListBackup = $self->dbHistoryList();
     my $iDbHistoryId = undef;

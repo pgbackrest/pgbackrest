@@ -15,11 +15,10 @@ use File::Basename qw(dirname);
 use File::Copy;
 use Storable qw(dclone);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-
 use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # CONSTRUCTOR

@@ -12,10 +12,9 @@ use Exporter qw(import);
 use JSON::PP;
 use Storable qw(dclone);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-
 use BackRestDoc::Common::DocManifest;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # XML tag/param constants

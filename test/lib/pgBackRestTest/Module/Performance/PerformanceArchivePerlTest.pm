@@ -15,7 +15,7 @@ use English '-no_match_vars';
 use Storable qw(dclone);
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;

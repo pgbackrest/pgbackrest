@@ -10,9 +10,8 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 use BackRestDoc::Html::DocHtmlElement;
 
 ####################################################################################################################################

@@ -13,21 +13,21 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
 
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::Manifest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # archiveCheck

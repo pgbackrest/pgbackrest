@@ -18,15 +18,16 @@ use File::Basename qw(dirname basename);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
 use pgBackRest::Version;
+
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CoverageTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;

@@ -16,22 +16,22 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
-use pgBackRest::Archive::Common;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Helper;
+use BackRestDoc::Common::Log;
 
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageBase;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
 use pgBackRestTest::Env::Host::HostS3Test;
-use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # Constants

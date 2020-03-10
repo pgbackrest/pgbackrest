@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # COMMON WAIT MODULE
 ####################################################################################################################################
-package pgBackRest::Common::Wait;
+package pgBackRestTest::Common::Wait;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,7 +13,7 @@ use File::Basename qw(dirname);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday usleep);
 
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # Wait constants

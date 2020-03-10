@@ -17,10 +17,11 @@ use IPC::Open3;
 use POSIX ':sys_wait_h';
 use Symbol 'gensym';
 
-use pgBackRest::Common::Io::Handle;
-use pgBackRest::Common::Io::Buffered;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::Io::Handle;
+use pgBackRestTest::Common::Io::Buffered;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # new
@@ -101,11 +102,11 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create buffered read object
-    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
+    $self->{oIo} = new pgBackRestTest::Common::Io::Buffered(new pgBackRestTest::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
 
     # Create buffered error object
-    $self->{oIoError} = new pgBackRest::Common::Io::Buffered(
-        new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
+    $self->{oIoError} = new pgBackRestTest::Common::Io::Buffered(
+        new pgBackRestTest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
     $self->{iProcessTimeout} = 300;

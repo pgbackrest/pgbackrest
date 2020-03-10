@@ -14,22 +14,23 @@ use Carp qw(confess);
 use Fcntl qw(O_RDONLY);
 use File::Basename qw(basename);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Common;
-use pgBackRest::Backup::Info;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
-use pgBackRestTest::Env::HostEnvTest;
-use pgBackRestTest::Env::Host::HostBaseTest;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
+use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::Host::HostBaseTest;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # new
@@ -216,20 +217,20 @@ sub stanzaSet
     if (!$bStanzaUpgrade)
     {
         $oArchiveInfo =
-            new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath(), false,
+            new pgBackRestTest::Env::ArchiveInfo($self->{oHostBackup}->repoArchivePath(), false,
             {bIgnoreMissing => true, strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_ARCHIVE : undef});
         $oBackupInfo =
-            new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath(), false,
+            new pgBackRestTest::Env::BackupInfo($self->{oHostBackup}->repoBackupPath(), false,
             {bIgnoreMissing => true, strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_MANIFEST : undef});
     }
     # Else get the info data from disk
     else
     {
         $oArchiveInfo =
-            new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath(),
+            new pgBackRestTest::Env::ArchiveInfo($self->{oHostBackup}->repoArchivePath(),
             {strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_ARCHIVE : undef});
         $oBackupInfo =
-            new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath(),
+            new pgBackRestTest::Env::BackupInfo($self->{oHostBackup}->repoBackupPath(),
             {strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_MANIFEST : undef});
     }
 
@@ -384,7 +385,7 @@ sub backupCreate
 
     # Get passphrase (returns undefined if repo not encrypted) to access the manifest
     my $strCipherPassManifest =
-        (new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath()))->cipherPassSub();
+        (new pgBackRestTest::Env::BackupInfo($self->{oHostBackup}->repoBackupPath()))->cipherPassSub();
     my $strCipherPassBackupSet;
 
     # If repo is encrypted then get passphrase for accessing the backup files from the last manifest if it exists provide one
@@ -396,7 +397,7 @@ sub backupCreate
 
     my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
 
-    my $oManifest = new pgBackRest::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
+    my $oManifest = new pgBackRestTest::Env::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
         iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93),
         strCipherPass => $strCipherPassManifest, strCipherPassSub => $strCipherPassBackupSet});
 
@@ -433,7 +434,7 @@ sub backupCreate
     $$oStanza{oManifest} = $oManifest;
 
     # Add the backup to info
-    my $oBackupInfo = new pgBackRest::Backup::Info($$oStanza{strBackupClusterPath}, false);
+    my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($$oStanza{strBackupClusterPath}, false);
 
     $oBackupInfo->check($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId});
     $oBackupInfo->add($oManifest);
@@ -531,7 +532,7 @@ sub archiveCreate
 
     # Get passphrase (returns undefined if repo not encrypted) to access the archive files
     my $strCipherPass =
-        (new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath()))->cipherPassSub();
+        (new pgBackRestTest::Env::ArchiveInfo($self->{oHostBackup}->repoArchivePath()))->cipherPassSub();
 
     push(my @stryArchive, $strArchive);
 

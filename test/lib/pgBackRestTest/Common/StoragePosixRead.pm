@@ -2,7 +2,7 @@
 # Posix File Read
 ####################################################################################################################################
 package pgBackRestTest::Common::StoragePosixRead;
-use parent 'pgBackRest::Common::Io::Handle';
+use parent 'pgBackRestTest::Common::Io::Handle';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -11,8 +11,8 @@ use English '-no_match_vars';
 
 use Fcntl qw(O_RDONLY);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # CONSTRUCTOR

@@ -2,7 +2,7 @@
 # Implements storage functionality using drivers.
 ####################################################################################################################################
 package pgBackRestTest::Common::Storage;
-use parent 'pgBackRest::Storage::Base';
+use parent 'pgBackRestTest::Common::StorageBase';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -11,10 +11,11 @@ use English '-no_match_vars';
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Storage::Base;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
+
+use pgBackRestTest::Common::StorageBase;
 
 ####################################################################################################################################
 # new

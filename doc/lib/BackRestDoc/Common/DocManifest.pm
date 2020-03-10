@@ -13,8 +13,8 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use JSON::PP;
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # File constants

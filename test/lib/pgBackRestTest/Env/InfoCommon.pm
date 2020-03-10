@@ -2,7 +2,7 @@
 # INFO MODULE
 # Constants, variables and functions common to the info files
 ####################################################################################################################################
-package pgBackRest::InfoCommon;
+package pgBackRestTest::Env::InfoCommon;
 
 use strict;
 use warnings FATAL => qw(all);

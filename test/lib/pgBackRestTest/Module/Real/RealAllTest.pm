@@ -13,29 +13,31 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::InfoCommon;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Ini;
+use BackRestDoc::Common::Log;
+
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
+use pgBackRestTest::Env::InfoCommon;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostDbTest;
+use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::HostEnvTest;
-use pgBackRestTest::Common::Storage;
-use pgBackRestTest::Common::StoragePosix;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # Backup advisory lock
@@ -129,10 +131,10 @@ sub run
 
         # Get passphrase to access the Manifest file from backup.info - returns undefined if repo not encrypted
         my $strCipherPass =
-            (new pgBackRest::Backup::Info($oHostBackup->repoBackupPath()))->cipherPassSub();
+            (new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath()))->cipherPassSub();
 
         # Create a manifest with the pg version to get version-specific paths
-        my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion(),
+        my $oManifest = new pgBackRestTest::Env::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion(),
             iDbCatalogVersion => $self->dbCatalogVersion($self->pgVersion()),
             strCipherPass => $strCipherPass, strCipherPassSub => $bRepoEncrypt ? ENCRYPTION_KEY_BACKUPSET : undef});
 
@@ -351,8 +353,8 @@ sub run
             # Run stanza-create offline to create files needing to be upgraded (using new pg-path)
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam => ' --pg1-path=' . $oHostDbMaster->dbPath() . '/testbase/ --no-online --force'});
-            my $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
-            my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
+            my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
+            my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
@@ -374,8 +376,8 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
-            $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
+            $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
+            $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
             $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
@@ -777,7 +779,7 @@ sub run
         else
         {
             # Backup info will have the catalog number
-            my $oBackupInfo = new pgBackRest::Common::Ini(
+            my $oBackupInfo = new BackRestDoc::Common::Ini(
                 storageRepo(), $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
                 {bLoad => false, strContent => ${storageRepo()->get($oHostBackup->repoBackupPath(FILE_BACKUP_INFO))}});
 

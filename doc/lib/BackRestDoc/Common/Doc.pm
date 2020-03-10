@@ -13,8 +13,8 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 use XML::Checker::Parser;
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # CONSTRUCTOR

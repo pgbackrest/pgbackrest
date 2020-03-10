@@ -13,9 +13,10 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::DbVersion;
 
 ####################################################################################################################################
 # VM hash keywords

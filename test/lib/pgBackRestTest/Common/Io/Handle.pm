@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Basic Handle IO
 ####################################################################################################################################
-package pgBackRest::Common::Io::Handle;
-use parent 'pgBackRest::Common::Io::Base';
+package pgBackRestTest::Common::Io::Handle;
+use parent 'pgBackRestTest::Common::Io::Base';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,8 +12,8 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
 
 ####################################################################################################################################
 # Package name constant

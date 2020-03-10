@@ -15,8 +15,8 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use BackRestDoc::Common::Log;
+use BackRestDoc::Common::String;
 
 ####################################################################################################################################
 # VM hash keywords

@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # C Storage Interface
 ####################################################################################################################################
-package pgBackRest::Storage::Storage;
-use parent 'pgBackRest::Storage::Base';
+package pgBackRestTest::Common::StorageRepo;
+use parent 'pgBackRestTest::Common::StorageBase';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -10,16 +10,27 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Digest::SHA qw(sha1_hex);
+use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 use Fcntl qw(:mode);
 use File::stat qw{lstat};
 use JSON::PP;
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Io::Handle;
-use pgBackRest::Common::Io::Process;
-use pgBackRest::Common::Log;
-use pgBackRest::Storage::Base;
+use pgBackRest::Version;
+
+use BackRestDoc::Common::Exception;
+use BackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::Io::Handle;
+use pgBackRestTest::Common::Io::Process;
+use pgBackRestTest::Common::StorageBase;
+
+####################################################################################################################################
+# Temp file extension
+####################################################################################################################################
+use constant STORAGE_TEMP_EXT                                       => PROJECT_EXE . '.tmp';
+    push @EXPORT, qw(STORAGE_TEMP_EXT);
 
 ####################################################################################################################################
 # new
@@ -123,9 +134,9 @@ sub exec
         );
 
     $strCommand = "$self->{strCommand} ${strCommand}";
-    my $oBuffer = new pgBackRest::Common::Io::Buffered(
-        new pgBackRest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
-    my $oProcess = new pgBackRest::Common::Io::Process($oBuffer, $strCommand);
+    my $oBuffer = new pgBackRestTest::Common::Io::Buffered(
+        new pgBackRestTest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
+    my $oProcess = new pgBackRestTest::Common::Io::Process($oBuffer, $strCommand);
 
     my $tResult;
 
@@ -479,9 +490,9 @@ sub put
         "$self->{strCommand}" . (defined($strCipherPass) ? ' --cipher-pass=' . $self->escape($strCipherPass) : '') .
             ($bRaw ? ' --raw' : '') . ' repo-put ' . $self->escape($strFile);
 
-    my $oBuffer = new pgBackRest::Common::Io::Buffered(
-        new pgBackRest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
-    my $oProcess = new pgBackRest::Common::Io::Process($oBuffer, $strCommand);
+    my $oBuffer = new pgBackRestTest::Common::Io::Buffered(
+        new pgBackRestTest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
+    my $oProcess = new pgBackRestTest::Common::Io::Process($oBuffer, $strCommand);
 
     if (defined($tContent))
     {
@@ -528,6 +539,75 @@ sub remove
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
+
+####################################################################################################################################
+# Cache storage so it can be retrieved quickly
+####################################################################################################################################
+my $oRepoStorage;
+
+####################################################################################################################################
+# storageRepoCommandSet
+####################################################################################################################################
+my $strStorageRepoCommand;
+my $strStorageRepoType;
+
+sub storageRepoCommandSet
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,
+        $strStorageType,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepoCommandSet', \@_,
+            {name => 'strCommand'},
+            {name => 'strStorageType'},
+        );
+
+    $strStorageRepoCommand = $strCommand;
+    $strStorageRepoType = $strStorageType;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(storageRepoCommandSet);
+
+####################################################################################################################################
+# storageRepo - get repository storage
+####################################################################################################################################
+sub storageRepo
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepo', \@_,
+            {name => 'strStanza', optional => true, trace => true},
+        );
+
+    # Create storage if not defined
+    if (!defined($oRepoStorage))
+    {
+        $oRepoStorage = new pgBackRestTest::Common::StorageRepo($strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oStorageRepo', value => $oRepoStorage, trace => true},
+    );
+}
+
+push @EXPORT, qw(storageRepo);
 
 ####################################################################################################################################
 # Getters
