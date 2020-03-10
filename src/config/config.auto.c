@@ -14,7 +14,11 @@ STRING_EXTERN(CFGCMD_CHECK_STR,                                     CFGCMD_CHECK
 STRING_EXTERN(CFGCMD_EXPIRE_STR,                                    CFGCMD_EXPIRE);
 STRING_EXTERN(CFGCMD_HELP_STR,                                      CFGCMD_HELP);
 STRING_EXTERN(CFGCMD_INFO_STR,                                      CFGCMD_INFO);
-STRING_EXTERN(CFGCMD_LS_STR,                                        CFGCMD_LS);
+STRING_EXTERN(CFGCMD_REPO_CREATE_STR,                               CFGCMD_REPO_CREATE);
+STRING_EXTERN(CFGCMD_REPO_GET_STR,                                  CFGCMD_REPO_GET);
+STRING_EXTERN(CFGCMD_REPO_LS_STR,                                   CFGCMD_REPO_LS);
+STRING_EXTERN(CFGCMD_REPO_PUT_STR,                                  CFGCMD_REPO_PUT);
+STRING_EXTERN(CFGCMD_REPO_RM_STR,                                   CFGCMD_REPO_RM);
 STRING_EXTERN(CFGCMD_RESTORE_STR,                                   CFGCMD_RESTORE);
 STRING_EXTERN(CFGCMD_STANZA_CREATE_STR,                             CFGCMD_STANZA_CREATE);
 STRING_EXTERN(CFGCMD_STANZA_DELETE_STR,                             CFGCMD_STANZA_DELETE);
@@ -121,7 +125,59 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
     CONFIG_COMMAND
     (
-        CONFIG_COMMAND_NAME(CFGCMD_LS)
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_CREATE)
+
+        CONFIG_COMMAND_INTERNAL(true)
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
+    )
+
+    CONFIG_COMMAND
+    (
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_GET)
+
+        CONFIG_COMMAND_INTERNAL(true)
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
+    )
+
+    CONFIG_COMMAND
+    (
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_LS)
+
+        CONFIG_COMMAND_INTERNAL(true)
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
+    )
+
+    CONFIG_COMMAND
+    (
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_PUT)
+
+        CONFIG_COMMAND_INTERNAL(true)
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
+    )
+
+    CONFIG_COMMAND
+    (
+        CONFIG_COMMAND_NAME(CFGCMD_REPO_RM)
 
         CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
@@ -236,10 +292,12 @@ STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHI
 STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKUP_STANDBY);
 STRING_EXTERN(CFGOPT_BUFFER_SIZE_STR,                               CFGOPT_BUFFER_SIZE);
 STRING_EXTERN(CFGOPT_CHECKSUM_PAGE_STR,                             CFGOPT_CHECKSUM_PAGE);
+STRING_EXTERN(CFGOPT_CIPHER_PASS_STR,                               CFGOPT_CIPHER_PASS);
 STRING_EXTERN(CFGOPT_CMD_SSH_STR,                                   CFGOPT_CMD_SSH);
 STRING_EXTERN(CFGOPT_COMPRESS_STR,                                  CFGOPT_COMPRESS);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_STR,                            CFGOPT_COMPRESS_LEVEL);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_NETWORK_STR,                    CFGOPT_COMPRESS_LEVEL_NETWORK);
+STRING_EXTERN(CFGOPT_COMPRESS_TYPE_STR,                             CFGOPT_COMPRESS_TYPE);
 STRING_EXTERN(CFGOPT_CONFIG_STR,                                    CFGOPT_CONFIG);
 STRING_EXTERN(CFGOPT_CONFIG_INCLUDE_PATH_STR,                       CFGOPT_CONFIG_INCLUDE_PATH);
 STRING_EXTERN(CFGOPT_CONFIG_PATH_STR,                               CFGOPT_CONFIG_PATH);
@@ -251,6 +309,7 @@ STRING_EXTERN(CFGOPT_EXCLUDE_STR,                                   CFGOPT_EXCLU
 STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTER);
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
 STRING_EXTERN(CFGOPT_HOST_ID_STR,                                   CFGOPT_HOST_ID);
+STRING_EXTERN(CFGOPT_IGNORE_MISSING_STR,                            CFGOPT_IGNORE_MISSING);
 STRING_EXTERN(CFGOPT_LINK_ALL_STR,                                  CFGOPT_LINK_ALL);
 STRING_EXTERN(CFGOPT_LINK_MAP_STR,                                  CFGOPT_LINK_MAP);
 STRING_EXTERN(CFGOPT_LOCK_PATH_STR,                                 CFGOPT_LOCK_PATH);
@@ -355,6 +414,7 @@ STRING_EXTERN(CFGOPT_PG8_USER_STR,                                  CFGOPT_PG8_U
 STRING_EXTERN(CFGOPT_PROCESS_STR,                                   CFGOPT_PROCESS);
 STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCESS_MAX);
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
+STRING_EXTERN(CFGOPT_RAW_STR,                                       CFGOPT_RAW);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
 STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
 STRING_EXTERN(CFGOPT_REMOTE_TYPE_STR,                               CFGOPT_REMOTE_TYPE);
@@ -481,6 +541,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_CIPHER_PASS)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptCipherPass)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_CMD_SSH)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptCmdSsh)
@@ -508,6 +576,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS_LEVEL_NETWORK)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressLevelNetwork)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_COMPRESS_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressType)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -596,6 +672,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_HOST_ID)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptHostId)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_IGNORE_MISSING)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptIgnoreMissing)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1428,6 +1512,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_PROTOCOL_TIMEOUT)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptProtocolTimeout)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_RAW)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRaw)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

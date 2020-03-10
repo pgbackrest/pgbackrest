@@ -239,14 +239,6 @@ lib/pgBackRest/InfoCommon.pm:
   class: test/harness
   type: perl
 
-lib/pgBackRest/LibC.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/LibCAuto.pm:
-  class: test/harness/auto
-  type: perl
-
 lib/pgBackRest/Manifest.pm:
   class: test/harness
   type: perl
@@ -278,82 +270,6 @@ lib/pgBackRest/Storage/StorageWrite.pm:
 lib/pgBackRest/Version.pm:
   class: test/harness
   type: perl
-
-libc/LibC.h:
-  class: test/harness
-  type: c/h
-
-libc/LibC.xs:
-  class: test/harness
-  type: xs
-
-libc/Makefile.PL:
-  class: build
-  type: perl
-
-libc/build/lib/pgBackRestLibC/Build.pm:
-  class: build
-  type: perl
-
-libc/xs/config/config.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/config/configTest.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/config/configTest.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/config/define.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/crypto/hash.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/crypto/hash.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/postgres/client.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/postgres/client.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/postgres/pageChecksum.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storage.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storage.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/storage/storageRead.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storageRead.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/storage/storageWrite.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storageWrite.xsh:
-  class: test/harness
-  type: c/h
 
 src/Makefile.in:
   class: build
@@ -547,6 +463,14 @@ src/command/remote/remote.h:
   class: core
   type: c/h
 
+src/command/repo/ls.c:
+  class: core
+  type: c
+
+src/command/repo/ls.h:
+  class: core
+  type: c/h
+
 src/command/restore/file.c:
   class: core
   type: c
@@ -600,14 +524,6 @@ src/command/stanza/upgrade.c:
   type: c
 
 src/command/stanza/upgrade.h:
-  class: core
-  type: c/h
-
-src/command/storage/list.c:
-  class: core
-  type: c
-
-src/command/storage/list.h:
   class: core
   type: c/h
 

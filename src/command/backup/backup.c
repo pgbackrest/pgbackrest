@@ -17,9 +17,7 @@ Backup Command
 #include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/compress/gz/common.h"
-#include "common/compress/gz/compress.h"
-#include "common/compress/gz/decompress.h"
+#include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
@@ -124,8 +122,9 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strPtr(strLstGet(historyYearList, 0))),
                     .expression = strNewFmt(
-                        "%s\\.manifest\\." GZ_EXT "$",
-                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)))),
+                        "%s\\.manifest\\.%s$",
+                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                        strPtr(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
             if (strLstSize(historyList) > 0)
@@ -193,7 +192,6 @@ typedef struct BackupData
     const String *hostStandby;                                      // Host name of the standby
 
     unsigned int version;                                           // PostgreSQL version
-    unsigned int pageSize;                                          // PostgreSQL page size
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
 
@@ -258,7 +256,6 @@ backupInit(const InfoBackup *infoBackup)
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
 
     result->version = pgControl.version;
-    result->pageSize = pgControl.pageSize;
     result->walSegmentSize = pgControl.walSegmentSize;
 
     // Validate pg_control info against the stanza
@@ -399,14 +396,27 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
                     strPtr(manifestData(result)->backrestVersion));
 
-                // Warn if compress option changed
-                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
+                // Warn if compress-type option changed
+                if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
-                        "%s backup cannot alter compress option to '%s', reset to value in %s",
-                        strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                        strPtr(backupLabelPrior));
-                    cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
+                        "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
+                        strPtr(cfgOptionStr(cfgOptType)),
+                        strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))), strPtr(backupLabelPrior));
+
+                    // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
+                    // could store compression type on a per file basis, but it seems simplest and safest for now.
+                    cfgOptionSet(
+                        cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
+
+                    // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
+                    // There's an even smaller chance that the user will also alter compression-type in this this scenario right
+                    // after upgrading to a newer version. Because we judge this combination of events to be nearly impossible just
+                    // assert here so no test coverage is needed.
+                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+
+                    // Set the compression level back to whatever was in the prior backup
+                    cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, manifestPriorData->backupOptionCompressLevel);
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
@@ -504,7 +514,7 @@ typedef struct BackupResumeData
 {
     Manifest *manifest;                                             // New manifest
     const Manifest *manifestResume;                                 // Resumed manifest
-    const bool compressed;                                          // Is the backup compressed?
+    const CompressType compressType;                                // Backup compression type
     const bool delta;                                               // Is this a delta backup?
     const String *backupPath;                                       // Path to the current level of the backup being cleaned
     const String *manifestParentName;                               // Parent manifest name used to construct manifest name
@@ -575,9 +585,11 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeFile:
         {
-            // If the backup is compressed then strip off the extension before doing the lookup
-            if (resumeData->compressed)
-                manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZ_EXT));
+            // If the file is compressed then strip off the extension before doing the lookup
+            CompressType fileCompressType = compressTypeFromName(manifestName);
+
+            if (fileCompressType != compressTypeNone)
+                manifestName = compressExtStrip(manifestName, fileCompressType);
 
             // Find the file in both manifests
             const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
@@ -586,7 +598,9 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // Check if the file can be resumed or must be removed
             const char *removeReason = NULL;
 
-            if (file == NULL)
+            if (fileCompressType != resumeData->compressType)
+                removeReason = "mismatched compression type";
+            else if (file == NULL)
                 removeReason = "missing in manifest";
             else if (file->reference != NULL)
                 removeReason = "reference in manifest";
@@ -715,12 +729,12 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
                         // Check compression. Compression can't be changed between backups so resume won't work either.
-                        else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
+                        else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                         {
                             reason = strNewFmt(
                                 "new compression '%s' does not match resumable compression '%s'",
-                                cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                                cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
+                                strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                strPtr(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                         }
                         else
                             usable = true;
@@ -790,7 +804,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             {
                 .manifest = manifest,
                 .manifestResume = manifestResume,
-                .compressed = cfgOptionBool(cfgOptCompress),
+                .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
                 .delta = cfgOptionBool(cfgOptDelta),
                 .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)),
             };
@@ -920,13 +934,13 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         {
             // Create file
             const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(name));
-            bool compress = cfgOptionBool(cfgOptCompress);
+            CompressType compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    compress ? "." GZ_EXT : ""),
+                    strPtr(compressExtStr(compressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -935,8 +949,11 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
 
             // Add compression
-            if (compress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew((int)cfgOptionUInt(cfgOptCompressLevel)));
+            if (compressType != compressTypeNone)
+            {
+                ioFilterGroupAdd(
+                    ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+            }
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
@@ -1040,7 +1057,7 @@ Log the results of a job and throw errors
 static uint64_t
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t sizeCopied, unsigned int pageSize)
+    const uint64_t sizeTotal, uint64_t sizeCopied)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1050,7 +1067,6 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeCopied);
-        FUNCTION_LOG_PARAM(UINT, pageSize);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1144,7 +1160,7 @@ backupJobResult(
                             // ??? Update formatting after migration
                             LOG_WARN_FMT(
                                 "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                strPtr(fileLog), copySize, pageSize);
+                                strPtr(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
                         }
                         else
                         {
@@ -1421,8 +1437,8 @@ typedef struct BackupJobData
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const bool compress;                                            // Is the backup compressed?
-    const unsigned int compressLevel;                               // Compress level if backup is compressed
+    const CompressType compressType;                                // Backup compression type
+    const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
     const uint64_t lsnStart;                                        // Starting lsn for the backup
 
@@ -1472,8 +1488,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
-                protocolCommandParamAdd(command, VARBOOL(jobData->compress));
-                protocolCommandParamAdd(command, VARUINT(jobData->compressLevel));
+                protocolCommandParamAdd(command, VARUINT(jobData->compressType));
+                protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
@@ -1564,8 +1580,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         {
             .backupLabel = backupLabel,
             .backupStandby = backupStandby,
-            .compress = cfgOptionBool(cfgOptCompress),
-            .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
+            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+            .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
@@ -1617,7 +1633,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgId(pgId) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, sizeCopied, backupData->pageSize);
+                        fileRemove, job, sizeTotal, sizeCopied);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1649,7 +1665,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = jobData.compress ? "." GZ_EXT : "";
+        const char *const compressExt = strPtr(compressExtStr(jobData.compressType));
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1754,8 +1770,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {
-                    // Is the archive file compressed?
-                    bool archiveCompressed = strEndsWithZ(archiveFile, "." GZ_EXT);
+                    // Get compression type of the WAL segment and backup
+                    CompressType archiveCompressType = compressTypeFromName(archiveFile);
+                    CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
                     // Open the archive file
                     StorageRead *read = storageNewReadP(
@@ -1767,13 +1784,14 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
                         infoArchiveCipherPass(infoArchive));
 
-                    // Compress or decompress if archive and backup do not have the same compression settings
-                    if (archiveCompressed != cfgOptionBool(cfgOptCompress))
+                    // Compress/decompress if archive and backup do not have the same compression settings
+                    if (archiveCompressType != backupCompressType)
                     {
-                        if (archiveCompressed)
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
-                        else
-                            ioFilterGroupAdd(filterGroup, gzCompressNew(cfgOptionInt(cfgOptCompressLevel)));
+                        if (archiveCompressType != compressTypeNone)
+                            ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+
+                        if (backupCompressType != compressTypeNone)
+                            ioFilterGroupAdd(filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
                     }
 
                     // Encrypt with backup key if encrypted
@@ -1794,7 +1812,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             storageRepoWrite(),
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                cfgOptionBool(cfgOptCompress) ? "." GZ_EXT : "")));
+                                strPtr(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
 
                     // Add to manifest
                     ManifestFile file =
@@ -1864,10 +1882,10 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         StorageWrite *manifestWrite = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZ_EXT, strPtr(strSubN(backupLabel, 0, 4)),
-                    strPtr(backupLabel)));
+                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
+                    strPtr(backupLabel), strPtr(compressExtStr(compressTypeGz))));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzCompressNew(9));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
@@ -1952,7 +1970,8 @@ cmdBackup(void)
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
-        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), cfgOptionBool(cfgOptCompress));
+        manifestBuildValidate(
+            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))

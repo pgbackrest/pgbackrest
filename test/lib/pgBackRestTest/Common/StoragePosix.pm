@@ -978,5 +978,6 @@ sub remove
 sub className {STORAGE_POSIX_DRIVER}
 sub tempExtension {shift->{strTempExtension}}
 sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}
+sub type {STORAGE_POSIX}
 
 1;

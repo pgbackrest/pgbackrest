@@ -140,6 +140,9 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
 }
 
 /**********************************************************************************************************************************/
+// Helper function to get info for a file if it exists.  This logic can't live directly in storagePosixInfoList() because there is
+// a race condition where a file might exist while listing the directory but it is gone before stat() can be called.  In order to
+// get complete test coverage this function must be split out.
 static void
 storagePosixInfoListEntry(
     StoragePosix *this, const String *path, const String *name, StorageInfoListCallback callback, void *callbackData)

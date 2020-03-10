@@ -199,11 +199,7 @@ regExpMatchOne(const String *expression, const String *string)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Return the constant first part of the regular expression if it has a beginning anchor
-
-This works by scanning the string until the first special regex character is found so escaped characters will not be included.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 regExpPrefix(const String *expression)
 {
@@ -216,11 +212,13 @@ regExpPrefix(const String *expression)
     // Only generate prefix if expression is defined and has a beginning anchor
     if (expression != NULL && strPtr(expression)[0] == '^')
     {
+        const char *expressionZ = strPtr(expression);
+        size_t expressionSize = strSize(expression);
         unsigned int expressionIdx = 1;
 
-        for (; expressionIdx < strSize(expression); expressionIdx++)
+        for (; expressionIdx < expressionSize; expressionIdx++)
         {
-            char expressionChr = strPtr(expression)[expressionIdx];
+            char expressionChr = expressionZ[expressionIdx];
 
             // Search for characters that will end the prefix
             if (expressionChr == '.' || expressionChr == '^' || expressionChr == '$' || expressionChr == '*' ||
@@ -234,7 +232,21 @@ regExpPrefix(const String *expression)
 
         // Will there be any characters in the prefix?
         if (expressionIdx > 1)
-            result = strSubN(expression, 1, expressionIdx - 1);
+        {
+            // Search the rest of the string for another begin anchor
+            unsigned int anchorIdx = expressionIdx;
+
+            for (; anchorIdx < expressionSize; anchorIdx++)
+            {
+                // [^ and \^ are not begin anchors
+                if (expressionZ[anchorIdx] == '^' && expressionZ[anchorIdx - 1] != '[' && expressionZ[anchorIdx - 1] != '\\')
+                    break;
+            }
+
+            // If no other begin anchor was found then the prefix is usable
+            if (anchorIdx == expressionSize)
+                result = strSubN(expression, 1, expressionIdx - 1);
+        }
     }
 
     FUNCTION_TEST_RETURN(result);

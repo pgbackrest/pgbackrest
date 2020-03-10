@@ -6,8 +6,6 @@ Archive Push File
 #include "command/archive/push/file.h"
 #include "command/archive/common.h"
 #include "command/control/common.h"
-#include "common/compress/gz/common.h"
-#include "common/compress/gz/compress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -24,7 +22,7 @@ Copy a file from the source to the archive
 String *
 archivePushFile(
     const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CipherType cipherType, const String *cipherPass, bool compress, int compressLevel)
+    CipherType cipherType, const String *cipherPass, CompressType compressType, int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
@@ -34,7 +32,7 @@ archivePushFile(
         FUNCTION_LOG_PARAM(STRING, archiveFile);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM(BOOL, compress);
+        FUNCTION_LOG_PARAM(ENUM, compressType);
         FUNCTION_LOG_PARAM(INT, compressLevel);
     FUNCTION_LOG_END();
 
@@ -114,10 +112,10 @@ archivePushFile(
             bool compressible = true;
 
             // If the file will be compressed then add compression filter
-            if (isSegment && compress)
+            if (isSegment && compressType != compressTypeNone)
             {
-                strCat(archiveDestination, "." GZ_EXT);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), gzCompressNew(compressLevel));
+                compressExtCat(archiveDestination, compressType);
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilter(compressType, compressLevel));
                 compressible = false;
             }
 

@@ -444,11 +444,11 @@ testRun(void)
         IoFilterGroup *filterGroup = ioFilterGroupNew();
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
+        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        ioFilterGroupAdd(filterGroup, gzCompressNew(3));
-        ioFilterGroupAdd(filterGroup, gzDecompressNew());
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
         TEST_RESULT_BOOL(

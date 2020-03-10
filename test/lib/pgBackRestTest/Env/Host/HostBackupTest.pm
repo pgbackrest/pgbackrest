@@ -24,12 +24,11 @@ use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Version;
 use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Helper;
+use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
@@ -49,6 +48,49 @@ use constant HOST_PATH_REPO                                         => 'repo';
 
 use constant HOST_PROTOCOL_TIMEOUT                                  => 10;
     push @EXPORT, qw(HOST_PROTOCOL_TIMEOUT);
+
+####################################################################################################################################
+# Configuration constants
+####################################################################################################################################
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
+    push @EXPORT, qw(CFGDEF_SECTION_GLOBAL);
+use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
+    push @EXPORT, qw(CFGDEF_SECTION_STANZA);
+
+use constant CFGOPTVAL_BACKUP_TYPE_FULL                             => 'full';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_FULL);
+use constant CFGOPTVAL_BACKUP_TYPE_DIFF                             => 'diff';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_DIFF);
+use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
+    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_INCR);
+
+use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
+    push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+
+use constant STORAGE_CIFS                                           => 'cifs';
+    push @EXPORT, qw(STORAGE_CIFS);
+use constant STORAGE_S3                                             => 's3';
+    push @EXPORT, qw(STORAGE_S3);
+
+use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
+use constant CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                       => 'immediate';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
+use constant CFGOPTVAL_RESTORE_TYPE_NAME                            => 'name';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_NAME);
+use constant CFGOPTVAL_RESTORE_TYPE_PRESERVE                        => 'preserve';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_PRESERVE);
+use constant CFGOPTVAL_RESTORE_TYPE_STANDBY                         => 'standby';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_STANDBY);
+use constant CFGOPTVAL_RESTORE_TYPE_TIME                            => 'time';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_TIME);
+use constant CFGOPTVAL_RESTORE_TYPE_XID                             => 'xid';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_XID);
+
+use constant NONE                                                   => 'none';
+    push @EXPORT, qw(NONE);
+use constant GZ                                                     => 'gz';
+    push @EXPORT, qw(GZ);
 
 ####################################################################################################################################
 # new
@@ -100,12 +142,6 @@ sub new
     else
     {
         $self->{strRepoPath} = '/';
-    }
-
-    # Create the repo-path if on a local filesystem
-    if ($$oParam{strBackupDestination} eq $self->nameGet() && $oParam->{bRepoLocal})
-    {
-        storageTest()->pathCreate($self->repoPath(), {strMode => '0770'});
     }
 
     # Set log/lock paths
@@ -257,8 +293,8 @@ sub backupEnd
     {
         if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
         {
-            my $hTablespaceManifest = storageRepo()->manifest(
-                STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
+            my $hTablespaceManifest = storageTest()->manifest(
+                $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC));
 
             # Remove . and ..
             delete($hTablespaceManifest->{'.'});
@@ -309,18 +345,19 @@ sub backupEnd
                 }
             }
         }
-        # Else there should not be a tablespace directory at all
-        elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
+        # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
+        elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
+               storageTest()->pathExists($self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
         {
             confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
         }
     }
 
     # Check that latest link exists unless repo links are disabled
-    my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
+    my $strLatestLink = $self->repoBackupPath(LINK_LATEST);
     my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq CFGOPTVAL_REPO_TYPE_POSIX) && $self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq STORAGE_POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -370,14 +407,12 @@ sub backupEnd
         if ($self->synthetic() && $bManifestCompare)
         {
             $self->{oLogTest}->supplementalAdd(
-                storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), undef,
+                $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), undef,
                 ${storageRepo()->get(
                     storageRepo()->openRead(
-                        STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST,
-                        {strCipherPass => $self->cipherPassManifest()}))});
+                        $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()}))});
             $self->{oLogTest}->supplementalAdd(
-                storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO), undef,
-                ${storageRepo->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
+                $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo->get($self->repoBackupPath(FILE_BACKUP_INFO))});
         }
     }
 
@@ -449,8 +484,7 @@ sub backupCompare
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
     my $oActualManifest = new pgBackRest::Manifest(
-        storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST),
-        {strCipherPass => $self->cipherPassManifest()});
+        $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()});
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, &MANIFEST_KEY_TIMESTAMP_START);
@@ -479,9 +513,9 @@ sub backupCompare
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
         # Determine repo size if compression or encryption is enabled
-        my $bCompressed = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS};
+        my $strCompressType = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE};
 
-        if ($bCompressed ||
+        if ($strCompressType ne NONE ||
             (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
                 defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS})))
         {
@@ -489,8 +523,9 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageRepo()->info(STORAGE_REPO_BACKUP .
-                        "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->{size};
+                    (storageRepo()->info(
+                        $self->repoBackupPath("${strBackup}/${strFileKey}") .
+                        ($strCompressType eq NONE ? '' : ".${strCompressType}")))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -615,7 +650,7 @@ sub backupLast
     my $self = shift;
 
     my @stryBackup = storageRepo()->list(
-        STORAGE_REPO_BACKUP, {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
+        $self->repoBackupPath(), {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
 
     if (!defined($stryBackup[0]))
     {
@@ -782,13 +817,11 @@ sub stanzaCreate
         if (defined($self->{oLogTest}) && $self->synthetic())
         {
             $self->{oLogTest}->supplementalAdd(
-                storageRepo()->pathGet('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO), undef,
-                ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
+                $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo()->get($self->repoBackupPath(FILE_BACKUP_INFO))});
         }
 
         # Get the passphrase for accessing the manifest file
-        $self->{strCipherPassManifest} =
-            (new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza())))->cipherPassSub();
+        $self->{strCipherPassManifest} = (new pgBackRest::Backup::Info($self->repoBackupPath()))->cipherPassSub();
     }
 
     if (storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
@@ -797,13 +830,12 @@ sub stanzaCreate
         if (defined($self->{oLogTest}) && $self->synthetic())
         {
             $self->{oLogTest}->supplementalAdd(
-                storageRepo()->pathGet('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE), undef,
-                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
+                $self->repoArchivePath(ARCHIVE_INFO_FILE), undef, ${storageRepo()->get($self->repoArchivePath(ARCHIVE_INFO_FILE))});
         }
 
         # Get the passphrase for accessing the archived files
         $self->{strCipherPassArchive} =
-            (new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza())))->cipherPassSub();
+            (new pgBackRest::Archive::Info($self->repoArchivePath()))->cipherPassSub();
     }
 
     # Return from function and log return values if any
@@ -850,16 +882,14 @@ sub stanzaUpgrade
         storageRepo()->exists('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
     {
         $self->{oLogTest}->supplementalAdd(
-            storageRepo()->pathGet('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO), undef,
-            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
+            $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo()->get($self->repoBackupPath(FILE_BACKUP_INFO))});
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
         storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
         $self->{oLogTest}->supplementalAdd(
-            storageRepo()->pathGet('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE), undef,
-            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
+            $self->repoArchivePath(ARCHIVE_INFO_FILE), undef, ${storageRepo()->get($self->repoArchivePath(ARCHIVE_INFO_FILE))});
     }
 
     # Return from function and log return values if any
@@ -1011,65 +1041,64 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DETAIL);
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = testRunGet()->logLevelTestFile();
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_SUBPROCESS)} =
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-console'} = lc(DETAIL);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-file'} = testRunGet()->logLevelTestFile();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-stderr'} = lc(OFF);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-subprocess'} =
         testRunGet()->logLevelTestFile() eq lc(OFF) ? 'n' : 'y';
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_TIMESTAMP)} = 'n';
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BUFFER_SIZE)} = '64k';
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
 
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
 
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'protocol-timeout'} = 60;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'db-timeout'} = 45;
 
     # Set to make sure that changing the default works and to speed compression for testing
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL)} = 3;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level'} = 3;
 
     # Only set network compress level if there is more than one host
     if ($oHostBackup != $oHostDbMaster)
     {
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK)} = 1;
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level-network'} = 1;
     }
 
-    if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
+    if (defined($oParam->{strCompressType}) && $oParam->{strCompressType} ne 'gz')
     {
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-type'} = $oParam->{strCompressType};
     }
 
     if ($self->isHostBackup())
     {
         if ($self->repoEncrypt())
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_CIPHER_TYPE)} =
-                CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_CIPHER_PASS)} = 'x';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-cipher-type'} = CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-cipher-pass'} = 'x';
         }
 
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_PATH)} = $self->repoPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
         # S3 settings
         if ($oParam->{bS3})
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_TYPE)} = CFGOPTVAL_REPO_TYPE_S3;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY)} = HOST_S3_ACCESS_KEY;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY_SECRET)} = HOST_S3_ACCESS_SECRET_KEY;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_BUCKET)} = HOST_S3_BUCKET;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_ENDPOINT)} = HOST_S3_ENDPOINT;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_REGION)} = HOST_S3_REGION;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = STORAGE_S3;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key'} = HOST_S3_ACCESS_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key-secret'} = HOST_S3_ACCESS_SECRET_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-bucket'} = HOST_S3_BUCKET;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-endpoint'} = HOST_S3_ENDPOINT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-region'} = HOST_S3_REGION;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-verify-ssl'} = 'n';
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_REPO_HARDLINK)} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':backup'}{'repo1-s3-hardlink'} = 'y';
         }
 
-        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_ARCHIVE_COPY)} = 'y';
-        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_START_FAST)} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':backup'}{'archive-copy'} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':backup'}{'start-fast'} = 'y';
     }
 
     # Host specific options
@@ -1089,53 +1118,44 @@ sub configCreate
 
         if ($self->nameTest(HOST_BACKUP))
         {
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST)} = $oHostDb1->nameGet();
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_USER)} = $oHostDb1->userGet();
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_CMD)} = $oHostDb1->backrestExe();
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_CONFIG)} = $oHostDb1->backrestConfig();
+            $oParamHash{$strStanza}{'pg1-host'} = $oHostDb1->nameGet();
+            $oParamHash{$strStanza}{'pg1-host-user'} = $oHostDb1->userGet();
+            $oParamHash{$strStanza}{'pg1-host-cmd'} = $oHostDb1->backrestExe();
+            $oParamHash{$strStanza}{'pg1-host-config'} = $oHostDb1->backrestConfig();
 
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
-                $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PORT)} = $oHostDb1->pgPort();
+                $oParamHash{$strStanza}{'pg1-port'} = $oHostDb1->pgPort();
             }
         }
 
-        $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $oHostDb1->dbBasePath();
+        $oParamHash{$strStanza}{'pg1-path'} = $oHostDb1->dbBasePath();
 
         if (defined($oHostDb2))
         {
-            # Add an invalid replica to simulate more than one replica. A warning should be thrown by dbObjectGet when a stanza is
-            # created and a valid replica should be chosen.
-            my $iInvalidReplica = 2;
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iInvalidReplica))} = BOGUS;
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iInvalidReplica))} =
-                $oHostDb2->userGet();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iInvalidReplica))} =
-                $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iInvalidReplica))} =
-                $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iInvalidReplica))} =
-                $oHostDb2->dbBasePath();
+            # Add an invalid replica to simulate more than one replica. A warning should be thrown when a stanza is created and a
+            # valid replica should be chosen.
+            $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
+            $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{"pg2-path"} = $oHostDb2->dbBasePath();
 
             # Set a flag so we know there's a bogus host
             $self->{bBogusHost} = true;
 
-            # Set a valid replica to the last possible index to ensure skipping indexes does not make a difference.
-            my $iValidReplica = cfgOptionIndexTotal(CFGOPT_PG_PATH);
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iValidReplica))} = $oHostDb2->nameGet();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iValidReplica))} =
-                $oHostDb2->userGet();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iValidReplica))} =
-                $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iValidReplica))} =
-                $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iValidReplica))} = $oHostDb2->dbBasePath();
+            # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
+            $oParamHash{$strStanza}{"pg8-host"} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{"pg8-host-user"} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{"pg8-host-cmd"} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{"pg8-host-config"} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{"pg8-path"} = $oHostDb2->dbBasePath();
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $iValidReplica))} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{"pg8-port"} = $oHostDb2->pgPort();
             }
         }
     }
@@ -1143,32 +1163,31 @@ sub configCreate
     # If this is a database host
     if ($self->isHostDb())
     {
-        $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $self->dbBasePath();
+        $oParamHash{$strStanza}{'pg1-path'} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_SOCKET_PATH)} = $self->pgSocketPath();
-            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PORT)} = $self->pgPort();
+            $oParamHash{$strStanza}{'pg1-socket-path'} = $self->pgSocketPath();
+            $oParamHash{$strStanza}{'pg1-port'} = $self->pgPort();
         }
 
         if ($bArchiveAsync)
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' .
-                cfgCommandName(CFGCMD_ARCHIVE_PUSH)}{cfgOptionName(CFGOPT_ARCHIVE_ASYNC)} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':archive-push'}{'archive-async'} = 'y';
         }
 
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_SPOOL_PATH)} = $self->spoolPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'spool-path'} = $self->spoolPath();
 
         # If the the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST)} = $oHostBackup->nameGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_USER)} = $oHostBackup->userGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_CMD)} = $oHostBackup->backrestExe();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_CONFIG)} = $oHostBackup->backrestConfig();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
 
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
         }
     }
 
@@ -1203,7 +1222,14 @@ sub configUpdate
     {
         foreach my $strKey (keys(%{$hParam->{$strSection}}))
         {
-            $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            if (defined($hParam->{$strSection}{$strKey}))
+            {
+                $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            }
+            else
+            {
+                delete($oConfig->{$strSection}{$strKey});
+            }
         }
     }
 
@@ -1239,7 +1265,7 @@ sub manifestMunge
             {name => 'bCache', default => true},
         );
 
-    $self->infoMunge(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $hParam, $bCache, true);
+    $self->infoMunge($self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), $hParam, $bCache, true);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1266,7 +1292,7 @@ sub manifestRestore
             {name => 'bSave', default => true},
         );
 
-    $self->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $bSave);
+    $self->infoRestore($self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), $bSave);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1304,15 +1330,16 @@ sub infoMunge
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName, {oStorage => storageRepo(),
-        strCipherPass => !$bManifest ? storageRepo()->cipherPassUser() : $self->cipherPassManifest()});
+        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini(
+        storageRepo(), $strFileName,
+        {strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});
     }
 
     # Make a copy of the original file contents
     my $oMungeIni = new pgBackRest::Common::Ini(
-        $strFileName,
-        {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}), oStorage => storageRepo(),
-        strCipherPass => !$bManifest ? storageRepo()->cipherPassUser() : $self->cipherPassManifest()});
+        storageRepo(), $strFileName,
+        {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}),
+        strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});
 
     # Load params
     foreach my $strSection (keys(%{$hParam}))
@@ -1433,7 +1460,7 @@ sub configRecovery
 
     if (@stryRecoveryOption)
     {
-        $oConfig->{$strStanza}{cfgOptionName(CFGOPT_RECOVERY_OPTION)} = \@stryRecoveryOption;
+        $oConfig->{$strStanza}{'recovery-option'} = \@stryRecoveryOption;
     }
 
     # Save db config file
@@ -1467,7 +1494,7 @@ sub configRemap
     }
 
     # Rewrite recovery section
-    delete($oConfig->{"${strStanza}:restore"}{cfgOptionName(CFGOPT_TABLESPACE_MAP)});
+    delete($oConfig->{"${strStanza}:restore"}{'tablespace-map'});
     my @stryTablespaceMap;
 
     foreach my $strRemap (sort(keys(%$oRemapHashRef)))
@@ -1476,13 +1503,13 @@ sub configRemap
 
         if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
-            $oConfig->{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $strRemapPath;
+            $oConfig->{$strStanza}{'pg1-path'} = $strRemapPath;
 
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if (defined($oHostBackup))
             {
-                $oRemoteConfig->{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $strRemapPath;
+                $oRemoteConfig->{$strStanza}{'pg1-path'} = $strRemapPath;
             }
         }
         else
@@ -1497,7 +1524,7 @@ sub configRemap
 
     if (@stryTablespaceMap)
     {
-        $oConfig->{"${strStanza}:restore"}{cfgOptionName(CFGOPT_TABLESPACE_MAP)} = \@stryTablespaceMap;
+        $oConfig->{"${strStanza}:restore"}{'tablespace-map'} = \@stryTablespaceMap;
     }
 
     # Save db config file
@@ -1572,14 +1599,13 @@ sub restore
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
-                  ($strBackup ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
+                  ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
                   # This does not output 'default' for synthetic tests to make expect logs match up (may change later)
                   ($strType ? ", type '${strType}'" : (defined($rhExpectedManifest) ? '' : ", type 'default'")) .
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                   ($bTargetExclusive ? ', exclusive' : '') .
-                  (defined($strTargetAction) && $strTargetAction ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
-                      ? ', ' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
+                  (defined($strTargetAction) && $strTargetAction ne 'pause' ? ", target-action=${strTargetAction}" : '') .
                   (defined($rhRemapHash) ? ', remap' : '') .
                   (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
                   (defined($strComment) ? " - ${strComment}" : '') .
@@ -1593,18 +1619,19 @@ sub restore
     # Load the expected manifest if it was not defined
     my $oExpectedManifest = undef;
 
+    # If an expected backup is defined, then the strBackup should be the default to allow the restore process to select the backup
+    # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
+    if (!defined($strBackupExpected))
+    {
+        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() :
+            $strBackup;
+    }
+
     if (!defined($rhExpectedManifest))
     {
-        if (!defined($strBackupExpected))
-        {
-            $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup;
-        }
-
-        # Load the manifest
+        # Load the manifest from the backup expected to be chosen/processed by restore
         my $oExpectedManifest = new pgBackRest::Manifest(
-            storageRepo()->pathGet(
-                STORAGE_REPO_BACKUP . qw{/} . $strBackupExpected. qw{/} .
-                    FILE_MANIFEST),
+            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
         $rhExpectedManifest = $oExpectedManifest->{oContent};
@@ -1664,7 +1691,7 @@ sub restore
         ' --config=' . $self->backrestConfig() .
         ($bDelta ? ' --delta' : '') .
         ($bForce ? ' --force' : '') .
-        ($strBackup ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
+        ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
         (defined($strType) && $strType ne CFGOPTVAL_RESTORE_TYPE_DEFAULT ? " --type=${strType}" : '') .
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
@@ -1672,8 +1699,7 @@ sub restore
         ($bTargetExclusive ? ' --target-exclusive' : '') .
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
-        (defined($strTargetAction) && $strTargetAction ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
-            ? ' --' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
+        (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},
@@ -1681,7 +1707,7 @@ sub restore
 
     if (!defined($iExpectedExitStatus))
     {
-        $self->restoreCompare($strBackup, dclone($rhExpectedManifest), $bTablespace);
+        $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
 
         if (defined($self->{oLogTest}))
         {
@@ -1715,9 +1741,8 @@ sub restoreCompare
     {
         my $oExpectedManifest =
             new pgBackRest::Manifest(
-                storageRepo()->pathGet(
-                    STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) .
-                        '/'. FILE_MANIFEST),
+                $self->repoBackupPath(
+                    ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
         # Get the --delta option from the backup manifest so the actual manifest can be built the same way for comparison
@@ -1726,9 +1751,8 @@ sub restoreCompare
 
         $oLastManifest =
             new pgBackRest::Manifest(
-                storageRepo()->pathGet(
-                    STORAGE_REPO_BACKUP . qw{/} .
-                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
+                $self->repoBackupPath(
+                    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
     }
 
@@ -1792,6 +1816,8 @@ sub restoreCompare
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
     $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS_TYPE, undef,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE});
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
@@ -2018,6 +2044,20 @@ sub restoreCompare
 }
 
 ####################################################################################################################################
+# Get repo backup/archive path
+####################################################################################################################################
+sub repoSubPath
+{
+    my $self = shift;
+    my $strSubPath = shift;
+    my $strPath = shift;
+
+    return
+        ($self->{strRepoPath} eq '/' ? '' : $self->{strRepoPath}) . "/${strSubPath}/" . $self->stanza() .
+        (defined($strPath) ? "/${strPath}" : '');
+}
+
+####################################################################################################################################
 # Getters
 ####################################################################################################################################
 sub backrestConfig {return shift->{strBackRestConfig}}
@@ -2026,13 +2066,15 @@ sub backrestExe {return testRunGet()->backrestExe()}
 sub bogusHost {return shift->{bBogusHost}}
 sub hardLink {return shift->{bHardLink}}
 sub hasLink {storageRepo()->capability(STORAGE_CAPABILITY_LINK)}
-sub isFS {storageRepo()->type() ne STORAGE_S3}
+sub isFS {storageRepo()->type() ne STORAGE_OBJECT}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}
 sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby()}
 sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
+sub repoArchivePath {return shift->repoSubPath('archive', shift)}
+sub repoBackupPath {return shift->repoSubPath('backup', shift)}
 sub repoPath {return shift->{strRepoPath}}
 sub repoEncrypt {return shift->{bRepoEncrypt}}
 sub stanza {return testRunGet()->stanza()}

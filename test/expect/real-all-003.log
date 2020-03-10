@@ -1,5 +1,5 @@
-run 003 - bkp 0, sby 1, dst db-standby, cmp 0, s3 0, enc 0
-==========================================================
+run 003 - bkp 0, sby 1, dst db-standby, cmp none, s3 0, enc 0
+=============================================================
 
 stanza-create db - main create stanza info files (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db stanza-create
@@ -18,9 +18,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -55,9 +55,9 @@ pg8-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
@@ -102,9 +102,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -142,9 +142,9 @@ pg8-path=[TEST_PATH]/db-master/db/base
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
@@ -174,9 +174,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -214,9 +214,9 @@ pg8-path=[TEST_PATH]/db-master/db/base
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail

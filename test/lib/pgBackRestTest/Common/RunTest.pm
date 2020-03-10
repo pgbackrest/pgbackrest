@@ -19,14 +19,14 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -114,7 +114,7 @@ sub process
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
-        $self->{strBackRestExeC},
+        $self->{strBackRestExe},
         $self->{strBackRestExeHelper},
         $self->{strPgBinPath},
         $self->{strPgVersion},
@@ -136,7 +136,7 @@ sub process
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
-            {name => 'strBackRestExeC'},
+            {name => 'strBackRestExe'},
             {name => 'strBackRestExeHelper'},
             {name => 'strPgBinPath', required => false},
             {name => 'strPgVersion', required => false},
@@ -156,10 +156,8 @@ sub process
     $self->{bFirstTest} = true;
 
     # Initialize test storage
-    $oStorage = new pgBackRest::Storage::Storage(STORAGE_LOCAL, {strPath => $self->testPath()});
-
-    # Generate backrest exe
-    $self->{strBackRestExe} = defined($self->{strBackRestExeC}) ? $self->{strBackRestExeC} : $self->{strBackRestExeHelper};
+    $oStorage = new pgBackRestTest::Common::Storage(
+        $self->testPath(), new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     projectBinSet($self->{strBackRestExe});
 
@@ -544,6 +542,7 @@ push(@EXPORT, qw(storageTest));
 ####################################################################################################################################
 sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
+sub backrestExeHelper {return shift->{strBackRestExeHelper}}
 sub basePath {return shift->{strBasePath}}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
