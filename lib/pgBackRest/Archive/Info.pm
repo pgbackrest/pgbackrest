@@ -19,13 +19,11 @@ use File::Basename qw(dirname basename);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
-use pgBackRest::Config::Config;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 
@@ -95,9 +93,9 @@ sub new
     # Init object and store variables
     eval
     {
-        $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => storageRepo(), strCipherPass => storageRepo()->cipherPassUser(),
-            strCipherPassSub => $strCipherPassSub});
+        $self = $class->SUPER::new(
+            storageRepo(), $strArchiveInfoFile,
+                {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do
@@ -332,149 +330,6 @@ sub create
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# reconstruct
-#
-# Reconstruct the info file from the existing directory and files
-####################################################################################################################################
-sub reconstruct
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strCurrentDbVersion,
-        $ullCurrentDbSysId,
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->reconstruct', \@_,
-        {name => 'strCurrentDbVersion'},
-        {name => 'ullCurrentDbSysId'},
-    );
-
-    my $strInvalidFileStructure = undef;
-
-    my @stryArchiveId = storageRepo()->list(
-        $self->{strArchiveClusterPath}, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
-    my %hDbHistoryVersion;
-
-    # Get the db-version and db-id (history id) from the upper level directory names, e.g. 9.4-1
-    foreach my $strArchiveId (@stryArchiveId)
-    {
-        my ($strDbVersion, $iDbHistoryId) = split("-", $strArchiveId);
-        $hDbHistoryVersion{$iDbHistoryId} = $strDbVersion;
-    }
-
-    # Loop through the DBs in the order they were created as indicated by the db-id so that the last one is set in the db section
-    foreach my $iDbHistoryId (sort {$a <=> $b} keys %hDbHistoryVersion)
-    {
-        my $strDbVersion = $hDbHistoryVersion{$iDbHistoryId};
-        my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
-
-        # Get the name of the first archive directory
-        my $strArchiveDir = (storageRepo()->list(
-            $self->{strArchiveClusterPath} . "/${strVersionDir}",
-            {strExpression => REGEX_ARCHIVE_DIR_WAL, bIgnoreMissing => true}))[0];
-
-        # Continue if any file structure or missing files info
-        if (!defined($strArchiveDir))
-        {
-            $strInvalidFileStructure = "found empty directory " . $self->{strArchiveClusterPath} . "/${strVersionDir}";
-            next;
-        }
-
-        # ??? Should probably make a function in ArchiveCommon
-        my $strArchiveFile = (storageRepo()->list(
-            $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\." . COMPRESS_EXT . "){0,1}\$",
-                bIgnoreMissing => true}))[0];
-
-        # Continue if any file structure or missing files info
-        if (!defined($strArchiveFile))
-        {
-            $strInvalidFileStructure =
-                "found empty directory " . $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}";
-            next;
-        }
-
-        # Get the full path for the file
-        my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
-
-        # Get the db-system-id from the WAL file depending on the version of postgres
-        my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
-
-        # Error if the file encryption setting is not valid for the repo
-        if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
-        {
-            confess &log(ERROR, "encryption incompatible for '$strArchiveFilePath'" .
-                "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
-        }
-
-        # If the file is encrypted, then the passphrase from the info file is required, else getEncryptionKeySub returns undefined
-        my $oFileIo = storageRepo()->openRead(
-            $strArchiveFilePath,
-            {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZ, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
-            strCipherPass => $self->cipherPassSub()});
-        $oFileIo->open();
-
-        my $tBlock;
-        $oFileIo->read(\$tBlock, 512);
-        $oFileIo->close();
-
-        # Get the required data from the file that was pulled into scalar $tBlock
-        my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
-
-        if (!defined($ullDbSysId))
-        {
-            confess &log(ERROR, "unable to read database system identifier", ERROR_FILE_READ);
-        }
-
-        # Fill db section and db history section
-        $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
-    }
-
-    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections.
-    if (!$self->test(INFO_ARCHIVE_SECTION_DB))
-    {
-        $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
-    }
-    # Else if it does exist but does not match the current DB, then update the DB section
-    else
-    {
-        # Turn off console logging to control when to display the error
-        logDisable();
-
-        eval
-        {
-            $self->check($strCurrentDbVersion, $ullCurrentDbSysId, false);
-            logEnable();
-            return true;
-        }
-        or do
-        {
-            # Reset the console logging
-            logEnable();
-
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_ARCHIVE_MISMATCH);
-
-            # Update the DB section if it does not match the current database
-            $self->dbSectionSet($strCurrentDbVersion, $ullCurrentDbSysId, $self->dbHistoryIdGet(false)+1);
-        };
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strInvalidFileStructure', value => $strInvalidFileStructure}
-    );
 }
 
 ####################################################################################################################################

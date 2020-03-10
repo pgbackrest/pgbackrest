@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Storage List Command
+Repository List Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -37,8 +37,8 @@ storageListRenderCallback(void *data, const StorageInfo *info)
 
     StorageListRenderCallbackData *listData = (StorageListRenderCallbackData *)data;
 
-    // Skip . path when output is text
-    if (info->type == storageTypePath && strEq(info->name, DOT_STR) && !listData->json)
+    // Skip . path if it is not first when json output
+    if (info->type == storageTypePath && strEq(info->name, DOT_STR) && (!listData->first || !listData->json))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -150,9 +150,26 @@ storageListRender(IoWrite *write)
     if (data.json)
         ioWrite(data.write, BRACEL_BUF);
 
-    storageInfoListP(
-        storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = cfgOptionStr(cfgOptFilter),
-        .recurse = cfgOptionBool(cfgOptRecurse));
+    // Check if this is a file
+    StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
+
+    if (info.exists && info.type == storageTypeFile)
+    {
+        info.name = DOT_STR;
+        storageListRenderCallback(&data, &info);
+    }
+    // Else try to list the path
+    else
+    {
+        // The path will always be reported as existing so we don't get different results from storage that does not support paths
+        if (data.json)
+            storageListRenderCallback(&data, &(StorageInfo){.type = storageTypePath, .name = DOT_STR});
+
+        // List content of the path
+        storageInfoListP(
+            storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = cfgOptionStr(cfgOptFilter),
+            .recurse = cfgOptionBool(cfgOptRecurse));
+    }
 
     if (data.json)
         ioWrite(data.write, BRACER_BUF);
@@ -162,9 +179,7 @@ storageListRender(IoWrite *write)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Render storage list and output to stdout
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 cmdStorageList(void)
 {

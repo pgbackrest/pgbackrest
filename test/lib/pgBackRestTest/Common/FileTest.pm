@@ -25,7 +25,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Storage::Base;
 
@@ -154,7 +153,7 @@ sub forceStorageMode
     (
         $strOperation,
         $oStorage,
-        $strPathExp,
+        $strPath,
         $strMode,
         $bRecurse
     ) =
@@ -162,15 +161,15 @@ sub forceStorageMode
         (
             __PACKAGE__ . '::forceStorageMode', \@_,
             {name => 'oStorage'},
-            {name => 'strPathExp'},
+            {name => 'strPath'},
             {name => 'strMode'},
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    # Mode commands are ignored on S3
-    if ($oStorage->type() ne STORAGE_S3)
+    # Mode commands are ignored on object storage
+    if ($oStorage->type() ne STORAGE_OBJECT)
     {
-        executeTest('chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+        executeTest('chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} ${strPath}");
     }
 
     # Return from function and log return values if any
@@ -189,55 +188,48 @@ sub forceStorageMove
     (
         $strOperation,
         $oStorage,
-        $strSourcePathExp,
-        $strDestinationPathExp,
+        $strSourcePath,
+        $strDestinationPath,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->forceStorageMove', \@_,
             {name => 'oStorage'},
-            {name => 'strSourcePathExp'},
-            {name => 'strDestinationPathExp'},
+            {name => 'strSourcePath'},
+            {name => 'strDestinationPath'},
             {name => 'bRecurse', optional => true, default => true},
         );
 
-    # If S3 then use storage commands to remove
-    if ($oStorage->type() eq STORAGE_S3)
+    # If object storage then use storage commands to remove
+    if ($oStorage->type() eq STORAGE_OBJECT)
     {
         if ($bRecurse)
         {
-            my $rhManifest = $oStorage->manifest($strSourcePathExp);
+            my $rhManifest = $oStorage->manifest($strSourcePath);
 
             foreach my $strName (sort(keys(%{$rhManifest})))
             {
                 if ($rhManifest->{$strName}{type} eq 'f')
                 {
                     $oStorage->put(
-                        new pgBackRest::Storage::StorageWrite(
-                            $oStorage,
-                            pgBackRest::LibC::StorageWrite->new(
-                                $oStorage->{oStorageC}, "${strDestinationPathExp}/${strName}", 0, undef, undef, 0, true, false)),
-                        ${$oStorage->get(
-                            new pgBackRest::Storage::StorageRead(
-                                $oStorage,
-                                pgBackRest::LibC::StorageRead->new(
-                                    $oStorage->{oStorageC}, "${strSourcePathExp}/${strName}", false)))});
-
-                    $oStorage->remove("${strSourcePathExp}/${strName}");
+                        "${strDestinationPath}/${strName}", ${$oStorage->get("${strSourcePath}/${strName}", {bRaw => true})},
+                        {bRaw => true});
                 }
             }
+
+            $oStorage->pathRemove($strSourcePath, {bRecurse => true});
         }
         else
         {
-            $oStorage->put($strDestinationPathExp, ${$oStorage->get($strSourcePathExp)});
-            $oStorage->remove($strSourcePathExp);
+            $oStorage->put($strDestinationPath, ${$oStorage->get($strSourcePath)});
+            $oStorage->remove($strSourcePath);
         }
     }
     # Else remove using filesystem commands
     else
     {
-        executeTest('mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+        executeTest("mv ${strSourcePath} ${strDestinationPath}");
     }
 
     # Return from function and log return values if any
@@ -245,41 +237,6 @@ sub forceStorageMove
 }
 
 push(@EXPORT, qw(forceStorageMove));
-
-####################################################################################################################################
-# forceStorageOwner - force ownership on a file or path
-####################################################################################################################################
-sub forceStorageOwner
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oStorage,
-        $strPathExp,
-        $strOwner,
-        $bRecurse
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::forceStorageOwner', \@_,
-            {name => 'oStorage'},
-            {name => 'strPathExp'},
-            {name => 'strOwner'},
-            {name => 'bRecurse', optional => true, default => false},
-        );
-
-    # Owner commands are ignored on S3
-    if ($oStorage->type() ne STORAGE_S3)
-    {
-        executeTest('chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-push(@EXPORT, qw(forceStorageOwner));
 
 ####################################################################################################################################
 # forceStorageRemove - force remove a file or path from storage
@@ -291,34 +248,25 @@ sub forceStorageRemove
     (
         $strOperation,
         $oStorage,
-        $strPathExp,
+        $strPath,
         $bRecurse
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->forceStorageRemove', \@_,
             {name => 'oStorage'},
-            {name => 'strPathExp'},
+            {name => 'strPath'},
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    # If S3 then use storage commands to remove
-    if ($oStorage->type() eq STORAGE_S3)
+    # If object storage then use storage commands to remove
+    if ($oStorage->type() eq STORAGE_OBJECT)
     {
-        my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
-
-        if (defined($oInfo) && $oInfo->{type} eq 'f')
-        {
-            $oStorage->remove($strPathExp);
-        }
-        else
-        {
-            $oStorage->pathRemove($strPathExp, {bRecurse => true});
-        }
+        $oStorage->pathRemove($strPath, {bRecurse => true});
     }
     else
     {
-        executeTest('rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
+        executeTest('rm -f' . ($bRecurse ? 'r ' : ' ') . $strPath);
     }
 
     # Return from function and log return values if any

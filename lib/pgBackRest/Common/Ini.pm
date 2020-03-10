@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
@@ -17,7 +18,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -74,17 +74,13 @@ sub new
     my $self = {};
     bless $self, $class;
 
-    # Load Storage::Helper module
-    require pgBackRest::Storage::Helper;
-    pgBackRest::Storage::Helper->import();
-
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{oStorage},
         $self->{strFileName},
         my $bLoad,
         my $strContent,
-        $self->{oStorage},
         $self->{iInitFormat},
         $self->{strInitVersion},
         my $bIgnoreMissing,
@@ -94,21 +90,16 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'oStorage', trace => true},
             {name => 'strFileName', trace => true},
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'strContent', optional => true, trace => true},
-            {name => 'oStorage', optional => true, default => storageLocal(), trace => true},
             {name => 'iInitFormat', optional => true, default => REPOSITORY_FORMAT, trace => true},
             {name => 'strInitVersion', optional => true, default => PROJECT_VERSION, trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
             {name => 'strCipherPass', optional => true, trace => true},
             {name => 'strCipherPassSub', optional => true, trace => true},
         );
-
-    if (defined($self->{oStorage}->cipherPassUser()) && !defined($self->{strCipherPass}))
-    {
-        confess &log(ERROR, 'passphrase is required when storage is encrypted', ERROR_CRYPTO);
-    }
 
     # Set changed to false
     $self->{bModified} = false;
@@ -139,11 +130,6 @@ sub new
         {
             $self->set(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS, undef, $strCipherPassSub);
         }
-        elsif ((defined($self->{strCipherPass}) && !defined($strCipherPassSub)) ||
-            (!defined($self->{strCipherPass}) && defined($strCipherPassSub)))
-        {
-            confess &log(ASSERT, 'a user passphrase and sub passphrase are both required when encrypting');
-        }
     }
 
     return $self;
@@ -158,37 +144,27 @@ sub loadVersion
     my $bCopy = shift;
     my $bIgnoreError = shift;
 
-    # Make sure the file encryption setting is valid for the repo
-    if ($self->{oStorage}->encryptionValid($self->{oStorage}->encrypted($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
-        {bIgnoreMissing => $bIgnoreError})))
+    # Load main
+    my $rstrContent = $self->{oStorage}->get(
+        $self->{oStorage}->openRead($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
+        {bIgnoreMissing => $bIgnoreError, strCipherPass => $self->{strCipherPass}}));
+
+    # If the file exists then attempt to parse it
+    if (defined($rstrContent))
     {
-        # Load main
-        my $rstrContent = $self->{oStorage}->get(
-            $self->{oStorage}->openRead($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''),
-            {bIgnoreMissing => $bIgnoreError, strCipherPass => $self->{strCipherPass}}));
+        my $rhContent = iniParse($$rstrContent, {bIgnoreInvalid => $bIgnoreError});
 
-        # If the file exists then attempt to parse it
-        if (defined($rstrContent))
+        # If the content is valid then check the header
+        if (defined($rhContent))
         {
-            my $rhContent = iniParse($$rstrContent, {bIgnoreInvalid => $bIgnoreError});
+            $self->{oContent} = $rhContent;
 
-            # If the content is valid then check the header
-            if (defined($rhContent))
+            # If the header is invalid then undef content
+            if (!$self->headerCheck({bIgnoreInvalid => $bIgnoreError}))
             {
-                $self->{oContent} = $rhContent;
-
-                # If the header is invalid then undef content
-                if (!$self->headerCheck({bIgnoreInvalid => $bIgnoreError}))
-                {
-                    delete($self->{oContent});
-                }
+                delete($self->{oContent});
             }
         }
-    }
-    else
-    {
-        confess &log(ERROR, "unable to parse '$self->{strFileName}" . ($bCopy ? INI_COPY_EXT : '') . "'" .
-            "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
     }
 
     return defined($self->{oContent});
@@ -423,10 +399,20 @@ sub save
 
         # Save the file
         $self->{oStorage}->put($self->{strFileName}, iniRender($self->{oContent}), {strCipherPass => $self->{strCipherPass}});
-        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+
+        if ($self->{oStorage}->can('pathSync'))
+        {
+            $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+        }
+
         $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}),
             {strCipherPass => $self->{strCipherPass}});
-        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+
+        if ($self->{oStorage}->can('pathSync'))
+        {
+            $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+        }
+
         $self->{bModified} = false;
 
         # Indicate the file now exists
@@ -563,7 +549,7 @@ sub hash
 
     # Set the new checksum
     $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
-        cryptoHashOne('sha1', JSON::PP->new()->canonical()->allow_nonref()->encode($self->{oContent}));
+        sha1_hex(JSON::PP->new()->canonical()->allow_nonref()->encode($self->{oContent}));
 
     return $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
 }

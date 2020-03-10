@@ -30,9 +30,9 @@ typedef enum
 #include <common/io/filter/group.h>
 
 /***********************************************************************************************************************************
-Compression types as a regexp. Ideally this would be generated automatically at build time from the known compression types but
-there shouldn't be a lot of churn, so just define it statically.  If a supported type is not in this list then it should cause an
-integration test to fail.
+Compression types as a regexp. In the future this regexp will be generated automatically at build time but we want to wait until the
+build code is migrated to C to do that. For now just define it statically since we don't expect it to change very often. If a
+supported type is not in this list then it should cause an integration test to fail.
 ***********************************************************************************************************************************/
 #define COMPRESS_TYPE_REGEXP                                        "(\\.gz|\\.lz4|\\.zst|\\.xz|\\.bz2)"
 

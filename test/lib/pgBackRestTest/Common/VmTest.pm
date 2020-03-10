@@ -512,7 +512,7 @@ sub vmValid
 
     if (!defined($oyVm->{$strVm}))
     {
-        confess &log(ERROR, "no definition for vm '${strVm}'", ERROR_OPTION_INVALID_VALUE);
+        confess &log(ERROR, "no definition for vm '${strVm}'");
     }
 }
 

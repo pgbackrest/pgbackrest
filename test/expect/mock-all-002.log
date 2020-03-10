@@ -62,9 +62,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -92,9 +92,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -255,9 +255,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -285,9 +285,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -487,9 +487,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -517,9 +517,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -692,9 +692,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -722,9 +722,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -905,9 +905,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -935,9 +935,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1135,9 +1135,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1165,9 +1165,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1345,9 +1345,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1375,9 +1375,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1558,9 +1558,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1588,9 +1588,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1772,9 +1772,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1980,9 +1980,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -2193,9 +2193,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -2445,9 +2445,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn

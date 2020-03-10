@@ -15,16 +15,13 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -39,6 +36,11 @@ use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
+
+####################################################################################################################################
+# Backup advisory lock
+####################################################################################################################################
+use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';
 
 ####################################################################################################################################
 # run
@@ -116,8 +118,8 @@ sub run
         # without slowing down the other tests too much.
         if ($bS3)
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
         }
 
         $oHostDbMaster->clusterCreate();
@@ -127,7 +129,7 @@ sub run
 
         # Get passphrase to access the Manifest file from backup.info - returns undefined if repo not encrypted
         my $strCipherPass =
-            (new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP)))->cipherPassSub();
+            (new pgBackRest::Backup::Info($oHostBackup->repoBackupPath()))->cipherPassSub();
 
         # Create a manifest with the pg version to get version-specific paths
         my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion(),
@@ -162,13 +164,13 @@ sub run
             my $strComment = undef;
 
             # Archive and backup info file names
-            my $strArchiveInfoFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE;
-            my $strArchiveInfoCopyFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT;
+            my $strArchiveInfoFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE);
+            my $strArchiveInfoCopyFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE . INI_COPY_EXT);
             my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
             my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
 
-            my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
-            my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
+            my $strBackupInfoFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO);
+            my $strBackupInfoCopyFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO . INI_COPY_EXT);
             my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
             my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
@@ -237,7 +239,7 @@ sub run
 
             # load the archive info file and munge it for testing by breaking the database version
             $oHostBackup->infoMunge(
-                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+                $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
                  &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
 
@@ -250,7 +252,7 @@ sub run
             }
 
             # Restore the file to its original condition
-            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
 
             # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
@@ -273,7 +275,7 @@ sub run
 
             # Load the backup.info file and munge it for testing by breaking the database version and system id
             $oHostBackup->infoMunge(
-                storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
+                $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
                 {&INFO_BACKUP_SECTION_DB =>
                     {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
                 &INFO_BACKUP_SECTION_DB_HISTORY =>
@@ -289,7 +291,7 @@ sub run
             }
 
             # Restore the file to its original condition
-            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore($oHostBackup->repoBackupPath(FILE_BACKUP_INFO));
 
             # ??? Removed temporarily until manifest build can be brought back into the check command
             # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
@@ -329,7 +331,7 @@ sub run
                 'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
-            storageLocal()->pathCreate(
+            storageTest()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
@@ -337,22 +339,20 @@ sub run
 
             # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
             $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
-                '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
+                {strOptionalParam => ' --pg1-path=' . $oHostDbMaster->dbPath() . '/testbase/',
+                    iExpectedExitStatus => ERROR_DB_MISMATCH});
 
             # Remove the directories to be able to create the stanza
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});
-            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
+            forceStorageRemove(storageRepo(), $oHostBackup->repoBackupPath(), {bRecurse => true});
+            forceStorageRemove(storageRepo(), $oHostBackup->repoArchivePath(), {bRecurse => true});
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
             #-----------------------------------------------------------------------------------------------------------------------
             # Run stanza-create offline to create files needing to be upgraded (using new pg-path)
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
-                {strOptionalParam =>
-                    ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
-                    '/testbase/ --no-' .  cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-            my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
-            my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
+                {strOptionalParam => ' --pg1-path=' . $oHostDbMaster->dbPath() . '/testbase/ --no-online --force'});
+            my $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
+            my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
@@ -374,8 +374,8 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
-            $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
+            $oArchiveInfo = new pgBackRest::Archive::Info($oHostBackup->repoArchivePath());
+            $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoBackupPath());
             $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
@@ -414,10 +414,10 @@ sub run
 
         my $strFullBackup = $oHostBackup->backup(
             CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
-            {strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
+            {strOptionalParam => ' --buffer-size=16384'});
 
         # Enabled async archiving
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
+        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'archive-async' => 'y'}});
 
         # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
@@ -449,7 +449,7 @@ sub run
             }
 
             $oHostDbStandby->restore(
-                'restore backup on replica', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+                'restore backup on replica', 'latest',
                 {rhRemapHash => \%oRemapHash, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY,
                     strOptionalParam =>
                         ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
@@ -475,19 +475,13 @@ sub run
                 {
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach master',
-                        {bStandby => true,
-                         iExpectedExitStatus => ERROR_DB_CONNECT,
-                         strOptionalParam => '--' .
-                         cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
+                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg8-host=' . BOGUS});
                 }
                 else
                 {
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
-                        {bStandby => true,
-                         iExpectedExitStatus => ERROR_DB_CONNECT,
-                         strOptionalParam => '--' .
-                         cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
+                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg8-host=' . BOGUS});
                 }
             }
 
@@ -495,7 +489,7 @@ sub run
                 CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
                 {bStandby => true,
                  iExpectedExitStatus => $oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG,
-                 strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . '=1'});
+                 strOptionalParam => '--repo1-retention-full=1'});
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
             {
@@ -637,9 +631,7 @@ sub run
 
         # Exercise --delta checksum option
         my $strIncrBackup = $oHostBackup->backup(
-            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
-            {strOptionalParam =>
-                '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768 --delta'});
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup', {strOptionalParam => '--stop-auto --buffer-size=32768 --delta'});
 
         # Ensure the check command runs properly with a tablespace unless there is a bogus host
         if (!$oHostBackup->bogusHost())
@@ -707,9 +699,7 @@ sub run
         if ($bTestLocal)
         {
             # Expect failure because postmaster.pid exists
-            $oHostDbMaster->restore(
-                'postmaster running', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING});
+            $oHostDbMaster->restore('postmaster running', 'latest', {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING});
         }
 
         $oHostDbMaster->clusterStop();
@@ -717,8 +707,7 @@ sub run
         if ($bTestLocal)
         {
             # Expect failure because db path is not empty
-            $oHostDbMaster->restore(
-                'path not empty', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+            $oHostDbMaster->restore('path not empty', 'latest', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
         }
 
         # Drop and recreate db path
@@ -731,7 +720,7 @@ sub run
 
         # Now the restore should work
         $oHostDbMaster->restore(
-            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            undef, 'latest',
             {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
 
         # Test that the first database has not been restored since --db-include did not include test1
@@ -779,7 +768,7 @@ sub run
         # Version <= 8.4 always places a PG_VERSION file in the tablespace
         if ($oHostDbMaster->pgVersion() <= PG_VERSION_84)
         {
-            if (!storageLocal()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
+            if (!storageTest()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
             {
                 confess &log(ASSERT, "unable to find '" . DB_FILE_PGVERSION . "' in tablespace path '${strTablespacePath}'");
             }
@@ -789,22 +778,22 @@ sub run
         {
             # Backup info will have the catalog number
             my $oBackupInfo = new pgBackRest::Common::Ini(
-                storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-                {bLoad => false, strContent => ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)}});
+                storageRepo(), $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
+                {bLoad => false, strContent => ${storageRepo()->get($oHostBackup->repoBackupPath(FILE_BACKUP_INFO))}});
 
             # Construct the special path
             $strTablespacePath .=
                 '/PG_' . $oHostDbMaster->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
 
             # Check that path exists
-            if (!storageLocal()->pathExists($strTablespacePath))
+            if (!storageTest()->pathExists($strTablespacePath))
             {
                 confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
             }
         }
 
         # Make sure there are some files in the tablespace path (exclude PG_VERSION if <= 8.4 since that was tested above)
-        if (grep(!/^PG\_VERSION$/i, storageLocal()->list($strTablespacePath)) == 0)
+        if (grep(!/^PG\_VERSION$/i, storageTest()->list($strTablespacePath)) == 0)
         {
             confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
         }
@@ -874,7 +863,7 @@ sub run
             # Save recovery file to test so we can use it in the next test
             $strRecoveryFile = $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
 
-            storageLocal()->copy(
+            storageTest()->copy(
                 $oHostDbMaster->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
             $oHostDbMaster->clusterStart();
@@ -896,16 +885,15 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            storageLocal()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
+            storageTest()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
             # Also touch recovery.signal when required
             if ($oHostDbMaster->pgVersion() >= PG_VERSION_12)
             {
-                storageDb()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
+                storageTest()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
             }
 
-            $oHostDbMaster->restore(
-                undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
+            $oHostDbMaster->restore(undef, 'latest', {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
@@ -921,7 +909,7 @@ sub run
         $oHostDbMaster->clusterStop();
 
         $oHostDbMaster->restore(
-            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            undef, 'latest',
             {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget,
                 strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
                 strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
@@ -957,7 +945,7 @@ sub run
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+                undef, 'latest',
                 {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget,
                     strTargetAction => 'promote',
                     strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
@@ -1002,15 +990,13 @@ sub run
             # Incr backup - make sure a --no-online backup fails
             #-----------------------------------------------------------------------------------------------------------------------
             $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-' . cfgOptionName(CFGOPT_ONLINE),
-                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-online',
+                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-online'});
 
             # Incr backup - allow --no-online backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------
             $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_INCR,
-                'succeed on --no-' . cfgOptionName(CFGOPT_ONLINE) . ' with --' . cfgOptionName(CFGOPT_FORCE),
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'succeed on --no-online with --force', {strOptionalParam => '--no-online --force'});
         }
 
         # Stanza-delete --force without access to pgbackrest on database host
@@ -1022,8 +1008,8 @@ sub run
             {
                 $oHostDbMaster->stop();
                 $oHostBackup->stop({strStanza => $self->stanza});
-                $oHostBackup->stanzaDelete("delete stanza with --force when pgbackrest on pg host not accessible",
-                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
+                $oHostBackup->stanzaDelete(
+                    "delete stanza with --force when pgbackrest on pg host not accessible", {strOptionalParam => ' --force'});
                 $oHostDbMaster->start();
                 $oHostBackup->start();
             }

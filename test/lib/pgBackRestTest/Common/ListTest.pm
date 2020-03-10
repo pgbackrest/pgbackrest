@@ -115,7 +115,7 @@ sub testListGet
                         # Skip this test if it is integration and vm=none
                         next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_TYPE} eq TESTDEF_INTEGRATION);
 
-                        # Skip this test if it is not C and vm=none.  Perl tests require libc which is not supported.
+                        # Skip this test if it is not C and vm=none.  Perl tests require Docker which is not supported.
                         next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
 
                         # Skip this test if a container is required and vm=none.

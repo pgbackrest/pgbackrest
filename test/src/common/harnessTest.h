@@ -347,15 +347,14 @@ Macros to ease the use of common data types
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
 
-#define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT(statement, resultExpected, uint16_t, "%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
-
 #define TEST_RESULT_UINT_PARAM(statement, resultExpected, typeOp, ...)                                                             \
     TEST_RESULT(statement, resultExpected, uint64_t, "%" PRIu64, TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_UINT(statement, resultExpected, ...)                                                                           \
     TEST_RESULT_UINT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_UINT_HEX(statement, resultExpected, ...)                                                                       \
+    TEST_RESULT(statement, resultExpected, uint64_t, "%" PRIx64, TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
 
 /***********************************************************************************************************************************
 Test system calls

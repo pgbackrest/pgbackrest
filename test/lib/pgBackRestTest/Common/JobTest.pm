@@ -221,13 +221,11 @@ sub run
                     if (!$rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}})
                     {
                         executeTest(
-                            'rsync -rt --delete --exclude=*.o --exclude=test.c --exclude=test.gcno --exclude=LibC.h --exclude=xs' .
+                            'rsync -rt --delete --exclude=*.o --exclude=test.c --exclude=test.gcno ' .
                                 ' --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags' .
                                 ' --exclude=build.auto.h --exclude=build.auto.h.in --exclude=Makefile --exclude=Makefile.in' .
                                 ' --exclude=configure --exclude=configure.ac' .
                                 " $self->{strBackRestBase}/src/ $self->{strGCovPath} && " .
-                            "rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath} && " .
-                            "rsync -rt --delete $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs && " .
                             "rsync -rt --delete --exclude=*.o $self->{strBackRestBase}/test/src/ $self->{strGCovPath}/test");
                     }
 
@@ -796,7 +794,6 @@ sub jobInstallC
 
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
-    my $strBuildLibCPath = "${strBuildPath}/libc";
     my $strBuildBinPath = "${strBuildPath}/src";
 
     executeTest(

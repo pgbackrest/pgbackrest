@@ -31,7 +31,8 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             {
                 uint64_t size = info->size;
 
-                // If the file is compressed then decompress to get the real size
+                // If the file is compressed then decompress to get the real size.  Note that only gz is used in unit tests since
+                // it is the only compression type guaranteed to be present.
                 if (data->fileCompressed)
                 {
                     ASSERT(data->storage != NULL);

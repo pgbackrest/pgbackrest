@@ -188,7 +188,7 @@ backupFile(
         if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
         {
             // Is the file compressible during the copy?
-            bool compressible = true;
+            bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
             // Setup pg file for read
             StorageRead *read = storageNewReadP(
@@ -201,7 +201,7 @@ backupFile(
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)), pageChecksumNew(segmentNumber(pgFile), PG_SEGMENT_PAGE_DEFAULT,
-                    PG_PAGE_SIZE_DEFAULT, pgFileChecksumPageLsnLimit));
+                    pgFileChecksumPageLsnLimit));
             }
 
             // Add compression
@@ -209,7 +209,6 @@ backupFile(
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
-                compressible = false;
             }
 
             // If there is a cipher then add the encrypt filter
@@ -218,7 +217,6 @@ backupFile(
                 ioFilterGroupAdd(
                     ioReadFilterGroup(
                         storageReadIo(read)), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
-                compressible = false;
             }
 
             // Setup the repo file for write

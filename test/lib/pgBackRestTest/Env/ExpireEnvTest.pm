@@ -11,18 +11,17 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Fcntl qw(O_RDONLY);
 use File::Basename qw(basename);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -49,6 +48,7 @@ sub new
         $self->{oHostBackup},
         $self->{strBackRestExe},
         $self->{oStorageRepo},
+        $self->{strPgPath},
         $self->{oLogTest},
         $self->{oRunTest},
     ) =
@@ -58,6 +58,7 @@ sub new
             {name => 'oHostBackup', required => false, trace => true},
             {name => 'strBackRestExe', trace => true},
             {name => 'oStorageRepo', trace => true},
+            {name => 'strPgPath', trace => true},
             {name => 'oLogTest', required => false, trace => true},
             {name => 'oRunTest', required => false, trace => true},
         );
@@ -69,6 +70,115 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
+    );
+}
+
+####################################################################################################################################
+# get into from pg_control
+####################################################################################################################################
+my $oPgControlVersionHash =
+{
+    # iControlVersion => {iCatalogVersion => strDbVersion}
+    833 => {200711281 => PG_VERSION_83},
+    843 => {200904091 => PG_VERSION_84},
+    903 =>
+    {
+        201008051 => PG_VERSION_90,
+        201105231 => PG_VERSION_91,
+    },
+    922 => {201204301 => PG_VERSION_92},
+    937 => {201306121 => PG_VERSION_93},
+    942 =>
+    {
+        201409291 => PG_VERSION_94,
+        201510051 => PG_VERSION_95,
+    },
+    960 =>
+    {
+        201608131 => PG_VERSION_96,
+    },
+    1002 =>
+    {
+        201707211 => PG_VERSION_10,
+    },
+    1100 =>
+    {
+        201809051 => PG_VERSION_11,
+    },
+    1201 =>
+    {
+        201909212 => PG_VERSION_12,
+    },
+};
+
+sub info
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbPath
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->info', \@_,
+            {name => 'strDbPath', default => $self->{strPgPath}}
+        );
+
+    # Open the control file and read system id and versions
+    #-----------------------------------------------------------------------------------------------------------------------
+    my $strControlFile = "${strDbPath}/" . DB_FILE_PGCONTROL;
+    my $hFile;
+    my $tBlock;
+
+    sysopen($hFile, $strControlFile, O_RDONLY)
+        or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+    # Read system identifier
+    sysread($hFile, $tBlock, 8) == 8
+        or confess &log(ERROR, "unable to read database system identifier");
+
+    $self->{info}{$strDbPath}{ullDbSysId} = unpack('Q', $tBlock);
+
+    # Read control version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read control version");
+
+    $self->{info}{$strDbPath}{iDbControlVersion} = unpack('L', $tBlock);
+
+    # Read catalog version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read catalog version");
+
+    $self->{info}{$strDbPath}{iDbCatalogVersion} = unpack('L', $tBlock);
+
+    # Close the control file
+    close($hFile);
+
+    # Get PostgreSQL version
+    $self->{info}{$strDbPath}{strDbVersion} =
+        $oPgControlVersionHash->{$self->{info}{$strDbPath}{iDbControlVersion}}
+            {$self->{info}{$strDbPath}{iDbCatalogVersion}};
+
+    if (!defined($self->{info}{$strDbPath}{strDbVersion}))
+    {
+        confess &log(
+            ERROR,
+            'unexpected control version = ' . $self->{info}{$strDbPath}{iDbControlVersion} .
+            ' and catalog version = ' . $self->{info}{$strDbPath}{iDbCatalogVersion} . "\n" .
+            'HINT: is this version of PostgreSQL supported?');
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strDbVersion', value => $self->{info}{$strDbPath}{strDbVersion}},
+        {name => 'iDbControlVersion', value => $self->{info}{$strDbPath}{iDbControlVersion}},
+        {name => 'iDbCatalogVersion', value => $self->{info}{$strDbPath}{iDbCatalogVersion}},
+        {name => 'ullDbSysId', value => $self->{info}{$strDbPath}{ullDbSysId}}
     );
 }
 
@@ -99,7 +209,6 @@ sub stanzaSet
     my $oStanza = {};
     my $oArchiveInfo = {};
     my $oBackupInfo = {};
-    my $bEncrypted = defined($self->{oStorageRepo}->cipherType());
     my $iArchiveDbId = 1;
     my $iBackupDbId = 1;
 
@@ -107,32 +216,25 @@ sub stanzaSet
     if (!$bStanzaUpgrade)
     {
         $oArchiveInfo =
-            new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE), false,
-            {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
+            new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath(), false,
+            {bIgnoreMissing => true, strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_ARCHIVE : undef});
         $oBackupInfo =
-            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP), false, false,
-            {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
+            new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath(), false,
+            {bIgnoreMissing => true, strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_MANIFEST : undef});
     }
     # Else get the info data from disk
     else
     {
         $oArchiveInfo =
-            new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE),
-            {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
+            new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath(),
+            {strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_ARCHIVE : undef});
         $oBackupInfo =
-            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP),
-            {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
-    }
-
-    my ($oDb) = dbObjectGet();
-    if (cfgOption(CFGOPT_ONLINE))
-    {
-        # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
-        $oDb->configValidate();
+            new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath(),
+            {strCipherPassSub => $self->{oHostBackup}->repoEncrypt() ? ENCRYPTION_KEY_MANIFEST : undef});
     }
 
     # Get the database info for the stanza
-    (my $strVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId}) = $oDb->info();
+    (my $strVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId}) = $self->info();
     $$oStanza{strDbVersion} = $strDbVersion;
 
     if ($bStanzaUpgrade)
@@ -149,9 +251,8 @@ sub stanzaSet
     $oBackupInfo->save();
 
     # Get the archive and directory paths for the stanza
-    $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
-    $$oStanza{strBackupClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP);
-    storageRepo()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
+    $$oStanza{strArchiveClusterPath} = $self->{oHostBackup}->repoArchivePath($oArchiveInfo->archiveId());
+    $$oStanza{strBackupClusterPath} = $self->{oHostBackup}->repoBackupPath();
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
@@ -183,23 +284,12 @@ sub stanzaCreate
     my $strDbVersionTemp = $strDbVersion;
     $strDbVersionTemp =~ s/\.//;
 
-    my $strDbPath = cfgOption(CFGOPT_PG_PATH);
-
     # Create the test path for pg_control
-    storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
+    storageTest()->pathCreate(($self->{strPgPath} . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
 
     # Generate pg_control for stanza-create
-    $self->controlGenerate($strDbPath, $strDbVersion);
-    executeTest('chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
-
-    # Create the stanza repo paths if they don't exist
-    if (!cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
-    {
-        storageTest()->pathCreate(
-            cfgOption(CFGOPT_REPO_PATH) . "/archive/$strStanza", {bIgnoreExists => true, bCreateParent => true});
-        storageTest()->pathCreate(
-            cfgOption(CFGOPT_REPO_PATH) . "/backup/$strStanza", {bIgnoreExists => true, bCreateParent => true});
-    }
+    $self->controlGenerate($self->{strPgPath}, $strDbVersion);
+    executeTest('chmod 600 ' . $self->{strPgPath} . '/' . DB_FILE_PGCONTROL);
 
     # Create the stanza and set the local stanza object
     $self->stanzaSet($strStanza, $strDbVersion, false);
@@ -233,11 +323,11 @@ sub stanzaUpgrade
     $strDbVersionTemp =~ s/\.//;
 
     # Remove pg_control
-    storageTest()->remove(cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
+    storageTest()->remove($self->{strPgPath} . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
-    $self->controlGenerate(cfgOption(CFGOPT_PG_PATH), $strDbVersion);
-    executeTest('chmod 600 ' . cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
+    $self->controlGenerate($self->{strPgPath}, $strDbVersion);
+    executeTest('chmod 600 ' . $self->{strPgPath} . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);
 
@@ -289,13 +379,12 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    storageRepo()->pathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
     # Get passphrase (returns undefined if repo not encrypted) to access the manifest
     my $strCipherPassManifest =
-        (new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP)))->cipherPassSub();
+        (new pgBackRest::Backup::Info($self->{oHostBackup}->repoBackupPath()))->cipherPassSub();
     my $strCipherPassBackupSet;
 
     # If repo is encrypted then get passphrase for accessing the backup files from the last manifest if it exists provide one
@@ -442,15 +531,13 @@ sub archiveCreate
 
     # Get passphrase (returns undefined if repo not encrypted) to access the archive files
     my $strCipherPass =
-        (new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE)))->cipherPassSub();
+        (new pgBackRest::Archive::Info($self->{oHostBackup}->repoArchivePath()))->cipherPassSub();
 
     push(my @stryArchive, $strArchive);
 
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        storageRepo()->pathCreate($strPath, {bIgnoreExists => true});
-
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
 
         storageRepo()->put($strFile, 'ARCHIVE', {strCipherPass => $strCipherPass});
@@ -508,7 +595,7 @@ sub supplementalLog
             join("\n", grep(!/^backup\.info.*$/i, storageRepo()->list("backup/${strStanza}"))));
 
         # Output archive manifest
-        my $rhManifest = storageRepo()->manifest(STORAGE_REPO_ARCHIVE);
+        my $rhManifest = storageRepo()->manifest($self->{oHostBackup}->repoArchivePath());
         my $strManifest;
         my $strPrefix = '';
 
@@ -519,7 +606,7 @@ sub supplementalLog
 
             if ($rhManifest->{$strEntry}->{type} eq 'd')
             {
-                $strEntry = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . ($strEntry eq '.' ? '' : "/${strEntry}");
+                $strEntry = $self->{oHostBackup}->repoArchivePath($strEntry eq '.' ? undef : $strEntry);
 
                 # &log(WARN, "DIR $strEntry");
                 $strManifest .= (defined($strManifest) ? "\n" : '') . "${strEntry}:\n";
@@ -574,10 +661,9 @@ sub process
 
     undef($$oStanza{strBackupDescription});
 
-    my $strCommand = $self->{strBackRestExe} .
-                     ' --' . cfgOptionName(CFGOPT_CONFIG) . '="' . $self->{oHostBackup}->backrestConfig() . '"' .
-                     ' --' . cfgOptionName(CFGOPT_STANZA) . '=' . $strStanza .
-                     ' --' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
+    my $strCommand =
+        $self->{strBackRestExe} . ' --config="' . $self->{oHostBackup}->backrestConfig() . '"' . ' --stanza=' . $strStanza .
+        ' --log-level-console=' . lc(DETAIL);
 
     if (defined($iExpireFull))
     {

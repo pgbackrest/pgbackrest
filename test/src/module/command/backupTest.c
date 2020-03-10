@@ -8,30 +8,12 @@ Test Backup Command
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
+#include "postgres/interface/static.auto.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessPq.h"
-
-/***********************************************************************************************************************************
-Page header structure use to create realistic pages for testing
-***********************************************************************************************************************************/
-typedef struct
-{
-    uint32_t walid;                                                 // high bits
-    uint32_t xrecoff;                                               // low bits
-} PageWalRecPtr;
-
-typedef struct PageHeaderData
-{
-    // LSN is member of *any* block, not only page-organized ones
-    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
-    uint16_t pd_checksum;                                           // checksum
-    uint16_t pd_flags;                                              // flag bits, see below
-    uint16_t pd_lower;                                              // offset to start of free space
-    uint16_t pd_upper;                                              // offset to end of free space
-} PageHeaderData;
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup
@@ -1304,7 +1286,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0, 0), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1326,7 +1308,7 @@ testRun(void)
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
 
         TEST_RESULT_UINT(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0, 0), 0, "log noop result");
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0), 0, "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }

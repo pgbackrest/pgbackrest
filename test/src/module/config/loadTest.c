@@ -264,6 +264,7 @@ testRun(void)
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
@@ -278,6 +279,7 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    compress-type=none");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "    compress-level=0");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=gz when compress=y");
@@ -290,6 +292,7 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 9, "    compress-level=9");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");
@@ -302,6 +305,7 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "    compress-level=6");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
         harnessLogResult(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"

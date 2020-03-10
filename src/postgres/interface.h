@@ -139,6 +139,9 @@ StringList *pgLsnRangeToWalSegmentList(
 // Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
 const String *pgLsnName(unsigned int pgVersion);
 
+// Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
+uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+
 const String *pgWalName(unsigned int pgVersion);
 
 // Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)

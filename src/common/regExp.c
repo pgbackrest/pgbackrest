@@ -233,17 +233,17 @@ regExpPrefix(const String *expression)
         // Will there be any characters in the prefix?
         if (expressionIdx > 1)
         {
-            // Search again and make sure there is not another begin anchor.  If so we won't be able to use the prefix
+            // Search the rest of the string for another begin anchor
             unsigned int anchorIdx = expressionIdx;
 
-            for (anchorIdx = 1; anchorIdx < expressionSize; anchorIdx++)
+            for (; anchorIdx < expressionSize; anchorIdx++)
             {
                 // [^ and \^ are not begin anchors
                 if (expressionZ[anchorIdx] == '^' && expressionZ[anchorIdx - 1] != '[' && expressionZ[anchorIdx - 1] != '\\')
                     break;
             }
 
-            // If another begin anchor was not found then return the prefix
+            // If no other begin anchor was found then the prefix is usable
             if (anchorIdx == expressionSize)
                 result = strSubN(expression, 1, expressionIdx - 1);
         }

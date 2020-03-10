@@ -179,6 +179,16 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgPageChecksum()"))
+    {
+        unsigned char page[PG_PAGE_SIZE_DEFAULT];
+        memset(page, 0xFF, PG_PAGE_SIZE_DEFAULT);
+
+        TEST_RESULT_UINT_HEX(pgPageChecksum(page, 0), 0x0E1C, "check 0xFF filled page, block 0");
+        TEST_RESULT_UINT_HEX(pgPageChecksum(page, 999), 0x0EC3, "check 0xFF filled page, block 999");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgWalFromBuffer() and pgWalFromFile()"))
     {
         String *walFile = strNewFmt("%s/0000000F0000000F0000000F", testPath());

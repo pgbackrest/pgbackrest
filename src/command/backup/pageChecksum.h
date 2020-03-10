@@ -17,7 +17,7 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoFilter *pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pageSize, uint64_t lsnLimit);
+IoFilter *pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit);
 IoFilter *pageChecksumNewVar(const VariantList *paramList);
 
 #endif

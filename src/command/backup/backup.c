@@ -192,7 +192,6 @@ typedef struct BackupData
     const String *hostStandby;                                      // Host name of the standby
 
     unsigned int version;                                           // PostgreSQL version
-    unsigned int pageSize;                                          // PostgreSQL page size
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
 
@@ -257,7 +256,6 @@ backupInit(const InfoBackup *infoBackup)
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
 
     result->version = pgControl.version;
-    result->pageSize = pgControl.pageSize;
     result->walSegmentSize = pgControl.walSegmentSize;
 
     // Validate pg_control info against the stanza
@@ -410,6 +408,15 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
                     cfgOptionSet(
                         cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
+
+                    // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
+                    // There's an even smaller chance that the user will also alter compression-type in this this scenario right
+                    // after upgrading to a newer version. Because we judge this combination of events to be nearly impossible just
+                    // assert here so no test coverage is needed.
+                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+
+                    // Set the compression level back to whatever was in the prior backup
+                    cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, manifestPriorData->backupOptionCompressLevel);
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
@@ -1050,7 +1057,7 @@ Log the results of a job and throw errors
 static uint64_t
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t sizeCopied, unsigned int pageSize)
+    const uint64_t sizeTotal, uint64_t sizeCopied)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1060,7 +1067,6 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeCopied);
-        FUNCTION_LOG_PARAM(UINT, pageSize);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1154,7 +1160,7 @@ backupJobResult(
                             // ??? Update formatting after migration
                             LOG_WARN_FMT(
                                 "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                strPtr(fileLog), copySize, pageSize);
+                                strPtr(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
                         }
                         else
                         {
@@ -1627,7 +1633,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgId(pgId) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, sizeCopied, backupData->pageSize);
+                        fileRemove, job, sizeTotal, sizeCopied);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection

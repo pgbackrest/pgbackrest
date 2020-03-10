@@ -320,17 +320,11 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
-        total: 8
+        total: 9
 
         coverage:
           postgres/interface: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: page-checksum
-        total: 3
-
-        coverage:
-          postgres/pageChecksum: full
+          postgres/interface/page: full
 
   # ********************************************************************************************************************************
   - name: config
@@ -654,11 +648,19 @@ unit:
           command/stanza/delete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: storage
-        total: 1
+      - name: repo
+        total: 4
 
         coverage:
-          command/storage/list: full
+          command/repo/get: full
+          command/repo/ls: full
+          command/repo/put: full
+          command/repo/rm: full
+
+        include:
+          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+          # future this will probably be rolled into a custom object store server implementation.
+          - command/repo/create
 
 # **********************************************************************************************************************************
 # Integration tests

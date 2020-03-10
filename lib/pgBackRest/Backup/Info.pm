@@ -19,10 +19,8 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -111,7 +109,6 @@ sub new
     (
         $strOperation,
         $strBackupClusterPath,
-        $bValidate,
         $bRequired,
         $oStorage,
         $bLoad,                                     # Should the file attemp to be loaded?
@@ -122,7 +119,6 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strBackupClusterPath'},
-            {name => 'bValidate', default => true},
             {name => 'bRequired', default => true},
             {name => 'oStorage', optional => true, default => storageRepo()},
             {name => 'bLoad', optional => true, default => true},
@@ -139,9 +135,9 @@ sub new
     # Init object and store variables
     eval
     {
-        $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => $oStorage, strCipherPass => $oStorage->cipherPassUser(),
-            strCipherPassSub => $strCipherPassSub});
+        $self = $class->SUPER::new(
+            $oStorage, $strBackupInfoFile,
+            {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do
@@ -175,176 +171,12 @@ sub new
     $self->{strBackupClusterPath} = $strBackupClusterPath;
     $self->{oStorage} = $oStorage;
 
-    # Validate the backup info
-    if ($bValidate)
-    {
-        $self->validate();
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
     );
-}
-
-####################################################################################################################################
-# validate
-#
-# Confirm the file exists and reconstruct as necessary.
-####################################################################################################################################
-sub validate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
-
-    # Confirm the info file exists with the DB section
-    $self->confirmExists();
-
-    $self->reconstruct();
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# reconstruct
-#
-# Compare the backup info against the actual backups in the repository. Reconstruct the file based on manifests missing or no
-# longer valid.
-####################################################################################################################################
-sub reconstruct
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $bSave,
-        $bRequired,             # If false then must be creating or reconstructing so the DB info must be supplied
-        $strDbVersion,
-        $ullDbSysId,
-        $iControlVersion,
-        $iCatalogVersion,
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->reconstruct', \@_,
-        {name => 'bSave', default => true},
-        {name => 'bRequired', default => true},
-        {name => 'strDbVersion', required => false},
-        {name => 'ullDbSysId', required => false},
-        {name => 'iControlVersion', required => false},
-        {name => 'iCatalogVersion', required => false},
-    );
-
-    # Check for backups that are not in FILE_BACKUP_INFO
-    foreach my $strBackup ($self->{oStorage}->list(
-        $self->{strBackupClusterPath}, {strExpression => backupRegExpGet(true, true, true)}))
-    {
-        my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-
-        # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
-        # can't be moved.  This would also be true for the first move attempt in Backup->process();
-
-        if (!$self->current($strBackup) && $self->{oStorage}->exists($strManifestFile))
-        {
-            my $oManifest = pgBackRest::Manifest->new($strManifestFile,
-                {strCipherPass => ($self->{oStorage}->encrypted($strManifestFile)) ? $self->cipherPassSub() : undef});
-
-            # If we are reconstructing, then we need to be sure this db-id and version is in the history section. Also if it
-            # has a db-id greater than anything in the history section, then add it to the db section.
-            if (!$bRequired)
-            {
-                my $hDbList = $self->dbHistoryList();
-                my $iDbId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID);
-                my $iDbIdMax = 0;
-                my $ullDbSysId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
-                my $strDbVersion = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
-
-                # If this is the max history id then set the db section
-                foreach my $iDbHistoryId (keys %{$hDbList})
-                {
-                    # If the current history ID is greater than the running max, then set it to the current id
-                    if ($iDbHistoryId > $iDbIdMax)
-                    {
-                        $iDbIdMax = $iDbHistoryId;
-                    }
-                }
-
-                if ($iDbId >= $iDbIdMax)
-                {
-                    $self->dbSectionSet($strDbVersion, $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
-                        $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG), $ullDbSysId, $iDbId);
-                }
-            }
-
-            &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
-
-            $self->add($oManifest, $bSave, $bRequired);
-        }
-    }
-
-    # If reconstructing, make sure the DB section is correct
-    if (!$bRequired)
-    {
-        # If any database info is missing, then assert
-        if (!defined($strDbVersion) || !defined($ullDbSysId) || !defined($iControlVersion) || !defined($iCatalogVersion))
-        {
-            confess &log(ASSERT, "backup info cannot be reconstructed without database information");
-        }
-        # If the DB section does not exist then create the db and history section
-        elsif (!$self->test(INFO_BACKUP_SECTION_DB))
-        {
-            $self->create($strDbVersion, $ullDbSysId, $iControlVersion, $iCatalogVersion, $bSave);
-        }
-        # Else update the DB section if it does not match the current database
-        else
-        {
-            # Turn off console logging to control when to display the error
-            logDisable();
-
-            eval
-            {
-                $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $bRequired);
-                logEnable();
-                return true;
-            }
-            or do
-            {
-                # Reset the console logging
-                logEnable();
-
-                # Confess unhandled errors
-                confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_BACKUP_MISMATCH);
-
-                # Update the DB section if it does not match the current database
-                $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false)+1);
-            };
-        }
-    }
-
-    # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
-    foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
-    {
-        my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-        my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
-
-        if (!$self->{oStorage}->pathExists($strBackupPath) || !$self->{oStorage}->exists($strManifestFile))
-        {
-            &log(WARN, "backup '${strBackup}' missing manifest removed from " . FILE_BACKUP_INFO);
-            $self->delete($strBackup);
-        }
-    }
-
-    # ??? Add a section to remove backups that are missing references (unless they are hardlinked?)
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

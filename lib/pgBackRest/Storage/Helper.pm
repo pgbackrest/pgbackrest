@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Local Storage Helper
+# Repository Storage Helper
 ####################################################################################################################################
 package pgBackRest::Storage::Helper;
 
@@ -12,16 +12,8 @@ use Exporter qw(import);
 use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
-use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
-
-####################################################################################################################################
-# Compression extension
-####################################################################################################################################
-use constant COMPRESS_EXT                                           => 'gz';
-    push @EXPORT, qw(COMPRESS_EXT);
 
 ####################################################################################################################################
 # Temp file extension
@@ -30,24 +22,88 @@ use constant STORAGE_TEMP_EXT                                       => PROJECT_E
     push @EXPORT, qw(STORAGE_TEMP_EXT);
 
 ####################################################################################################################################
-# storageLocal - get local storage
-#
-# Local storage is generally read-only (except for locking) and can never reference a remote path.  Used for adhoc activities like
-# reading pgbackrest.conf.
+# Cache storage so it can be retrieved quickly
 ####################################################################################################################################
-sub storageLocal
+my $oRepoStorage;
+
+####################################################################################################################################
+# storageRepoCommandSet
+####################################################################################################################################
+my $strStorageRepoCommand;
+my $strStorageRepoType;
+
+sub storageRepoCommandSet
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageLocal');
+    my
+    (
+        $strOperation,
+        $strCommand,
+        $strStorageType,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepoCommandSet', \@_,
+            {name => 'strCommand'},
+            {name => 'strStorageType'},
+        );
+
+    $strStorageRepoCommand = $strCommand;
+    $strStorageRepoType = $strStorageType;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(storageRepoCommandSet);
+
+####################################################################################################################################
+# storageRepo - get repository storage
+####################################################################################################################################
+sub storageRepo
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepo', \@_,
+            {name => 'strStanza', optional => true, trace => true},
+        );
+
+    # Create storage if not defined
+    if (!defined($oRepoStorage))
+    {
+        $oRepoStorage = new pgBackRest::Storage::Storage($strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageLocal', value => new pgBackRest::Storage::Storage(STORAGE_LOCAL), trace => true},
+        {name => 'oStorageRepo', value => $oRepoStorage, trace => true},
     );
 }
 
-push @EXPORT, qw(storageLocal);
+push @EXPORT, qw(storageRepo);
+
+####################################################################################################################################
+# Clear the repo storage cache - FOR TESTING ONLY!
+####################################################################################################################################
+sub storageRepoCacheClear
+{
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageRepoCacheClear');
+
+    undef($oRepoStorage);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(storageRepoCacheClear);
 
 1;
