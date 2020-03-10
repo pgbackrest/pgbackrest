@@ -753,12 +753,52 @@ testRun(void)
             "P00   INFO: expire full backup 20181119-152138F\n"
             "P00   INFO: remove expired backup 20181119-152138F");
 
+        // Save a copy of the info files for a later test
+        storageCopy(
+            storageNewReadP(storageTest, backupInfoFileName),
+            storageNewWriteP(storageTest, strNewFmt("%s%s", strPtr(backupInfoFileName), ".save")));
+        storageCopy(
+            storageNewReadP(storageTest, archiveInfoFileName),
+            storageNewWriteP(storageTest, strNewFmt("%s%s", strPtr(archiveInfoFileName), ".save")));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=2");
+        strLstAddZ(argList, "--repo1-retention-diff=3");
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
+            false, "  archive sub path removed");
+        harnessLogResult(
+            "P00   INFO: expire full backup 20181119-152138F\n"
+            "P00   INFO: remove expired backup 20181119-152138F");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Restore info files from a previous test
+        storageCopy(
+            storageNewReadP(storageTest, strNewFmt("%s%s", strPtr(backupInfoFileName), ".save")),
+            storageNewWriteP(storageTest, backupInfoFileName));
+        storageCopy(
+            storageNewReadP(storageTest,  strNewFmt("%s%s", strPtr(archiveInfoFileName), ".save")),
+            storageNewWriteP(storageTest, archiveInfoFileName));
+
+        // Write out manifest and archive that will be removed
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
 
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(

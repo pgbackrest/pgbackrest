@@ -762,6 +762,16 @@ my %hConfigDefine =
         &CFGDEF_NEGATE => false,
     },
 
+    &CFGOPT_DRYRUN =>
+    {
+       &CFGDEF_TYPE    => CFGDEF_TYPE_BOOLEAN,
+       &CFGDEF_DEFAULT => false,
+       &CFGDEF_COMMAND =>
+       {
+         &CFGCMD_EXPIRE => {},
+      },
+    },
+
     &CFGOPT_FORCE =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
@@ -1272,16 +1282,6 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         },
-    },
-
-    &CFGOPT_DRYRUN =>
-    {
-       &CFGDEF_TYPE    => CFGDEF_TYPE_BOOLEAN,
-       &CFGDEF_DEFAULT => false,
-       &CFGDEF_COMMAND =>
-       {
-         &CFGCMD_EXPIRE => {},
-      },
     },
 
     # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption().
