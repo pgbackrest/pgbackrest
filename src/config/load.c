@@ -137,13 +137,14 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
-            // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+            // If the repo-type is defined, then see if corresponding retention-full or retention-days is set
+            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx) || cfgOptionTest(cfgOptRepoRetentionDays + optionIdx)))
             {
                 LOG_WARN_FMT(
-                    "option %s is not set, the repository may run out of space"
+                    "neither option %s nor %s is set, the repository may run out of space"
                         "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
+                    cfgOptionName(cfgOptRepoRetentionDays + optionIdx),
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
             }
         }

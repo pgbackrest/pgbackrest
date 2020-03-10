@@ -250,6 +250,8 @@ use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PR
     push @EXPORT, qw(CFGOPT_REPO_RETENTION_DIFF);
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
     push @EXPORT, qw(CFGOPT_REPO_RETENTION_FULL);
+use constant CFGOPT_REPO_RETENTION_DAYS                             => CFGDEF_PREFIX_REPO . '-retention-days';
+    push @EXPORT, qw(CFGOPT_REPO_RETENTION_DAYS);
 
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
@@ -1752,6 +1754,25 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        }
+    },
+
+    &CFGOPT_REPO_RETENTION_DAYS =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX], ### FIXME TODO
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-days' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {

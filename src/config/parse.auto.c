@@ -1952,6 +1952,23 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionArchiveType,
     },
 
+    // repo-retention-days option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_RETENTION_DAYS,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionDays,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_RETENTION_DAYS,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionDays,
+    },
+    {
+        .name = "retention-days",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionDays,
+    },
+
     // repo-retention-diff option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2503,6 +2520,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
     cfgOptRepoRetentionArchiveType,
+    cfgOptRepoRetentionDays,
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
     cfgOptRepoType,
