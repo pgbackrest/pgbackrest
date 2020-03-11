@@ -1573,16 +1573,6 @@
             </execute-list>
 
             <execute-list host="{[host-pg1]}">
-                <title>Expire archive (dry-run)</title>
-
-                <execute user="postgres" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
-                        --repo1-retention-archive-type=diff --repo1-retention-archive=1 --dry-run expire</exe-cmd>
-                    <exe-highlight>archive retention on backup {[backup-diff-first]}|remove archive</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <execute-list host="{[host-pg1]}">
                 <title>Expire archive (actual)</title>
 
                 <execute user="postgres" output="y">
