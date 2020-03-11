@@ -507,7 +507,7 @@ eval
 
             # Auto-generate C files
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^build\//, @stryModifiedList))
+            if (!$bSmart || grep(/^build\//, @stryModifiedList) || grep(/^doc\/xml\/reference\.xml/, @stryModifiedList))
             {
                 errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
