@@ -14,23 +14,23 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
-use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::ExpireEnvTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::Manifest;
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # run

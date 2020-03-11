@@ -206,6 +206,44 @@ testRun(void)
         TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("lz4"))
+    {
+#ifdef HAVE_LIBLZ4
+        // Run standard test suite
+        testSuite(compressTypeLz4, "lz4 -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lz4Error()");
+
+        TEST_RESULT_UINT(lz4Error(0), 0, "check success");
+        TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [-2] ERROR_maxBlockSize_invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
+
+        Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
+
+        compress->inputSame = true;
+        compress->flushing = true;
+
+        TEST_RESULT_STR_Z(
+            lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
+
+        Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+        decompress->inputOffset = 999;
+
+        TEST_RESULT_STR_Z(
+            lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
+            "format object");
+#else
+        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
+#endif // HAVE_LIBLZ4
+    }
+
     // Test everything in the helper that is not tested in the individual compression type tests
     // *****************************************************************************************************************************
     if (testBegin("helper"))

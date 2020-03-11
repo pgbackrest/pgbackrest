@@ -13,21 +13,21 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
 
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::Manifest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # archiveCheck
@@ -83,14 +83,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote => false, s3 => false, encrypt => false, compress => LZ4},
         {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>  GZ},
         {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  GZ},
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => LZ4},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
         {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress => LZ4},
     )
     {
         # Only run tests for this vm

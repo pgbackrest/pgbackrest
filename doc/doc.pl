@@ -24,22 +24,21 @@ use lib dirname(dirname(abs_path($0))) . '/lib';
 use lib dirname(dirname(abs_path($0))) . '/build/lib';
 use lib dirname(dirname(abs_path($0))) . '/test/lib';
 
-use BackRestDoc::Common::Doc;
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::DocRender;
-use BackRestDoc::Html::DocHtmlSite;
-use BackRestDoc::Latex::DocLatex;
-use BackRestDoc::Markdown::DocMarkdown;
-
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
-
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
+
+use pgBackRestDoc::Common::Doc;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::DocRender;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Html::DocHtmlSite;
+use pgBackRestDoc::Latex::DocLatex;
+use pgBackRestDoc::Markdown::DocMarkdown;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Usage
@@ -222,7 +221,7 @@ eval
     }
 
     # Load the manifest
-    my $oManifest = new BackRestDoc::Common::DocManifest(
+    my $oManifest = new pgBackRestDoc::Common::DocManifest(
         $oStorageDoc, \@stryRequire, \@stryInclude, \@stryExclude, $rhKeyVariableOverride, $rhVariableOverride,
         $strDocPath, $bDeploy, $bCacheOnly, $bPre);
 
@@ -302,7 +301,7 @@ eval
         if ($strOutput eq 'markdown')
         {
             my $oMarkdown =
-                new BackRestDoc::Markdown::DocMarkdown
+                new pgBackRestDoc::Markdown::DocMarkdown
                 (
                     $oManifest,
                     "${strBasePath}/xml",
@@ -315,10 +314,10 @@ eval
         elsif ($strOutput eq 'man' && $oManifest->isBackRest())
         {
             # Generate the command-line help
-            my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
+            my $oRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
             my $oDocConfig =
-                new BackRestDoc::Common::DocConfig(
-                    new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
+                new pgBackRestDoc::Common::DocConfig(
+                    new pgBackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
 
             $oStorageDoc->pathCreate(
                 "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
@@ -327,7 +326,7 @@ eval
         elsif ($strOutput eq 'html')
         {
             my $oHtmlSite =
-                new BackRestDoc::Html::DocHtmlSite
+                new pgBackRestDoc::Html::DocHtmlSite
                 (
                     $oManifest,
                     "${strBasePath}/xml",
@@ -345,7 +344,7 @@ eval
         elsif ($strOutput eq 'pdf')
         {
             my $oLatex =
-                new BackRestDoc::Latex::DocLatex
+                new pgBackRestDoc::Latex::DocLatex
                 (
                     $oManifest,
                     "${strBasePath}/xml",

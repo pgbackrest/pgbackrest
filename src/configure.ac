@@ -57,6 +57,9 @@ AC_SUBST(CLIBRARY, "$CLIBRARY `pkg-config libxml-2.0 --cflags`")
 # Check required gz library
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 
+# Check optional lz4 library
+AC_CHECK_LIB([lz4], [LZ4F_isError])
+
 # Write output
 AC_CONFIG_HEADERS([build.auto.h])
 AC_CONFIG_FILES([Makefile])

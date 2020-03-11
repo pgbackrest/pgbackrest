@@ -21,9 +21,10 @@ use Pod::Usage qw(pod2usage);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -181,7 +182,7 @@ eval
 
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool";
         }
         else
         {

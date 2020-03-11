@@ -18,15 +18,15 @@ use File::Basename qw(dirname basename);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CoverageTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
@@ -434,7 +434,8 @@ sub run
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
                 # Create build.auto.h
-                my $strBuildAutoH = "";
+                my $strBuildAutoH =
+                    (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
 
@@ -502,6 +503,7 @@ sub run
                     "HARNESSFLAGS=${strHarnessFlags}\n" .
                     "TESTFLAGS=${strTestFlags}\n" .
                     "LDFLAGS=-lcrypto -lssl -lxml2 -lz" .
+                        (vmWithLz4($self->{oTest}->{&TEST_VM}) ? ' -llz4' : '') .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                     "\n" .

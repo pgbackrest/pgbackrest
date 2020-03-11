@@ -13,27 +13,172 @@ use Carp qw(confess);
 
 use File::Basename qw(basename dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Common;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::InfoCommon;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::InfoCommon;
+use pgBackRestTest::Env::Manifest;
+
+####################################################################################################################################
+# backupRegExpGet
+#
+# Generate a regexp depending on the backups that need to be found.
+####################################################################################################################################
+sub backupRegExpGet
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bFull,
+        $bDifferential,
+        $bIncremental,
+        $bAnchor
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupRegExpGet', \@_,
+            {name => 'bFull', default => false},
+            {name => 'bDifferential', default => false},
+            {name => 'bIncremental', default => false},
+            {name => 'bAnchor', default => true}
+        );
+
+    # One of the types must be selected
+    if (!($bFull || $bDifferential || $bIncremental))
+    {
+        confess &log(ASSERT, 'at least one backup type must be selected');
+    }
+
+    # Standard regexp to match date and time formatting
+    my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
+    # Start the expression with the anchor if requested, date/time regexp and full backup indicator
+    my $strRegExp = ($bAnchor ? '^' : '') . $strDateTimeRegExp . 'F';
+
+    # Add the diff and/or incr expressions if requested
+    if ($bDifferential || $bIncremental)
+    {
+        # If full requested then diff/incr is optional
+        if ($bFull)
+        {
+            $strRegExp .= "(\\_";
+        }
+        # Else diff/incr is required
+        else
+        {
+            $strRegExp .= "\\_";
+        }
+
+        # Append date/time regexp for diff/incr
+        $strRegExp .= $strDateTimeRegExp;
+
+        # Filter on both diff/incr
+        if ($bDifferential && $bIncremental)
+        {
+            $strRegExp .= '(D|I)';
+        }
+        # Else just diff
+        elsif ($bDifferential)
+        {
+            $strRegExp .= 'D';
+        }
+        # Else just incr
+        else
+        {
+            $strRegExp .= 'I';
+        }
+
+        # If full requested then diff/incr is optional
+        if ($bFull)
+        {
+            $strRegExp .= '){0,1}';
+        }
+    }
+
+    # Append the end anchor if requested
+    $strRegExp .= $bAnchor ? "\$" : '';
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strRegExp', value => $strRegExp}
+    );
+}
+
+####################################################################################################################################
+# backupLabel
+#
+# Get unique backup label.
+####################################################################################################################################
+sub backupLabel
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorageRepo,
+        $strRepoBackupPath,
+        $strType,
+        $strBackupLabelLast,
+        $lTimestampStart
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupLabelFormat', \@_,
+            {name => 'oStorageRepo', trace => true},
+            {name => 'strRepoBackupPath', trace => true},
+            {name => 'strType', trace => true},
+            {name => 'strBackupLabelLast', required => false, trace => true},
+            {name => 'lTimestampStart', trace => true}
+        );
+
+    # Create backup label
+    my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStart);
+
+    # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
+    # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
+    # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
+    # be skipped by dealing with any backup label collisions here.
+    if ($oStorageRepo->list(
+        $strRepoBackupPath,
+             {strExpression =>
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
+        $oStorageRepo->list(
+            "${strRepoBackupPath}/" . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
+             {strExpression =>
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.gz$'),
+                bIgnoreMissing => true}))
+    {
+        waitRemainder();
+        $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, time());
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackupLabel', value => $strBackupLabel, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # Build PostgreSQL pages for testing
@@ -60,13 +205,13 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress =>  GZ},
+        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress => LZ4},
         {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false, compress =>  GZ},
         {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true, compress =>  GZ},
         {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false, compress =>  GZ},
         {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true, compress =>  GZ},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress =>  GZ},
-        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress => LZ4},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress => LZ4},
         {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true, compress =>  GZ},
     )
     {

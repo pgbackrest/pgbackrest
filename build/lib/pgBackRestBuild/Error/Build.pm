@@ -11,10 +11,10 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRestDoc::Common::Log;
+
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Error::Data;
-
-use pgBackRest::Common::Log;
 
 ####################################################################################################################################
 # Constants

@@ -17,13 +17,13 @@ to:
         <release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
 ```
 
-Edit version in `lib/pgBackRest/Version.pm`, e.g.:
+Edit version in `src/version.h`, e.g.:
 ```
-use constant PROJECT_VERSION                                        => '2.14dev';
+#define PROJECT_VERSION                                             "2.14dev"
 ```
 to:
 ```
-use constant PROJECT_VERSION                                        => '2.14';
+#define PROJECT_VERSION                                             "2.14"
 ```
 
 ## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
@@ -121,13 +121,13 @@ Add new release in `doc/xml/release.xml`, e.g.:
         <release date="XXXX-XX-XX" version="2.15dev" title="UNDER DEVELOPMENT">
 ```
 
-Edit version in `lib/pgBackRest/Version.pm`, e.g.:
+Edit version in `src/version.h`, e.g.:
 ```
-use constant PROJECT_VERSION                                        => '2.14';
+#define PROJECT_VERSION                                             "2.14"
 ```
 to:
 ```
-use constant PROJECT_VERSION                                        => '2.15dev';
+#define PROJECT_VERSION                                             "2.15dev"
 ```
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):

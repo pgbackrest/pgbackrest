@@ -15,12 +15,11 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
-
-use BackRestDoc::Html::DocHtmlBuilder;
-use BackRestDoc::Html::DocHtmlElement;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Html::DocHtmlBuilder;
+use pgBackRestDoc::Html::DocHtmlElement;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Generate an lcov configuration file
@@ -253,7 +252,7 @@ sub coverageGenerate
     my $strGray = '#555555';
     my $strDarkGray = '#333333';
 
-    my $oHtml = new BackRestDoc::Html::DocHtmlBuilder(
+    my $oHtml = new pgBackRestDoc::Html::DocHtmlBuilder(
         PROJECT_NAME, $strTitle,
         undef, undef, undef,
         true, true,

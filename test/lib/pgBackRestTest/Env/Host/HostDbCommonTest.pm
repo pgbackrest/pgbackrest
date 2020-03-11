@@ -16,21 +16,21 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
-use pgBackRest::DbVersion;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
-use pgBackRestTest::Env::Host::HostBackupTest;
-use pgBackRestTest::Env::Host::HostBaseTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
+use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::Host::HostBaseTest;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # Test WAL size

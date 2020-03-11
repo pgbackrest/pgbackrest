@@ -66,11 +66,11 @@ use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
 use Storable qw(dclone);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Io::Base;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
+
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Command constants - commands that are allowed in the exe
@@ -1214,7 +1214,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
-        &CFGDEF_DEFAULT => COMMON_IO_BUFFER_MAX,
+        &CFGDEF_DEFAULT => 4194304,
         &CFGDEF_ALLOW_LIST =>
         [
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN,
@@ -1306,6 +1306,7 @@ my %hConfigDefine =
         [
             'none',
             'gz',
+            'lz4',
         ],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },

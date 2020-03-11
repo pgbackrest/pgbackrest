@@ -31,7 +31,7 @@ typedef struct GzCompress
     z_stream stream;                                                // Compression stream state
 
     bool inputSame;                                                 // Is the same input required on the next process call?
-    bool flush;                                                     // Is input complete and flushing in progress?
+    bool flushing;                                                  // Is input complete and flushing in progress?
     bool done;                                                      // Is compression done?
 } GzCompress;
 
@@ -43,7 +43,7 @@ gzCompressToLog(const GzCompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flush), this->stream.avail_in);
+        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_COMPRESS_TYPE                                                                                              \
@@ -82,14 +82,14 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     ASSERT(this != NULL);
     ASSERT(!this->done);
     ASSERT(compressed != NULL);
-    ASSERT(!this->flush || uncompressed == NULL);
-    ASSERT(this->flush || (!this->inputSame || this->stream.avail_in != 0));
+    ASSERT(!this->flushing || uncompressed == NULL);
+    ASSERT(this->flushing || (!this->inputSame || this->stream.avail_in != 0));
 
     // Flushing
     if (uncompressed == NULL)
     {
         this->stream.avail_in = 0;
-        this->flush = true;
+        this->flushing = true;
     }
     // More input
     else
@@ -107,17 +107,17 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression
-    gzError(deflate(&this->stream, this->flush ? Z_FINISH : Z_NO_FLUSH));
+    gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
 
     // Is compression done?
-    if (this->flush && this->stream.avail_out > 0)
+    if (this->flushing && this->stream.avail_out > 0)
         this->done = true;
 
     // Can more input be provided on the next call?
-    this->inputSame = this->flush ? !this->done : this->stream.avail_in != 0;
+    this->inputSame = this->flushing ? !this->done : this->stream.avail_in != 0;
 
     FUNCTION_LOG_RETURN_VOID();
 }

@@ -832,7 +832,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The following compression types are supported:\n"
             "\n"
-            "* gz - gzip compression format"
+            "* gz - gzip compression format\n"
+            "* lz4 - lz4 compression format (not available on all platforms)"
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -846,7 +847,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
             (
                 "none",
-                "gz"
+                "gz",
+                "lz4"
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("gz")

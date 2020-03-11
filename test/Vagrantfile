@@ -71,7 +71,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
         apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev liblz4-dev libpq-dev valgrind lcov
+             libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date

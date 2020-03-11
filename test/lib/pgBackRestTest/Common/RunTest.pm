@@ -15,11 +15,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
@@ -28,6 +27,7 @@ use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required
@@ -158,8 +158,6 @@ sub process
     # Initialize test storage
     $oStorage = new pgBackRestTest::Common::Storage(
         $self->testPath(), new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
-
-    projectBinSet($self->{strBackRestExe});
 
     # Init, run, and end the test(s)
     $self->initModule();

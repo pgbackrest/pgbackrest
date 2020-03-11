@@ -27,11 +27,10 @@ use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
@@ -54,6 +53,7 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
 
 ####################################################################################################################################
 # Usage
@@ -452,7 +452,7 @@ eval
 
             # Auto-generate version for configure.ac script
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^lib\/pgBackRest\/Version\.pm/, @stryModifiedList))
+            if (!$bSmart || grep(/^src\/version\.h/, @stryModifiedList))
             {
                 my $strConfigureAcOld = ${$oStorageTest->get("${strBackRestBase}/src/configure.ac")};
                 my $strConfigureAcNew;
@@ -596,14 +596,14 @@ eval
             &log(INFO, "check version info");
 
             # Load the doc modules dynamically since they are not supported on all systems
-            require BackRestDoc::Common::Doc;
-            BackRestDoc::Common::Doc->import();
-            require BackRestDoc::Custom::DocCustomRelease;
-            BackRestDoc::Custom::DocCustomRelease->import();
+            require pgBackRestDoc::Common::Doc;
+            pgBackRestDoc::Common::Doc->import();
+            require pgBackRestDoc::Custom::DocCustomRelease;
+            pgBackRestDoc::Custom::DocCustomRelease->import();
 
             my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
             my $oRelease =
-                (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+                (new pgBackRestDoc::Custom::DocCustomRelease(new pgBackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
             my $strVersion = $oRelease->paramGet('version');
             $bVersionDev = false;
             $strVersionBase = $strVersion;
@@ -621,27 +621,6 @@ eval
             elsif ($strVersion ne PROJECT_VERSION)
             {
                 confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
-            }
-
-            # Update version for the C code based on the current Perl version
-            #-----------------------------------------------------------------------------------------------------------------------
-            my $strCVersionFile = "${strBackRestBase}/src/version.h";
-            my $strCVersionOld = ${$oStorageTest->get($strCVersionFile)};
-            my $strCVersionNew;
-
-            foreach my $strLine (split("\n", $strCVersionOld))
-            {
-                if ($strLine =~ /^#define PROJECT_VERSION/)
-                {
-                    $strLine = '#define PROJECT_VERSION' . (' ' x 45) . '"' . PROJECT_VERSION . '"';
-                }
-
-                $strCVersionNew .= "${strLine}\n";
-            }
-
-            if ($strCVersionNew ne $strCVersionOld)
-            {
-                $oStorageTest->put($strCVersionFile, $strCVersionNew);
             }
         }
 
@@ -850,7 +829,7 @@ eval
             {
                 my $strPackagePath = "${strVagrantPath}/package";
                 my $strPackageSmart = "${strPackagePath}/build.timestamp";
-                my @stryPackageSrcPath = ('lib');
+                my @stryPackageSrcPath = ('src');
 
                 # Find the lastest modified time for additional dirs that affect the package build
                 foreach my $strPackageSrcPath (@stryPackageSrcPath)

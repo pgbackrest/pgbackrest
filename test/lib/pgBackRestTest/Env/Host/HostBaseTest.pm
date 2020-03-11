@@ -16,14 +16,14 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::JobTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################

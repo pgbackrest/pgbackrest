@@ -18,24 +18,30 @@ use File::Basename qw(dirname);
 use File::stat qw{lstat};
 use Storable qw(dclone);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Common;
-use pgBackRest::Backup::Info;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
-use pgBackRest::Manifest;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::StorageBase;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Env::Manifest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+
+####################################################################################################################################
+# Latest backup link constant
+####################################################################################################################################
+use constant LINK_LATEST                                            => 'latest';
+    push @EXPORT, qw(LINK_LATEST);
 
 ####################################################################################################################################
 # Host defaults
@@ -91,6 +97,8 @@ use constant NONE                                                   => 'none';
     push @EXPORT, qw(NONE);
 use constant GZ                                                     => 'gz';
     push @EXPORT, qw(GZ);
+use constant LZ4                                                    => 'lz4';
+    push @EXPORT, qw(LZ4);
 
 ####################################################################################################################################
 # new
@@ -180,6 +188,93 @@ sub new
         {name => 'self', value => $self, trace => true}
     );
 }
+
+####################################################################################################################################
+# timestampFileFormat
+####################################################################################################################################
+sub timestampFileFormat
+{
+    my $strFormat = shift;
+    my $lTime = shift;
+
+    return timestampFormat(defined($strFormat) ? $strFormat : '%4d%02d%02d-%02d%02d%02d', $lTime);
+}
+
+push @EXPORT, qw(timestampFileFormat);
+
+####################################################################################################################################
+# backupLabelFormat
+#
+# Format the label for a backup.
+####################################################################################################################################
+sub backupLabelFormat
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $strBackupLabelLast,
+        $lTimestampStart
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupLabelFormat', \@_,
+            {name => 'strType', trace => true},
+            {name => 'strBackupLabelLast', required => false, trace => true},
+            {name => 'lTimestampTart', trace => true}
+        );
+
+    # Full backup label
+    my $strBackupLabel;
+
+    if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
+    {
+        # Last backup label must not be defined
+        if (defined($strBackupLabelLast))
+        {
+            confess &log(ASSERT, "strBackupLabelLast must not be defined when strType = '${strType}'");
+        }
+
+        # Format the timestamp and add the full indicator
+        $strBackupLabel = timestampFileFormat(undef, $lTimestampStart) . 'F';
+    }
+    # Else diff or incr label
+    else
+    {
+        # Last backup label must be defined
+        if (!defined($strBackupLabelLast))
+        {
+            confess &log(ASSERT, "strBackupLabelLast must be defined when strType = '${strType}'");
+        }
+
+        # Get the full backup portion of the last backup label
+        $strBackupLabel = substr($strBackupLabelLast, 0, 16);
+
+        # Format the timestamp
+        $strBackupLabel .= '_' . timestampFileFormat(undef, $lTimestampStart);
+
+        # Add the diff indicator
+        if ($strType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
+        {
+            $strBackupLabel .= 'D';
+        }
+        # Else incr indicator
+        else
+        {
+            $strBackupLabel .= 'I';
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackupLabel', value => $strBackupLabel, trace => true}
+    );
+}
+
+push @EXPORT, qw(backupLabelFormat);
 
 ####################################################################################################################################
 # backupBegin
@@ -483,7 +578,7 @@ sub backupCompare
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
-    my $oActualManifest = new pgBackRest::Manifest(
+    my $oActualManifest = new pgBackRestTest::Env::Manifest(
         $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()});
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
@@ -821,7 +916,7 @@ sub stanzaCreate
         }
 
         # Get the passphrase for accessing the manifest file
-        $self->{strCipherPassManifest} = (new pgBackRest::Backup::Info($self->repoBackupPath()))->cipherPassSub();
+        $self->{strCipherPassManifest} = (new pgBackRestTest::Env::BackupInfo($self->repoBackupPath()))->cipherPassSub();
     }
 
     if (storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
@@ -835,7 +930,7 @@ sub stanzaCreate
 
         # Get the passphrase for accessing the archived files
         $self->{strCipherPassArchive} =
-            (new pgBackRest::Archive::Info($self->repoArchivePath()))->cipherPassSub();
+            (new pgBackRestTest::Env::ArchiveInfo($self->repoArchivePath()))->cipherPassSub();
     }
 
     # Return from function and log return values if any
@@ -1330,13 +1425,13 @@ sub infoMunge
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini(
+        $self->{hInfoFile}{$strFileName} = new pgBackRestDoc::Common::Ini(
         storageRepo(), $strFileName,
         {strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});
     }
 
     # Make a copy of the original file contents
-    my $oMungeIni = new pgBackRest::Common::Ini(
+    my $oMungeIni = new pgBackRestDoc::Common::Ini(
         storageRepo(), $strFileName,
         {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}),
         strCipherPass => !$bManifest ? undef : $self->cipherPassManifest()});
@@ -1630,7 +1725,7 @@ sub restore
     if (!defined($rhExpectedManifest))
     {
         # Load the manifest from the backup expected to be chosen/processed by restore
-        my $oExpectedManifest = new pgBackRest::Manifest(
+        my $oExpectedManifest = new pgBackRestTest::Env::Manifest(
             $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
@@ -1740,7 +1835,7 @@ sub restoreCompare
     if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR}))
     {
         my $oExpectedManifest =
-            new pgBackRest::Manifest(
+            new pgBackRestTest::Env::Manifest(
                 $self->repoBackupPath(
                     ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
@@ -1750,7 +1845,7 @@ sub restoreCompare
             $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_OPTION, &MANIFEST_KEY_DELTA);
 
         $oLastManifest =
-            new pgBackRest::Manifest(
+            new pgBackRestTest::Env::Manifest(
                 $self->repoBackupPath(
                     ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
@@ -1805,7 +1900,7 @@ sub restoreCompare
         }
     }
 
-    my $oActualManifest = new pgBackRest::Manifest(
+    my $oActualManifest = new pgBackRestTest::Env::Manifest(
         "${strTestPath}/" . FILE_MANIFEST,
         {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION},
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},

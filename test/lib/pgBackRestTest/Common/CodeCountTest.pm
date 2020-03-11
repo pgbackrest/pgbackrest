@@ -14,7 +14,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ExecuteTest;
 
