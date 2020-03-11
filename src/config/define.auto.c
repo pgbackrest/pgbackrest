@@ -1118,6 +1118,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Execute a dry-run for the command")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The --dry-run option is a command-line only option and can be passed when it is desireable to determine what "
+                "modifications will be made by the command without the command actually making any modifications."
+        )
+
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
@@ -1126,19 +1134,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdExpire)
-
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("dry-run execution, it does not expire backups.")
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
-                (
-                    "Using this option, pgBackRest will not effectively expire the archives,\n"
-                    "rather pgBackRest will simply inform you about which archives\n"
-                    "and backups are going to be expired."
-                )
-            )
         )
     )
 
