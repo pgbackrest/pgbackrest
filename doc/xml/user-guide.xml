@@ -1573,7 +1573,7 @@
             </execute-list>
 
             <execute-list host="{[host-pg1]}">
-                <title>Expire archive (actual)</title>
+                <title>Expire archive</title>
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
