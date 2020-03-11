@@ -841,7 +841,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         harnessCfgLoad(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "test code path from backup command - expire backups and remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "via backup command: expire backups and remove archive path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
             false, "  archive path removed");
