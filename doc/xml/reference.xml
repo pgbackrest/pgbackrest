@@ -937,7 +937,7 @@
 
                 <!-- OPERATION - GENERAL - DRY-RUN OPTION -->
                 <option id="dry-run" name="Dry Run">
-                    <summary>Execute a dry-run for the command</summary>
+                    <summary>Execute a dry-run for the command.</summary>
 
                     <text>The <br-option>{[dash]}-dry-run</br-option> option is a command-line only option and can be passed when it is desireable to determine what modifications will be made by the command without the command actually making any modifications.</text>
 
