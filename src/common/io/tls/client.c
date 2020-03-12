@@ -632,7 +632,7 @@ tlsClientOpen(TlsClient *this)
                         setsockopt(this->socket, SOL_SOCKET, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
                          "unable set SO_KEEPINTVL");
 
-                    socketValue = this->timeout / socketValue;
+                    socketValue = (int)this->timeout / socketValue;
 
                     THROW_ON_SYS_ERROR(
                         setsockopt(this->socket, SOL_SOCKET, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
