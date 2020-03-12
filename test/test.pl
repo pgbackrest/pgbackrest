@@ -454,7 +454,7 @@ eval
             #-----------------------------------------------------------------------------------------------------------------------
             if (!$bSmart || grep(/^src\/version\.h/, @stryModifiedList))
             {
-                my $strConfigureAcOld = ${$oStorageTest->get("${strBackRestBase}/src/configure.ac")};
+                my $strConfigureAcOld = ${$oStorageTest->get("${strBackRestBase}/src/build/configure.ac")};
                 my $strConfigureAcNew;
 
                 foreach my $strLine (split("\n", $strConfigureAcOld))
@@ -469,7 +469,7 @@ eval
 
                 # Save into the src dir
                 my @stryBuilt;
-                my $strBuilt = 'src/configure.ac';
+                my $strBuilt = 'src/build/configure.ac';
 
                 if (buildPutDiffers($oStorageBackRest, "${strBackRestBase}/${strBuilt}", $strConfigureAcNew))
                 {
@@ -484,9 +484,9 @@ eval
 
             # Auto-generate configure script
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^src\/configure\.ac/, @stryModifiedList))
+            if (!$bSmart || grep(/^src\/build\/configure\.ac/, @stryModifiedList))
             {
-                my $strConfigure = executeTest("autoconf ${strBackRestBase}/src/configure.ac");
+                my $strConfigure = executeTest("autoconf ${strBackRestBase}/src/build/configure.ac");
 
                 # Trim off any trailing LFs
                 $strConfigure = trim($strConfigure) . "\n";
