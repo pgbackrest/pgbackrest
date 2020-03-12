@@ -33,6 +33,15 @@
                              <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
+                        <p>Fix detection of keepalive options on <proper>Linux</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-contributor id="marc.cousin"/>
+                             <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
                         <p>Add configure host detection to set standards flags correctly.</p>
                     </release-item>
 
