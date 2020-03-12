@@ -2041,7 +2041,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Check compiler
+# Check compiler supports C99 standard
+# ----------------------------------------------------------------------------------------------------------------------------------
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -3009,7 +3010,8 @@ fi
 
 
 
-# Enable internal test code and assertions by undefining NDEBUG
+# Set warnings and optimizations based on build type (i.e. production or test)
+# ----------------------------------------------------------------------------------------------------------------------------------
 warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
 
 # Check whether --enable-test was given.
@@ -3045,11 +3047,13 @@ else
 
 fi
 
-# Set includes
+# Include the build directory
+# ----------------------------------------------------------------------------------------------------------------------------------
 CINCLUDE="-I."
 
 
 # Check required pq library
+# ----------------------------------------------------------------------------------------------------------------------------------
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
@@ -3102,6 +3106,7 @@ CINCLUDE="$CINCLUDE -I`pg_config --includedir`"
 
 
 # Check required openssl libraries
+# ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_get_digestbyname in -lcrypto" >&5
 $as_echo_n "checking for EVP_get_digestbyname in -lcrypto... " >&6; }
 if ${ac_cv_lib_crypto_EVP_get_digestbyname+:} false; then :
@@ -3198,6 +3203,7 @@ fi
 
 
 # Check required xml library
+# ----------------------------------------------------------------------------------------------------------------------------------
 
 if test -z "$XML2_CONFIG"; then
     XML2_CONFIG="pkg-config libxml-2.0"
@@ -3661,6 +3667,7 @@ CLIBRARY="$CLIBRARY `pkg-config libxml-2.0 --cflags`"
 
 
 # Check required gz library
+# ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for deflate in -lz" >&5
 $as_echo_n "checking for deflate in -lz... " >&6; }
 if ${ac_cv_lib_z_deflate+:} false; then :
@@ -3710,6 +3717,7 @@ fi
 
 
 # Check optional lz4 library
+# ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4F_isError in -llz4" >&5
 $as_echo_n "checking for LZ4F_isError in -llz4... " >&6; }
 if ${ac_cv_lib_lz4_LZ4F_isError+:} false; then :
@@ -3757,6 +3765,7 @@ fi
 
 
 # Write output
+# ----------------------------------------------------------------------------------------------------------------------------------
 ac_config_headers="$ac_config_headers build.auto.h"
 
 ac_config_files="$ac_config_files Makefile"
