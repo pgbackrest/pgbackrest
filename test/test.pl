@@ -785,7 +785,7 @@ eval
                         {
                             executeTest(
                                 "docker run -itd -h test-build --name=test-build" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
                                 {bSuppressStdErr => true});
                         }
 
@@ -873,11 +873,16 @@ eval
                         {
                             executeTest(
                                 "docker run -itd -h test-build --name=test-build" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
                                 {bSuppressStdErr => true});
                         }
 
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
+
+                        # Clone a copy of the debian package repo
+                        executeTest(
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "bash -c 'git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src 2>&1'");
 
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
@@ -948,9 +953,25 @@ eval
                         {
                             executeTest(
                                 "docker run -itd -h test-build --name=test-build" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
                                 {bSuppressStdErr => true});
                         }
+
+                        # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.
+                        # Using 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
+                        executeTest(
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "bash -c \"" .
+                            "mkdir /root/package-src && " .
+                            "wget -q -O /root/package-src/pgbackrest-conf.patch " .
+                                "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                                "f=rpm/redhat/master/pgbackrest/master/pgbackrest-conf.patch;hb=refs/heads/master' && " .
+                            "wget -q -O /root/package-src/pgbackrest-libxmlinclude.patch " .
+                                "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                                "f=rpm/redhat/master/pgbackrest/master/pgbackrest-libxmlinclude.patch;hb=refs/heads/master' && " .
+                            "wget -q -O /root/package-src/pgbackrest.spec " .
+                                "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                                "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'\"");
 
                         # Create build directories
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
