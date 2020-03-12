@@ -9,6 +9,21 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PROG_CC_C99
 
+# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CANONICAL_HOST
+CSTANDARD="-std=c99"
+
+case $host_os in
+    darwin*)
+        AC_SUBST(CSTANDARD, "${CSTANDARD?} -D_DARWIN_C_SOURCE")
+        ;;
+
+    linux*)
+        AC_SUBST(CSTANDARD, "${CSTANDARD?} -D_POSIX_C_SOURCE=200809L")
+        ;;
+esac
+
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
 warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
