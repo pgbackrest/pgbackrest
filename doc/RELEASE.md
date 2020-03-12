@@ -1,5 +1,12 @@
 # Release Build Instructions
 
+## Set location of the `pgbackrest` repo
+
+This makes the rest of the commands in the document easier to run (change to your repo path):
+```
+export PGBR_REPO=/backrest
+```
+
 ## Create a branch to test the release
 
 ```
@@ -28,12 +35,12 @@ to:
 
 ## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
-doc/release.pl --build
+${PGBR_REPO?}/doc/release.pl --build
 ```
 
 ## Update code counts
 ```
-test/test.pl --code-count
+${PGBR_REPO?}/test/test.pl --code-count
 ```
 
 ## Commit release branch and push to CI for testing
@@ -44,13 +51,13 @@ git push origin release-ci
 
 ## Clone web documentation into `doc/site`
 ```
-cd doc
+cd ${PGBR_REPO?}/doc
 git clone git@github.com:pgbackrest/website.git site
 ```
 
 ## Deploy web documentation to `doc/site`
 ```
-doc/release.pl --deploy
+${PGBR_REPO?}/doc/release.pl --deploy
 ```
 
 ## Final commit of release to integration
@@ -103,7 +110,7 @@ The first line will be the release title and the rest will be the body.  The tag
 
 ## Push web documentation to master and deploy
 ```
-cd doc/site
+cd ${PGBR_REPO?}/doc/site
 git commit -m "v2.14 documentation."
 git push origin master
 ```
@@ -132,12 +139,12 @@ to:
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
-doc/release.pl --build
+${PGBR_REPO?}/doc/release.pl --build
 ```
 
 Build to generate files and test documentation:
 ```
-test/test.pl --vm=u18 --build-only
+${PGBR_REPO?}/test/test.pl --vm=u18 --build-only
 ```
 
 Commit and push to integration:
