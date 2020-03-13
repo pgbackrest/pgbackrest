@@ -621,16 +621,14 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
-CLIBRARY
+XML2_CONFIG_EXISTS
+XML2_CONFIG
 EGREP
 GREP
 CPP
-XML2_CONFIG
-CINCLUDE
-CWARNING
-COPTIMIZE_PAGE_CHECKSUM
-COPTIMIZE
-CSTANDARD
+PG_CONFIG_EXISTS
+PG_CONFIG
+CFLAGS_PAGE_CHECKSUM
 host_os
 host_vendor
 host_cpu
@@ -699,8 +697,9 @@ CFLAGS
 LDFLAGS
 LIBS
 CPPFLAGS
-XML2_CONFIG
-CPP'
+PG_CONFIG
+CPP
+XML2_CONFIG'
 
 
 # Initialize some variables set by options.
@@ -1286,25 +1285,6 @@ For better control, use the options below.
 
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
-  --sbindir=DIR           system admin executables [EPREFIX/sbin]
-  --libexecdir=DIR        program executables [EPREFIX/libexec]
-  --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-  --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-  --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-  --libdir=DIR            object code libraries [EPREFIX/lib]
-  --includedir=DIR        C header files [PREFIX/include]
-  --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-  --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
-  --datadir=DIR           read-only architecture-independent data [DATAROOTDIR]
-  --infodir=DIR           info documentation [DATAROOTDIR/info]
-  --localedir=DIR         locale-dependent data [DATAROOTDIR/locale]
-  --mandir=DIR            man documentation [DATAROOTDIR/man]
-  --docdir=DIR            documentation root [DATAROOTDIR/doc/pgbackrest]
-  --htmldir=DIR           html documentation [DOCDIR]
-  --dvidir=DIR            dvi documentation [DOCDIR]
-  --pdfdir=DIR            pdf documentation [DOCDIR]
-  --psdir=DIR             ps documentation [DOCDIR]
 _ACEOF
 
   cat <<\_ACEOF
@@ -1337,8 +1317,9 @@ Some influential environment variables:
   LIBS        libraries to pass to the linker, e.g. -l<library>
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
-  XML2_CONFIG path to xml2 config utility
+  PG_CONFIG   path to pg_config utility
   CPP         C preprocessor
+  XML2_CONFIG path to xml2 config utility
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2082,6 +2063,10 @@ ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
 ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
+
+# Don't add any CFLAGS by default (otherwise -g -O2 will be added)
+# ----------------------------------------------------------------------------------------------------------------------------------
+: ${CFLAGS=""}
 
 # Check compiler supports C99 standard
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -3125,23 +3110,25 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-CSTANDARD="-std=c99"
+CFLAGS="${CFLAGS} -std=c99"
+
 
 case $host_os in
     darwin*)
-        CSTANDARD="${CSTANDARD?} -D_DARWIN_C_SOURCE"
+        CPPFLAGS="${CPPFLAGS} -D_DARWIN_C_SOURCE"
 
         ;;
 
     linux*)
-        CSTANDARD="${CSTANDARD?} -D_POSIX_C_SOURCE=200809L"
+        CPPFLAGS="${CPPFLAGS} -D_POSIX_C_SOURCE=200809L"
 
         ;;
 esac
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
+CFLAGS="${CFLAGS} -Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers"
+
 
 # Check whether --enable-test was given.
 if test "${enable_test+set}" = set; then :
@@ -3163,26 +3150,77 @@ fi
 
     if test "$enable_optimize" != no
     then
-        COPTIMIZE="-O2"
+        CFLAGS="${CFLAGS} -O2"
 
-        COPTIMIZE_PAGE_CHECKSUM="-funroll-loops -ftree-vectorize"
+        CFLAGS_PAGE_CHECKSUM="-funroll-loops -ftree-vectorize"
 
     fi
-
-    CWARNING=$warning
-
 else
-    CWARNING="$warning -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla"
+    CFLAGS="${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith"
+
+    CFLAGS="${CFLAGS} -Wvla"
 
 fi
 
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
-CINCLUDE="-I."
+CPPFLAGS="${CPPFLAGS} -I."
 
 
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------
+
+if test -z "$PG_CONFIG"; then
+    PG_CONFIG="pg_config"
+fi
+
+# Extract the first word of "${PG_CONFIG?}", so it can be a program name with args.
+set dummy ${PG_CONFIG?}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_PG_CONFIG_EXISTS+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PG_CONFIG_EXISTS"; then
+  ac_cv_prog_PG_CONFIG_EXISTS="$PG_CONFIG_EXISTS" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_PG_CONFIG_EXISTS=""yes""
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PG_CONFIG_EXISTS" && ac_cv_prog_PG_CONFIG_EXISTS=""no""
+fi
+fi
+PG_CONFIG_EXISTS=$ac_cv_prog_PG_CONFIG_EXISTS
+if test -n "$PG_CONFIG_EXISTS"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PG_CONFIG_EXISTS" >&5
+$as_echo "$PG_CONFIG_EXISTS" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+if test ${PG_CONFIG_EXISTS?} == yes
+then
+    CPPFLAGS="${CPPFLAGS} -I`${PG_CONFIG?} --includedir`"
+
+    LDFLAGS="${LDFLAGS} -L`${PG_CONFIG?} --libdir`"
+
+fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
@@ -3229,162 +3267,6 @@ _ACEOF
 
 else
   as_fn_error $? "library 'pq' is required" "$LINENO" 5
-fi
-
-CINCLUDE="$CINCLUDE -I`pg_config --includedir`"
-
-
-# Check required openssl libraries
-# ----------------------------------------------------------------------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_get_digestbyname in -lcrypto" >&5
-$as_echo_n "checking for EVP_get_digestbyname in -lcrypto... " >&6; }
-if ${ac_cv_lib_crypto_EVP_get_digestbyname+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcrypto  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char EVP_get_digestbyname ();
-int
-main ()
-{
-return EVP_get_digestbyname ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_crypto_EVP_get_digestbyname=yes
-else
-  ac_cv_lib_crypto_EVP_get_digestbyname=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_get_digestbyname" >&5
-$as_echo "$ac_cv_lib_crypto_EVP_get_digestbyname" >&6; }
-if test "x$ac_cv_lib_crypto_EVP_get_digestbyname" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBCRYPTO 1
-_ACEOF
-
-  LIBS="-lcrypto $LIBS"
-
-else
-  as_fn_error $? "library 'crypto' is required" "$LINENO" 5
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_new in -lssl" >&5
-$as_echo_n "checking for SSL_new in -lssl... " >&6; }
-if ${ac_cv_lib_ssl_SSL_new+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lssl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char SSL_new ();
-int
-main ()
-{
-return SSL_new ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ssl_SSL_new=yes
-else
-  ac_cv_lib_ssl_SSL_new=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_new" >&5
-$as_echo "$ac_cv_lib_ssl_SSL_new" >&6; }
-if test "x$ac_cv_lib_ssl_SSL_new" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSSL 1
-_ACEOF
-
-  LIBS="-lssl $LIBS"
-
-else
-  as_fn_error $? "library 'ssl' is required" "$LINENO" 5
-fi
-
-
-# Check required xml library
-# ----------------------------------------------------------------------------------------------------------------------------------
-
-if test -z "$XML2_CONFIG"; then
-    XML2_CONFIG="pkg-config libxml-2.0"
-fi
-
-CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags`"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSaveToBuffer in -lxml2" >&5
-$as_echo_n "checking for xmlSaveToBuffer in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlSaveToBuffer+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlSaveToBuffer ();
-int
-main ()
-{
-return xmlSaveToBuffer ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlSaveToBuffer=yes
-else
-  ac_cv_lib_xml2_xmlSaveToBuffer=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlSaveToBuffer" >&5
-$as_echo "$ac_cv_lib_xml2_xmlSaveToBuffer" >&6; }
-if test "x$ac_cv_lib_xml2_xmlSaveToBuffer" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBXML2 1
-_ACEOF
-
-  LIBS="-lxml2 $LIBS"
-
-else
-  as_fn_error $? "library 'xml2' is required" "$LINENO" 5
 fi
 
 ac_ext=c
@@ -3784,6 +3666,211 @@ fi
 done
 
 
+ac_fn_c_check_header_mongrel "$LINENO" "libpq-fe.h" "ac_cv_header_libpq_fe_h" "$ac_includes_default"
+if test "x$ac_cv_header_libpq_fe_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <libpq-fe.h> is required" "$LINENO" 5
+fi
+
+
+
+# Check required openssl libraries
+# ----------------------------------------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_get_digestbyname in -lcrypto" >&5
+$as_echo_n "checking for EVP_get_digestbyname in -lcrypto... " >&6; }
+if ${ac_cv_lib_crypto_EVP_get_digestbyname+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_get_digestbyname ();
+int
+main ()
+{
+return EVP_get_digestbyname ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_crypto_EVP_get_digestbyname=yes
+else
+  ac_cv_lib_crypto_EVP_get_digestbyname=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_get_digestbyname" >&5
+$as_echo "$ac_cv_lib_crypto_EVP_get_digestbyname" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_get_digestbyname" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCRYPTO 1
+_ACEOF
+
+  LIBS="-lcrypto $LIBS"
+
+else
+  as_fn_error $? "library 'crypto' is required" "$LINENO" 5
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_new in -lssl" >&5
+$as_echo_n "checking for SSL_new in -lssl... " >&6; }
+if ${ac_cv_lib_ssl_SSL_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_new ();
+int
+main ()
+{
+return SSL_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ssl_SSL_new=yes
+else
+  ac_cv_lib_ssl_SSL_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_new" >&5
+$as_echo "$ac_cv_lib_ssl_SSL_new" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_new" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSSL 1
+_ACEOF
+
+  LIBS="-lssl $LIBS"
+
+else
+  as_fn_error $? "library 'ssl' is required" "$LINENO" 5
+fi
+
+
+# Check required xml library
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+if test -z "$XML2_CONFIG"; then
+    XML2_CONFIG="pkg-config libxml-2.0"
+fi
+
+# Extract the first word of "${XML2_CONFIG?}", so it can be a program name with args.
+set dummy ${XML2_CONFIG?}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_XML2_CONFIG_EXISTS+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$XML2_CONFIG_EXISTS"; then
+  ac_cv_prog_XML2_CONFIG_EXISTS="$XML2_CONFIG_EXISTS" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_XML2_CONFIG_EXISTS=""yes""
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_XML2_CONFIG_EXISTS" && ac_cv_prog_XML2_CONFIG_EXISTS=""no""
+fi
+fi
+XML2_CONFIG_EXISTS=$ac_cv_prog_XML2_CONFIG_EXISTS
+if test -n "$XML2_CONFIG_EXISTS"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XML2_CONFIG_EXISTS" >&5
+$as_echo "$XML2_CONFIG_EXISTS" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+if test ${XML2_CONFIG_EXISTS?} == yes
+then
+    CPPFLAGS="$CPPFLAGS `${XML2_CONFIG?} --cflags`"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSaveToBuffer in -lxml2" >&5
+$as_echo_n "checking for xmlSaveToBuffer in -lxml2... " >&6; }
+if ${ac_cv_lib_xml2_xmlSaveToBuffer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxml2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char xmlSaveToBuffer ();
+int
+main ()
+{
+return xmlSaveToBuffer ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_xml2_xmlSaveToBuffer=yes
+else
+  ac_cv_lib_xml2_xmlSaveToBuffer=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlSaveToBuffer" >&5
+$as_echo "$ac_cv_lib_xml2_xmlSaveToBuffer" >&6; }
+if test "x$ac_cv_lib_xml2_xmlSaveToBuffer" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBXML2 1
+_ACEOF
+
+  LIBS="-lxml2 $LIBS"
+
+else
+  as_fn_error $? "library 'xml2' is required" "$LINENO" 5
+fi
+
 ac_fn_c_check_header_mongrel "$LINENO" "libxml/parser.h" "ac_cv_header_libxml_parser_h" "$ac_includes_default"
 if test "x$ac_cv_header_libxml_parser_h" = xyes; then :
 
@@ -3791,8 +3878,6 @@ else
   as_fn_error $? "header file <libxml/parser.h> is required" "$LINENO" 5
 fi
 
-
-CLIBRARY="$CLIBRARY `pkg-config libxml-2.0 --cflags`"
 
 
 # Check required gz library
@@ -3844,6 +3929,14 @@ else
   as_fn_error $? "library 'z' is required" "$LINENO" 5
 fi
 
+ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
+if test "x$ac_cv_header_zlib_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <zlib.h> is required" "$LINENO" 5
+fi
+
+
 
 # Check optional lz4 library
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -3884,11 +3977,15 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lz4_LZ4F_isError" >&5
 $as_echo "$ac_cv_lib_lz4_LZ4F_isError" >&6; }
 if test "x$ac_cv_lib_lz4_LZ4F_isError" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBLZ4 1
-_ACEOF
+  ac_fn_c_check_header_mongrel "$LINENO" "lz4frame.h" "ac_cv_header_lz4frame_h" "$ac_includes_default"
+if test "x$ac_cv_header_lz4frame_h" = xyes; then :
+  $as_echo "#define HAVE_LIBLZ4 1" >>confdefs.h
+ LIBS="${LIBS} -llz4"
 
-  LIBS="-llz4 $LIBS"
+else
+  as_fn_error $? "header file <lz4frame.h> is required" "$LINENO" 5
+fi
+
 
 fi
 
