@@ -26,7 +26,7 @@ struct StorageRemote
     STORAGE_COMMON_MEMBER;
     MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
-    unsigned int compressLevel;                                     // Protocol compression level
+    int compressLevel;                                              // Protocol compression level
 };
 
 /**********************************************************************************************************************************/
@@ -465,7 +465,7 @@ static const StorageInterface storageInterfaceRemote =
 Storage *
 storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
-    unsigned int compressLevel)
+    int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
@@ -473,7 +473,7 @@ storageRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
-        FUNCTION_LOG_PARAM(UINT, compressLevel);
+        FUNCTION_LOG_PARAM(INT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(modeFile != 0);

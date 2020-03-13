@@ -94,7 +94,7 @@ storageWriteRemoteOpen(THIS_VOID)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(this->write)),
-                compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+                compressFilter(compressTypeGz, this->interface.compressLevel));
         }
 
         // Set free callback to ensure remote file is freed
@@ -167,7 +167,7 @@ StorageWrite *
 storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
     const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible,
-    unsigned int compressLevel)
+    int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -182,7 +182,7 @@ storageWriteRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, compressible);
-        FUNCTION_LOG_PARAM(UINT, compressLevel);
+        FUNCTION_LOG_PARAM(INT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);

@@ -171,7 +171,7 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
 
 /***********************************************************************************************************************************

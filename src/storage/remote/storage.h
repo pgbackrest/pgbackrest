@@ -18,6 +18,6 @@ Constructor
 ***********************************************************************************************************************************/
 Storage *storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
-    unsigned int compressLevel);
+    int compressLevel);
 
 #endif

@@ -66,7 +66,7 @@ storageReadRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, this->interface.compressLevel));
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
@@ -178,7 +178,7 @@ New object
 StorageRead *
 storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel)
+    int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -186,7 +186,7 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
-        FUNCTION_LOG_PARAM(UINT, compressLevel);
+        FUNCTION_LOG_PARAM(INT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);

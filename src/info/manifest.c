@@ -1203,7 +1203,7 @@ void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
     bool optionStandby)
 {
@@ -1221,7 +1221,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
-        FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
+        FUNCTION_LOG_PARAM(INT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
@@ -1264,7 +1264,7 @@ manifestBuildComplete(
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
+        this->data.backupOptionCompressLevel = varNewInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
         this->data.backupOptionHardLink = optionHardLink;
         this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
@@ -1682,7 +1682,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             else if (strEq(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR))
                 manifest->data.backupOptionChecksumPage = varNewBool(jsonToBool(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR))
-                manifest->data.backupOptionCompressLevel = varNewUInt(jsonToUInt(value));
+                manifest->data.backupOptionCompressLevel = varNewInt(jsonToInt(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR))
                 manifest->data.backupOptionCompressLevelNetwork = varNewUInt(jsonToUInt(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_DELTA_STR))
