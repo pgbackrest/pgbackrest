@@ -14,6 +14,7 @@ use English '-no_match_vars';
 # Convert die to confess to capture the stack trace
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
+use Digest::SHA qw(sha1_hex);
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path cwd);
@@ -486,21 +487,33 @@ eval
             #-----------------------------------------------------------------------------------------------------------------------
             if (!$bSmart || grep(/^src\/build\/configure\.ac/, @stryModifiedList))
             {
-                my $strConfigure = executeTest("autoconf ${strBackRestBase}/src/build/configure.ac");
-
-                # Trim off any trailing LFs
-                $strConfigure = trim($strConfigure) . "\n";
-
-                # Remove unused options from help
-                $strConfigure =~ s/^  --((?!bin).)*dir=DIR.*\n//mg;
-                $strConfigure =~ s/^  --sbindir=DIR.*\n//mg;
-
-                # Save into the src dir
+                # Set build file
                 my @stryBuilt;
                 my $strBuilt = 'src/configure';
 
-                if (buildPutDiffers($oStorageBackRest, "${strBackRestBase}/${strBuilt}", $strConfigure))
+                # Get configure.ac and configure to see if anything has changed
+                my $strConfigureAc = ${$oStorageBackRest->get('src/build/configure.ac')};
+                my $strConfigureAcHash = sha1_hex($strConfigureAc);
+                my $rstrConfigure = $oStorageBackRest->get($oStorageBackRest->openRead($strBuilt, {bIgnoreMissing => true}));
+
+                # Check if configure needs to be regenerated
+                if (!defined($rstrConfigure) || !defined($$rstrConfigure) ||
+                    $strConfigureAcHash ne substr($$rstrConfigure, length($$rstrConfigure) - 41, 40))
                 {
+                    # Generate configure
+                    my $strConfigure = executeTest("cd ${strBackRestBase}/src/build && autoconf --output=-");
+                    $strConfigure =
+                        trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
+
+                    # Remove unused options from help
+                    $strConfigure =~ s/^  --((?!bin).)*dir=DIR.*\n//mg;
+                    $strConfigure =~ s/^  --sbindir=DIR.*\n//mg;
+
+                    # Save into the src dir
+                    $oStorageBackRest->put(
+                        $oStorageBackRest->openWrite("${strBackRestBase}/${strBuilt}", {strMode => '0755'}), $strConfigure);
+
+                    # Add to built list
                     push(@stryBuilt, $strBuilt);
                     push(@stryBuiltAll, @stryBuilt);
                     push(@stryModifiedList, @stryBuilt);
