@@ -13,12 +13,12 @@ services:
 
 matrix:
   include:
-    - env: PGB_CI="test --vm=u12 --param=no-package"
-    - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
-    - env: PGB_CI="test --vm=co6 --param=module=mock --param=module=real"
-    - env: PGB_CI="test --vm=u18 --param=container-only"
+    - env: PGB_CI="test --vm=u12"
+    - env: PGB_CI="test --vm=f30 --param=c-only"
+    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
+    - env: PGB_CI="test --vm=u18 --param=build-package --param=container-only"
     - env: PGB_CI=" doc --vm=u18"
-    - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
+    - env: PGB_CI="test --vm=co7 --param=build-package --param=module=mock --param=module=real"
     - dist: bionic
       env:
         - PGB_CI="test --vm=none --param=tz=America/New_York"

@@ -76,7 +76,8 @@ test.pl [options]
    --no-cleanup         don't cleanup after the last test is complete - useful for debugging
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
-   --build-only         compile the test library / packages and run tests only
+   --build-only         build the binary (and honor --build-package) but don't run tests
+   --build-package      build the package
    --build-max          max processes to use for builds (default 4)
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
@@ -85,10 +86,9 @@ test.pl [options]
    --no-gen             do not run code generation
    --code-count         generate code counts
    --smart              perform bin/package builds only when source timestamps have changed
-   --no-package         do not build packages
-   --dev                --smart --no-package --no-optimize
-   --dev-test           --no-package
-   --expect             --no-package --vm=co7 --db=9.6 --log-force
+   --dev                --smart --no-optimize
+   --dev-test           does nothing -- kept for backward compatibility
+   --expect             --vm=co7 --db=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
@@ -148,6 +148,7 @@ my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bBuildOnly = false;
+my $bBuildPackage = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
@@ -158,7 +159,6 @@ my $bGenOnly = false;
 my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
-my $bNoPackage = false;
 my $bDev = false;
 my $bDevTest = false;
 my $bBackTrace = false;
@@ -197,8 +197,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'pg-version=s' => \$strPgVersion,
             'log-force' => \$bLogForce,
             'build-only' => \$bBuildOnly,
+            'build-package' => \$bBuildPackage,
             'build-max=s' => \$iBuildMax,
-            'no-package' => \$bNoPackage,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
@@ -278,13 +278,7 @@ eval
     if ($bDev)
     {
         $bSmart = true;
-        $bNoPackage = true;
         $bNoOptimize = true;
-    }
-
-    if ($bDevTest)
-    {
-        $bNoPackage = true;
     }
 
     ################################################################################################################################
@@ -301,7 +295,6 @@ eval
     ################################################################################################################################
     if ($bExpect)
     {
-        $bNoPackage = true;
         $strVm = VM_EXPECT;
         $strPgVersion = '9.6';
         $bLogForce = true;
@@ -421,7 +414,8 @@ eval
                 trim(
                     executeTest(
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                            " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args --exclude=repo.manifest" .
+                            " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
+                            " --exclude=test/result --exclude=test/profile --exclude=repo.manifest" .
                             " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
 
         if (@stryModifiedList > 0)
@@ -589,7 +583,7 @@ eval
         my $bVersionDev = true;
         my $strVersionBase;
 
-        if (!$bDev)
+        if (!$bDev || $bBuildPackage)
         {
             # Make sure version number matches the latest release
             #-----------------------------------------------------------------------------------------------------------------------
@@ -718,7 +712,7 @@ eval
 
         &log(INFO, "builds required: ${strBuildRequired}");
 
-        # Build the binary, library and packages
+        # Build the binary and packages
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
@@ -825,37 +819,9 @@ eval
 
             # Build the package
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bNoPackage && $strVm ne VM_NONE)
+            if ($bBuildPackage && $strVm ne VM_NONE)
             {
-                my $strPackagePath = "${strVagrantPath}/package";
-                my $strPackageSmart = "${strPackagePath}/build.timestamp";
-                my @stryPackageSrcPath = ('src');
-
-                # Find the lastest modified time for additional dirs that affect the package build
-                foreach my $strPackageSrcPath (@stryPackageSrcPath)
-                {
-                    my $hManifest = $oStorageBackRest->manifest($strPackageSrcPath);
-
-                    foreach my $strFile (sort(keys(%{$hManifest})))
-                    {
-                        if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
-                        {
-                            $lTimestampLast = $hManifest->{$strFile}{modification_time};
-                        }
-                    }
-                }
-
-                # Rebuild if the modification time of the smart file does not equal the last changes in source paths
-                if ((!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
-                     $oStorageBackRest->info($strPackageSmart)->mtime < $lTimestampLast))
-                {
-                    if ($bSmart)
-                    {
-                        &log(INFO, 'package dependencies have changed, rebuilding...');
-                    }
-
-                    executeTest("rm -rf ${strPackagePath}");
-                }
+                my $strPackagePath = "${strBackRestBase}/test/result/package";
 
                 # Loop through VMs to do the package builds
                 my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
@@ -863,9 +829,9 @@ eval
 
                 foreach my $strBuildVM (@stryBuildVm)
                 {
-                    my $strBuildPath = "${strPackagePath}/${strBuildVM}/src";
+                    my $strBuildPath = "${strPackagePath}/${strBuildVM}";
 
-                    if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                    if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
@@ -884,7 +850,9 @@ eval
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src 2>&1'");
 
-                        executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
+                        executeTest(
+                            "rsync -r --exclude=.vagrant --exclude=.git --exclude=test/result ${strBackRestBase}/" .
+                                " ${strBuildPath}/");
                         executeTest(
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
@@ -944,7 +912,7 @@ eval
                         }
                     }
 
-                    if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+                    if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
                     {
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
@@ -1028,14 +996,6 @@ eval
                             executeTest("docker rm -f test-build");
                         }
                     }
-                }
-
-                # Write files to indicate the last time a build was successful
-                if (!$bNoPackage)
-                {
-                    $oStorageBackRest->put($strPackageSmart);
-                    utime($lTimestampLast, $lTimestampLast, $strPackageSmart) or
-                        confess "unable to set time for ${strPackageSmart}" . (defined($!) ? ":$!" : '');
                 }
             }
 

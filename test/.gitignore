@@ -8,3 +8,4 @@
 # Exclude paths where test code writes results (eventually want to get this down to just result)
 /coverage*
 /profile
+/result
