@@ -59,14 +59,10 @@ sub codeCountScan
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
-                 $strFile =~ '^test/coverage/' ||
                  $strFile =~ '^test/data/' ||
-                 $strFile =~ '^test/docker/' ||
                  $strFile =~ '^test/expect/' ||
-                 $strFile =~ '^test/lint/' ||
-                 $strFile =~ '^test/package/' ||
                  $strFile =~ '^test/patch/' ||
-                 $strFile =~ '^test/profile/' ||
+                 $strFile =~ '^test/result/' ||
                  $strFile eq 'test/scratch.txt' ||
                  $strFile eq 'test/src/valgrind.suppress' ||
                  $strFile eq 'test/src/lcov.conf');
@@ -83,7 +79,7 @@ sub codeCountScan
             $strClass = 'doc/core';
         }
         elsif ($strFile =~ '^build/' ||  $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
-               $strFile eq 'src/configure.ac')
+               $strFile =~ '^src/build/')
         {
             $strClass = 'build';
         }
@@ -131,7 +127,7 @@ sub codeCountScan
             $strType = 'yaml';
             $strForceLang = 'YAML';
         }
-        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure')
+        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
         {
             $strType = 'make';
             $strForceLang = 'make';
@@ -164,7 +160,6 @@ sub codeCountScan
         # Load the file counts
         my $strYaml = executeTest(
             "cloc --yaml ${strBasePath}/${strFile}" .
-            " --read-lang-def=${strBasePath}/test/code-count/code.def" .
             " --force-lang='${strForceLang}'", {bSuppressStdErr => true});
 
         # Error if the file was ignored

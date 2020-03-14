@@ -1,8 +1,0 @@
-XS
-    filter remove_matches ^\s*//
-    filter call_regexp_common C
-    filter remove_inline //.*$
-    filter remove_inline #.*$
-    extension xs
-    3rd_gen_scale 0.77
-    end_of_line_continuation \\$
