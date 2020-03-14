@@ -500,6 +500,12 @@ eval
                 if (!defined($rstrConfigure) || !defined($$rstrConfigure) ||
                     $strConfigureAcHash ne substr($$rstrConfigure, length($$rstrConfigure) - 41, 40))
                 {
+                    # Generate aclocal.m4
+                    my $strAcLocal = executeTest("cd ${strBackRestBase}/src/build && aclocal --OUT=-");
+                    $strAcLocal = trim($strAcLocal) . "\n";
+
+                    buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/build/aclocal.m4", $strAcLocal);
+
                     # Generate configure
                     my $strConfigure = executeTest("cd ${strBackRestBase}/src/build && autoconf --output=-");
                     $strConfigure =

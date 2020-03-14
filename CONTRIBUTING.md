@@ -11,8 +11,8 @@ This example is based on Ubuntu 19.04, but it should work on many versions of De
 pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
-       libssl-dev zlib1g-dev libxml2-dev libpq-dev libxml-checker-perl \
-       libyaml-libyaml-perl libdbd-pg-perl
+       autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev \
+       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl
 ```
 
 Coverage testing is an important component of pgBackRest testing and is integrated directly into the test harness. Unfortunately, the default version of lcov is often not compatible with gcc. lcov 1.14 works up to gcc 8.
