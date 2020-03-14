@@ -1,5 +1,10 @@
+# Exclude vagrant path and build log
 /.vagrant
-/scratch*
-/coverage*
 /ubuntu-bionic-18.04-cloudimg-console.log
+
+# Paths and files beginning with "scratch" will be excluded to give a place to store notes
+/scratch*
+
+# Exclude paths where test code writes results (eventually want to get this down to just result)
+/coverage*
 /profile
