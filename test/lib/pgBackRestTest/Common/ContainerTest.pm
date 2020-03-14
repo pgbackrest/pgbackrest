@@ -303,7 +303,7 @@ sub containerBuild
     my $bVmForce = shift;
 
     # Create temp path
-    my $strTempPath = $oStorageDocker->pathGet('test/.vagrant/docker');
+    my $strTempPath = $oStorageDocker->pathGet('test/result/docker');
     $oStorageDocker->pathCreate($strTempPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
     # Load container definitions from yaml
