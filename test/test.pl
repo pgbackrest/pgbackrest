@@ -415,7 +415,7 @@ eval
                     executeTest(
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
                             " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
-                            " --exclude=test/result --exclude=test/profile --exclude=repo.manifest" .
+                            " --exclude=test/result --exclude=repo.manifest" .
                             " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
 
         if (@stryModifiedList > 0)

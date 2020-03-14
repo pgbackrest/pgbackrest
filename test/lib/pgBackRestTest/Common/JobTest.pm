@@ -606,9 +606,10 @@ sub end
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
 
-            $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
+            $self->{oStorageTest}->pathCreate(
+                "$self->{strBackRestBase}/test/result/profile", {strMode => '0750', bIgnoreExists => true, bCreateParent => true});
             $self->{oStorageTest}->copy(
-                "$self->{strGCovPath}/gprof.txt", "$self->{strBackRestBase}/test/profile/gprof.txt");
+                "$self->{strGCovPath}/gprof.txt", "$self->{strBackRestBase}/test/result/profile/gprof.txt");
         }
 
         # If C code generate coverage info
