@@ -643,12 +643,13 @@ eval
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
-            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
+            executeTest("rm -rf ${strBackRestBase}/test/result/coverage/lcov/*");
 
             # Overwrite the C coverage report so it will load but not show old coverage
-            $oStorageTest->pathCreate("${strBackRestBase}/test/coverage", {strMode => '0770', bIgnoreExists => true});
+            $oStorageTest->pathCreate(
+                "${strBackRestBase}/test/result/coverage", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
             $oStorageBackRest->put(
-                "${strBackRestBase}/test/coverage/c-coverage.html", "<center>[ Generating New Report ]</center>");
+                "${strBackRestBase}/test/result/coverage/coverage.html", "<center>[ Generating New Report ]</center>");
 
             # Copy C code for coverage tests
             if (vmCoverageC($strVm) && !$bDryRun)
@@ -1192,7 +1193,7 @@ eval
                     executeTest(
                         "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/.vagrant/code/lcov.conf" .
                             " --prefix=${strBackRestBase}/test/.vagrant/code" .
-                            " --output-directory=${strBackRestBase}/test/coverage/c");
+                            " --output-directory=${strBackRestBase}/test/result/coverage/lcov");
 
                     foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                     {
@@ -1250,7 +1251,7 @@ eval
                     $oStorageBackRest->remove("${strBackRestBase}/test/.vagrant/code/all.lcov", {bIgnoreMissing => true});
                     coverageGenerate(
                         $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code",
-                        "${strBackRestBase}/test/coverage/c-coverage.html");
+                        "${strBackRestBase}/test/result/coverage/coverage.html");
 
                     if ($bCoverageSummary)
                     {
@@ -1263,7 +1264,7 @@ eval
                 }
                 else
                 {
-                    executeTest("rm -rf ${strBackRestBase}/test/coverage/c");
+                    executeTest("rm -rf ${strBackRestBase}/test/tesult/coverage");
                 }
             }
         }

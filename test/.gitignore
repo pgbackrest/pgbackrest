@@ -6,8 +6,8 @@
 /scratch*
 
 # Exclude paths where test code writes results (eventually want to get this down to just result)
-/coverage*
 /result
 
 # Obsolete result paths ignored so old results don't suddenly show up as new files
+/coverage*
 /profile
