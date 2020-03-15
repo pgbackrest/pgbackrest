@@ -66,12 +66,12 @@ sub new
 
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
+    my $strBinPath = dirname(dirname($strTestPath)) . '/bin/' . testRunGet()->vm() . '/' . PROJECT_EXE;
     my $strContainer = 'test-' . testRunGet()->vmId() . "-$strName";
 
     my $self = $class->SUPER::new(
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
-        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}"
-        ,dirname(dirname($strTestPath)) . '/cover_db:' . dirname(dirname($strTestPath)) . '/cover_db']);
+        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"]);
     bless $self, $class;
 
     # Set test path
@@ -79,9 +79,6 @@ sub new
 
     # Set permissions on the test path
     $self->executeSimple('chown -R ' . $self->userGet() . ':'. TEST_GROUP . ' ' . $self->testPath(), undef, 'root');
-
-    # Install bin and Perl C Library
-    jobInstallC(testRunGet()->basePath(), $self->{strOS}, $strContainer);
 
     # Return from function and log return values if any
     return logDebugReturn

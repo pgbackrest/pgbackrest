@@ -719,8 +719,7 @@ eval
         {
             my $oVm = vmGet();
             my $lTimestampLast;
-            my @stryBinSrcPath = ('src');
-            my $strBinPath = "${strVagrantPath}/bin";
+            my $strBinPath = "${strTestPath}/bin";
             my $rhBinBuild = {};
 
             # Build the binary
@@ -728,7 +727,7 @@ eval
             if ($bBinRequired)
             {
                 # Find the lastest modified time for dirs that affect the bin build
-                $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
+                $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, ['src']);
 
                 # Loop through VMs to do the C bin builds
                 my $bLogDetail = $strLogLevel eq 'detail';
@@ -742,7 +741,7 @@ eval
 
                 foreach my $strBuildVM (@stryBuildVm)
                 {
-                    my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
+                    my $strBuildPath = "${strBinPath}/${strBuildVM}";
                     my $bRebuild = !$bSmart;
                     $rhBinBuild->{$strBuildVM} = true;
 
@@ -757,9 +756,9 @@ eval
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
                     my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-                    $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h$/, @stryModifiedList);
+                    $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h\.in$/, @stryModifiedList);
 
-                    # Rebuild if the modification time of the smart file does equal the last changes in source paths
+                    # Rebuild if the modification time of the bin file is less than the last changes in source paths
                     my $strBinSmart = "${strBuildPath}/pgbackrest";
 
                     if ($bBuildOptionsDiffer ||
@@ -767,7 +766,9 @@ eval
                          (!$oStorageBackRest->exists($strBinSmart) ||
                           $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)))
                     {
-                        &log(INFO, "    bin dependencies have changed for ${strBuildVM}, rebuilding...");
+                        &log(
+                            INFO, "    bin dependencies have changed for ${strBuildVM}, " . ($bBuildOptionsDiffer ? 're' : '') .
+                            'building...');
 
                         $bRebuild = true;
                     }
@@ -780,32 +781,25 @@ eval
                         {
                             executeTest(
                                 "docker run -itd -h test-build --name=test-build" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
+                                    " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath} " .
+                                    containerRepo() . ":${strBuildVM}-test",
                                 {bSuppressStdErr => true});
                         }
 
-                        foreach my $strBinSrcPath (@stryBinSrcPath)
+                        if (!$bSmart || $bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
                         {
-                            $oStorageBackRest->pathCreate(
-                                "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                        }
+                            # Remove old path if it exists and save the build flags
+                            executeTest("rm -rf ${strBuildPath}");
+                            buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
-                        executeTest(
-                            "rsync -rt" . (!$bSmart || $bBuildOptionsDiffer ? " --delete-excluded" : '') .
-                            " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
-                            " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
-                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                        if ($bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
-                        {
                             executeTest(
-                                ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
-                                "bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
+                                ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
+                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure${strConfigOptions}'",
                                 {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(
-                            ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
+                            ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
                             "make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
                                 " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});
@@ -863,7 +857,7 @@ eval
                         #
                         # Use these commands to create a new patch (may need to modify first line):
                         # BRDIR=/backrest;BRVM=u18;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
-                        # DBDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/debian
+                        # DBDIR=${BRDIR?}/test/result/package/${BRVM}/debian
                         # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
                         my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
 
@@ -969,7 +963,7 @@ eval
                         #
                         # Use these commands to create a new patch (may need to modify first line):
                         # BRDIR=/backrest;BRVM=co7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
-                        # PKDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/SPECS
+                        # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
                         # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
                         my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";
 
@@ -1301,8 +1295,8 @@ eval
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
-        '/usr/bin/' . PROJECT_EXE,                                  # Path to the backrest executable
-        "${strVagrantPath}/bin/" . VM_NONE . '/src/' . PROJECT_EXE, # Path to the backrest Perl storage helper
+        dirname($strTestPath) . "/bin/${strVm}/" . PROJECT_EXE,     # Path to the pgbackrest binary
+        dirname($strTestPath) . "/bin/" . VM_NONE . '/' . PROJECT_EXE,  # Path to the backrest Perl storage helper
         $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info

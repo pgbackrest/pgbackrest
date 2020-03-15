@@ -203,14 +203,16 @@ sub run
             {
                 if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
                 {
+                    my $strBinPath = $self->{strTestPath} . '/bin/' . $self->{oTest}->{&TEST_VM} . '/' . PROJECT_EXE;
+
                     executeTest(
                         'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
                         " -v ${strHostTestPath}:${strVmTestPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
-                        " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
-                        containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
-                        "-test",
+                        " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
+                        ($self->{oTest}->{&TEST_BIN_REQ} ? " -v ${strBinPath}:${strBinPath}:ro" : '') .
+                        ' ' . containerRepo() . ':' . $self->{oTest}->{&TEST_VM} . '-test',
                         {bSuppressStdErr => true});
                 }
 
@@ -231,12 +233,6 @@ sub run
 
                     # Build directory has been initialized
                     $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
-                }
-
-                # If testing Perl code (or C code that calls the binary) install binary
-                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_BIN_REQ}))
-                {
-                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
             }
         }
@@ -379,8 +375,7 @@ sub run
                 }
 
                 # Determine where the project exe is located
-                my $strProjectExePath = $self->{oTest}->{&TEST_VM} eq VM_NONE ?
-                    "$self->{strBackRestBase}/test/.vagrant/bin/$self->{oTest}->{&TEST_VM}/src/" . PROJECT_EXE : PROJECT_EXE;
+                my $strProjectExePath = "$self->{strTestPath}/bin/$self->{oTest}->{&TEST_VM}/" . PROJECT_EXE;
 
                 # Is this test running in a container?
                 my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
@@ -783,26 +778,5 @@ sub end
         {name => 'bFail', value => $bFail, trace => true}
     );
 }
-
-####################################################################################################################################
-# Install C binary
-####################################################################################################################################
-sub jobInstallC
-{
-    my $strBasePath = shift;
-    my $strVm = shift;
-    my $strImage = shift;
-
-    my $oVm = vmGet();
-    my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
-    my $strBuildBinPath = "${strBuildPath}/src";
-
-    executeTest(
-        "docker exec -i -u root ${strImage} bash -c '" .
-        "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
-        'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
-}
-
-push(@EXPORT, qw(jobInstallC));
 
 1;
