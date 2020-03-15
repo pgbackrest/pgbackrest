@@ -320,6 +320,7 @@ testRun(void)
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--pg5-host=localhost");
+        strLstAddZ(argList, "--" CFGOPT_PG5_HOST_CMD "=pgbackrest-bogus");
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
         harnessCfgLoad(cfgCmdCheck, argList);
@@ -327,7 +328,7 @@ testRun(void)
         // Placeholder test for manifest
         TEST_ERROR(
             checkManifest(), UnknownError,
-            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: pgbackrest: command not found");
+            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: pgbackrest-bogus: command not found");
     }
 
     // *****************************************************************************************************************************
