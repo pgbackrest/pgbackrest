@@ -21,27 +21,27 @@ Log Handler
 Module variables
 ***********************************************************************************************************************************/
 // Log levels
-DEBUG_UNIT_EXTERN LogLevel logLevelStdOut = logLevelError;
-DEBUG_UNIT_EXTERN LogLevel logLevelStdErr = logLevelError;
-DEBUG_UNIT_EXTERN LogLevel logLevelFile = logLevelOff;
-DEBUG_UNIT_EXTERN LogLevel logLevelAny = logLevelError;
+static LogLevel logLevelStdOut = logLevelError;
+static LogLevel logLevelStdErr = logLevelError;
+static LogLevel logLevelFile = logLevelOff;
+static LogLevel logLevelAny = logLevelError;
 
 // Log file handles
-DEBUG_UNIT_EXTERN int logHandleStdOut = STDOUT_FILENO;
-DEBUG_UNIT_EXTERN int logHandleStdErr = STDERR_FILENO;
+static int logHandleStdOut = STDOUT_FILENO;
+static int logHandleStdErr = STDERR_FILENO;
 DEBUG_UNIT_EXTERN int logHandleFile = -1;
 
 // Has the log file banner been written yet?
 DEBUG_UNIT_EXTERN bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
-DEBUG_UNIT_EXTERN bool logTimestamp = false;
+static bool logTimestamp = false;
 
 // Size of the process id field
-DEBUG_UNIT_EXTERN int logProcessSize = 2;
+static int logProcessSize = 2;
 
 // Prefix DRY-RUN to log messages
-DEBUG_UNIT_EXTERN bool logDryRun = false;
+static bool logDryRun = false;
 
 /***********************************************************************************************************************************
 Dry run prefix
