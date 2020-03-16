@@ -615,7 +615,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
         if (cfgCommandRole() != cfgCmdRoleLocal && cfgCommandRole() != cfgCmdRoleRemote && resetLogLevel)
-            logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 1);
+            logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
         // specific command and would like to display actual option values in the help.

@@ -30,6 +30,12 @@ STRING_EXTERN(STORAGE_PATH_ARCHIVE_STR,                             STORAGE_PATH
 STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH_BACKUP);
 
 /***********************************************************************************************************************************
+Error message when writable storage is requested in dry-run mode
+***********************************************************************************************************************************/
+#define WRITABLE_WHILE_DRYRUN                                                                                                      \
+    "unable to get writable storage in dry-run mode or before dry-run is initialized"
+
+/***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
 static struct StorageHelper
@@ -47,6 +53,8 @@ static struct StorageHelper
 
     String *stanza;                                                 // Stanza for storage
     bool stanzaInit;                                                // Has the stanza been initialized?
+    bool dryRunInit;                                                // Has dryRun been initialized?  If not disallow writes.
+    bool dryRun;                                                    // Disallow writes in dry-run mode.
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
 
@@ -70,6 +78,18 @@ storageHelperInit(void)
         }
         MEM_CONTEXT_END();
     }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageHelperDryRunInit(bool dryRun)
+{
+    FUNCTION_TEST_VOID();
+
+    storageHelper.dryRunInit = true;
+    storageHelper.dryRun = dryRun;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -223,6 +243,10 @@ storagePgIdWrite(unsigned int hostId)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, hostId);
     FUNCTION_TEST_END();
+
+    // Writes not allowed in dry-run mode
+    if (!storageHelper.dryRunInit || storageHelper.dryRun)
+        THROW(AssertError, WRITABLE_WHILE_DRYRUN);
 
     if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[hostId - 1] == NULL)
     {
@@ -419,6 +443,10 @@ storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
 
+    // Writes not allowed in dry-run mode
+    if (!storageHelper.dryRunInit || storageHelper.dryRun)
+        THROW(AssertError, WRITABLE_WHILE_DRYRUN);
+
     if (storageHelper.storageRepoWrite == NULL)
     {
         storageHelperInit();
@@ -503,6 +531,10 @@ const Storage *
 storageSpoolWrite(void)
 {
     FUNCTION_TEST_VOID();
+
+    // Writes not allowed in dry-run mode
+    if (!storageHelper.dryRunInit || storageHelper.dryRun)
+        THROW(AssertError, WRITABLE_WHILE_DRYRUN);
 
     if (storageHelper.storageSpoolWrite == NULL)
     {

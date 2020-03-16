@@ -26,4 +26,10 @@ Setters
 void harnessLogLevelReset(void);
 void harnessLogLevelSet(LogLevel logLevel);
 
+/***********************************************************************************************************************************
+Internal Setters
+***********************************************************************************************************************************/
+// Set dry-run on or off.  This is usually called only from the config harness.
+void harnessLogDryRunSet(bool dryRun);
+
 #endif

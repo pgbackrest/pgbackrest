@@ -34,6 +34,11 @@ Repository storage types
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize dry-run for the current command. No writes are allowed until dry-run has been intitialized and no writes are allowed
+// after initialization if dry-run is true. Note that storageLocalWrite() is exempt from this rule. The primary purpose is to
+// prevent damage to the repository from an error in dry-run coding in the individual commands.
+void storageHelperDryRunInit(bool dryRun);
+
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 const Storage *storagePg(void);

@@ -61,6 +61,27 @@ testRun(void)
     // Write file for testing if storage is read-only
     String *writeFile = strNewFmt("%s/writefile", testPath());
 
+    // This test should always be first so the storage helper is uninitialized
+    // *****************************************************************************************************************************
+    if (testBegin("storageHelperDryRunInit()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is not initialized");
+
+        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is true");
+
+        storageHelperDryRunInit(true);
+
+        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("storageNew() and storageFree()"))
     {

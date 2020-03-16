@@ -334,9 +334,31 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoad()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dry-run valid, --no-dry-run");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_RESULT_VOID(storageRepoWrite(), "  check writable storage");
+        lockRelease(true);
+
+        TEST_TITLE("dry-run valid, dry-run");
+
+        strLstAddZ(argList, "--" CFGOPT_DRY_RUN);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_ERROR(
+            storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
+        lockRelease(true);
+
         // Command does not have umask
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("info"));
 

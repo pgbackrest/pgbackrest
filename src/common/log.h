@@ -20,7 +20,7 @@ Functions
 ***********************************************************************************************************************************/
 void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
-    unsigned int logProcessMax);
+    unsigned int logProcessMax, bool dryRun);
 void logClose(void);
 bool logFileSet(const char *logFile);
 

@@ -120,14 +120,16 @@ testRun(void)
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
 
-        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 99), "init logging");
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 99, true), "init logging");
         TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
         TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
         TEST_RESULT_INT(logLevelFile, logLevelError, "file logging is error");
         TEST_RESULT_INT(logProcessSize, 2, "process field size is 2");
+        TEST_RESULT_BOOL(logDryRun, true, "dry run is true");
 
-        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 100), "init logging");
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 100, false), "init logging");
         TEST_RESULT_INT(logProcessSize, 3, "process field size is 3");
+        TEST_RESULT_BOOL(logDryRun, false, "dry run is false");
     }
 
     // *****************************************************************************************************************************
@@ -166,12 +168,12 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("logInternal() and logInternalFmt()"))
     {
-        TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 1), "init logging to off");
+        TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 1, false), "init logging to off");
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format"),
             "message not logged anywhere");
 
-        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true, 1), "init logging to warn (timestamp on)");
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true, 1, false), "init logging to warn (timestamp on)");
         TEST_RESULT_VOID(logFileSet(BOGUS_STR), "ignore bogus filename because file logging is off");
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "TEST"), "log timestamp");
@@ -191,7 +193,7 @@ testRun(void)
         snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
         logHandleStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, false, 1), "init logging to warn (timestamp off)");
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, false, 1, false), "init logging to warn (timestamp off)");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
@@ -213,7 +215,7 @@ testRun(void)
             "log error with multiple lines");
         TEST_RESULT_Z(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
 
-        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 999), "init logging to debug");
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 999, false), "init logging to debug");
 
         // Log to file
         char fileFile[1024];
@@ -236,23 +238,24 @@ testRun(void)
         TEST_RESULT_Z(logBuffer, "P000  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
-        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99), "reduce log size");
+        TEST_RESULT_VOID(
+            logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99, true), "reduce process-id size and dry-run");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 1, "test.c", "test_func", 0, "info message"), "log info");
-        TEST_RESULT_Z(logBuffer, "P01   INFO: info message\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P01   INFO: [DRY-RUN] info message\n", "    check log");
         TEST_RESULT_VOID(
             logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message 2"), "log info");
-        TEST_RESULT_Z(logBuffer, "P99   INFO: info message 2\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P99   INFO: [DRY-RUN] info message 2\n", "    check log");
 
         // Reopen invalid log file
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
         TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
 
         // Close logging again
-        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99), "reduce log size");
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
         TEST_RESULT_BOOL(logHandleFile != -1, true, "log file is open");
 
@@ -275,9 +278,9 @@ testRun(void)
             stderrFile,
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
-            "INFO: info message\n"
-            "INFO: info message 2\n"
-            "WARN: unable to open log file '/BOGUS': Permission denied\n"
+            "INFO: [DRY-RUN] info message\n"
+            "INFO: [DRY-RUN] info message 2\n"
+            "WARN: [DRY-RUN] unable to open log file '/BOGUS': Permission denied\n"
             "      NOTE: process will continue without log file.");
 
         // Check file
@@ -288,8 +291,8 @@ testRun(void)
             "                 message2\n"
             "\n"
             "-------------------PROCESS START-------------------\n"
-            "P01   INFO: info message\n"
-            "P99   INFO: info message 2");
+            "P01   INFO: [DRY-RUN] info message\n"
+            "P99   INFO: [DRY-RUN] info message 2");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

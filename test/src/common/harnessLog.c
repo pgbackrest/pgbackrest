@@ -26,9 +26,11 @@ extern bool logFileBanner;
 extern void logAnySet(void);
 
 /***********************************************************************************************************************************
-Default log level for testing
+Log settings for testing
 ***********************************************************************************************************************************/
+LogLevel logLevelTest = logLevelInfo;
 LogLevel logLevelTestDefault = logLevelOff;
+bool logDryRunTest = false;
 
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
@@ -70,7 +72,7 @@ harnessLogInit(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99, false);
     logFileBanner = true;
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
@@ -78,6 +80,15 @@ harnessLogInit(void)
     logAnySet();
 
     FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+harnessLogDryRunSet(bool dryRun)
+{
+    logDryRunTest = dryRun;
+
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +99,9 @@ This is info by default but it can sometimes be useful to set the log level to s
 void
 harnessLogLevelSet(LogLevel logLevel)
 {
-    logInit(logLevelTestDefault, logLevelOff, logLevel, false, 99);
+    logLevelTest = logLevel;
+
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************
@@ -99,7 +112,9 @@ Set back to info
 void
 harnessLogLevelReset(void)
 {
-    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
+    logLevelTest = logLevelInfo;
+
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************

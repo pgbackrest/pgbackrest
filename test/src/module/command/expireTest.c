@@ -750,8 +750,8 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
             true, "  backup not removed");
         harnessLogResult(
-            "P00   INFO: expire full backup 20181119-152138F\n"
-            "P00   INFO: remove expired backup 20181119-152138F");
+            "P00   INFO: [DRY-RUN] expire full backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
 
         // Save a copy of the info files for a later test
         storageCopy(
@@ -828,13 +828,13 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath)))),
             true, "  backup not removed");
         harnessLogResult(strPtr(strNewFmt(
-            "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
+            "P00   INFO: [DRY-RUN] expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
-            "P00   INFO: remove expired backup 20181119-152800F_20181119-152252D\n"
-            "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
-            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00   INFO: remove expired backup 20181119-152800F\n"
-            "P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F\n"
+            "P00   INFO: [DRY-RUN] remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");

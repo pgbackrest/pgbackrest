@@ -16,6 +16,7 @@ Configuration Load
 #include "config/config.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Load log settings
@@ -49,7 +50,9 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptProcessMax))
         logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
-    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
+    logInit(
+        logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax,
+        cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -324,6 +327,9 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     {
         // Parse config from command line and config file
         configParse(argListSize, argList, true);
+
+        // Initialize dry-run mode for storage when valid for the current command
+        storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 
         // Load the log settings
         cfgLoadLogSetting();
