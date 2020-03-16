@@ -537,7 +537,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                                             if (strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0 &&
                                                 (archiveRange->stop == NULL ||
-                                                    strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0))
+                                                 strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0))
                                             {
                                                 removeArchive = false;
                                                 break;
