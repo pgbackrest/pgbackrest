@@ -50,6 +50,7 @@
 * Before starting work on an existing on an issue create a card for it an move to "in progress".
 * If only a card exists then move it to "in progress" and covert the card to an issue (or reopen the original issues if it was closed when the card was created).
 * When submitting a PR link it to the original issue.
+* WHEN MOVE TO IN PROGRESS ADD OWNER
 
     <!-- ======================================================================================================================= -->
     <section id="environment">
