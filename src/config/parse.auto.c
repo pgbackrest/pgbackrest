@@ -279,6 +279,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
     },
 
+    // dry-run option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_DRY_RUN,
+        .val = PARSE_OPTION_FLAG | cfgOptDryRun,
+    },
+
     // exclude option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2380,6 +2387,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
+    cfgOptDryRun,
     cfgOptExclude,
     cfgOptFilter,
     cfgOptHostId,

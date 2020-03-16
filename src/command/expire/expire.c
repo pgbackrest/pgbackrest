@@ -59,9 +59,14 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
-    storageRemoveP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+    // Execute the real expiration and deletion only if the dry-run option is disabled
+    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+    {
+        storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+        storageRemoveP(
+            storageRepoWrite(),
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+    }
 
     // Remove the backup from the info object
     infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -359,8 +364,12 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             {
                                 String *fullPath = storagePathP(
                                     storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
-                                storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
+
                                 LOG_INFO_FMT("remove archive path: %s", strPtr(fullPath));
+
+                                // Execute the real expiration and deletion only if the dry-run option is disabled
+                                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                                    storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                             }
 
                             // Continue to next directory
@@ -503,9 +512,14 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 // Remove the entire directory if all archive is expired
                                 if (removeArchive)
                                 {
-                                    storagePathRemoveP(
-                                        storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-                                        strPtr(walPath)), .recurse = true);
+                                    // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                                    {
+                                        storagePathRemoveP(
+                                            storageRepoWrite(),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                            .recurse = true);
+                                    }
 
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
@@ -547,10 +561,15 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
-                                            storageRemoveP(
-                                                storageRepoWrite(),
-                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
-                                                    strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
+                                            // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                                            {
+                                                storageRemoveP(
+                                                    storageRepoWrite(),
+                                                    strNewFmt(
+                                                        STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                                        strPtr(walSubPath)));
+                                            }
 
                                             // Track that this archive was removed
                                             archiveExpire.total++;
@@ -610,9 +629,13 @@ removeExpiredBackup(InfoBackup *infoBackup)
         {
             LOG_INFO_FMT("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
 
-            storagePathRemoveP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
-                .recurse = true);
+            // Execute the real expiration and deletion only if the dry-run mode is disabled
+            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+            {
+                storagePathRemoveP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
+                    .recurse = true);
+            }
         }
     }
 
@@ -640,9 +663,13 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+        // Store the new backup info only if the dry-run mode is disabled
+        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+        {
+            infoBackupSaveFile(
+                infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+        }
 
         removeExpiredBackup(infoBackup);
         removeExpiredArchive(infoBackup);
