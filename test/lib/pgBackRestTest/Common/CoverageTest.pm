@@ -71,6 +71,7 @@ push @EXPORT, qw(coverageLCovConfigGenerate);
 sub coverageGenerate
 {
     my $oStorage = shift;
+    my $strBasePath = shift;
     my $strCoveragePath = shift;
     my $strOutFile = shift;
 
@@ -87,8 +88,7 @@ sub coverageGenerate
             my $strCoverage = ${$oStorage->get("${strCoveragePath}/${strFileCov}")};
 
             # Show that the file is part of the coverage report even if there is no missing coverage
-            my $strFile = substr($strFileCov, 0, length($strFileCov) - 5) . '.c';
-            $rhCoverage->{$strFile} = undef;
+            my $strFile;
 
             my $iBranchLine = -1;
             my $iBranch = undef;
@@ -97,8 +97,14 @@ sub coverageGenerate
 
             foreach my $strLine (split("\n", $strCoverage))
             {
+                # Get source file name
+                if ($strLine =~ /^SF\:/)
+                {
+                    $strFile = substr($strLine, 3);
+                    $rhCoverage->{$strFile} = undef;
+                }
                 # Check branch coverage
-                if ($strLine =~ /^BRDA\:/)
+                elsif ($strLine =~ /^BRDA\:/)
                 {
                     my @stryData = split("\,", substr($strLine, 5));
 
@@ -216,7 +222,7 @@ sub coverageGenerate
     {
         if (defined($rhCoverage->{$strFile}{line}))
         {
-            my $strC = ${$oStorage->get("${strCoveragePath}/${strFile}")};
+            my $strC = ${$oStorage->get($strFile)};
             my @stryC = split("\n", $strC);
 
             foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
@@ -435,7 +441,7 @@ sub coverageGenerate
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
         my $oRow = $oTable->addNew(HTML_TR, 'list-table-row-' . (defined($rhCoverage->{$strFile}{line}) ? 'uncovered' : 'covered'));
-        $oRow->addNew(HTML_TD, 'list-table-row-file', {strContent => $strFile});
+        $oRow->addNew(HTML_TD, 'list-table-row-file', {strContent => substr($strFile, length($strBasePath) + 1)});
     }
 
     # Report on files that are missing coverage
@@ -446,14 +452,14 @@ sub coverageGenerate
             # Build the file report table
             $oTable = $oHtml->bodyGet()->addNew(HTML_TABLE, 'report-table');
 
-            $oTable->addNew(HTML_DIV, 'report-table-caption', {strContent => "${strFile}"});
+            $oTable->addNew(HTML_DIV, 'report-table-caption', {strContent => substr($strFile, length($strBasePath) + 1)});
 
             $oHeader = $oTable->addNew(HTML_TR, 'report-table-header');
             $oHeader->addNew(HTML_TH, 'report-table-header-line', {strContent => 'LINE'});
             $oHeader->addNew(HTML_TH, 'report-table-header-branch', {strContent => 'BRANCH'});
             $oHeader->addNew(HTML_TH, 'report-table-header-code', {strContent => 'CODE'});
 
-            my $strC = ${$oStorage->get("${strCoveragePath}/${strFile}")};
+            my $strC = ${$oStorage->get($strFile)};
             my @stryC = split("\n", $strC);
             my $iLastLine = undef;
 

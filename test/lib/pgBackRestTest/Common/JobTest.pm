@@ -626,7 +626,7 @@ sub end
                 "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
 
             # Generate coverage reports for the modules
-            my $strLCovConf = $self->{strBackRestBase} . '/test/.vagrant/code/lcov.conf';
+            my $strLCovConf = $self->{strBackRestBase} . '/test/result/coverage/raw/lcov.conf';
             coverageLCovConfigGenerate($self->{oStorageTest}, $strLCovConf, $self->{bCoverageSummary});
 
             my $strLCovExeBase = "lcov --config-file=${strLCovConf}";
@@ -659,9 +659,12 @@ sub end
                 }
 
                 # Generate lcov reports
-                my $strModulePath = $self->{strBackRestBase} . "/test/.vagrant/code/${strModuleOutName}";
-                my $strLCovFile = "${strModulePath}.lcov";
-                my $strLCovTotal = $self->{strBackRestBase} . "/test/.vagrant/code/all.lcov";
+                my $strModulePath =
+                    $self->{strTestPath} . "/repo/" .
+                    (${strModuleOutName} =~ /^test\// ?
+                        'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
+                my $strLCovFile = $self->{strBackRestBase} . "/test/result/coverage/raw/${strModuleOutName}.lcov";
+                my $strLCovTotal = $self->{strTestPath} . "/temp/all.lcov";
 
                 executeTest(
                     "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
@@ -709,7 +712,8 @@ sub end
                         # Fix source file name
                         $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
 
-                        $self->{oStorageTest}->put($strLCovFile, $strCoverage);
+                        $self->{oStorageTest}->put(
+                            $self->{oStorageTest}->openWrite($strLCovFile, {bPathCreate => true}), $strCoverage);
 
                         if ($self->{oStorageTest}->exists($strLCovTotal))
                         {

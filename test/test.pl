@@ -623,7 +623,7 @@ eval
         my $iTestFail = 0;
         my $iTestRetry = 0;
         my $oyProcess = [];
-        my $strCodePath = "${strBackRestBase}/test/.vagrant/code";
+        my $strCodePath = "${strBackRestBase}/test/result/coverage/raw";
 
         if (!$bDryRun || $bVmOut)
         {
@@ -639,10 +639,11 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
-            executeTest("rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
-            $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+            executeTest(
+                "rm -rf ${strTestPath}/temp ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
+            $oStorageTest->pathCreate("${strTestPath}/temp", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-            # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
+            # Remove old lcov dirs -- do it this way so the dirs stay open in finder/explorer, etc.
             executeTest("rm -rf ${strBackRestBase}/test/result/coverage/lcov/*");
 
             # Overwrite the C coverage report so it will load but not show old coverage
@@ -654,11 +655,8 @@ eval
             # Copy C code for coverage tests
             if (vmCoverageC($strVm) && !$bDryRun)
             {
-                $oStorageTest->pathCreate("${strCodePath}/test", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-
-                executeTest(
-                    "rsync -rt --delete --exclude=test ${strBackRestBase}/src/ ${strCodePath} && " .
-                    "rsync -rt --delete ${strBackRestBase}/test/src/module/ ${strCodePath}/test");
+                executeTest("rm -rf ${strBackRestBase}/test/result/coverage/raw/*");
+                $oStorageTest->pathCreate("${strCodePath}", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
             }
         }
 
@@ -1180,13 +1178,13 @@ eval
             {
                 &log(INFO, 'writing C coverage report');
 
-                my $strLCovFile = "${strBackRestBase}/test/.vagrant/code/all.lcov";
+                my $strLCovFile = "${strTestPath}/temp/all.lcov";
 
                 if ($oStorageBackRest->exists($strLCovFile))
                 {
                     executeTest(
-                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/.vagrant/code/lcov.conf" .
-                            " --prefix=${strBackRestBase}/test/.vagrant/code" .
+                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/result/coverage/raw/lcov.conf" .
+                            " --prefix=${strTestPath}/repo" .
                             " --output-directory=${strBackRestBase}/test/result/coverage/lcov");
 
                     foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
@@ -1199,7 +1197,7 @@ eval
 
                         my $strCoverageFile = $strCodeModule;
                         $strCoverageFile =~ s/^module/test/mg;
-                        $strCoverageFile = "${strBackRestBase}/test/.vagrant/code/${strCoverageFile}.lcov";
+                        $strCoverageFile = "${strBackRestBase}/test/result/coverage/raw/${strCoverageFile}.lcov";
 
                         my $strCoverage = $oStorageBackRest->get(
                             $oStorageBackRest->openRead($strCoverageFile, {bIgnoreMissing => true}));
@@ -1242,9 +1240,8 @@ eval
                         }
                     }
 
-                    $oStorageBackRest->remove("${strBackRestBase}/test/.vagrant/code/all.lcov", {bIgnoreMissing => true});
                     coverageGenerate(
-                        $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code",
+                        $oStorageBackRest, "${strTestPath}/repo", "${strBackRestBase}/test/result/coverage/raw",
                         "${strBackRestBase}/test/result/coverage/coverage.html");
 
                     if ($bCoverageSummary)
@@ -1252,7 +1249,7 @@ eval
                         &log(INFO, 'writing C coverage summary report');
 
                         coverageDocSummaryGenerate(
-                            $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code",
+                            $oStorageBackRest, "${strBackRestBase}/test/result/coverage/raw",
                             "${strBackRestBase}/doc/xml/auto/metric-coverage-report.auto.xml");
                     }
                 }
