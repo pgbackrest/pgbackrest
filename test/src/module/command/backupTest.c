@@ -486,6 +486,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Test pagechecksum
+
+        // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
+        // where a file grows while a backup is running.
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile!!!"));
+
         TEST_ASSIGN(
             result,
             backupFile(
@@ -589,14 +594,14 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1, backupLabel,
-                true, cipherTypeNone, NULL),
+                pgFile, false, 12, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 16, "    copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "TEST");
+        TEST_RESULT_STR_Z(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
+            (strEqZ(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 

@@ -85,7 +85,8 @@ backupFile(
             if (delta)
             {
                 // Generate checksum/size for the pg file
-                IoRead *read = storageReadIo(storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing));
+                IoRead *read = storageReadIo(
+                    storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .limit = PRMUINT64(pgFileSize)));
                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                 ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
