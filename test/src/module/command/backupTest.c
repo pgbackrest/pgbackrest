@@ -592,10 +592,11 @@ testRun(void)
                 pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1, backupLabel,
                 true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 16, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
@@ -777,11 +778,11 @@ testRun(void)
                 pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeAes256Cbc, strNew("12345678")),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
+        TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file (size missmatch) to encrypted repo success");
 
@@ -1982,8 +1983,8 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/1 {file, s=4}\n"
-                "pg_data/base/1/2 {file, s=4}\n"
+                "pg_data/base/1/1 {file, s=0}\n"
+                "pg_data/base/1/2 {file, s=1}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"

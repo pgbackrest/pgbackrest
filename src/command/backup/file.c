@@ -192,7 +192,8 @@ backupFile(
 
             // Setup pg file for read
             StorageRead *read = storageNewReadP(
-                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible);
+                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible,
+                .limit = PRMUINT64(pgFileSize));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
