@@ -105,7 +105,7 @@ typedef struct StorageInterfaceNewReadParam
     // helpful.
     bool compressible;
 
-    // Limit bytes read from the file.  For now the offset is always 0.
+    // Limit bytes read from the file
     const Variant *limit;
 } StorageInterfaceNewReadParam;
 

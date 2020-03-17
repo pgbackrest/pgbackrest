@@ -635,7 +635,7 @@ New object
 ***********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
-    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress),
+    .feature = 1 << storageFeaturePath | 1 << storageFeatureCompress | 1 << storageFeatureLimitRead,
 
     .exists = storagePosixExists,
     .info = storagePosixInfo,
@@ -693,11 +693,7 @@ storagePosixNewInternal(
 
         // If this is a posix driver then add link features
         if (strEq(type, STORAGE_POSIX_TYPE_STR))
-        {
-            driver->interface.feature |=
-                1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
-                1 << storageFeatureLimitRead;
-        }
+            driver->interface.feature |= (1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync);
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

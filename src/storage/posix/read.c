@@ -114,12 +114,13 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
 
     if (!this->eof)
     {
-        // Read and handle errors
+        // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
 
         if (this->current + expectedBytes > this->limit)
             expectedBytes = (size_t)(this->limit - this->current);
 
+        // Read from file
         actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
 
         // Error occurred during read

@@ -19,7 +19,6 @@ typedef struct Storage Storage;
 #include "common/io/filter/group.h"
 #include "common/time.h"
 #include "common/type/param.h"
-#include "common/type/variant.h"
 #include "storage/info.h"
 #include "storage/read.h"
 #include "storage/write.h"
