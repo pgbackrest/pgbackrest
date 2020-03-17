@@ -246,10 +246,12 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                storageInterfaceNewReadP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1))));
+                storageInterfaceNewReadP(
+                    driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)),
+                    .limit = varLstGet(paramList, 2) == NULL ? NULL : PRMUINT64(varUInt64(varLstGet(paramList, 2)))));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
+            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 3));
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);

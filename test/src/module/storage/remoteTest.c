@@ -422,6 +422,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("missing.txt")));
         varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
@@ -433,12 +434,13 @@ testRun(void)
 
         // Check protocol function directly (file exists)
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA!"));
         ioBufferSizeSet(4);
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt64(8));
 
         // Create filters to test filter logic
         IoFilterGroup *filterGroup = ioFilterGroupNew();
@@ -469,9 +471,12 @@ testRun(void)
 
         // Check protocol function directly (file exists but all data goes to sink)
         // -------------------------------------------------------------------------------------------------------------------------
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
+
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, NULL);
 
         // Create filters to test filter logic
         filterGroup = ioFilterGroupNew();
@@ -496,6 +501,7 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
         TEST_ERROR(

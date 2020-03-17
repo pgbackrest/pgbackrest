@@ -811,6 +811,16 @@ testRun(void)
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_INT(bufSize(buffer), 9, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read limited bytes");
+
+        ioBufferSizeSet(2);
+
+        TEST_ASSIGN(
+            buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()), .limit = PRMUINT64(7))), "get");
+        TEST_RESULT_INT(bufSize(buffer), 7, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
     }
 
     // *****************************************************************************************************************************
@@ -842,10 +852,11 @@ testRun(void)
         TEST_CREATE_NOPERM();
         StorageRead *file = NULL;
 
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true, .limit = PRMUINT64(44)), "new read file");
         TEST_RESULT_PTR(storageRead(file), file->driver, "    check driver");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "    check ignore missing");
         TEST_RESULT_STR(storageReadName(file), fileNoPerm, "    check name");
+        TEST_RESULT_UINT(prmUInt64(storageReadLimit(file)), 44, "    check limit");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm), "new no perm read file");

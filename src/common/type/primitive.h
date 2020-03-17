@@ -15,6 +15,7 @@ typedef struct PrmUInt64 PrmUInt64;
 Functions
 ***********************************************************************************************************************************/
 PrmUInt64 *prmUInt64New(uint64_t value);
+PrmUInt64 *prmUInt64Dup(const PrmUInt64 *this);
 uint64_t prmUInt64(const PrmUInt64 *this);
 
 /***********************************************************************************************************************************
@@ -35,7 +36,7 @@ Frequently used constant primitives can be declared with these macros at compile
 ***********************************************************************************************************************************/
 // Create a UInt64 primitive constant inline from a uint64_t
 #define PRMUINT64(valueParam)                                                                                                      \
-    ((const PrmUInt64 *)&(const UInt64Const){.value = valueParam})
+    ((const PrmUInt64 *)&(const PrmUInt64Const){.value = valueParam})
 
 /***********************************************************************************************************************************
 Macros for function logging

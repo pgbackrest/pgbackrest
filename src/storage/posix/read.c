@@ -118,7 +118,7 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
         size_t expectedBytes = bufRemains(buffer);
 
         if (this->current + expectedBytes > this->limit)
-            expectedBytes = this->limit - this->current;
+            expectedBytes = (size_t)(this->limit - this->current);
 
         actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
 
@@ -228,6 +228,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
                 .type = STORAGE_POSIX_TYPE_STR,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .limit = prmUInt64Dup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {
