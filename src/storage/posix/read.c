@@ -28,6 +28,8 @@ typedef struct StorageReadPosix
     StoragePosix *storage;                                          // Storage that created this object
 
     int handle;
+    uint64_t current;                                               // Current bytes read from file
+    uint64_t limit;                                                 // Limit bytes to be read from file
     bool eof;
 } StorageReadPosix;
 
@@ -112,8 +114,13 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
 
     if (!this->eof)
     {
-        // Read and handle errors
+        // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
+
+        if (this->current + expectedBytes > this->limit)
+            expectedBytes = (size_t)(this->limit - this->current);
+
+        // Read from file
         actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
 
         // Error occurred during read
@@ -122,10 +129,11 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
 
         // Update amount of buffer used
         bufUsedInc(buffer, (size_t)actualBytes);
+        this->current += (uint64_t)actualBytes;
 
-        // If less data than expected was read then EOF.  The file may not actually be EOF but we are not concerned with files that
-        // are growing.  Just read up to the point where the file is being extended.
-        if ((size_t)actualBytes != expectedBytes)
+        // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
+        // not concerned with files that are growing.  Just read up to the point where the file is being extended.
+        if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
     }
 
@@ -191,11 +199,12 @@ storageReadPosixHandle(const THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 StorageRead *
-storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing)
+storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -212,11 +221,15 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
             .storage = storage,
             .handle = -1,
 
+            // Rather than enable/disable limit checking just always use a limit
+            .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
+
             .interface = (StorageReadInterface)
             {
                 .type = STORAGE_POSIX_TYPE_STR,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

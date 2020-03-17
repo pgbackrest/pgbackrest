@@ -23,6 +23,10 @@ StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
 Getters
 ***********************************************************************************************************************************/
 IoRead *storageReadIo(const StorageRead *this);
+
+// Is there a read limit?
+const Variant *storageReadLimit(const StorageRead *this);
+
 bool storageReadIgnoreMissing(const StorageRead *this);
 const String *storageReadName(const StorageRead *this);
 const String *storageReadType(const StorageRead *this);

@@ -403,6 +403,10 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "    check contents");
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "    check read size");
 
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRemote, strNew("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "    check contents");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "    check read size");
+
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageRemote->driver)->compressLevel = 3;
 
@@ -422,6 +426,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("missing.txt")));
         varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
@@ -433,12 +438,13 @@ testRun(void)
 
         // Check protocol function directly (file exists)
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA!"));
         ioBufferSizeSet(4);
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt64(8));
 
         // Create filters to test filter logic
         IoFilterGroup *filterGroup = ioFilterGroupNew();
@@ -469,9 +475,12 @@ testRun(void)
 
         // Check protocol function directly (file exists but all data goes to sink)
         // -------------------------------------------------------------------------------------------------------------------------
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
+
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, NULL);
 
         // Create filters to test filter logic
         filterGroup = ioFilterGroupNew();
@@ -496,6 +505,7 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
         TEST_ERROR(
