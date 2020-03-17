@@ -356,6 +356,29 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
     FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
 }
 
+/**********************************************************************************************************************************/
+InfoBackupData *
+infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupLabel != NULL);
+
+    // Loop through all the current backups and return a pointer to the data if the label is found, else NULL
+    for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
+    {
+        if (strCmp(infoBackupData(this, idx).backupLabel, backupLabel) == 0)
+            FUNCTION_TEST_RETURN((InfoBackupData *)lstGet(this->backup, idx));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
+
 /***********************************************************************************************************************************
 Add a backup to the current list
 ***********************************************************************************************************************************/

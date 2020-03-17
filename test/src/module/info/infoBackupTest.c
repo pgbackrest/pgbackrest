@@ -156,17 +156,18 @@ testRun(void)
         TEST_RESULT_INT(backupData.backupTimestampStart, 1482182846, "    timestamp start");
         TEST_RESULT_INT(backupData.backupTimestampStop, 1482182861, "    timestamp stop");
 
-        backupData = infoBackupData(infoBackup, 1);
-        TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F_20161219-212803D", "diff backup label");
-        TEST_RESULT_STR_Z(backupData.backupType, "diff", "    backup type diff");
-        TEST_RESULT_INT(backupData.backupInfoRepoSize, 3159811, "    repo size");
-        TEST_RESULT_INT(backupData.backupInfoRepoSizeDelta, 15765, "    repo delta");
-        TEST_RESULT_INT(backupData.backupInfoSize, 26897030, "    backup size");
-        TEST_RESULT_INT(backupData.backupInfoSizeDelta, 163866, "    backup delta");
-        TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "    backup prior exists");
+        InfoBackupData *backupDataPtr = infoBackupDataByLabel(infoBackup, STRDEF("20161219-212741F_20161219-212803D"));
+        TEST_RESULT_STR_Z(backupDataPtr->backupLabel, "20161219-212741F_20161219-212803D", "diff backup label");
+        TEST_RESULT_STR_Z(backupDataPtr->backupType, "diff", "    backup type diff");
+        TEST_RESULT_INT(backupDataPtr->backupInfoRepoSize, 3159811, "    repo size");
+        TEST_RESULT_INT(backupDataPtr->backupInfoRepoSizeDelta, 15765, "    repo delta");
+        TEST_RESULT_INT(backupDataPtr->backupInfoSize, 26897030, "    backup size");
+        TEST_RESULT_INT(backupDataPtr->backupInfoSizeDelta, 163866, "    backup delta");
+        TEST_RESULT_STR_Z(backupDataPtr->backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
-            (strLstSize(backupData.backupReference) == 1 && strLstExistsZ(backupData.backupReference, "20161219-212741F")), true,
+            (strLstSize(backupDataPtr->backupReference) == 1 && strLstExistsZ(backupDataPtr->backupReference, "20161219-212741F")), true,
             "    backup reference exists");
+        TEST_RESULT_PTR(infoBackupDataByLabel(infoBackup, STRDEF("20161219-12345")), NULL, "    backup label does not exist");
 
         backupData = infoBackupData(infoBackup, 2);
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F_20161219-212918I", "incr backup label");
