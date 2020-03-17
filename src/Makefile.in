@@ -89,7 +89,6 @@ SRCS = \
 	common/type/keyValue.c \
 	common/type/list.c \
 	common/type/mcv.c \
-	common/type/primitive.c \
 	common/type/string.c \
 	common/type/stringList.c \
 	common/type/variant.c \

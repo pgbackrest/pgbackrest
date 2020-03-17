@@ -5,7 +5,6 @@ Storage Read Interface Internal
 #define STORAGE_READ_INTERN_H
 
 #include "common/io/read.intern.h"
-#include "common/type/primitive.h"
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,7 @@ typedef struct StorageReadInterface
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
-    const PrmUInt64 *limit;                                         // Limit how many bytes are read
+    const Variant *limit;                                           // Limit how many bytes are read
     IoReadInterface ioInterface;
 } StorageReadInterface;
 

@@ -19,7 +19,7 @@ typedef struct Storage Storage;
 #include "common/io/filter/group.h"
 #include "common/time.h"
 #include "common/type/param.h"
-#include "common/type/primitive.h"
+#include "common/type/variant.h"
 #include "storage/info.h"
 #include "storage/read.h"
 #include "storage/write.h"
@@ -157,7 +157,7 @@ typedef struct StorageNewReadParam
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool compressible;
-    const PrmUInt64 *limit;                                         // Limit bytes to read from the file
+    const Variant *limit;                                           // Limit bytes to read from the file (must be varTypeUInt64)
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \

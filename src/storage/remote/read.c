@@ -72,7 +72,7 @@ storageReadRemoteOpen(THIS_VOID)
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
-        protocolCommandParamAdd(command, this->interface.limit == NULL ? NULL : VARUINT64(prmUInt64(this->interface.limit)));
+        protocolCommandParamAdd(command, this->interface.limit);
         protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         result = varBool(protocolClientExecute(this->client, command, true));
@@ -179,7 +179,7 @@ New object
 StorageRead *
 storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, const PrmUInt64 *limit)
+    unsigned int compressLevel, const Variant *limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -188,7 +188,7 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
-        FUNCTION_LOG_PARAM(PRM_UINT64, limit);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -214,7 +214,7 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
-                .limit = prmUInt64Dup(limit),
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

@@ -13,6 +13,7 @@ Object type
 typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
+#include "common/type/variant.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -23,6 +24,10 @@ StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
 Getters
 ***********************************************************************************************************************************/
 IoRead *storageReadIo(const StorageRead *this);
+
+// Is there a read limit?
+const Variant *storageReadLimit(const StorageRead *this);
+
 bool storageReadIgnoreMissing(const StorageRead *this);
 const String *storageReadName(const StorageRead *this);
 const String *storageReadType(const StorageRead *this);

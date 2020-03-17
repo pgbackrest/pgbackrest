@@ -198,12 +198,12 @@ storageReadPosixHandle(const THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 StorageRead *
-storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const PrmUInt64 *limit)
+storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(PRM_UINT64, limit);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -221,14 +221,14 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
             .handle = -1,
 
             // Rather than enable/disable limit checking just always use a limit
-            .limit = limit == NULL ? UINT64_MAX : prmUInt64(limit),
+            .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
 
             .interface = (StorageReadInterface)
             {
                 .type = STORAGE_POSIX_TYPE_STR,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .limit = prmUInt64Dup(limit),
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {
