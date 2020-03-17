@@ -471,7 +471,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(pgFile, false, 9999999, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
-            "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+            "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         ((Storage *)storageRepo())->interface.feature = feature;
 
