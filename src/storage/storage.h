@@ -19,6 +19,7 @@ typedef struct Storage Storage;
 #include "common/io/filter/group.h"
 #include "common/time.h"
 #include "common/type/param.h"
+#include "common/type/primitive.h"
 #include "storage/info.h"
 #include "storage/read.h"
 #include "storage/write.h"
@@ -44,6 +45,9 @@ typedef enum
 
     // Does the storage support hardlinks?  Hardlinks allow the same file to linked into multiple paths to save space.
     storageFeatureHardLink,
+
+    // Can the storage limit the amount of data read from a file?
+    storageFeatureLimitRead,
 
     // Does the storage support symlinks?  Symlinks allow paths/files/links to be accessed from another path.
     storageFeatureSymLink,
@@ -153,6 +157,7 @@ typedef struct StorageNewReadParam
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool compressible;
+    const PrmUInt64 *limit;                                         // Limit bytes to read from the file
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \

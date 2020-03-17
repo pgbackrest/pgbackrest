@@ -104,6 +104,9 @@ typedef struct StorageInterfaceNewReadParam
     // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
     // helpful.
     bool compressible;
+
+    // Limit bytes read from the file.  For now the offset is always 0.
+    const PrmUInt64 *limit;
 } StorageInterfaceNewReadParam;
 
 typedef StorageRead *StorageInterfaceNewRead(

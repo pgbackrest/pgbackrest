@@ -389,13 +389,13 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(PRM_UINT64, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -693,7 +693,11 @@ storagePosixNewInternal(
 
         // If this is a posix driver then add link features
         if (strEq(type, STORAGE_POSIX_TYPE_STR))
-            driver->interface.feature |= (1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync);
+        {
+            driver->interface.feature |=
+                1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
+                1 << storageFeatureLimitRead;
+        }
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
