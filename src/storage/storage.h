@@ -43,7 +43,7 @@ typedef enum
     // will need to checked after write to see if it is different.
     storageFeatureCompress,
 
-    // Does the storage support hardlinks?  Hardlinks allow the same file to linked into multiple paths to save space.
+    // Does the storage support hardlinks?  Hardlinks allow the same file to be linked into multiple paths to save space.
     storageFeatureHardLink,
 
     // Can the storage limit the amount of data read from a file?
