@@ -13,7 +13,6 @@ Object type
 typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
-#include "common/type/variant.h"
 
 /***********************************************************************************************************************************
 Functions
