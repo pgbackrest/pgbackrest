@@ -832,6 +832,10 @@ my %hConfigDefine =
             {
                 &CFGDEF_DEFAULT => 'latest',
             },
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
             &CFGCMD_INFO =>
             {
                 &CFGDEF_REQUIRED => false,

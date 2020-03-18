@@ -79,6 +79,25 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     FUNCTION_LOG_RETURN_VOID();
 }
 
+static void
+expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(backupLabel != NULL);
+
+    InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
+
+    if (backupData == NULL)
+        THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Expire differential backups
 ***********************************************************************************************************************************/
@@ -659,6 +678,10 @@ cmdExpire(void)
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
+
+        // If the --set option is valid (i.e. expire is called on its own) and set then attempt to expire the requested backup
+        if (cfgOptionValid(cfgOptSet) || cfgOptionTest(cfgOptSet))
+            expireBackupSet(infoBackup, cfgOptionStr(cfgOptSet));
 
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
