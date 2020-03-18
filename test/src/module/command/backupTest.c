@@ -2074,14 +2074,26 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
-            // Create files to copy from the standby.  The files will be zero-size on the primary and non-zero on the standby to test
-            // that they were copied from the right place.
+            // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
+            // but not bytes will be copied.
             storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("DATA"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
+
+            // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
+            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // the checksum will change but not the size.
             storagePutP(
                 storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
-                BUFSTRDEF("D"));
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("DATA"));
+                BUFSTRDEF("DA"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("5678"));
+
+            // Create file to copy from the standby. This file will be larger on the primary than the standby and have no common
+            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // the checksum and size will change.
+            storagePutP(
+                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart),
+                BUFSTRDEF("TEST"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/3")), BUFSTRDEF("ABC"));
 
             // Create a file on the primary that does not exist on the standby to test that the file is removed from the manifest
             storagePutP(
@@ -2121,7 +2133,8 @@ testRun(void)
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/1 {file, s=0}\n"
-                "pg_data/base/1/2 {file, s=1}\n"
+                "pg_data/base/1/2 {file, s=2}\n"
+                "pg_data/base/1/3 {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"
@@ -2136,9 +2149,10 @@ testRun(void)
                     ",\"timestamp\":1571200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1571200002}\n"
-                "pg_data/base/1/1={\"checksum\":\"580393f5a94fb469585f5dd2a6859a4aab899f37\",\"master\":false,\"size\":4"
+                "pg_data/base/1/1={\"master\":false,\"size\":0,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"master\":false,\"size\":2"
                     ",\"timestamp\":1571200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"580393f5a94fb469585f5dd2a6859a4aab899f37\",\"master\":false,\"size\":4"
+                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"master\":false,\"size\":3"
                     ",\"timestamp\":1571200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1571200000}\n"
                 "pg_data/pg_xlog/0000000105DA69C000000000={\"size\":16777216,\"timestamp\":1571200002}\n"
