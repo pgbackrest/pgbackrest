@@ -58,7 +58,7 @@
                 <exe-cmd>
                     apt-get install rsync git devscripts build-essential valgrind autoconf
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev
-                    libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl
+                    libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -380,9 +380,8 @@ harnessLogResult(
             <code-block>
 /backrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
             </code-block>
-            <admonition type="note">If you have changed branches, it is recommended the above be run with <code>--dev-test</code> instead of <code>--dev</code> to rebuild the code from scratch.</admonition>
 
-            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under <file>backrest/test/coverage/c-coverage.html</file> and will highlight code that has not been tested.</p>
+            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage</file> (or <file>test/coverage</file> prior to version 2.25) and will highlight code that has not been tested.</p>
 
             <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, we see in <b>define.yaml</b> above that there are two tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.</p>
 

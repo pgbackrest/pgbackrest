@@ -12,7 +12,7 @@ pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev \
-       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl
+       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
 ```
 
 Coverage testing is an important component of pgBackRest testing and is integrated directly into the test harness. Unfortunately, the default version of lcov is often not compatible with gcc. lcov 1.14 works up to gcc 8.
@@ -342,9 +342,7 @@ Unit tests are run, and coverage of the code being tested is provided, by runnin
 ```
 /backrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
 ```
-> **NOTE:** If you have changed branches, it is recommended the above be run with `--dev-test` instead of `--dev` to rebuild the code from scratch.
-
-Because no test run is specified and `--coverage-only` has been requested, a coverage report will be generated and written to the local file system under `backrest/test/coverage/c-coverage.html` and will highlight code that has not been tested.
+Because no test run is specified and `--coverage-only` has been requested, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage` (or `test/coverage` prior to version 2.25) and will highlight code that has not been tested.
 
 Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, we see in **define.yaml** above that there are two tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.
 ```
