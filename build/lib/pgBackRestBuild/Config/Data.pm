@@ -828,10 +828,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_RESTORE =>
-            {
-                &CFGDEF_DEFAULT => 'latest',
-            },
             &CFGCMD_EXPIRE =>
             {
                 &CFGDEF_REQUIRED => false,
@@ -843,6 +839,10 @@ my %hConfigDefine =
                 {
                     &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
                 },
+            },
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_DEFAULT => 'latest',
             },
         }
     },
