@@ -344,6 +344,8 @@ Macros to ease the use of common data types
     TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(strPtr(statement), resultExpected, __VA_ARGS__);
+#define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
+    TEST_RESULT_Z(strPtr(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
 
