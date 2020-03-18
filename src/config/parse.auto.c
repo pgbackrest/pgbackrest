@@ -1952,23 +1952,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionArchiveType,
     },
 
-    // repo-retention-days option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_REPO1_RETENTION_DAYS,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionDays,
-    },
-    {
-        .name = "reset-" CFGOPT_REPO1_RETENTION_DAYS,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionDays,
-    },
-    {
-        .name = "retention-days",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionDays,
-    },
-
     // repo-retention-diff option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2001,6 +1984,23 @@ static const struct option optionList[] =
         .name = "retention-full",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionFull,
+    },
+
+    // repo-retention-period option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_RETENTION_PERIOD,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionPeriod,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_RETENTION_PERIOD,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionPeriod,
+    },
+    {
+        .name = "retention-period",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionPeriod,
     },
 
     // repo-s3-bucket option and deprecations
@@ -2520,9 +2520,9 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
     cfgOptRepoRetentionArchiveType,
-    cfgOptRepoRetentionDays,
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
+    cfgOptRepoRetentionPeriod,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,

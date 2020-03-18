@@ -90,7 +90,7 @@ expireTimeBackup(InfoBackup *infoBackup)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int backupRetentionDays = cfgOptionTest(cfgOptRepoRetentionDays) ? cfgOptionUInt(cfgOptRepoRetentionDays) : 0;
+        unsigned int backupRetentionDays = cfgOptionTest(cfgOptRepoRetentionPeriod) ? cfgOptionUInt(cfgOptRepoRetentionPeriod) : 0;
         // Find all the expired differential backups
         if (backupRetentionDays > 0)
         {
@@ -703,8 +703,14 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        expireTimeBackup(infoBackup);
-        expireFullBackup(infoBackup);
+        if (cfgOptionTest(cfgOptRepoRetentionDiff))
+        {
+            expireTimeBackup(infoBackup);
+        }
+        else
+        {
+            expireFullBackup(infoBackup);
+        }
         expireDiffBackup(infoBackup);
 
         infoBackupSaveFile(

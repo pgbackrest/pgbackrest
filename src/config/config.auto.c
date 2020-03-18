@@ -430,9 +430,9 @@ STRING_EXTERN(CFGOPT_REPO1_HOST_USER_STR,                           CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_PATH_STR,                                CFGOPT_REPO1_PATH);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_STR,                   CFGOPT_REPO1_RETENTION_ARCHIVE);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE_STR,              CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_DAYS_STR,                      CFGOPT_REPO1_RETENTION_DAYS);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_DIFF_STR,                      CFGOPT_REPO1_RETENTION_DIFF);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_FULL_STR,                      CFGOPT_REPO1_RETENTION_FULL);
+STRING_EXTERN(CFGOPT_REPO1_RETENTION_PERIOD_STR,                    CFGOPT_REPO1_RETENTION_PERIOD);
 STRING_EXTERN(CFGOPT_REPO1_S3_BUCKET_STR,                           CFGOPT_REPO1_S3_BUCKET);
 STRING_EXTERN(CFGOPT_REPO1_S3_CA_FILE_STR,                          CFGOPT_REPO1_S3_CA_FILE);
 STRING_EXTERN(CFGOPT_REPO1_S3_CA_PATH_STR,                          CFGOPT_REPO1_S3_CA_PATH);
@@ -1645,14 +1645,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_DAYS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionDays)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
         CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_DIFF)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionDiff)
@@ -1664,6 +1656,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_FULL)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionFull)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_PERIOD)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionPeriod)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
