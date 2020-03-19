@@ -2069,7 +2069,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
-            // but not bytes will be copied.
+            // but no bytes will be copied.
             storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
             storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
 
