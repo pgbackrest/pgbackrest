@@ -156,7 +156,9 @@ typedef struct StorageNewReadParam
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool compressible;
-    const Variant *limit;                                           // Limit bytes to read from the file (must be varTypeUInt64)
+
+    // Limit bytes to read from the file (must be varTypeUInt64). NULL for no limit.
+    const Variant *limit;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \

@@ -29,7 +29,7 @@ typedef struct StorageReadPosix
 
     int handle;
     uint64_t current;                                               // Current bytes read from file
-    uint64_t limit;                                                 // Limit bytes to be read from file
+    uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
 } StorageReadPosix;
 
@@ -221,7 +221,9 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
             .storage = storage,
             .handle = -1,
 
-            // Rather than enable/disable limit checking just always use a limit
+            // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
+            // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
+            // read so it seems worthwhile.
             .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
 
             .interface = (StorageReadInterface)

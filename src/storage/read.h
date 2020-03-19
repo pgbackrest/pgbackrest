@@ -24,7 +24,7 @@ Getters
 ***********************************************************************************************************************************/
 IoRead *storageReadIo(const StorageRead *this);
 
-// Is there a read limit?
+// Is there a read limit? NULL for no limit.
 const Variant *storageReadLimit(const StorageRead *this);
 
 bool storageReadIgnoreMissing(const StorageRead *this);
