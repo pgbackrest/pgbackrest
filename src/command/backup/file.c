@@ -84,8 +84,11 @@ backupFile(
             // recopy.
             if (delta)
             {
-                // Generate checksum/size for the pg file
-                IoRead *read = storageReadIo(storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing));
+                // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize.  If the file has grown
+                // since the manifest was built we don't need to consider the extra bytes since they will be replayed from WAL
+                // during recovery.
+                IoRead *read = storageReadIo(
+                    storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .limit = VARUINT64(pgFileSize)));
                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                 ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -190,9 +193,12 @@ backupFile(
             // Is the file compressible during the copy?
             bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
-            // Setup pg file for read
+            // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no good to
+            // copy data past the end of the size recorded in the manifest since those blocks will need to be replayed from WAL
+            // during recovery.
             StorageRead *read = storageNewReadP(
-                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible);
+                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible,
+                .limit = VARUINT64(pgFileSize));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 

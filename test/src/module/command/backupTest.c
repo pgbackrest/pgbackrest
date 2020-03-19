@@ -562,6 +562,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Test pagechecksum
+
+        // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
+        // where a file grows while a backup is running.
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile!!!"));
+
         TEST_ASSIGN(
             result,
             backupFile(
@@ -665,13 +670,14 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1, backupLabel,
-                true, cipherTypeNone, NULL),
+                pgFile, false, 9999999, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
@@ -853,11 +859,11 @@ testRun(void)
                 pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeAes256Cbc, strNew("12345678")),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
+        TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file (size missmatch) to encrypted repo success");
 
@@ -2126,8 +2132,8 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/1 {file, s=4}\n"
-                "pg_data/base/1/2 {file, s=4}\n"
+                "pg_data/base/1/1 {file, s=0}\n"
+                "pg_data/base/1/2 {file, s=2}\n"
                 "pg_data/base/1/3 {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
@@ -2143,9 +2149,8 @@ testRun(void)
                     ",\"timestamp\":1571200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1571200002}\n"
-                "pg_data/base/1/1={\"checksum\":\"7110eda4d09e062aa5e4a390b0a572ac0d2c0220\",\"master\":false,\"size\":4"
-                    ",\"timestamp\":1571200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"2abd55e001c524cb2cf6300a89ca6366848a77d5\",\"master\":false,\"size\":4"
+                "pg_data/base/1/1={\"master\":false,\"size\":0,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"master\":false,\"size\":2"
                     ",\"timestamp\":1571200000}\n"
                 "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"master\":false,\"size\":3"
                     ",\"timestamp\":1571200000}\n"
