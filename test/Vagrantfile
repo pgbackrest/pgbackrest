@@ -94,9 +94,6 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build VM Images' && date
-        rm -rf /backrest/test/.vagrant/docker/*
-        rm -rf /backrest/test/.vagrant/bin/*
-        rm -rf /backrest/test/.vagrant/package/*
         sudo su - vagrant -c '/backrest/test/test.pl --vm-build'
 
         #---------------------------------------------------------------------------------------------------------------------------
