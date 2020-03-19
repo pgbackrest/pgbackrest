@@ -22,6 +22,12 @@ use pgBackRestDoc::Html::DocHtmlBuilder;
 use pgBackRestDoc::Html::DocHtmlElement;
 use pgBackRestDoc::ProjectInfo;
 
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DefineTest;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::ListTest;
+use pgBackRestTest::Common::RunTest;
+
 ####################################################################################################################################
 # Generate an lcov configuration file
 ####################################################################################################################################
@@ -65,6 +71,297 @@ sub coverageLCovConfigGenerate
 }
 
 push @EXPORT, qw(coverageLCovConfigGenerate);
+
+####################################################################################################################################
+# Extract coverage using gcov
+####################################################################################################################################
+sub coverageExtract
+{
+    my $oStorage = shift;
+    my $strModule = shift;
+    my $strTest = shift;
+    my $bSummary = shift;
+    my $strContainerImage = shift;
+    my $strWorkPath = shift;
+    my $strWorkTmpPath = shift;
+    my $strWorkUnitPath = shift;
+    my $strTestResultCoveragePath = shift . '/coverage';
+
+    # Generate a list of files to cover
+    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
+
+    my @stryCoveredModule;
+
+    foreach my $strModule (sort(keys(%{$hTestCoverage})))
+    {
+        push (@stryCoveredModule, $strModule);
+    }
+
+    push(@stryCoveredModule, "module/${strModule}/" . testRunName($strTest, false) . 'Test');
+
+    # Generate coverage reports for the modules
+    my $strLCovConf = "${strTestResultCoveragePath}/raw/lcov.conf";
+    coverageLCovConfigGenerate($oStorage, $strLCovConf, $bSummary);
+
+    my $strLCovExeBase = "lcov --config-file=${strLCovConf}";
+    my $strLCovOut = "${strWorkUnitPath}/test.lcov";
+    my $strLCovOutTmp = "${strWorkUnitPath}/test.tmp.lcov";
+
+    executeTest(
+        (defined($strContainerImage) ? 'docker exec -i -u ' . TEST_USER . " ${strContainerImage} " : '') .
+        "${strLCovExeBase} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
+
+    # Generate coverage report for each module
+    foreach my $strCoveredModule (@stryCoveredModule)
+    {
+        my $strModuleName = testRunName($strCoveredModule, false);
+        my $strModuleOutName = $strModuleName;
+        my $bTest = false;
+
+        if ($strModuleOutName =~ /^module/mg)
+        {
+            $strModuleOutName =~ s/^module/test/mg;
+            $bTest = true;
+        }
+
+        # Disable branch coverage for test files
+        my $strLCovExe = $strLCovExeBase;
+
+        if ($bTest)
+        {
+            $strLCovExe .= ' --rc lcov_branch_coverage=0';
+        }
+
+        # Generate lcov reports
+        my $strModulePath =
+            "${strWorkPath}/repo/" .
+            (${strModuleOutName} =~ /^test\// ?
+                'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
+        my $strLCovFile = "${strTestResultCoveragePath}/raw/${strModuleOutName}.lcov";
+        my $strLCovTotal = "${strWorkTmpPath}/all.lcov";
+
+        executeTest(
+            "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
+
+        # Combine with prior run if there was one
+        if ($oStorage->exists($strLCovFile))
+        {
+            my $strCoverage = ${$oStorage->get($strLCovOutTmp)};
+            $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+            $oStorage->put($strLCovOutTmp, $strCoverage);
+
+            executeTest(
+                "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
+        }
+
+        # Update source file
+        my $strCoverage = ${$oStorage->get($strLCovOutTmp)};
+
+        if (defined($strCoverage))
+        {
+            if (!$bTest && $hTestCoverage->{$strCoveredModule} eq TESTDEF_COVERAGE_NOCODE)
+            {
+                confess &log(ERROR, "module '${strCoveredModule}' is marked 'no code' but has code");
+            }
+
+            # Get coverage info
+            my $iTotalLines = (split(':', ($strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
+            my $iCoveredLines = (split(':', ($strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
+
+            my $iTotalBranches = 0;
+            my $iCoveredBranches = 0;
+
+            if ($strCoverage =~ /^BRF\:/mg && $strCoverage =~ /^BRH\:/mg)
+            {
+                # If this isn't here the statements below fail -- huh?
+                my @match = $strCoverage =~ m/^BRF\:.*$/mg;
+
+                $iTotalBranches = (split(':', ($strCoverage =~ m/^BRF:.*$/mg)[0]))[1] + 0;
+                $iCoveredBranches = (split(':', ($strCoverage =~ m/^BRH:.*$/mg)[0]))[1] + 0;
+            }
+
+            # Report coverage if this is not a test or if the test does not have complete coverage
+            if (!$bTest || $iTotalLines != $iCoveredLines || $iTotalBranches != $iCoveredBranches)
+            {
+                # Fix source file name
+                $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+
+                $oStorage->put($oStorage->openWrite($strLCovFile, {bPathCreate => true}), $strCoverage);
+
+                if ($oStorage->exists($strLCovTotal))
+                {
+                    executeTest("${strLCovExe} --add-tracefile=${strLCovFile} --add-tracefile=${strLCovTotal} --o=${strLCovTotal}");
+                }
+                else
+                {
+                    $oStorage->copy($strLCovFile, $strLCovTotal)
+                }
+            }
+            else
+            {
+                $oStorage->remove($strLCovFile);
+            }
+        }
+        else
+        {
+            if ($hTestCoverage->{$strCoveredModule} ne TESTDEF_COVERAGE_NOCODE)
+            {
+                confess &log(ERROR, "module '${strCoveredModule}' is marked 'code' but has no code");
+            }
+        }
+    }
+}
+
+push @EXPORT, qw(coverageExtract);
+
+####################################################################################################################################
+# Validate converage and generate reports
+####################################################################################################################################
+sub coverageValidateAndGenerate
+{
+    my $oyTestRun = shift;
+    my $oStorage = shift;
+    my $bCoverageSummary = shift;
+    my $strWorkTmpPath = shift;
+    my $strTestResultCoveragePath = shift . '/coverage';
+    my $strTestResultSummaryPath = shift;
+
+    my $result = 0;
+
+    # Determine which modules were covered (only check coverage if all tests were successful)
+    #-----------------------------------------------------------------------------------------------------------------------
+    my $hModuleTest;                                        # Everything that was run
+
+    # Build a hash of all modules, tests, and runs that were executed
+    foreach my $hTestRun (@{$oyTestRun})
+    {
+        # Get coverage for the module
+        my $strModule = $hTestRun->{&TEST_MODULE};
+        my $hModule = testDefModule($strModule);
+
+        # Get coverage for the test
+        my $strTest = $hTestRun->{&TEST_NAME};
+        my $hTest = testDefModuleTest($strModule, $strTest);
+
+        # If no tests are listed it means all of them were run
+        if (@{$hTestRun->{&TEST_RUN}} == 0)
+        {
+            $hModuleTest->{$strModule}{$strTest} = true;
+        }
+    }
+
+    # Now compare against code modules that should have full coverage
+    my $hCoverageList = testDefCoverageList();
+    my $hCoverageType = testDefCoverageType();
+    my $hCoverageActual;
+
+    foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
+    {
+        if (@{$hCoverageList->{$strCodeModule}} > 0)
+        {
+            my $iCoverageTotal = 0;
+
+            foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
+            {
+                if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
+                {
+                    next;
+                }
+
+                $iCoverageTotal++;
+            }
+
+            if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
+            {
+                $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
+            }
+        }
+    }
+
+    if (keys(%{$hCoverageActual}) == 0)
+    {
+        &log(INFO, 'no code modules had all tests run required for coverage');
+    }
+
+    # Generate C coverage report
+    #---------------------------------------------------------------------------------------------------------------------------
+    &log(INFO, 'writing C coverage report');
+
+    my $strLCovFile = "${strWorkTmpPath}/all.lcov";
+
+    if ($oStorage->exists($strLCovFile))
+    {
+        executeTest(
+            "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
+                " --prefix=${strWorkTmpPath}/repo" .
+                " --output-directory=${strTestResultCoveragePath}/lcov");
+
+        foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
+        {
+            my $strCoverageFile = $strCodeModule;
+            $strCoverageFile =~ s/^module/test/mg;
+            $strCoverageFile = "${strTestResultCoveragePath}/raw/${strCoverageFile}.lcov";
+
+            my $strCoverage = $oStorage->get($oStorage->openRead($strCoverageFile, {bIgnoreMissing => true}));
+
+            if (defined($strCoverage) && defined($$strCoverage))
+            {
+                my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF\:.*$/mg)[0]))[1] + 0;
+                my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH\:.*$/mg)[0]))[1] + 0;
+
+                my $iTotalBranches = 0;
+                my $iCoveredBranches = 0;
+
+                if ($$strCoverage =~ /^BRF\:/mg && $$strCoverage =~ /^BRH\:/mg)
+                {
+                    # If this isn't here the statements below fail -- huh?
+                    my @match = $$strCoverage =~ m/^BRF\:.*$/mg;
+
+                    $iTotalBranches = (split(':', ($$strCoverage =~ m/^BRF\:.*$/mg)[0]))[1] + 0;
+                    $iCoveredBranches = (split(':', ($$strCoverage =~ m/^BRH\:.*$/mg)[0]))[1] + 0;
+                }
+
+                # Generate detail if there is missing coverage
+                my $strDetail = undef;
+
+                if ($iCoveredLines != $iTotalLines)
+                {
+                    $strDetail .= "$iCoveredLines/$iTotalLines lines";
+                }
+
+                if ($iTotalBranches != $iCoveredBranches)
+                {
+                    $strDetail .= (defined($strDetail) ? ', ' : '') . "$iCoveredBranches/$iTotalBranches branches";
+                }
+
+                if (defined($strDetail))
+                {
+                    &log(ERROR, "c module ${strCodeModule} is not fully covered ($strDetail)");
+                    $result++;
+                }
+            }
+        }
+
+        coverageGenerate(
+            $oStorage, "${strWorkTmpPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+
+        if ($bCoverageSummary)
+        {
+            &log(INFO, 'writing C coverage summary report');
+
+            coverageDocSummaryGenerate(
+                $oStorage, "${strTestResultCoveragePath}/raw", "${strTestResultSummaryPath}/metric-coverage-report.auto.xml");
+        }
+    }
+    else
+    {
+        executeTest("rm -rf ${strTestResultCoveragePath}/test/tesult/coverage");
+    }
+
+    return $result;
+}
+
+push @EXPORT, qw(coverageValidateAndGenerate);
 
 ####################################################################################################################################
 # Generate a C coverage report
