@@ -416,7 +416,8 @@ eval
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
                             " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
                             " --exclude=test/result --exclude=repo.manifest" .
-                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
+                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
+                            " | grep -E -v '/\$' | cat"))));
 
         if (@stryModifiedList > 0)
         {
