@@ -79,7 +79,10 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     FUNCTION_LOG_RETURN_VOID();
 }
 
-static void
+/***********************************************************************************************************************************
+Function to expire a backup and all its dependents.
+***********************************************************************************************************************************/
+static unsigned int
 expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -90,12 +93,48 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
     ASSERT(infoBackup != NULL);
     ASSERT(backupLabel != NULL);
 
-    InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
+    unsigned int result = 0;
 
-    if (backupData == NULL)
-        THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
 
-    FUNCTION_LOG_RETURN_VOID();
+        if (backupData == NULL)
+            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+
+        StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+
+        if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+        {
+            THROW_FMT(
+                OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
+                strPtr(backupLabel));
+        }
+
+        // Warn if most recent (last) backup is being expired
+        if (strCmp(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, backupLabel) == 0)
+            LOG_WARN_FMT("most recent backup '%s' will be expired", strPtr(backupLabel));
+
+        // Get the backup and all its dependents
+        StringList *backupList = infoBackupDataDependentList(infoBackup, backupLabel);
+
+        // Initialize the log message
+        String *backupExpired = strNew("");
+
+        // Expire each backup in the list
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+        {
+            expireBackup(infoBackup, strLstGet(backupList, backupIdx), backupExpired);
+            result++;
+        }
+
+        // If the message contains a comma, then prepend "set:"
+        LOG_INFO_FMT(
+            "adhoc expire backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -679,7 +718,7 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        // If the --set option is valid (i.e. expire is called on its own) and set then attempt to expire the requested backup
+        // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
         if (cfgOptionValid(cfgOptSet) || cfgOptionTest(cfgOptSet))
             expireBackupSet(infoBackup, cfgOptionStr(cfgOptSet));
 

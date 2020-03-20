@@ -1077,6 +1077,16 @@
 
                 <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
 
+                <option-list>
+                    <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
+                    <option id="set" name="Set">
+                        <summary>Backup set to expire.</summary>
+
+                        <text>Using this option, the backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives from the <backrest/> repository for the specified backup set.</admonition></text>
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+
                 <command-example-list>
                     <command-example>
                         <text><code-block title="">
