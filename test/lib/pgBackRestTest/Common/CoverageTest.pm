@@ -103,13 +103,13 @@ sub coverageExtract
     my $strLCovConf = "${strTestResultCoveragePath}/raw/lcov.conf";
     coverageLCovConfigGenerate($oStorage, $strLCovConf, $bSummary);
 
-    my $strLCovExeBase = "lcov --config-file=${strLCovConf}";
+    my $strLCovExe = "lcov --config-file=${strLCovConf}";
     my $strLCovOut = "${strWorkUnitPath}/test.lcov";
     my $strLCovOutTmp = "${strWorkUnitPath}/test.tmp.lcov";
 
     executeTest(
         (defined($strContainerImage) ? 'docker exec -i -u ' . TEST_USER . " ${strContainerImage} " : '') .
-        "${strLCovExeBase} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
+        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
 
     # Generate coverage report for each module
     foreach my $strCoveredModule (@stryCoveredModule)
@@ -124,14 +124,6 @@ sub coverageExtract
             $bTest = true;
         }
 
-        # Disable branch coverage for test files
-        my $strLCovExe = $strLCovExeBase;
-
-        if ($bTest)
-        {
-            $strLCovExe .= ' --rc lcov_branch_coverage=0';
-        }
-
         # Generate lcov reports
         my $strModulePath =
             "${strWorkPath}/repo/" .
@@ -141,7 +133,8 @@ sub coverageExtract
         my $strLCovTotal = "${strWorkTmpPath}/all.lcov";
 
         executeTest(
-            "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
+            "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} */${strModuleName}.c" .
+                " --o=${strLCovOutTmp}");
 
         # Combine with prior run if there was one
         if ($oStorage->exists($strLCovFile))
@@ -150,8 +143,7 @@ sub coverageExtract
             $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
             $oStorage->put($strLCovOutTmp, $strCoverage);
 
-            executeTest(
-                "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
+            executeTest("${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
         }
 
         # Update source file
