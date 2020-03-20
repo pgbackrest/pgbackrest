@@ -408,11 +408,12 @@ sub coverageGenerate
                     }
 
                     my $strBranchLine = sprintf("%09d", $stryData[0]);
+                    $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{covered} = true;
 
                     if ($iBranchLine != $stryData[0])
                     {
-                        $iBranchLine = $stryData[0];
-                        $iBranch = $stryData[1];
+                        $iBranchLine = $stryData[0] + 0;
+                        $iBranch = $stryData[1] + 0;
                         $iBranchIdx = 0;
                         $iBranchPart = 0;
                     }
@@ -420,10 +421,10 @@ sub coverageGenerate
                     {
                         if ($iBranchPart != 1)
                         {
-                            confess &log(ERROR, "line ${iBranchLine}, branch ${iBranch} does not have two parts");
+                            confess &log(ERROR, "line ${iBranchLine}, branch ${iBranch} does not have at least two parts");
                         }
 
-                        $iBranch = $stryData[1];
+                        $iBranch = $stryData[1] + 0;
                         $iBranchIdx++;
                         $iBranchPart = 0;
                     }
@@ -434,6 +435,11 @@ sub coverageGenerate
 
                     $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{$iBranchIdx}{$iBranchPart} =
                         $stryData[3] eq '-' || $stryData[3] eq '0' ? false : true;
+
+                    if (!$rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{$iBranchIdx}{$iBranchPart})
+                    {
+                        $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{covered} = false;
+                    }
                 }
 
                 # Check line coverage
@@ -457,52 +463,18 @@ sub coverageGenerate
         }
     }
 
-    # Remove branch coverage on lines that are completely covered
-    foreach my $strFile (sort(keys(%{$rhCoverage})))
-    {
-        foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
-        {
-            if (defined($rhCoverage->{$strFile}{line}{$iLine}{branch}))
-            {
-                # We'll assume the line is completely covered
-                my $bCovered = true;
-
-                foreach my $iBranch (sort(keys(%{$rhCoverage->{$strFile}{line}{$iLine}{branch}})))
-                {
-                    foreach my $iBranchPart (sort(keys(%{$rhCoverage->{$strFile}{line}{$iLine}{branch}{$iBranch}})))
-                    {
-                        if (!$rhCoverage->{$strFile}{line}{$iLine}{branch}{$iBranch}{$iBranchPart})
-                        {
-                            $bCovered = false;
-                        }
-                    }
-                }
-
-                if ($bCovered)
-                {
-                    # &log(WARN, "removed branch coverage for ${strFile} line ${iLine}");
-                    if (defined($rhCoverage->{$strFile}{line}{$iLine}{statement}))
-                    {
-                        delete($rhCoverage->{$strFile}{line}{$iLine}{branch});
-                    }
-                    else
-                    {
-                        delete($rhCoverage->{$strFile}{line}{$iLine});
-                    }
-                }
-            }
-        }
-    }
-
-    # Remove line when no lines are uncovered
+    # Remove file when no lines are uncovered
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
         my $bCovered = true;
 
         foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
         {
-            $bCovered = false;
-            last;
+            if (defined($rhCoverage->{$strFile}{line}{$iLine}{branch}) && !$rhCoverage->{$strFile}{line}{$iLine}{branch}{covered})
+            {
+                $bCovered = false;
+                last;
+            }
         }
 
         if ($bCovered)
@@ -791,42 +763,42 @@ sub coverageGenerate
                 my $strBranch;
 
                 # Show missing branch coverage
-                if (defined($rhCoverage->{$strFile}{line}{$strLine}{branch}) &&
-                    !defined($rhCoverage->{$strFile}{line}{$strLine}{statement}))
+                if (defined($rhCoverage->{$strFile}{line}{$strLine}{branch}))
                 {
-                    my $iBranchIdx = 0;
-
                     foreach my $iBranch (sort(keys(%{$rhCoverage->{$strFile}{line}{$strLine}{branch}})))
                     {
-                        $strBranch .=
-                            '[' .
-                            ($rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}{0} ?
-                                '+' : '-') .
-                            ' ' .
-                            ($rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}{1} ?
-                                '+' : '-') .
-                            ']';
+                        next if $iBranch eq 'covered';
 
-                        if ($iBranchIdx == 1)
+                        $strBranch .= '[';
+
+                        my $bBranchPartFirst = true;
+
+                        foreach my $iBranchPart (sort(keys(%{$rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}})))
                         {
-                            $strBranch .= '<br/>';
-                            $iBranchIdx = 0;
+                            if (!$bBranchPartFirst)
+                            {
+                                $strBranch .= ' ';
+                            }
+
+                            $strBranch .= $rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}{$iBranchPart} ? '+' : '-';
+
+                            $bBranchPartFirst = false;
                         }
-                        else
-                        {
-                            $strBranch .= ' ';
-                            $iBranchIdx++;
-                        }
+
+                        $strBranch .= ']';
                     }
                 }
 
                 $oRow->addNew(
-                    HTML_TD, 'report-table-row-branch' . (defined($strBranch) ? '-uncovered' : ''),
+                    HTML_TD,
+                    'report-table-row-branch' .
+                        (defined($strBranch) && !$rhCoverage->{$strFile}{line}{$strLine}{branch}{covered} ? '-uncovered' : ''),
                     {strContent => $strBranch});
 
                 # Color code based on coverage
                 my $bUncovered =
-                    defined($rhCoverage->{$strFile}{line}{$strLine}{branch}) ||
+                    (defined($rhCoverage->{$strFile}{line}{$strLine}{branch}) &&
+                        !$rhCoverage->{$strFile}{line}{$strLine}{branch}{covered}) ||
                     defined($rhCoverage->{$strFile}{line}{$strLine}{statement});
 
                 $oRow->addNew(
