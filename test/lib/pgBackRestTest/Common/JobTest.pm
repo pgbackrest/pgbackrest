@@ -254,6 +254,8 @@ sub run
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 "bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
+                # Remove coverage data from last run
+                "rm -f test.gcda && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
                     $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
