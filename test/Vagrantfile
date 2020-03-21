@@ -87,6 +87,10 @@ Vagrant.configure(2) do |config|
         mkdir -p 700 /tmp/pgbackrest
 
         #---------------------------------------------------------------------------------------------------------------------------
+        echo 'create link to repo in old location to make the transition less painful' && date
+        ln -s /home/vagrant/pgbackrest /backrest
+
+        #---------------------------------------------------------------------------------------------------------------------------
         # echo 'Install TeX Live' && date
         # Not installed by default since latex is only needed for releases and PDF development/testing
         # apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
@@ -110,6 +114,6 @@ Vagrant.configure(2) do |config|
   # Don't share the default vagrant folder
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-  # Mount backrest path for testing
-  config.vm.synced_folder "..", "/backrest"
+  # Mount pgbackrest path for testing
+  config.vm.synced_folder "..", "/home/vagrant/pgbackrest"
 end

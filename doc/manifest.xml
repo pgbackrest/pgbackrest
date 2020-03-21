@@ -112,8 +112,15 @@
         <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
             <render-source key="coding" file="../../../CODING.md"/>
-            <!-- This needs to be uncommented when generating the contributing doc.  We are currently unable to get Docker in Docker running correctly in CI.  Note that a symlink must be created from /home/[test-user]/pgbackrest to /backrest. -->
-            <!-- <render-source key="contributing" file="../../../CONTRIBUTING.md"/> -->
+
+            <!--
+                Building the contributing document has some special requirements because it runs Docker in Docker so the repo path
+                must align on the host and all Docker containers.  Run `pgbackrest/doc/doc.pl` from within the home directory of
+                the user that will do the doc build, e.g. `home/vagrant`.  If the repo is not located directly in the home
+                directory, e.g. `/home/vagrant/pgbackrest`, then a symlink may be used,
+                e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
+            -->
+            <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
             <render-source key="test" file="../../../test/README.md"/>
             <render-source key="documentation" file="../../README.md"/>
         </render>
