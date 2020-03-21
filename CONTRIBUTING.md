@@ -10,19 +10,9 @@ This example is based on Ubuntu 19.04, but it should work on many versions of De
 
 pgbackrest-dev => Install development tools
 ```
-sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
+sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
        libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
-```
-
-Coverage testing is an important component of pgBackRest testing and is integrated directly into the test harness. Unfortunately, the default version of lcov is often not compatible with gcc. lcov 1.14 works up to gcc 8.
-
-pgbackrest-dev => Build lcov 1.14
-```
-curl -fsSL \
-       https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz | \
-       tar zx
-sudo make -C lcov-1.14 install
 ```
 
 Some unit tests and all the integration test require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.

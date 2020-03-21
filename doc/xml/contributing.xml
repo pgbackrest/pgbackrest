@@ -58,29 +58,11 @@
 
             <execute user="root" pre="y">
                 <exe-cmd>
-                    apt-get install rsync git devscripts build-essential valgrind autoconf
+                    apt-get install rsync git devscripts build-essential valgrind lcov autoconf
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config
                     libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p>Coverage testing is an important component of <backrest/> testing and is integrated directly into the test harness.  Unfortunately, the default version of <proper>lcov</proper> is often not compatible with <proper>gcc</proper>.  <proper>lcov 1.14</proper> works up to <proper>gcc 8</proper>.</p>
-
-        <execute-list host="{[host-contrib]}">
-            <title>Build lcov 1.14</title>
-
-            <execute pre="y">
-                <exe-cmd>
-                    curl -fsSL
-                        https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz |
-                        tar zx
-                </exe-cmd>
-            </execute>
-
-            <execute user="root" pre="y">
-                <exe-cmd>make -C lcov-1.14 install</exe-cmd>
             </execute>
         </execute-list>
 
