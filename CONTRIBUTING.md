@@ -11,7 +11,7 @@ This example is based on Ubuntu 19.04, but it should work on many versions of De
 pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
-       autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev \
+       autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
        libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
 ```
 
