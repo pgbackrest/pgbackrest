@@ -7,6 +7,9 @@
     <variable-list>
         <variable key="host-user-id" eval="y">use English; $UID</variable>
 
+        <!-- Options to pass to test.pl so log output is reproducible -->
+        <variable key="test-cmd-extra">--no-log-timestamp</variable>
+
         <variable key="host-contrib-id">contrib</variable>
         <variable key="host-contrib">pgbackrest-dev</variable>
         <variable key="host-contrib-user">{[host-user]}</variable>
@@ -109,6 +112,7 @@
 
                 <execute output="y">
                     <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
+                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
                 </execute>
             </execute-list>
@@ -120,6 +124,7 @@
 
                 <execute output="y">
                     <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
+                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>
 
@@ -130,6 +135,7 @@
 
                 <execute output="y">
                     <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
+                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>
         </section>
@@ -144,6 +150,7 @@
 
                 <execute output="y">
                     <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u19</exe-cmd>
+                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>
 
@@ -152,6 +159,7 @@
 
                 <execute output="y">
                     <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u19 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>
         </section>
