@@ -74,6 +74,8 @@ test.pl [options]
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleanup after the last test is complete - useful for debugging
+   --clean              clean working and result paths for a completely fresh build
+   --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --build-only         build the binary (and honor --build-package) but don't run tests
@@ -126,6 +128,8 @@ test.pl [options]
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
+my $bClean;
+my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
 my $strLogLevelTestFile = lc(TRACE);
@@ -179,6 +183,8 @@ my @cmdOptions = @ARGV;
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
+            'clean' => \$bClean,
+            'clean-only' => \$bCleanOnly,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
@@ -367,6 +373,27 @@ eval
 
     my $oStorageBackRest = new pgBackRestTest::Common::Storage(
         $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
+
+    ################################################################################################################################
+    # Clean working and result paths
+    ################################################################################################################################
+    if ($bClean || $bCleanOnly)
+    {
+        &log(INFO, "clean working (${strTestPath}) and result (${strBackRestBase}/test/result) paths");
+
+        if ($oStorageTest->pathExists($strTestPath))
+        {
+            executeTest("find ${strTestPath} -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        if ($oStorageTest->pathExists("${strBackRestBase}/test/result"))
+        {
+            executeTest("find ${strBackRestBase}/test/result -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        # Exit when clean-only
+        exit 0 if $bCleanOnly;
+    }
 
     ################################################################################################################################
     # Build Docker containers
