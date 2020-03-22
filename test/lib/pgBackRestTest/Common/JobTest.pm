@@ -638,7 +638,7 @@ sub end
         # Output success
         else
         {
-            &log(INFO, "${strTestDone}" . ($self->{bLogTimestamp} ? "(${fTestElapsedTime}s)" : '').
+            &log(INFO, "${strTestDone}" . ($self->{bLogTimestamp} ? " (${fTestElapsedTime}s)" : '').
                  ($self->{bVmOut} && !$self->{bShowOutputAsync} ?
                      ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
         }
