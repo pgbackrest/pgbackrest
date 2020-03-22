@@ -26,6 +26,11 @@ struct ErrorType
 #define ERROR_DEFINE(code, name, parentType)                                                                                       \
     const ErrorType name = {code, #name, &parentType}
 
+// Define test error
+#ifndef NDEBUG
+    ERROR_DEFINE(1, TestError, RuntimeError);
+#endif
+
 // Include error type definitions
 #include "common/error.auto.c"
 
