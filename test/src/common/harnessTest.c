@@ -33,6 +33,7 @@ static const char *testExeData = NULL;
 static const char *testProjectExeData = NULL;
 static bool testContainerData = false;
 static unsigned int testIdxData = 0;
+static bool testTiming = true;
 static uint64_t testScaleData = 1;
 static const char *testPathData = NULL;
 static const char *testDataPathData = NULL;
@@ -56,7 +57,7 @@ Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, uint64_t testScale,
+    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, uint64_t testScale,
     const char *testPath, const char *testDataPath, const char *testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
@@ -66,6 +67,7 @@ hrnInit(
     testProjectExeData = testProjectExe;
     testContainerData = testContainer;
     testIdxData = testIdx;
+    testTiming = timing;
     testScaleData = testScale;
     testPathData = testPath;
     testDataPathData = testDataPath;
@@ -381,6 +383,32 @@ hrnDiff(const char *expected, const char *actual)
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
 
     FUNCTION_HARNESS_RESULT(STRINGZ, harnessDiffBuffer);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnTestLogPrefix(int lineNo, bool padding)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, lineNo);
+        FUNCTION_HARNESS_PARAM(BOOL, padding);
+    FUNCTION_HARNESS_END();
+
+    // Always indent at the beginning
+    printf("    ");
+
+    // Add timing if requested
+    if (testTiming)
+    {
+        printf(
+            "%03u.%03us ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000));
+    }
+
+    // Add number and padding
+    printf("l%04d - %s", lineNo, padding ? "    " : "");
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************

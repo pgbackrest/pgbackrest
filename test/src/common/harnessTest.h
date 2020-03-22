@@ -6,6 +6,8 @@ C Test Harness
 
 #include <inttypes.h>
 
+#include "common/harnessTest.intern.h"
+
 #include "common/debug.h"
 #include "common/error.h"
 
@@ -95,10 +97,8 @@ Test that an expected error is actually thrown and error when it isn't
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
-    printf(                                                                                                                        \
-        "    %03u.%03us l%04d -     expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),               \
-        (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, errorTypeName(&errorTypeExpected),                \
-        errorMessageExpected);                                                                                                     \
+    hrnTestLogPrefix(__LINE__, true);                                                                                              \
+    printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
     TRY_BEGIN()                                                                                                                    \
@@ -179,9 +179,7 @@ Compare types
 Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(...)                                                                                                      \
-    printf(                                                                                                                        \
-        "    %03u.%03us l%04d -     ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                              \
-        (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__);                                                  \
+    hrnTestLogPrefix(__LINE__, true);                                                                                              \
     printf(__VA_ARGS__);                                                                                                           \
     printf("\n");                                                                                                                  \
     fflush(stdout);
@@ -423,18 +421,16 @@ Logging macros
 #define TEST_LOG(message)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        printf(                                                                                                                    \
-            "    %03u.%03us l%04d -     %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                      \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
+        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
     } while(0)
 
 #define TEST_LOG_FMT(format, ...)                                                                                                  \
     do                                                                                                                             \
     {                                                                                                                              \
-        printf(                                                                                                                    \
-            "    %03u.%03us l%04d -     " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),              \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, __VA_ARGS__);                                 \
+        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
     } while(0)
 
@@ -444,9 +440,8 @@ Test title macro
 #define TEST_TITLE(message)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        printf(                                                                                                                    \
-            "    %03u.%03us l%04d - %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                          \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
+        hrnTestLogPrefix(__LINE__, false);                                                                                         \
+        printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
     } while(0)
 

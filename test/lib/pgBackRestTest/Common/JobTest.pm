@@ -66,6 +66,7 @@ sub new
         $self->{strLogLevel},
         $self->{strLogLevelTest},
         $self->{strLogLevelTestFile},
+        $self->{bLogTimestamp},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -99,6 +100,7 @@ sub new
             {name => 'strLogLevel'},
             {name => 'strLogLevelTest'},
             {name => 'strLogLevelTestFile'},
+            {name => 'bLogTimestamp'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -278,6 +280,7 @@ sub run
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                 ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
+                ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                 ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .
@@ -394,6 +397,9 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
+
+                my $strLogTimestampC = $self->{bLogTimestamp} ? 'true' : 'false';
+                $strTestC =~ s/\{\[C\_TEST\_TIMING\]\}/$strLogTimestampC/g;
 
                 # Set timezone
                 if (defined($self->{strTimeZone}))
@@ -624,7 +630,7 @@ sub end
         # Output error
         if ($iExitStatus != 0)
         {
-            &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
+            &log(ERROR, "${strTestDone} (err${iExitStatus}" . ($self->{bLogTimestamp} ? "-${fTestElapsedTime}s)" : '') .
                  (defined($oExecDone->{strOutLog}) && !$self->{bShowOutputAsync} ?
                     ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
             $bFail = true;
@@ -632,7 +638,7 @@ sub end
         # Output success
         else
         {
-            &log(INFO, "${strTestDone} (${fTestElapsedTime}s)".
+            &log(INFO, "${strTestDone}" . ($self->{bLogTimestamp} ? "(${fTestElapsedTime}s)" : '').
                  ($self->{bVmOut} && !$self->{bShowOutputAsync} ?
                      ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
         }

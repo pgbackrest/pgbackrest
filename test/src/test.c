@@ -85,6 +85,7 @@ main(int argListSize, const char *argList[])
         "{[C_TEST_PROJECT_EXE]}",   // Project exe
         {[C_TEST_CONTAINER]},       // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
+        {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
         {[C_TEST_SCALE]},           // Scaling factor for performance tests
         "{[C_TEST_PATH]}",          // Path where tests write data
         "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
