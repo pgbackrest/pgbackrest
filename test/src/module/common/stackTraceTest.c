@@ -35,7 +35,7 @@ testRun(void)
 
         // This will call the error routine since we passed a bogus exe
         assert(stackTracePush("file1.c", "function1", logLevelDebug) == logLevelDebug);
-        stackTracePop("file1.c", "function1");
+        stackTracePop("file1.c", "function1", false);
 
         backTraceState = NULL;
 #endif
