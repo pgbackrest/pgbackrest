@@ -97,6 +97,9 @@ Test that an expected error is actually thrown and error when it isn't
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
+    /* Set the line number for the current function in the stack trace */                                                          \
+    stackTraceTestFileLineSet(__LINE__);                                                                                           \
+                                                                                                                                   \
     hrnTestLogPrefix(__LINE__, true);                                                                                              \
     printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
     fflush(stdout);                                                                                                                \
@@ -111,14 +114,14 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                AssertError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),            \
+                TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
         THROW_FMT(                                                                                                                 \
-            AssertError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected), \
+            TestError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected),   \
             errorMessageExpected);                                                                                                 \
 }
 
@@ -202,19 +205,9 @@ parameters.
     /* Try to run the statement.  Assign expected to result to silence compiler warning about uninitialized var. */                \
     type TEST_RESULT_result = (type)TEST_RESULT_resultExpected;                                                                    \
                                                                                                                                    \
-    TRY_BEGIN()                                                                                                                    \
-    {                                                                                                                              \
-        TEST_RESULT_result = (type)(statement);                                                                                    \
-    }                                                                                                                              \
-    /* Catch any errors */                                                                                                         \
-    CATCH_ANY()                                                                                                                    \
-    {                                                                                                                              \
-        /* No errors were expected so error */                                                                                     \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "STATEMENT: %s\n\nTHREW %s: %s\n\nTHROWN AT:\n%s\n\nBUT EXPECTED RESULT:\n%s",                            \
-            #statement, errorName(), errorMessage(), errorStackTrace(), TEST_RESULT_resultExpectedStr);                            \
-    }                                                                                                                              \
-    TRY_END();                                                                                                                     \
+    hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
+    TEST_RESULT_result = (type)(statement);                                                                                        \
+    hrnTestResultEnd();                                                                                                            \
                                                                                                                                    \
     /* Test the type operator */                                                                                                   \
     bool TEST_RESULT_resultOp = false;                                                                                             \
@@ -252,19 +245,9 @@ Test that a void statement returns and does not throw an error
     /* Output test info */                                                                                                         \
     TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
                                                                                                                                    \
-    TRY_BEGIN()                                                                                                                    \
-    {                                                                                                                              \
-        statement;                                                                                                                 \
-    }                                                                                                                              \
-    /* Catch any errors */                                                                                                         \
-    CATCH_ANY()                                                                                                                    \
-    {                                                                                                                              \
-        /* No errors were expected so error */                                                                                     \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "EXPECTED VOID RESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),   \
-            errorMessage(), errorStackTrace());                                                                                    \
-    }                                                                                                                              \
-    TRY_END();                                                                                                                     \
+    hrnTestResultBegin(#statement, __LINE__, false);                                                                               \
+    statement;                                                                                                                     \
+    hrnTestResultEnd();                                                                                                            \
 }
 
 /***********************************************************************************************************************************
@@ -275,19 +258,9 @@ Test that a statement does not error and assign it to the specified variable if 
     /* Output test info */                                                                                                         \
     TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
                                                                                                                                    \
-    TRY_BEGIN()                                                                                                                    \
-    {                                                                                                                              \
-        lValue = statement;                                                                                                        \
-    }                                                                                                                              \
-    /* Catch any errors */                                                                                                         \
-    CATCH_ANY()                                                                                                                    \
-    {                                                                                                                              \
-        /* No errors were expected so error */                                                                                     \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "EXPECTED ASSIGNMENT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),    \
-            errorMessage(), errorStackTrace());                                                                                    \
-    }                                                                                                                              \
-    TRY_END();                                                                                                                     \
+    hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
+    lValue = statement;                                                                                                            \
+    hrnTestResultEnd();                                                                                                            \
 }
 
 /***********************************************************************************************************************************

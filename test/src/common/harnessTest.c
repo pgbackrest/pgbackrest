@@ -44,6 +44,17 @@ static char testUserData[64];
 static char testGroupIdData[32];
 static char testGroupData[64];
 
+static struct HarnessTestLocal
+{
+    struct HarnessTestResult
+    {
+        bool running;                                               // Is the test currently running?
+        const char *statement;                                      // statement that is being tested
+        int lineNo;                                                 // Line number the test is on
+        bool result;                                                // Is there a result or is it void?
+    } result;
+} harnessTestLocal;
+
 /***********************************************************************************************************************************
 Extern functions
 ***********************************************************************************************************************************/
@@ -409,6 +420,55 @@ hrnTestLogPrefix(int lineNo, bool padding)
     printf("l%04d - %s", lineNo, padding ? "    " : "");
 
     FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnTestResultBegin(const char *statement, int lineNo, bool result)
+{
+    ASSERT(!harnessTestLocal.result.running);
+
+    // Set the line number for the current function in the stack trace
+#ifndef NDEBUG
+    stackTraceTestFileLineSet((unsigned int)lineNo);
+#endif
+    // Set info to report if an error is thrown
+    harnessTestLocal.result =
+        (struct HarnessTestResult){.running = true, .statement = statement, .lineNo = lineNo, .result = result};
+}
+
+bool
+hrnTestResultException(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    if (harnessTestLocal.result.running)
+    {
+        THROW_FMT(
+#ifndef NDEBUG
+            TestError,
+#else
+            AssertError,
+#endif
+            "EXPECTED %sRESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s",
+            harnessTestLocal.result.result ? "" : "VOID ",
+            harnessTestLocal.result.statement, errorName(), errorMessage(), errorStackTrace());
+    }
+
+    FUNCTION_HARNESS_RESULT(BOOL, false);
+}
+
+void
+hrnTestResultEnd(void)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    // Set the line number for the current function back to unknown
+#ifndef NDEBUG
+    stackTraceTestFileLineSet(0);
+#endif
+
+    harnessTestLocal.result.running = false;
 }
 
 /***********************************************************************************************************************************

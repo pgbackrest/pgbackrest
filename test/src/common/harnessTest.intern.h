@@ -20,4 +20,9 @@ void hrnComplete(void);
 // Output test log prefix with timing, line number, and optional padding
 void hrnTestLogPrefix(int lineNo, bool padding);
 
+// Begin/end result test so an exception during the test will give a useful message about what happened and where
+void hrnTestResultBegin(const char *statement, int lineNo, bool result);
+bool hrnTestResultException(void);
+void hrnTestResultEnd(void);
+
 #endif

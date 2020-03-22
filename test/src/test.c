@@ -103,9 +103,23 @@ main(int argListSize, const char *argList[])
 #ifndef NO_ERROR
     TRY_BEGIN()
     {
+        TRY_BEGIN()
+        {
 #endif
-        // Run the tests
-        testRun();
+            // Run the tests
+            testRun();
+#ifndef NO_ERROR
+        }
+        CATCH_ANY()
+        {
+            // If a test was running then throw a detailed result exception
+            hrnTestResultException();
+
+            // Else rethrow the original error
+            RETHROW();
+        }
+        TRY_END();
+#endif
 
         // End test run and make sure all tests completed
         hrnComplete();
@@ -116,14 +130,20 @@ main(int argListSize, const char *argList[])
     }
     CATCH_ANY()
     {
+        // Make the error really obvious
         fprintf(
             stderr,
             "\nTEST FAILED WITH %s:\n\n"
                 "--------------------------------------------------------------------------------\n"
                 "%s\n"
-                "--------------------------------------------------------------------------------\n"
-                "\nTHROWN AT:\n%s\n",
-            errorName(), errorMessage(), errorStackTrace());
+                "--------------------------------------------------------------------------------\n",
+            errorName(), errorMessage());
+
+        // If not a TestError (which is detailed) then also print the stack trace
+#ifndef NDEBUG
+        if (!errorInstanceOf(&TestError))
+#endif
+            fprintf(stderr, "\nTHROWN AT:\n%s\n", errorStackTrace());
 
         fflush(stderr);
         result = errorCode();

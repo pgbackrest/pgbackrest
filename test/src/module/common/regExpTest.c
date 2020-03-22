@@ -18,7 +18,7 @@ testRun(void)
         {
             TEST_ERROR(regExpNew(strNew("[[[")), FormatError, "Unmatched [ or [^");
         }
-        CATCH(AssertError)
+        CATCH(TestError)
         {
             TEST_ERROR(regExpNew(strNew("[[[")), FormatError, "Unmatched [, [^, [:, [., or [=");
         }
