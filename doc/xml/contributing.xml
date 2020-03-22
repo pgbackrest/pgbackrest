@@ -67,6 +67,13 @@
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
+
+            <!-- Clean so the tests give consistent output -->
+            <execute show="n">
+                <exe-cmd>
+                    pgbackrest/test/test.pl --clean-only
+                </exe-cmd>
+            </execute>
         </execute-list>
 
         <p>Some unit tests and all the integration test require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
