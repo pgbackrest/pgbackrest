@@ -52,6 +52,11 @@ testRun(void)
 
         stackTraceTestStart();
         assert(stackTraceTest());
+
+        stackSize++;
+        stackTraceTestFileLineSet(888);
+        assert(stackTrace[stackSize - 1].fileLine == 888);
+        stackSize--;
 #endif
     }
 
@@ -87,21 +92,12 @@ testRun(void)
 
             stackTraceToZ(buffer, sizeof(buffer), "file1.c", "function2", 99);
 
-#ifdef WITH_BACKTRACE
-            TEST_RESULT_Z(
-                buffer,
-                "file1:function2:99:(test build required for parameters)\n"
-                "    ... function(s) omitted ...\n"
-                "file1:function1:0:(void)",
-                "    check stack trace");
-#else
             TEST_RESULT_Z(
                 buffer,
                 "file1:function2:99:(test build required for parameters)\n"
                 "    ... function(s) omitted ...\n"
                 "file1:function1:(void)",
                 "    check stack trace");
-#endif
 
             assert(stackTracePush("file1.c", "function2", logLevelTrace) == logLevelTrace);
             stackTrace[stackSize - 2].fileLine = 7777;
@@ -152,7 +148,6 @@ testRun(void)
 
                 stackTraceToZ(buffer, sizeof(buffer), "file4.c", "function4", 99);
 
-#ifdef WITH_BACKTRACE
                 TEST_RESULT_Z(
                     buffer,
                     "file4:function4:99:(buffer full - parameters not available)\n"
@@ -161,16 +156,6 @@ testRun(void)
                     "file1:function2:7777:(debug log level required for parameters)\n"
                     "file1:function1:7777:(void)",
                     "stack trace");
-#else
-                TEST_RESULT_Z(
-                    buffer,
-                    "file4:function4:99:(buffer full - parameters not available)\n"
-                    "file3:function3:(param1: value1, param2: value2)\n"
-                    "file2:function2:(param1: value1)\n"
-                    "file1:function2:(debug log level required for parameters)\n"
-                    "file1:function1:(void)",
-                    "stack trace");
-#endif
 
                 stackTracePop("file4.c", "function4", false);
                 assert(stackSize == 4);
