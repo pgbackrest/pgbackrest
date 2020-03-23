@@ -179,14 +179,13 @@ testRun(void)
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, full2Path), "full2 empty");
 
-        StringList *backupExpired = strLstNew();
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full1, backupExpired), "expire backup with both manifest files");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full1), "expire backup with both manifest files");
         TEST_RESULT_BOOL(
             (strLstSize(storageListP(storageTest, full1Path)) && strLstExistsZ(storageListP(storageTest, full1Path), "bogus")),
             true, "  full1 - only manifest files removed");
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2, backupExpired), "expire backup with no manifest - does not error");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full2), "expire backup with no manifest - does not error");
 
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),

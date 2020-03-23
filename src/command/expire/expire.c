@@ -44,20 +44,18 @@ typedef struct ArchiveRange
 } ArchiveRange;
 
 /***********************************************************************************************************************************
-Common function for expiring any backup
+Common function for expiring a single backup
 ***********************************************************************************************************************************/
 static void
-expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, StringList *backupExpired)
+expireBackup(InfoBackup *infoBackup, String *removeBackupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);              // Backup label to remove
-        FUNCTION_LOG_PARAM(STRING_LIST, backupExpired);             // Append backup label to return list for backup expired
+        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
     ASSERT(removeBackupLabel != NULL);
-    ASSERT(backupExpired != NULL);
 
     // Execute the real expiration and deletion only if the dry-run option is disabled
     if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
@@ -71,7 +69,6 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, StringList *back
 
     // Remove the backup from the info object
     infoBackupDataDelete(infoBackup, removeBackupLabel);
-    strLstAdd(backupExpired, removeBackupLabel);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -119,7 +116,10 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
 
         // Expire each backup in the list
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
-            expireBackup(infoBackup, strLstGet(backupList, backupIdx), result);
+        {
+            expireBackup(infoBackup, strLstGet(backupList, backupIdx));
+            strLstAdd(result, strLstGet(backupList, backupIdx));
+        }
 
         // Sort from oldest to newest and return the list of expired backups
         strLstSort(result, sortOrderAsc);
