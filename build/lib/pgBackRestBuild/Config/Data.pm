@@ -828,10 +828,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_EXPIRE =>
-            {
-                &CFGDEF_REQUIRED => false,
-            },
             &CFGCMD_INFO =>
             {
                 &CFGDEF_REQUIRED => false,

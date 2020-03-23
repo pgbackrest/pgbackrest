@@ -47,12 +47,12 @@ typedef struct ArchiveRange
 Common function for expiring any backup
 ***********************************************************************************************************************************/
 static void
-expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupExpired)
+expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, StringList *backupExpired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);
-        FUNCTION_LOG_PARAM(STRING, backupExpired);
+        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);              // Backup label to remove
+        FUNCTION_LOG_PARAM(STRING_LIST, backupExpired);             // Append backup label to return list for backup expired
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -62,6 +62,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     // Execute the real expiration and deletion only if the dry-run option is disabled
     if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
     {
+        // Remove the manifest files to invalidate the backup
         storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
         storageRemoveP(
             storageRepoWrite(),
@@ -70,16 +71,15 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
 
     // Remove the backup from the info object
     infoBackupDataDelete(infoBackup, removeBackupLabel);
-
-    if (strSize(backupExpired) == 0)
-        strCat(backupExpired, strPtr(removeBackupLabel));
-    else
-        strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
+    strLstAdd(backupExpired, removeBackupLabel);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-static void
+/***********************************************************************************************************************************
+Given a backup lable, expire a backup and all its dependents.
+***********************************************************************************************************************************/
+static StringList *
 expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -90,12 +90,43 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
     ASSERT(infoBackup != NULL);
     ASSERT(backupLabel != NULL);
 
-    InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
+    // Return a list of all backups being expired
+    StringList *result = strLstNew();
 
-    if (backupData == NULL)
-        THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
 
-    FUNCTION_LOG_RETURN_VOID();
+        if (backupData == NULL)
+            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+
+        StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+
+        if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+        {
+            THROW_FMT(
+                OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
+                strPtr(backupLabel));
+        }
+
+        // Warn if most recent (last) backup is being expired
+        if (strCmp(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, backupLabel) == 0)
+            LOG_WARN_FMT("most recent backup '%s' will be expired", strPtr(backupLabel));  // CSHANG Maybe this should just be INFO
+
+        // Get the backup and all its dependents sorted from newest to oldest - that way if the process is aborted before all
+        // dependencies have been dealt with, the backups remaining should still be usable.
+        StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+
+        // Expire each backup in the list
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+            expireBackup(infoBackup, strLstGet(backupList, backupIdx), result);
+
+        // Sort from oldest to newest and return the list of expired backups
+        strLstSort(result, sortOrderAsc);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -110,6 +141,7 @@ expireDiffBackup(InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
+    // Total of all backups being expired
     unsigned int result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -133,30 +165,14 @@ expireDiffBackup(InfoBackup *infoBackup)
                     if (regExpMatchOne(backupRegExpP(.full = true), strLstGet(currentBackupList, diffIdx)))
                         continue;
 
-                    // Get a list of all differential and incremental backups
-                    StringList *removeList = infoBackupDataLabelList(
-                        infoBackup, backupRegExpP(.differential = true, .incremental = true));
+                    // Expire the differential and any dependent backups
+                    StringList *backupExpired = expireBackupSet(infoBackup, strLstGet(currentBackupList, diffIdx));
+                    result += strLstSize(backupExpired);
 
-                    // Initialize the log message
-                    String *backupExpired = strNew("");
-
-                    // Remove the manifest files in each directory and remove the backup from the current section of backup.info
-                    for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
-                    {
-                        // Remove all differential and incremental backups before the oldest valid differential
-                        // (removeBackupLabel < oldest valid differential)
-                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
-
-                        if (strCmp(removeBackupLabel, strLstGet(currentBackupList, diffIdx + 1)) < 0)
-                        {
-                            expireBackup(infoBackup, removeBackupLabel, backupExpired);
-                            result++;
-                        }
-                    }
-
-                    // If the message contains a comma, then prepend "set:"
+                    // Log the expired backups. If there is more than one backup, then prepend "set:"
                     LOG_INFO_FMT(
-                        "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                        "expire diff backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""),
+                        strPtr(strLstJoin(backupExpired, ", ")));
                 }
             }
         }
@@ -178,6 +194,7 @@ expireFullBackup(InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
+    // Total of all backups being expired
     unsigned int result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -196,24 +213,14 @@ expireFullBackup(InfoBackup *infoBackup)
                 // Expire all backups that depend on the full backup
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
-                    // The list of backups to remove includes the full backup and the default sort order will put it first
-                    StringList *removeList = infoBackupDataLabelList(
-                        infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+                    // Expire the full backup and all its dependents
+                    StringList *backupExpired = expireBackupSet(infoBackup, strLstGet(currentBackupList, fullIdx));
+                    result += strLstSize(backupExpired);
 
-                    // Initialize the log message
-                    String *backupExpired = strNew("");
-
-                    // Remove the manifest files in each directory and remove the backup from the current section of backup.info
-                    for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
-                    {
-                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
-                        expireBackup(infoBackup, removeBackupLabel, backupExpired);
-                        result++;
-                    }
-
-                    // If the message contains a comma, then prepend "set:"
+                    // Log the expired backups. If there is more than one backup, then prepend "set:"
                     LOG_INFO_FMT(
-                        "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                        "expire full backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""),
+                        strPtr(strLstJoin(backupExpired, ", ")));
                 }
             }
         }
@@ -678,10 +685,6 @@ cmdExpire(void)
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
-
-        // If the --set option is valid (i.e. expire is called on its own) and set then attempt to expire the requested backup
-        if (cfgOptionValid(cfgOptSet) || cfgOptionTest(cfgOptSet))
-            expireBackupSet(infoBackup, cfgOptionStr(cfgOptSet));
 
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
