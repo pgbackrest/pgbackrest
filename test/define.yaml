@@ -600,6 +600,9 @@ unit:
         coverage:
           command/expire/expire: full
 
+        include:
+          - info/infoBackup
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: help
         total: 4
