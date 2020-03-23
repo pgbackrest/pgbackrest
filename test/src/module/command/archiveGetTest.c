@@ -168,7 +168,7 @@ testRun(void)
         TEST_RESULT_INT(
             archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        TEST_RESULT_INT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
 
         storageRemoveP(
             storageTest,
@@ -211,7 +211,7 @@ testRun(void)
             archiveGetFile(
                 storageTest, archiveFile, walDestination, false, cipherTypeAes256Cbc, strNew("12345678")), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        TEST_RESULT_INT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------

@@ -219,7 +219,7 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.size, 7, "    check size");
         TEST_RESULT_UINT(info.mode, 0600, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1557432154, "    check time");
+        TEST_RESULT_INT(info.timeModified, 1557432154, "    check time");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("normal")))), "acefile", "    check contents");
@@ -338,7 +338,7 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.size, 9, "    check size");
         TEST_RESULT_UINT(info.mode, 0677, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1557432100, "    check time");
+        TEST_RESULT_INT(info.timeModified, 1557432100, "    check time");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
         TEST_RESULT_STR_Z(
@@ -452,9 +452,9 @@ testRun(void)
         TEST_TITLE("system time UTC");
 
         setenv("TZ", "UTC", true);
-        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
-        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
-        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
+        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
+        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
+        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
         TEST_ERROR_FMT(getEpoch(strNew("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
         TEST_ERROR_FMT(getEpoch(strNew("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
 
@@ -466,15 +466,15 @@ testRun(void)
         char timeBuffer[20];
         strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
         TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
-        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
-        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
-        TEST_RESULT_UINT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
-        TEST_RESULT_UINT(getEpoch(strNew("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
+        TEST_RESULT_INT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
+        TEST_RESULT_INT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
+        TEST_RESULT_INT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
+        TEST_RESULT_INT(getEpoch(strNew("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid target time format");
 
-        TEST_RESULT_UINT(getEpoch(strNew("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
+        TEST_RESULT_INT(getEpoch(strNew("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
         TEST_RESULT_LOG(
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"

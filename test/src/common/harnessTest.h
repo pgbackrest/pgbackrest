@@ -271,13 +271,6 @@ Macros to ease the use of common data types
 #define TEST_RESULT_BOOL(statement, resultExpected, ...)                                                                           \
     TEST_RESULT_BOOL_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 
-#define TEST_RESULT_CHAR_PARAM(statement, resultExpected, typeOp, ...)                                                             \
-    TEST_RESULT(statement, resultExpected, char, "%c", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_CHAR(statement, resultExpected, ...)                                                                           \
-    TEST_RESULT_CHAR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_CHAR_NE(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT_CHAR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
-
 #define TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, typeOp, ...)                                                           \
     TEST_RESULT(statement, resultExpected, double, "%f", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_DOUBLE(statement, resultExpected, ...)                                                                         \
@@ -296,13 +289,6 @@ Macros to ease the use of common data types
     TEST_RESULT_PTR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_PTR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_PTR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
-
-#define TEST_RESULT_SIZE_PARAM(statement, resultExpected, typeOp, ...)                                                             \
-    TEST_RESULT(statement, resultExpected, size_t, "%zu", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_SIZE(statement, resultExpected, ...)                                                                           \
-    TEST_RESULT_SIZE_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_SIZE_NE(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT_SIZE_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #define TEST_RESULT_Z_PARAM(statement, resultExpected, typeOp, ...)                                                                \
     TEST_RESULT(statement, resultExpected, char *, "%s", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE_STR, __VA_ARGS__);
@@ -326,8 +312,6 @@ Macros to ease the use of common data types
     TEST_RESULT_UINT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
-#define TEST_RESULT_UINT_HEX(statement, resultExpected, ...)                                                                       \
-    TEST_RESULT(statement, resultExpected, uint64_t, "%" PRIx64, TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
 
 /***********************************************************************************************************************************
 Test system calls

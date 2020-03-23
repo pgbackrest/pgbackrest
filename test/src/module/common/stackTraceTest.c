@@ -16,11 +16,11 @@ testRun(void)
     {
         char buffer[8];
 
-        TEST_RESULT_INT(stackTraceFmt(buffer, 8, 0, "%s", "1234567"), 7, "fill buffer");
+        TEST_RESULT_UINT(stackTraceFmt(buffer, 8, 0, "%s", "1234567"), 7, "fill buffer");
         TEST_RESULT_Z(buffer, "1234567", "    check buffer");
-        TEST_RESULT_INT(stackTraceFmt(buffer, 8, 7, "%s", "1234567"), 7, "try to fill buffer - at end");
+        TEST_RESULT_UINT(stackTraceFmt(buffer, 8, 7, "%s", "1234567"), 7, "try to fill buffer - at end");
         TEST_RESULT_Z(buffer, "1234567", "    check buffer is unmodified");
-        TEST_RESULT_INT(stackTraceFmt(buffer, 8, 8, "%s", "1234567"), 7, "try to fill buffer - past end");
+        TEST_RESULT_UINT(stackTraceFmt(buffer, 8, 8, "%s", "1234567"), 7, "try to fill buffer - past end");
         TEST_RESULT_Z(buffer, "1234567", "    check buffer is unmodified");
     }
 

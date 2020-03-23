@@ -77,8 +77,8 @@ testRun(void)
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
-        TEST_RESULT_INT(info.systemId, 0xFACEFACE, "   check system id");
-        TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
+        TEST_RESULT_UINT(info.systemId, 0xFACEFACE, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -101,8 +101,8 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF}));
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
-        TEST_RESULT_INT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
     }
 
     // *****************************************************************************************************************************
@@ -184,8 +184,8 @@ testRun(void)
         unsigned char page[PG_PAGE_SIZE_DEFAULT];
         memset(page, 0xFF, PG_PAGE_SIZE_DEFAULT);
 
-        TEST_RESULT_UINT_HEX(pgPageChecksum(page, 0), 0x0E1C, "check 0xFF filled page, block 0");
-        TEST_RESULT_UINT_HEX(pgPageChecksum(page, 999), 0x0EC3, "check 0xFF filled page, block 999");
+        TEST_RESULT_UINT(pgPageChecksum(page, 0), 0x0E1C, "check 0xFF filled page, block 0");
+        TEST_RESULT_UINT(pgPageChecksum(page, 999), 0x0EC3, "check 0xFF filled page, block 999");
     }
 
     // *****************************************************************************************************************************
@@ -223,8 +223,8 @@ testRun(void)
 
         PgWal info = {0};
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v11");
-        TEST_RESULT_INT(info.systemId, 0xECAFECAF, "   check system id");
-        TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
+        TEST_RESULT_UINT(info.systemId, 0xECAFECAF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
@@ -232,8 +232,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v8.3");
-        TEST_RESULT_INT(info.systemId, 0xEAEAEAEA, "   check system id");
-        TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
     }
 
     // *****************************************************************************************************************************

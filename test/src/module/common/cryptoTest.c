@@ -92,11 +92,11 @@ testRun(void)
             cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS), NULL));
         TEST_RESULT_Z(memContextName(cipherBlock->memContext), "CipherBlock", "mem context name is valid");
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
-        TEST_RESULT_INT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
+        TEST_RESULT_UINT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
         TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
         TEST_RESULT_BOOL(cipherBlock->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(cipherBlock->processDone, false, "process done is false");
-        TEST_RESULT_INT(cipherBlock->headerSize, 0, "header size is 0");
+        TEST_RESULT_UINT(cipherBlock->headerSize, 0, "header size is 0");
         TEST_RESULT_PTR_NE(cipherBlock->cipher, NULL, "cipher is set");
         TEST_RESULT_PTR_NE(cipherBlock->digest, NULL, "digest is set");
         TEST_RESULT_PTR(cipherBlock->cipherContext, NULL, "cipher context is not set");
@@ -109,13 +109,13 @@ testRun(void)
         blockEncryptFilter = cipherBlockNewVar(ioFilterParamList(blockEncryptFilter));
         CipherBlock *blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
-        TEST_RESULT_INT(
+        TEST_RESULT_UINT(
             cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
             strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH + CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN, "check process size");
 
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE);
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
-        TEST_RESULT_INT(bufUsed(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE, "cipher size is magic size");
+        TEST_RESULT_UINT(bufUsed(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE, "cipher size is magic size");
         TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), true,  "filter needs same input");
 
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN);
@@ -124,10 +124,10 @@ testRun(void)
 
         TEST_RESULT_BOOL(blockEncrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockEncrypt->processDone, true, "process done is true");
-        TEST_RESULT_INT(blockEncrypt->headerSize, 0, "header size is 0");
-        TEST_RESULT_INT(bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE, "cipher size is header len");
+        TEST_RESULT_UINT(blockEncrypt->headerSize, 0, "header size is 0");
+        TEST_RESULT_UINT(bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE, "cipher size is header len");
 
-        TEST_RESULT_INT(
+        TEST_RESULT_UINT(
             cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
             strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH, "check process size");
 
@@ -139,13 +139,13 @@ testRun(void)
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
         bufLimitClear(encryptBuffer);
 
-        TEST_RESULT_INT(
+        TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)EVP_CIPHER_block_size(blockEncrypt->cipher),
             "cipher size increases by one block");
         TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), false,  "filter is not done");
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
-        TEST_RESULT_INT(
+        TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)(EVP_CIPHER_block_size(blockEncrypt->cipher) * 2),
             "cipher size increases by one block on flush");
         TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true,  "filter is done");
@@ -160,15 +160,15 @@ testRun(void)
         blockDecryptFilter = cipherBlockNewVar(ioFilterParamList(blockDecryptFilter));
         CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
-        TEST_RESULT_INT(
+        TEST_RESULT_UINT(
             cipherBlockProcessSize(blockDecrypt, bufUsed(encryptBuffer)), bufUsed(encryptBuffer) + EVP_MAX_BLOCK_LENGTH,
             "check process size");
 
         ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
 
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), strlen(TEST_PLAINTEXT) * 2, "check final decrypt size");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), strlen(TEST_PLAINTEXT) * 2, "check final decrypt size");
 
         TEST_RESULT_STR_Z(strNewBuf(decryptBuffer), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
@@ -182,19 +182,19 @@ testRun(void)
         bufUsedZero(decryptBuffer);
 
         ioFilterProcessInOut(blockDecryptFilter, bufNewC(bufPtr(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE), decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since header read is not complete");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "no decrypt since header read is not complete");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
-        TEST_RESULT_INT(blockDecrypt->headerSize, CIPHER_BLOCK_MAGIC_SIZE, "check header size");
+        TEST_RESULT_UINT(blockDecrypt->headerSize, CIPHER_BLOCK_MAGIC_SIZE, "check header size");
         TEST_RESULT_BOOL(
             memcmp(blockDecrypt->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) == 0, true, "check header magic");
 
         ioFilterProcessInOut(
             blockDecryptFilter, bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE, PKCS5_SALT_LEN), decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since no data processed yet");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "no decrypt since no data processed yet");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
-        TEST_RESULT_INT(blockDecrypt->headerSize, CIPHER_BLOCK_MAGIC_SIZE, "check header size (not increased)");
+        TEST_RESULT_UINT(blockDecrypt->headerSize, CIPHER_BLOCK_MAGIC_SIZE, "check header size (not increased)");
         TEST_RESULT_BOOL(
             memcmp(
                 blockDecrypt->header + CIPHER_BLOCK_MAGIC_SIZE, bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE,
@@ -205,10 +205,10 @@ testRun(void)
             blockDecryptFilter,
             bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_HEADER_SIZE, bufUsed(encryptBuffer) - CIPHER_BLOCK_HEADER_SIZE),
             decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
 
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), strlen(TEST_PLAINTEXT) * 2, "check final decrypt size");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), strlen(TEST_PLAINTEXT) * 2, "check final decrypt size");
 
         TEST_RESULT_STR_Z(strNewBuf(decryptBuffer), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
@@ -222,7 +222,7 @@ testRun(void)
         bufUsedZero(encryptBuffer);
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
-        TEST_RESULT_INT(bufUsed(encryptBuffer), 32, "check remaining size");
+        TEST_RESULT_UINT(bufUsed(encryptBuffer), 32, "check remaining size");
 
         ioFilterFree(blockEncryptFilter);
 
@@ -232,9 +232,9 @@ testRun(void)
         bufUsedZero(decryptBuffer);
 
         ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "0 bytes processed");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes processed");
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
-        TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
+        TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
 
         ioFilterFree(blockDecryptFilter);
 

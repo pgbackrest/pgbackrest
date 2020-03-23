@@ -400,7 +400,7 @@ testRun(void)
 
         ioBufferSizeSet(333);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
-        TEST_RESULT_SIZE(ioBufferSize(), 333, "buffer size not updated by help command");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // Help command for backup
         // -------------------------------------------------------------------------------------------------------------------------
@@ -414,7 +414,7 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-retention-full=2"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_SIZE(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
 
         // Command takes lock and opens log file
         // -------------------------------------------------------------------------------------------------------------------------
