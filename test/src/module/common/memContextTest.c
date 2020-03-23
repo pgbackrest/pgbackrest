@@ -166,6 +166,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
+        TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
+        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)0), (void *)sizeof(MemContextAlloc), "check buffer macro");
+        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_HEADER((void *)sizeof(MemContextAlloc)), (void *)0, "check header macro");
+
         memContextSwitch(memContextTop());
         memNewPtrArray(1);
 
@@ -200,11 +204,10 @@ testRun(void)
 
         // Free memory
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 2, "check alloc free idx");
-        TEST_RESULT_VOID(memFree(memContextCurrent()->allocList[0].buffer), "free allocation");
-        TEST_ERROR(memFree(memContextCurrent()->allocList[0].buffer), AssertError, "unable to find allocation");
+        TEST_RESULT_VOID(memFree(MEM_CONTEXT_ALLOC_BUFFER(memContextCurrent()->allocList[0])), "free allocation");
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, 0, "check alloc free idx");
 
-        TEST_RESULT_VOID(memFree(memContextCurrent()->allocList[1].buffer), "free allocation");
+        TEST_RESULT_VOID(memFree(MEM_CONTEXT_ALLOC_BUFFER(memContextCurrent()->allocList[1])), "free allocation");
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, 0, "check alloc free idx");
 
         TEST_RESULT_VOID(memNew(3), "new allocation");
@@ -217,7 +220,6 @@ testRun(void)
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         TEST_ERROR(memFree(NULL), AssertError, "assertion 'buffer != NULL' failed");
-        TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
 
         memContextSwitch(memContextTop());
@@ -286,12 +288,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList[0], NULL, "nothing allocated");
             memNew(99);
-            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, true, "1 allocation");
+            TEST_RESULT_PTR_NE(MEM_CONTEXT_TEMP()->allocList[0], NULL, "1 allocation");
 
             MEM_CONTEXT_TEMP_RESET(1);
-            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList[0], NULL, "nothing allocated");
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -370,7 +372,7 @@ testRun(void)
                 }
                 MEM_CONTEXT_NEW_END();
 
-                TEST_RESULT_PTR(memContext->allocList[0].buffer, mem, "check memory allocation");
+                TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER(memContext->allocList[0]), mem, "check memory allocation");
                 TEST_RESULT_PTR(memContextCurrent()->contextChildList[1], memContext, "check memory context");
 
                 // Null out the mem context in the parent so the move will fail
@@ -394,10 +396,10 @@ testRun(void)
             }
             MEM_CONTEXT_TEMP_END();
 
-            TEST_RESULT_PTR(memContext->allocList[0].buffer, mem, "check memory allocation");
+            TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER(memContext->allocList[0]), mem, "check memory allocation");
             TEST_RESULT_PTR(memContextCurrent()->contextChildList[1], memContext, "check memory context");
 
-            TEST_RESULT_PTR(memContext2->allocList[0].buffer, mem2, "check memory allocation 2");
+            TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER(memContext2->allocList[0]), mem2, "check memory allocation 2");
             TEST_RESULT_PTR(memContextCurrent()->contextChildList[2], memContext2, "check memory context 2");
         }
         MEM_CONTEXT_NEW_END();
