@@ -113,6 +113,9 @@ main(int argListSize, const char *argList[])
         CATCH_ANY()
         {
             // If a test was running then throw a detailed result exception
+#ifndef NDEBUG
+        if (!errorInstanceOf(&TestError))
+#endif
             hrnTestResultException();
 
             // Else rethrow the original error

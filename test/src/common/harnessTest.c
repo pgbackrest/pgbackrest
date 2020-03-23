@@ -471,6 +471,228 @@ hrnTestResultEnd(void)
     harnessTestLocal.result.running = false;
 }
 
+/**********************************************************************************************************************************/
+static void hrnTestResultDiff(const char *actual, const char *expected)
+{
+    if (actual != NULL && expected != NULL && (strstr(actual, "\n") != NULL || strstr(expected, "\n") != NULL))
+    {
+        THROW_FMT(
+#ifndef NDEBUG
+            TestError,
+#else
+            AssertError,
+#endif
+            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",
+            harnessTestLocal.result.statement, actual, hrnDiff(expected, actual));
+    }
+    else
+    {
+        THROW_FMT(
+#ifndef NDEBUG
+            TestError,
+#else
+            AssertError,
+#endif
+            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s",
+            harnessTestLocal.result.statement, actual == NULL ? "NULL" : actual, expected == NULL ? "NULL" : expected);                                                 \
+    }
+}
+
+void hrnTestResultBool(int actual, int expected)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    if (actual < 0 || actual > 1 || expected < 0 || expected > 1 || actual != expected)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        if (actual < 0 || actual > 1)
+            snprintf(actualZ, sizeof(actualZ), "INVALID(%d)", actual);
+        else
+            actual ? strcpy(actualZ, "true") : strcpy(actualZ, "false");
+
+        if (expected < 0 || expected > 1)
+            snprintf(expectedZ, sizeof(expectedZ), "INVALID(%d)", expected);
+        else
+            expected ? strcpy(expectedZ, "true") : strcpy(expectedZ, "false");
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
+void hrnTestResultDouble(double actual, double expected)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    if (actual != expected)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%f", actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%f", expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
+void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    bool result = false;
+
+    switch (operation)
+    {
+        case harnessTestResultOperationEq:
+        {
+            result = actual == expected;
+            break;
+        }
+
+        case harnessTestResultOperationNe:
+        {
+            result = actual != expected;
+            break;
+        }
+    }
+
+    if (!result)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%" PRId64, actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%" PRId64, expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
+void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    bool result = false;
+
+    switch (operation)
+    {
+        case harnessTestResultOperationEq:
+        {
+            result = actual == expected;
+            break;
+        }
+
+        case harnessTestResultOperationNe:
+        {
+            result = actual != expected;
+            break;
+        }
+    }
+
+    if (!result)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%p", actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%p", expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
+void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    bool result = false;
+
+    switch (operation)
+    {
+        case harnessTestResultOperationEq:
+        {
+            result = actual == expected;
+            break;
+        }
+
+        case harnessTestResultOperationNe:
+        {
+            result = actual != expected;
+            break;
+        }
+    }
+
+    if (!result)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%" PRIu64, actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%" PRIu64, expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
+void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    if (actual <= INT64_MAX && expected >= 0)
+        hrnTestResultUInt64(actual, (uint64_t)expected, operation);
+    else
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%" PRIu64, actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%" PRId64, expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+}
+
+void hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    bool result = false;
+
+    switch (operation)
+    {
+        case harnessTestResultOperationEq:
+        {
+            result = (actual == NULL && expected == NULL) || (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
+            break;
+        }
+
+        case harnessTestResultOperationNe:
+        {
+            result =
+                (actual == NULL && expected != NULL) || (actual != NULL && expected == NULL) ||
+                (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
+            break;
+        }
+    }
+
+    if (!result)
+        hrnTestResultDiff(actual, expected);
+
+    hrnTestResultEnd();
+}
+
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/

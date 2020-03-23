@@ -85,12 +85,6 @@ const char *testProjectExe(void);
 uint64_t testScale(void);
 
 /***********************************************************************************************************************************
-Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
-to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.
-***********************************************************************************************************************************/
-#define TEST_RESULT_FORMAT_SIZE                                     128
-
-/***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
 #define TEST_ERROR(statement, errorTypeExpected, errorMessageExpected)                                                             \
@@ -139,46 +133,6 @@ Test error with a formatted expected message
 }
 
 /***********************************************************************************************************************************
-Format the test type into the given buffer -- or return verbatim if char *
-***********************************************************************************************************************************/
-#define TEST_TYPE_FORMAT_VAR(value)                                                                                                \
-    char value##StrBuffer[TEST_RESULT_FORMAT_SIZE + 1];                                                                            \
-    char *value##Str = value##StrBuffer;
-
-#define TEST_TYPE_FORMAT_SPRINTF(format, value)                                                                                    \
-    if (snprintf((char *)value##Str, TEST_RESULT_FORMAT_SIZE + 1, format, value) > TEST_RESULT_FORMAT_SIZE)                        \
-    {                                                                                                                              \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "formatted type '%" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);     \
-    }
-
-#define TEST_TYPE_FORMAT(type, format, value)                                                                                      \
-    TEST_TYPE_FORMAT_VAR(value);                                                                                                   \
-    TEST_TYPE_FORMAT_SPRINTF(format, value);
-
-#define TEST_TYPE_FORMAT_PTR(type, format, value)                                                                                  \
-    TEST_TYPE_FORMAT_VAR(value);                                                                                                   \
-                                                                                                                                   \
-    if (value == NULL)                                                                                                             \
-        value##Str = (char *)"NULL";                                                                                               \
-    else if (strcmp(#type, "char *") == 0)                                                                                         \
-        value##Str = (char *)value;                                                                                                \
-    else                                                                                                                           \
-        TEST_TYPE_FORMAT_SPRINTF(format, value);
-
-/***********************************************************************************************************************************
-Compare types
-***********************************************************************************************************************************/
-#define TEST_TYPE_COMPARE_STR(result, value, typeOp, valueExpected)                                                                \
-    if (value != NULL && valueExpected != NULL)                                                                                    \
-        result = strcmp((char *)value, (char *)valueExpected) typeOp 0;                                                            \
-    else                                                                                                                           \
-        result = value typeOp valueExpected;
-
-#define TEST_TYPE_COMPARE(result, value, typeOp, valueExpected)                                                                    \
-    result = value typeOp valueExpected;
-
-/***********************************************************************************************************************************
 Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(...)                                                                                                      \
@@ -188,63 +142,11 @@ Output information about the test
     fflush(stdout);
 
 /***********************************************************************************************************************************
-Test the result of a statement and make sure it matches the expected value.  This macro can test any C type given the correct
-parameters.
-***********************************************************************************************************************************/
-#define TEST_RESULT(statement, resultExpectedValue, type, format, formatMacro, typeOp, compareMacro, ...)                          \
-{                                                                                                                                  \
-    /* Assign expected result to a local variable */                                                                               \
-    const type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                           \
-                                                                                                                                   \
-    /* Output test info */                                                                                                         \
-    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
-                                                                                                                                   \
-    /* Format the expected result */                                                                                               \
-    formatMacro(type, format, TEST_RESULT_resultExpected);                                                                         \
-                                                                                                                                   \
-    /* Try to run the statement.  Assign expected to result to silence compiler warning about uninitialized var. */                \
-    type TEST_RESULT_result = (type)TEST_RESULT_resultExpected;                                                                    \
-                                                                                                                                   \
-    hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
-    TEST_RESULT_result = (type)(statement);                                                                                        \
-    hrnTestResultEnd();                                                                                                            \
-                                                                                                                                   \
-    /* Test the type operator */                                                                                                   \
-    bool TEST_RESULT_resultOp = false;                                                                                             \
-    compareMacro(TEST_RESULT_resultOp, TEST_RESULT_result, typeOp, TEST_RESULT_resultExpected);                                    \
-                                                                                                                                   \
-    /* If type operator test was not successful */                                                                                 \
-    if (!TEST_RESULT_resultOp)                                                                                                     \
-    {                                                                                                                              \
-        /* Format the actual result */                                                                                             \
-        formatMacro(type, format, TEST_RESULT_result);                                                                             \
-                                                                                                                                   \
-        /* Throw diff error */                                                                                                     \
-        if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
-        {                                                                                                                          \
-            THROW_FMT(                                                                                                             \
-                AssertError,                                                                                                       \
-                "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",         \
-                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultExpectedStr, TEST_RESULT_resultStr));                 \
-        }                                                                                                                          \
-        /* Throw error */                                                                                                          \
-        else                                                                                                                       \
-        {                                                                                                                          \
-            THROW_FMT(                                                                                                             \
-                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                       \
-                #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                 \
-        }                                                                                                                          \
-    }                                                                                                                              \
-}
-
-/***********************************************************************************************************************************
 Test that a void statement returns and does not throw an error
 ***********************************************************************************************************************************/
 #define TEST_RESULT_VOID(statement, ...)                                                                                           \
 {                                                                                                                                  \
-    /* Output test info */                                                                                                         \
     TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
-                                                                                                                                   \
     hrnTestResultBegin(#statement, __LINE__, false);                                                                               \
     statement;                                                                                                                     \
     hrnTestResultEnd();                                                                                                            \
@@ -255,47 +157,80 @@ Test that a statement does not error and assign it to the specified variable if 
 ***********************************************************************************************************************************/
 #define TEST_ASSIGN(lValue, statement, ...)                                                                                        \
 {                                                                                                                                  \
-    /* Output test info */                                                                                                         \
     TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
-                                                                                                                                   \
     hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
     lValue = statement;                                                                                                            \
     hrnTestResultEnd();                                                                                                            \
 }
 
 /***********************************************************************************************************************************
-Macros to ease the use of common data types
+Macros to compare results of common data types
 ***********************************************************************************************************************************/
-#define TEST_RESULT_BOOL_PARAM(statement, resultExpected, typeOp, ...)                                                             \
-    TEST_RESULT(statement, resultExpected, bool, "%d", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_BOOL(statement, resultExpected, ...)                                                                           \
-    TEST_RESULT_BOOL_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_BOOL_PARAM(statement, expected, ...)                                                                           \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBool(statement, expected);                                                                                    \
+    }                                                                                                                              \
+    while (0)
 
-#define TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, typeOp, ...)                                                           \
-    TEST_RESULT(statement, resultExpected, double, "%f", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_DOUBLE(statement, resultExpected, ...)                                                                         \
-    TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_BOOL(statement, expected, ...)                                                                                 \
+    TEST_RESULT_BOOL_PARAM(statement, expected, __VA_ARGS__);
 
-#define TEST_RESULT_INT_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, int64_t, "%" PRId64, TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_INT(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_INT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_INT_NE(statement, resultExpected, ...)                                                                         \
-    TEST_RESULT_INT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_DOUBLE_PARAM(statement, expected, ...)                                                                         \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultDouble(statement, expected);                                                                                  \
+    }                                                                                                                              \
+    while (0)
 
-#define TEST_RESULT_PTR_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, void *, "%p", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_PTR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_PTR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_PTR_NE(statement, resultExpected, ...)                                                                         \
-    TEST_RESULT_PTR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_DOUBLE(statement, expected, ...)                                                                               \
+    TEST_RESULT_DOUBLE_PARAM(statement, expected, __VA_ARGS__);
 
-#define TEST_RESULT_Z_PARAM(statement, resultExpected, typeOp, ...)                                                                \
-    TEST_RESULT(statement, resultExpected, char *, "%s", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE_STR, __VA_ARGS__);
-#define TEST_RESULT_Z(statement, resultExpected, ...)                                                                              \
-    TEST_RESULT_Z_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_Z_NE(statement, resultExpected, ...)                                                                           \
-    TEST_RESULT_Z_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_INT_PARAM(statement, expected, operation, ...)                                                                 \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultInt64(statement, expected, operation);                                                                        \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_INT(statement, expected, ...)                                                                                  \
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+#define TEST_RESULT_INT_NE(statement, expected, ...)                                                                               \
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+
+#define TEST_RESULT_PTR_PARAM(statement, expected, operation, ...)                                                                 \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultPtr(statement, expected, operation);                                                                          \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_PTR(statement, expected, ...)                                                                                  \
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+#define TEST_RESULT_PTR_NE(statement, expected, ...)                                                                               \
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+
+#define TEST_RESULT_Z_PARAM(statement, expected, operation, ...)                                                                   \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultZ(statement, expected, operation);                                                                            \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_Z(statement, expected, ...)                                                                                    \
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+#define TEST_RESULT_Z_NE(statement, expected, ...)                                                                                 \
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
     TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
@@ -306,12 +241,29 @@ Macros to ease the use of common data types
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
 
-#define TEST_RESULT_UINT_PARAM(statement, resultExpected, typeOp, ...)                                                             \
-    TEST_RESULT(statement, resultExpected, uint64_t, "%" PRIu64, TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
-#define TEST_RESULT_UINT(statement, resultExpected, ...)                                                                           \
-    TEST_RESULT_UINT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultUInt64(statement, expected, operation);                                                                       \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_UINT(statement, expected, ...)                                                                                 \
+    TEST_RESULT_UINT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+
+#define TEST_RESULT_UINT_INT_PARAM(statement, expected, operation, ...)                                                            \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultUInt64Int64(statement, expected, operation);                                                                  \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_UINT_INT(statement, expected, ...)                                                                             \
+    TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
 
 /***********************************************************************************************************************************
 Test system calls
