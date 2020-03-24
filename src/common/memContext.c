@@ -21,8 +21,8 @@ typedef enum
 } MemContextState;
 
 /***********************************************************************************************************************************
-Contains information about a memory allocation. Extra space is added to each allocation and this header is placed at the
-beginning of the allocation. The advantage is that when a buffer pointer is passed by the user we know the pointer of the allocation
+Contains information about a memory allocation. This header is placed at the beginning of every memory allocation returned to the
+user by memNew(), etc. The advantage is that when an allocation is passed back by the user we know the location of the allocation
 header by doing some pointer arithmetic. This is much faster than searching through a list.
 ***********************************************************************************************************************************/
 typedef struct MemContextAlloc
@@ -365,12 +365,14 @@ memContextCallbackClear(MemContext *this)
 }
 
 /***********************************************************************************************************************************
-Find an available allocation in the memory context
+Find an available slot in the memory context's allocation list and allocate memory
 ***********************************************************************************************************************************/
-static unsigned int
-memContextAllocFind(void)
+static MemContextAlloc *
+memContextAllocNew(size_t size)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
 
     // Find space for the new allocation
     MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
@@ -406,10 +408,45 @@ memContextAllocFind(void)
         }
     }
 
+    // Create new allocation
+    MemContextAlloc *result = memAllocInternal(sizeof(MemContextAlloc) + size);
+
+    *result = (MemContextAlloc)
+    {
+        .allocIdx = contextCurrent->allocFreeIdx,
+        .size = (unsigned int)(sizeof(MemContextAlloc) + size),
+    };
+
+    // Set pointer in allocation list
+    contextCurrent->allocList[contextCurrent->allocFreeIdx] = result;
+
+    // Update free index to next location. This location may not actually be free but it is where the search should start next time.
     contextCurrent->allocFreeIdx++;
 
-    // Return allocation index
-    FUNCTION_TEST_RETURN(contextCurrent->allocFreeIdx - 1);
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Resize memory that has already been allocated
+***********************************************************************************************************************************/
+static MemContextAlloc *
+memContextAllocResize(MemContextAlloc *alloc, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    // Make sure the allocation is in the memory context
+    ASSERT(memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] == alloc);
+
+    // Resize the allocation
+    alloc = memReAllocInternal(alloc, sizeof(MemContextAlloc) + size);
+    alloc->size = (unsigned int)(sizeof(MemContextAlloc) + size);
+
+    // Update pointer in allocation list in case the realloc moved the allocation
+    memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] = alloc;
+
+    FUNCTION_TEST_RETURN(alloc);
 }
 
 /**********************************************************************************************************************************/
@@ -420,20 +457,7 @@ memNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    // Find a new allocation and allocate memory
-    unsigned int allocIdx = memContextAllocFind();
-    MemContextAlloc *alloc = memAllocInternal(size + sizeof(MemContextAlloc));
-
-    *alloc = (MemContextAlloc)
-    {
-        .allocIdx = allocIdx,
-        .size = (unsigned int)size,
-    };
-
-    // Update pointer in allocation list
-    memContextStack[memContextCurrentStackIdx].memContext->allocList[allocIdx] = alloc;
-
-    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(alloc));
+    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size)));
 }
 
 /**********************************************************************************************************************************/
@@ -444,24 +468,14 @@ memNewPtrArray(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    // Find a new allocation and allocate memory
-    unsigned int allocIdx = memContextAllocFind();
-    MemContextAlloc *alloc = memAllocInternal(size * sizeof(void *) + sizeof(MemContextAlloc));
-
-    *alloc = (MemContextAlloc)
-    {
-        .allocIdx = allocIdx,
-        .size = (unsigned int)(size * sizeof(void *) + sizeof(MemContextAlloc)),
-    };
+    // Allocate pointer array
+    void **buffer = (void **)MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size * sizeof(void *)));
 
     // Set pointers to NULL
     for (size_t ptrIdx = 0; ptrIdx < size; ptrIdx++)
-        ((void **)MEM_CONTEXT_ALLOC_BUFFER(alloc))[ptrIdx] = NULL;
+        buffer[ptrIdx] = NULL;
 
-    // Update pointer in allocation list
-    memContextStack[memContextCurrentStackIdx].memContext->allocList[allocIdx] = alloc;
-
-    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(alloc));
+    FUNCTION_TEST_RETURN(buffer);
 }
 
 /**********************************************************************************************************************************/
@@ -475,20 +489,7 @@ memResize(const void *buffer, size_t size)
 
     ASSERT(buffer != NULL);
 
-    // Get the allocation
-    MemContextAlloc *alloc = MEM_CONTEXT_ALLOC_HEADER(buffer);
-
-    // Make sure this allocation really is in this mem context
-    ASSERT(memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] == alloc);
-
-    // Grow the buffer
-    alloc = memReAllocInternal(alloc, size + sizeof(MemContextAlloc));
-    alloc->size = (unsigned int)(size + sizeof(MemContextAlloc));
-
-    // Update pointer in allocation list
-    memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] = alloc;
-
-    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(alloc));
+    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(memContextAllocResize(MEM_CONTEXT_ALLOC_HEADER(buffer), size)));
 }
 
 /**********************************************************************************************************************************/
@@ -501,12 +502,11 @@ memFree(void *buffer)
 
     ASSERT(buffer != NULL);
 
-    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
-
     // Get the allocation
+    MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     MemContextAlloc *alloc = MEM_CONTEXT_ALLOC_HEADER(buffer);
 
-    // Make sure this allocation really is in this mem context
+    // Make sure the allocation is in the memory context
     ASSERT(contextCurrent->allocList[alloc->allocIdx] == alloc);
 
     // If this allocation is before the current free allocation then make it the current free allocation
