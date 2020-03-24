@@ -39,21 +39,11 @@ typedef struct MemContextAlloc
 
 // Make sure the allocation is valid for the current memory context.  This check only works correctly if the allocation is valid but
 // belongs to another context.  Otherwise, there is likely to be a segfault.
-#ifdef DEBUG
-    #define ASSERT_ALLOC_VALID(alloc)                                                                                              \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            MemContext *memContext = memContextStack[memContextCurrentStackIdx].memContext;                                        \
-                                                                                                                                   \
-            ASSERT(alloc != NULL);                                                                                                 \
-            ASSERT(alloc != MEM_CONTEXT_ALLOC_HEADER(NULL));                                                                       \
-            ASSERT(alloc->allocIdx < memContext->allocListSize);                                                                   \
-            ASSERT(memContext->allocList[alloc->allocIdx] == alloc);                                                               \
-        }                                                                                                                          \
-        while (0)
-#else
-    #define ASSERT_ALLOC_VALID(memContext, alloc)
-#endif
+#define ASSERT_ALLOC_VALID(alloc)                                                                                                  \
+    ASSERT(                                                                                                                        \
+        alloc != NULL && alloc != MEM_CONTEXT_ALLOC_HEADER(NULL) &&                                                                \
+        alloc->allocIdx < memContextStack[memContextCurrentStackIdx].memContext->allocListSize &&                                  \
+        memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx]);
 
 /***********************************************************************************************************************************
 Contains information about the memory context

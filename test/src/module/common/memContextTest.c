@@ -220,7 +220,13 @@ testRun(void)
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         TEST_ERROR(
-            memFree(NULL), AssertError, "assertion '((MemContextAlloc *)buffer - 1) != MEM_CONTEXT_ALLOC_HEADER(NULL)' failed");
+            memFree(NULL), AssertError,
+            "assertion '((MemContextAlloc *)buffer - 1) != NULL"
+                " && ((MemContextAlloc *)buffer - 1) != MEM_CONTEXT_ALLOC_HEADER(NULL)"
+                " && ((MemContextAlloc *)buffer - 1)->allocIdx <"
+                " memContextStack[memContextCurrentStackIdx].memContext->allocListSize"
+                " && memContextStack[memContextCurrentStackIdx].memContext->allocList[((MemContextAlloc *)buffer - 1)->allocIdx]'"
+                " failed");
         memFree(buffer);
 
         memContextSwitch(memContextTop());
