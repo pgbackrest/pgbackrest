@@ -144,9 +144,9 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0750, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
+        TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
@@ -162,9 +162,9 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_INT(info.size, 6, "    check size");
+        TEST_RESULT_UINT(info.size, 6, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1555160001, "    check mod time");
+        TEST_RESULT_INT(info.timeModified, 1555160001, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
@@ -180,7 +180,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0666, "    check mode");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
@@ -197,7 +197,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "    check link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
@@ -212,7 +212,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_INT(info.size, 6, "    check size");
+        TEST_RESULT_UINT(info.size, 6, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
@@ -395,7 +395,7 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), hrnReplaceKey("{[path]}/repo/test.txt"), "check name");
-        TEST_RESULT_SIZE(
+        TEST_RESULT_UINT(
             storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
             "nothing more to read");
 

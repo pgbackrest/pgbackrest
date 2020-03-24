@@ -18,9 +18,9 @@ testRun(void)
 
         TEST_ERROR(cvtBoolToZ(true, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtBoolToZ(true, buffer, STACK_TRACE_PARAM_MAX), 4, "convert true bool to string");
+        TEST_RESULT_UINT(cvtBoolToZ(true, buffer, STACK_TRACE_PARAM_MAX), 4, "convert true bool to string");
         TEST_RESULT_Z(buffer, "true", "    check buffer");
-        TEST_RESULT_INT(cvtBoolToZ(false, buffer, STACK_TRACE_PARAM_MAX), 5, "convert false bool to string");
+        TEST_RESULT_UINT(cvtBoolToZ(false, buffer, STACK_TRACE_PARAM_MAX), 5, "convert false bool to string");
         TEST_RESULT_Z(buffer, "false", "    check buffer");
     }
 
@@ -31,7 +31,7 @@ testRun(void)
 
         TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
+        TEST_RESULT_UINT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
         TEST_RESULT_Z(buffer, "C", "    check buffer");
     }
 
@@ -42,13 +42,13 @@ testRun(void)
 
         TEST_ERROR(cvtDoubleToZ(999.1234, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
+        TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
         TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
 
-        TEST_RESULT_INT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
+        TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
         TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");
 
-        TEST_RESULT_INT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
+        TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
         TEST_RESULT_Z(buffer, "999", "    check buffer");
 
         TEST_ERROR(cvtZToDouble("AAA"), FormatError, "unable to convert string 'AAA' to double");
@@ -64,7 +64,7 @@ testRun(void)
 
         TEST_ERROR(cvtIntToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtIntToZ(1234567890, buffer, STACK_TRACE_PARAM_MAX), 10, "convert int to string");
+        TEST_RESULT_UINT(cvtIntToZ(1234567890, buffer, STACK_TRACE_PARAM_MAX), 10, "convert int to string");
         TEST_RESULT_Z(buffer, "1234567890", "    check buffer");
 
         TEST_ERROR(cvtZToInt("FEF"), FormatError, "unable to convert base 10 string 'FEF' to int");
@@ -85,7 +85,7 @@ testRun(void)
 
         TEST_ERROR(cvtModeToZ(0750, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtModeToZ(0777, buffer, STACK_TRACE_PARAM_MAX), 4, "convert mode to string");
+        TEST_RESULT_UINT(cvtModeToZ(0777, buffer, STACK_TRACE_PARAM_MAX), 4, "convert mode to string");
         TEST_RESULT_Z(buffer, "0777", "    check buffer");
 
         TEST_RESULT_UINT(cvtZToMode("0700"), 0700, "convert string to mode");
@@ -104,7 +104,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(cvtSSizeToZ(-9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtSSizeToZ(-9999, buffer, STACK_TRACE_PARAM_MAX), 5, "convert ssize to string");
+        TEST_RESULT_UINT(cvtSSizeToZ(-9999, buffer, STACK_TRACE_PARAM_MAX), 5, "convert ssize to string");
         TEST_RESULT_Z(buffer, "-9999", "    check buffer");
     }
 
@@ -126,7 +126,7 @@ testRun(void)
 
         TEST_ERROR(cvtUIntToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtUIntToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert unsigned int to string");
+        TEST_RESULT_UINT(cvtUIntToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert unsigned int to string");
         TEST_RESULT_Z(buffer, "4294967295", "    check buffer");
 
         TEST_ERROR(cvtZToUInt("-1"), FormatError, "unable to convert base 10 string '-1' to unsigned int");
@@ -143,7 +143,7 @@ testRun(void)
 
         TEST_ERROR(cvtInt64ToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtInt64ToZ(9223372036854775807, buffer, STACK_TRACE_PARAM_MAX), 19, "convert int64 to string");
+        TEST_RESULT_UINT(cvtInt64ToZ(9223372036854775807, buffer, STACK_TRACE_PARAM_MAX), 19, "convert int64 to string");
         TEST_RESULT_Z(buffer, "9223372036854775807", "    check buffer");
 
         TEST_ERROR(cvtZToInt64("123INV"), FormatError, "unable to convert base 10 string '123INV' to int64");
@@ -168,7 +168,7 @@ testRun(void)
 
         TEST_ERROR(cvtUInt64ToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtUInt64ToZ(0xFFFFFFFFFFFFFFFF, buffer, STACK_TRACE_PARAM_MAX), 20, "convert uint64 to string");
+        TEST_RESULT_UINT(cvtUInt64ToZ(0xFFFFFFFFFFFFFFFF, buffer, STACK_TRACE_PARAM_MAX), 20, "convert uint64 to string");
         TEST_RESULT_Z(buffer, "18446744073709551615", "    check buffer");
 
         TEST_ERROR(cvtZToUInt64("FEF"), FormatError, "unable to convert base 10 string 'FEF' to uint64");
@@ -177,7 +177,7 @@ testRun(void)
         TEST_ERROR(cvtZToUInt64("-1"), FormatError, "unable to convert base 10 string '-1' to uint64");
 
         TEST_RESULT_UINT(cvtZToUInt64Base("FF", 16), 255, "convert string to uint64");
-        TEST_RESULT_DOUBLE(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
+        TEST_RESULT_UINT(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

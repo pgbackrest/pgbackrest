@@ -214,6 +214,7 @@ sub coverageValidateAndGenerate
     my $oyTestRun = shift;
     my $oStorage = shift;
     my $bCoverageSummary = shift;
+    my $strWorkPath = shift;
     my $strWorkTmpPath = shift;
     my $strTestResultCoveragePath = shift . '/coverage';
     my $strTestResultSummaryPath = shift;
@@ -285,7 +286,7 @@ sub coverageValidateAndGenerate
     {
         executeTest(
             "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
-                " --prefix=${strWorkTmpPath}/repo" .
+                " --prefix=${strWorkPath}/repo" .
                 " --output-directory=${strTestResultCoveragePath}/lcov");
 
         foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
@@ -335,7 +336,7 @@ sub coverageValidateAndGenerate
         }
 
         coverageGenerate(
-            $oStorage, "${strWorkTmpPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+            $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
 
         if ($bCoverageSummary)
         {
@@ -358,6 +359,29 @@ push @EXPORT, qw(coverageValidateAndGenerate);
 ####################################################################################################################################
 # Generate a C coverage report
 ####################################################################################################################################
+# Helper to get the function for the current line
+sub coverageGenerateFunction
+{
+    my $rhFile = shift;
+    my $iCurrentLine = shift;
+
+    my $rhFunction;
+
+    foreach my $iFunctionLine (sort(keys(%{$rhFile->{function}})))
+    {
+        last if $iCurrentLine < $iFunctionLine;
+
+        $rhFunction = $rhFile->{function}{$iFunctionLine};
+    }
+
+    if (!defined($rhFunction))
+    {
+        confess &log(ERROR, "function not found at line ${iCurrentLine}");
+    }
+
+    return $rhFunction;
+}
+
 sub coverageGenerate
 {
     my $oStorage = shift;
@@ -397,6 +421,12 @@ sub coverageGenerate
                     # to create valid, disambiguos links.
                     $rhCoverage->{$strFile}{anchor} = sha1_hex(rand(16));
                 }
+                # Mark functions as initially covered
+                if ($strLine =~ /^FN\:/)
+                {
+                    my ($strLineBegin) = split("\,", substr($strLine, 3));
+                    $rhCoverage->{$strFile}{function}{sprintf("%09d", $strLineBegin - 1)}{covered} = true;
+                }
                 # Check branch coverage
                 elsif ($strLine =~ /^BRDA\:/)
                 {
@@ -408,7 +438,6 @@ sub coverageGenerate
                     }
 
                     my $strBranchLine = sprintf("%09d", $stryData[0]);
-                    $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{covered} = true;
 
                     if ($iBranchLine != $stryData[0])
                     {
@@ -436,9 +465,10 @@ sub coverageGenerate
                     $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{$iBranchIdx}{$iBranchPart} =
                         $stryData[3] eq '-' || $stryData[3] eq '0' ? false : true;
 
+                    # If the branch is uncovered then the function is uncovered
                     if (!$rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{$iBranchIdx}{$iBranchPart})
                     {
-                        $rhCoverage->{$strFile}{line}{$strBranchLine}{branch}{covered} = false;
+                        coverageGenerateFunction($rhCoverage->{$strFile}, $strBranchLine)->{covered} = false;
                     }
                 }
 
@@ -452,69 +482,76 @@ sub coverageGenerate
                         confess &log(ERROR, "'${strLine}' should have two fields");
                     }
 
-                    my $strBranchLine = sprintf("%09d", $stryData[0]);
+                    my $strStatementLine = sprintf("%09d", $stryData[0]);
 
+                    # If the statement is uncovered then the function is uncovered
                     if ($stryData[1] eq '0')
                     {
-                        $rhCoverage->{$strFile}{line}{$strBranchLine}{statement} = 0;
+                        $rhCoverage->{$strFile}{line}{$strStatementLine}{statement} = 0;
+                        coverageGenerateFunction($rhCoverage->{$strFile}, $strStatementLine)->{covered} = false;
                     }
                 }
             }
         }
     }
 
-    # Remove file when no lines are uncovered
+    # Report on the entire function if any branches/lines in the function are uncovered
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
-        my $bCovered = true;
+        my $bFileCovered = true;
 
-        foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
-        {
-            if (defined($rhCoverage->{$strFile}{line}{$iLine}{branch}) && !$rhCoverage->{$strFile}{line}{$iLine}{branch}{covered})
-            {
-                $bCovered = false;
-                last;
-            }
-        }
-
-        if ($bCovered)
-        {
-            delete($rhCoverage->{$strFile}{line});
-        }
-    }
-
-    # Report on the entire function if any lines in the function are uncovered
-    foreach my $strFile (sort(keys(%{$rhCoverage})))
-    {
+        # Proceed if there is some coverage data
         if (defined($rhCoverage->{$strFile}{line}))
         {
-            my $strC = ${$oStorage->get($strFile)};
-            my @stryC = split("\n", $strC);
+            my @stryC = split("\n", ${$oStorage->get($strFile)});
+            my $bInUncoveredFunction = false;
 
-            foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
+            # Iterate every line in the C file
+            for (my $iLineIdx = 0; $iLineIdx < @stryC; $iLineIdx++)
             {
-                # Run back to the beginning of the function comment
-                for (my $iLineIdx = $iLine; $iLineIdx >= 0; $iLineIdx--)
-                {
-                    if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
-                    {
-                        $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
-                    }
+                my $iLine = sprintf("%09d", $iLineIdx + 1);
 
-                    last if ($stryC[$iLineIdx - 1] =~ '^\/\*');
+                # If not in an uncovered function see if this line is the start of an uncovered function
+                if (!$bInUncoveredFunction)
+                {
+                    $bInUncoveredFunction =
+                        defined($rhCoverage->{$strFile}{function}{$iLine}) && !$rhCoverage->{$strFile}{function}{$iLine}{covered};
+
+                    # If any function is uncovered then the file is uncovered
+                    if ($bInUncoveredFunction)
+                    {
+                        $bFileCovered = false;
+                    }
                 }
 
-                # Run forward to the end of the function
-                for (my $iLineIdx = $iLine; $iLineIdx < @stryC; $iLineIdx++)
+                # If not in an uncovered function remove coverage
+                if (!$bInUncoveredFunction)
                 {
-                    if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
+                    delete($rhCoverage->{$strFile}{line}{$iLine});
+                }
+                # Else in an uncovered function
+                else
+                {
+                    # If there is no coverage for this line define it so it will show up on the report
+                    if (!defined($rhCoverage->{$strFile}{line}{$iLine}))
                     {
-                        $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
+                        $rhCoverage->{$strFile}{line}{$iLine} = undef;
                     }
 
-                    last if ($stryC[$iLineIdx - 1] eq '}');
+                    # Stop processing at the function end brace. This depends on the file being formated correctly, but worst case
+                    # is we run on a display the entire file rather than just uncovered functions.
+                    if ($stryC[$iLineIdx] =~ '^\}')
+                    {
+                        $bInUncoveredFunction = false;
+                    }
                 }
             }
+        }
+
+        # Remove coverage info when file is fully covered
+        if ($bFileCovered)
+        {
+            delete($rhCoverage->{$strFile}{line});
         }
     }
 
@@ -709,31 +746,33 @@ sub coverageGenerate
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
         my $oRow = $oTable->addNew(HTML_TR, 'list-table-row-' . (defined($rhCoverage->{$strFile}{line}) ? 'uncovered' : 'covered'));
+        my $strFileDisplay = substr($strFile, length($strBasePath) + 1);
 
         # Link only created when file is uncovered
         if (defined($rhCoverage->{$strFile}{line}))
         {
             $oRow->addNew(HTML_TD, 'list-table-row-file')->addNew(
-                HTML_A, undef,
-                {strContent => substr($strFile, length($strBasePath) + 1), strRef => '#' . $rhCoverage->{$strFile}{anchor}});
+                HTML_A, undef, {strContent => $strFileDisplay, strRef => '#' . $rhCoverage->{$strFile}{anchor}});
         }
         # Else just show the file name
         else
         {
-            $oRow->addNew(HTML_TD, 'list-table-row-file', {strContent => substr($strFile, length($strBasePath) + 1)});
+            $oRow->addNew(HTML_TD, 'list-table-row-file', {strContent => $strFileDisplay});
         }
     }
 
     # Report on files that are missing coverage
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
+        my $strFileDisplay = substr($strFile, length($strBasePath) + 1);
+
         if (defined($rhCoverage->{$strFile}{line}))
         {
             # Anchor only created when file is uncovered
             $oHtml->bodyGet()->addNew(HTML_A, undef, {strId => $rhCoverage->{$strFile}{anchor}});
 
             # Report table caption, i.e. the uncovered file name
-            $oHtml->bodyGet()->addNew(HTML_DIV, 'report-table-caption', {strContent => substr($strFile, length($strBasePath) + 1)});
+            $oHtml->bodyGet()->addNew(HTML_DIV, 'report-table-caption', {strContent => $strFileDisplay});
 
             # Build the file report table
             $oTable = $oHtml->bodyGet()->addNew(HTML_TABLE, 'report-table');
@@ -763,12 +802,12 @@ sub coverageGenerate
                 my $strBranch;
 
                 # Show missing branch coverage
+                my $bBranchCovered = true;
+
                 if (defined($rhCoverage->{$strFile}{line}{$strLine}{branch}))
                 {
                     foreach my $iBranch (sort(keys(%{$rhCoverage->{$strFile}{line}{$strLine}{branch}})))
                     {
-                        next if $iBranch eq 'covered';
-
                         $strBranch .= '[';
 
                         my $bBranchPartFirst = true;
@@ -780,7 +819,15 @@ sub coverageGenerate
                                 $strBranch .= ' ';
                             }
 
-                            $strBranch .= $rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}{$iBranchPart} ? '+' : '-';
+                            if ($rhCoverage->{$strFile}{line}{$strLine}{branch}{$iBranch}{$iBranchPart})
+                            {
+                                $strBranch .= '+';
+                            }
+                            else
+                            {
+                                $strBranch .= '-';
+                                $bBranchCovered = false;
+                            }
 
                             $bBranchPartFirst = false;
                         }
@@ -790,19 +837,12 @@ sub coverageGenerate
                 }
 
                 $oRow->addNew(
-                    HTML_TD,
-                    'report-table-row-branch' .
-                        (defined($strBranch) && !$rhCoverage->{$strFile}{line}{$strLine}{branch}{covered} ? '-uncovered' : ''),
-                    {strContent => $strBranch});
+                    HTML_TD, 'report-table-row-branch' . (!$bBranchCovered ? '-uncovered' : ''), {strContent => $strBranch});
 
                 # Color code based on coverage
-                my $bUncovered =
-                    (defined($rhCoverage->{$strFile}{line}{$strLine}{branch}) &&
-                        !$rhCoverage->{$strFile}{line}{$strLine}{branch}{covered}) ||
-                    defined($rhCoverage->{$strFile}{line}{$strLine}{statement});
-
                 $oRow->addNew(
-                    HTML_TD, 'report-table-row-code' . ($bUncovered ? '-uncovered' : ''),
+                    HTML_TD,
+                    'report-table-row-code' . (defined($rhCoverage->{$strFile}{line}{$strLine}{statement}) ? '-uncovered' : ''),
                     {bPre => true, strContent => $stryC[$strLine - 1]});
             }
         }

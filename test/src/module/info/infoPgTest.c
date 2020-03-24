@@ -53,8 +53,8 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         InfoPgData pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 1, "  id set");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "  system-id set");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_94, "  version set");
+        TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_94, "  version set");
 
         TEST_ASSIGN(
             infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999), "infoPgSet - infoPgArchive second db");
@@ -62,8 +62,8 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 2, "  current id updated");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665999, "  system-id updated");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_95, "  version updated");
+        TEST_RESULT_UINT(pgData.systemId, 6569239123849665999, "  system-id updated");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "  version updated");
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass not set");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -74,8 +74,8 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 1, "  id set");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "  system-id set");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_94, "  version set");
+        TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_94, "  version set");
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
     }
 
@@ -118,8 +118,8 @@ testRun(void)
 
         InfoPgData pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 1, "    id set");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR_Z(infoPgArchiveId(infoPg, 0), "9.4-1", "    check pg archive id");
         TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
@@ -164,12 +164,12 @@ testRun(void)
         pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 2, "    id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_95, "    version set");
-        TEST_RESULT_INT(pgData.systemId, 6365925855999999999, "    system-id set");
+        TEST_RESULT_UINT(pgData.systemId, 6365925855999999999, "    system-id set");
 
         pgData = infoPgData(infoPg, 1);
         TEST_RESULT_INT(pgData.id, 1, "    id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
+        TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "    system-id set");
 
         contentSave = bufNew(0);
 
@@ -186,7 +186,7 @@ testRun(void)
         InfoPgData pgDataTest = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgDataTest.id, 3, "    id set");
         TEST_RESULT_INT(pgDataTest.version, PG_VERSION_96, "    version set");
-        TEST_RESULT_INT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
+        TEST_RESULT_UINT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
 
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------

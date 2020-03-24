@@ -86,7 +86,7 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(info->infoPg), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+        TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "    systemId set");
 
         // Free
         // -------------------------------------------------------------------------------------------------------------------------

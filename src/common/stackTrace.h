@@ -39,6 +39,9 @@ Internal Functions
     void stackTraceTestStart(void);
     void stackTraceTestStop(void);
     bool stackTraceTest(void);
+
+    // Set line number for the current function on the stack
+    void stackTraceTestFileLineSet(unsigned int fileLine);
 #endif
 
 LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel);

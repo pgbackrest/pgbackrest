@@ -25,6 +25,7 @@ use lib dirname(dirname($0)) . '/doc/lib';
 
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -160,6 +161,10 @@ eval
 
         processBegin('remove sudo');
         processExec('sudo rm /etc/sudoers.d/travis');
+        processEnd();
+
+        processBegin('create link from home to repo for contributing doc');
+        processExec("ln -s ${strBackRestBase} \${HOME?}/" . PROJECT_EXE);
         processEnd();
 
         processBegin('release documentation');

@@ -85,6 +85,7 @@ main(int argListSize, const char *argList[])
         "{[C_TEST_PROJECT_EXE]}",   // Project exe
         {[C_TEST_CONTAINER]},       // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
+        {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
         {[C_TEST_SCALE]},           // Scaling factor for performance tests
         "{[C_TEST_PATH]}",          // Path where tests write data
         "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
@@ -102,9 +103,26 @@ main(int argListSize, const char *argList[])
 #ifndef NO_ERROR
     TRY_BEGIN()
     {
+        TRY_BEGIN()
+        {
 #endif
-        // Run the tests
-        testRun();
+            // Run the tests
+            testRun();
+#ifndef NO_ERROR
+        }
+        CATCH_ANY()
+        {
+            // If a test was running then throw a detailed result exception
+#ifndef NDEBUG
+        if (!errorInstanceOf(&TestError))
+#endif
+            hrnTestResultException();
+
+            // Else rethrow the original error
+            RETHROW();
+        }
+        TRY_END();
+#endif
 
         // End test run and make sure all tests completed
         hrnComplete();
@@ -115,14 +133,20 @@ main(int argListSize, const char *argList[])
     }
     CATCH_ANY()
     {
+        // Make the error really obvious
         fprintf(
             stderr,
             "\nTEST FAILED WITH %s:\n\n"
                 "--------------------------------------------------------------------------------\n"
                 "%s\n"
-                "--------------------------------------------------------------------------------\n"
-                "\nTHROWN AT:\n%s\n",
-            errorName(), errorMessage(), errorStackTrace());
+                "--------------------------------------------------------------------------------\n",
+            errorName(), errorMessage());
+
+        // If not a TestError (which is detailed) then also print the stack trace
+#ifndef NDEBUG
+        if (!errorInstanceOf(&TestError))
+#endif
+            fprintf(stderr, "\nTHROWN AT:\n%s\n", errorStackTrace());
 
         fflush(stderr);
         result = errorCode();

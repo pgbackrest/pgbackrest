@@ -74,6 +74,8 @@ test.pl [options]
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleanup after the last test is complete - useful for debugging
+   --clean              clean working and result paths for a completely fresh build
+   --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --build-only         build the binary (and honor --build-package) but don't run tests
@@ -108,6 +110,7 @@ test.pl [options]
    --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
    --log-level-test     log level to use for C tests (defaults to OFF)
    --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
+   --no-log-timestamp   suppress timestamps, timings, etc. Used to generate documentation.
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -125,9 +128,12 @@ test.pl [options]
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
+my $bClean;
+my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
 my $strLogLevelTestFile = lc(TRACE);
+my $bNoLogTimestamp = false;
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -177,11 +183,14 @@ my @cmdOptions = @ARGV;
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
+            'clean' => \$bClean,
+            'clean-only' => \$bCleanOnly,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
             'log-level-test-file=s' => \$strLogLevelTestFile,
+            'no-log-timestamp' => \$bNoLogTimestamp,
             'vm=s' => \$strVm,
             'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
@@ -312,7 +321,7 @@ eval
         $strLogLevel = 'off';
     }
 
-    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
+    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
     &log(INFO, "test begin - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
@@ -366,6 +375,27 @@ eval
         $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
+    # Clean working and result paths
+    ################################################################################################################################
+    if ($bClean || $bCleanOnly)
+    {
+        &log(INFO, "clean working (${strTestPath}) and result (${strBackRestBase}/test/result) paths");
+
+        if ($oStorageTest->pathExists($strTestPath))
+        {
+            executeTest("find ${strTestPath} -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        if ($oStorageTest->pathExists("${strBackRestBase}/test/result"))
+        {
+            executeTest("find ${strBackRestBase}/test/result -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        # Exit when clean-only
+        exit 0 if $bCleanOnly;
+    }
+
+    ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
@@ -416,7 +446,8 @@ eval
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
                             " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
                             " --exclude=test/result --exclude=repo.manifest" .
-                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
+                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
+                            " | grep -E -v '/\$' | cat"))));
 
         if (@stryModifiedList > 0)
         {
@@ -1094,10 +1125,10 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, $bLogForce,
-                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
-                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
-                        $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
+                        !$bNoLogTimestamp, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage,
+                        $bCoverageSummary, !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug,
+                        $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1118,8 +1149,8 @@ eval
         if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
-                $oyTestRun, $oStorageBackRest, $bCoverageSummary, "${strTestPath}/temp", "${strBackRestBase}/test/result",
-                "${strBackRestBase}/doc/xml/auto");
+                $oyTestRun, $oStorageBackRest, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
+                "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
         }
 
         # Print test info and exit
@@ -1128,7 +1159,7 @@ eval
             ($bDryRun ? 'DRY RUN COMPLETED' : 'TESTS COMPLETED') . ($iTestFail == 0 ? ' SUCCESSFULLY' .
                 ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
             " WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
-                ' (' . (time() - $lStartTime) . 's)');
+                ($bNoLogTimestamp ? '' : ' (' . (time() - $lStartTime) . 's)'));
 
         exit 1 if ($iTestFail > 0 || ($iUncoveredCodeModuleTotal > 0 && !$bCoverageSummary));
 

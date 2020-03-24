@@ -170,7 +170,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
-        TEST_RESULT_INT(cfgOptionUInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1)), "set protocol-timeout");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1.1, "protocol-timeout is set");
