@@ -90,6 +90,19 @@ storageReadIgnoreMissing(const StorageRead *this)
     FUNCTION_TEST_RETURN(this->interface->ignoreMissing);
 }
 
+/**********************************************************************************************************************************/
+const Variant *
+storageReadLimit(const StorageRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface->limit);
+}
+
 /***********************************************************************************************************************************
 Get io interface
 ***********************************************************************************************************************************/

@@ -65,6 +65,16 @@
 
                         <p>These commands (e.g. <cmd>restore</cmd>, <cmd>archive-get</cmd>) never used the compress options but allowed them to be passed on the command line.  Now they will error when these options are passed on the command line.  If these errors occur then remove the unused options.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Limit backup file copy size to size reported at backup start.</p>
+
+                        <p>If a file grows during the backup it will be reconstructed by WAL replay during recovery so there is no need to copy the additional data.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -82,6 +92,14 @@
                         </release-item-contributor-list>
 
                         <p>Improve performance of <code>MEM_CONTEXT*()</code> macros.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow storage reads to be limited by bytes.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

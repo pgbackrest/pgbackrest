@@ -176,7 +176,7 @@ sub executeKey
 
     if (defined($oCommand->fieldGet('exe-cmd-extra', false)))
     {
-        $$hCacheKey{'cmd-extra'} = $oCommand->fieldGet('exe-cmd-extra');
+        $$hCacheKey{'cmd-extra'} = $self->{oManifest}->variableReplace($oCommand->fieldGet('exe-cmd-extra'));
     }
 
     if (defined($oCommand->paramGet('err-expect', false)))

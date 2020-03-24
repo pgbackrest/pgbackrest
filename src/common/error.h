@@ -53,6 +53,11 @@ typedef struct ErrorType ErrorType;
 // Include error type declarations
 #include "common/error.auto.h"
 
+// Declare test error
+#ifndef NDEBUG
+    ERROR_DECLARE(TestError);
+#endif
+
 /***********************************************************************************************************************************
 Functions to get information about a generic error type
 ***********************************************************************************************************************************/

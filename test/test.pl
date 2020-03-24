@@ -74,6 +74,8 @@ test.pl [options]
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleanup after the last test is complete - useful for debugging
+   --clean              clean working and result paths for a completely fresh build
+   --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --build-only         build the binary (and honor --build-package) but don't run tests
@@ -108,6 +110,7 @@ test.pl [options]
    --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
    --log-level-test     log level to use for C tests (defaults to OFF)
    --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
+   --no-log-timestamp   suppress timestamps, timings, etc. Used to generate documentation.
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -125,9 +128,12 @@ test.pl [options]
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
+my $bClean;
+my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
 my $strLogLevelTestFile = lc(TRACE);
+my $bNoLogTimestamp = false;
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -177,11 +183,14 @@ my @cmdOptions = @ARGV;
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
+            'clean' => \$bClean,
+            'clean-only' => \$bCleanOnly,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
             'log-level-test-file=s' => \$strLogLevelTestFile,
+            'no-log-timestamp' => \$bNoLogTimestamp,
             'vm=s' => \$strVm,
             'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
@@ -312,7 +321,7 @@ eval
         $strLogLevel = 'off';
     }
 
-    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
+    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
     &log(INFO, "test begin - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
@@ -366,6 +375,27 @@ eval
         $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
+    # Clean working and result paths
+    ################################################################################################################################
+    if ($bClean || $bCleanOnly)
+    {
+        &log(INFO, "clean working (${strTestPath}) and result (${strBackRestBase}/test/result) paths");
+
+        if ($oStorageTest->pathExists($strTestPath))
+        {
+            executeTest("find ${strTestPath} -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        if ($oStorageTest->pathExists("${strBackRestBase}/test/result"))
+        {
+            executeTest("find ${strBackRestBase}/test/result -mindepth 1 -print0 | xargs -0 rm -rf");
+        }
+
+        # Exit when clean-only
+        exit 0 if $bCleanOnly;
+    }
+
+    ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
@@ -416,7 +446,8 @@ eval
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
                             " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
                             " --exclude=test/result --exclude=repo.manifest" .
-                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
+                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
+                            " | grep -E -v '/\$' | cat"))));
 
         if (@stryModifiedList > 0)
         {
@@ -1094,10 +1125,10 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, $bLogForce,
-                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
-                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
-                        $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
+                        !$bNoLogTimestamp, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage,
+                        $bCoverageSummary, !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug,
+                        $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1117,147 +1148,9 @@ eval
 
         if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
-            # Determine which modules were covered (only check coverage if all tests were successful)
-            #-----------------------------------------------------------------------------------------------------------------------
-            my $hModuleTest;                                        # Everything that was run
-
-            # Build a hash of all modules, tests, and runs that were executed
-            foreach my $hTestRun (@{$oyTestRun})
-            {
-                # Get coverage for the module
-                my $strModule = $hTestRun->{&TEST_MODULE};
-                my $hModule = testDefModule($strModule);
-
-                # Get coverage for the test
-                my $strTest = $hTestRun->{&TEST_NAME};
-                my $hTest = testDefModuleTest($strModule, $strTest);
-
-                # If no tests are listed it means all of them were run
-                if (@{$hTestRun->{&TEST_RUN}} == 0)
-                {
-                    $hModuleTest->{$strModule}{$strTest} = true;
-                }
-            }
-
-            # Now compare against code modules that should have full coverage
-            my $hCoverageList = testDefCoverageList();
-            my $hCoverageType = testDefCoverageType();
-            my $hCoverageActual;
-
-            foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
-            {
-                if (@{$hCoverageList->{$strCodeModule}} > 0)
-                {
-                    my $iCoverageTotal = 0;
-
-                    foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
-                    {
-                        if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
-                        {
-                            next;
-                        }
-
-                        $iCoverageTotal++;
-                    }
-
-                    if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
-                    {
-                        $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
-                    }
-                }
-            }
-
-            if (keys(%{$hCoverageActual}) == 0)
-            {
-                &log(INFO, 'no code modules had all tests run required for coverage');
-            }
-
-            # Generate C coverage report
-            #---------------------------------------------------------------------------------------------------------------------------
-            if (vmCoverageC($strVm))
-            {
-                &log(INFO, 'writing C coverage report');
-
-                my $strLCovFile = "${strTestPath}/temp/all.lcov";
-
-                if ($oStorageBackRest->exists($strLCovFile))
-                {
-                    executeTest(
-                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/result/coverage/raw/lcov.conf" .
-                            " --prefix=${strTestPath}/repo" .
-                            " --output-directory=${strBackRestBase}/test/result/coverage/lcov");
-
-                    foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
-                    {
-                        # If the first char of the module is upper case then it's a Perl module
-                        if (substr($strCodeModule, 0, 1) eq uc(substr($strCodeModule, 0, 1)))
-                        {
-                            next;
-                        }
-
-                        my $strCoverageFile = $strCodeModule;
-                        $strCoverageFile =~ s/^module/test/mg;
-                        $strCoverageFile = "${strBackRestBase}/test/result/coverage/raw/${strCoverageFile}.lcov";
-
-                        my $strCoverage = $oStorageBackRest->get(
-                            $oStorageBackRest->openRead($strCoverageFile, {bIgnoreMissing => true}));
-
-                        if (defined($strCoverage) && defined($$strCoverage))
-                        {
-                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF\:.*$/mg)[0]))[1] + 0;
-                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH\:.*$/mg)[0]))[1] + 0;
-
-                            my $iTotalBranches = 0;
-                            my $iCoveredBranches = 0;
-
-                            if ($$strCoverage =~ /^BRF\:/mg && $$strCoverage =~ /^BRH\:/mg)
-                            {
-                                # If this isn't here the statements below fail -- huh?
-                                my @match = $$strCoverage =~ m/^BRF\:.*$/mg;
-
-                                $iTotalBranches = (split(':', ($$strCoverage =~ m/^BRF\:.*$/mg)[0]))[1] + 0;
-                                $iCoveredBranches = (split(':', ($$strCoverage =~ m/^BRH\:.*$/mg)[0]))[1] + 0;
-                            }
-
-                            # Generate detail if there is missing coverage
-                            my $strDetail = undef;
-
-                            if ($iCoveredLines != $iTotalLines)
-                            {
-                                $strDetail .= "$iCoveredLines/$iTotalLines lines";
-                            }
-
-                            if ($iTotalBranches != $iCoveredBranches)
-                            {
-                                $strDetail .= (defined($strDetail) ? ', ' : '') . "$iCoveredBranches/$iTotalBranches branches";
-                            }
-
-                            if (defined($strDetail))
-                            {
-                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($strDetail)");
-                                $iUncoveredCodeModuleTotal++;
-                            }
-                        }
-                    }
-
-                    coverageGenerate(
-                        $oStorageBackRest, "${strTestPath}/repo", "${strBackRestBase}/test/result/coverage/raw",
-                        "${strBackRestBase}/test/result/coverage/coverage.html");
-
-                    if ($bCoverageSummary)
-                    {
-                        &log(INFO, 'writing C coverage summary report');
-
-                        coverageDocSummaryGenerate(
-                            $oStorageBackRest, "${strBackRestBase}/test/result/coverage/raw",
-                            "${strBackRestBase}/doc/xml/auto/metric-coverage-report.auto.xml");
-                    }
-                }
-                else
-                {
-                    executeTest("rm -rf ${strBackRestBase}/test/tesult/coverage");
-                }
-            }
+            $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
+                $oyTestRun, $oStorageBackRest, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
+                "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
         }
 
         # Print test info and exit
@@ -1266,7 +1159,7 @@ eval
             ($bDryRun ? 'DRY RUN COMPLETED' : 'TESTS COMPLETED') . ($iTestFail == 0 ? ' SUCCESSFULLY' .
                 ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
             " WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
-                ' (' . (time() - $lStartTime) . 's)');
+                ($bNoLogTimestamp ? '' : ' (' . (time() - $lStartTime) . 's)'));
 
         exit 1 if ($iTestFail > 0 || ($iUncoveredCodeModuleTotal > 0 && !$bCoverageSummary));
 

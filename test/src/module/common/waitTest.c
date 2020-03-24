@@ -22,9 +22,9 @@ testRun(void)
         TimeMSec begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
-        TEST_RESULT_DOUBLE(wait->waitTime, 200, "    check wait time");
-        TEST_RESULT_DOUBLE(wait->sleepTime, 20, "    check sleep time");
-        TEST_RESULT_DOUBLE(wait->sleepPrevTime, 0, "    check sleep prev time");
+        TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
+        TEST_RESULT_UINT(wait->sleepTime, 20, "    check sleep time");
+        TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
         TEST_RESULT_BOOL(wait->beginTime > (TimeMSec)1483228800000, true, "    check begin time");
 
         while (waitMore(wait));
@@ -40,9 +40,9 @@ testRun(void)
         begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(1100), "new wait = 1.1 sec");
-        TEST_RESULT_DOUBLE(wait->waitTime, 1100, "    check wait time");
-        TEST_RESULT_DOUBLE(wait->sleepTime, 100, "    check sleep time");
-        TEST_RESULT_DOUBLE(wait->sleepPrevTime, 0, "    check sleep prev time");
+        TEST_RESULT_UINT(wait->waitTime, 1100, "    check wait time");
+        TEST_RESULT_UINT(wait->sleepTime, 100, "    check sleep time");
+        TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
         TEST_RESULT_BOOL(wait->beginTime > (TimeMSec)1483228800000, true, "    check begin time");
 
         while (waitMore(wait));

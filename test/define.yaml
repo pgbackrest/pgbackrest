@@ -564,6 +564,7 @@ unit:
           command/backup/protocol: full
 
         include:
+          - info/info
           - info/manifest
           - storage/storage
 

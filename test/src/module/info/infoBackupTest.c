@@ -90,7 +90,7 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+        TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "    systemId set");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
@@ -146,10 +146,10 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backrestVersion, "2.04", "    backrest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "00000007000000000000001C", "    archive start");
         TEST_RESULT_STR_Z(backupData.backupArchiveStop, "00000007000000000000001C", "    archive stop");
-        TEST_RESULT_INT(backupData.backupInfoRepoSize, 3159776, "    repo size");
-        TEST_RESULT_INT(backupData.backupInfoRepoSizeDelta, 3159776, "    repo delta");
-        TEST_RESULT_INT(backupData.backupInfoSize, 26897030, "    backup size");
-        TEST_RESULT_INT(backupData.backupInfoSizeDelta, 26897030, "    backup delta");
+        TEST_RESULT_UINT(backupData.backupInfoRepoSize, 3159776, "    repo size");
+        TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 3159776, "    repo delta");
+        TEST_RESULT_UINT(backupData.backupInfoSize, 26897030, "    backup size");
+        TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 26897030, "    backup delta");
         TEST_RESULT_INT(backupData.backupPgId, 1, "    pg id");
         TEST_RESULT_PTR(backupData.backupPrior, NULL, "    backup prior NULL");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "    backup reference NULL");
