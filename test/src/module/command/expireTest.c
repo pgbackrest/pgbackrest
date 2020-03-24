@@ -193,9 +193,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, 20181119-152900F"
-                ", 20181119-152900F_20181119-152600D",
-            "only backups passed to expireBackup are removed from backup:current");
+            "20181119-152900F, 20181119-152900F_20181119-152600D",
+            "only backups in set passed to expireBackup are removed from backup:current (result is sorted)");
     }
 
     // *****************************************************************************************************************************
