@@ -156,10 +156,8 @@ testRun(void)
         TEST_TITLE("manifest file removal");
 
         // Create backup.info
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write backup.info");
-// CSHANG Don't have to store this file. Also, fix the last test since that was not really valid anyway.
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Create backup directories and manifest files
         String *full1 = strNew("20181119-152138F");
