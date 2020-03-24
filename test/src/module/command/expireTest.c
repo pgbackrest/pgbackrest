@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Expire Command
 ***********************************************************************************************************************************/
+#include "common/io/bufferRead.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
@@ -83,75 +84,77 @@ testRun(void)
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
 
-    String *backupInfoBase = strNew(
-             "[backup:current]\n"
-            "20181119-152138F={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152800F={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
-            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152800F_20181119-152152D={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
-            "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
-            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-            "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
-            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152800F_20181119-152155I={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
-            "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
-            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-            "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
-            "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
-            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152900F={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-            "\"backup-archive-start\":\"000000010000000000000007\",\"backup-archive-stop\":\"000000010000000000000007\","
-            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152900F_20181119-152600D={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
-            "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
-            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-            "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
-            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "\n"
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6625592122879095702\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}");
+    const Buffer *backupInfoBase = harnessInfoChecksumZ
+    (
+        "[backup:current]\n"
+        "20181119-152138F={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+        "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152800F={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+        "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152800F_20181119-152152D={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
+        "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
+        "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+        "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152800F_20181119-152155I={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
+        "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
+        "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+        "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
+        "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
+        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152900F={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+        "\"backup-archive-start\":\"000000010000000000000007\",\"backup-archive-stop\":\"000000010000000000000007\","
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152900F_20181119-152600D={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
+        "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
+        "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+        "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
+        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "\n"
+        "[db]\n"
+        "db-catalog-version=201409291\n"
+        "db-control-version=942\n"
+        "db-id=1\n"
+        "db-system-id=6625592122879095702\n"
+        "db-version=\"9.4\"\n"
+        "\n"
+        "[db:history]\n"
+        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+            "\"db-version\":\"9.4\"}"
+    );
 
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
     {
         // Create backup.info
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
-
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write backup.info");
+// CSHANG Don't have to store this file. Also, fix the last test since that was not really valid anyway.
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
@@ -198,10 +201,8 @@ testRun(void)
     if (testBegin("expireFullBackup()"))
     {
         // Create backup.info
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
-
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -251,10 +252,8 @@ testRun(void)
     if (testBegin("expireDiffBackup()"))
     {
         // Create backup.info
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
-
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
@@ -289,12 +288,11 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "  current backups not reduced");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-diff=1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 2, "retention-diff set to 1 - full considered in diff");
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),

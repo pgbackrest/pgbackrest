@@ -43,41 +43,12 @@ typedef struct ArchiveRange
     const String *stop;
 } ArchiveRange;
 
-/***********************************************************************************************************************************
-Common function for expiring a single backup
-***********************************************************************************************************************************/
-static void
-expireBackup(InfoBackup *infoBackup, String *removeBackupLabel)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);
-    FUNCTION_LOG_END();
-
-    ASSERT(infoBackup != NULL);
-    ASSERT(removeBackupLabel != NULL);
-
-    // Execute the real expiration and deletion only if the dry-run option is disabled
-    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-    {
-        // Remove the manifest files to invalidate the backup
-        storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
-        storageRemoveP(
-            storageRepoWrite(),
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
-    }
-
-    // Remove the backup from the info object
-    infoBackupDataDelete(infoBackup, removeBackupLabel);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
-Given a backup lable, expire a backup and all its dependents.
+Given a backup label, expire a backup and all its dependents (if any).
 ***********************************************************************************************************************************/
 static StringList *
-expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
+expireBackup(InfoBackup *infoBackup, const String *backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -92,24 +63,6 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
-
-        if (backupData == NULL)
-            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
-
-        StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
-
-        if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
-        {
-            THROW_FMT(
-                OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
-                strPtr(backupLabel));
-        }
-
-        // Warn if most recent (last) backup is being expired
-        if (strCmp(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, backupLabel) == 0)
-            LOG_WARN_FMT("most recent backup '%s' will be expired", strPtr(backupLabel));  // CSHANG Maybe this should just be INFO
-
         // Get the backup and all its dependents sorted from newest to oldest - that way if the process is aborted before all
         // dependencies have been dealt with, the backups remaining should still be usable.
         StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
@@ -117,8 +70,21 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
         // Expire each backup in the list
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
         {
-            expireBackup(infoBackup, strLstGet(backupList, backupIdx));
-            strLstAdd(result, strLstGet(backupList, backupIdx));
+            String *removeBackupLabel = strLstGet(backupList, backupIdx);
+
+            // Execute the real expiration and deletion only if the dry-run option is disabled
+            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+            {
+                // Remove the manifest files to invalidate the backup
+                storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+                storageRemoveP(
+                    storageRepoWrite(),
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+            }
+
+            // Remove the backup from the info object
+            infoBackupDataDelete(infoBackup, removeBackupLabel);
+            strLstAdd(result, removeBackupLabel);
         }
 
         // Sort from oldest to newest and return the list of expired backups
@@ -166,7 +132,7 @@ expireDiffBackup(InfoBackup *infoBackup)
                         continue;
 
                     // Expire the differential and any dependent backups
-                    StringList *backupExpired = expireBackupSet(infoBackup, strLstGet(currentBackupList, diffIdx));
+                    StringList *backupExpired = expireBackup(infoBackup, strLstGet(currentBackupList, diffIdx));
                     result += strLstSize(backupExpired);
 
                     // Log the expired backups. If there is more than one backup, then prepend "set:"
@@ -214,7 +180,7 @@ expireFullBackup(InfoBackup *infoBackup)
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
                     // Expire the full backup and all its dependents
-                    StringList *backupExpired = expireBackupSet(infoBackup, strLstGet(currentBackupList, fullIdx));
+                    StringList *backupExpired = expireBackup(infoBackup, strLstGet(currentBackupList, fullIdx));
                     result += strLstSize(backupExpired);
 
                     // Log the expired backups. If there is more than one backup, then prepend "set:"
