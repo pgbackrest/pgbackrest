@@ -219,7 +219,8 @@ testRun(void)
         TEST_RESULT_VOID(memNew(3), "new allocation");
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
-        TEST_ERROR(memFree(NULL), AssertError, "assertion 'buffer != NULL' failed");
+        TEST_ERROR(
+            memFree(NULL), AssertError, "assertion '((MemContextAlloc *)buffer - 1) != MEM_CONTEXT_ALLOC_HEADER(NULL)' failed");
         memFree(buffer);
 
         memContextSwitch(memContextTop());

@@ -37,6 +37,24 @@ typedef struct MemContextAlloc
 // Get the allocation header pointer given the allocation buffer pointer
 #define MEM_CONTEXT_ALLOC_HEADER(buffer)                            ((MemContextAlloc *)buffer - 1)
 
+// Make sure the allocation is valid for the current memory context.  This check only works correctly if the allocation is valid but
+// belongs to another context.  Otherwise, there is likely to be a segfault.
+#ifdef DEBUG
+    #define ASSERT_ALLOC_VALID(alloc)                                                                                              \
+        do                                                                                                                         \
+        {                                                                                                                          \
+            MemContext *memContext = memContextStack[memContextCurrentStackIdx].memContext;                                        \
+                                                                                                                                   \
+            ASSERT(alloc != NULL);                                                                                                 \
+            ASSERT(alloc != MEM_CONTEXT_ALLOC_HEADER(NULL));                                                                       \
+            ASSERT(alloc->allocIdx < memContext->allocListSize);                                                                   \
+            ASSERT(memContext->allocList[alloc->allocIdx] == alloc);                                                               \
+        }                                                                                                                          \
+        while (0)
+#else
+    #define ASSERT_ALLOC_VALID(memContext, alloc)
+#endif
+
 /***********************************************************************************************************************************
 Contains information about the memory context
 ***********************************************************************************************************************************/
@@ -433,11 +451,11 @@ static MemContextAlloc *
 memContextAllocResize(MemContextAlloc *alloc, size_t size)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, alloc);
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    // Make sure the allocation is in the memory context
-    ASSERT(memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] == alloc);
+    ASSERT_ALLOC_VALID(alloc);
 
     // Resize the allocation
     alloc = memReAllocInternal(alloc, sizeof(MemContextAlloc) + size);
@@ -487,8 +505,6 @@ memResize(const void *buffer, size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    ASSERT(buffer != NULL);
-
     FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(memContextAllocResize(MEM_CONTEXT_ALLOC_HEADER(buffer), size)));
 }
 
@@ -500,14 +516,11 @@ memFree(void *buffer)
         FUNCTION_TEST_PARAM_P(VOID, buffer);
     FUNCTION_TEST_END();
 
-    ASSERT(buffer != NULL);
+    ASSERT_ALLOC_VALID(MEM_CONTEXT_ALLOC_HEADER(buffer));
 
     // Get the allocation
     MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     MemContextAlloc *alloc = MEM_CONTEXT_ALLOC_HEADER(buffer);
-
-    // Make sure the allocation is in the memory context
-    ASSERT(contextCurrent->allocList[alloc->allocIdx] == alloc);
 
     // If this allocation is before the current free allocation then make it the current free allocation
     if (alloc->allocIdx < contextCurrent->allocFreeIdx)
