@@ -39,6 +39,17 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Free temp mem context periodically in storageRemoteInfoList()."/>
+
+                        <release-item-contributor-list>
+                             <release-item-ideator id="jens.wilke"/>
+                             <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of remote manifest build.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                              <release-item-contributor id="marc.cousin"/>
                              <release-item-reviewer id="david.steele"/>
