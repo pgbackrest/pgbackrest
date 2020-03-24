@@ -159,10 +159,10 @@ testRun(void)
         InfoBackupData *backupDataPtr = infoBackupDataByLabel(infoBackup, STRDEF("20161219-212741F_20161219-212803D"));
         TEST_RESULT_STR_Z(backupDataPtr->backupLabel, "20161219-212741F_20161219-212803D", "diff backup label");
         TEST_RESULT_STR_Z(backupDataPtr->backupType, "diff", "    backup type diff");
-        TEST_RESULT_INT(backupDataPtr->backupInfoRepoSize, 3159811, "    repo size");
-        TEST_RESULT_INT(backupDataPtr->backupInfoRepoSizeDelta, 15765, "    repo delta");
-        TEST_RESULT_INT(backupDataPtr->backupInfoSize, 26897030, "    backup size");
-        TEST_RESULT_INT(backupDataPtr->backupInfoSizeDelta, 163866, "    backup delta");
+        TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSize, 3159811, "    repo size");
+        TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSizeDelta, 15765, "    repo delta");
+        TEST_RESULT_UINT(backupDataPtr->backupInfoSize, 26897030, "    backup size");
+        TEST_RESULT_UINT(backupDataPtr->backupInfoSizeDelta, 163866, "    backup delta");
         TEST_RESULT_STR_Z(backupDataPtr->backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupDataPtr->backupReference) == 1 && strLstExistsZ(backupDataPtr->backupReference, "20161219-212741F")), true,
