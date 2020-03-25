@@ -51,6 +51,13 @@ testRun(void)
 
         TEST_RESULT_VOID(strFree(string), "free string");
         TEST_RESULT_VOID(strFree(NULL), "free null string");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("empty string is allocated extra space");
+
+        TEST_ASSIGN(string, strNew(""), "new empty string");
+        TEST_RESULT_UINT(string->size, 0, "    check size");
+        TEST_RESULT_UINT(string->extra, 64, "    check extra");
     }
 
     // *****************************************************************************************************************************
@@ -93,11 +100,15 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR_Z(strCat(string, "YYYY"), "XXXXYYYY", "cat string");
-        TEST_RESULT_UINT(string->extra, 4, "check extra");
+        TEST_RESULT_UINT(string->extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_UINT(string->extra, 6, "check extra");
+        TEST_RESULT_UINT(string->extra, 55, "check extra");
         TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_UINT(string->extra, 5, "check extra");
+        TEST_RESULT_UINT(string->extra, 54, "check extra");
+        TEST_RESULT_STR_Z(
+            strCat(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"),
+            "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
+        TEST_RESULT_UINT(string->extra, 34, "check extra");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }

@@ -82,10 +82,13 @@ strNew(const char *string)
     {
         .memContext = memContextCurrent(),
         .size = (unsigned int)stringSize,
+
+        // A zero-length string is not very useful so assume this string is being created for appending and allocate extra space
+        .extra = stringSize == 0 ? STRING_EXTRA_MIN : 0,
     };
 
     // Allocate and assign string
-    this->buffer = memNew(this->size + 1);
+    this->buffer = memNew(this->size + this->extra + 1);
     strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
@@ -276,6 +279,10 @@ strResize(String *this, size_t requested)
 
         // Calculate new extra needs to satisfy request and leave extra space for new growth
         this->extra = (unsigned int)requested + ((this->size + (unsigned int)requested) / 2);
+
+        // Adding too little extra space usually leads to immediate resizing so enforce a minimum
+        if (this->extra < STRING_EXTRA_MIN)
+            this->extra = STRING_EXTRA_MIN;
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
