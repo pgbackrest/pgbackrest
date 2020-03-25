@@ -424,9 +424,22 @@ sub backupCreate
             confess &log(ERROR, "oLastManifest must be defined when strType = ${strType}");
         }
 
-        push(my @stryReference, $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
-
-        $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, $stryReference[0]);
+        # Set backup-prior
+        if ($strType eq CFGOPTVAL_BACKUP_TYPE_INCR)
+        {
+            # If this is an incremental backup, then it is always based on the prior backup so use the label from the last backup
+            $oManifest->set(
+                MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef,
+                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+        }
+        else
+        {
+            # If it is a differential then backup-prior must be set to the newest full backup so get the full backup label from
+            # the prior label
+            $oManifest->set(
+                MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef,
+                substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL), 0, 16));
+        }
     }
 
     $oManifest->save();
