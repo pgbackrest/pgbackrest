@@ -2392,16 +2392,6 @@
                     <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
-
-            <p>A new backup must be performed due to the timeline switch.</p>
-
-            <execute-list host="{[host-repo1]}">
-                <title>Backup the {[postgres-cluster-demo]} cluster</title>
-
-                <execute user="{[br-user]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                </execute>
-            </execute-list>
         </section>
     </section>
 
