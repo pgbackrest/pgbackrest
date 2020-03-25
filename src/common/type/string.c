@@ -721,12 +721,7 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    char *result = NULL;
-
-    if (this != NULL)
-        result = this->buffer;
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(this == NULL ? NULL : this->buffer);
 }
 
 /***********************************************************************************************************************************
