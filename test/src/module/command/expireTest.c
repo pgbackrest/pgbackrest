@@ -156,10 +156,8 @@ testRun(void)
         TEST_TITLE("manifest file removal");
 
         // Create backup.info
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write backup.info");
-
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Create backup directories and manifest files
         String *full1 = strNew("20181119-152138F");
@@ -311,9 +309,8 @@ testRun(void)
         TEST_TITLE("retention-diff set - diff with no dependents expired");
 
         // Create backup.info with two diff - oldest to be expired - no "set:"
-        storagePutP(
-            storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
+        const Buffer *backupInfoContent = harnessInfoChecksumZ
+        (
             "[backup:current]\n"
             "20181119-152800F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -349,8 +346,10 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}"));
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+                "\"db-version\":\"9.4\"}"
+        );
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
         // Load parameters
         argList = strLstDup(argListAvoidWarn);
@@ -376,25 +375,25 @@ testRun(void)
         storagePutP(
             storageNewWriteP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201409291\n"
-                "db-control-version=942\n"
-                "db-id=1\n"
-                "db-system-id=6625592122879095702\n"
-                "db-version=\"9.4\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                     "\"db-version\":\"9.4\"}"));
 
         InfoBackup *infoBackup = NULL;
@@ -439,21 +438,21 @@ testRun(void)
         TEST_TITLE("remove expired backup from disk - no current backups");
 
         // Create backup.info without current backups
-        storagePutP(
-            storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-catalog-version=201409291\n"
-                "db-control-version=942\n"
-                "db-id=1\n"
-                "db-system-id=6625592122879095702\n"
-                "db-version=\"9.4\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}"));
+        const Buffer *backupInfoContent = harnessInfoChecksumZ
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}"
+        );
 
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup), "remove backups - backup.info current empty");
 
@@ -474,22 +473,22 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Create backup.info without current backups
-        storagePutP(
-            storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-catalog-version=201409291\n"
-                "db-control-version=942\n"
-                "db-id=1\n"
-                "db-system-id=6625592122879095702\n"
-                "db-version=\"9.4\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}"));
+        const Buffer *backupInfoContent = harnessInfoChecksumZ
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}"
+        );
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
         harnessLogResult(
