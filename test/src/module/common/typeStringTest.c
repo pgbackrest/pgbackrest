@@ -106,7 +106,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
         TEST_RESULT_UINT(string->extra, 54, "check extra");
         TEST_RESULT_STR_Z(
-            strCat(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"),
+            strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
         TEST_RESULT_UINT(string->extra, 34, "check extra");
 

@@ -322,6 +322,32 @@ strCat(String *this, const char *cat)
     FUNCTION_TEST_RETURN(this);
 }
 
+String *
+strCatZN(String *this, const char *cat, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, cat);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != NULL);
+
+    // Ensure there is enough space to grow the string
+    strResize(this, size);
+
+    // Append the string
+    strncpy(this->buffer + this->size, cat, size);
+    this->buffer[this->size + size] = '\0';
+
+    // Update size/extra
+    this->size += (unsigned int)size;
+    this->extra -= (unsigned int)size;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
 /***********************************************************************************************************************************
 Append a character
 ***********************************************************************************************************************************/
