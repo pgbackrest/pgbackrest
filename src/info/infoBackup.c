@@ -755,11 +755,19 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
             String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
-            // Remove backup from the current list in the infoBackup object
-            if (!storageExistsP(storage, manifestFileName))
+            // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
+            // infoBackup object, then remove it and its dependencies
+            if (!storageExistsP(storage, manifestFileName) &&  infoBackupDataByLabel(infoBackup, backupLabel) != NULL)
             {
-                LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
-                infoBackupDataDelete(infoBackup, backupLabel);
+                StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+                for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+                {
+                    String *removeBackup = strLstGet(backupList, backupIdx);
+
+                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(removeBackup));
+
+                    infoBackupDataDelete(infoBackup, removeBackup);
+                }
             }
         }
     }

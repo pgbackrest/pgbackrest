@@ -335,7 +335,7 @@ testRun(void)
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
 
-        manifestContent = harnessInfoChecksumZ
+        const Buffer *manifestContentIncr = harnessInfoChecksumZ
         (
             "[backup]\n"
             "backup-archive-start=\"000000030000028500000089\"\n"
@@ -405,7 +405,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContent)), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContentIncr)), "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup added to current");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 1), "get added backup");
@@ -669,6 +669,11 @@ testRun(void)
             manifestContent), "write manifest - invalid backup version mismatch");
 
         TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(),
+            strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
+            manifestContentIncr), "write manifest for dependent backup that will be removed from backup.info");
+
+        TEST_RESULT_VOID(
             storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
@@ -680,8 +685,8 @@ testRun(void)
                         .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                     sortOrderAsc),
                 ", "),
-            "20190818-084444F, 20190818-084502F, 20190818-084555F, 20190818-084666F, 20190818-084777F, 20190923-164324F",
-            "confirm backups on disk");
+            "20190818-084444F, 20190818-084502F, 20190818-084502F_20190820-084502I, 20190818-084555F, 20190818-084666F, "
+            "20190818-084777F, 20190923-164324F", "confirm backups on disk");
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196), "upgrade db");
@@ -708,8 +713,8 @@ testRun(void)
             "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups\n"
             "P00   WARN: backup '20190923-164324F' found in repository added to backup.info\n"
-            "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
-            "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info");
+            "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
+            "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info");
 
         TEST_RESULT_VOID(
             storageCopyP(
@@ -725,8 +730,9 @@ testRun(void)
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct");
         TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "), "20190818-084444F, 20190923-164324F",
-            "previously ignored pgId=1 manifest copy-only now added before existing");
+            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
+            "20190818-084444F, 20190818-084502F_20190820-084502I, 20190923-164324F",
+            "previously ignored pgId=1 manifest copy-only now added before existing and incr from deleted full is still on disk");
         harnessLogResult(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"

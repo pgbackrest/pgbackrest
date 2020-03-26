@@ -76,7 +76,8 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel)
             if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
             {
                 // Remove the manifest files to invalidate the backup
-                storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+                storageRemoveP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
                 storageRemoveP(
                     storageRepoWrite(),
                     strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
