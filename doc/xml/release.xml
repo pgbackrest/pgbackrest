@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.26dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-03-26" version="2.25" title="LZ4 Compression Support">
             <release-core-list>
                 <release-feature-list>

@@ -1,5 +1,10 @@
 [
     {
+        "commit": "fd3dca036b1436564dec17b7c23b62b9d9fa1051",
+        "date": "2020-03-26 17:14:53 -0400",
+        "subject": "v2.25: LZ4 Compression Support"
+    },
+    {
         "commit": "8af0462c5d749ca798bc524e7a05d0e24f4ed0c7",
         "date": "2020-03-26 15:30:59 -0400",
         "subject": "Fix race condition in real/all integration tests.",
