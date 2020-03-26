@@ -368,14 +368,7 @@ infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
     ASSERT(this != NULL);
     ASSERT(backupLabel != NULL);
 
-    // Loop through all the current backups and return a pointer to the data if the label is found, else NULL
-    for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
-    {
-        if (strCmp(infoBackupData(this, idx).backupLabel, backupLabel) == 0)
-            FUNCTION_TEST_RETURN((InfoBackupData *)lstGet(this->backup, idx));
-    }
-
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(lstFind(this->backup, &backupLabel));
 }
 
 /***********************************************************************************************************************************
@@ -555,9 +548,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
 
             // If the backupPrior is in the dependency chain add the label to the list
             if (backupData.backupPrior != NULL && strLstExists(result, backupData.backupPrior))
-            {
                 strLstAdd(result, backupData.backupLabel);
-            }
         }
     }
     MEM_CONTEXT_TEMP_END();

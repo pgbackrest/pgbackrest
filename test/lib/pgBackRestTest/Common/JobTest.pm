@@ -442,6 +442,19 @@ sub run
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
 
+                # Disable debug/coverage for performance and profile tests
+                my $bPerformance = $self->{oTest}->{&TEST_TYPE} eq TESTDEF_PERFORMANCE;
+
+                if ($bPerformance || $self->{bProfile})
+                {
+                    $self->{bDebug} = false;
+                    $self->{bDebugTestTrace} = false;
+                    $self->{bCoverageUnit} = false;
+                }
+
+                # When optimization is disabled add -ftree-coalesce-vars to make the compiler faster when available
+                my $strNoOptimizeFlags = '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '');
+
                 # Determine which warnings are available
                 my $strWarningFlags =
                     '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wconversion -Wformat=2' .
@@ -462,13 +475,13 @@ sub run
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
-                    ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
+                    ($self->{bDebug} ? '' : ' -DNDEBUG') .
                     ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_CO6 ? ' -DDEBUG_EXEC_TIME' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =
-                    '-O2' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{bOptimize} ? '-O2' : $strNoOptimizeFlags) .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
@@ -477,11 +490,9 @@ sub run
 
                 # Flags used to build test.c
                 my $strTestFlags =
-                    ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
-                    '-O0' .
-                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
-                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
-                        ' -fprofile-arcs -ftest-coverage' : '') .
+                    (($self->{bOptimize} && ($self->{bProfile} || $bPerformance)) ? '-O2' : $strNoOptimizeFlags) .
+                    (!$self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
+                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
@@ -490,8 +501,7 @@ sub run
 
                 # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
-                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} ? '-O2' : $strNoOptimizeFlags);
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",
