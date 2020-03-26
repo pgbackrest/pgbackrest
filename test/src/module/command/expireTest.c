@@ -86,7 +86,7 @@ testRun(void)
 
     const Buffer *backupInfoBase = harnessInfoChecksumZ
     (
-         "[backup:current]\n"
+        "[backup:current]\n"
         "20181119-152138F={"
         "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
         "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
@@ -132,7 +132,7 @@ testRun(void)
         "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
         "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-        "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152900F\"],"
+        "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
         "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
@@ -183,20 +183,18 @@ testRun(void)
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, full2Path), "full2 empty");
 
-        String *backupExpired = strNew("");
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full1, backupExpired), "expire backup with both manifest files");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full1), "expire backup with both manifest files");
         TEST_RESULT_BOOL(
             (strLstSize(storageListP(storageTest, full1Path)) && strLstExistsZ(storageListP(storageTest, full1Path), "bogus")),
             true, "full1 - only manifest files removed");
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2, backupExpired), "expire backup with no manifest - does not error");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full2), "expire backup with no manifest - does not error");
 
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, 20181119-152900F"
-                ", 20181119-152900F_20181119-152600D",
-            "only backups passed to expireBackup are removed from backup:current");
+            "20181119-152900F, 20181119-152900F_20181119-152600D",
+            "only backups in set passed to expireBackup are removed from backup:current (result is sorted)");
     }
 
     // *****************************************************************************************************************************
@@ -304,6 +302,20 @@ testRun(void)
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 0, "retention-diff=2 but no more to expire");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "current backups not reduced");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-diff=1");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_RESULT_UINT(expireDiffBackup(infoBackup), 2, "retention-diff set to 1 - full considered in diff");
+        TEST_RESULT_STR_Z(
+            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
+            "20181119-152138F, 20181119-152800F, 20181119-152900F, 20181119-152900F_20181119-152600D",
+            "  remaining backups correct");
+        harnessLogResult(
+            "P00   INFO: expire diff backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - diff with no dependents expired");

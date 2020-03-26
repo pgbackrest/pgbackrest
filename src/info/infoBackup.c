@@ -356,6 +356,21 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
     FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
 }
 
+/**********************************************************************************************************************************/
+InfoBackupData *
+infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupLabel != NULL);
+
+    FUNCTION_TEST_RETURN(lstFind(this->backup, &backupLabel));
+}
+
 /***********************************************************************************************************************************
 Add a backup to the current list
 ***********************************************************************************************************************************/
@@ -501,6 +516,39 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
             {
                 strLstAdd(result, backupData.backupLabel);
             }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
+}
+
+/**********************************************************************************************************************************/
+StringList *
+infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupLabel != NULL);
+
+    // Return the given label as the only dependency or the given label and a list of labels that depend on it
+    StringList *result = strLstNew();
+    strLstAdd(result, backupLabel);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // For each backup label from oldest to newest in the current section, add each dependency to the list
+        for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
+        {
+            InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
+
+            // If the backupPrior is in the dependency chain add the label to the list
+            if (backupData.backupPrior != NULL && strLstExists(result, backupData.backupPrior))
+                strLstAdd(result, backupData.backupLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();
