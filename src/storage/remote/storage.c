@@ -189,18 +189,25 @@ storageRemoteInfoList(
 
         // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
         // since the filename is json-encoded so will always include quotes.
-        const String *name = protocolClientReadLine(this->client);
-
-        while (strSize(name) != 0)
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            StorageInfo info = {.exists = true, .name = jsonToStr(name)};
+            const String *name = protocolClientReadLine(this->client);
 
-            storageRemoteInfoParse(this->client, &info);
-            callback(callbackData, &info);
+            while (strSize(name) != 0)
+            {
+                StorageInfo info = {.exists = true, .name = jsonToStr(name)};
 
-            // Read the next item
-            name = protocolClientReadLine(this->client);
+                storageRemoteInfoParse(this->client, &info);
+                callback(callbackData, &info);
+
+                // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                MEM_CONTEXT_TEMP_RESET(1000);
+
+                // Read the next item
+                name = protocolClientReadLine(this->client);
+            }
         }
+        MEM_CONTEXT_TEMP_END();
 
         // Acknowledge command completed
         result = varBool(protocolClientReadOutput(this->client, true));

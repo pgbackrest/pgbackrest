@@ -221,6 +221,26 @@
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} status</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
+        <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
+             document where needed to grow the number of files as needed for performance testing. -->
+        <!-- <execute user="postgres" show="n">
+            <exe-cmd>psql -c "
+                create or replace function create_test_table(prefix int, scale int) returns void as \$\$
+                declare
+                    index int;
+                begin
+                    for index in 1 .. scale loop
+                        execute 'create table test_' || prefix || '_' || index || ' (id int)';
+                    end loop;
+                end \$\$ LANGUAGE plpgsql;"</exe-cmd>
+        </execute>
+
+        <execute user="postgres" show="n">
+            <exe-cmd>
+                bash -c 'for i in {1..100}; do psql -c "select create_test_table(${i?}, 1000)"; done'
+            </exe-cmd>
+        </execute> -->
+
         <!-- Common commands -->
         <variable key="ssh-key-install">
             mkdir -p -m 700 /root/.ssh &amp;&amp; \
@@ -2390,16 +2410,6 @@
 
                 <execute user="postgres" show="n">
                     <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <p>A new backup must be performed due to the timeline switch.</p>
-
-            <execute-list host="{[host-repo1]}">
-                <title>Backup the {[postgres-cluster-demo]} cluster</title>
-
-                <execute user="{[br-user]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 </execute>
             </execute-list>
         </section>

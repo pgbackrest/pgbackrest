@@ -242,12 +242,24 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Skip the beginning "
         (*jsonPos)++;
+
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
 
         while (json[*jsonPos] != '"')
         {
             if (json[*jsonPos] == '\\')
             {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(result, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
                 (*jsonPos)++;;
 
                 switch (json[*jsonPos])
@@ -293,11 +305,19 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                 if (json[*jsonPos] == '\0')
                     THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
-                    strCatChr(result, json[*jsonPos]);
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = json + *jsonPos;
+
+                noEscapeSize++;
             }
 
             (*jsonPos)++;;
         };
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(result, noEscape, noEscapeSize);
 
         // Advance the character array pointer to the next element after the string
         (*jsonPos)++;;
@@ -670,6 +690,10 @@ jsonFromStrInternal(String *json, const String *string)
     {
         strCatChr(json, '"');
 
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
+
         for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
         {
             char stringChr = strPtr(string)[stringIdx];
@@ -677,38 +701,83 @@ jsonFromStrInternal(String *json, const String *string)
             switch (stringChr)
             {
                 case '"':
-                    strCat(json, "\\\"");
-                    break;
-
                 case '\\':
-                    strCat(json, "\\\\");
-                    break;
-
                 case '\n':
-                    strCat(json, "\\n");
-                    break;
-
                 case '\r':
-                    strCat(json, "\\r");
-                    break;
-
                 case '\t':
-                    strCat(json, "\\t");
-                    break;
-
                 case '\b':
-                    strCat(json, "\\b");
-                    break;
-
                 case '\f':
-                    strCat(json, "\\f");
+                {
+                    // Copy portion of string without escapes
+                    if (noEscapeSize > 0)
+                    {
+                        strCatZN(json, noEscape, noEscapeSize);
+                        noEscapeSize = 0;
+                    }
+
+                    switch (stringChr)
+                    {
+                        case '"':
+                        {
+                            strCat(json, "\\\"");
+                            break;
+                        }
+
+                        case '\\':
+                        {
+                            strCat(json, "\\\\");
+                            break;
+                        }
+
+                        case '\n':
+                        {
+                            strCat(json, "\\n");
+                            break;
+                        }
+
+                        case '\r':
+                        {
+                            strCat(json, "\\r");
+                            break;
+                        }
+
+                        case '\t':
+                        {
+                            strCat(json, "\\t");
+                            break;
+                        }
+
+                        case '\b':
+                        {
+                            strCat(json, "\\b");
+                            break;
+                        }
+
+                        case '\f':
+                        {
+                            strCat(json, "\\f");
+                            break;
+                        }
+                    }
+
                     break;
+                }
 
                 default:
-                    strCatChr(json, stringChr);
+                {
+                    // If escape string is zero size then start it
+                    if (noEscapeSize == 0)
+                        noEscape = strPtr(string) + stringIdx;
+
+                    noEscapeSize++;
                     break;
+                }
             }
         }
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(json, noEscape, noEscapeSize);
 
         strCatChr(json, '"');
     }

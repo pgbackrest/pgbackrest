@@ -24,6 +24,13 @@ old context and then back. Below is a simplified example:
 #include <stdint.h>
 
 /***********************************************************************************************************************************
+Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
+***********************************************************************************************************************************/
+#ifndef STRING_EXTRA_MIN
+    #define STRING_EXTRA_MIN                                            64
+#endif
+
+/***********************************************************************************************************************************
 String object
 ***********************************************************************************************************************************/
 typedef struct String String;
@@ -44,6 +51,11 @@ bool strBeginsWithZ(const String *this, const char *beginsWith);
 String *strCat(String *this, const char *cat);
 String *strCatChr(String *this, char cat);
 String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+// Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
+// N is <= the end of the string being concatenated.
+String *strCatZN(String *this, const char *cat, size_t size);
+
 int strCmp(const String *this, const String *compare);
 int strCmpZ(const String *this, const char *compare);
 String *strDup(const String *this);
