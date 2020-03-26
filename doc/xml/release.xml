@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.25dev" title="UNDER DEVELOPMENT">
+        <release date="2020-03-26" version="2.25" title="LZ4 Compression Support">
             <release-core-list>
                 <release-feature-list>
                     <release-item>
@@ -74,7 +74,7 @@
 
                         <p>Remove <br-option>compress</br-option>/<br-option>compress-level</br-option> options from commands where unused.</p>
 
-                        <p>These commands (e.g. <cmd>restore</cmd>, <cmd>archive-get</cmd>) never used the compress options but allowed them to be passed on the command line.  Now they will error when these options are passed on the command line.  If these errors occur then remove the unused options.</p>
+                        <p>These commands (e.g. <cmd>restore</cmd>, <cmd>archive-get</cmd>) never used the compress options but allowed them to be passed on the command line. Now they will error when these options are passed on the command line. If these errors occur then remove the unused options.</p>
                     </release-item>
 
                     <release-item>
