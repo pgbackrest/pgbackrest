@@ -225,12 +225,12 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         Buffer *output = bufNew(12);
-        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 12, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "some content", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(8);
-        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 8, "read output");
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 8, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
@@ -246,12 +246,12 @@ testRun(void)
         ioWriteFlush(tlsClientIoWrite(client));
 
         output = bufNew(12);
-        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 12, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
-        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
 
         // -------------------------------------------------------------------------------------------------------------------------

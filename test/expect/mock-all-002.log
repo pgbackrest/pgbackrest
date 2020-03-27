@@ -62,9 +62,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -92,9 +92,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -149,6 +149,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -254,9 +255,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -284,9 +285,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -345,6 +346,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -485,9 +487,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -515,9 +517,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -573,6 +575,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -689,9 +692,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -719,9 +722,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -777,6 +780,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=true
 option-hardlink=false
 option-online=false
@@ -901,9 +905,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -931,9 +935,9 @@ pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -989,6 +993,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=true
 option-hardlink=false
 option-online=false
@@ -1130,9 +1135,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1160,9 +1165,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1218,6 +1223,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -1339,9 +1345,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1369,9 +1375,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1427,6 +1433,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=true
 option-hardlink=false
 option-online=false
@@ -1551,9 +1558,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1581,9 +1588,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1639,6 +1646,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=true
 option-hardlink=false
 option-online=false
@@ -1747,7 +1755,7 @@ diff backup - remove files (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
+P00   WARN: diff backup cannot alter compress-type option to 'lz4', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
@@ -1764,9 +1772,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -1794,9 +1802,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=y
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -1852,6 +1860,7 @@ option-checksum-page=true
 option-compress=false
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="none"
 option-delta=true
 option-hardlink=false
 option-online=false
@@ -1971,9 +1980,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -2001,9 +2010,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=y
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -2058,6 +2067,7 @@ option-checksum-page=false
 option-compress=true
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="lz4"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -2183,9 +2193,9 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -2213,9 +2223,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=y
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -2271,6 +2281,7 @@ option-checksum-page=false
 option-compress=true
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="lz4"
 option-delta=false
 option-hardlink=false
 option-online=false
@@ -2410,7 +2421,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
@@ -2434,9 +2445,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
@@ -2464,9 +2475,9 @@ pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=y
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
@@ -2522,6 +2533,7 @@ option-checksum-page=false
 option-compress=true
 option-compress-level=3
 option-compress-level-network=1
+option-compress-type="lz4"
 option-delta=false
 option-hardlink=false
 option-online=false

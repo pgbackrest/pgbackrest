@@ -21,9 +21,11 @@ use Pod::Usage qw(pod2usage);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/doc/lib';
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -131,10 +133,7 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec(
-        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl' .
-            ' pkg-config',
-        {bSuppressStdErr => true});
+    processExec('sudo apt-get install -y libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
     processBegin('mount tmpfs');
@@ -161,6 +160,10 @@ eval
         processExec('sudo rm /etc/sudoers.d/travis');
         processEnd();
 
+        processBegin('create link from home to repo for contributing doc');
+        processExec("ln -s ${strBackRestBase} \${HOME?}/" . PROJECT_EXE);
+        processEnd();
+
         processBegin('release documentation');
         processExec("${strReleaseExe} --build --no-gen --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
@@ -172,17 +175,20 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "libperl-dev";
+        my $strPackage = "rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config";
 
+        # Add lcov when testing coverage
         if (vmCoverageC($strVm))
         {
             $strPackage .= " lcov";
         }
 
+        # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool";
         }
+        # Else packages needed for integration tests on containers
         else
         {
             $strPackage .= " libdbd-pg-perl";

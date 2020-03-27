@@ -1,4 +1,0 @@
-pgBackRest::LibC::PgClient T_PTROBJ
-pgBackRest::LibC::Storage T_PTROBJ
-pgBackRest::LibC::StorageRead T_PTROBJ
-pgBackRest::LibC::StorageWrite T_PTROBJ

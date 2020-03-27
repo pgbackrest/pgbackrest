@@ -14,7 +14,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ExecuteTest;
 
@@ -55,19 +55,14 @@ sub codeCountScan
                  $strFile =~ '\.eps$' ||
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
-                 $strFile eq 'libc/typemap' ||
                  $strFile eq 'test/Vagrantfile' ||
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
-                 $strFile =~ '^test/coverage/' ||
                  $strFile =~ '^test/data/' ||
-                 $strFile =~ '^test/docker/' ||
                  $strFile =~ '^test/expect/' ||
-                 $strFile =~ '^test/lint/' ||
-                 $strFile =~ '^test/package/' ||
                  $strFile =~ '^test/patch/' ||
-                 $strFile =~ '^test/profile/' ||
+                 $strFile =~ '^test/result/' ||
                  $strFile eq 'test/scratch.txt' ||
                  $strFile eq 'test/src/valgrind.suppress' ||
                  $strFile eq 'test/src/lcov.conf');
@@ -83,13 +78,12 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' || $strFile =~ '^libc/build/' || $strFile eq 'libc/Makefile.PL' ||
-               $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' || $strFile eq 'src/configure.ac')
+        elsif ($strFile =~ '^build/' ||  $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
+               $strFile =~ '^src/build/')
         {
             $strClass = 'build';
         }
-        elsif ($strFile =~ '^test/lib/pgBackRestTest/Module/' || $strFile =~ '^test/src/module/' ||
-               $strFile =~ '^libc/t/')
+        elsif ($strFile =~ '^test/lib/pgBackRestTest/Module/' || $strFile =~ '^test/src/module/')
         {
             $strClass = 'test/module';
         }
@@ -133,7 +127,7 @@ sub codeCountScan
             $strType = 'yaml';
             $strForceLang = 'YAML';
         }
-        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure')
+        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
         {
             $strType = 'make';
             $strForceLang = 'make';
@@ -166,7 +160,6 @@ sub codeCountScan
         # Load the file counts
         my $strYaml = executeTest(
             "cloc --yaml ${strBasePath}/${strFile}" .
-            " --read-lang-def=${strBasePath}/test/code-count/code.def" .
             " --force-lang='${strForceLang}'", {bSuppressStdErr => true});
 
         # Error if the file was ignored

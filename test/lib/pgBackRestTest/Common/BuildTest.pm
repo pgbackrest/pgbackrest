@@ -15,8 +15,8 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 ####################################################################################################################################
 # VM hash keywords
@@ -113,7 +113,7 @@ sub buildDependencyTree
         # Only process non-auto files
         if ($strFile =~ /^[A-Za-z0-9\/]+\.(c|h)$/)
         {
-            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile, true, undef, ['src', 'libc']);
+            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile, true, undef, ['src']);
         }
     }
 
@@ -229,8 +229,7 @@ sub buildMakefileObjectCompile
 
             foreach my $strInclude (@{$rhDependencyTree->{$strFile}{include}})
             {
-                $strDepend .=
-                    ' ' . ($oStorage->exists("src/${strInclude}") || $strInclude eq BUILD_AUTO_H ? '' : '../libc/') . $strInclude;
+                $strDepend .= " ${strInclude}";
             }
 
             $strMakefile .=
@@ -287,28 +286,6 @@ sub buildMakefile
 }
 
 push @EXPORT, qw(buildMakefile);
-
-####################################################################################################################################
-# Load the C library and check pointer size
-####################################################################################################################################
-sub buildLoadLibC
-{
-    # Load the module dynamically
-    require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:debug));
-
-    # Load shared object
-    require XSLoader;
-    XSLoader::load('pgBackRest::LibC', '999');
-
-    # Do a basic test to make sure it installed correctly
-    if (libcUvSize() != 8)
-    {
-        confess &log(ERROR, 'UVSIZE in test library does not equal 8');
-    }
-}
-
-push @EXPORT, qw(buildLoadLibC);
 
 
 1;

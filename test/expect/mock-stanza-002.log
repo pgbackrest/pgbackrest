@@ -1,5 +1,5 @@
-run 002 - remote 1, s3 1, enc 1
-===============================
+run 002 - remote 1, s3 1, enc 1, cmp lz4
+========================================
 
 stanza-create db - fail on missing control file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --log-level-file=[LOG-LEVEL-FILE] stanza-create
@@ -231,13 +231,13 @@ backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000001' to the archive
 P00   INFO: archive-push command end: completed successfully
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000002' to the archive
 P00   INFO: archive-push command end: completed successfully
 
@@ -310,7 +310,7 @@ P00   INFO: archive-get command end: completed successfully
 full backup - create first full backup  (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=2 --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=full
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum e40de8cea99dd469c3efb47f5f33a73c7390fb9c
@@ -338,6 +338,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -366,6 +367,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
@@ -512,7 +514,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - diff changed to full backup (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=2 --no-online --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
@@ -539,6 +541,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -567,6 +570,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 buffer-size=[BUFFER-SIZE]
 compress-level=3
 compress-level-network=1
+compress-type=lz4
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail

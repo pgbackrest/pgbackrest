@@ -55,42 +55,42 @@ testRun(void)
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_INT(objToLog(NULL, "Object", buffer, 4), 4, "truncated null");
+        TEST_RESULT_UINT(objToLog(NULL, "Object", buffer, 4), 4, "truncated null");
         TEST_RESULT_Z(buffer, "nul", "    check truncated null");
 
-        TEST_RESULT_INT(objToLog(NULL, "Object", buffer, sizeof(buffer)), 4, "full null");
+        TEST_RESULT_UINT(objToLog(NULL, "Object", buffer, sizeof(buffer)), 4, "full null");
         TEST_RESULT_Z(buffer, "null", "    check full null");
 
-        TEST_RESULT_INT(objToLog((void *)1, "Object", buffer, 4), 8, "truncated object");
+        TEST_RESULT_UINT(objToLog((void *)1, "Object", buffer, 4), 8, "truncated object");
         TEST_RESULT_Z(buffer, "{Ob", "    check truncated object");
 
-        TEST_RESULT_INT(objToLog((void *)1, "Object", buffer, sizeof(buffer)), 8, "full object");
+        TEST_RESULT_UINT(objToLog((void *)1, "Object", buffer, sizeof(buffer)), 8, "full object");
         TEST_RESULT_Z(buffer, "{Object}", "    check full object");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(ptrToLog(NULL, "char *", buffer, 4), 4, "truncated null");
+        TEST_RESULT_UINT(ptrToLog(NULL, "char *", buffer, 4), 4, "truncated null");
         TEST_RESULT_Z(buffer, "nul", "    check truncated null");
 
-        TEST_RESULT_INT(ptrToLog(NULL, "char *", buffer, sizeof(buffer)), 4, "full null");
+        TEST_RESULT_UINT(ptrToLog(NULL, "char *", buffer, sizeof(buffer)), 4, "full null");
         TEST_RESULT_Z(buffer, "null", "    check full null");
 
-        TEST_RESULT_INT(ptrToLog((void *)1, "char *", buffer, 4), 8, "truncated pointer");
+        TEST_RESULT_UINT(ptrToLog((void *)1, "char *", buffer, 4), 8, "truncated pointer");
         TEST_RESULT_Z(buffer, "(ch", "    check truncated pointer");
 
-        TEST_RESULT_INT(ptrToLog((void *)1, "char *", buffer, sizeof(buffer)), 8, "full pointer");
+        TEST_RESULT_UINT(ptrToLog((void *)1, "char *", buffer, sizeof(buffer)), 8, "full pointer");
         TEST_RESULT_Z(buffer, "(char *)", "    check full pointer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(strzToLog(NULL, buffer, 4), 4, "truncated null");
+        TEST_RESULT_UINT(strzToLog(NULL, buffer, 4), 4, "truncated null");
         TEST_RESULT_Z(buffer, "nul", "    check truncated null");
 
-        TEST_RESULT_INT(strzToLog(NULL, buffer, sizeof(buffer)), 4, "full null");
+        TEST_RESULT_UINT(strzToLog(NULL, buffer, sizeof(buffer)), 4, "full null");
         TEST_RESULT_Z(buffer, "null", "    check full null");
 
-        TEST_RESULT_INT(strzToLog("test", buffer, 4), 6, "truncated string");
+        TEST_RESULT_UINT(strzToLog("test", buffer, 4), 6, "truncated string");
         TEST_RESULT_Z(buffer, "\"te", "    check truncated string");
 
-        TEST_RESULT_INT(strzToLog("test2", buffer, sizeof(buffer)), 7, "full string");
+        TEST_RESULT_UINT(strzToLog("test2", buffer, sizeof(buffer)), 7, "full string");
         TEST_RESULT_Z(buffer, "\"test2\"", "    check full string");
     }
 

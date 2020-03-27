@@ -1,5 +1,5 @@
-run 005 - bkp 1, sby 1, dst backup, cmp , s3 0, enc 0
-=====================================================
+run 005 - bkp 1, sby 1, dst backup, cmp none, s3 0, enc 0
+=========================================================
 
 stanza-create db - main create stanza info files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
@@ -18,9 +18,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -45,9 +45,9 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
@@ -86,9 +86,9 @@ pg8-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
@@ -132,9 +132,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -161,9 +161,9 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
@@ -203,9 +203,9 @@ pg8-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
@@ -238,9 +238,9 @@ pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=detail
@@ -267,9 +267,9 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
@@ -309,9 +309,9 @@ pg8-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-compress=n
 compress-level=3
 compress-level-network=1
+compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail

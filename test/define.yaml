@@ -264,6 +264,10 @@ unit:
           common/compress/gz/common: full
           common/compress/gz/compress: full
           common/compress/gz/decompress: full
+          common/compress/lz4/common: full
+          common/compress/lz4/compress: full
+          common/compress/lz4/decompress: full
+          common/compress/helper: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
@@ -316,17 +320,11 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
-        total: 8
+        total: 9
 
         coverage:
           postgres/interface: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: page-checksum
-        total: 3
-
-        coverage:
-          postgres/pageChecksum: full
+          postgres/interface/page: full
 
   # ********************************************************************************************************************************
   - name: config
@@ -356,12 +354,18 @@ unit:
           config/parse: full
           config/parse.auto: noCode
 
+        include:
+          - common/log
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 4
 
         coverage:
           config/load: full
+
+        include:
+          - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
@@ -395,7 +399,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 20
+        total: 21
         containerReq: true
 
         coverage:
@@ -481,7 +485,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-backup
-        total: 2
+        total: 3
 
         coverage:
           info/infoBackup: full
@@ -560,6 +564,7 @@ unit:
           command/backup/protocol: full
 
         include:
+          - info/info
           - info/manifest
           - storage/storage
 
@@ -594,6 +599,9 @@ unit:
 
         coverage:
           command/expire/expire: full
+
+        include:
+          - info/infoBackup
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: help
@@ -650,11 +658,19 @@ unit:
           command/stanza/delete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: storage
-        total: 1
+      - name: repo
+        total: 4
 
         coverage:
-          command/storage/list: full
+          command/repo/get: full
+          command/repo/ls: full
+          command/repo/put: full
+          command/repo/rm: full
+
+        include:
+          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+          # future this will probably be rolled into a custom object store server implementation.
+          - command/repo/create
 
 # **********************************************************************************************************************************
 # Integration tests
@@ -717,3 +733,10 @@ performance:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type
         total: 3
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: storage
+        total: 1
+
+        include:
+          - storage/helper

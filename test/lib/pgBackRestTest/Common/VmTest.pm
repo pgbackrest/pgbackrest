@@ -13,9 +13,10 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::DbVersion;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::DbVersion;
 
 ####################################################################################################################################
 # VM hash keywords
@@ -48,6 +49,8 @@ use constant VMDEF_LCOV_VERSION                                     => 'lcov-ver
     push @EXPORT, qw(VMDEF_LCOV_VERSION);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
+use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
+    push @EXPORT, qw(VMDEF_WITH_LZ4);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -216,6 +219,7 @@ my $oyVm =
         &VM_IMAGE => 'fedora:30',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+        &VMDEF_COVERAGE_C => true,
 
         &VMDEF_DEBUG_INTEGRATION => false,
 
@@ -302,6 +306,7 @@ my $oyVm =
         &VM_IMAGE => 'i386/ubuntu:12.04',
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
         [
@@ -509,7 +514,7 @@ sub vmValid
 
     if (!defined($oyVm->{$strVm}))
     {
-        confess &log(ERROR, "no definition for vm '${strVm}'", ERROR_OPTION_INVALID_VALUE);
+        confess &log(ERROR, "no definition for vm '${strVm}'");
     }
 }
 
@@ -590,6 +595,18 @@ sub vmWithBackTrace
 }
 
 push @EXPORT, qw(vmWithBackTrace);
+
+####################################################################################################################################
+# Does the VM support liblz4?
+####################################################################################################################################
+sub vmWithLz4
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_WITH_LZ4}) ? $oyVm->{$strVm}{&VMDEF_WITH_LZ4} : true);
+}
+
+push @EXPORT, qw(vmWithLz4);
 
 ####################################################################################################################################
 # Will integration tests be run in debug mode?

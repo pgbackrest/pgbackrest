@@ -23,7 +23,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
-        TEST_RESULT_INT(bufSize(buffer), 256, "buffer size");
+        TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
 
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
@@ -52,9 +52,9 @@ testRun(void)
         unsigned char *bufferPtr = NULL;
 
         TEST_ASSIGN(buffer, bufNew(0), "new zero buffer");
-        TEST_RESULT_INT(bufSize(buffer), 0, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 0, "check size");
         TEST_RESULT_PTR(bufResize(buffer, 256), buffer, "resize buffer");
-        TEST_RESULT_INT(bufSize(buffer), 256, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 256, "check size");
         TEST_RESULT_VOID(bufUsedSet(buffer, 256), "set used size");
         TEST_RESULT_BOOL(bufFull(buffer), true, "check buffer full");
 
@@ -67,10 +67,10 @@ testRun(void)
         // Increase buffer size
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "increase buffer size");
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "set to same size");
-        TEST_RESULT_INT(bufSize(buffer), 512, "check size");
-        TEST_RESULT_INT(bufUsed(buffer), 256, "check used size");
+        TEST_RESULT_UINT(bufSize(buffer), 512, "check size");
+        TEST_RESULT_UINT(bufUsed(buffer), 256, "check used size");
         TEST_RESULT_BOOL(bufFull(buffer), false, "check buffer not full");
-        TEST_RESULT_INT(bufRemains(buffer), 256, "check remaining buffer space");
+        TEST_RESULT_UINT(bufRemains(buffer), 256, "check remaining buffer space");
         TEST_RESULT_PTR(bufRemainsPtr(buffer), bufPtr(buffer) + 256, "check remaining buffer space pointer");
         TEST_RESULT_VOID(bufUsedInc(buffer, 256), "set used size");
         TEST_RESULT_BOOL(bufFull(buffer), true, "check buffer full");
@@ -85,7 +85,7 @@ testRun(void)
 
         // Decrease buffer size
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 128)), "decrease buffer size");
-        TEST_RESULT_INT(bufSize(buffer), 128, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "check size");
 
         // Test that no bytes have changed in the original data
         sameTotal = 0;
@@ -97,22 +97,22 @@ testRun(void)
 
         // Use limits to change size reporting
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
-        TEST_RESULT_INT(bufSize(buffer), 64, "    check limited size");
+        TEST_RESULT_UINT(bufSize(buffer), 64, "    check limited size");
         TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
-        TEST_RESULT_INT(bufSize(buffer), 128, "    check unlimited size");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "    check unlimited size");
 
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");
-        TEST_RESULT_INT(bufUsed(buffer), 0, "check used is zero");
+        TEST_RESULT_UINT(bufUsed(buffer), 0, "check used is zero");
 
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit to make sure it gets reduced with the resize");
         TEST_RESULT_VOID(bufResize(buffer, 32), "decrease size to 32");
-        TEST_RESULT_INT(bufSize(buffer), 32, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 32, "check size");
         TEST_RESULT_VOID(bufLimitSet(buffer, 0), "set limit so that it won't need to be resized");
         TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero");
-        TEST_RESULT_INT(bufSize(buffer), 0, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 0, "check size");
         TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero again");
-        TEST_RESULT_INT(bufSize(buffer), 0, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 0, "check size");
     }
 
     // *****************************************************************************************************************************

@@ -39,59 +39,79 @@ doc/doc.pl:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Common/Doc.pm:
+doc/lib/pgBackRestDoc/Common/Doc.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Common/DocConfig.pm:
+doc/lib/pgBackRestDoc/Common/DocConfig.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Common/DocExecute.pm:
+doc/lib/pgBackRestDoc/Common/DocExecute.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Common/DocManifest.pm:
+doc/lib/pgBackRestDoc/Common/DocManifest.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Common/DocRender.pm:
+doc/lib/pgBackRestDoc/Common/DocRender.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Custom/DocCustomRelease.pm:
+doc/lib/pgBackRestDoc/Common/Exception.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Html/DocHtmlBuilder.pm:
+doc/lib/pgBackRestDoc/Common/Ini.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Html/DocHtmlElement.pm:
+doc/lib/pgBackRestDoc/Common/Log.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Html/DocHtmlPage.pm:
+doc/lib/pgBackRestDoc/Common/String.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Html/DocHtmlSite.pm:
+doc/lib/pgBackRestDoc/Custom/DocCustomRelease.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Latex/DocLatex.pm:
+doc/lib/pgBackRestDoc/Html/DocHtmlBuilder.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Latex/DocLatexSection.pm:
+doc/lib/pgBackRestDoc/Html/DocHtmlElement.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Markdown/DocMarkdown.pm:
+doc/lib/pgBackRestDoc/Html/DocHtmlPage.pm:
   class: doc/core
   type: perl
 
-doc/lib/BackRestDoc/Markdown/DocMarkdownRender.pm:
+doc/lib/pgBackRestDoc/Html/DocHtmlSite.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Latex/DocLatex.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Latex/DocLatexSection.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Markdown/DocMarkdown.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Markdown/DocMarkdownRender.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/ProjectInfo.pm:
   class: doc/core
   type: perl
 
@@ -167,194 +187,6 @@ doc/xml/user-guide.xml:
   class: doc/source
   type: xml
 
-lib/pgBackRest/Archive/Common.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Archive/Info.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Backup/Common.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Backup/Info.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Exception.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/ExceptionAuto.pm:
-  class: test/harness/auto
-  type: perl
-
-lib/pgBackRest/Common/Ini.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Io/Base.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Io/Buffered.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Io/Filter.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Io/Handle.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Log.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/String.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Common/Wait.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Config/Config.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Db.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/DbVersion.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/InfoCommon.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/LibC.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/LibCAuto.pm:
-  class: test/harness/auto
-  type: perl
-
-lib/pgBackRest/Manifest.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Protocol/Storage/Helper.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Storage/Base.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Storage/Helper.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Storage/Storage.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Storage/StorageRead.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Storage/StorageWrite.pm:
-  class: test/harness
-  type: perl
-
-lib/pgBackRest/Version.pm:
-  class: test/harness
-  type: perl
-
-libc/LibC.h:
-  class: test/harness
-  type: c/h
-
-libc/LibC.xs:
-  class: test/harness
-  type: xs
-
-libc/Makefile.PL:
-  class: build
-  type: perl
-
-libc/build/lib/pgBackRestLibC/Build.pm:
-  class: build
-  type: perl
-
-libc/xs/config/config.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/config/configTest.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/config/configTest.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/config/define.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/crypto/hash.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/crypto/hash.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/postgres/client.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/postgres/client.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/postgres/pageChecksum.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storage.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storage.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/storage/storageRead.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storageRead.xsh:
-  class: test/harness
-  type: c/h
-
-libc/xs/storage/storageWrite.xs:
-  class: test/harness
-  type: xs
-
-libc/xs/storage/storageWrite.xsh:
-  class: test/harness
-  type: c/h
-
 src/Makefile.in:
   class: build
   type: make
@@ -362,6 +194,46 @@ src/Makefile.in:
 src/build.auto.h.in:
   class: core
   type: c/h
+
+src/build/aclocal.m4:
+  class: build
+  type: make
+
+src/build/autom4te.cache/output.0:
+  class: build
+  type: make
+
+src/build/autom4te.cache/output.1:
+  class: build
+  type: make
+
+src/build/autom4te.cache/requests:
+  class: build
+  type: make
+
+src/build/autom4te.cache/traces.0:
+  class: build
+  type: make
+
+src/build/autom4te.cache/traces.1:
+  class: build
+  type: make
+
+src/build/config.guess:
+  class: build
+  type: make
+
+src/build/config.sub:
+  class: build
+  type: make
+
+src/build/configure.ac:
+  class: build
+  type: make
+
+src/build/install-sh:
+  class: build
+  type: make
 
 src/command/archive/common.c:
   class: core
@@ -547,6 +419,46 @@ src/command/remote/remote.h:
   class: core
   type: c/h
 
+src/command/repo/create.c:
+  class: core
+  type: c
+
+src/command/repo/create.h:
+  class: core
+  type: c/h
+
+src/command/repo/get.c:
+  class: core
+  type: c
+
+src/command/repo/get.h:
+  class: core
+  type: c/h
+
+src/command/repo/ls.c:
+  class: core
+  type: c
+
+src/command/repo/ls.h:
+  class: core
+  type: c/h
+
+src/command/repo/put.c:
+  class: core
+  type: c
+
+src/command/repo/put.h:
+  class: core
+  type: c/h
+
+src/command/repo/rm.c:
+  class: core
+  type: c
+
+src/command/repo/rm.h:
+  class: core
+  type: c/h
+
 src/command/restore/file.c:
   class: core
   type: c
@@ -603,14 +515,6 @@ src/command/stanza/upgrade.h:
   class: core
   type: c/h
 
-src/command/storage/list.c:
-  class: core
-  type: c
-
-src/command/storage/list.h:
-  class: core
-  type: c/h
-
 src/common/assert.h:
   class: core
   type: c/h
@@ -636,6 +540,42 @@ src/common/compress/gz/decompress.c:
   type: c
 
 src/common/compress/gz/decompress.h:
+  class: core
+  type: c/h
+
+src/common/compress/helper.c:
+  class: core
+  type: c
+
+src/common/compress/helper.h:
+  class: core
+  type: c/h
+
+src/common/compress/helper.intern.h:
+  class: core
+  type: c/h
+
+src/common/compress/lz4/common.c:
+  class: core
+  type: c
+
+src/common/compress/lz4/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/lz4/compress.c:
+  class: core
+  type: c
+
+src/common/compress/lz4/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/lz4/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/lz4/decompress.h:
   class: core
   type: c/h
 
@@ -1135,10 +1075,6 @@ src/configure:
   class: build
   type: make
 
-src/configure.ac:
-  class: build
-  type: make
-
 src/db/db.c:
   class: core
   type: c
@@ -1223,6 +1159,18 @@ src/postgres/interface.h:
   class: core
   type: c/h
 
+src/postgres/interface/page.c:
+  class: core
+  type: c
+
+src/postgres/interface/pageChecksum.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/static.auto.h:
+  class: core/auto
+  type: c/h
+
 src/postgres/interface/v083.c:
   class: core
   type: c
@@ -1280,14 +1228,6 @@ src/postgres/interface/version.h:
   type: c/h
 
 src/postgres/interface/version.intern.h:
-  class: core
-  type: c/h
-
-src/postgres/pageChecksum.c:
-  class: core
-  type: c
-
-src/postgres/pageChecksum.h:
   class: core
   type: c/h
 
@@ -1519,6 +1459,10 @@ test/lib/pgBackRestTest/Common/CoverageTest.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Common/DbVersion.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Common/DefineTest.pm:
   class: test/harness
   type: perl
@@ -1536,6 +1480,26 @@ test/lib/pgBackRestTest/Common/HostGroupTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Common/HostTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Io/Base.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Io/Buffered.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Io/Filter.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Io/Handle.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Io/Process.pm:
   class: test/harness
   type: perl
 
@@ -1559,6 +1523,10 @@ test/lib/pgBackRestTest/Common/Storage.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Common/StorageBase.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Common/StoragePosix.pm:
   class: test/harness
   type: perl
@@ -1571,11 +1539,23 @@ test/lib/pgBackRestTest/Common/StoragePosixWrite.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Common/StorageRepo.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Common/VmTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Env/ConfigEnvTest.pm:
+test/lib/pgBackRestTest/Common/Wait.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/ArchiveInfo.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/BackupInfo.pm:
   class: test/harness
   type: perl
 
@@ -1609,6 +1589,18 @@ test/lib/pgBackRestTest/Env/Host/HostS3Test.pm:
 
 test/lib/pgBackRestTest/Env/HostEnvTest.pm:
   class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/InfoCommon.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Manifest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/LibCAuto.pm:
+  class: test/harness/auto
   type: perl
 
 test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
@@ -1759,15 +1751,15 @@ test/src/module/command/remoteTest.c:
   class: test/module
   type: c
 
+test/src/module/command/repoTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/restoreTest.c:
   class: test/module
   type: c
 
 test/src/module/command/stanzaTest.c:
-  class: test/module
-  type: c
-
-test/src/module/command/storageTest.c:
   class: test/module
   type: c
 
@@ -1964,10 +1956,6 @@ test/src/module/postgres/clientTest.c:
   type: c
 
 test/src/module/postgres/interfaceTest.c:
-  class: test/module
-  type: c
-
-test/src/module/postgres/pageChecksumTest.c:
   class: test/module
   type: c
 

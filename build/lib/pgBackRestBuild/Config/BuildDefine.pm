@@ -14,12 +14,11 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
-
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocRender;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocRender;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Data;
@@ -345,8 +344,8 @@ sub buildConfigDefine
 {
     # Load help data
     #-------------------------------------------------------------------------------------------------------------------------------
-    require BackRestDoc::Common::Doc;
-    require BackRestDoc::Common::DocManifest;
+    require pgBackRestDoc::Common::Doc;
+    require pgBackRestDoc::Common::DocManifest;
 
     my $strDocPath = abs_path(dirname($0) . '/../doc');
 
@@ -354,13 +353,13 @@ sub buildConfigDefine
         $strDocPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     my @stryEmpty = [];
-    my $oManifest = new BackRestDoc::Common::DocManifest(
+    my $oManifest = new pgBackRestDoc::Common::DocManifest(
         $oStorageDoc, \@stryEmpty, \@stryEmpty, \@stryEmpty, \@stryEmpty, undef, $strDocPath, false, false);
 
-    my $oDocRender = new BackRestDoc::Common::DocRender('text', $oManifest, false);
+    my $oDocRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, false);
     my $oDocConfig =
-        new BackRestDoc::Common::DocConfig(
-            new BackRestDoc::Common::Doc("${strDocPath}/xml/reference.xml"), $oDocRender);
+        new pgBackRestDoc::Common::DocConfig(
+            new pgBackRestDoc::Common::Doc("${strDocPath}/xml/reference.xml"), $oDocRender);
     my $hConfigHelp = $oDocConfig->{oConfigHash};
 
     # Build command constants and data

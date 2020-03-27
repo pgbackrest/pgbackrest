@@ -141,6 +141,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptChecksumPage,
     },
 
+    // cipher-pass option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_CIPHER_PASS,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptCipherPass,
+    },
+
     // cmd-ssh option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -190,6 +198,18 @@ static const struct option optionList[] =
     {
         .name = "reset-" CFGOPT_COMPRESS_LEVEL_NETWORK,
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevelNetwork,
+    },
+
+    // compress-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_COMPRESS_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptCompressType,
+    },
+    {
+        .name = "reset-" CFGOPT_COMPRESS_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressType,
     },
 
     // config option
@@ -259,6 +279,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
     },
 
+    // dry-run option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_DRY_RUN,
+        .val = PARSE_OPTION_FLAG | cfgOptDryRun,
+    },
+
     // exclude option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -292,6 +319,13 @@ static const struct option optionList[] =
         .name = CFGOPT_HOST_ID,
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptHostId,
+    },
+
+    // ignore-missing option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_IGNORE_MISSING,
+        .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
     },
 
     // link-all option
@@ -1674,6 +1708,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProtocolTimeout,
     },
 
+    // raw option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_RAW,
+        .val = PARSE_OPTION_FLAG | cfgOptRaw,
+    },
+
     // recovery-option option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2334,19 +2375,23 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptBackupStandby,
     cfgOptBufferSize,
     cfgOptChecksumPage,
+    cfgOptCipherPass,
     cfgOptCmdSsh,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
+    cfgOptCompressType,
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
+    cfgOptDryRun,
     cfgOptExclude,
     cfgOptFilter,
     cfgOptHostId,
+    cfgOptIgnoreMissing,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,
@@ -2451,6 +2496,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
+    cfgOptRaw,
     cfgOptRecurse,
     cfgOptRemoteType,
     cfgOptRepoCipherType,

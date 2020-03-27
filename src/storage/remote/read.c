@@ -6,8 +6,7 @@ Remote Storage Read
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/compress/gz/compress.h"
-#include "common/compress/gz/decompress.h"
+#include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -65,11 +64,15 @@ storageReadRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add compression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzCompressNew((int)this->interface.compressLevel));
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+        }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
+        protocolCommandParamAdd(command, this->interface.limit);
         protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         result = varBool(protocolClientExecute(this->client, command, true));
@@ -79,7 +82,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         // If the file is compressible add decompression filter locally
         if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzDecompressNew());
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -176,7 +179,7 @@ New object
 StorageRead *
 storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel)
+    unsigned int compressLevel, const Variant *limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -185,6 +188,7 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -210,6 +214,7 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

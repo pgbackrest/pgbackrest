@@ -14,9 +14,9 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;

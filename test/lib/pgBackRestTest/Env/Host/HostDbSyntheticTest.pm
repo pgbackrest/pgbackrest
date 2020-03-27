@@ -17,21 +17,21 @@ use Fcntl ':mode';
 use File::Basename qw(basename dirname);
 use File::stat;
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Common::Wait;
-use pgBackRest::DbVersion;
-use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::FileTest;
+use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Common::Wait;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
-use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::FileTest;
-use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
 # new

@@ -3,27 +3,51 @@ branches:
     - integration
     - /-ci$/
 
+os: linux
 dist: trusty
-sudo: required
 
 language: c
 
 services:
   - docker
 
-matrix:
+jobs:
+  # The first five jobs should be the canaries in the coal mine, i.e. the most likely to fail if there are problems in the code.
+  # They should also be a good mix of unit, integration, and documentation tests.
+  #
+  # In general tests should be ordered from slowest to fastest for the first five jobs (the maximum concurrent jobs allowed), then
+  # slowest to fastest for the rest of the tests. This does not make a difference for testing a single commit, but when multiple
+  # commits are being tested it is best to have the slowest jobs first so that as jobs become available they will tackle the slowest
+  # tests first.
   include:
-    - env: PGB_CI="test --vm=u12"
-    - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
-    - env: PGB_CI="test --vm=co6 --param=module=mock --param=module=real"
-    - env: PGB_CI="test --vm=u18 --param=container-only"
+    # All unit (without coverage) and integration tests for 32-bit
+    - env: PGB_CI="test --vm=u12 --param=no-performance"
+
+    # Debian/Ubuntu documentation
     - env: PGB_CI=" doc --vm=u18"
-    - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
+
+    # All integration tests
+    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
+
+    # All unit tests (with coverage) on the newest gcc available
+    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
+
+    # All integration tests
+    - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
+
+    # RHEL/CentOS 6 documentation
+    - env: PGB_CI=" doc --vm=co6"
+
+    # Performance tests and unit tests (with coverage) run without a container in a non-UTC timezone
     - dist: bionic
       env:
         - PGB_CI="test --vm=none --param=tz=America/New_York"
       services:
-    - env: PGB_CI=" doc --vm=co6"
+
+    # All integration tests
+    - env: PGB_CI="test --vm=co7 --param=build-package --param=module=mock --param=module=real"
+
+    # RHEL/CentOS 7 documentation
     - env: PGB_CI=" doc --vm=co7"
 
 install:

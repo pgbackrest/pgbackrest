@@ -71,7 +71,7 @@ testRun(void)
         TEST_RESULT_DOUBLE(varDblForce(varNewBool(false)), 0, "force bool to double");
         TEST_RESULT_DOUBLE(varDblForce(VARINT(123)), 123, "force int to double");
         TEST_RESULT_DOUBLE(varDblForce(VARINT64(999999999999)), 999999999999, "force int64 to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARUINT64(9223372036854775807U)), 9223372036854775807U, "force uint64 to double");
+        TEST_RESULT_DOUBLE(varDblForce(VARUINT64(9223372036854775807U)), 9223372036854775807.0, "force uint64 to double");
         TEST_RESULT_DOUBLE(varDblForce(VARUINT(992)), 992, "force uint to double");
         TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("879.01")), 879.01, "force String to double");
         TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("0")), 0, "force String to double");
@@ -219,17 +219,17 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *uint64 = varNewUInt64(44);
-        TEST_RESULT_DOUBLE(varUInt64(uint64), 44, "uint64 variant");
-        TEST_RESULT_DOUBLE(varUInt64Force(uint64), 44, "force uint64 to uint64");
+        TEST_RESULT_UINT(varUInt64(uint64), 44, "uint64 variant");
+        TEST_RESULT_UINT(varUInt64Force(uint64), 44, "force uint64 to uint64");
         varFree(uint64);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varUInt64Force(varNewBool(true)), 1, "force bool to uint64");
-        TEST_RESULT_DOUBLE(varUInt64Force(VARINT(2147483647)), 2147483647, "force int to uint64");
-        TEST_RESULT_INT(varUInt64Force(VARUINT(4294967295)), 4294967295, "force uint to uint64");
-        TEST_RESULT_DOUBLE(varUInt64Force(VARINT64(2147483647)), 2147483647, "force int64 to uint64");
-        TEST_RESULT_DOUBLE(varUInt64Force(varNewStrZ("18446744073709551615")), 18446744073709551615U, "force str to uint64");
-        TEST_RESULT_DOUBLE(varUInt64Force(VARUINT64(18446744073709551615U)), 18446744073709551615U, "force uint64 to uint64");
+        TEST_RESULT_UINT(varUInt64Force(varNewBool(true)), 1, "force bool to uint64");
+        TEST_RESULT_UINT(varUInt64Force(VARINT(2147483647)), 2147483647, "force int to uint64");
+        TEST_RESULT_UINT(varUInt64Force(VARUINT(4294967295)), 4294967295, "force uint to uint64");
+        TEST_RESULT_UINT(varUInt64Force(VARINT64(2147483647)), 2147483647, "force int64 to uint64");
+        TEST_RESULT_UINT(varUInt64Force(varNewStrZ("18446744073709551615")), 18446744073709551615U, "force str to uint64");
+        TEST_RESULT_UINT(varUInt64Force(VARUINT64(18446744073709551615U)), 18446744073709551615U, "force uint64 to uint64");
 
         TEST_ERROR(
             varUInt64Force(varNewStrZ("18446744073709551616")), FormatError,
@@ -243,7 +243,7 @@ testRun(void)
         TEST_ERROR(varUInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varUInt64(varDup(VARUINT64(88976))), 88976, "dup uint64");
+        TEST_RESULT_UINT(varUInt64(varDup(VARUINT64(88976))), 88976, "dup uint64");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(varEq(NULL, NULL), true, "null, null eq");

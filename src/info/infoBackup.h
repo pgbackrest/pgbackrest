@@ -79,6 +79,13 @@ StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expres
 
 InfoPg *infoBackupPg(const InfoBackup *this);
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
+
+// Return a pointer to a structure from the current backup data given a label, else NULL
+InfoBackupData *infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel);
+
+// Given a backup label, get the dependency list
+StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);
+
 unsigned int infoBackupDataTotal(const InfoBackup *this);
 const String *infoBackupCipherPass(const InfoBackup *this);
 

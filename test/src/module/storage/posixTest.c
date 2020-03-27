@@ -61,6 +61,27 @@ testRun(void)
     // Write file for testing if storage is read-only
     String *writeFile = strNewFmt("%s/writefile", testPath());
 
+    // This test should always be first so the storage helper is uninitialized
+    // *****************************************************************************************************************************
+    if (testBegin("storageHelperDryRunInit()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is not initialized");
+
+        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is true");
+
+        storageHelperDryRunInit(true);
+
+        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("storageNew() and storageFree()"))
     {
@@ -182,9 +203,9 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
+        TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
@@ -204,9 +225,9 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_INT(info.size, 8, "    check size");
+        TEST_RESULT_UINT(info.size, 8, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_UINT(info.timeModified, 1555155555, "    check mod time");
+        TEST_RESULT_INT(info.timeModified, 1555155555, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_STR(info.user, NULL, "    check user");
         TEST_RESULT_STR(info.group, NULL, "    check group");
@@ -221,7 +242,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR_Z(info.linkDestination, "/tmp", "    check link destination");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
@@ -231,7 +252,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR(info.linkDestination, NULL, "    check link destination");
         TEST_RESULT_STR_Z(info.user, "root", "    check user");
@@ -247,7 +268,7 @@ testRun(void)
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
-        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0666, "    check mode");
         TEST_RESULT_STR(info.linkDestination, NULL, "    check link destination");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
@@ -728,7 +749,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileName), false, "destination file does not exist");
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileNameTmp), true, "destination tmp file exists");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileNameTmp).size, 8, "    check temp file size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, fileNameTmp).size, 8, "    check temp file size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = strNewFmt("%s/sub2/testfile", testPath());
@@ -770,17 +791,17 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.empty", testPath()))), "get empty");
-        TEST_RESULT_INT(bufSize(buffer), 0, "size is 0");
+        TEST_RESULT_UINT(bufSize(buffer), 0, "size is 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
-        TEST_RESULT_INT(bufSize(buffer), 9, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 4), "get exact");
-        TEST_RESULT_INT(bufSize(buffer), 4, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
 
         TEST_ERROR_FMT(
@@ -791,8 +812,18 @@ testRun(void)
         ioBufferSizeSet(2);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
-        TEST_RESULT_INT(bufSize(buffer), 9, "check size");
+        TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read limited bytes");
+
+        ioBufferSizeSet(2);
+
+        TEST_ASSIGN(
+            buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()), .limit = VARUINT64(7))), "get");
+        TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
     }
 
     // *****************************************************************************************************************************
@@ -824,10 +855,11 @@ testRun(void)
         TEST_CREATE_NOPERM();
         StorageRead *file = NULL;
 
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true, .limit = VARUINT64(44)), "new read file");
         TEST_RESULT_PTR(storageRead(file), file->driver, "    check driver");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "    check ignore missing");
         TEST_RESULT_STR(storageReadName(file), fileNoPerm, "    check name");
+        TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "    check limit");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm), "new no perm read file");
@@ -894,12 +926,12 @@ testRun(void)
         bufUsedZero(outBuffer);
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    no data to load");
-        TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
+        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_VOID(
             storageReadPosix(storageRead(file), outBuffer, true),
             "    no data to load from driver either");
-        TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
+        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
 

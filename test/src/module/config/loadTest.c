@@ -9,14 +9,6 @@ Test Configuration Load
 #include "common/harnessConfig.h"
 
 /***********************************************************************************************************************************
-Expose log internal data for unit testing/debugging
-***********************************************************************************************************************************/
-extern LogLevel logLevelStdOut;
-extern LogLevel logLevelStdErr;
-extern LogLevel logLevelFile;
-extern bool logTimestamp;
-
-/***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
 void
@@ -264,9 +256,52 @@ testRun(void)
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compress-type=none when compress=n");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    compress-type=none");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "    compress-level=0");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compress-type=gz when compress=y");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS_LEVEL "=9");
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 9, "    compress-level=9");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn when compress-type and compress both set");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS_TYPE "=gz");
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "    compress-level=6");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
+
+        harnessLogResult(
+            "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
+            "            HINT: 'compress-type' is preferred and 'compress' is deprecated.");
     }
 
     // *****************************************************************************************************************************
@@ -291,9 +326,31 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoad()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dry-run valid, --no-dry-run");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_RESULT_VOID(storageRepoWrite(), "  check writable storage");
+        lockRelease(true);
+
+        TEST_TITLE("dry-run valid, dry-run");
+
+        strLstAddZ(argList, "--" CFGOPT_DRY_RUN);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_ERROR(
+            storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
+        lockRelease(true);
+
         // Command does not have umask
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("info"));
 
@@ -343,7 +400,7 @@ testRun(void)
 
         ioBufferSizeSet(333);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
-        TEST_RESULT_SIZE(ioBufferSize(), 333, "buffer size not updated by help command");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // Help command for backup
         // -------------------------------------------------------------------------------------------------------------------------
@@ -357,7 +414,7 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-retention-full=2"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_SIZE(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
 
         // Command takes lock and opens log file
         // -------------------------------------------------------------------------------------------------------------------------

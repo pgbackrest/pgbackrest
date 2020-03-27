@@ -2,7 +2,7 @@
 # FullCommonTest.pm - Common code for backup tests
 ####################################################################################################################################
 package pgBackRestTest::Env::HostEnvTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -11,27 +11,27 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
-use pgBackRest::Archive::Common;
-use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
-use pgBackRest::DbVersion;
-use pgBackRest::LibC qw(:crypto);
-use pgBackRest::Protocol::Storage::Helper;
+use pgBackRestDoc::Common::Log;
 
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageBase;
+use pgBackRestTest::Common::StorageRepo;
+use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
 use pgBackRestTest::Env::Host::HostS3Test;
-use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # Constants
@@ -127,7 +127,7 @@ sub setup
     # Create db master config
     $oHostDbMaster->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
-        bCompress => $$oConfigParam{bCompress},
+        strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
         bS3 => $$oConfigParam{bS3}});
@@ -136,7 +136,7 @@ sub setup
     if (defined($oHostBackup))
     {
         $oHostBackup->configCreate({
-            bCompress => $$oConfigParam{bCompress},
+            strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
             bS3 => $$oConfigParam{bS3}});
     }
@@ -146,47 +146,27 @@ sub setup
         $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
     }
 
+    storageRepoCommandSet(
+        $self->backrestExeHelper() .
+            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
+            ' --log-level-stderr=error' .
+            ($oConfigParam->{bS3} ? ' --no-repo1-s3-verify-tls --repo1-s3-host=' . $oHostS3->ipGet() : ''),
+        $oConfigParam->{bS3} ? STORAGE_OBJECT : STORAGE_POSIX);
+
     # Create db-standby config
     if (defined($oHostDbStandby))
     {
         $oHostDbStandby->configCreate({
             strBackupSource => $$oConfigParam{strBackupSource},
-            bCompress => $$oConfigParam{bCompress},
+            strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }
 
-    # Set options needed for storage helper
-    $self->optionTestSet(CFGOPT_PG_PATH, $oHostDbMaster->dbBasePath());
-    $self->optionTestSet(CFGOPT_REPO_PATH, $oHostBackup->repoPath());
-    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-
-    # Configure the repo to be encrypted if required
-    if ($bRepoEncrypt)
-    {
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
-    }
-
-    # Set S3 options
-    if (defined($oHostS3))
-    {
-        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
-        $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
-        $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
-        $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
-        $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
-    }
-
-    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
     # Create S3 bucket
     if (defined($oHostS3))
     {
-        storageRepo()->{oStorageC}->bucketCreate();
+        storageRepo()->create();
     }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
@@ -492,7 +472,7 @@ sub walGenerateContentChecksum
             {name => 'hParam', required => false, trace => true},
         );
 
-    return cryptoHashOne('sha1', ${$self->walGenerateContent($strPgVersion, $hParam)});
+    return sha1_hex(${$self->walGenerateContent($strPgVersion, $hParam)});
 }
 
 ####################################################################################################################################
@@ -513,7 +493,7 @@ sub walGenerate
 
     my $rtWalContent = $self->walGenerateContent($strPgVersion, {iSourceNo => $iSourceNo});
     my $strWalFile =
-        "${strWalPath}/${strWalSegment}" . ($bChecksum ? '-' . cryptoHashOne('sha1', $rtWalContent) : '') .
+        "${strWalPath}/${strWalSegment}" . ($bChecksum ? '-' . sha1_hex($rtWalContent) : '') .
             (defined($bPartial) && $bPartial ? '.partial' : '');
 
     # Put the WAL segment and the ready file

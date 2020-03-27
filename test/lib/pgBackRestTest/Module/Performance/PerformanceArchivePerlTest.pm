@@ -15,8 +15,7 @@ use English '-no_match_vars';
 use Storable qw(dclone);
 use Time::HiRes qw(gettimeofday);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
+use pgBackRestDoc::Common::Log;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
@@ -63,11 +62,8 @@ sub run
         for (my $iIndex = 0; $iIndex < $iRunTotal; $iIndex++)
         {
             executeTest(
-                $self->backrestExe() . ' --' . cfgOptionName(CFGOPT_STANZA) . '=' . $self->stanza() .
-                ' --' . cfgOptionName(CFGOPT_ARCHIVE_ASYNC) .
-                ' --' . cfgOptionName(CFGOPT_SPOOL_PATH) . '=' . $self->{strSpoolPath} .
-                ' --' . cfgOptionName(CFGOPT_ARCHIVE_TIMEOUT) . '=1' .
-                ' archive-push /pg_xlog/000000010000000100000001');
+                $self->backrestExe() . ' --stanza=' . $self->stanza() . ' --archive-async --spool-path=' . $self->{strSpoolPath} .
+                ' --archive-timeout=1 archive-push /pg_xlog/000000010000000100000001');
         }
 
         &log(INFO, 'time per execution: ' . ((gettimeofday() - $lTimeBegin) / $iRunTotal));

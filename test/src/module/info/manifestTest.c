@@ -115,6 +115,7 @@ testRun(void)
             "option-archive-copy=false\n"                                                                                          \
             "option-checksum-page=false\n"                                                                                         \
             "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
             "option-hardlink=false\n"                                                                                              \
             "option-online=false\n"
 
@@ -132,11 +133,13 @@ testRun(void)
 
         #define TEST_MANIFEST_OPTION_ONLINE_FALSE                                                                                  \
             "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
             "option-hardlink=false\n"                                                                                              \
             "option-online=false\n"
 
         #define TEST_MANIFEST_OPTION_ONLINE_TRUE                                                                                   \
             "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
             "option-hardlink=false\n"                                                                                              \
             "option-online=true\n"
 
@@ -1171,9 +1174,9 @@ testRun(void)
         manifest->data.backupOptionOnline = true;
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860, false), "validate manifest");
-        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
+        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_BOOL(manifest->data.backupOptionCompress, false, "check compress");
+        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeNone, "check compress");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in past does not force delta");
@@ -1185,16 +1188,16 @@ testRun(void)
             &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860, false), "validate manifest");
-        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182860, "check copy start");
+        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182860, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), false, "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in future forces delta");
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, true), "validate manifest");
-        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
+        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_BOOL(manifest->data.backupOptionCompress, true, "check compress");
+        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGz, "check compress");
 
         TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
     }
@@ -1221,7 +1224,8 @@ testRun(void)
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=false\n"                                                                                         \
             "option-archive-copy=false\n"                                                                                          \
-            "option-compress=false\n"
+            "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"
 
         #define TEST_MANIFEST_HEADER_POST                                                                                          \
             "option-hardlink=false\n"                                                                                              \
@@ -1566,6 +1570,7 @@ testRun(void)
             "option-archive-check=true\n"
             "option-archive-copy=true\n"
             "option-compress=false\n"
+            "option-compress-type=\"none\"\n"
             "option-hardlink=false\n"
             "option-online=false\n"
             "\n"
@@ -1651,6 +1656,7 @@ testRun(void)
             "option-compress=true\n"                                                                                               \
             "option-compress-level=3\n"                                                                                            \
             "option-compress-level-network=6\n"                                                                                    \
+            "option-compress-type=\"gz\"\n"                                                                                        \
             "option-delta=false\n"                                                                                                 \
             "option-hardlink=true\n"                                                                                               \
             "option-online=false\n"                                                                                                \

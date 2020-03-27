@@ -18,9 +18,9 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
@@ -303,7 +303,7 @@ sub containerBuild
     my $bVmForce = shift;
 
     # Create temp path
-    my $strTempPath = $oStorageDocker->pathGet('test/.vagrant/docker');
+    my $strTempPath = $oStorageDocker->pathGet('test/result/docker');
     $oStorageDocker->pathCreate($strTempPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
     # Load container definitions from yaml
@@ -361,7 +361,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel";
+                "        zlib-devel libxml2-devel lz4-devel lz4";
 
             if ($strOS eq VM_CO6)
             {
@@ -388,7 +388,7 @@ sub containerBuild
             }
             else
             {
-                $strScript .= ' libjson-pp-perl liblz4-dev';
+                $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
             }
         }
 
@@ -545,46 +545,6 @@ sub containerBuild
 
         containerWrite(
             $oStorageDocker, $strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
-
-        # Build image
-        ###########################################################################################################################
-        $strImageParent = containerRepo() . ":${strOS}-base";
-        $strImage = "${strOS}-build";
-        $strCopy = undef;
-
-        $strScript = sectionHeader() .
-            "# Create test user\n" .
-            '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
-            '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
-
-        # Fetch package source
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-        {
-            $strScript .=  sectionHeader() .
-                "# Install pgBackRest package source\n" .
-                "    git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src";
-        }
-        else
-        {
-            # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.  Using
-            # 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
-            $strScript .=  sectionHeader() .
-                "# Install pgBackRest package source\n" .
-                "    mkdir /root/package-src && \\\n" .
-                "    wget -O /root/package-src/pgbackrest-conf.patch " .
-                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
-                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest-conf.patch;hb=refs/heads/master' && \\\n" .
-                "    wget -O /root/package-src/pgbackrest-libxmlinclude.patch " .
-                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
-                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest-libxmlinclude.patch;hb=refs/heads/master' && \\\n" .
-                "    wget -O /root/package-src/pgbackrest.spec " .
-                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
-                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'";
-        }
-
-        $strScript .= entryPointSetup($strOS);
-
-        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
         # Test image
         ########################################################################################################################

@@ -24,23 +24,22 @@ use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/lib';
 use lib dirname(dirname($0)) . '/test/lib';
 
-use BackRestDoc::Common::Doc;
-use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Common::DocRender;
-use BackRestDoc::Html::DocHtmlSite;
-use BackRestDoc::Latex::DocLatex;
-use BackRestDoc::Markdown::DocMarkdown;
-
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-use pgBackRest::Version;
-
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
+
+use pgBackRestDoc::Common::Doc;
+use pgBackRestDoc::Common::DocConfig;
+use pgBackRestDoc::Common::DocManifest;
+use pgBackRestDoc::Common::DocRender;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Html::DocHtmlSite;
+use pgBackRestDoc::Latex::DocLatex;
+use pgBackRestDoc::Markdown::DocMarkdown;
+use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # Usage
@@ -215,7 +214,7 @@ eval
             # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
             executeTest(
-                "${strTestExe} --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
+                "${strTestExe} --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
                 {bShowOutputAsync => true});
         }
 

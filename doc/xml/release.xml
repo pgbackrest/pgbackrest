@@ -12,9 +12,64 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.25dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.26dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2020-03-26" version="2.25" title="LZ4 Compression Support">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>lz4</proper> compression support.</p>
+
+                        <p>Note that setting <br-option>compress-type=lz4</br-option> will make new backups and archive incompatible (unrestorable) with prior versions of <backrest/>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="luca.ferrari"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>--dry-run</br-option> option to the <cmd>expire</cmd> command.</p>
+
+                        <p>Use dry-run to see which backups/archive would be removed by the <cmd>expire</cmd> command without actually removing anything.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
+                    <release-item>
+                        <commit subject="Free temp mem context periodically in storageRemoteInfoList()."/>
+
+                        <release-item-contributor-list>
+                             <release-item-ideator id="jens.wilke"/>
+                             <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of remote manifest build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-contributor id="marc.cousin"/>
+                             <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix detection of keepalive options on <proper>Linux</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-contributor id="marc.cousin"/>
+                             <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add configure host detection to set standards flags correctly.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                              <release-item-reviewer id="cynthia.shang"/>
@@ -22,7 +77,17 @@
 
                         <p>Remove <br-option>compress</br-option>/<br-option>compress-level</br-option> options from commands where unused.</p>
 
-                        <p>These commands (e.g. <cmd>restore</cmd>, <cmd>archive-get</cmd>) never used the compress options but allowed them to be passed on the command line.  Now they will error when these options are passed on the command line.  If these errors occur then remove the unused options.</p>
+                        <p>These commands (e.g. <cmd>restore</cmd>, <cmd>archive-get</cmd>) never used the compress options but allowed them to be passed on the command line. Now they will error when these options are passed on the command line. If these errors occur then remove the unused options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Limit backup file copy size to size reported at backup start.</p>
+
+                        <p>If a file grows during the backup it will be reconstructed by WAL replay during recovery so there is no need to copy the additional data.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -32,7 +97,23 @@
                              <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Add infrastructure for multiple compression type support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Improve performance of <code>MEM_CONTEXT*()</code> macros.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow storage reads to be limited by bytes.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

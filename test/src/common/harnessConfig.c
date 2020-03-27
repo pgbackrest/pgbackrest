@@ -25,6 +25,12 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
 
+    // Set dry-run mode for storage and logging
+    storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+#ifndef NO_LOG
+    harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+#endif
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
 

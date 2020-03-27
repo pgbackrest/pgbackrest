@@ -4,7 +4,7 @@ Storage Test Harness
 #include <inttypes.h>
 
 #include "common/debug.h"
-#include "common/compress/gz/decompress.h"
+#include "common/compress/helper.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
@@ -31,7 +31,8 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             {
                 uint64_t size = info->size;
 
-                // If the file is compressed then decompress to get the real size
+                // If the file is compressed then decompress to get the real size.  Note that only gz is used in unit tests since
+                // it is the only compression type guaranteed to be present.
                 if (data->fileCompressed)
                 {
                     ASSERT(data->storage != NULL);
@@ -39,7 +40,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
                     StorageRead *read = storageNewReadP(
                         data->storage,
                         data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGz));
                     size = bufUsed(storageGetP(read));
                 }
 

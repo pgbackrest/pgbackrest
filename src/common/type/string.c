@@ -82,10 +82,13 @@ strNew(const char *string)
     {
         .memContext = memContextCurrent(),
         .size = (unsigned int)stringSize,
+
+        // A zero-length string is not very useful so assume this string is being created for appending and allocate extra space
+        .extra = stringSize == 0 ? STRING_EXTRA_MIN : 0,
     };
 
     // Allocate and assign string
-    this->buffer = memNew(this->size + 1);
+    this->buffer = memNew(this->size + this->extra + 1);
     strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
@@ -277,6 +280,10 @@ strResize(String *this, size_t requested)
         // Calculate new extra needs to satisfy request and leave extra space for new growth
         this->extra = (unsigned int)requested + ((this->size + (unsigned int)requested) / 2);
 
+        // Adding too little extra space usually leads to immediate resizing so enforce a minimum
+        if (this->extra < STRING_EXTRA_MIN)
+            this->extra = STRING_EXTRA_MIN;
+
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->buffer = memResize(this->buffer, this->size + this->extra + 1);
@@ -311,6 +318,32 @@ strCat(String *this, const char *cat)
     strcpy(this->buffer + this->size, cat);
     this->size += (unsigned int)sizeGrow;
     this->extra -= (unsigned int)sizeGrow;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+String *
+strCatZN(String *this, const char *cat, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, cat);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != NULL);
+
+    // Ensure there is enough space to grow the string
+    strResize(this, size);
+
+    // Append the string
+    strncpy(this->buffer + this->size, cat, size);
+    this->buffer[this->size + size] = '\0';
+
+    // Update size/extra
+    this->size += (unsigned int)size;
+    this->extra -= (unsigned int)size;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -714,12 +747,7 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    char *result = NULL;
-
-    if (this != NULL)
-        result = this->buffer;
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(this == NULL ? NULL : this->buffer);
 }
 
 /***********************************************************************************************************************************

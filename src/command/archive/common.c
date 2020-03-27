@@ -415,7 +415,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
             // Get a list of all WAL segments that match
             StringList *list = storageListP(
                 storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt("^%s%s-[0-f]{40}(\\.gz){0,1}$", strPtr(strSubN(walSegment, 0, 24)),
+                .expression = strNewFmt("^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strPtr(strSubN(walSegment, 0, 24)),
                     walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""), .nullOnMissing = true);
 
             // If there are results

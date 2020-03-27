@@ -13,30 +13,172 @@ use Carp qw(confess);
 
 use File::Basename qw(basename dirname);
 
-use pgBackRest::Archive::Info;
-use pgBackRest::Backup::Common;
-use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
-use pgBackRest::Common::Log;
-use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
-use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:checksum);
-use pgBackRest::Manifest;
-use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Helper;
-use pgBackRest::Version;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Ini;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
+use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::Wait;
+use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Env::InfoCommon;
+use pgBackRestTest::Env::Manifest;
+
+####################################################################################################################################
+# backupRegExpGet
+#
+# Generate a regexp depending on the backups that need to be found.
+####################################################################################################################################
+sub backupRegExpGet
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bFull,
+        $bDifferential,
+        $bIncremental,
+        $bAnchor
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupRegExpGet', \@_,
+            {name => 'bFull', default => false},
+            {name => 'bDifferential', default => false},
+            {name => 'bIncremental', default => false},
+            {name => 'bAnchor', default => true}
+        );
+
+    # One of the types must be selected
+    if (!($bFull || $bDifferential || $bIncremental))
+    {
+        confess &log(ASSERT, 'at least one backup type must be selected');
+    }
+
+    # Standard regexp to match date and time formatting
+    my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
+    # Start the expression with the anchor if requested, date/time regexp and full backup indicator
+    my $strRegExp = ($bAnchor ? '^' : '') . $strDateTimeRegExp . 'F';
+
+    # Add the diff and/or incr expressions if requested
+    if ($bDifferential || $bIncremental)
+    {
+        # If full requested then diff/incr is optional
+        if ($bFull)
+        {
+            $strRegExp .= "(\\_";
+        }
+        # Else diff/incr is required
+        else
+        {
+            $strRegExp .= "\\_";
+        }
+
+        # Append date/time regexp for diff/incr
+        $strRegExp .= $strDateTimeRegExp;
+
+        # Filter on both diff/incr
+        if ($bDifferential && $bIncremental)
+        {
+            $strRegExp .= '(D|I)';
+        }
+        # Else just diff
+        elsif ($bDifferential)
+        {
+            $strRegExp .= 'D';
+        }
+        # Else just incr
+        else
+        {
+            $strRegExp .= 'I';
+        }
+
+        # If full requested then diff/incr is optional
+        if ($bFull)
+        {
+            $strRegExp .= '){0,1}';
+        }
+    }
+
+    # Append the end anchor if requested
+    $strRegExp .= $bAnchor ? "\$" : '';
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strRegExp', value => $strRegExp}
+    );
+}
+
+####################################################################################################################################
+# backupLabel
+#
+# Get unique backup label.
+####################################################################################################################################
+sub backupLabel
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorageRepo,
+        $strRepoBackupPath,
+        $strType,
+        $strBackupLabelLast,
+        $lTimestampStart
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupLabelFormat', \@_,
+            {name => 'oStorageRepo', trace => true},
+            {name => 'strRepoBackupPath', trace => true},
+            {name => 'strType', trace => true},
+            {name => 'strBackupLabelLast', required => false, trace => true},
+            {name => 'lTimestampStart', trace => true}
+        );
+
+    # Create backup label
+    my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStart);
+
+    # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
+    # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
+    # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
+    # be skipped by dealing with any backup label collisions here.
+    if ($oStorageRepo->list(
+        $strRepoBackupPath,
+             {strExpression =>
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
+        $oStorageRepo->list(
+            "${strRepoBackupPath}/" . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
+             {strExpression =>
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.gz$'),
+                bIgnoreMissing => true}))
+    {
+        waitRemainder();
+        $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, time());
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackupLabel', value => $strBackupLabel, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # Build PostgreSQL pages for testing
@@ -45,13 +187,13 @@ sub pageBuild
 {
     my $tPageSource = shift;
     my $iBlockNo = shift;
+    my $iChecksum = shift;
     my $iWalId = shift;
     my $iWalOffset = shift;
 
-    my $tPage = defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) . substr($tPageSource, 8) : $tPageSource;
-    my $iChecksum = pageChecksum($tPage, $iBlockNo, length($tPage));
-
-    return substr($tPage, 0, 8) . pack('S', $iChecksum) . substr($tPage, 10);
+    return
+        (defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) : substr($tPageSource, 0, 8)) . pack('S', $iChecksum) .
+        substr($tPageSource, 10);
 }
 
 ####################################################################################################################################
@@ -63,14 +205,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true},
-        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false},
-        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true},
-        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false},
-        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false},
-        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true},
+        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress => LZ4},
+        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false, compress =>  GZ},
+        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true, compress =>  GZ},
+        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true, compress =>  GZ},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress => LZ4},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress => LZ4},
+        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -81,24 +223,25 @@ sub run
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
         my $bDeltaBackup = $rhRun->{delta};
+        my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
         if ($bS3)
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
 
             # Reduce log level to warn because parallel tests do not create deterministic logs
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(WARN)}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(WARN)}});
         }
 
         # Get base time
@@ -115,6 +258,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 16384;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = NONE;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL} = 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL_NETWORK} = $bRemote ? 1 : 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
@@ -143,7 +287,7 @@ sub run
                                               '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
         # Load sample page
-        my $tBasePage = ${storageLocal()->get($self->dataPath() . '/page.bin')};
+        my $tBasePage = ${storageTest()->get($self->dataPath() . '/page.bin')};
         my $iBasePageChecksum = 0x1B99;
 
         # Create base path
@@ -184,10 +328,10 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
         my $tPageValid =
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 2) .
-            pageBuild($tBasePage, 0, 0xFFFFFFFF, 0xFFFFFFFF);
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 2, 0x1b97) .
+            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '7a16d165e4775f7c92e8cdf60c0af57313f0bf90',
@@ -196,24 +340,24 @@ sub run
         my $iBlockOffset = 32767 * 131072;
 
         my $tPageValidSeg32767 =
-            pageBuild($tBasePage, $iBlockOffset + 0) .
-            pageBuild($tBasePage, $iBlockOffset + 1) .
+            pageBuild($tBasePage, $iBlockOffset + 0, 0xf7de) .
+            pageBuild($tBasePage, $iBlockOffset + 1, 0xf7df) .
             ("\0" x 8192) .
-            pageBuild($tBasePage, 0, 0xFFFFFFFF, 0xFFFFFFFF);
+            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
             '6e99b589e550e68e934fd235ccba59fe5b592a9e', $lTime);
 
         my $tPageInvalid33001 =
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 1) .
-            pageBuild($tBasePage, 2) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 0) .
-            pageBuild($tBasePage, 6) .
-            pageBuild($tBasePage, 0);
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 1, 0x1b9a) .
+            pageBuild($tBasePage, 2, 0x1b97) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 0, 0x1b99) .
+            pageBuild($tBasePage, 6, 0x1b9b) .
+            pageBuild($tBasePage, 0, 0x1b99);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33001', $tPageInvalid33001,
@@ -305,7 +449,7 @@ sub run
         my $strTestPoint;
 
         # Create the archive info file
-        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-online'});
 
         # Create a link to postgresql.conf
         storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
@@ -342,14 +486,13 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => $strOptionalParam .
                     # Pass ssh path to make sure it is used
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_CMD_SSH) . '=/usr/bin/ssh' : '') .
+                    ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
                     # Pass bogus ssh port to make sure it is passed through the protocol layer (it won't be used)
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_PORT) . '=9999' : '') .
+                    ($bRemote ? ' --pg1-port=9999' : '') .
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . '=/test_socket_path' : '') .
-                    ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
-                    ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
-                strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                    ($bRemote ? ' --pg1-socket-path=/test_socket_path' : '') .
+                    ' --buffer-size=16384 --checksum-page --process-max=1',
+                strRepoType => $bS3 ? undef : STORAGE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 65536;
@@ -408,13 +551,13 @@ sub run
 
         # Resume by copying the valid full backup over the last aborted full backup if it exists, or by creating a new path
         my $strResumeBackup = (storageRepo()->list(
-            STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
+            $oHostBackup->repoBackupPath(), {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
         my $strResumeLabel = $strResumeBackup ne $strFullBackup ?
-            $strResumeBackup : backupLabel(storageRepo(), $strType, undef, time());
-        my $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' . $strResumeLabel);
+            $strResumeBackup : backupLabel(storageRepo(), $oHostBackup->repoBackupPath(), $strType, undef, time());
+        my $strResumePath = $oHostBackup->repoBackupPath($strResumeLabel);
 
         forceStorageRemove(storageRepo(), $strResumePath, {bRecurse => true});
-        forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strFullBackup}", $strResumePath);
+        forceStorageMove(storageRepo(), $oHostBackup->repoBackupPath($strFullBackup), $strResumePath);
 
         # Set ownership on base directory to bogus values
         if (!$bRemote)
@@ -463,7 +606,7 @@ sub run
         # Create files to be excluded with the --exclude option
         $oHostBackup->configUpdate(
             {(CFGDEF_SECTION_GLOBAL . ':backup') =>
-                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
+                {'exclude' => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
         $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
                                           '../pg_config/postgresql.conf', true);
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
@@ -475,10 +618,10 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--force --checksum-page' . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
-        storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        storageTest->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
@@ -522,7 +665,7 @@ sub run
                 strOptionalParam => ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '')});
 
         # Remove excludes now that they just create noise in the log
-        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {cfgOptionName(CFGOPT_EXCLUDE) => []}});
+        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {'exclude' => []}});
 
         # Run again to fix permissions
         if (!$bRemote)
@@ -623,11 +766,11 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
 
         # Create resumable backup from last backup
-        $strResumeLabel = backupLabel(storageRepo(), $strType, substr($strBackup, 0, 16), time());
-        $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' . $strResumeLabel);
+        $strResumeLabel = backupLabel(storageRepo(), $oHostBackup->repoBackupPath(), $strType, substr($strBackup, 0, 16), time());
+        $strResumePath = $oHostBackup->repoBackupPath($strResumeLabel);
 
         forceStorageRemove(storageRepo(), $strResumePath);
-        forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strBackup}", $strResumePath);
+        forceStorageMove(storageRepo(), $oHostBackup->repoBackupPath($strBackup), $strResumePath);
 
         # Munge manifest so the resumed file in the repo appears to be bad
         if ($bEncrypt || $bRemote)
@@ -681,7 +824,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
         # Change the content of the changecontent file to be the same size but leave the timestamp the same on the file
-        storageDb()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
+        storageTest()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
         utime($lTime, $lTime, $oHostDbMaster->dbBasePath() . '/changecontent.txt')
             or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changecontent.txt');
 
@@ -697,7 +840,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -718,9 +861,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'drop tablespace 11',
-            {oExpectedManifest => \%oManifest,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
-                ($bDeltaBackup ? ' --delta' : '')});
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -775,7 +916,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'add files and remove tablespace 2',
-            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--process-max=1'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -800,7 +941,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -810,13 +951,20 @@ sub run
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
-        # Enable compression to ensure a warning is raised
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
+        # Enable compression to ensure a warning is raised (reset when gz to avoid log churn since it is the default)
+        if ($strCompressType eq GZ)
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'compress-type' => undef}});
+        }
+        else
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'compress-type' => $strCompressType}});
+        }
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_REPO_HARDLINK) => 'y'}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'repo1-hardlink' => 'y'}});
         }
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
@@ -832,7 +980,7 @@ sub run
         $oHostBackup->backup(
             $strType, 'remove files',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -842,6 +990,7 @@ sub run
 
         # Now the compression and hardlink changes will take effect
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = $strCompressType;
 
         if (!$bS3)
         {
@@ -880,8 +1029,7 @@ sub run
             $strFullBackup, {&MANIFEST_SECTION_BACKUP_OPTION => {&MANIFEST_KEY_CHECKSUM_PAGE => undef}}, false);
 
         $strBackup = $oHostBackup->backup(
-            $strType, 'add file',
-            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
+            $strType, 'add file', {oExpectedManifest => \%oManifest, strOptionalParam => '--checksum-page'});
 
         # Selective Restore
         #---------------------------------------------------------------------------------------------------------------------------
@@ -897,7 +1045,7 @@ sub run
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            'selective restore 16384', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            'selective restore 16384', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 strOptionalParam => '--db-include=16384'});
 
@@ -915,7 +1063,7 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            'selective restore 32768', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            'selective restore 32768', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 strOptionalParam => '--db-include=32768'});
 
@@ -923,12 +1071,12 @@ sub run
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
         $oHostDbMaster->restore(
-            'error on invalid id', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            'error on invalid id', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 iExpectedExitStatus => ERROR_DB_MISSING, strOptionalParam => '--log-level-console=warn --db-include=7777'});
 
         $oHostDbMaster->restore(
-            'error on system id', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            'error on system id', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 iExpectedExitStatus => ERROR_DB_INVALID, strOptionalParam => '--log-level-console=warn --db-include=1'});
 
@@ -943,7 +1091,7 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            'no tablespace remap', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bTablespace => false,
                 strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
@@ -956,8 +1104,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bRemote && !$bS3)
         {
-            executeTest('ls -1Rtr ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
-                        {oLogTest => $self->expect(), bRemote => $bRemote});
+            executeTest(
+                'ls -1Rtr ' . $oHostBackup->repoBackupPath(PATH_BACKUP_HISTORY),
+                {oLogTest => $self->expect(), bRemote => $bRemote});
         }
 
         # Test backup from standby warning that standby not configured so option reset
@@ -966,7 +1115,7 @@ sub run
         {
             $strBackup = $oHostBackup->backup(
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--log-level-console=info --' . cfgOptionName(CFGOPT_BACKUP_STANDBY)});
+                    strOptionalParam => '--log-level-console=info --backup-standby'});
         }
     }
 }

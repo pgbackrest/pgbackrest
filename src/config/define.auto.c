@@ -107,12 +107,63 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
 
     CFGDEFDATA_COMMAND
     (
-        CFGDEFDATA_COMMAND_NAME("ls")
+        CFGDEFDATA_COMMAND_NAME("repo-create")
+
+        CFGDEFDATA_COMMAND_HELP_SUMMARY("Create the repository.")
+        CFGDEFDATA_COMMAND_HELP_DESCRIPTION
+        (
+            "Creates the bucket if repo-type=s3.\n"
+            "\n"
+            "FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY."
+        )
+    )
+
+    CFGDEFDATA_COMMAND
+    (
+        CFGDEFDATA_COMMAND_NAME("repo-get")
+
+        CFGDEFDATA_COMMAND_HELP_SUMMARY("Get a file from the repository.")
+        CFGDEFDATA_COMMAND_HELP_DESCRIPTION
+        (
+            "Similar to the unix cat command but options are different."
+        )
+    )
+
+    CFGDEFDATA_COMMAND
+    (
+        CFGDEFDATA_COMMAND_NAME("repo-ls")
 
         CFGDEFDATA_COMMAND_HELP_SUMMARY("List paths/files in the repository.")
         CFGDEFDATA_COMMAND_HELP_DESCRIPTION
         (
-            "This is intended to be a general purpose list function, but for now it only works on the repository."
+            "Similar to the unix ls command but options and output are different. Only information provided by repository storage "
+                "drivers is available: name, type, size, (modify) time, and destination (for drivers that support links)."
+        )
+    )
+
+    CFGDEFDATA_COMMAND
+    (
+        CFGDEFDATA_COMMAND_NAME("repo-put")
+
+        CFGDEFDATA_COMMAND_HELP_SUMMARY("Put a file in the repository.")
+        CFGDEFDATA_COMMAND_HELP_DESCRIPTION
+        (
+            "Similar to the unix tee command but options and behavior are different.\n"
+            "\n"
+            "FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY."
+        )
+    )
+
+    CFGDEFDATA_COMMAND
+    (
+        CFGDEFDATA_COMMAND_NAME("repo-rm")
+
+        CFGDEFDATA_COMMAND_HELP_SUMMARY("Remove paths/files in the repository.")
+        CFGDEFDATA_COMMAND_HELP_DESCRIPTION
+        (
+            "Similar to the unix rm command but options are different.\n"
+            "\n"
+            "FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY."
         )
     )
 
@@ -528,7 +579,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -588,6 +643,25 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("cipher-pass")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("cmd-ssh")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -612,7 +686,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -640,10 +718,12 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Use gzip file compression.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Use file compression.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Backup files are compatible with command-line gzip tools."
+            "Backup files are compatible with command-line compression tools.\n"
+            "\n"
+            "This option is now deprecated. The compress-type option should be used instead."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -662,7 +742,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     CFGDEFDATA_OPTION
     (
         CFGDEFDATA_OPTION_NAME("compress-level")
-        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
@@ -671,10 +751,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Compression level for stored files.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("File compression level.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Sets the zlib level to be used for file compression when compress=y."
+            "Sets the level to be used for file compression when compress-type does not equal none or compress=y (deprecated)."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -686,7 +766,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 9)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("6")
         )
     )
 
@@ -703,13 +782,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Compression level for network transfer when compress=n.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Network compression level.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Sets the zlib level to be used for protocol compression when compress=n and the database cluster is not on the same "
-                "host as the repository. Protocol compression is used to reduce network traffic but can be disabled by setting "
-                "compress-level-network=0. When compress=y the compress-level-network setting is ignored and compress-level is "
-                "used instead so that the file is only compressed once. SSH compression is always disabled."
+            "Sets the network compression level when compress-type=none and the command is not run on the same host as the "
+                "repository. Compression is used to reduce network traffic but can be disabled by setting "
+                "compress-level-network=0. When compress-type does not equal none the compress-level-network setting is ignored "
+                "and compress-level is used instead so that the file is only compressed once. SSH compression is always disabled."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -719,7 +798,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -730,6 +811,47 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 9)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("3")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("compress-type")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("File compression type.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The following compression types are supported:\n"
+            "\n"
+            "* gz - gzip compression format\n"
+            "* lz4 - lz4 compression format (not available on all platforms)"
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "none",
+                "gz",
+                "lz4"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("gz")
         )
     )
 
@@ -760,7 +882,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -803,7 +929,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -849,7 +979,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -923,7 +1057,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
@@ -962,6 +1100,37 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("dry-run")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Execute a dry-run for the command.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The --dry-run option is a command-line only option and can be passed when it is desireable to determine what "
+                "modifications will be made by the command without the command actually making any modifications."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1027,14 +1196,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoLs)
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Filter output with a regular expression.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
@@ -1177,6 +1346,40 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("ignore-missing")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoGet)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Ignore missing source file.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "Exit with 1 if the source file is missing but don't throw an error."
+                )
+            )
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("link-all")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -1309,7 +1512,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1370,7 +1577,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1434,7 +1645,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1488,7 +1703,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1530,7 +1749,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1573,7 +1796,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1654,7 +1881,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -1747,7 +1978,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1776,7 +2007,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoLs)
 
                 CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
                 (
@@ -2292,7 +2523,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2368,7 +2603,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2379,6 +2618,37 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0.1, 604800)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1830")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("raw")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Do not transform data.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Do not transform (i.e, encrypt, decompress, etc.) data for the current command."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
         )
     )
 
@@ -2443,7 +2713,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2452,12 +2723,23 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoLs)
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Include all subpaths in output.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
                     "All subpaths and their files will be included in the output."
+                )
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoRm)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Remove all sub file/paths.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "All subpaths and their files will be removed."
                 )
             )
         )
@@ -2482,7 +2764,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2526,7 +2812,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2579,7 +2869,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2664,7 +2958,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -2741,7 +3039,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2781,7 +3083,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2822,7 +3128,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2862,7 +3172,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2901,7 +3215,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2944,7 +3262,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
@@ -2991,7 +3313,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3195,7 +3521,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3243,7 +3573,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3291,7 +3625,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3339,7 +3677,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3387,7 +3729,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3435,7 +3781,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3483,7 +3833,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3531,7 +3885,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3581,7 +3939,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3629,7 +3991,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3680,7 +4046,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3736,7 +4106,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3790,7 +4164,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -3911,7 +4289,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3927,7 +4305,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoLs)
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending, descending, or none.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
@@ -4044,6 +4422,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
@@ -4057,6 +4440,41 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoCreate)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoGet)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoPut)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRepoRm)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )

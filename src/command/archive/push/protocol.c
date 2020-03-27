@@ -48,7 +48,7 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
                         varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
                         varUIntForce(varLstGet(paramList, 2)), varUInt64(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
                         (CipherType)varUIntForce(varLstGet(paramList, 5)), varStr(varLstGet(paramList, 6)),
-                        varBool(varLstGet(paramList, 7)), varIntForce(varLstGet(paramList, 8)))));
+                        (CompressType)varUIntForce(varLstGet(paramList, 7)), varIntForce(varLstGet(paramList, 8)))));
         }
         else
             found = false;

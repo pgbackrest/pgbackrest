@@ -7,6 +7,7 @@ Configuration Load
 #include <sys/stat.h>
 
 #include "command/command.h"
+#include "common/compress/helper.intern.h"
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -15,11 +16,12 @@ Configuration Load
 #include "config/config.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Load log settings
 ***********************************************************************************************************************************/
-void
+static void
 cfgLoadLogSetting(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -48,7 +50,9 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptProcessMax))
         logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
-    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
+    logInit(
+        logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax,
+        cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -228,6 +232,41 @@ cfgLoadUpdateOption(void)
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
+    // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
+    if (cfgOptionValid(cfgOptCompress))
+    {
+        if (cfgOptionSource(cfgOptCompress) != cfgSourceDefault)
+        {
+            if (cfgOptionSource(cfgOptCompressType) != cfgSourceDefault)
+            {
+                LOG_WARN(
+                    "'" CFGOPT_COMPRESS "' and '" CFGOPT_COMPRESS_TYPE "' options should not both be set\n"
+                    "HINT: '" CFGOPT_COMPRESS_TYPE "' is preferred and '" CFGOPT_COMPRESS "' is deprecated.");
+            }
+
+            // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
+            // when that happens.
+            if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
+                cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(compressTypeNone)));
+        }
+
+        // Now invalidate compress so it can't be used and won't be passed to child processes
+        cfgOptionValidSet(cfgOptCompress, false);
+        cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
+    }
+
+    // Check that selected compress type has been compiled into this binary
+    if (cfgOptionValid(cfgOptCompressType))
+        compressTypePresent(compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
+
+    // Update compress-level default based on the compression type
+    if (cfgOptionValid(cfgOptCompressLevel) && cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+    {
+        cfgOptionSet(
+            cfgOptCompressLevel, cfgSourceDefault,
+            VARINT(compressLevelDefault(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))));
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -288,6 +327,9 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     {
         // Parse config from command line and config file
         configParse(argListSize, argList, true);
+
+        // Initialize dry-run mode for storage when valid for the current command
+        storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 
         // Load the log settings
         cfgLoadLogSetting();

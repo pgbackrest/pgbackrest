@@ -11,6 +11,7 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #define INFO_MANIFEST_H
 
 #include "command/backup/common.h"
+#include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/type/variantList.h"
 
@@ -66,9 +67,9 @@ typedef struct ManifestData
     const Variant *backupOptionStandby;                             // Will the backup be performed from a standby?
     const Variant *backupOptionBufferSize;                          // Buffer size used for file/protocol operations
     const Variant *backupOptionChecksumPage;                        // Will page checksums be verified?
-    bool backupOptionCompress;                                      // Will compression be used for backup?
-    const Variant *backupOptionCompressLevel;                       // Level to use for compression
-    const Variant *backupOptionCompressLevelNetwork;                // Level to use for network compression
+    CompressType backupOptionCompressType;                          // Compression type used for the backup
+    const Variant *backupOptionCompressLevel;                       // Level used for compression (if type not none)
+    const Variant *backupOptionCompressLevelNetwork;                // Level used for network compression
     const Variant *backupOptionDelta;                               // Will a checksum delta be performed?
     bool backupOptionHardLink;                                      // Will hardlinks be created in the backup?
     bool backupOptionOnline;                                        // Will an online backup be performed?
@@ -161,7 +162,7 @@ Manifest *manifestNewLoad(IoRead *read);
 Build functions
 ***********************************************************************************************************************************/
 // Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
-void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress);
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType);
 
 // Create a diff/incr backup by comparing to a previous backup manifest
 void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);

@@ -12,7 +12,6 @@ Configuration Load
 Functions
 ***********************************************************************************************************************************/
 void cfgLoad(unsigned int argListSize, const char *argList[]);
-void cfgLoadLogSetting(void);
 void cfgLoadLogFile(void);
 void cfgLoadUpdateOption(void);
 

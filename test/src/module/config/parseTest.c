@@ -13,12 +13,6 @@ Test Configuration Parse
 #define TEST_COMMAND_VERSION                                        "version"
 
 /***********************************************************************************************************************************
-Expose log internal data for unit testing/debugging
-***********************************************************************************************************************************/
-extern LogLevel logLevelStdOut;
-extern LogLevel logLevelStdErr;
-
-/***********************************************************************************************************************************
 Option find test -- this is done a lot in the deprecated tests
 ***********************************************************************************************************************************/
 static void
@@ -127,7 +121,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
-        TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
         // Rename conf files - ensure read of conf extension only is attempted
@@ -1269,7 +1263,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
-        TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
         unsetenv("PGBACKREST_BOGUS");

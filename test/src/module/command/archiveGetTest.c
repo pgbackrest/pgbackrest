@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "common/compress/gz/compress.h"
+#include "common/compress/helper.h"
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
@@ -168,7 +168,7 @@ testRun(void)
         TEST_RESULT_INT(
             archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        TEST_RESULT_INT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
 
         storageRemoveP(
             storageTest,
@@ -202,7 +202,7 @@ testRun(void)
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
-        ioFilterGroupAdd(filterGroup, gzCompressNew(3));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(
             filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
         storagePutP(destination, buffer);
@@ -211,7 +211,7 @@ testRun(void)
             archiveGetFile(
                 storageTest, archiveFile, walDestination, false, cipherTypeAes256Cbc, strNew("12345678")), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        TEST_RESULT_INT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------

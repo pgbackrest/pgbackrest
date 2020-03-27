@@ -13,13 +13,13 @@ use Exporter qw(import);
 use File::Basename qw(basename);
 use Storable qw(dclone);
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
-
-use pgBackRestBuild::Build::Common;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
+
+use pgBackRestBuild::Build::Common;
 
 ####################################################################################################################################
 # Define generator used for auto generated warning messages

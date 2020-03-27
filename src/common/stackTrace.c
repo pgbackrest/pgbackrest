@@ -109,6 +109,13 @@ stackTraceTest(void)
 {
     return stackTraceTestFlag;
 }
+
+void
+stackTraceTestFileLineSet(unsigned int fileLine)
+{
+    stackTrace[stackSize - 1].fileLine = fileLine;
+}
+
 #endif
 
 /***********************************************************************************************************************************
@@ -339,18 +346,12 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
             StackTraceData *data = &stackTrace[stackIdx];
 
             result += stackTraceFmt(
-                buffer, bufferSize, result, "\n%.*s:%s"
+                buffer, bufferSize, result, "\n%.*s:%s", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName);
 
-#ifdef WITH_BACKTRACE
-                ":%u"
-#endif
-                ":(%s)", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName,
+            if (data->fileLine > 0)
+                result += stackTraceFmt(buffer, bufferSize, result, ":%u", data->fileLine);
 
-#ifdef WITH_BACKTRACE
-                data->fileLine,
-#endif
-
-                stackTraceParamIdx(stackIdx));
+            result += stackTraceFmt(buffer, bufferSize, result, ":(%s)", stackTraceParamIdx(stackIdx));
         }
     }
 

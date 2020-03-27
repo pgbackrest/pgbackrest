@@ -93,7 +93,7 @@ testRun(void)
         VariantList *valueList = NULL;
         TEST_ASSIGN(valueList, varVarLst(jsonToVar(strNew("[1, \"test\", false]"))), "array");
         TEST_RESULT_UINT(varLstSize(valueList), 3, "check array size");
-        TEST_RESULT_INT(varUInt64(varLstGet(valueList, 0)), 1, "check array int");
+        TEST_RESULT_UINT(varUInt64(varLstGet(valueList, 0)), 1, "check array int");
         TEST_RESULT_STR_Z(varStr(varLstGet(valueList, 1)), "test", "check array str");
         TEST_RESULT_BOOL(varBool(varLstGet(valueList, 2)), false, "check array bool");
 

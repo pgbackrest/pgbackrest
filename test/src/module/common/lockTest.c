@@ -85,7 +85,7 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
-                TEST_RESULT_BOOL(lockAcquireFile(backupLock, 0, true), true, "lock on fork");
+                TEST_RESULT_INT_NE(lockAcquireFile(backupLock, 0, true), -1, "lock on fork");
                 sleepMSec(500);
             }
             HARNESS_FORK_CHILD_END();

@@ -96,7 +96,7 @@ void varFree(Variant *this);
 Fields that are common between dynamically allocated and constant variants
 
 There is nothing user-accessible here but this construct allows constant variants to be created and then handled by the same
-functions that process dynamically allocated variant.
+functions that process dynamically allocated variants.
 ***********************************************************************************************************************************/
 #define VARIANT_COMMON                                                                                                             \
     VariantType type;                                               /* Variant type */

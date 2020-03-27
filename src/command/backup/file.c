@@ -7,9 +7,6 @@ Backup File
 
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
-#include "common/compress/gz/common.h"
-#include "common/compress/gz/compress.h"
-#include "common/compress/gz/decompress.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -42,8 +39,8 @@ Copy a file from the PostgreSQL data directory to the repository
 BackupFileResult
 backupFile(
     const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,
-    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, bool repoFileCompress,
-    unsigned int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass)
+    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, CompressType repoFileCompressType,
+    int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pgFile);                         // Database file to copy to the repo
@@ -54,8 +51,8 @@ backupFile(
         FUNCTION_LOG_PARAM(UINT64, pgFileChecksumPageLsnLimit);     // Upper LSN limit to which page checksums must be valid
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Destination in the repo to copy the pg file
         FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exist in a prior backup in the set?
-        FUNCTION_LOG_PARAM(BOOL, repoFileCompress);                 // Compress destination file
-        FUNCTION_LOG_PARAM(UINT, repoFileCompressLevel);            // Compression level for destination file
+        FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
+        FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
         FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
@@ -74,7 +71,7 @@ backupFile(
     {
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), repoFileCompress ? "." GZ_EXT : "");
+            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), strPtr(compressExtStr(repoFileCompressType)));
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.
@@ -87,8 +84,11 @@ backupFile(
             // recopy.
             if (delta)
             {
-                // Generate checksum/size for the pg file
-                IoRead *read = storageReadIo(storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing));
+                // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize.  If the file has grown
+                // since the manifest was built we don't need to consider the extra bytes since they will be replayed from WAL
+                // during recovery.
+                IoRead *read = storageReadIo(
+                    storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .limit = VARUINT64(pgFileSize)));
                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                 ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -148,8 +148,9 @@ backupFile(
                                 ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
                         }
 
-                        if (repoFileCompress)
-                            ioFilterGroupAdd(ioReadFilterGroup(read), gzDecompressNew());
+                        // Decompress the file if compressed
+                        if (repoFileCompressType != compressTypeNone)
+                            ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
 
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
@@ -190,11 +191,14 @@ backupFile(
         if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
         {
             // Is the file compressible during the copy?
-            bool compressible = !repoFileCompress && cipherType == cipherTypeNone;
+            bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
-            // Setup pg file for read
+            // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no good to
+            // copy data past the end of the size recorded in the manifest since those blocks will need to be replayed from WAL
+            // during recovery.
             StorageRead *read = storageNewReadP(
-                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible);
+                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible,
+                .limit = VARUINT64(pgFileSize));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
@@ -203,12 +207,15 @@ backupFile(
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)), pageChecksumNew(segmentNumber(pgFile), PG_SEGMENT_PAGE_DEFAULT,
-                    PG_PAGE_SIZE_DEFAULT, pgFileChecksumPageLsnLimit));
+                    pgFileChecksumPageLsnLimit));
             }
 
             // Add compression
-            if (repoFileCompress)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzCompressNew((int)repoFileCompressLevel));
+            if (repoFileCompressType != compressTypeNone)
+            {
+                ioFilterGroupAdd(
+                    ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
+            }
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)

@@ -169,18 +169,25 @@ storageRemoteInfoList(
 
         // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
         // since the filename is json-encoded so will always include quotes.
-        const String *name = protocolClientReadLine(this->client);
-
-        while (strSize(name) != 0)
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            StorageInfo info = {.exists = true, .level = level, .name = jsonToStr(name)};
+            const String *name = protocolClientReadLine(this->client);
 
-            storageRemoteInfoParse(this->client, &info);
-            callback(callbackData, &info);
+            while (strSize(name) != 0)
+            {
+                StorageInfo info = {.exists = true, .level = level, .name = jsonToStr(name)};
 
-            // Read the next item
-            name = protocolClientReadLine(this->client);
+                storageRemoteInfoParse(this->client, &info);
+                callback(callbackData, &info);
+
+                // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                MEM_CONTEXT_TEMP_RESET(1000);
+
+                // Read the next item
+                name = protocolClientReadLine(this->client);
+            }
         }
+        MEM_CONTEXT_TEMP_END();
 
         // Acknowledge command completed
         result = varBool(protocolClientReadOutput(this->client, true));
@@ -201,6 +208,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -209,7 +217,8 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadRemoteNew(
-            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel));
+            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
+            param.limit));
 }
 
 /**********************************************************************************************************************************/

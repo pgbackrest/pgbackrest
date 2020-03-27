@@ -13,8 +13,8 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Common::Log;
-use pgBackRest::Common::String;
+use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::VmTest;
@@ -64,6 +64,7 @@ sub testListGet
     my $bCoverageOnly = shift;
     my $bCOnly = shift;
     my $bContainerOnly = shift;
+    my $bNoPerformance = shift;
 
     my $oyVm = vmGet();
     my $oyTestRun = [];
@@ -115,7 +116,10 @@ sub testListGet
                         # Skip this test if it is integration and vm=none
                         next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_TYPE} eq TESTDEF_INTEGRATION);
 
-                        # Skip this test if it is not C and vm=none.  Perl tests require libc which is not supported.
+                        # Skip this test if it is performance and no performance is specified
+                        next if ($bNoPerformance && $hTest->{&TESTDEF_TYPE} eq TESTDEF_PERFORMANCE);
+
+                        # Skip this test if it is not C and vm=none.  Perl tests require Docker which is not supported.
                         next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
 
                         # Skip this test if a container is required and vm=none.

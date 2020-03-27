@@ -166,7 +166,7 @@ testRun(void)
             "\n"
             "[target:file]\n");
 
-        unsigned int fileTotal = 3000 * (unsigned int)testScale();
+        unsigned int fileTotal = 100000 * (unsigned int)testScale();
 
         // Because of the way the filenames are formatted they will end up badly out of order.  We'll be depending on the sort after
         // load the fix this.  Normally the files won't need sorting, but a collation issue could well cause problems for us without

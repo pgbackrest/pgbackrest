@@ -1,8 +1,7 @@
-/pgbackrest
-*.o
-/autom4te.cache
+/.build
+autom4te.cache
 /config.log
 /config.status
-/config.h
-/build.auto.h
 /Makefile
+/build.auto.h
+/pgbackrest

@@ -27,10 +27,10 @@ testRun(void)
 
         String *string = strNew("static string");
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
-        TEST_RESULT_INT(strSize(string), 13, "check size");
+        TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
-        TEST_RESULT_INT(strlen(strPtr(string)), 13, "check size with strlen()");
-        TEST_RESULT_CHAR(strPtr(string)[2], 'a', "check character");
+        TEST_RESULT_UINT(strlen(strPtr(string)), 13, "check size with strlen()");
+        TEST_RESULT_INT(strPtr(string)[2], 'a', "check character");
 
         TEST_RESULT_VOID(strFree(string), "free string");
 
@@ -51,6 +51,13 @@ testRun(void)
 
         TEST_RESULT_VOID(strFree(string), "free string");
         TEST_RESULT_VOID(strFree(NULL), "free null string");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("empty string is allocated extra space");
+
+        TEST_ASSIGN(string, strNew(""), "new empty string");
+        TEST_RESULT_UINT(string->size, 0, "    check size");
+        TEST_RESULT_UINT(string->extra, 64, "    check extra");
     }
 
     // *****************************************************************************************************************************
@@ -93,11 +100,15 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR_Z(strCat(string, "YYYY"), "XXXXYYYY", "cat string");
-        TEST_RESULT_SIZE(string->extra, 4, "check extra");
+        TEST_RESULT_UINT(string->extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_SIZE(string->extra, 6, "check extra");
+        TEST_RESULT_UINT(string->extra, 55, "check extra");
         TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_SIZE(string->extra, 5, "check extra");
+        TEST_RESULT_UINT(string->extra, 54, "check extra");
+        TEST_RESULT_STR_Z(
+            strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
+            "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
+        TEST_RESULT_UINT(string->extra, 34, "check extra");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }
@@ -232,7 +243,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'n')), "abc\r\n to e", "complex string truncated");
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'a')), "", "complete string truncated - empty string");
 
-        TEST_RESULT_INT(strSize(val), 0, "0 size");
+        TEST_RESULT_UINT(strSize(val), 0, "0 size");
         TEST_RESULT_STR_Z(strTrunc(val, 0), "", "test coverage of empty string - no error thrown for index 0");
     }
 
@@ -292,7 +303,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_INT(strLstSize(list), 9, "list size");
+        TEST_RESULT_UINT(strLstSize(list), 9, "list size");
 
         // Read them back and check values
         // -------------------------------------------------------------------------------------------------------------------------

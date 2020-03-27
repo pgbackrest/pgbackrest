@@ -181,7 +181,7 @@
         <variable key="host-repo1-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">pgbackrest ls backup/demo --filter="(F|D|I)$" --sort=desc | head -1</variable>
+        <variable key="cmd-backup-last">pgbackrest repo-ls backup/demo --filter="(F|D|I)$" --sort=desc | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
@@ -221,6 +221,26 @@
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} status</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
+        <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
+             document where needed to grow the number of files as needed for performance testing. -->
+        <!-- <execute user="postgres" show="n">
+            <exe-cmd>psql -c "
+                create or replace function create_test_table(prefix int, scale int) returns void as \$\$
+                declare
+                    index int;
+                begin
+                    for index in 1 .. scale loop
+                        execute 'create table test_' || prefix || '_' || index || ' (id int)';
+                    end loop;
+                end \$\$ LANGUAGE plpgsql;"</exe-cmd>
+        </execute>
+
+        <execute user="postgres" show="n">
+            <exe-cmd>
+                bash -c 'for i in {1..100}; do psql -c "select create_test_table(${i?}, 1000)"; done'
+            </exe-cmd>
+        </execute> -->
+
         <!-- Common commands -->
         <variable key="ssh-key-install">
             mkdir -p -m 700 /root/.ssh &amp;&amp; \
@@ -244,9 +264,6 @@
             echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp; \
             chmod 600 /root/.ssh/*
         </variable>
-
-        <variable key="minio-client-install">wget https://dl.min.io/client/mc/release/linux-amd64/mc -qO /usr/bin/mc &amp;&amp; \
-            chmod 755 /usr/bin/mc</variable>
 
         <variable key="copy-ca-cert">COPY {[fake-cert-path-relative]}/ca.crt {[ca-cert-path]}/pgbackrest-ca.crt</variable>
     </variable-list>
@@ -293,8 +310,6 @@
             update-locale LANG=en_US.UTF-8
         ENV LANG en_US.UTF-8
 
-        RUN {[minio-client-install]}
-
         ENTRYPOINT service ssh restart &amp;&amp; bash
     </host-define>
 
@@ -323,8 +338,6 @@
         # Add doc user with sudo privileges
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
-
-        RUN {[minio-client-install]}
 
         ENTRYPOINT /usr/sbin/sshd -D
     </host-define>
@@ -374,8 +387,6 @@
         RUN systemctl enable systemd-user-sessions.service &amp;&amp; \
             ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
                 /etc/systemd/system/default.target.wants/systemd-user-sessions.service
-
-        RUN {[minio-client-install]}
 
         CMD ["/usr/sbin/init"]
     </host-define>
@@ -592,23 +603,6 @@
     <block-define id="s3-setup">
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
-        <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
-            <title>Create the bucket</title>
-
-            <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" user-force="y" show="n">
-                <exe-cmd>echo "{[host-s3-ip]} {[s3-bucket]}.{[s3-endpoint]} {[s3-endpoint]}" | tee -a /etc/hosts</exe-cmd>
-            </execute>
-
-            <execute show='n'>
-                <exe-cmd>mc config host add demo https://{[host-s3-ip]} {[s3-key]} {[s3-key-secret]} --insecure</exe-cmd>
-            </execute>
-
-            <execute if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
-                <exe-cmd>mc mb demo/{[s3-bucket]} --insecure</exe-cmd>
-            </execute>
-        </execute-list>
-
         <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
             <title>Configure <proper>S3</proper></title>
 
@@ -622,6 +616,19 @@
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
+
+        <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
+            <title>Create the bucket</title>
+
+            <!-- Set host entries to redirect AWS to local s3 server -->
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>echo "{[host-s3-ip]} {[s3-bucket]}.{[s3-endpoint]} {[s3-endpoint]}" | tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute user="{[s3-setup-user]}" if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
+                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+            </execute>
+        </execute-list>
 
         <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
     </block-define>
@@ -744,9 +751,6 @@
                 <exe-cmd>mkdir -p /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /build/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
                 <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
@@ -763,13 +767,13 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config</exe-cmd>
+                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config liblz4-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install make gcc postgresql-devel openssl-devel libxml2-devel
+                    yum install make gcc postgresql-devel openssl-devel libxml2-devel lz4-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -1036,6 +1040,7 @@
 
             <block id="s3-setup">
                 <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
             </block>
@@ -1554,7 +1559,7 @@
 
             <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
 
-            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process.</p>
+            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process. To determine what will be expired without actually expiring anything, the <br-option>dry-run</br-option> option can be provided on the command line with the <cmd>expire</cmd> command.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
@@ -2066,6 +2071,7 @@
 
         <block id="s3-setup">
             <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
         </block>
@@ -2330,6 +2336,7 @@
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
                 <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
             </block>
@@ -2403,16 +2410,6 @@
 
                 <execute user="postgres" show="n">
                     <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <p>A new backup must be performed due to the timeline switch.</p>
-
-            <execute-list host="{[host-repo1]}">
-                <title>Backup the {[postgres-cluster-demo]} cluster</title>
-
-                <execute user="{[br-user]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 </execute>
             </execute-list>
         </section>

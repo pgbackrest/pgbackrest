@@ -5,9 +5,11 @@ Test Backup Command
 
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
+#include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
+#include "postgres/interface/static.auto.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
@@ -15,32 +17,14 @@ Test Backup Command
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
-Page header structure use to create realistic pages for testing
-***********************************************************************************************************************************/
-typedef struct
-{
-    uint32_t walid;                                                 // high bits
-    uint32_t xrecoff;                                               // low bits
-} PageWalRecPtr;
-
-typedef struct PageHeaderData
-{
-    // LSN is member of *any* block, not only page-organized ones
-    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
-    uint16_t pd_checksum;                                           // checksum
-    uint16_t pd_flags;                                              // flag bits, see below
-    uint16_t pd_lower;                                              // offset to start of free space
-    uint16_t pd_upper;                                              // offset to end of free space
-} PageHeaderData;
-
-/***********************************************************************************************************************************
-Get a list of all files in the backup
+Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
 ***********************************************************************************************************************************/
 typedef struct TestBackupValidateCallbackData
 {
     const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
     const String *path;                                             // Subpath when storage is specified
-    const Manifest *manifest;                                       // Manifest check for files/links/paths
+    const Manifest *manifest;                                       // Manifest to check for files/links/paths
+    const ManifestData *manifestData;                               // Manifest data
     String *content;                                                // String where content should be added
 } TestBackupValidateCallbackData;
 
@@ -58,6 +42,9 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         (strEqZ(info->name, BACKUP_MANIFEST_FILE) || strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT)))
         return;
 
+    // Get manifest name
+    const String *manifestName = info->name;
+
     strCatFmt(data->content, "%s {", strPtr(info->name));
 
     switch (info->type)
@@ -66,34 +53,62 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         {
             strCat(data->content, "file");
 
-            uint64_t size = info->size;
-            const String *manifestName = info->name;
+            // Calculate checksum/size and decompress if needed
+            // ---------------------------------------------------------------------------------------------------------------------
+            StorageRead *read = storageNewReadP(
+                data->storage,
+                data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
 
-            // If the file is compressed then decompress to get the real size
-            if (strEndsWithZ(info->name, "." GZ_EXT))
+            if (data->manifestData->backupOptionCompressType != compressTypeNone)
             {
-                ASSERT(data->storage != NULL);
-
-                StorageRead *read = storageNewReadP(
-                    data->storage,
-                    data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzDecompressNew());
-                size = bufUsed(storageGetP(read));
-
-                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZ_EXT));
+                ioFilterGroupAdd(
+                    ioReadFilterGroup(storageReadIo(read)), decompressFilter(data->manifestData->backupOptionCompressType));
+                manifestName = strSubN(
+                    info->name, 0, strSize(info->name) - strSize(compressExtStr(data->manifestData->backupOptionCompressType)));
             }
+
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
+
+            uint64_t size = bufUsed(storageGetP(read));
+            const String *checksum = varStr(
+                ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR));
 
             strCatFmt(data->content, ", s=%" PRIu64, size);
 
             // Check against the manifest
+            // ---------------------------------------------------------------------------------------------------------------------
             const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
 
+            // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
+            // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
+            // compression.
             if (size != file->size)
                 THROW_FMT(AssertError, "'%s' size does match manifest", strPtr(manifestName));
 
             if (info->size != file->sizeRepo)
+            {
                 THROW_FMT(AssertError, "'%s' repo size does match manifest", strPtr(manifestName));
+            }
 
+            if (data->manifestData->backupOptionCompressType != compressTypeNone)
+                ((ManifestFile *)file)->sizeRepo = file->size;
+
+            // Test the checksum. pg_control and WAL headers have different checksums depending on cpu architecture so remove
+            // the checksum from the test output.
+            if (!strEqZ(checksum, file->checksumSha1))
+            {
+                THROW_FMT(AssertError, "'%s' checksum does match manifest", strPtr(manifestName));
+            }
+
+            if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                strBeginsWith(
+                    manifestName, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strPtr(pgWalPath(data->manifestData->pgVersion)))))
+            {
+                ((ManifestFile *)file)->checksumSha1[0] = '\0';
+            }
+
+            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
+            // mode and current user/group.
             if (info->mode != 0640)
                 THROW_FMT(AssertError, "'%s' mode is not 0640", strPtr(manifestName));
 
@@ -117,8 +132,11 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             strCat(data->content, "path");
 
             // Check against the manifest
+            // ---------------------------------------------------------------------------------------------------------------------
             manifestPathFind(data->manifest, info->name);
 
+            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
+            // mode and current user/group.
             if (info->mode != 0750)
                 THROW_FMT(AssertError, "'%s' mode is not 00750", strPtr(info->name));
 
@@ -153,14 +171,8 @@ testBackupValidate(const Storage *storage, const String *path)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Make sure both backup.manifest files exist
-        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strPtr(path))))
-            THROW(AssertError, BACKUP_MANIFEST_FILE " is missing");
-
-        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(path))))
-            THROW(AssertError, BACKUP_MANIFEST_FILE INFO_COPY_EXT " is missing");
-
         // Build a list of files in the backup path and verify against the manifest
+        // -------------------------------------------------------------------------------------------------------------------------
         Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strPtr(path)), cipherTypeNone, NULL);
 
         TestBackupValidateCallbackData callbackData =
@@ -169,9 +181,57 @@ testBackupValidate(const Storage *storage, const String *path)
             .path = path,
             .content = result,
             .manifest = manifest,
+            .manifestData = manifestData(manifest),
         };
 
         storageInfoListP(storage, path, testBackupValidateCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc);
+
+        // Make sure both backup.manifest files exist since we skipped them in the callback above
+        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strPtr(path))))
+            THROW(AssertError, BACKUP_MANIFEST_FILE " is missing");
+
+        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(path))))
+            THROW(AssertError, BACKUP_MANIFEST_FILE INFO_COPY_EXT " is missing");
+
+        // Output the manifest to a string and exclude sections that don't need validation. Note that each of these sections should
+        // be considered from automatic validation but adding them to the output will make the tests too noisy. One good technique
+        // would be to remove it from the output only after validation so new values will cause changes in the output.
+        // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *manifestSaveBuffer = bufNew(0);
+        manifestSave(manifest, ioBufferWriteNew(manifestSaveBuffer));
+
+        String *manifestEdit = strNew("");
+        StringList *manifestLine = strLstNewSplitZ(strTrim(strNewBuf(manifestSaveBuffer)), "\n");
+        bool bSkipSection = false;
+
+        for (unsigned int lineIdx = 0; lineIdx < strLstSize(manifestLine); lineIdx++)
+        {
+            const String *line = strTrim(strLstGet(manifestLine, lineIdx));
+
+            if (strChr(line, '[') == 0)
+            {
+                const String *section = strSubN(line, 1, strSize(line) - 2);
+
+                if (strEq(section, INFO_SECTION_BACKREST_STR) ||
+                    strEq(section, MANIFEST_SECTION_BACKUP_STR) ||
+                    strEq(section, MANIFEST_SECTION_BACKUP_DB_STR) ||
+                    strEq(section, MANIFEST_SECTION_BACKUP_OPTION_STR) ||
+                    strEq(section, MANIFEST_SECTION_DB_STR) ||
+                    strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR) ||
+                    strEq(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR) ||
+                    strEq(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR))
+                {
+                    bSkipSection = true;
+                }
+                else
+                    bSkipSection = false;
+            }
+
+            if (!bSkipSection)
+                strCatFmt(manifestEdit, "%s\n", strPtr(line));
+        }
+
+        strCatFmt(result, "--------\n%s\n", strPtr(strTrim(manifestEdit)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -188,7 +248,7 @@ typedef struct TestBackupPqScriptParam
     bool backupStandby;
     bool errorAfterStart;
     bool noWal;                                                     // Don't write test WAL segments
-    bool walCompress;                                               // Compress the archive files
+    CompressType walCompressType;                                   // Compress type for the archive files
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
@@ -241,10 +301,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
-                    strPtr(walChecksum), param.walCompress ? "." GZ_EXT : ""));
+                    strPtr(walChecksum), strPtr(compressExtStr(param.walCompressType))));
 
-            if (param.walCompress)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzCompressNew(1));
+            if (param.walCompressType != compressTypeNone)
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(param.walCompressType, 1));
 
             storagePutP(write, walBuffer);
         }
@@ -456,8 +516,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(missingFile));       // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -486,8 +546,8 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            backupFile(pgFile, false, 9, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
-            "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+            backupFile(pgFile, false, 9999999, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
+            "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         ((Storage *)storageRepo())->interface.feature = feature;
 
@@ -502,6 +562,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Test pagechecksum
+
+        // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
+        // where a file grows while a backup is running.
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile!!!"));
+
         TEST_ASSIGN(
             result,
             backupFile(
@@ -531,8 +596,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -573,8 +638,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));            // repoFileCompress
-        varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
+        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -605,13 +670,14 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1, backupLabel,
-                true, cipherTypeNone, NULL),
+                pgFile, false, 9999999, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
@@ -712,8 +778,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewBool(true));             // repoFileCompress
-        varLstAdd(paramList, varNewUInt(3));                // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
+        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
@@ -793,11 +859,11 @@ testRun(void)
                 pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeAes256Cbc, strNew("12345678")),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
+        TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file (size missmatch) to encrypted repo success");
 
@@ -830,8 +896,8 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));                // repoFile
         varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewBool(false));                // repoFileCompress
-        varLstAdd(paramList, varNewUInt(0));                    // repoFileCompressLevel
+        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
+        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
@@ -1270,7 +1336,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompress = true;
+        manifestResume->data.backupOptionCompressType = compressTypeGz;
 
         manifestSave(
             manifestResume,
@@ -1282,12 +1348,12 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new compression 'false' does not match resumable compression 'true'");
+                " new compression 'none' does not match resumable compression 'gz'");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupOptionCompress = false;
+        manifestResume->data.backupOptionCompressType = compressTypeNone;
     }
 
     // *****************************************************************************************************************************
@@ -1302,7 +1368,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0, 0), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1324,7 +1390,7 @@ testRun(void)
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
 
         TEST_RESULT_UINT(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0, 0), 0, "log noop result");
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0), 0, "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }
@@ -1427,7 +1493,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
+            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
             "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1595,7 +1661,7 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191002-070640F}\n"
                 "pg_data {path}\n"
@@ -1603,7 +1669,22 @@ testRun(void)
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"
-                "pg_data/postgresql.conf {file, s=11}\n",
+                "pg_data/postgresql.conf {file, s=11}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
+                    ",\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                    ",\"timestamp\":1570000000}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_xlog={}\n",
                 "compare file list");
         }
 
@@ -1631,7 +1712,7 @@ testRun(void)
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1689,6 +1770,12 @@ testRun(void)
             // File is not in manifest
             storagePutP(
                 storageNewWriteP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strPtr(resumeLabel))),
+                NULL);
+
+            // File has incorrect compression type
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strPtr(resumeLabel))),
                 NULL);
 
@@ -1720,6 +1807,8 @@ testRun(void)
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
                 "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
+                    " (mismatched compression type)\n"
+                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed backup"
                     " (missing in manifest)\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed"
                     " backup (no checksum in resumed manifest)\n"
@@ -1744,7 +1833,7 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F}\n"
                 "pg_data {path}\n"
@@ -1757,7 +1846,30 @@ testRun(void)
                 "pg_data/postgresql.conf.gz {file, s=11}\n"
                 "pg_data/size-mismatch.gz {file, s=4}\n"
                 "pg_data/time-mismatch.gz {file, s=4}\n"
-                "pg_data/zero-size.gz {file, s=0}\n",
+                "pg_data/zero-size.gz {file, s=0}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
+                    ",\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/not-in-resume={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
+                    ",\"timestamp\":1570100000}\n"
+                "pg_data/pg_xlog/0000000105D95D3000000000={\"size\":16777216,\"timestamp\":1570100002}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                    ",\"timestamp\":1570000000}\n"
+                "pg_data/size-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
+                    ",\"timestamp\":1570100000}\n"
+                "pg_data/time-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
+                    ",\"timestamp\":1570100000}\n"
+                "pg_data/zero-size={\"size\":0,\"timestamp\":1570100000}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_xlog={}\n",
                 "compare file list");
 
             // Remove test files
@@ -1779,6 +1891,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -1795,7 +1908,7 @@ testRun(void)
 
             manifestResumeData->backupType = backupTypeDiff;
             manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
-            manifestResumeData->backupOptionCompress = true;
+            manifestResumeData->backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1852,6 +1965,7 @@ testRun(void)
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
+                "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
@@ -1882,7 +1996,7 @@ testRun(void)
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
 
             // Check repo directory
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F_20191004-144000D}\n"
                 "pg_data {path}\n"
@@ -1892,7 +2006,25 @@ testRun(void)
                 "pg_data/pg_xlog {path}\n"
                 "pg_data/postgresql.conf.gz {file, s=11}\n"
                 "pg_data/resume-ref.gz {file, s=0}\n"
-                "pg_data/time-mismatch2.gz {file, s=4}\n",
+                "pg_data/time-mismatch2.gz {file, s=4}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"reference\":\"20191003-105320F\""
+                    ",\"size\":3,\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"reference\":\"20191003-105320F\",\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
+                    ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/resume-ref={\"size\":0,\"timestamp\":1570200000}\n"
+                "pg_data/time-mismatch2={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
+                    ",\"timestamp\":1570200100}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_xlog={}\n",
                 "compare file list");
 
             // Remove test files
@@ -1942,14 +2074,26 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
-            // Create files to copy from the standby.  The files will be zero-size on the primary and non-zero on the standby to test
-            // that they were copied from the right place.
+            // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
+            // but no bytes will be copied.
             storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("DATA"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
+
+            // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
+            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // the checksum will change but not the size.
             storagePutP(
                 storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
-                BUFSTRDEF("D"));
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("DATA"));
+                BUFSTRDEF("DA"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("5678"));
+
+            // Create file to copy from the standby. This file will be larger on the primary than the standby and have no common
+            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // the checksum and size will change.
+            storagePutP(
+                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart),
+                BUFSTRDEF("TEST"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/3")), BUFSTRDEF("ABC"));
 
             // Create a file on the primary that does not exist on the standby to test that the file is removed from the manifest
             storagePutP(
@@ -1971,7 +2115,7 @@ testRun(void)
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompress = true);
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
@@ -1980,7 +2124,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191016-042640F}\n"
                 "pg_data {path}\n"
@@ -1988,13 +2132,39 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/1 {file, s=4}\n"
-                "pg_data/base/1/2 {file, s=4}\n"
+                "pg_data/base/1/1 {file, s=0}\n"
+                "pg_data/base/1/2 {file, s=2}\n"
+                "pg_data/base/1/3 {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"
                 "pg_data/pg_xlog/0000000105DA69C000000000 {file, s=16777216}\n"
-                "pg_data/postgresql.conf {file, s=11}\n",
+                "pg_data/postgresql.conf {file, s=11}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"f5b7e6d36dc0113f61b36c700817d42b96f7b037\",\"size\":3"
+                    ",\"timestamp\":1571200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1571200002}\n"
+                "pg_data/base/1/1={\"master\":false,\"size\":0,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"master\":false,\"size\":2"
+                    ",\"timestamp\":1571200000}\n"
+                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"master\":false,\"size\":3"
+                    ",\"timestamp\":1571200000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1571200000}\n"
+                "pg_data/pg_xlog/0000000105DA69C000000000={\"size\":16777216,\"timestamp\":1571200002}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                    ",\"timestamp\":1570000000}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_xlog={}\n",
                 "compare file list");
 
             // Remove test files
@@ -2107,7 +2277,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompress = true, .walTotal = 3);
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features
@@ -2135,7 +2305,7 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=2}\n"
@@ -2158,7 +2328,48 @@ testRun(void)
                 "pg_tblspc/32768 {path}\n"
                 "pg_tblspc/32768/PG_11_201809051 {path}\n"
                 "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n",
+                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
+                    ",\"timestamp\":1572200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572200002}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
+                    ",\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"8beb58e08394fe665fb04a17b4003faa3802760b\",\"checksum-page\":false"
+                    ",\"master\":false,\"size\":8193,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/3={\"checksum\":\"73e537a445ad34eab4b292ac6aa07b8ce14e8421\",\"checksum-page\":false"
+                    ",\"checksum-page-error\":[0,[2,3]],\"master\":false,\"size\":32768,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/4={\"checksum\":\"ba233be7198b3115f0480fa5274448f2a2fc2af1\",\"checksum-page\":false"
+                    ",\"checksum-page-error\":[1],\"master\":false,\"size\":24576,\"timestamp\":1572200000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000001={\"size\":1048576,\"timestamp\":1572200002}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000002={\"size\":1048576,\"timestamp\":1572200002}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                    ",\"timestamp\":1570000000}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0"
+                    ",\"timestamp\":1572200000}\n"
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_wal={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/32768={}\n"
+                "pg_tblspc/32768/PG_11_201809051={}\n"
+                "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
 
             // Remove test files
@@ -2246,7 +2457,7 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR_Z_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191027-181320F_20191030-014640I}\n"
                 "pg_data {path}\n"
@@ -2263,7 +2474,36 @@ testRun(void)
                 "pg_tblspc/32768 {path}\n"
                 "pg_tblspc/32768/PG_11_201809051 {path}\n"
                 "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n",
+                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191027-181320F\""
+                    ",\"size\":2,\"timestamp\":1572200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572400002}\n"
+                "pg_data/global/pg_control={\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572400000}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
+                    ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"reference\":\"20191027-181320F\""
+                    ",\"size\":0,\"timestamp\":1572200000}\n"
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_wal={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/32768={}\n"
+                "pg_tblspc/32768/PG_11_201809051={}\n"
+                "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
 
             // Remove test files

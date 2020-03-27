@@ -21,24 +21,32 @@ Log Handler
 Module variables
 ***********************************************************************************************************************************/
 // Log levels
-DEBUG_UNIT_EXTERN LogLevel logLevelStdOut = logLevelError;
-DEBUG_UNIT_EXTERN LogLevel logLevelStdErr = logLevelError;
-DEBUG_UNIT_EXTERN LogLevel logLevelFile = logLevelOff;
-DEBUG_UNIT_EXTERN LogLevel logLevelAny = logLevelError;
+static LogLevel logLevelStdOut = logLevelError;
+static LogLevel logLevelStdErr = logLevelError;
+static LogLevel logLevelFile = logLevelOff;
+static LogLevel logLevelAny = logLevelError;
 
 // Log file handles
-DEBUG_UNIT_EXTERN int logHandleStdOut = STDOUT_FILENO;
-DEBUG_UNIT_EXTERN int logHandleStdErr = STDERR_FILENO;
+static int logHandleStdOut = STDOUT_FILENO;
+static int logHandleStdErr = STDERR_FILENO;
 DEBUG_UNIT_EXTERN int logHandleFile = -1;
 
 // Has the log file banner been written yet?
 DEBUG_UNIT_EXTERN bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
-DEBUG_UNIT_EXTERN bool logTimestamp = false;
+static bool logTimestamp = false;
 
 // Size of the process id field
-DEBUG_UNIT_EXTERN int logProcessSize = 2;
+static int logProcessSize = 2;
+
+// Prefix DRY-RUN to log messages
+static bool logDryRun = false;
+
+/***********************************************************************************************************************************
+Dry run prefix
+***********************************************************************************************************************************/
+#define DRY_RUN_PREFIX                                              "[DRY-RUN] "
 
 /***********************************************************************************************************************************
 Test Asserts
@@ -143,13 +151,15 @@ Initialize the log system
 void
 logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
-    unsigned int logProcessMax)
+    unsigned int logProcessMax, bool dryRunParam)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
         FUNCTION_TEST_PARAM(ENUM, logLevelStdErrParam);
         FUNCTION_TEST_PARAM(ENUM, logLevelFileParam);
         FUNCTION_TEST_PARAM(BOOL, logTimestampParam);
+        FUNCTION_TEST_PARAM(UINT, logProcessMax);
+        FUNCTION_TEST_PARAM(BOOL, dryRunParam);
     FUNCTION_TEST_END();
 
     ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
@@ -162,6 +172,7 @@ logInit(
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
     logProcessSize = logProcessMax > 99 ? 3 : 2;
+    logDryRun = dryRunParam;
 
     logAnySet();
 
@@ -241,7 +252,7 @@ logClose(void)
     FUNCTION_TEST_VOID();
 
     // Disable all logging
-    logInit(logLevelOff, logLevelOff, logLevelOff, false, 1);
+    logInit(logLevelOff, logLevelOff, logLevelOff, false, 1, false);
 
     // Close the log file if it is open
     logFileClose();
@@ -391,6 +402,10 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     // Add error code
     if (code != 0)
         result.bufferPos += (size_t)snprintf(logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "[%03d]: ", code);
+
+    // Add dry-run prefix
+    if (logDryRun)
+        result.bufferPos += (size_t)snprintf(logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, DRY_RUN_PREFIX);
 
     // Add debug info
     if (logLevel >= logLevelDebug)

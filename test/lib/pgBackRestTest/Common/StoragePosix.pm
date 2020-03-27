@@ -16,9 +16,10 @@ use File::Basename qw(basename dirname);
 use Fcntl qw(:mode);
 use File::stat qw{lstat};
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
-use pgBackRest::Storage::Base;
+use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Log;
+
+use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StoragePosixRead;
 use pgBackRestTest::Common::StoragePosixWrite;
 
@@ -978,5 +979,6 @@ sub remove
 sub className {STORAGE_POSIX_DRIVER}
 sub tempExtension {shift->{strTempExtension}}
 sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}
+sub type {STORAGE_POSIX}
 
 1;
