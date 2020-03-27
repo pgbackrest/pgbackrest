@@ -3,15 +3,15 @@ branches:
     - integration
     - /-ci$/
 
+os: linux
 dist: trusty
-sudo: required
 
 language: c
 
 services:
   - docker
 
-matrix:
+jobs:
   include:
     - env: PGB_CI="test --vm=u12 --param=no-performance"
     - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
