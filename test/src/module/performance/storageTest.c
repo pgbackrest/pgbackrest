@@ -22,29 +22,18 @@ amount of time.  It should be noted that in this context scaling to 1000 is nowh
 /***********************************************************************************************************************************
 Dummy functions and interface for constructing test drivers
 ***********************************************************************************************************************************/
-static bool
-storageTestDummyExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    (void)thisVoid; (void)file; (void)param; return false;
-}
-
 static StorageInfo
-storageTestDummyInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
-    (void)thisVoid; (void)file; (void)param; return (StorageInfo){.exists = false};
+    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
 }
 
 static bool
 storageTestDummyInfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
-    (void)thisVoid; (void)path; (void)callback; (void)callbackData; (void)param; return false;
-}
-
-static StringList *
-storageTestDummyList(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    (void)thisVoid; (void)path; (void)param; return NULL;
+    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
 }
 
 static StorageRead *
@@ -73,10 +62,8 @@ storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemovePara
 
 static const StorageInterface storageInterfaceTestDummy =
 {
-    .exists = storageTestDummyExists,
     .info = storageTestDummyInfo,
     .infoList = storageTestDummyInfoList,
-    .list = storageTestDummyList,
     .newRead = storageTestDummyNewRead,
     .newWrite = storageTestDummyNewWrite,
     .pathRemove = storageTestDummyPathRemove,
@@ -107,10 +94,11 @@ typedef struct
 
 static bool
 storageTestPerfInfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StorageTestPerfInfoList);
-    (void)path; (void)param;
+    (void)path; (void)level; (void)param;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

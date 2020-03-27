@@ -611,6 +611,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
     StorageInfo info =
     {
         .name = name,
+        .level = data->level,
         .exists = true,
     };
 
