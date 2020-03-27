@@ -694,8 +694,32 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderAsc);
 
-        // Get the current list of backups from backup.info
+        // Get the list of current backups and remove backups from current that are no longer in the repository
         StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
+
+        for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
+        {
+            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
+            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
+            // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
+            // infoBackup object, then remove it and its dependencies
+            if (!storageExistsP(storage, manifestFileName) && infoBackupDataByLabel(infoBackup, backupLabel) != NULL)
+            {
+                StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+                for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+                {
+                    String *removeBackup = strLstGet(backupList, backupIdx);
+
+                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(removeBackup));
+
+                    infoBackupDataDelete(infoBackup, removeBackup);
+                }
+            }
+        }
+
+        // Get the updated current list of backups from backup.info
+        backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
 
         // For each backup in the repo, check if it exists in backup.info
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
@@ -721,9 +745,12 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                     {
                         InfoPgData pgHistory = infoPgData(infoBackup->infoPg, pgIdx);
 
-                        // If there is an exact match with the history, system and version then add it to the current backup list
+                        // If there is an exact match with the history, system and version and there is no backup-prior dependency
+                        // or there is a backup-prior and it is in the list, then add this backup to the current backup list
                         if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
-                            manData->pgVersion == pgHistory.version)
+                            manData->pgVersion == pgHistory.version &&
+                            (manData->backupLabelPrior == NULL ||
+                                infoBackupDataByLabel(infoBackup, manData->backupLabelPrior) != NULL))
                         {
                             LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
                             infoBackupDataAdd(infoBackup, manifest);
@@ -734,30 +761,6 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
 
                     if (!found)
                         LOG_WARN_FMT("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
-                }
-            }
-        }
-
-        // Get the updated list of current backups and remove backups from current that are no longer in the repository
-        backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
-
-        for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
-        {
-            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
-            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
-
-            // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
-            // infoBackup object, then remove it and its dependencies
-            if (!storageExistsP(storage, manifestFileName) &&  infoBackupDataByLabel(infoBackup, backupLabel) != NULL)
-            {
-                StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
-                for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
-                {
-                    String *removeBackup = strLstGet(backupList, backupIdx);
-
-                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(removeBackup));
-
-                    infoBackupDataDelete(infoBackup, removeBackup);
                 }
             }
         }

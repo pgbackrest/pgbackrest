@@ -706,35 +706,100 @@ testRun(void)
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 1, "backup list contains 1 backup");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get the backup");
         TEST_RESULT_STR_Z(
-            backupData.backupLabel, "20190923-164324F",
-            "backups not on disk removed, valid backup on disk added, manifest copy-only ignored");
+            backupData.backupLabel, "20190923-164324F", "backups not on disk removed, dependent backup removed and not added back, "
+            "valid backup on disk added, manifest copy-only ignored");
         harnessLogResult(
+            "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
+            "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
+            "P00   WARN: invalid backup '20190818-084502F_20190820-084502I' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups\n"
-            "P00   WARN: backup '20190923-164324F' found in repository added to backup.info\n"
-            "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
-            "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info");
+            "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
+            .recurse = true), "remove dependent backup from disk");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            "reconstruct does not attempt to add back dependent backup");
+        harnessLogResult(
+            "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
+            "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
+            "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
+            "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
+            "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups\n"
+            "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storageCopyP(
                 storageNewReadP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
                 storageNewWriteP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
                 "write manifest from copy-only for pgId=1");
 
+        manifestContentIncr = harnessInfoChecksumZ
+        (
+            "[backup]\n"
+            "backup-archive-start=\"000000030000028500000089\"\n"
+            "backup-archive-stop=\"000000030000028500000090\"\n"
+            "backup-label=\"20190818-084444F_20190924-084502D\"\n"
+            "backup-lsn-start=\"285/89000028\"\n"
+            "backup-lsn-stop=\"285/89001F88\"\n"
+            "backup-prior=\"20190818-084444F\"\n"
+            "backup-timestamp-copy-start=1565282141\n"
+            "backup-timestamp-start=1565282140\n"
+            "backup-timestamp-stop=1565282142\n"
+            "backup-type=\"diff\"\n"
+            TEST_MANIFEST_BACKUPDB
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-backup-standby=true\n"
+            "option-buffer-size=16384\n"
+            "option-checksum-page=true\n"
+            "option-compress=true\n"
+            "option-compress-level=3\n"
+            "option-compress-level-network=3\n"
+            "option-delta=false\n"
+            "option-hardlink=true\n"
+            "option-online=true\n"
+            "option-process-max=32\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(),
+            strNew(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
+            manifestContentIncr), "write manifest for dependent backup to be added to full already in backup.info");
+
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "save updated backup info");
+
         infoBackup = NULL;
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct");
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20190818-084444F, 20190818-084502F_20190820-084502I, 20190923-164324F",
-            "previously ignored pgId=1 manifest copy-only now added before existing and incr from deleted full is still on disk");
+            "20190818-084444F, 20190818-084444F_20190924-084502D, 20190923-164324F",
+            "previously ignored pgId=1 manifest copy-only now added before existing, and add dependent found");
         harnessLogResult(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
+            "P00   WARN: backup '20190818-084444F_20190924-084502D' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups");
