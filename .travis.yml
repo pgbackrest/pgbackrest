@@ -23,20 +23,20 @@ jobs:
     # All unit (without coverage) and integration tests for 32-bit
     - env: PGB_CI="test --vm=u12 --param=no-performance"
 
-    # All unit tests (with coverage) on the newest gcc available
-    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
-
-    # All integration tests
-    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
-
-    # All integration tests
-    - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
-
     # Debian/Ubuntu documentation
     - env: PGB_CI=" doc --vm=u18"
 
     # All integration tests
-    - env: PGB_CI="test --vm=co7 --param=build-package --param=module=mock --param=module=real"
+    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
+
+    # All unit tests (with coverage) on the newest gcc available
+    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
+
+    # All integration tests
+    - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
+
+    # RHEL/CentOS 6 documentation
+    - env: PGB_CI=" doc --vm=co6"
 
     # Performance tests and unit tests (with coverage) run without a container in a non-UTC timezone
     - dist: bionic
@@ -44,8 +44,8 @@ jobs:
         - PGB_CI="test --vm=none --param=tz=America/New_York"
       services:
 
-    # RHEL/CentOS 6 documentation
-    - env: PGB_CI=" doc --vm=co6"
+    # All integration tests
+    - env: PGB_CI="test --vm=co7 --param=build-package --param=module=mock --param=module=real"
 
     # RHEL/CentOS 7 documentation
     - env: PGB_CI=" doc --vm=co7"
