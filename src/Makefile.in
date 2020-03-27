@@ -161,6 +161,8 @@ LIBS = @LIBS@
 # Directory options
 ####################################################################################################################################
 VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
 bindir = @bindir@
 BUILDDIR=.build
 
