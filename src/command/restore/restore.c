@@ -188,7 +188,7 @@ getEpoch(const String *targetTime)
             LOG_WARN_FMT(
                 "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
                 "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                " - if timezone is ommitted, local time is assumed (for UTC use +00)",
+                " - if timezone is omitted, local time is assumed (for UTC use +00)",
                 strPtr(targetTime));
         }
     }

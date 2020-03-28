@@ -1124,7 +1124,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Execute a dry-run for the command.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "The --dry-run option is a command-line only option and can be passed when it is desireable to determine what "
+            "The --dry-run option is a command-line only option and can be passed when it is desirable to determine what "
                 "modifications will be made by the command without the command actually making any modifications."
         )
 
