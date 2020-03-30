@@ -115,14 +115,6 @@
 
                         <p>Allow storage reads to be limited by bytes.</p>
                     </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Added functions to select a current backup by label and to retrieve a backup dependency list for any given backup. Updated the expire code to utilize the new functions and to expire backup sets from newest dependency to oldest.</p>
-                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
