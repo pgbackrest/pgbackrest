@@ -1,5 +1,742 @@
 [
     {
+        "commit": "fd3dca036b1436564dec17b7c23b62b9d9fa1051",
+        "date": "2020-03-26 17:14:53 -0400",
+        "subject": "v2.25: LZ4 Compression Support"
+    },
+    {
+        "commit": "8af0462c5d749ca798bc524e7a05d0e24f4ed0c7",
+        "date": "2020-03-26 15:30:59 -0400",
+        "subject": "Fix race condition in real/all integration tests.",
+        "body": "If the tests are running quickly then the time target might end up the same as the end time of the prior full backup. That means restore auto-select will not pick it as a candidate and restore the last backup instead causing the restore compare to fail.\n\nSo, sleep one second."
+    },
+    {
+        "commit": "86f71349efdc5970b9985c0155a65c2e3b193a04",
+        "date": "2020-03-26 14:05:40 -0400",
+        "subject": "Improve and centralize backup dependency calculation.",
+        "body": "Add functions to select a current backup by label and to retrieve a backup dependency list for any given backup.\n\nUpdate the expire code to utilize the new functions and to expire backup sets from newest dependency to oldest."
+    },
+    {
+        "commit": "048a36ea390334ddc019e958242c4d4ca0f9096f",
+        "date": "2020-03-26 13:04:59 -0400",
+        "subject": "Order commands alphabetically in definition of set option."
+    },
+    {
+        "commit": "2c2bc8a32ba6e91e2a0241cc2d93d9809ab6c068",
+        "date": "2020-03-26 12:16:22 -0400",
+        "subject": "Debug and optimize flag cleanup for unit tests.",
+        "body": "Decisions about when to optimize or enable debug code were spread out in too many places making it hard to keep them consistent.\n\nCentralize the logic as much as possible to make it easier to maintain."
+    },
+    {
+        "commit": "e63fdfbfd24bb1893ed5c0abb9aed72d2a230d56",
+        "date": "2020-03-26 11:16:35 -0400",
+        "subject": "Debug and optimize flag cleanup for unit tests.",
+        "body": "Decisions about when to optimize or enable debug code were spread out in too many places making it hard to keep them consistent.\n\nCentralize the logic as much as possible to make it easier to maintain."
+    },
+    {
+        "commit": "d242114dc0feec9e87932e810ec3c1027752949b",
+        "date": "2020-03-25 19:00:09 -0400",
+        "subject": "Rough script to add tables to the user guide for performance tests.",
+        "body": "This really needs to be worked on but for now at least preserve to code to be improved later."
+    },
+    {
+        "commit": "10b4b9af8712c558ad1d3d1674dd494716fa1cb9",
+        "date": "2020-03-25 18:52:20 -0400",
+        "subject": "Improve performance of jsonToStrInternal() and jsonFromStrInternal().",
+        "body": "Most strings do not contain escape/d characters, so optimize the path where the string contains few or no escape/d characters.\n\nThis means far fewer calls to strCatChr() in favor of strCatZN(), which is much more efficient."
+    },
+    {
+        "commit": "88d7ee621547b28113af9c00712267642729b7ec",
+        "date": "2020-03-25 18:37:35 -0400",
+        "subject": "Add srtCatZN().",
+        "body": "Append N characters from a zero-terminated string.\n\nNote that the string does not actually need to be zero-terminated as long as N is <= the end of the string being concatenated."
+    },
+    {
+        "commit": "b10270eee87ebaa1c595d0ba486a61fefabd8d6d",
+        "date": "2020-03-25 16:03:33 -0400",
+        "subject": "Use conditional in strPtr() to encourage inlining.",
+        "body": "This construct is logically equivalent but it seems to make the compiler more likely to inline the function, probably because the compiled code is slightly smaller."
+    },
+    {
+        "commit": "eb7f7dd5caf9f48368b6c24b401f9094ad85a95e",
+        "date": "2020-03-25 15:47:03 -0400",
+        "subject": "Fix backup-prior for diff backups in mock/expire integration test.",
+        "body": "In the ExpireEnvTest.pm backupCreate() function, backup-prior was incorrectly set for diff backups to the previous backup regardless of what backup type the previous backup was. This did not cause any issues in the Mock Expire tests before because it was not being checked. However, in order to reduce churn in the expect logs for a new feature where the backup-prior is utilized, this is being fixed so that the full backup is always used as backup-prior."
+    },
+    {
+        "commit": "4c31a922a3b258b075c095b92d637eb2d367d7f2",
+        "date": "2020-03-25 12:17:20 -0400",
+        "subject": "Remove backup after timeline switch from user guide.",
+        "body": "It is no longer necessary (since 2.07, 34c63276) to do a backup manually after a timeline switch."
+    },
+    {
+        "commit": "480a11066db83ecb57d2ca3f23924a93d8590b5e",
+        "date": "2020-03-25 12:04:23 -0400",
+        "subject": "More refactoring of command/expire unit test module.",
+        "body": "Buffer cleanup following on from e170c53e."
+    },
+    {
+        "commit": "d20115d29e0b33062fce5dfc8285c0f884ef4246",
+        "date": "2020-03-25 09:12:51 -0400",
+        "subject": "Allocate a minimum amount of space when a string is likely to grow.",
+        "body": "This helps prevent excessive memory reallocation."
+    },
+    {
+        "commit": "ad4187eb9f5ff3cfca20537dd6d998d1afa4a96b",
+        "date": "2020-03-24 19:08:00 -0400",
+        "subject": "Improve performance of memResize().",
+        "body": "The major bottleneck was finding the memory allocation to be resized since it required a sequential search through a list.\n\nInstead, put the allocation header at the beginning of the allocation and return an offset to the user for their buffer. This allows us to use pointer arithmetic to get back to the allocation header quickly when resizing. A side effect is to make memFree() faster as well. The downside is we won't detect garbage pointers passed to memResize()/memFree(), which is also true for MemContext pointers.\n\nThe performance benefits can be pretty large in certain cases, in particular when loading and saving manifests. The following are the before and after performance tests on a 900K file manifest.\n\nBefore:\n\nrun 003 - manifestNewLoad()/manifestSave()\n    000.000s l0125 - generate manifest\n    183.411s l0236 -     101.2MB manifest generated with 900000 files\n    183.411s l0239 - load manifest\n    403.816s l0243 -     completed in 220405ms\n    403.816s l0245 -        check file total\n    403.816s l0248 - save manifest\n    670.217s l0253 -     completed in 266401ms\n    670.217s l0256 - find all files\n    671.263s l0266 -     completed in 1046ms\n\nAfter:\n\nrun 003 - manifestNewLoad()/manifestSave()\n    000.000s l0125 - generate manifest\n    007.730s l0236 -     101.2MB manifest generated with 900000 files\n    007.730s l0239 - load manifest\n    033.431s l0243 -     completed in 25701ms\n    033.431s l0245 -        check file total\n    033.431s l0248 - save manifest\n    057.755s l0253 -     completed in 24324ms\n    057.755s l0256 - find all files\n    058.689s l0266 -     completed in 934ms"
+    },
+    {
+        "commit": "98e5affa8aa1b1f7076e2d389d3afdf71dd80644",
+        "date": "2020-03-24 18:44:13 -0400",
+        "subject": "Free temp mem context periodically in storageRemoteInfoList().",
+        "body": "Other storage*InfoList() functions do this but it was missed here.\n\nmemResize()/memFree() operations become more expensive as the mem context grows larger so freeing it periodically saves processing time."
+    },
+    {
+        "commit": "e170c53e7efb84dc65e3a0c0b8e4ed3c060030d8",
+        "date": "2020-03-23 14:31:04 -0400",
+        "subject": "Refactor command/expire unit test module.",
+        "body": "Add titles and use a Buffer to store backup.info instead of a String."
+    },
+    {
+        "commit": "f9c86b11a54e5c37ad98afd5a2de76cd96ae1061",
+        "date": "2020-03-23 12:17:34 -0400",
+        "subject": "More improvements to custom coverage report.",
+        "body": "* Fix a few issues with file names being truncated introduced in 787d3fd6.\n\n* Use function line info from the lcov file to calculate which lines to show for uncovered functions.  This is more accurate than what we were doing before and function comment headers are now excluded which reduces clutter in the report."
+    },
+    {
+        "commit": "dbb1248bfbb1d469bae030084e6672772702f89d",
+        "date": "2020-03-22 20:44:51 -0400",
+        "subject": "Implement TEST_RESULT_*() macros with functions, mostly.",
+        "body": "The prior macros had grown over time to be pretty significant pieces of code that required a lot of compile time, though runtime was efficient.\n\nMove most of the macro code into functions to reduce compile time, perhaps at a slight expense to runtime.  The overall performance benefit is 10-15% so this seems like a good tradeoff.\n\nAdd TEST_RESULT_UINT_INT() to safely compare uint to int with range checking."
+    },
+    {
+        "commit": "d6ffa9ea6d45fcae46abd79a5f6d6123e79c9168",
+        "date": "2020-03-22 20:25:31 -0400",
+        "subject": "Fix incorrect result types in unit tests.",
+        "body": "Upcoming changes to the TEST_RESULT_* macros are more type safe and identified that the wrong macros were being used to test results in many cases.\n\nCommit these changes separately to verify that they work with the current macro versions.\n\nNote that no core bugs were exposed by these changes."
+    },
+    {
+        "commit": "e1da6a45e0e7f5223ac5210b2485f7946421a723",
+        "date": "2020-03-22 16:14:33 -0400",
+        "subject": "Remove TRY...CATCH blocks from TEST_RESULT*() macros.",
+        "body": "TRY...CATCH blocks are fairly expensive and when all the TEST_RESULT*() macros succeed they are not needed.\n\nInstead just record info at the start of the result test so a detailed exception can be thrown in test.c in the rare case where an exception occurs."
+    },
+    {
+        "commit": "5a8758cc8a49b88f731bb33d81579115cb1ea3c3",
+        "date": "2020-03-22 16:04:24 -0400",
+        "subject": "Add test function to set stack trace function line number.",
+        "body": "This is helpful for test macros that know the line number.\n\nThe line number can now be non-zero below the top of the stack without WITH_BACKTRACE so instead ignore the line number for output when it is zero."
+    },
+    {
+        "commit": "bd461a18997dd38443004eb962e37d348bcef03a",
+        "date": "2020-03-22 14:40:36 -0400",
+        "subject": "Add TestError for testing.",
+        "body": "This error type distinguishes test errors with detailed debug info from normal errors which may need, for example, a stack trace to be added for context."
+    },
+    {
+        "commit": "c2df383aec3960fcc8046f93089114de8043cb14",
+        "date": "2020-03-22 14:24:28 -0400",
+        "subject": "Fix missing parameter in common/stack-trace test module.",
+        "body": "This was passing since we don't test WITH_BACKTRACE in CI because it is used only for test builds.\n\nIdeally we would test this but it doesn't seem worth the trouble at the moment."
+    },
+    {
+        "commit": "8c76ea2d93926cb3c714490884fb42966a859cf2",
+        "date": "2020-03-22 14:18:16 -0400",
+        "subject": "Fix space lost in d70ca259."
+    },
+    {
+        "commit": "4c831d8e83f4ffda02023351c17cb3072b5b6e10",
+        "date": "2020-03-22 13:50:31 -0400",
+        "subject": "Use --clean-only for reproducible builds in contributing documentation.",
+        "body": "If the work or result directories already contain data then the docs might be generated slightly differently.  Doing a clean ensures they will always produce the same output (provided the code does not change)."
+    },
+    {
+        "commit": "06a3f82e912b549add76b65f51075bc389f4e29c",
+        "date": "2020-03-22 13:46:30 -0400",
+        "subject": "Add --clean and --clean-only options to test.pl."
+    },
+    {
+        "commit": "d70ca2592f7df7d9a0adc2b91fd03c8cafc757b0",
+        "date": "2020-03-22 10:17:03 -0400",
+        "subject": "Suppress timestamps in contributing documentation.",
+        "body": "Timestamps cause a lot of churn and make it hard to tell if important changes are working."
+    },
+    {
+        "commit": "3ec630f5b2008af92d1baab36afda4d20b8329a8",
+        "date": "2020-03-22 10:12:29 -0400",
+        "subject": "Allow suppression of times in testing for reproducibility.",
+        "body": "Timestamps, timings, etc. cause a lot of log churn when included in documentation."
+    },
+    {
+        "commit": "a1802510111297b479c6150631df92bc6b065613",
+        "date": "2020-03-22 09:59:38 -0400",
+        "subject": "Do variable replacements for cmd-extra in documentation."
+    },
+    {
+        "commit": "6a9fbccf7603bc1ae9626ff387013933271a1c05",
+        "date": "2020-03-21 19:08:27 -0400",
+        "subject": "Remove custom lcov build from contributing documentation.",
+        "body": "Using the stock lcov no longer seems to be a problem, probably due to a better implementation in CoverageTest.pm."
+    },
+    {
+        "commit": "56fb39937368463474c96307454051a66c1742c4",
+        "date": "2020-03-21 18:45:58 -0400",
+        "subject": "Build contributing documentation on Travis CI.",
+        "body": "Building the contributing document has some special requirements because it runs Docker in Docker so the repo path must align on the host and all Docker containers.  Run `pgbackrest/doc/doc.pl` from within the home directory of the user that will do the doc build, e.g. `home/vagrant`.  If the repo is not located directly in the home directory, e.g. `/home/vagrant/pgbackrest`, then a symlink may be used, e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.\n\nMount the repo in the Vagrantfile at /home/vagrant/pgbackrest but provide a link from the old location at /backrest to make the transition less painful."
+    },
+    {
+        "commit": "ee2e15bf5524cf8bac3454d409dee250792411d9",
+        "date": "2020-03-21 09:51:12 -0400",
+        "subject": "Add missing package to contributing documentation."
+    },
+    {
+        "commit": "f405c82dcc99da8e8da2fc19b8e13f2dd9b542d2",
+        "date": "2020-03-20 15:00:20 -0400",
+        "subject": "Don't list directories as changed from the last run.",
+        "body": "It's not very useful information and just clutters the list."
+    },
+    {
+        "commit": "cfab67a775e0e1eb80e15df2fb5b1acc4d911432",
+        "date": "2020-03-20 13:49:23 -0400",
+        "subject": "Enable coverage testing on Fedora 30.",
+        "body": "Now that coverage testing works reliably with gcc9 it makes sense to enable it for CI."
+    },
+    {
+        "commit": "782c9f89f47fcb8bac75b21c241c1f34d744c13c",
+        "date": "2020-03-20 13:43:08 -0400",
+        "subject": "Remove old coverage data before starting new test.",
+        "body": "The old coverage data has been recorded so it is no longer needed. In newer versions of gcc leaving this file around can lead to an error when writing profile data after forking off to a non-pgbackrest binary (which we do in some unit tests)."
+    },
+    {
+        "commit": "787d3fd67b3549b9b04a8053e751cda9494d8df5",
+        "date": "2020-03-20 12:54:29 -0400",
+        "subject": "Improve custom coverage report.",
+        "body": "* Show all uncovered branch parts even when there are more than two parts per branch. This is the way gcc9 reports coverage so it needs to work even if it doesn't make as much sense as the old way.\n\n* Show covered branches in functions where coverage is missing.  Showing just the uncovered branches can be confusing because it's not always clear how the coverage relates to the code.  By showing all branch coverage (+ or -) this correspondence is made easier."
+    },
+    {
+        "commit": "8af802900657174e1b24a1bdf9992c9fa78909d9",
+        "date": "2020-03-20 09:16:38 -0400",
+        "subject": "Fix lcov report when test module missing coverage.",
+        "body": "We don't report branch coverage on test modules (e.g. test/src/module/common/errorTest.c) but the code that excluded branch coverage from the test module would also exclude it from all core modules if the test module was included in the lcov report due to lack of function/line coverage.\n\nAdjust the coverage code to only exclude branches during the extraction of test module coverage."
+    },
+    {
+        "commit": "f6e9bb081963932b4a35e6fd6c01ac2a523195f1",
+        "date": "2020-03-19 19:30:09 -0400",
+        "subject": "Remove obsolete -O2 option for Fedora 30 unit test builds.",
+        "body": "For some reason gcc9 would not do -O0 builds in combination with one of the options that libperl required.  Now that libperl is gone this exception is no longer required."
+    },
+    {
+        "commit": "2241524c0bdc92e1a04ac18e91a188a2bc1bcbdf",
+        "date": "2020-03-19 18:34:10 -0400",
+        "subject": "Remove obsolete deletes from Vagrantfile.",
+        "body": "pgBackRest no longer writes files into the .vagrant path so there's no longer anything to delete."
+    },
+    {
+        "commit": "dcddf3a58bc6c4a8fbc9ac2c000cd5ff7b669cb5",
+        "date": "2020-03-19 13:16:05 -0400",
+        "subject": "Limit backup file copy size to size reported at backup start.",
+        "body": "If a file grows during the backup it will be reconstructed by WAL replay during recovery so there is no need to copy the additional data.\n\nThis also reduces the likelihood of seeing torn pages during the copy. Torn pages can still occur in the middle of the file, though, so they must be handled."
+    },
+    {
+        "commit": "e5bcc0c47e9db98ff99366a1e5806c1dcd6ebadd",
+        "date": "2020-03-19 12:34:27 -0400",
+        "subject": "Clarifications of what limit == NULL or UINT64_MAX means."
+    },
+    {
+        "commit": "73315268fd9d405eee7da019014e8117c6a20693",
+        "date": "2020-03-19 12:11:20 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "d677b0708126302e3b01e24664866b29913b1c1d",
+        "date": "2020-03-19 12:07:51 -0400",
+        "subject": "Move coverage code to CoverageTest module.",
+        "body": "This code needs some work, which will be easier if it is all in one place."
+    },
+    {
+        "commit": "f538da0571e9e6b224b208fa5f2b3bc3025f5f02",
+        "date": "2020-03-18 17:30:36 -0400",
+        "subject": "Updates to contributing documentation."
+    },
+    {
+        "commit": "26c89b2c8c9ea362b9bd075cc4d541dc515af28b",
+        "date": "2020-03-18 13:40:16 -0400",
+        "subject": "Improve testing of files that change size during the backup.",
+        "body": "Files can change size during a backup so update and add tests to cover the various scenarios more thoroughly."
+    },
+    {
+        "commit": "4ec04e5163a361f88e3f2e09bdc22465a0868982",
+        "date": "2020-03-18 10:10:10 -0400",
+        "subject": "Added redacted manifest to testBackupValidate().",
+        "body": "The manifest is excellent for validation but including the entire manifest is too noisy and some values are architecture/algorithm dependent.\n\nOutput a redacted version that contains the most important information which can be improved on over time."
+    },
+    {
+        "commit": "b8cd1b6790b85f3ac36ae3fcb024be3997ac6ad1",
+        "date": "2020-03-18 10:05:08 -0400",
+        "subject": "Add TEST_RESULT_STR_Z_KEYRPL() test macro.",
+        "body": "This macro will automatically do key replacement before the comparison. This saves the indentation required for an embedded function call.\n\nPossibly TEST_RESULT_Z_KEYRPL() would also be useful but it will be added when needed."
+    },
+    {
+        "commit": "f2548f45ce4c1e444e9d3175b2349e0a97b2783a",
+        "date": "2020-03-17 18:16:17 -0400",
+        "subject": "Allow storage reads to be limited by bytes.",
+        "body": "The current use case is reading files from the PostgreSQL cluster during backup.\n\nA file may grow during backup but we only need to copy the number of bytes that were reported during the manifest build.  The rest will be rebuilt from the WAL during recovery so copying more is just a waste of space.\n\nLimiting the copy sizes in backup will be part of a future commit."
+    },
+    {
+        "commit": "307e741298cd068e68bcbe8994c871a989bdff01",
+        "date": "2020-03-17 16:01:17 -0400",
+        "subject": "Test that shrunk file is backed up correctly.",
+        "body": "It's possible, though rare, for a file to shrink during a backup.\n\nThere was no issue with the code but having a test is always a good idea."
+    },
+    {
+        "commit": "7f1817c8adea02e58af3ae82044e8e91e6f2c4f4",
+        "date": "2020-03-17 11:43:38 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "9a47b88da3effe24b835908c12ce5dd5abf2304d",
+        "date": "2020-03-16 20:02:36 -0400",
+        "subject": "Add links to custom coverage report.",
+        "body": "When multiple files were missing coverage it could be hard to locate the coverage report for a specific file.\n\nAdd links for uncovered files to make this easier.\n\nAlso move table titles out of the table so they are valid html."
+    },
+    {
+        "commit": "d6cea422a01b6645d78aebe0e547d4fd1688001b",
+        "date": "2020-03-16 18:18:30 -0400",
+        "subject": "Make cfgLoadLogSetting() static.",
+        "body": "This function was once required by the test harness."
+    },
+    {
+        "commit": "f7dac144a6393736e16f44d4103ec4d4ff6133dc",
+        "date": "2020-03-16 18:16:27 -0400",
+        "subject": "Reduce variables extern'd by the common/log module in debug builds.",
+        "body": "These days it is better to include the module in define.yaml when we need to poke at the internal implementation.\n\nThis doesn't quite work for the log test harness, so for now some variables will need to remain extern'd in debug builds."
+    },
+    {
+        "commit": "3fbfcba811499a59b943dd893eef9ff52090f7b6",
+        "date": "2020-03-16 17:27:01 -0400",
+        "subject": "Forbid access to /tmp/pgbackrest in the Vagrantfile.",
+        "body": "This matches the error that will be thrown in the vm=none test on Travis CI if a unit test writes to /tmp/pgbackrest."
+    },
+    {
+        "commit": "46911c64c19dc8ff76d2a6ff4548fc01647043e0",
+        "date": "2020-03-16 17:24:21 -0400",
+        "subject": "Make storage and logging dry-run aware.",
+        "body": "Enhance dry-run support added in 2fa69af8 by forbidding writes in the storage layer and adding prefixes to log messages.\n\nThe former will protect against mistakes in dry-run implementations and the latter will make it clear when a command was executed in dry-run mode.\n\nUpdate expire unit tests with the new log prefix."
+    },
+    {
+        "commit": "2fa69af8da4075e82359a8585ecde2f2030db546",
+        "date": "2020-03-16 13:56:52 -0400",
+        "subject": "Add --dry-run option to the expire command.",
+        "body": "Use dry-run to see which backups/archive would be removed by the expire command without actually removing anything."
+    },
+    {
+        "commit": "4608ca473e6d8c92762eee08169b50072bec0821",
+        "date": "2020-03-16 12:50:37 -0400",
+        "subject": "Fix indentation."
+    },
+    {
+        "commit": "4328bc1ac64726e810dfa76d0d1149ded6c93770",
+        "date": "2020-03-16 08:41:32 -0400",
+        "subject": "Move raw coverage results to test/result/raw path.",
+        "body": "These results were stored in the vagrant path along with a full copy of src.\n\nInstead store the raw coverage data in test/result/raw and change source references to the files that already exist in [test-path]/repo."
+    },
+    {
+        "commit": "d7022495075682b35441a31e22606bdcffdb9b86",
+        "date": "2020-03-15 10:09:27 -0400",
+        "subject": "Build binaries in the test path rather than the vagrant path.",
+        "body": "It makes more sense to build in the test path since many developers won't have a vagrant path. Anyway, it's better not to modify the vagrant path since it belongs to vagrant.\n\nInstead of installing the binary just mount it into the container from where it was built. This saves a bit of time and space."
+    },
+    {
+        "commit": "19d975346b2688aa1a7b9e2dc68baecb9f6e7af2",
+        "date": "2020-03-15 09:59:22 -0400",
+        "subject": "Improve stability of command/check test module.",
+        "body": "When pgbackrest was present this test behaved unexpectedly.\n\nWhile the binary is not currently required for this test is might be in the future so fix the test to prevent a regression."
+    },
+    {
+        "commit": "da89d0ad6157487f820632cbc7109c8a91f56cc9",
+        "date": "2020-03-15 09:53:42 -0400",
+        "subject": "Add VPATH to Makefile.",
+        "body": "This allows builds in a separate directory without copying the source."
+    },
+    {
+        "commit": "959dce569b150cf221f2f38a3c4f438964ca324e",
+        "date": "2020-03-14 18:30:24 -0400",
+        "subject": "Update code classification and remove XS definition."
+    },
+    {
+        "commit": "213cc6e8becd9974351cb28d08bef01184bf6ad3",
+        "date": "2020-03-14 15:40:37 -0400",
+        "subject": "Move docker files to test/result."
+    },
+    {
+        "commit": "6827e248cd3ce9b92ef4bbddb79dfe0b32c1a6ef",
+        "date": "2020-03-14 15:29:42 -0400",
+        "subject": "Move coverage results to test/result."
+    },
+    {
+        "commit": "75ff25f17fda6e3198aa8e227bc535dc5d8fb969",
+        "date": "2020-03-14 14:50:36 -0400",
+        "subject": "Move profile results to test/result."
+    },
+    {
+        "commit": "0f7fe55f728345426da2514e2c866678921114a6",
+        "date": "2020-03-14 14:35:09 -0400",
+        "subject": "Build packages on demand only and change build path.",
+        "body": "Building packages is not a normal part of development so don't build packages by default. Instead build them in CI as needed.\n\nDo the builds in test/result instead of .vagrant to be friendlier with hosts that are not running vagrant. Anyway, it's probably not a good idea to be creating files in the .vagrant path."
+    },
+    {
+        "commit": "5645c91ed5cb48f0dbcb92439405dcefe7d1156a",
+        "date": "2020-03-14 14:18:22 -0400",
+        "subject": "Add comments to test/.gitignore."
+    },
+    {
+        "commit": "b4c94e42b903059c044128710ef9e61ff5f1aa67",
+        "date": "2020-03-14 13:06:21 -0400",
+        "subject": "Auto-detect presence of clobbered warning.",
+        "body": "Not all compilers (e.g. clang) support this warning so only disable it (i.e. -Wno-clobbered) when supported."
+    },
+    {
+        "commit": "4cd060b7fe6e2f9cc7ca8f8c128d1b5c1de9c137",
+        "date": "2020-03-14 12:48:08 -0400",
+        "subject": "Generate src/build/aclocal.m4 automatically.",
+        "body": "This file is required when macros from the autoconf archive are used in configure.ac"
+    },
+    {
+        "commit": "9e80c5710e8e8005dee553b4583dc062dfc3ca62",
+        "date": "2020-03-14 12:39:29 -0400",
+        "subject": "Use a checksum to build configure.ac more efficiently.",
+        "body": "Building the configure.ac script can take multiple seconds depending on the state of the autoconf cache. Use a checksum to only rebuild when configure.ac has changed no matter how the timestamps have changed."
+    },
+    {
+        "commit": "748f9502eb06b1315551b5967eb5c6255fe9e072",
+        "date": "2020-03-14 10:04:49 -0400",
+        "subject": "Remove obsolete ignore."
+    },
+    {
+        "commit": "237a3da4d69bf068652c6f5cc805c313f725b129",
+        "date": "2020-03-13 09:07:57 -0400",
+        "subject": "Configure and make improvements.",
+        "body": "Configure:\n\n* Use standard make variables, e.g. CFLAGS, rather than our own, e.g. CINCLUDE\n* Add PG_CONFIG var for configuring custom pg_config location\n* Don't error if xml_config or pg_config is missing (but error if libs/headers not found)\n* Check for zlib.h header\n* Check for lz4frame.h header when liblz4 is present\n\nMake:\n\n* Use gcc-style auto dependencies\n* Put src list at the top since it is most frequently modified\n* Add clean-all target to also remove auto-generated config files"
+    },
+    {
+        "commit": "810b2a5265888a7ba46c85cee52ca7b7b269608d",
+        "date": "2020-03-12 13:18:08 -0400",
+        "subject": "Remove obsolete ignore."
+    },
+    {
+        "commit": "4b24a74afb5c3ed1f176287070a3b1f58fa4b479",
+        "date": "2020-03-12 11:38:50 -0400",
+        "subject": "Fix detection of keepalive options on Linux.",
+        "body": "This code stanza was not being included on Linux platforms because of a missing header file.\n\nAlso update the order of operations and make the timeout calculations more sensible."
+    },
+    {
+        "commit": "e9c1569d8e2b55762784b8c74c1092b4ad3cadf9",
+        "date": "2020-03-12 10:48:40 -0400",
+        "subject": "Fix missing cast.",
+        "body": "This was a problem in testing when -Wconversion was enabled and TCP_KEEPIDLE was defined."
+    },
+    {
+        "commit": "d6ef6c57c336d56561ce84e63a75880e293e0b8f",
+        "date": "2020-03-12 10:37:19 -0400",
+        "subject": "Add configure host detection to set standards flags correctly.",
+        "body": "Linux and MacOS were tolerant of having all standards flags set but BSD was not.\n\nInstead detect the host type and set standards flags as appropriate."
+    },
+    {
+        "commit": "fa1f63198d7af2ae7c3a7d26af972f81de15d215",
+        "date": "2020-03-12 10:03:57 -0400",
+        "subject": "Add scripts required for host detection by src/configure.",
+        "body": "Add to the src/build directory so they will be out of the way.\n\nAlso add instructions for updating the scripts to RELEASE.md."
+    },
+    {
+        "commit": "c3b6bd2e831c4f29fdfb69d36fe6d21da1a322be",
+        "date": "2020-03-12 09:50:10 -0400",
+        "subject": "Add separators to make configure.ac easier to read."
+    },
+    {
+        "commit": "ccdf4bf3ccb091a1371646f65583a77105c43e0d",
+        "date": "2020-03-12 09:43:29 -0400",
+        "subject": "Add repo path env var to make release commands easier to run."
+    },
+    {
+        "commit": "838ef4eca1a1fa2c791fa4913a3cae803eb4c8a8",
+        "date": "2020-03-12 09:34:52 -0400",
+        "subject": "Move configure.ac to src/build.",
+        "body": "This file is used to generate src/configure and is not required to make pgbackrest since src/configure is updated before distribution.\n\nMove to src/build so it is out of the way."
+    },
+    {
+        "commit": "79a6798f39124db044f0af5091027ecb255ba033",
+        "date": "2020-03-12 09:28:59 -0400",
+        "subject": "Remove extra spaces."
+    },
+    {
+        "commit": "2ac9c19d4a2a3e75373b97ab2360f11469998448",
+        "date": "2020-03-12 09:28:16 -0400",
+        "subject": "Fix misleading comment."
+    },
+    {
+        "commit": "181fa1fc8bbc4af06e1ff491b165b3b0e78cdfd6",
+        "date": "2020-03-12 09:27:44 -0400",
+        "subject": "Detect changes in reference.xml for code auto-generation.",
+        "body": "Changes to reference.xml can affect the command-line documentation built into the binary so changes must trigger an auto-generated code build during smart builds."
+    },
+    {
+        "commit": "0ba8062f5f04e22edb5700be3d8eb26255ea68d4",
+        "date": "2020-03-12 08:48:45 -0400",
+        "subject": "Get package source files dynamically during package build.",
+        "body": "The prior method was to build a special container to hold these files which meant they would get stale on development systems.  On CI the container was always rebuilt so failures would be seen there even when dev seemed to be working.\n\nInstead get the package source when the package is built to ensure it is as up-to-date as possible.\n\nThis change was prompted by failures on the Ubuntu 12.04 container while getting the package source, probably due to an ancient version of git.  Package builds are no longer supported on that platform with the addition of lz4 compression so it didn't seem worth fixing."
+    },
+    {
+        "commit": "4a5bd002c0071960b537e6d1dc35efe626146956",
+        "date": "2020-03-10 17:57:02 -0400",
+        "subject": "Move pgBackRest::Version module to pgBackRestDoc::ProjectInfo.",
+        "body": "The primary source for project info is now src/version.h.\n\nThe pgBackRestDoc::ProjectInfo module loads the project info from src/version.h at runtime so there is no need to update it."
+    },
+    {
+        "commit": "731b862e6faf266c7ddbbd01a85496147d8bf7a6",
+        "date": "2020-03-10 15:41:56 -0400",
+        "subject": "Rename BackRestDoc Perl module to pgBackRestDoc.",
+        "body": "This is consistent with the way BackRest and BackRest test were renamed way back in 18fd2523.\n\nMore modules will be moving to pgBackRestDoc soon so renaming now reduces churn later."
+    },
+    {
+        "commit": "36d4ab9bff668efcbbbf3393d80bd53f0be09a67",
+        "date": "2020-03-10 15:12:44 -0400",
+        "subject": "Move Perl modules out of lib directory.",
+        "body": "This directory was once the home of the production Perl code but since f0ef73db this is no longer true.\n\nMove the modules to test in most cases, except where the module is expected to be useful for the doc engine beyond the expected lifetime of the Perl test code (about a year if all goes well).\n\nThe exception is pgBackRest::Version which requires more work to migrate since it is used to track pgBackRest versions."
+    },
+    {
+        "commit": "c279a00279e3c5b956f6dc4496454a9c4ccaa487",
+        "date": "2020-03-10 14:45:27 -0400",
+        "subject": "Add lz4 compression support.",
+        "body": "LZ4 compresses data faster than gzip but at a lower ratio.  This can be a good tradeoff in certain scenarios.\n\nNote that setting compress-type=lz4 will make new backups and archive incompatible (unrestorable) with prior versions of pgBackRest."
+    },
+    {
+        "commit": "cc9d7315dbb4e66cd281dc2156faf529e566ddbc",
+        "date": "2020-03-10 14:05:00 -0400",
+        "subject": "Rename flush->flushing to be consistent with usage in other modules."
+    },
+    {
+        "commit": "79cfd3aebf4848c325d6eb98f5fe88f7f03805b0",
+        "date": "2020-03-09 17:41:59 -0400",
+        "subject": "Remove LibC.",
+        "body": "This was the interface between Perl and C introduced in 36a5349b but since f0ef73db has only been used by the Perl integration tests.  This is expensive code to maintain just for testing.\n\nThe main dependency was the interface to storage, no matter where it was located, e.g. S3.  Replace this with the new-introduced repo commands (d3c83453) that allow access to repo storage via the command line.\n\nThe other dependency was on various cfgOption* functions and CFGOPT_ constants that were convenient but not necessary.  Replace these with hard-coded strings in most places and create new constants for commonly used values.\n\nRemove all auto-generated Perl code.  This means that the error list will no longer be maintained automatically so copy used errors to Common::Exception.pm.  This file will need to be maintained manually going forward but there is not likely to be much churn as the Perl integration tests are being retired.\n\nUpdate test.pl and related code to remove LibC builds.\n\nDing, dong, LibC is dead."
+    },
+    {
+        "commit": "d3c83453deffa6435ec5c4a932ad62a3d4d2cd95",
+        "date": "2020-03-09 17:15:03 -0400",
+        "subject": "Add repo-create, repo-get, repo-put, and repo-rm commands.",
+        "body": "These commands are generally useful but more importantly they allow removing LibC by providing the Perl integration tests an alternate way to work with repository storage.\n\nAll the commands are currently internal only and should not be used on production repositories."
+    },
+    {
+        "commit": "948835fb84010f515ec90395bd0c009e9884ad82",
+        "date": "2020-03-09 16:54:07 -0400",
+        "subject": "Update repo-ls command to work better with files.",
+        "body": "If the command was passed a file it would return no results since it was originally intended to list files when passed a path.\n\nHowever, as a general purpose command working directly with files makes sense."
+    },
+    {
+        "commit": "5e1291a29f65d0430966756c4031f6cc307ca208",
+        "date": "2020-03-09 16:41:04 -0400",
+        "subject": "Rename ls command to repo-ls.",
+        "body": "This command only makes sense for the repository storage since other storage (e.g. pg and spool) must be located on a local Posix filesystem and can be listed using standard unix commands.  Since the repo storage can be located lots of places having a common way to list it makes sense.\n\nPrefix with repo- to make the scope of this command clear.\n\nUpdate documentation to reflect this change."
+    },
+    {
+        "commit": "f581edfa509c0879164597eba5ecf9dc287ca08d",
+        "date": "2020-03-09 13:36:46 -0400",
+        "subject": "Remove valgrind suppressions made obsolete by f0ef73db."
+    },
+    {
+        "commit": "3c4f91b31929c56f43ebb8f9bd48f39295dae917",
+        "date": "2020-03-09 13:35:26 -0400",
+        "subject": "Remove Perl unit tests made obsolete in 434cd832.",
+        "body": "These were replaced by C unit tests but not all the unit test setup code was removed in the Perl module."
+    },
+    {
+        "commit": "e93f1dd898ea76e4068d3723f36282bf715cd9d8",
+        "date": "2020-03-06 15:33:57 -0500",
+        "subject": "Fix incorrect parameter in logging function."
+    },
+    {
+        "commit": "54bc3b454a18677610d54e37813c51ad36b6c7d8",
+        "date": "2020-03-06 15:01:50 -0500",
+        "subject": "Cleanup pgPageChecksum() test in postgres/interface module.",
+        "body": "Some of the comments were wrong or inconsistent.\n\nUpdate TEST_RESULT_U16_HEX() to the less-specific TEST_RESULT_UINT_HEX()."
+    },
+    {
+        "commit": "438b957f9cf11b1c23636ec781c67f59bf4a8af1",
+        "date": "2020-03-06 14:41:03 -0500",
+        "subject": "Add infrastructure for multiple compression type support.",
+        "body": "Add compress-type option and deprecate compress option. Since the compress option is boolean it won't work with multiple compression types. Add logic to cfgLoadUpdateOption() to update compress-type if it is not set directly. The compress option should no longer be referenced outside the cfgLoadUpdateOption() function.\n\nAdd common/compress/helper module to contain interface functions that work with multiple compression types. Code outside this module should no longer call specific compression drivers, though it may be OK to reference a specific compression type using the new interface (e.g., saving backup history files in gz format).\n\nUnit tests only test compression using the gz format because other formats may not be available in all builds. It is the job of integration tests to exercise all compression types.\n\nAdditional compression types will be added in future commits."
+    },
+    {
+        "commit": "02aa03d1a266827b7ff5cb739b9598e475777086",
+        "date": "2020-03-06 14:10:09 -0500",
+        "subject": "Remove obsolete methods in pgBackRest::Storage::Storage module.",
+        "body": "All the methods in this module will need to be implemented via the command-line in order to get rid of LibC, so the first step is to reduce the code in the module as much as possible.\n\nFirst remove storageDb() and use storageTest() instead.  Then create storageTest() using pgBackRestTest::Common::Storage which has no dependencies on LibC.  Now the only storage using the LibC interface is storageRepo().\n\nRemove all link functions since those operations cannot be performed on a repo unless it is Posix, in which case the LibC interface is not needed.  Same for owner().\n\nRemove pathSync() because syncs are not required in the tests.  No test data is reused after a crash.\n\nPath create/exists functions should never be explicitly performed on a repo so remove those.  File exists can be implemented by calling info() instead.\n\nRemove encryption detection functions which were only used by Backup/Archive::Info reconstruct() which are now obsolete.\n\nRemove all filters except pgBackRest::Storage::Filter::CipherBlock since they are not being used.  That also means there are no filters returning results so remove all the result code.\n\nMove hashSize() and pathAbsolute() into pgBackRest::Storage::Base where they can be shared between pgBackRest::Storage::Storage and pgBackRestTest::Common::Storage."
+    },
+    {
+        "commit": "00647c7109cab28110d7dabd3da039b391507d50",
+        "date": "2020-03-06 07:21:17 -0500",
+        "subject": "Remove Perl Db module and LibC dependencies.",
+        "body": "This was mostly dead code except the DB_BACKUP_ADVISORY_LOCK constant, moved to the real/all test module, and the function that pulls info from pg_control, moved to ExpireEnvTest.pm."
+    },
+    {
+        "commit": "2e0fe2565025d0408e3d0f740fe1e5916d3ebbc0",
+        "date": "2020-03-05 18:34:59 -0500",
+        "subject": "Remove dependency on LibC hash filter.",
+        "body": "Perl provides Digest::SHA for hashing so there is no need to expose this via LibC anymore."
+    },
+    {
+        "commit": "e55443c890181ea63a350275447885331c8254e4",
+        "date": "2020-03-05 16:12:54 -0500",
+        "subject": "Move logic from postgres/pageChecksum to command/backup/pageChecksum().",
+        "body": "The postgres/pageChecksum module was designed as an interface to the C structs for the Perl code.  The new C code can do this directly so no need for an interface.\n\nMove the remaining test for pgPageChecksum() into the postgres/interface test module."
+    },
+    {
+        "commit": "3796b74dcac29d7e7e7f89b69d3fa92b9d105a17",
+        "date": "2020-03-05 14:23:01 -0500",
+        "subject": "Use stock PostgreSQL page checksum implementation.",
+        "body": "We were using a customized version which worked fine but was hard to merge with upstream changes.  Now this code is maintained much like the types in static.auto.h that we copy and check with each release.\n\nThe goal is to eventually build directly against PostgreSQL (either source or libcommon) and this brings us one step closer."
+    },
+    {
+        "commit": "1b647a1a22ae36e2447dc04384ab794b011a74aa",
+        "date": "2020-03-05 14:06:36 -0500",
+        "subject": "Remove invalid page checksum test.",
+        "body": "All zero pages should not have checksums.  Not only is this test invalid but it will not work with the stock page checksum implementation in PostgreSQL, which checks for zero pages.  Since we will be using that code verbatim soon this test needs to go."
+    },
+    {
+        "commit": "eb4347f20b85fa86208bb31b24b8b6f383432706",
+        "date": "2020-03-05 13:56:20 -0500",
+        "subject": "Use static checksums in mock/all integration tests.",
+        "body": "Using static values serves as a better cross-check against the page checksum code. The downside is that these checksums may not work with some big endian systems but in that case neither will the unit tests.\n\nWe can also remove the page checksum interface from LibC which brings us one step closer to eliminating it."
+    },
+    {
+        "commit": "77853d3c1387cd6ba42396e7ca29fae0f18ab6ac",
+        "date": "2020-03-05 11:14:53 -0500",
+        "subject": "Remove invalid const in pgPageChecksum() parameter.",
+        "body": "pgPageChecksum() must modify the page header in order to calculate the checksum.  The modification is temporary but make it clear that it happens by removing the const.\n\nAlso make a note about our non-entirely-kosher usage of a const Buffer in the PageChecksum filter.  This is safe as currently coded but at the least we need to be aware of what is going on."
+    },
+    {
+        "commit": "4ab8943ca886ec61934cea55182c1123cd4596a7",
+        "date": "2020-03-05 09:14:27 -0500",
+        "subject": "Use PG_PAGE_SIZE_DEFAULT constant instead of pageSize variable.",
+        "body": "Page size is passed around a lot but in fact it can only have one value, PG_PAGE_SIZE_DEFAULT, which is checked when pg_control is loaded. There may be an argument for supporting multiple page sizes in the future but for now just use the constant to simplify the code.\n\nThere is also a significant performance benefit.  Because pageSize was being used in pageChecksumBlock() the main loop was neither unrolled nor vectorized (-funroll-loops -ftree-vectorize) as it is now with a constant loop boundary."
+    },
+    {
+        "commit": "91f321fb865fe4569f50d3a280d9ad1f502b7cbd",
+        "date": "2020-03-04 14:24:40 -0500",
+        "subject": "Rename old page*() functions to conform to new conventions.",
+        "body": "The general convention now is to prefix PostgreSQL functions with \"pg\"."
+    },
+    {
+        "commit": "a86253f1128ad7cd3921826df4baec2e899667f9",
+        "date": "2020-03-04 14:12:02 -0500",
+        "subject": "Remove obsolete function pageChecksumBufferTest().",
+        "body": "This function made validation faster in Perl because fewer calls (and buffer transformations) were required when all checksums were valid.\n\nIn C calling pageChecksumTest() directly is just as efficient so there is no longer a need for pageChecksumBufferTest()."
+    },
+    {
+        "commit": "9d488822682ec425e5ac4b0946a89eef240fc172",
+        "date": "2020-03-04 13:31:27 -0500",
+        "subject": "Centralize PostgreSQL page header data structures.",
+        "body": "These data structures were copied a few places (but only once in the core code) so put them in a place where everyone can use them.\n\nTo do this create a new file, static.auto.h, to contain data types and macros that have stayed the same through all the versions of PostgreSQL that we support.  This allows us to have single, non-versioned set of headers and code for stable data structures like page headers.\n\nMigrate a few types from version.auto.h that are required for page header structures and pull the remaining types from PostgreSQL directly.\n\nWe had previously renamed xlog to wal so update those where required since we won't be modifying the PostgreSQL names anymore."
+    },
+    {
+        "commit": "a88d709962f761a51b21dd60688c5915bbdccddb",
+        "date": "2020-03-03 18:05:54 -0500",
+        "subject": "Add missing copyright notice."
+    },
+    {
+        "commit": "e8daabb963e6220f8b14672a6a9e3b3a118b4655",
+        "date": "2020-03-03 18:01:56 -0500",
+        "subject": "Remove incorrect comment.",
+        "body": "This was likely pasted from pageChecksum() and not removed."
+    },
+    {
+        "commit": "507a58460e9c33361baf3f1cbf2b95c9cb0dd5ae",
+        "date": "2020-02-29 07:52:54 -0500",
+        "subject": "Minor adjustments to common prefix code updated in 8ec41efb."
+    },
+    {
+        "commit": "8ec41efb04ee45854d18ffaf765e4a4800dd3879",
+        "date": "2020-02-28 17:41:34 -0500",
+        "subject": "Improve poor man's regular expression common prefix generator.",
+        "body": "The S3 driver depends on being able to generate a common prefix to limit the number of results from list commands, which saves on bandwidth.\n\nThe prior implementation could be tricked by an expression like ^ABC|^DEF where there is more than one possible prefix.  To fix this disallow any prefix when another ^ anchor is found in the expression.  [^ and \\^ are OK since they are not anchors.\n\nNote that this was not an active bug because there are currently no expressions with multiple ^ anchors."
+    },
+    {
+        "commit": "3bbead548026155c8bb5b212bed80903a3ef6a97",
+        "date": "2020-02-28 15:03:01 -0500",
+        "subject": "Add missing asserts.",
+        "body": "These interface functions did not exist when the Storage object was created but they are now required."
+    },
+    {
+        "commit": "19ea699e90a4f797c7f168cc853faf4b8e807056",
+        "date": "2020-02-28 15:00:09 -0500",
+        "subject": "Add function comment."
+    },
+    {
+        "commit": "ceb050e950c596835a9ab3b136b0de4983c69a54",
+        "date": "2020-02-28 14:50:50 -0500",
+        "subject": "Fix flapping test in real/all module.",
+        "body": "The restore test function was passing strBackup to the restoreCompare function but when the restore is expected to pick a backup based on a timestamp, then strBackup may not be the one chosen.\n\nModified the code so that strBackupExpected is set based on the parameters passed to the function and this is then passed to restoreCompare."
+    },
+    {
+        "commit": "089049ec563b021a69c46929f5fae13a1fdf0528",
+        "date": "2020-02-28 14:30:39 -0500",
+        "subject": "Add sleep before/after retrieving timestamp in the user guide.",
+        "body": "Adding a sleep before was necessary since only adding a sleep after did not always work. This helps to ensure the backup stop time for the previous backup does not equal time-recovery-timestamp. The sleep after allows enough time between the time retrieval and dropping important_table so PostgreSQL can consistently recover to before the table drop.\n\nNote that these issues were caused by picking a timestamp too close to the restore command or a database operation, not due to any problem in backup selection of the restore command."
+    },
+    {
+        "commit": "7d8c0d29fb5b2663c9c4b6be0b9f697a6c19c0fc",
+        "date": "2020-02-27 14:51:40 -0500",
+        "subject": "Remove compress option from config tests.",
+        "body": "This option was used for boolean testing but it will soon be deprecated and the semantics changed.  To reduce churn it seems easiest to just use other options for testing.  This will also be helpful when the option is eventually removed."
+    },
+    {
+        "commit": "dbf6255ab8ca9a141f9a7fbd1fda99006cce9e05",
+        "date": "2020-02-27 12:25:32 -0500",
+        "subject": "Remove compress/compress-level options from commands where unused.",
+        "body": "These commands (e.g. restore, archive-get) never used the compress options but allowed them to be passed on the command line. Now they will error when these options are passed on the command line. If these errors occur then remove the unused options."
+    },
+    {
+        "commit": "8f5337a136bcb8edf672a335164fc36768f22a73",
+        "date": "2020-02-27 12:21:53 -0500",
+        "subject": "Add missing static keywords.",
+        "body": "Interface functions should be marked static since they can only be called through the IoFilter interface."
+    },
+    {
+        "commit": "3f77a83e7367a05d7fee9612159e671910db25e0",
+        "date": "2020-02-27 12:19:40 -0500",
+        "subject": "Remove raw option for gz compression.",
+        "body": "This was a minor optimization used in protocol layer compression.  Even though it was slightly faster, it omitted the crc-32 that is generated during normal compression which could lead to corrupt data after a bad network transmission.  This would be caught on restore by our checksum but it seems better to catch an issue like this early.\n\nThe raw option also made the function signature different than future compression formats which may not support raw, or require different code to support raw.\n\nIn general, it doesn't seem worth the extra testing to support a format that has minimal benefit and is seldom used, since protocol compression is only enabled when the transmitted data is uncompressed."
+    },
+    {
+        "commit": "ee351682dae215ccbb2ae9d5c0932a41580635dd",
+        "date": "2020-02-27 12:09:05 -0500",
+        "subject": "Rename \"gzip\" to \"gz\".",
+        "body": "\"gz\" was used as the extension but \"gzip\" was generally used for function and type naming.\n\nWith a new compression format on the way, it makes sense to standardize on a single abbreviation to represent a compression format in the code.  Since the extension is standard and we must use it, also use the extension for all naming."
+    },
+    {
+        "commit": "5afd950ed98b7eea0bc0c52851fdbe4fb7637698",
+        "date": "2020-02-26 21:15:39 -0500",
+        "subject": "Improve performance of MEM_CONTEXT*() macros.",
+        "body": "The prior code used TRY...CATCH blocks to cleanup mem contexts when an error occurred. This included freeing new mem contexts that were still being initialized when the error occurred and ensuring that the prior memory context was restored.\n\nThis worked fine in production but it involved a lot of setjmp()/longjmp() calls that resulted in longer compilation times and sluggish performance under valgrind, profiling, and coverage testing.\n\nInstead maintain a stack of new contexts and context switches that can be used to do cleanup after an error. Normally, the stack is not used for this purpose and pushing/popping is a cheap operation. In the prior implementation most of the TRY...CATCH logic needed to be run even on success.\n\nOne bonus is that the binary is about 8% smaller after this change.  Another benefit is that new contexts *must* be explicitly freed/discarded or an error will occur.  See info/manifest.c for an example of where this is useful outside the standard macros."
+    },
+    {
+        "commit": "d68771a4a5f0f349ba31679a27bc7b2ab8b0d736",
+        "date": "2020-02-26 20:40:24 -0500",
+        "subject": "Fix incorrect lcov version in contributing guide."
+    },
+    {
+        "commit": "99b052a38ab41c2f10a68f234830508904341139",
+        "date": "2020-02-25 17:25:12 -0500",
+        "subject": "Update enum formatting and NULL test to project style."
+    },
+    {
+        "commit": "9e0dc83e878fbe407b8daf05710a8b8e73638c6e",
+        "date": "2020-02-25 17:18:25 -0500",
+        "subject": "Begin v2.25 development."
+    },
+    {
         "commit": "495dec44f0f512478ac942091ca2a29c60ad4911",
         "date": "2020-02-25 17:05:45 -0500",
         "subject": "v2.24: Auto-Select Backup Set for Time Target"

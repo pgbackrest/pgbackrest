@@ -46,6 +46,8 @@ static char testGroupData[64];
 
 static struct HarnessTestLocal
 {
+    uint64_t logLastBeginTime;                                      // Store the begin time of the last log for deltas
+
     struct HarnessTestResult
     {
         bool running;                                               // Is the test currently running?
@@ -207,6 +209,8 @@ testBegin(const char *name)
 
         result = true;
     }
+
+    harnessTestLocal.logLastBeginTime = 0;
 
     FUNCTION_HARNESS_RESULT(BOOL, result);
 }
@@ -411,9 +415,24 @@ hrnTestLogPrefix(int lineNo, bool padding)
     // Add timing if requested
     if (testTiming)
     {
+        uint64_t currentTime = testTimeMSec();
+
+        // Print elapsed time size the beginning of the test run
         printf(
-            "%03u.%03us ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000));
+            "%03" PRIu64 ".%03" PRIu64"s", ((currentTime - testTimeMSecBegin()) / 1000),
+            ((currentTime - testTimeMSecBegin()) % 1000));
+
+        // Print delta time since the last log message
+        if (harnessTestLocal.logLastBeginTime != 0)
+        {
+            printf(
+                " %03" PRIu64 ".%03" PRIu64"s ", ((currentTime - harnessTestLocal.logLastBeginTime) / 1000),
+                ((currentTime - harnessTestLocal.logLastBeginTime) % 1000));
+        }
+        else
+            printf("          ");
+
+        harnessTestLocal.logLastBeginTime = currentTime;
     }
 
     // Add number and padding

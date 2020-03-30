@@ -133,10 +133,7 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec(
-        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl' .
-            ' pkg-config',
-        {bSuppressStdErr => true});
+    processExec('sudo apt-get install -y libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
     processBegin('mount tmpfs');
@@ -178,17 +175,20 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "libperl-dev";
+        my $strPackage = "rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config";
 
+        # Add lcov when testing coverage
         if (vmCoverageC($strVm))
         {
             $strPackage .= " lcov";
         }
 
+        # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
             $strPackage .= " valgrind liblz4-dev liblz4-tool";
         }
+        # Else packages needed for integration tests on containers
         else
         {
             $strPackage .= " libdbd-pg-perl";

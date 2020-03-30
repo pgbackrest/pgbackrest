@@ -84,6 +84,7 @@ test.pl [options]
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
+   --no-performance     do not run performance tests
    --gen-only           only run auto-generation
    --no-gen             do not run code generation
    --code-count         generate code counts
@@ -161,6 +162,7 @@ my $bCoverageSummary = false;
 my $bNoCoverage = false;
 my $bCOnly = false;
 my $bContainerOnly = false;
+my $bNoPerformance = false;
 my $bGenOnly = false;
 my $bNoGen = false;
 my $bCodeCount = false;
@@ -213,6 +215,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
             'container-only' => \$bContainerOnly,
+            'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
@@ -702,7 +705,8 @@ eval
         {
             # Get the test list
             $oyTestRun = testListGet(
-                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly);
+                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly,
+                $bNoPerformance);
 
             # Determine if the C binary and test library need to be built
             foreach my $hTest (@{$oyTestRun})

@@ -162,11 +162,6 @@ Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ${PGBR_REPO?}/doc/release.pl --build
 ```
 
-Build to generate files and test documentation:
-```
-${PGBR_REPO?}/test/test.pl --vm=u18 --build-only
-```
-
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."

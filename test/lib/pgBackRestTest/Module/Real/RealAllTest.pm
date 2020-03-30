@@ -549,6 +549,11 @@ sub run
 
         # Setup the time targets
         #---------------------------------------------------------------------------------------------------------------------------
+        # If the tests are running quickly then the time target might end up the same as the end time of the prior full backup. That
+        # means restore auto-select will not pick it as a candidate and restore the last backup instead causing the restore compare
+        # to fail. So, sleep one second.
+        sleep(1);
+
         $oHostDbMaster->sqlExecute("update test set message = '$strTimeMessage'");
         $oHostDbMaster->sqlWalRotate();
         my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select current_timestamp");
