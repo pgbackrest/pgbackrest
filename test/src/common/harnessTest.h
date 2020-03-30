@@ -354,6 +354,14 @@ Test title macro
         fflush(stdout);                                                                                                            \
     } while(0)
 
+#define TEST_TITLE_FMT(format, ...)                                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__, false);                                                                                         \
+        printf(format "\n", __VA_ARGS__);                                                                                          \
+        fflush(stdout);                                                                                                            \
+    } while(0)
+
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/

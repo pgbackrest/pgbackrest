@@ -479,7 +479,7 @@ testRun(void)
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
-            " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");
+            " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
 
         setenv("TZ", "UTC", true);
     }
@@ -563,7 +563,7 @@ testRun(void)
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
-            " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");
+            " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
     }
 
     // *****************************************************************************************************************************
