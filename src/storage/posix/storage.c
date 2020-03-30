@@ -73,7 +73,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     {
         result.exists = true;
 
-        // Currently basic is the only way this can be called
+        // Add basic level info
         if (result.level >= storageInfoLevelBasic)
         {
             result.timeModified = statFile.st_mtime;
@@ -91,6 +91,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
                 result.type = storageTypeSpecial;
         }
 
+        // Add detail level info
         if (result.level >= storageInfoLevelDetail)
         {
             result.groupId = statFile.st_gid;
