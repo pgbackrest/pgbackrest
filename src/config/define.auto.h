@@ -151,6 +151,10 @@ typedef enum
     cfgDefOptTargetAction,
     cfgDefOptTargetExclusive,
     cfgDefOptTargetTimeline,
+    cfgDefOptTcpKeepAlive,
+    cfgDefOptTcpKeepAliveCount,
+    cfgDefOptTcpKeepAliveIdle,
+    cfgDefOptTcpKeepAliveInterval,
     cfgDefOptType,
 } ConfigDefineOption;
 

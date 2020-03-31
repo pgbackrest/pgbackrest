@@ -197,6 +197,14 @@ use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol
     push @EXPORT, qw(CFGOPT_PROTOCOL_TIMEOUT);
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(CFGOPT_PROCESS_MAX);
+use constant CFGOPT_TCP_KEEP_ALIVE                                  => 'tcp-keep-alive';
+    push @EXPORT, qw(CFGOPT_KEEP_ALIVE);
+use constant CFGOPT_TCP_KEEP_ALIVE_COUNT                            => 'tcp-keep-alive-count';
+    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_COUNT);
+use constant CFGOPT_TCP_KEEP_ALIVE_IDLE                             => 'tcp-keep-alive-idle';
+    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_IDLE);
+use constant CFGOPT_TCP_KEEP_ALIVE_INTERVAL                         => 'tcp-keep-alive-interval';
+    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_INTERVAL);
 
 # Commands
 use constant CFGOPT_CMD_SSH                                         => 'cmd-ssh';
@@ -1247,6 +1255,48 @@ my %hConfigDefine =
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         }
+    },
+
+    &CFGOPT_TCP_KEEP_ALIVE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+    },
+
+    &CFGOPT_TCP_KEEP_ALIVE_COUNT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+        &CFGDEF_ALLOW_RANGE => [1, 32],
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_TCP_KEEP_ALIVE,
+            &CFGDEF_DEPEND_LIST => [true],
+        },
+    },
+
+    &CFGOPT_TCP_KEEP_ALIVE_IDLE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+        &CFGDEF_ALLOW_RANGE => [1, 3600],
+        &CFGDEF_DEPEND => CFGOPT_TCP_KEEP_ALIVE_COUNT,
+    },
+
+    &CFGOPT_TCP_KEEP_ALIVE_INTERVAL =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+        &CFGDEF_ALLOW_RANGE => [1, 900],
+        &CFGDEF_DEPEND => CFGOPT_TCP_KEEP_ALIVE_COUNT,
     },
 
     &CFGOPT_DB_TIMEOUT =>

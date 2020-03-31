@@ -98,6 +98,104 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // *****************************************************************************************************************************
+    if (testBegin("tcp*()"))
+    {
+        // Save TCP settings
+        struct TcpLocal tcpLocalSave = tcpLocal;
+
+        struct addrinfo hints = (struct addrinfo)
+        {
+            .ai_family = AF_UNSPEC,
+            .ai_socktype = SOCK_STREAM,
+            .ai_protocol = IPPROTO_TCP,
+        };
+
+        struct addrinfo *hostAddress;
+        int result;
+        const char *host = "127.0.0.1";
+        const char *port = "7777";
+
+        if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
+            THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+
+        TRY_BEGIN()
+        {
+            int fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+            THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("enable keep-alive and options");
+
+            tcpInit(true, 32, 3113, 818);
+            tcpOptionSet(fd);
+
+            socklen_t socketValueSize = sizeof(int);
+            int keepAliveValue = 0;
+
+            THROW_ON_SYS_ERROR(
+                getsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &keepAliveValue, &socketValueSize) == -1, ProtocolError,
+                "unable get TCP_SO_KEEPALIVE");
+
+            TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
+
+            int keepAliveCountValue = 0;
+
+            THROW_ON_SYS_ERROR(
+                getsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &keepAliveCountValue, &socketValueSize) == -1, ProtocolError,
+                "unable get TCP_KEEPCNT");
+
+            TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
+
+            int keepAliveIdleValue = 0;
+
+            THROW_ON_SYS_ERROR(
+                getsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &keepAliveIdleValue, &socketValueSize) == -1, ProtocolError,
+                "unable get TCP_KEEPIDLE");
+
+            TEST_RESULT_INT(keepAliveIdleValue, 3113, "check TCP_KEEPIDLE");
+
+            int keepAliveIntervalValue = 0;
+
+            THROW_ON_SYS_ERROR(
+                getsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &keepAliveIntervalValue, &socketValueSize) == -1, ProtocolError,
+                "unable get TCP_KEEPIDLE");
+
+            TEST_RESULT_INT(keepAliveIntervalValue, 818, "check TCP_KEEPINTVL");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("disable keep-alive");
+
+            tcpInit(false, 0, 0, 0);
+            tcpOptionSet(fd);
+
+            TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
+            TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
+            TEST_RESULT_INT(keepAliveIdleValue, 3113, "check TCP_KEEPIDLE");
+            TEST_RESULT_INT(keepAliveIntervalValue, 818, "check TCP_KEEPINTVL");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("enable keep-alive but disable options");
+
+            tcpInit(true, 0, 0, 0);
+            tcpOptionSet(fd);
+
+            TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
+            TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
+            TEST_RESULT_INT(keepAliveIdleValue, 3113, "check TCP_KEEPIDLE");
+            TEST_RESULT_INT(keepAliveIntervalValue, 818, "check TCP_KEEPINTVL");
+        }
+        FINALLY()
+        {
+            // This needs to be freed or valgrind will complain
+            freeaddrinfo(hostAddress);
+        }
+        TRY_END();
+
+        // Restore TCP settings
+        tcpLocal = tcpLocalSave;
+    }
+
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
     if (testBegin("asn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))

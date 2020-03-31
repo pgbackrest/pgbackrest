@@ -405,10 +405,18 @@ Option constants
     STRING_DECLARE(CFGOPT_TARGET_EXCLUSIVE_STR);
 #define CFGOPT_TARGET_TIMELINE                                      "target-timeline"
     STRING_DECLARE(CFGOPT_TARGET_TIMELINE_STR);
+#define CFGOPT_TCP_KEEP_ALIVE                                       "tcp-keep-alive"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_COUNT_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_IDLE_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_INTERVAL_STR);
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            177
+#define CFG_OPTION_TOTAL                                            181
 
 /***********************************************************************************************************************************
 Command enum
@@ -618,6 +626,10 @@ typedef enum
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
+    cfgOptTcpKeepAlive,
+    cfgOptTcpKeepAliveCount,
+    cfgOptTcpKeepAliveIdle,
+    cfgOptTcpKeepAliveInterval,
     cfgOptType,
 } ConfigOption;
 

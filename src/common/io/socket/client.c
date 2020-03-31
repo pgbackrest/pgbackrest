@@ -9,18 +9,10 @@ Socket Client
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifdef __FreeBSD__
-#include <netinet/in.h>
-#endif
-
-#ifdef __linux__
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#endif
-
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/io/socket/client.h"
+#include "common/io/socket/tcp.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -149,6 +141,8 @@ sckClientOpen(SocketClient *this)
 
                     memContextCallbackSet(this->memContext, sckClientFreeResource, this);
 
+                    tcpOptionSet(this->fd);
+
                     if (connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
                         THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
                 }
@@ -157,33 +151,6 @@ sckClientOpen(SocketClient *this)
                     freeaddrinfo(hostAddress);
                 }
                 TRY_END();
-
-                // Enable TCP keepalives
-                int socketValue = 1;
-
-                THROW_ON_SYS_ERROR(
-                    setsockopt(this->fd, IPPROTO_TCP, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                     "unable set SO_KEEPALIVE");
-
-                // Set per-connection keepalive options if they are available
-#ifdef TCP_KEEPIDLE
-                socketValue = 3;
-
-                THROW_ON_SYS_ERROR(
-                    setsockopt(this->fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
-                     "unable set SO_KEEPCNT");
-
-                // First try + n failures to get to the timeout
-                socketValue = (int)this->timeout / (socketValue + 1);
-
-                THROW_ON_SYS_ERROR(
-                    setsockopt(this->fd, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                     "unable set SO_KEEPIDLE");
-
-                THROW_ON_SYS_ERROR(
-                    setsockopt(this->fd, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
-                     "unable set SO_KEEPINTVL");
-#endif
 
                 // Connection was successful
                 connected = true;

@@ -2349,6 +2349,57 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
     },
 
+    // tcp-keep-alive option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_TCP_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAlive,
+    },
+    {
+        .name = "no-" CFGOPT_TCP_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptTcpKeepAlive,
+    },
+    {
+        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAlive,
+    },
+
+    // tcp-keep-alive-count option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_TCP_KEEP_ALIVE_COUNT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveCount,
+    },
+    {
+        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_COUNT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveCount,
+    },
+
+    // tcp-keep-alive-idle option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_TCP_KEEP_ALIVE_IDLE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveIdle,
+    },
+    {
+        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_IDLE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveIdle,
+    },
+
+    // tcp-keep-alive-interval option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_TCP_KEEP_ALIVE_INTERVAL,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveInterval,
+    },
+    {
+        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_INTERVAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
+    },
+
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2522,6 +2573,10 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStopAuto,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
+    cfgOptTcpKeepAlive,
+    cfgOptTcpKeepAliveCount,
+    cfgOptTcpKeepAliveIdle,
+    cfgOptTcpKeepAliveInterval,
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,

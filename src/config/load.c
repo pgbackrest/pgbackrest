@@ -11,6 +11,7 @@ Configuration Load
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
+#include "common/io/socket/tcp.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -341,6 +342,16 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // If a command is set
         if (cfgCommand() != cfgCmdNone)
         {
+            // Initialize TCP settings
+            if (cfgOptionValid(cfgOptTcpKeepAlive))
+            {
+                tcpInit(
+                    cfgOptionBool(cfgOptTcpKeepAlive),
+                    cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
+                    cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
+                    cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
+            }
+
             // Set IO buffer size
             if (cfgOptionValid(cfgOptBufferSize))
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
