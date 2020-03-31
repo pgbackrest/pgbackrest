@@ -17,7 +17,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Older versions of lz4 do not define the max header size.  This seems to be the max for any version.

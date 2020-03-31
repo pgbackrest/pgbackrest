@@ -6,8 +6,8 @@ Http Client Cache
 #include "common/debug.h"
 #include "common/io/http/cache.h"
 #include "common/log.h"
-#include "common/object.h"
 #include "common/type/list.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type

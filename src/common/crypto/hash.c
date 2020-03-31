@@ -14,7 +14,7 @@ Cryptographic Hash
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************

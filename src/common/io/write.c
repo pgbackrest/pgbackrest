@@ -10,7 +10,7 @@ IO Write Interface
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type

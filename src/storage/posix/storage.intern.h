@@ -4,7 +4,7 @@ Posix Storage Internal
 #ifndef STORAGE_POSIX_STORAGE_INTERN_H
 #define STORAGE_POSIX_STORAGE_INTERN_H
 
-#include "common/object.h"
+#include "common/type/object.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************

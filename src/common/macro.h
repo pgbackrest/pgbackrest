@@ -16,7 +16,7 @@ Useful for converting non-string types (e.g. int) to strings for inclusion in me
 Glue together a string/macro and another string//macro
 
 Useful for creating function names when one or both of the macro parameter needs to be converted to a macro before concatenating.
-common/object.h has numerous examples of this.
+common/type/object.h has numerous examples of this.
 ***********************************************************************************************************************************/
 #define GLUE_HELPER(param1, param2)                                 param1##param2
 #define GLUE(param1, param2)                                        GLUE_HELPER(param1, param2)

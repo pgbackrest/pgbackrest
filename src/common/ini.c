@@ -12,7 +12,7 @@ Ini Handler
 #include "common/log.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type

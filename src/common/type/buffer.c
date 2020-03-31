@@ -8,7 +8,7 @@ Buffer Handler
 
 #include "common/debug.h"
 #include "common/type/buffer.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful

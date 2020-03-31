@@ -10,7 +10,7 @@ Http Client
 #include "common/io/read.intern.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************

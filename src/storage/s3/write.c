@@ -7,7 +7,7 @@ S3 Storage File write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/write.h"
 #include "storage/write.intern.h"

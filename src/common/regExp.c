@@ -8,7 +8,7 @@ Regular Expression Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************

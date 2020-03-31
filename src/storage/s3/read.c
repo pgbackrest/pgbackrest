@@ -11,7 +11,7 @@ S3 Storage Read
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "storage/s3/read.h"
 #include "storage/read.intern.h"
 

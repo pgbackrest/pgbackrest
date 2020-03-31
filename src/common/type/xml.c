@@ -11,8 +11,8 @@ Xml Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/list.h"
+#include "common/type/object.h"
 #include "common/type/xml.h"
 
 /***********************************************************************************************************************************

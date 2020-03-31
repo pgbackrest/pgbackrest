@@ -7,8 +7,8 @@ Http Query
 #include "common/io/http/common.h"
 #include "common/io/http/query.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/keyValue.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type

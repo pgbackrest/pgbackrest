@@ -4,9 +4,9 @@ Calculate Most Common Value
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/object.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
+#include "common/type/object.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************

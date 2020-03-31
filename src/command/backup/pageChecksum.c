@@ -8,7 +8,7 @@ Page Checksum Filter
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.auto.h"
 

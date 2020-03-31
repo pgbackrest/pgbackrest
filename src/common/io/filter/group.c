@@ -12,8 +12,8 @@ IO Filter Group
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/list.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Filter and buffer structure

@@ -6,7 +6,7 @@ Protocol Parallel Job
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "protocol/command.h"
 #include "protocol/parallelJob.h"
 

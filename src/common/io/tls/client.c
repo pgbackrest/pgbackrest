@@ -33,9 +33,9 @@ TLS Client
 #include "common/io/read.intern.h"
 #include "common/io/write.intern.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/time.h"
 #include "common/type/keyValue.h"
+#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************

@@ -863,7 +863,7 @@ src/common/memContext.h:
   class: core
   type: c/h
 
-src/common/object.h:
+src/common/type/object.h:
   class: core
   type: c/h
 

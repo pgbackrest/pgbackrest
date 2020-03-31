@@ -15,8 +15,8 @@ String) a shorter prefix may be used.
 When a macro exists to create a function definition in a C file there is no equivalent macro to create the prototype in the header.
 The prototype is not repetitious enough to justify a macro and it would only serve to obfuscate the header file.
 ***********************************************************************************************************************************/
-#ifndef COMMON_OBJECT_H
-#define COMMON_OBJECT_H
+#ifndef COMMON_TYPE_OBJECT_H
+#define COMMON_TYPE_OBJECT_H
 
 #include "common/macro.h"
 

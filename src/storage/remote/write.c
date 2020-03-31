@@ -8,7 +8,7 @@ Remote Storage File write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/write.h"
 #include "storage/write.intern.h"

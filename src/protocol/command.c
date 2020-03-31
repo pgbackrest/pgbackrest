@@ -6,9 +6,9 @@ Protocol Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
+#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
