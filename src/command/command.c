@@ -186,6 +186,12 @@ cmdEnd(int code, const String *errorMessage)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            // Log socket statistics
+            String *sckClientStat = sckClientStatStr();
+
+            if (sckClientStat != NULL)
+                LOG_DETAIL(strPtr(sckClientStat));
+
             // Log tls statistics
             String *tlsClientStat = tlsClientStatStr();
 

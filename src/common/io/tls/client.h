@@ -24,6 +24,7 @@ Object type
 
 typedef struct TlsClient TlsClient;
 
+#include "common/io/socket/client.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/time.h"
@@ -36,28 +37,34 @@ typedef struct TlsClientStat
 {
     uint64_t object;                                                // Objects created
     uint64_t session;                                               // Sessions created
-    uint64_t request;                                               // Requests (i.e. calls to tlsClientOpen())
     uint64_t retry;                                                 // Connection retries
 } TlsClientStat;
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-TlsClient *tlsClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+TlsClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Open tls connection
 bool tlsClientOpen(TlsClient *this);
+
+// Close tls connection
 void tlsClientClose(TlsClient *this);
-String *tlsClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-IoRead *tlsClientIoRead(const TlsClient *this);
-IoWrite *tlsClientIoWrite(const TlsClient *this);
+// Read interface
+IoRead *tlsClientIoRead(TlsClient *this);
+
+// Write interface
+IoWrite *tlsClientIoWrite(TlsClient *this);
+
+// Statistics as a formatted string
+String *tlsClientStatStr(void);
 
 /***********************************************************************************************************************************
 Destructor

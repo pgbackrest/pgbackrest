@@ -19,6 +19,7 @@ P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/arch
             HINT: is archive_command configured correctly in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-upgrade command end: aborted with exception [055]
@@ -27,6 +28,7 @@ stanza-create db - successfully create the stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-create command end: completed successfully
@@ -78,6 +80,7 @@ stanza-create db - do not fail on rerun of stanza-create - info files exist and 
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: stanza 'db' already exists and is valid
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-create command end: completed successfully
@@ -132,6 +135,7 @@ P00   WARN: option --force is no longer supported
 P00  ERROR: [028]: backup and archive info files exist but do not match the database
             HINT: is this the correct stanza?
             HINT: did an error occur during stanza-upgrade?
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-create command end: aborted with exception [028]
@@ -183,6 +187,7 @@ stanza-upgrade db - already up to date (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: stanza 'db' is already up to date
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-upgrade command end: completed successfully
@@ -250,6 +255,7 @@ stanza-upgrade db - successful upgrade creates additional history (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-upgrade command end: completed successfully
@@ -319,12 +325,14 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: remove archive path: /archive/db/9.3-1
 P00   INFO: full backup total < 2 - using oldest full backup for 9.4-2 archive retention
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -396,6 +404,7 @@ stanza-upgrade db - successfully upgrade (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-upgrade command end: completed successfully
@@ -457,6 +466,7 @@ P00  ERROR: [028]: backup info file and archive info file do not match
             archive: id = 2, version = 9.5, system-id = 1000000000000000095
             backup : id = 3, version = 9.5, system-id = 1000000000000000095
             HINT: this may be a symptom of repository corruption!
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-upgrade command end: aborted with exception [028]
@@ -524,10 +534,12 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=2 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -601,6 +613,7 @@ stanza-delete db - fail on missing stop file (backup host)
 P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00  ERROR: [055]: stop file does not exist for stanza 'db'
             HINT: has the pgbackrest stop command been run on this server for this stanza?
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-delete command end: aborted with exception [055]
@@ -625,6 +638,7 @@ stanza-delete db - successfully delete the stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-delete command end: completed successfully

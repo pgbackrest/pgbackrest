@@ -210,7 +210,7 @@ httpClientNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
-            .tls = tlsClientNew(host, port, timeout, verifyPeer, caFile, caPath),
+            .tls = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
         };
 
         httpClientStatLocal.object++;
