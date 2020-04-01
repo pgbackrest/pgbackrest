@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Tls Client
 ***********************************************************************************************************************************/
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "common/time.h"
@@ -129,6 +130,8 @@ testRun(void)
 
             sckInit(true, 32, 3113, 818);
             sckOptionSet(fd);
+
+            TEST_RESULT_INT(fcntl(fd, F_GETFD), FD_CLOEXEC, "check FD_CLOEXEC");
 
             socklen_t socketValueSize = sizeof(int);
             int noDelayValue = 0;

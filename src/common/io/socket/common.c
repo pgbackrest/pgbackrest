@@ -3,6 +3,8 @@ Socket Common Functions
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <fcntl.h>
+
 #ifdef __FreeBSD__
 #include <netinet/in.h>
 #endif
@@ -70,6 +72,12 @@ sckOptionSet(int fd)
 
     THROW_ON_SYS_ERROR(
         setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_NODELAY");
+#endif
+
+    // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
+    // processes so there is no reason to leave them open.
+#ifdef F_SETFD
+	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives
