@@ -76,43 +76,27 @@ use pgBackRestTest::Common::Wait;
 # Command constants - commands that are allowed in the exe
 ####################################################################################################################################
 use constant CFGCMD_ARCHIVE_GET                                     => 'archive-get';
-    push @EXPORT, qw(CFGCMD_ARCHIVE_GET);
 use constant CFGCMD_ARCHIVE_PUSH                                    => 'archive-push';
-    push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH);
 use constant CFGCMD_BACKUP                                          => 'backup';
     push @EXPORT, qw(CFGCMD_BACKUP);
 use constant CFGCMD_CHECK                                           => 'check';
-    push @EXPORT, qw(CFGCMD_CHECK);
 use constant CFGCMD_EXPIRE                                          => 'expire';
-    push @EXPORT, qw(CFGCMD_EXPIRE);
 use constant CFGCMD_HELP                                            => 'help';
     push @EXPORT, qw(CFGCMD_HELP);
 use constant CFGCMD_INFO                                            => 'info';
     push @EXPORT, qw(CFGCMD_INFO);
 use constant CFGCMD_REPO_CREATE                                     => 'repo-create';
-    push @EXPORT, qw(CFGCMD_REPO_CREATE);
 use constant CFGCMD_REPO_GET                                        => 'repo-get';
-    push @EXPORT, qw(CFGCMD_REPO_GET);
 use constant CFGCMD_REPO_LS                                         => 'repo-ls';
-    push @EXPORT, qw(CFGCMD_REPO_LS);
 use constant CFGCMD_REPO_PUT                                        => 'repo-put';
-    push @EXPORT, qw(CFGCMD_REPO_PUT);
 use constant CFGCMD_REPO_RM                                         => 'repo-rm';
-    push @EXPORT, qw(CFGCMD_REPO_RM);
 use constant CFGCMD_RESTORE                                         => 'restore';
-    push @EXPORT, qw(CFGCMD_RESTORE);
 use constant CFGCMD_STANZA_CREATE                                   => 'stanza-create';
-    push @EXPORT, qw(CFGCMD_STANZA_CREATE);
 use constant CFGCMD_STANZA_DELETE                                   => 'stanza-delete';
-    push @EXPORT, qw(CFGCMD_STANZA_DELETE);
 use constant CFGCMD_STANZA_UPGRADE                                  => 'stanza-upgrade';
-    push @EXPORT, qw(CFGCMD_STANZA_UPGRADE);
 use constant CFGCMD_START                                           => 'start';
-    push @EXPORT, qw(CFGCMD_START);
 use constant CFGCMD_STOP                                            => 'stop';
-    push @EXPORT, qw(CFGCMD_STOP);
 use constant CFGCMD_VERSION                                         => 'version';
-    push @EXPORT, qw(CFGCMD_VERSION);
 
 ####################################################################################################################################
 # Option constants - options that are allowed for commands
@@ -123,92 +107,55 @@ use constant CFGCMD_VERSION                                         => 'version'
 use constant CFGOPT_CONFIG                                          => 'config';
     push @EXPORT, qw(CFGOPT_CONFIG);
 use constant CFGOPT_CONFIG_PATH                                     => 'config-path';
-    push @EXPORT, qw(CFGOPT_CONFIG_PATH);
 use constant CFGOPT_CONFIG_INCLUDE_PATH                             => 'config-include-path';
-    push @EXPORT, qw(CFGOPT_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_DELTA                                           => 'delta';
-    push @EXPORT, qw(CFGOPT_DELTA);
 use constant CFGOPT_DRYRUN                                          => 'dry-run';
-    push @EXPORT, qw(CFGOPT_DRYRUN);
 use constant CFGOPT_FORCE                                           => 'force';
-    push @EXPORT, qw(CFGOPT_FORCE);
 use constant CFGOPT_ONLINE                                          => 'online';
-    push @EXPORT, qw(CFGOPT_ONLINE);
 use constant CFGOPT_SET                                             => 'set';
-    push @EXPORT, qw(CFGOPT_SET);
 use constant CFGOPT_STANZA                                          => 'stanza';
     push @EXPORT, qw(CFGOPT_STANZA);
 use constant CFGOPT_TARGET                                          => 'target';
-    push @EXPORT, qw(CFGOPT_TARGET);
 use constant CFGOPT_TARGET_EXCLUSIVE                                => 'target-exclusive';
-    push @EXPORT, qw(CFGOPT_TARGET_EXCLUSIVE);
 use constant CFGOPT_TARGET_ACTION                                   => 'target-action';
-    push @EXPORT, qw(CFGOPT_TARGET_ACTION);
 use constant CFGOPT_TARGET_TIMELINE                                 => 'target-timeline';
-    push @EXPORT, qw(CFGOPT_TARGET_TIMELINE);
 use constant CFGOPT_TYPE                                            => 'type';
-    push @EXPORT, qw(CFGOPT_TYPE);
 use constant CFGOPT_OUTPUT                                          => 'output';
-    push @EXPORT, qw(CFGOPT_OUTPUT);
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_PROCESS                                         => 'process';
-    push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
-    push @EXPORT, qw(CFGOPT_HOST_ID);
 use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
-    push @EXPORT, qw(CFGOPT_REMOTE_TYPE);
 
 # Command-line only storage options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_CIPHER_PASS                                     => 'cipher-pass';
-    push @EXPORT, qw(CFGOPT_CIPHER_PASS);
 use constant CFGOPT_FILTER                                          => 'filter';
-    push @EXPORT, qw(CFGOPT_FILTER);
 use constant CFGOPT_IGNORE_MISSING                                  => 'ignore-missing';
-    push @EXPORT, qw(CFGOPT_IGNORE_MISSING);
 use constant CFGOPT_RAW                                             => 'raw';
-    push @EXPORT, qw(CFGOPT_RAW);
 use constant CFGOPT_RECURSE                                         => 'recurse';
-    push @EXPORT, qw(CFGOPT_RECURSE);
 use constant CFGOPT_SORT                                            => 'sort';
-    push @EXPORT, qw(CFGOPT_SORT);
 
 # General options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_TIMEOUT                                 => 'archive-timeout';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_TIMEOUT);
 use constant CFGOPT_BUFFER_SIZE                                     => 'buffer-size';
-    push @EXPORT, qw(CFGOPT_BUFFER_SIZE);
 use constant CFGOPT_DB_TIMEOUT                                      => 'db-timeout';
-    push @EXPORT, qw(CFGOPT_DB_TIMEOUT);
 use constant CFGOPT_COMPRESS                                        => 'compress';
-    push @EXPORT, qw(CFGOPT_COMPRESS);
 use constant CFGOPT_COMPRESS_TYPE                                   => 'compress-type';
-    push @EXPORT, qw(CFGOPT_COMPRESS_TYPE);
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
-    push @EXPORT, qw(CFGOPT_COMPRESS_LEVEL);
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
-    push @EXPORT, qw(CFGOPT_COMPRESS_LEVEL_NETWORK);
 use constant CFGOPT_NEUTRAL_UMASK                                   => 'neutral-umask';
-    push @EXPORT, qw(CFGOPT_NEUTRAL_UMASK);
 use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
-    push @EXPORT, qw(CFGOPT_PROTOCOL_TIMEOUT);
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
-    push @EXPORT, qw(CFGOPT_PROCESS_MAX);
 use constant CFGOPT_SCK_KEEP_ALIVE                                  => 'sck-keep-alive';
-    push @EXPORT, qw(CFGOPT_SCK_KEEP_ALIVE);
 use constant CFGOPT_TCP_KEEP_ALIVE_COUNT                            => 'tcp-keep-alive-count';
-    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_COUNT);
 use constant CFGOPT_TCP_KEEP_ALIVE_IDLE                             => 'tcp-keep-alive-idle';
-    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_IDLE);
 use constant CFGOPT_TCP_KEEP_ALIVE_INTERVAL                         => 'tcp-keep-alive-interval';
-    push @EXPORT, qw(CFGOPT_KEEP_ALIVE_INTERVAL);
 
 # Commands
 use constant CFGOPT_CMD_SSH                                         => 'cmd-ssh';
-    push @EXPORT, qw(CFGOPT_CMD_SSH);
 
 # Paths
 use constant CFGOPT_LOCK_PATH                                       => 'lock-path';
@@ -220,13 +167,10 @@ use constant CFGOPT_SPOOL_PATH                                      => 'spool-pa
 
 # Logging
 use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
-    push @EXPORT, qw(CFGOPT_LOG_LEVEL_CONSOLE);
 use constant CFGOPT_LOG_LEVEL_FILE                                  => 'log-level-file';
-    push @EXPORT, qw(CFGOPT_LOG_LEVEL_FILE);
 use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
     push @EXPORT, qw(CFGOPT_LOG_LEVEL_STDERR);
 use constant CFGOPT_LOG_SUBPROCESS                                  => 'log-subprocess';
-    push @EXPORT, qw(CFGOPT_LOG_SUBPROCESS);
 use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
     push @EXPORT, qw(CFGOPT_LOG_TIMESTAMP);
 
@@ -237,117 +181,72 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
-    push @EXPORT, qw(CFGDEF_PREFIX_REPO);
 
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
-    push @EXPORT, qw(CFGOPT_REPO_CIPHER_TYPE);
 use constant CFGOPT_REPO_CIPHER_PASS                                => CFGDEF_PREFIX_REPO . '-cipher-pass';
-    push @EXPORT, qw(CFGOPT_REPO_CIPHER_PASS);
 use constant CFGOPT_REPO_HARDLINK                                   => CFGDEF_PREFIX_REPO . '-hardlink';
-    push @EXPORT, qw(CFGOPT_REPO_HARDLINK);
 use constant CFGOPT_REPO_PATH                                       => CFGDEF_PREFIX_REPO . '-path';
     push @EXPORT, qw(CFGOPT_REPO_PATH);
 use constant CFGOPT_REPO_TYPE                                       => CFGDEF_PREFIX_REPO . '-type';
-    push @EXPORT, qw(CFGOPT_REPO_TYPE);
 
 # Repository Retention
 use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PREFIX_REPO . '-retention-archive';
-    push @EXPORT, qw(CFGOPT_REPO_RETENTION_ARCHIVE);
 use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
-    push @EXPORT, qw(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE);
 use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
-    push @EXPORT, qw(CFGOPT_REPO_RETENTION_DIFF);
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
-    push @EXPORT, qw(CFGOPT_REPO_RETENTION_FULL);
 
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
-    push @EXPORT, qw(CFGOPT_REPO_HOST);
 use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_REPO_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
 use constant CFGOPT_REPO_HOST_CONFIG                                => CFGOPT_REPO_HOST . '-config';
-    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG);
 use constant CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH                   => CFGOPT_REPO_HOST_CONFIG . '-include-path';
-    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_REPO_HOST_CONFIG_PATH                           => CFGOPT_REPO_HOST_CONFIG . '-path';
-    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG_PATH);
 use constant CFGOPT_REPO_HOST_PORT                                  => CFGOPT_REPO_HOST . '-port';
-    push @EXPORT, qw(CFGOPT_REPO_HOST_PORT);
 use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_REPO_HOST . '-user';
-    push @EXPORT, qw(CFGOPT_REPO_HOST_USER);
 
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
-    push @EXPORT, qw(CFGOPT_REPO_S3_KEY);
 use constant CFGOPT_REPO_S3_KEY_SECRET                              => CFGDEF_REPO_S3 . '-key-secret';
-    push @EXPORT, qw(CFGOPT_REPO_S3_KEY_SECRET);
 use constant CFGOPT_REPO_S3_BUCKET                                  => CFGDEF_REPO_S3 . '-bucket';
-    push @EXPORT, qw(CFGOPT_REPO_S3_BUCKET);
 use constant CFGOPT_REPO_S3_CA_FILE                                 => CFGDEF_REPO_S3 . '-ca-file';
-    push @EXPORT, qw(CFGOPT_REPO_S3_CA_FILE);
 use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_REPO_S3 . '-ca-path';
-    push @EXPORT, qw(CFGOPT_REPO_S3_CA_PATH);
 use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_REPO_S3 . '-endpoint';
-    push @EXPORT, qw(CFGOPT_REPO_S3_ENDPOINT);
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
-    push @EXPORT, qw(CFGOPT_REPO_S3_HOST);
 use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
-    push @EXPORT, qw(CFGOPT_REPO_S3_PORT);
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
-    push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
-    push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
 use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
-    push @EXPORT, qw(CFGOPT_REPO_S3_URI_STYLE);
 use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
-    push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_TLS);
 
 # Archive options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_ASYNC                                   => 'archive-async';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_ASYNC);
 use constant CFGOPT_ARCHIVE_GET_QUEUE_MAX                           => 'archive-get-queue-max';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_GET_QUEUE_MAX);
 use constant CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                          => 'archive-push-queue-max';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 
 # Backup options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_CHECK                                   => 'archive-check';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_CHECK);
 use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-copy';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_COPY);
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
-    push @EXPORT, qw(CFGOPT_BACKUP_STANDBY);
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
-    push @EXPORT, qw(CFGOPT_CHECKSUM_PAGE);
 use constant CFGOPT_EXCLUDE                                         => 'exclude';
-    push @EXPORT, qw(CFGOPT_EXCLUDE);
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
-    push @EXPORT, qw(CFGOPT_MANIFEST_SAVE_THRESHOLD);
 use constant CFGOPT_RESUME                                          => 'resume';
-    push @EXPORT, qw(CFGOPT_RESUME);
 use constant CFGOPT_START_FAST                                      => 'start-fast';
-    push @EXPORT, qw(CFGOPT_START_FAST);
 use constant CFGOPT_STOP_AUTO                                       => 'stop-auto';
-    push @EXPORT, qw(CFGOPT_STOP_AUTO);
 
 # Restore options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_DB_INCLUDE                                      => 'db-include';
-    push @EXPORT, qw(CFGOPT_DB_INCLUDE);
 use constant CFGOPT_LINK_ALL                                        => 'link-all';
-    push @EXPORT, qw(CFGOPT_LINK_ALL);
 use constant CFGOPT_LINK_MAP                                        => 'link-map';
-    push @EXPORT, qw(CFGOPT_LINK_MAP);
 use constant CFGOPT_TABLESPACE_MAP_ALL                              => 'tablespace-map-all';
-    push @EXPORT, qw(CFGOPT_TABLESPACE_MAP_ALL);
 use constant CFGOPT_TABLESPACE_MAP                                  => 'tablespace-map';
-    push @EXPORT, qw(CFGOPT_TABLESPACE_MAP);
 use constant CFGOPT_RECOVERY_OPTION                                 => 'recovery-option';
-    push @EXPORT, qw(CFGOPT_RECOVERY_OPTION);
 
 # Stanza options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -360,28 +259,18 @@ use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
 
 use constant CFGOPT_PG_HOST                                         => CFGDEF_PREFIX_PG . '-host';
-    push @EXPORT, qw(CFGOPT_PG_HOST);
 use constant CFGOPT_PG_HOST_CMD                                     => CFGOPT_PG_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_PG_HOST_CMD);
 use constant CFGOPT_PG_HOST_CONFIG                                  => CFGOPT_PG_HOST . '-config';
-    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG);
 use constant CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH                     => CFGOPT_PG_HOST_CONFIG . '-include-path';
-    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_PG_HOST_CONFIG_PATH                             => CFGOPT_PG_HOST_CONFIG . '-path';
-    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG_PATH);
 use constant CFGOPT_PG_HOST_PORT                                    => CFGOPT_PG_HOST . '-port';
-    push @EXPORT, qw(CFGOPT_PG_HOST_PORT);
 use constant CFGOPT_PG_HOST_USER                                    => CFGOPT_PG_HOST . '-user';
-    push @EXPORT, qw(CFGOPT_PG_HOST_USER);
 
 use constant CFGOPT_PG_PATH                                         => CFGDEF_PREFIX_PG . '-path';
-    push @EXPORT, qw(CFGOPT_PG_PATH);
 use constant CFGOPT_PG_PORT                                         => CFGDEF_PREFIX_PG . '-port';
-    push @EXPORT, qw(CFGOPT_PG_PORT);
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
-    push @EXPORT, qw(CFGOPT_PG_SOCKET_PATH);
 use constant CFGOPT_PG_USER                                         => CFGDEF_PREFIX_PG . '-user';
-    push @EXPORT, qw(CFGOPT_PG_USER);
 
 ####################################################################################################################################
 # Option values - for options that have a specific list of allowed values
@@ -390,76 +279,51 @@ use constant CFGOPT_PG_USER                                         => CFGDEF_PR
 # Storage types
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_STORAGE_TYPE_PG                              => 'pg';
-    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_DB);
 use constant CFGOPTVAL_STORAGE_TYPE_REPO                            => 'repo';
-    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_BACKUP);
 
 # Backup type
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_BACKUP_TYPE_FULL                             => 'full';
-    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_FULL);
 use constant CFGOPTVAL_BACKUP_TYPE_DIFF                             => 'diff';
-    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_DIFF);
 use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
-    push @EXPORT, qw(CFGOPTVAL_BACKUP_TYPE_INCR);
 
 # Repo type
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_REPO_TYPE_CIFS                               => 'cifs';
-    push @EXPORT, qw(CFGOPTVAL_REPO_TYPE_CIFS);
 use constant CFGOPTVAL_REPO_TYPE_POSIX                              => 'posix';
-    push @EXPORT, qw(CFGOPTVAL_REPO_TYPE_POSIX);
 use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
-    push @EXPORT, qw(CFGOPTVAL_REPO_TYPE_S3);
 
 # Repo encryption type
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                        => 'none';
-    push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_NONE);
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
-    push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
 # Repo S3 URI style
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_REPO_S3_URI_STYLE_HOST                       => 'host';
-    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_HOST);
 use constant CFGOPTVAL_REPO_S3_URI_STYLE_PATH                       => 'path';
-    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_PATH);
 
 # Info output
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_OUTPUT_TEXT                                  => 'text';
-    push @EXPORT, qw(CFGOPTVAL_OUTPUT_TEXT);
 use constant CFGOPTVAL_OUTPUT_JSON                                  => 'json';
-    push @EXPORT, qw(CFGOPTVAL_OUTPUT_JSON);
 
 # Restore type
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_RESTORE_TYPE_NAME                            => 'name';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_NAME);
 use constant CFGOPTVAL_RESTORE_TYPE_TIME                            => 'time';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_TIME);
 use constant CFGOPTVAL_RESTORE_TYPE_XID                             => 'xid';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_XID);
 use constant CFGOPTVAL_RESTORE_TYPE_PRESERVE                        => 'preserve';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_PRESERVE);
 use constant CFGOPTVAL_RESTORE_TYPE_NONE                            => 'none';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_NONE);
 use constant CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                       => 'immediate';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
 use constant CFGOPTVAL_RESTORE_TYPE_STANDBY                         => 'standby';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_STANDBY);
 
 # Restore target action
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE                  => 'pause';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE);
 use constant CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE                => 'promote';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE);
 use constant CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN               => 'shutdown';
-    push @EXPORT, qw(CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN);
 
 ####################################################################################################################################
 # Option defaults - only defined here when the default is used in more than one place
