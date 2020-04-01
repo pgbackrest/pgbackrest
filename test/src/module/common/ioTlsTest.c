@@ -135,7 +135,7 @@ testRun(void)
 
             THROW_ON_SYS_ERROR(
                 getsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &keepAliveValue, &socketValueSize) == -1, ProtocolError,
-                "unable get TCP_SO_KEEPALIVE");
+                "unable get SO_KEEPALIVE");
 
             TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
 
