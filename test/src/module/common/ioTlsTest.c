@@ -125,12 +125,20 @@ testRun(void)
             THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
             // ---------------------------------------------------------------------------------------------------------------------
-            TEST_TITLE("enable keep-alive and options");
+            TEST_TITLE("enable options");
 
             sckInit(true, 32, 3113, 818);
             sckOptionSet(fd);
 
             socklen_t socketValueSize = sizeof(int);
+            int noDelayValue = 0;
+
+            THROW_ON_SYS_ERROR(
+                getsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &noDelayValue, &socketValueSize) == -1, ProtocolError,
+                "unable get TCP_NO_DELAY");
+
+            TEST_RESULT_INT(noDelayValue, 1, "check TCP_NODELAY");
+
             int keepAliveValue = 0;
 
             THROW_ON_SYS_ERROR(

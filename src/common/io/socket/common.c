@@ -63,6 +63,15 @@ sckOptionSet(int fd)
 
     ASSERT(socketLocal.init);
 
+    // Disable the Nagle algorithm. This means that segments are always sent as soon as possible, even if there is only a small
+    // amount of data. Our internal buffering minimizes the benefit of this optimization so lower latency is preferred.
+#ifdef TCP_NODELAY
+    int socketValue = 1;
+
+    THROW_ON_SYS_ERROR(
+        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_NODELAY");
+#endif
+
     // Enable TCP keepalives
     if (socketLocal.keepAlive)
     {
