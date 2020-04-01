@@ -12,7 +12,7 @@ Socket Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/io/socket/client.h"
-#include "common/io/socket/tcp.h"
+#include "common/io/socket/common.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -141,7 +141,7 @@ sckClientOpen(SocketClient *this)
 
                     memContextCallbackSet(this->memContext, sckClientFreeResource, this);
 
-                    tcpOptionSet(this->fd);
+                    sckOptionSet(this->fd);
 
                     if (connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
                         THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);

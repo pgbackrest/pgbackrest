@@ -245,7 +245,7 @@ unit:
         coverage:
           common/io/tls/client: full
           common/io/socket/client: full
-          common/io/socket/tcp: full
+          common/io/socket/common: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
@@ -368,7 +368,7 @@ unit:
 
         include:
           - common/log
-          - common/io/socket/tcp
+          - common/io/socket/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec

@@ -46,7 +46,7 @@ Includes that are not generally used by tests
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-#include "common/io/socket/tcp.h"
+#include "common/io/socket/common.h"
 
 /***********************************************************************************************************************************
 main - run the tests
@@ -73,7 +73,7 @@ main(int argListSize, const char *argList[])
     int result = 0;
 
     // Use aggressive keep-alive settings for testing
-    tcpInit(true, 2, 5, 5);
+    sckInit(true, 2, 5, 5);
 
     // Set neutral umask for testing
     umask(0000);

@@ -243,11 +243,11 @@
                         <example>630</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE KEY -->
-                    <config-key id="tcp-keep-alive" name="Keep Alive">
+                    <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
+                    <config-key id="sck-keep-alive" name="Keep Alive">
                         <summary>Keep-alive enable.</summary>
 
-                        <text>Enables keep-alive messages on TCP connections.</text>
+                        <text>Enables keep-alive messages on socket connections.</text>
 
                         <example>n</example>
                     </config-key>

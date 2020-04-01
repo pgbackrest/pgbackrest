@@ -2228,6 +2228,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
     },
 
+    // sck-keep-alive option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_SCK_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | cfgOptSckKeepAlive,
+    },
+    {
+        .name = "no-" CFGOPT_SCK_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckKeepAlive,
+    },
+    {
+        .name = "reset-" CFGOPT_SCK_KEEP_ALIVE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckKeepAlive,
+    },
+
     // set option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2347,21 +2362,6 @@ static const struct option optionList[] =
         .name = CFGOPT_TARGET_TIMELINE,
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
-    },
-
-    // tcp-keep-alive option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TCP_KEEP_ALIVE,
-        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAlive,
-    },
-    {
-        .name = "no-" CFGOPT_TCP_KEEP_ALIVE,
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptTcpKeepAlive,
-    },
-    {
-        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAlive,
     },
 
     // tcp-keep-alive-count option
@@ -2566,6 +2566,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoRetentionFull,
     cfgOptRepoType,
     cfgOptResume,
+    cfgOptSckKeepAlive,
     cfgOptSet,
     cfgOptSort,
     cfgOptSpoolPath,
@@ -2573,7 +2574,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStopAuto,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
-    cfgOptTcpKeepAlive,
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,

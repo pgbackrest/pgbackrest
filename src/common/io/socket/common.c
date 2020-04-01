@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-TCP Functions
+Socket Common Functions
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -13,58 +13,58 @@ TCP Functions
 #endif
 
 #include "common/debug.h"
+#include "common/io/socket/common.h"
 #include "common/log.h"
-#include "common/io/socket/tcp.h"
 
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct TcpLocal
+static struct SocketLocal
 {
-    bool init;                                                      // tcpInit() has been called
+    bool init;                                                      // sckInit() has been called
 
-    bool keepAlive;                                                 // Are keep alives enabled?
-    int keepAliveCount;                                             // Keep alive count (0 disables)
-    int keepAliveIdle;                                              // Keep alive idle (0 disables)
-    int keepAliveInterval;                                          // Keep alive interval (0 disables)
-} tcpLocal;
+    bool keepAlive;                                                 // Are socket keep alives enabled?
+    int tcpKeepAliveCount;                                          // TCP keep alive count (0 disables)
+    int tcpKeepAliveIdle;                                           // TCP keep alive idle (0 disables)
+    int tcpKeepAliveInterval;                                       // TCP keep alive interval (0 disables)
+} socketLocal;
 
 /**********************************************************************************************************************************/
 void
-tcpInit(bool keepAlive, int keepAliveCount, int keepAliveIdle, int keepAliveInterval)
+sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, keepAlive);
-        FUNCTION_LOG_PARAM(INT, keepAliveCount);
-        FUNCTION_LOG_PARAM(INT, keepAliveIdle);
-        FUNCTION_LOG_PARAM(INT, keepAliveInterval);
+        FUNCTION_LOG_PARAM(INT, tcpKeepAliveCount);
+        FUNCTION_LOG_PARAM(INT, tcpKeepAliveIdle);
+        FUNCTION_LOG_PARAM(INT, tcpKeepAliveInterval);
     FUNCTION_LOG_END();
 
-    ASSERT(keepAliveCount >= 0);
-    ASSERT(keepAliveIdle >= 0);
-    ASSERT(keepAliveInterval >= 0);
+    ASSERT(tcpKeepAliveCount >= 0);
+    ASSERT(tcpKeepAliveIdle >= 0);
+    ASSERT(tcpKeepAliveInterval >= 0);
 
-    tcpLocal.init = true;
-    tcpLocal.keepAlive = keepAlive;
-    tcpLocal.keepAliveCount = keepAliveCount;
-    tcpLocal.keepAliveIdle = keepAliveIdle;
-    tcpLocal.keepAliveInterval = keepAliveInterval;
+    socketLocal.init = true;
+    socketLocal.keepAlive = keepAlive;
+    socketLocal.tcpKeepAliveCount = tcpKeepAliveCount;
+    socketLocal.tcpKeepAliveIdle = tcpKeepAliveIdle;
+    socketLocal.tcpKeepAliveInterval = tcpKeepAliveInterval;
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-tcpOptionSet(int fd)
+sckOptionSet(int fd)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, fd);
     FUNCTION_TEST_END();
 
-    ASSERT(tcpLocal.init);
+    ASSERT(socketLocal.init);
 
     // Enable TCP keepalives
-    if (tcpLocal.keepAlive)
+    if (socketLocal.keepAlive)
     {
         int socketValue = 1;
 
@@ -73,9 +73,9 @@ tcpOptionSet(int fd)
 
         // Set TCP_KEEPCNT when available
 #ifdef TCP_KEEPIDLE
-        if (tcpLocal.keepAliveCount > 0)
+        if (socketLocal.tcpKeepAliveCount > 0)
         {
-            socketValue = tcpLocal.keepAliveCount;
+            socketValue = socketLocal.tcpKeepAliveCount;
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_KEEPCNT");
@@ -84,9 +84,9 @@ tcpOptionSet(int fd)
 
         // Set TCP_KEEPIDLE when available
 #ifdef TCP_KEEPIDLE
-        if (tcpLocal.keepAliveIdle > 0)
+        if (socketLocal.tcpKeepAliveIdle > 0)
         {
-            socketValue = tcpLocal.keepAliveIdle;
+            socketValue = socketLocal.tcpKeepAliveIdle;
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
@@ -96,9 +96,9 @@ tcpOptionSet(int fd)
 
     // Set TCP_KEEPINTVL when available
 #ifdef TCP_KEEPIDLE
-        if (tcpLocal.keepAliveInterval > 0)
+        if (socketLocal.tcpKeepAliveInterval > 0)
         {
-            socketValue = tcpLocal.keepAliveInterval;
+            socketValue = socketLocal.tcpKeepAliveInterval;
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,

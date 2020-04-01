@@ -197,8 +197,8 @@ use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol
     push @EXPORT, qw(CFGOPT_PROTOCOL_TIMEOUT);
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(CFGOPT_PROCESS_MAX);
-use constant CFGOPT_TCP_KEEP_ALIVE                                  => 'tcp-keep-alive';
-    push @EXPORT, qw(CFGOPT_KEEP_ALIVE);
+use constant CFGOPT_SCK_KEEP_ALIVE                                  => 'sck-keep-alive';
+    push @EXPORT, qw(CFGOPT_SCK_KEEP_ALIVE);
 use constant CFGOPT_TCP_KEEP_ALIVE_COUNT                            => 'tcp-keep-alive-count';
     push @EXPORT, qw(CFGOPT_KEEP_ALIVE_COUNT);
 use constant CFGOPT_TCP_KEEP_ALIVE_IDLE                             => 'tcp-keep-alive-idle';
@@ -1257,7 +1257,7 @@ my %hConfigDefine =
         }
     },
 
-    &CFGOPT_TCP_KEEP_ALIVE =>
+    &CFGOPT_SCK_KEEP_ALIVE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
@@ -1274,7 +1274,7 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_RANGE => [1, 32],
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_TCP_KEEP_ALIVE,
+            &CFGDEF_DEPEND_OPTION => CFGOPT_SCK_KEEP_ALIVE,
             &CFGDEF_DEPEND_LIST => [true],
         },
     },

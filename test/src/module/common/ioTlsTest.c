@@ -99,10 +99,10 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("tcp*()"))
+    if (testBegin("Socket Common"))
     {
-        // Save TCP settings
-        struct TcpLocal tcpLocalSave = tcpLocal;
+        // Save socket settings
+        struct SocketLocal socketLocalSave = socketLocal;
 
         struct addrinfo hints = (struct addrinfo)
         {
@@ -127,8 +127,8 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("enable keep-alive and options");
 
-            tcpInit(true, 32, 3113, 818);
-            tcpOptionSet(fd);
+            sckInit(true, 32, 3113, 818);
+            sckOptionSet(fd);
 
             socklen_t socketValueSize = sizeof(int);
             int keepAliveValue = 0;
@@ -166,8 +166,8 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("disable keep-alive");
 
-            tcpInit(false, 0, 0, 0);
-            tcpOptionSet(fd);
+            sckInit(false, 0, 0, 0);
+            sckOptionSet(fd);
 
             TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
             TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
@@ -177,8 +177,8 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("enable keep-alive but disable options");
 
-            tcpInit(true, 0, 0, 0);
-            tcpOptionSet(fd);
+            sckInit(true, 0, 0, 0);
+            sckOptionSet(fd);
 
             TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
             TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
@@ -192,8 +192,8 @@ testRun(void)
         }
         TRY_END();
 
-        // Restore TCP settings
-        tcpLocal = tcpLocalSave;
+        // Restore socket settings
+        socketLocal = socketLocalSave;
     }
 
     // Additional coverage not provided by testing with actual certificates
