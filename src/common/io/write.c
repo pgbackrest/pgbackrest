@@ -257,21 +257,6 @@ ioWriteClose(IoWrite *this)
 }
 
 /***********************************************************************************************************************************
-Interface for the write object
-***********************************************************************************************************************************/
-void *
-ioWriteDriver(IoWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->driver);
-}
-
-/***********************************************************************************************************************************
 Get/set filters
 
 Filters must be set before open and cannot be reset.
@@ -303,19 +288,4 @@ ioWriteHandle(const IoWrite *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
-}
-
-/***********************************************************************************************************************************
-Interface for the write object
-***********************************************************************************************************************************/
-const IoWriteInterface *
-ioWriteInterface(const IoWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->interface);
 }

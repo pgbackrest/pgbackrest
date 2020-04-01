@@ -536,10 +536,7 @@ testRun(void)
 
                 TEST_ASSIGN(write, ioHandleWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
                 ioWriteOpen(write);
-                TEST_RESULT_INT(
-                    ioWriteHandle(write), ((IoHandleWrite *)ioWriteDriver(write))->handle, "check write handle");
-                TEST_RESULT_PTR(ioWriteDriver(write), write->driver, "check write driver");
-                TEST_RESULT_PTR(ioWriteInterface(write), &write->interface, "check write interface");
+                TEST_RESULT_INT(ioWriteHandle(write), ((IoHandleWrite *)write->driver)->handle, "check write handle");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("test string 1")), "write test string");
