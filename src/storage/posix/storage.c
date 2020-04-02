@@ -265,7 +265,7 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
             {
                 // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
                 if (!storageInterfaceInfoP(this, sourceFile, storageInfoLevelExists).exists)
-                    THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
+                    THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing source '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
                 {

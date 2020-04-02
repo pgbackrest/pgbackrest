@@ -467,7 +467,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageMoveP(storageTest, source, destination), FileMissingError,
-            "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
+            "unable to move missing source '%s': [2] No such file or directory", strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, fileNoPerm);
