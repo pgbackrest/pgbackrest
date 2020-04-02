@@ -60,7 +60,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 
     StorageInfo result = {.level = level};
 
-    // Attempt to stat the file
+    // Stat the file to check if it exists
     struct stat statFile;
 
     if ((param.followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
@@ -68,7 +68,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
         if (errno != ENOENT)
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strPtr(file));
     }
-    // On success load info into a structure
+    // On success the file exists
     else
     {
         result.exists = true;

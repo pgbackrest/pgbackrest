@@ -545,19 +545,15 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    StorageInfo result = {.level = level};
-
     // Attempt to get file info
     StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
 
-    // On success load info into a structure
-    if (httpClientResponseCodeOk(httpResult.httpClient))
+    // Does the file exist?
+    StorageInfo result = {.level = level, .exists = httpClientResponseCodeOk(httpResult.httpClient)};
+
+    // Add basic level info if requested and the file exists
+    if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        result.exists = true;
-
-        // Currently basic is the only way this can be called
-        ASSERT(result.level >= storageInfoLevelBasic);
-
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));

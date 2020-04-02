@@ -163,7 +163,8 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         // Loop until file exists or timeout
         do
         {
-            // Call driver function
+            // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function
+            // specifically wants to test existence of a *file*, not just the existence of anything with the specified name.
             StorageInfo info = storageInfoP(
                 this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
 
@@ -838,6 +839,8 @@ storagePathExists(const Storage *this, const String *pathExp)
     ASSERT(this != NULL);
     ASSERT(storageFeature(this, storageFeaturePath));
 
+    // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function specifically
+    // wants to test existence of a *path*, not just the existence of anything with the specified name.
     StorageInfo info = storageInfoP(this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
 
     FUNCTION_LOG_RETURN(BOOL, info.exists && info.type == storageTypePath);

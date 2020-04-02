@@ -220,6 +220,14 @@ testS3Server(void)
             "Last-Modified: Wed, 21 Oct 2015 07:28:00 GMT",
             NULL));
 
+        // File exists and only checking existence
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file2.txt", NULL, storageS3UriStyleHost));
+        harnessTlsServerReply(testS3ServerResponse(
+            200, "OK",
+            "content-length:777\r\n"
+            "Last-Modified: Wed, 22 Oct 2015 07:28:00 GMT",
+            NULL));
+
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
         harnessTlsServerExpect(
@@ -850,6 +858,14 @@ testRun(void)
         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 9999, "    check exists");
         TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+
+        TEST_TITLE("file exists and only checking existence");
+
+        TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+        TEST_RESULT_UINT(info.size, 0, "    check exists");
+        TEST_RESULT_INT(info.timeModified, 0, "    check time");
 
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
