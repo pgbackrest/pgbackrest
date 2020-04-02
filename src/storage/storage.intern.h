@@ -50,7 +50,7 @@ typedef String *StoragePathExpressionCallback(const String *expression, const St
 /***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
-// Get information about a file
+// Get information about a file !!! ADD comments
 typedef struct StorageInterfaceInfoParam
 {
     VAR_PARAM_HEADER;
@@ -127,7 +127,7 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Get info for a path and all paths/files in the path (does not recurse)
+// Get info for a path and all paths/files in the path (does not recurse) !!! ADD comments
 typedef struct StorageInterfaceInfoListParam
 {
     VAR_PARAM_HEADER;
