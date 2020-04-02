@@ -430,7 +430,7 @@ tlsClientWrite(THIS_VOID, const Buffer *buffer)
 
     while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
     {
-        result = SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer));
+        result = SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer));
         error = SSL_get_error(this->session, result);
     }
 

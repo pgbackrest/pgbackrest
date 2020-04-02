@@ -123,7 +123,7 @@ strNewBuf(const Buffer *buffer)
 
     // Allocate and assign string
     this->buffer = memNew(this->size + 1);
-    memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
+    memcpy(this->buffer, bufPtrConst(buffer), this->size);
     this->buffer[this->size] = 0;
 
     FUNCTION_TEST_RETURN(this);

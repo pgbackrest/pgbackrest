@@ -360,11 +360,21 @@ bufLimitSet(Buffer *this, size_t limit)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Return buffer ptr
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned char *
-bufPtr(const Buffer *this)
+bufPtr(Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->buffer);
+}
+
+const unsigned char *
+bufPtrConst(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -390,11 +400,9 @@ bufRemains(const Buffer *this)
     FUNCTION_TEST_RETURN(bufSize(this) - this->used);
 }
 
-/***********************************************************************************************************************************
-Return pointer to remaining space in the buffer (after used space)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned char *
-bufRemainsPtr(const Buffer *this)
+bufRemainsPtr(Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);

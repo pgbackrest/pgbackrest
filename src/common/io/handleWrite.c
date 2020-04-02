@@ -47,7 +47,8 @@ ioHandleWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     THROW_ON_SYS_ERROR_FMT(
-        write(this->handle, bufPtr(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strPtr(this->name));
+        write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError,
+        "unable to write to %s", strPtr(this->name));
 
     FUNCTION_LOG_RETURN_VOID();
 }

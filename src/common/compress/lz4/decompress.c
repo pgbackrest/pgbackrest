@@ -99,7 +99,8 @@ lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
 
         this->frameDone = lz4Error(
             LZ4F_decompress(
-                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtr(compressed) + this->inputOffset, &srcSize, NULL)) == 0;
+                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtrConst(compressed) + this->inputOffset, &srcSize,
+                NULL)) == 0;
 
         bufUsedInc(decompressed, dstSize);
 

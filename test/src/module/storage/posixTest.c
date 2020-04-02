@@ -793,13 +793,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 4), "get exact");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
 
         TEST_ERROR_FMT(
             storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 64), FileReadError,
@@ -810,7 +810,7 @@ testRun(void)
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read limited bytes");
@@ -820,7 +820,7 @@ testRun(void)
         TEST_ASSIGN(
             buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()), .limit = VARUINT64(7))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
     }
 
     // *****************************************************************************************************************************

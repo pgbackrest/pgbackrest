@@ -183,7 +183,7 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
                 output,
                 lz4Error(
                     LZ4F_compressUpdate(
-                        this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), bufUsed(uncompressed),
+                        this->context, bufRemainsPtr(output), bufRemains(output), bufPtrConst(uncompressed), bufUsed(uncompressed),
                         NULL)));
         }
         // Else flush remaining output

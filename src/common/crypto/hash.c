@@ -84,7 +84,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     ASSERT(this->hash == NULL);
     ASSERT(message != NULL);
 
-    cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtr(message), bufUsed(message)), "unable to process message hash");
+    cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtrConst(message), bufUsed(message)), "unable to process message hash");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -251,7 +251,7 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     bufUsedSet(result, bufSize(result));
 
     // Calculate the HMAC
-    HMAC(hashType, bufPtr(key), (int)bufUsed(key), bufPtr(message), bufUsed(message), bufPtr(result), NULL);
+    HMAC(hashType, bufPtrConst(key), (int)bufUsed(key), bufPtrConst(message), bufUsed(message), bufPtr(result), NULL);
 
     FUNCTION_LOG_RETURN(BUFFER, result);
 }

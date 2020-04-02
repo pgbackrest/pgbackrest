@@ -331,7 +331,10 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
             this->done = true;
         }
         else
-            destinationSizeActual = cipherBlockProcessBlock(this, bufPtr(source), bufUsed(source), bufRemainsPtr(outputActual));
+        {
+            destinationSizeActual = cipherBlockProcessBlock(
+                this, bufPtrConst(source), bufUsed(source), bufRemainsPtr(outputActual));
+        }
 
         bufUsedInc(outputActual, destinationSizeActual);
 
@@ -432,7 +435,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
         // Store the passphrase
         driver->pass = memNew(driver->passSize);
-        memcpy(driver->pass, bufPtr(pass), driver->passSize);
+        memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
 
         // Create param list
         VariantList *paramList = varLstNew();

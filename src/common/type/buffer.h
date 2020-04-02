@@ -35,9 +35,7 @@ Buffer *bufResize(Buffer *this, size_t size);
 bool bufFull(const Buffer *this);
 void bufLimitClear(Buffer *this);
 void bufLimitSet(Buffer *this, size_t limit);
-unsigned char *bufPtr(const Buffer *this);
 size_t bufRemains(const Buffer *this);
-unsigned char *bufRemainsPtr(const Buffer *this);
 size_t bufSize(const Buffer *this);
 size_t bufUsed(const Buffer *this);
 void bufUsedInc(Buffer *this, size_t inc);
@@ -45,6 +43,18 @@ void bufUsedSet(Buffer *this, size_t used);
 void bufUsedZero(Buffer *this);
 
 void bufFree(Buffer *this);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Buffer pointer
+unsigned char *bufPtr(Buffer *this);
+
+// Const buffer pointer
+const unsigned char *bufPtrConst(const Buffer *this);
+
+// Pointer to remaining buffer space (after used space)
+unsigned char *bufRemainsPtr(Buffer *this);
 
 /***********************************************************************************************************************************
 Fields that are common between dynamically allocated and constant buffers

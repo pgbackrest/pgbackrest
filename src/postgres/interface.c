@@ -388,7 +388,7 @@ pgControlFromBuffer(const Buffer *controlFile)
 
     for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].controlIs(bufPtr(controlFile)))
+        if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -398,7 +398,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     // If the version was not found then error with the control and catalog version that were found
     if (interface == NULL)
     {
-        PgControlCommon *controlCommon = (PgControlCommon *)bufPtr(controlFile);
+        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
 
         THROW_FMT(
             VersionNotSupportedError,
@@ -408,7 +408,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     }
 
     // Get info from the control file
-    PgControl result = interface->control(bufPtr(controlFile));
+    PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
     // Check the segment size
@@ -491,7 +491,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     ASSERT(walBuffer != NULL);
 
     // Check that this is a long format WAL header
-    if (!(((PgWalCommon *)bufPtr(walBuffer))->flag & PG_WAL_LONG_HEADER))
+    if (!(((const PgWalCommon *)bufPtrConst(walBuffer))->flag & PG_WAL_LONG_HEADER))
         THROW_FMT(FormatError, "first page header in WAL file is expected to be in long format");
 
     // Search for the version of PostgreSQL that uses this WAL magic
@@ -499,7 +499,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
 
     for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].walIs(bufPtr(walBuffer)))
+        if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -513,11 +513,11 @@ pgWalFromBuffer(const Buffer *walBuffer)
             VersionNotSupportedError,
             "unexpected WAL magic %u\n"
                 "HINT: is this version of PostgreSQL supported?",
-            ((PgWalCommon *)bufPtr(walBuffer))->magic);
+            ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
     }
 
     // Get info from the control file
-    PgWal result = interface->wal(bufPtr(walBuffer));
+    PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
     FUNCTION_LOG_RETURN(PG_WAL, result);

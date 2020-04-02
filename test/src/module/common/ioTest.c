@@ -171,7 +171,7 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *input, Buffer *output)
         if (this->multiplyBuffer == NULL)
         {
             this->multiplyBuffer = bufNew(bufUsed(input) * this->multiplier);
-            unsigned char *inputPtr = bufPtr(input);
+            const unsigned char *inputPtr = bufPtrConst(input);
             unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
 
             for (unsigned int charIdx = 0; charIdx < bufUsed(input); charIdx++)
