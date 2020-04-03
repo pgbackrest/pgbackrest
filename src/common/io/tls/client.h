@@ -41,7 +41,7 @@ typedef struct TlsClientStat
 } TlsClientStat;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 TlsClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
@@ -55,7 +55,7 @@ bool tlsClientOpen(TlsClient *this);
 void tlsClientClose(TlsClient *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
 IoRead *tlsClientIoRead(TlsClient *this);

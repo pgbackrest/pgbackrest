@@ -9,7 +9,7 @@ Write to a handle using the IoWrite interface.
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoWrite *ioHandleWriteNew(const String *name, int handle);
 

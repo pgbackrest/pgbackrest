@@ -244,7 +244,7 @@ typedef struct StorageRemoveParam
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
 bool storageFeature(const Storage *this, StorageFeature feature);

@@ -17,7 +17,7 @@ typedef struct Ini Ini;
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Ini *iniNew(void);
 
@@ -34,7 +34,7 @@ void iniParse(Ini *this, const String *content);
 void iniSet(Ini *this, const String *section, const String *key, const String *value);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Get an ini value -- error if it does not exist
 const String *iniGet(const Ini *this, const String *section, const String *key);

@@ -9,7 +9,7 @@ Read from a Buffer object using the IoRead interface.
 #include "common/io/read.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoRead *ioBufferReadNew(const Buffer *buffer);
 

@@ -25,7 +25,7 @@ returned to each clientIdx in case job distribution varies by clientIdx.
 typedef ProtocolParallelJob *ParallelJobCallback(void *data, unsigned int clientIdx);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
 
@@ -39,7 +39,7 @@ void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
 unsigned int protocolParallelProcess(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Are all jobs done?
 bool protocolParallelDone(const ProtocolParallel *this);

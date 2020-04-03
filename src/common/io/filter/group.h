@@ -22,7 +22,7 @@ typedef struct IoFilterGroup IoFilterGroup;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilterGroup *ioFilterGroupNew(void);
 
@@ -48,7 +48,7 @@ void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *outp
 void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Is the filter group done processing?
 bool ioFilterGroupDone(const IoFilterGroup *this);

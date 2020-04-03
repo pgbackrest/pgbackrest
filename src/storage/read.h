@@ -20,7 +20,7 @@ Functions
 StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Should a missing file be ignored?
 bool storageReadIgnoreMissing(const StorageRead *this);

@@ -23,7 +23,7 @@ Constants
     STRING_DECLARE(PROTOCOL_KEY_PARAMETER_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolCommand *protocolCommandNew(const String *command);
 
@@ -37,7 +37,7 @@ ProtocolCommand *protocolCommandMove(ProtocolCommand *this, MemContext *parentNe
 ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Command JSON
 String *protocolCommandJson(const ProtocolCommand *this);

@@ -58,7 +58,7 @@ bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
 void infoCipherPassSet(Info *this, const String *cipherPass);

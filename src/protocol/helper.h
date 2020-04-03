@@ -42,7 +42,7 @@ ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsig
 void protocolRemoteFree(unsigned int hostId);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Is pg local?
 bool pgIsLocal(unsigned int hostId);

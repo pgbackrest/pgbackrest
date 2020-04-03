@@ -8,7 +8,7 @@ S3 Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 StorageRead *storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing);
 

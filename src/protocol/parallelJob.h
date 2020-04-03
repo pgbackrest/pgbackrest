@@ -26,7 +26,7 @@ typedef enum
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand *command);
 

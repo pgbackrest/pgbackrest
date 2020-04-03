@@ -45,7 +45,7 @@ const char *hrnReplaceKey(const char *string);
 const char *hrnDiff(const char *actual, const char *expected);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Time in MS
 uint64_t testTimeMSec(void);

@@ -82,7 +82,7 @@ unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
-Setters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Set a new comparator
 StringList *strLstComparatorSet(StringList *this, ListComparator *comparator);

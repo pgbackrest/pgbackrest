@@ -21,7 +21,7 @@ Protocol process handler type
 typedef bool (*ProtocolServerProcessHandler)(const String *command, const VariantList *paramList, ProtocolServer *server);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
@@ -47,7 +47,7 @@ ProtocolServer *protocolServerMove(ProtocolServer *this, MemContext *parentNew);
 void protocolServerWriteLine(const ProtocolServer *this, const String *line);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
 IoRead *protocolServerIoRead(const ProtocolServer *this);

@@ -78,7 +78,7 @@ bool varEq(const Variant *this1, const Variant *this2);
 VariantType varType(const Variant *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 bool varBool(const Variant *this);
 bool varBoolForce(const Variant *this);

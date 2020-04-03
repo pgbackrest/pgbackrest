@@ -19,7 +19,7 @@ Object type
 typedef struct Db Db;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName);
 
@@ -72,7 +72,7 @@ void dbClose(Db *this);
 Db *dbMove(Db *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Data path loaded from the data_directory GUC
 const String *dbPgDataPath(const Db *this);

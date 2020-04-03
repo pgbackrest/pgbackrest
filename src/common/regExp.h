@@ -15,7 +15,7 @@ typedef struct RegExp RegExp;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 RegExp *regExpNew(const String *expression);
 
@@ -26,7 +26,7 @@ Functions
 bool regExpMatch(RegExp *this, const String *string);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Get pointer to the last match.  NULL if there was no match.
 const char *regExpMatchPtr(RegExp *this);

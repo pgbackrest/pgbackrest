@@ -17,7 +17,7 @@ typedef struct HttpClientCache HttpClientCache;
 #include "common/io/http/client.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpClientCache *httpClientCacheNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);

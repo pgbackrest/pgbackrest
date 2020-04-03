@@ -23,7 +23,7 @@ typedef struct IoFilter IoFilter;
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Get filter result
 Variant *ioFilterResult(const IoFilter *this);

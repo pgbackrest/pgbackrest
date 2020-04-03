@@ -64,7 +64,7 @@ typedef struct HttpClientStat
 } HttpClientStat;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpClient *httpClientNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
@@ -90,7 +90,7 @@ bool httpClientResponseCodeOk(const HttpClient *this);
 String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
 IoRead *httpClientIoRead(const HttpClient *this);

@@ -65,7 +65,7 @@ void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction
 InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Archive id
 String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);

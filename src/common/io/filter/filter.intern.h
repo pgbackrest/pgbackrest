@@ -22,7 +22,7 @@ Each filter has a type that allows it to be identified in the filter list.
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct IoFilterInterface
 {
@@ -67,7 +67,7 @@ void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Is the filter done?
 bool ioFilterDone(const IoFilter *this);

@@ -32,7 +32,7 @@ void harnessTlsServerReply(const char *reply);
 void harnessTlsServerClose(void);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Hostname to use for testing -- this will vary based on whether the test is running in a container
 const String *harnessTlsTestHost(void);

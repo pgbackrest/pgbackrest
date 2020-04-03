@@ -32,7 +32,7 @@ typedef struct SocketClientStat
 } SocketClientStat;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 SocketClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
 
@@ -52,7 +52,7 @@ void sckClientClose(SocketClient *this);
 SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Socket file descriptor
 int sckClientFd(SocketClient *this);

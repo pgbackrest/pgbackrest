@@ -17,7 +17,7 @@ typedef struct HttpHeader HttpHeader;
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpHeader *httpHeaderNew(const StringList *redactList);
 HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList);

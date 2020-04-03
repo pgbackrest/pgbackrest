@@ -40,7 +40,7 @@ Constants
     STRING_DECLARE(PROTOCOL_OUTPUT_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
@@ -64,7 +64,7 @@ const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequire
 void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
 IoRead *protocolClientIoRead(const ProtocolClient *this);

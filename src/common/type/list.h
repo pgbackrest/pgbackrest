@@ -108,7 +108,7 @@ unsigned int lstSize(const List *this);
 List *lstSort(List *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
-Setters
+Getters/Setters
 ***********************************************************************************************************************************/
 // Set a new comparator
 List *lstComparatorSet(List *this, ListComparator *comparator);

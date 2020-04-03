@@ -21,7 +21,7 @@ Object type
 typedef struct PgClient PgClient;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 PgClient *pgClientNew(
     const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec queryTimeout);
