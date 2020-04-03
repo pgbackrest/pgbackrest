@@ -17,9 +17,7 @@ Macro to handle invalid encode type errors
 #define ENCODE_TYPE_INVALID_ERROR(encodeType)                                                                                      \
     THROW_FMT(AssertError, "invalid encode type %u", encodeType);
 
-/***********************************************************************************************************************************
-Encode binary data to a printable string
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSize, char *destination)
 {
@@ -38,9 +36,7 @@ encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSiz
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Size of the string returned by encodeToStr()
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 size_t
 encodeToStrSize(EncodeType encodeType, size_t sourceSize)
 {
@@ -59,9 +55,7 @@ encodeToStrSize(EncodeType encodeType, size_t sourceSize)
     FUNCTION_TEST_RETURN(destinationSize);
 }
 
-/***********************************************************************************************************************************
-Decode a string to binary data
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 decodeToBin(EncodeType encodeType, const char *source, unsigned char *destination)
 {
@@ -79,9 +73,7 @@ decodeToBin(EncodeType encodeType, const char *source, unsigned char *destinatio
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Size of the binary data returned by decodeToBin()
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 size_t
 decodeToBinSize(EncodeType encodeType, const char *source)
 {
@@ -100,9 +92,7 @@ decodeToBinSize(EncodeType encodeType, const char *source)
     FUNCTION_TEST_RETURN(destinationSize);
 }
 
-/***********************************************************************************************************************************
-Check that the encoded string is valid
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 decodeToBinValid(EncodeType encodeType, const char *source)
 {
@@ -126,9 +116,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
     FUNCTION_TEST_RETURN(valid);
 }
 
-/***********************************************************************************************************************************
-Validate the encoded string
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 decodeToBinValidate(EncodeType encodeType, const char *source)
 {

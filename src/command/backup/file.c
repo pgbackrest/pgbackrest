@@ -33,9 +33,7 @@ segmentNumber(const String *pgFile)
     FUNCTION_TEST_RETURN(regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strPtr(pgFile), '.') + 1) : 0);
 }
 
-/***********************************************************************************************************************************
-Copy a file from the PostgreSQL data directory to the repository
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 BackupFileResult
 backupFile(
     const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,

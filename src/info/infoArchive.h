@@ -36,17 +36,22 @@ InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSyste
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
-InfoArchive *infoArchivePgSet(
-    InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Current archive id
 const String *infoArchiveId(const InfoArchive *this);
+
+// Cipher passphrase
 const String *infoArchiveCipherPass(const InfoArchive *this);
+
+// PostgreSQL info
 InfoPg *infoArchivePg(const InfoArchive *this);
+InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Destructor
@@ -56,8 +61,11 @@ void infoArchiveFree(InfoArchive *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Load archive info
 InfoArchive *infoArchiveLoadFile(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+
+// Save archive info
 void infoArchiveSaveFile(
     InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 

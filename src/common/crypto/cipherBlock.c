@@ -380,9 +380,7 @@ cipherBlockInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->inputSame);
 }
 
-/***********************************************************************************************************************************
-New block encrypt/decrypt object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
 {
@@ -464,9 +462,7 @@ cipherBlockNewVar(const VariantList *paramList)
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
 
-/***********************************************************************************************************************************
-Helper function to add a block cipher to an io object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilterGroup *
 cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass)
 {

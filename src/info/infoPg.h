@@ -4,6 +4,8 @@ PostgreSQL Info Handler
 #ifndef INFO_INFOPG_H
 #define INFO_INFOPG_H
 
+#include <stdint.h>
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -11,8 +13,6 @@ Object type
 #define INFO_PG_PREFIX                                              infoPg
 
 typedef struct InfoPg InfoPg;
-
-#include <stdint.h>
 
 #include "common/crypto/common.h"
 #include "common/ini.h"
@@ -48,26 +48,48 @@ typedef enum
 Constructors
 ***********************************************************************************************************************************/
 InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+
+// Create new object and load contents from a file
 InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
-InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
+
+// Save to IO
 void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
+
+// Set the InfoPg object data based on values passed
+InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Archive id
 String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
+
+// Return the cipher passphrase
 const String *infoPgCipherPass(const InfoPg *this);
-InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
-InfoPgData infoPgDataCurrent(const InfoPg *this);
-unsigned int infoPgDataCurrentId(const InfoPg *this);
-Info *infoPgInfo(const InfoPg *this);
-unsigned int infoPgDataTotal(const InfoPg *this);
+
+// Return current pgId from the history
 unsigned int infoPgCurrentDataId(const InfoPg *this);
+
+// PostgreSQL info
+InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
+
+// Current PostgreSQL data
+InfoPgData infoPgDataCurrent(const InfoPg *this);
+
+// Current history index
+unsigned int infoPgDataCurrentId(const InfoPg *this);
+
+// Total PostgreSQL data in the history
+unsigned int infoPgDataTotal(const InfoPg *this);
+
+// Base info
+Info *infoPgInfo(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

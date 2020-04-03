@@ -25,7 +25,10 @@ typedef struct IoFilter IoFilter;
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Get filter result
 Variant *ioFilterResult(const IoFilter *this);
+
+// Identifies the filter and is used when pulling results from the filter group
 const String *ioFilterType(const IoFilter *this);
 
 /***********************************************************************************************************************************

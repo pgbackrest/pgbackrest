@@ -160,9 +160,7 @@ storageWriteRemoteClose(THIS_VOID)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Create a new file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageWrite *
 storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,

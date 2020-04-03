@@ -22,6 +22,7 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Process db protocol requests
 bool dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
 
 #endif

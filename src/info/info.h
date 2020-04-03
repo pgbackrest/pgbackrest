@@ -41,13 +41,20 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 Constructors
 ***********************************************************************************************************************************/
 Info *infoNew(const String *cipherPassSub);
+
+// Create new object and load contents from a file
 Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Save to file
 void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
+
+// Check if the section should be saved
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
+
+// Save a JSON formatted value and update checksum
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
 
 /***********************************************************************************************************************************
@@ -60,6 +67,7 @@ const String *infoBackrestVersion(const Info *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Load info file(s) and throw error for each attempt if none are successful
 void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************

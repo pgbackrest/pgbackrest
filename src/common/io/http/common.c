@@ -50,11 +50,7 @@ httpLastModifiedToTime(const String *lastModified)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Encode string to conform with URI specifications
-
-If a path is being encoded then / characters won't be encoded.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 httpUriEncode(const String *uri, bool path)
 {

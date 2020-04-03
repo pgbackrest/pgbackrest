@@ -19,19 +19,38 @@ typedef struct StorageWrite StorageWrite;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Move to a new parent mem context
 StorageWrite *storageWriteMove(StorageWrite *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Will the file be written atomically? Atomic writes means the file will be complete or be missing. Filesystems have different ways
+// to accomplish this.
 bool storageWriteAtomic(const StorageWrite *this);
+
+// Will the path be created if required?
 bool storageWriteCreatePath(const StorageWrite *this);
+
+// Write interface
 IoWrite *storageWriteIo(const StorageWrite *this);
+
+// File mode
 mode_t storageWriteModeFile(const StorageWrite *this);
+
+// Path mode (if the destination path needs to be create)
 mode_t storageWriteModePath(const StorageWrite *this);
+
+// File name
 const String *storageWriteName(const StorageWrite *this);
+
+// Will the file be synced before it is closed?
 bool storageWriteSyncFile(const StorageWrite *this);
+
+// Will the path be synced after the file is closed?
 bool storageWriteSyncPath(const StorageWrite *this);
+
+// File type
 const String *storageWriteType(const StorageWrite *this);
 
 /***********************************************************************************************************************************

@@ -33,20 +33,32 @@ ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Move to new parent mem context
 ProtocolParallelJob *protocolParallelJobMove(ProtocolParallelJob *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Job command
 const ProtocolCommand *protocolParallelJobCommand(const ProtocolParallelJob *this);
+
+// Job error
 int protocolParallelJobErrorCode(const ProtocolParallelJob *this);
 const String *protocolParallelJobErrorMessage(const ProtocolParallelJob *this);
 void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
+
+// Job key
 const Variant *protocolParallelJobKey(const ProtocolParallelJob *this);
+
+// Process Id
 unsigned int protocolParallelJobProcessId(const ProtocolParallelJob *this);
 void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
+
+// Job result
 const Variant *protocolParallelJobResult(const ProtocolParallelJob *this);
 void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
+
+// Job state
 ProtocolParallelJobState protocolParallelJobState(const ProtocolParallelJob *this);
 void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);
 

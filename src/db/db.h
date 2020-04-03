@@ -26,6 +26,7 @@ Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicat
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Open the db connection
 void dbOpen(Db *this);
 
 // Start backup and return starting lsn and wal segment name
@@ -48,6 +49,7 @@ typedef struct DbBackupStopResult
 
 DbBackupStopResult dbBackupStop(Db *this);
 
+// Is this cluster a standby?
 bool dbIsStandby(Db *this);
 
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
@@ -62,17 +64,26 @@ TimeMSec dbTimeMSec(Db *this);
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbTablespaceList(Db *this);
 
+// Switch the WAL segment and return the segment that should have been archived
 String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 
+// Move to a new parent mem context
 Db *dbMove(Db *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Data path loaded from the data_directory GUC
 const String *dbPgDataPath(const Db *this);
+
+// Version loaded from the server_version_num GUC
 unsigned int dbPgVersion(const Db *this);
+
+// Archive mode loaded from the archive_mode GUC
 const String *dbArchiveMode(const Db *this);
+
+// Archive command loaded from the archive_command GUC
 const String *dbArchiveCommand(const Db *this);
 
 /***********************************************************************************************************************************

@@ -16,6 +16,7 @@ IoWrite *ioHandleWriteNew(const String *name, int handle);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Write a string to the specified handle
 void ioHandleWriteOneStr(int handle, const String *string);
 
 #endif

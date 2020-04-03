@@ -32,13 +32,19 @@ ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *cal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add client
 void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
+
+// Process jobs
 unsigned int protocolParallelProcess(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Are all jobs done?
 bool protocolParallelDone(const ProtocolParallel *this);
+
+// Completed job result
 ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
 
 /***********************************************************************************************************************************

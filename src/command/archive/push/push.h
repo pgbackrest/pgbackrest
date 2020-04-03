@@ -7,7 +7,10 @@ Archive Push Command
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Push a WAL segment to the repository
 void cmdArchivePush(void);
+
+// Async version of archive push that runs in parallel for performance
 void cmdArchivePushAsync(void);
 
 #endif

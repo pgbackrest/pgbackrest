@@ -32,15 +32,21 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize crypto
 void cryptoInit(void);
+
+// Has crypto been initialized?
 bool cryptoIsInit(void);
 
+// Throw crypto errors
 void cryptoError(bool error, const char *description);
 void cryptoErrorCode(unsigned long code, const char *description) __attribute__((__noreturn__));
 
+// Get cipher type or name
 CipherType cipherType(const String *name);
 const String *cipherTypeName(CipherType type);
 
+// Generate random bytes
 void cryptoRandomBytes(unsigned char *buffer, size_t size);
 
 #endif

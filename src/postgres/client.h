@@ -29,11 +29,17 @@ PgClient *pgClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Open connection to PostgreSQL
 PgClient *pgClientOpen(PgClient *this);
-VariantList *pgClientQuery(PgClient *this, const String *query);
-void pgClientClose(PgClient *this);
 
+// Move to a new parent mem context
 PgClient *pgClientMove(PgClient *this, MemContext *parentNew);
+
+// Execute a query and return results
+VariantList *pgClientQuery(PgClient *this, const String *query);
+
+// Close connection to PostgreSQL
+void pgClientClose(PgClient *this);
 
 /***********************************************************************************************************************************
 Destructor

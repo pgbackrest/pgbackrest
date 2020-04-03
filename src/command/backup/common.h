@@ -26,8 +26,9 @@ typedef enum
     STRING_DECLARE(BACKUP_TYPE_INCR_STR);
 
 /***********************************************************************************************************************************
-Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
+Functions
 ***********************************************************************************************************************************/
+// Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
 typedef struct BackupRegExpParam
 {
     bool full;
@@ -41,9 +42,7 @@ typedef struct BackupRegExpParam
 
 String *backupRegExp(BackupRegExpParam param);
 
-/***********************************************************************************************************************************
-Convert text backup type to an enum and back
-***********************************************************************************************************************************/
+// Convert text backup type to an enum and back
 BackupType backupType(const String *type);
 const String *backupTypeStr(BackupType type);
 

@@ -65,19 +65,23 @@ InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const Str
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Add backup to current section
+// Add backup to the current list
 void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
-// Remove a backup from the current section
+
+// Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
-InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
-// Get a list of current backup labels
+// Return a list of current backup labels, applying a regex expression if provided
 StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
+// PostgreSQL info
 InfoPg *infoBackupPg(const InfoBackup *this);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
+
+// Return a structure of the backup data from a specific index
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
 // Return a pointer to a structure from the current backup data given a label, else NULL
@@ -86,7 +90,10 @@ InfoBackupData *infoBackupDataByLabel(const InfoBackup *this, const String *back
 // Given a backup label, get the dependency list
 StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);
 
+// Get total current backups
 unsigned int infoBackupDataTotal(const InfoBackup *this);
+
+// Cipher passphrase
 const String *infoBackupCipherPass(const InfoBackup *this);
 
 /***********************************************************************************************************************************
@@ -97,10 +104,15 @@ void infoBackupFree(InfoBackup *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Load backup info
 InfoBackup *infoBackupLoadFile(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+
+// Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
 InfoBackup *infoBackupLoadFileReconstruct(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+
+// Save backup info
 void infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 

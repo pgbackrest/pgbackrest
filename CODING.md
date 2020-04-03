@@ -30,6 +30,10 @@ if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.sy
     backupInfoPgHistory.systemId || archiveInfoPgHistory.version != backupInfoPgHistory.version)
 ```
 
+### Function Comments
+
+Comments for `extern` functions should be included in the `.h` file. Comments for `static` functions and implementation-specific notes for `extern` functions (i.e., not of interest to the general user) should be included in the `.c` file.
+
 ### Inline Comment
 
 Inline comments shall start at character 69 and must not exceed the line length of 132. For example:

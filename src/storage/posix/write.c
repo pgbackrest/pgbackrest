@@ -216,9 +216,7 @@ storageWritePosixHandle(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->handle);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageWrite *
 storageWritePosixNew(
     StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,

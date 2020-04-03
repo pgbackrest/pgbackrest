@@ -47,17 +47,29 @@ ProtocolClient *protocolClientNew(const String *name, const String *service, IoR
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Execute a protocol command and get the output
 const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
 ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
+
+// Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
+
+// Read a line
 String *protocolClientReadLine(ProtocolClient *this);
+
+// Read the command output
 const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
+
+// Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Read interface
 IoRead *protocolClientIoRead(const ProtocolClient *this);
+
+// Write interface
 IoWrite *protocolClientIoWrite(const ProtocolClient *this);
 
 /***********************************************************************************************************************************

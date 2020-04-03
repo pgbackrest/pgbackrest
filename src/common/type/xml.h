@@ -24,15 +24,25 @@ typedef struct XmlNodeList XmlNodeList;
 /***********************************************************************************************************************************
 Document Constructors
 ***********************************************************************************************************************************/
+// Document with the specified root node
 XmlDocument *xmlDocumentNew(const String *rootNode);
+
+// Document from Buffer
 XmlDocument *xmlDocumentNewBuf(const Buffer *);
+
+// Document from C buffer
 XmlDocument *xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize);
+
+// Document from zero-terminated string
 XmlDocument *xmlDocumentNewZ(const char *string);
 
 /***********************************************************************************************************************************
 Document Getters
 ***********************************************************************************************************************************/
+// Dump document to a buffer
 Buffer *xmlDocumentBuf(const XmlDocument *this);
+
+// Root node
 XmlNode *xmlDocumentRoot(const XmlDocument *this);
 
 /***********************************************************************************************************************************
@@ -43,16 +53,26 @@ void xmlDocumentFree(XmlDocument *this);
 /***********************************************************************************************************************************
 Node Functions
 ***********************************************************************************************************************************/
+// Add a node
 XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
 
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
+// Node attribute
 String *xmlNodeAttribute(const XmlNode *this, const String *name);
+
+// Node child (by name or index)
 XmlNode *xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing);
-XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
+
+// List of child nodes
+XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
+
+// Node child total
 unsigned int xmlNodeChildTotal(const XmlNode *this, const String *name);
+
+// Node content
 String *xmlNodeContent(const XmlNode *this);
 void xmlNodeContentSet(XmlNode *this, const String *content);
 
@@ -64,7 +84,10 @@ void xmlNodeFree(XmlNode *this);
 /***********************************************************************************************************************************
 Node List Getters
 ***********************************************************************************************************************************/
+// Get a node from the list
 XmlNode *xmlNodeLstGet(const XmlNodeList *this, unsigned int listIdx);
+
+// Node list size
 unsigned int xmlNodeLstSize(const XmlNodeList *this);
 
 /***********************************************************************************************************************************

@@ -67,7 +67,7 @@ struct InfoBackup
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
-Create new object
+Internal constructor
 ***********************************************************************************************************************************/
 static InfoBackup *
 infoBackupNewInternal(void)
@@ -85,9 +85,7 @@ infoBackupNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Create new object without loading it from a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackup *
 infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
@@ -293,9 +291,7 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get PostgreSQL info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoPg *
 infoBackupPg(const InfoBackup *this)
 {
@@ -308,9 +304,6 @@ infoBackupPg(const InfoBackup *this)
     FUNCTION_TEST_RETURN(this->infoPg);
 }
 
-/***********************************************************************************************************************************
-Set the infoPg data
-***********************************************************************************************************************************/
 InfoBackup *
 infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
@@ -325,9 +318,7 @@ infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 
-/***********************************************************************************************************************************
-Get total current backups
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned int
 infoBackupDataTotal(const InfoBackup *this)
 {
@@ -340,9 +331,7 @@ infoBackupDataTotal(const InfoBackup *this)
     FUNCTION_TEST_RETURN(lstSize(this->backup));
 }
 
-/***********************************************************************************************************************************
-Return a structure of the backup data from a specific index
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackupData
 infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 {
@@ -371,9 +360,7 @@ infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
     FUNCTION_TEST_RETURN(lstFind(this->backup, &backupLabel));
 }
 
-/***********************************************************************************************************************************
-Add a backup to the current list
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 {
@@ -462,9 +449,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Delete a backup from the current backup list
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 {
@@ -486,9 +471,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Return a list of current backup labels, applying a regex expression if provided
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
 infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 {
@@ -556,9 +539,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
-/***********************************************************************************************************************************
-Return the cipher passphrase
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 infoBackupCipherPass(const InfoBackup *this)
 {
@@ -571,9 +552,7 @@ infoBackupCipherPass(const InfoBackup *this)
     FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
-/***********************************************************************************************************************************
-Helper function to load backup info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct InfoBackupLoadFileData
 {
     MemContext *memContext;                                         // Mem context
@@ -666,9 +645,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
     FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
 }
 
-/***********************************************************************************************************************************
-Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackup *
 infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
@@ -771,9 +748,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
     FUNCTION_LOG_RETURN(INFO_BACKUP, infoBackup);
 }
 
-/***********************************************************************************************************************************
-Helper function to save backup info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
@@ -807,9 +782,7 @@ infoBackupSaveFile(
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 infoBackupDataToLog(const InfoBackupData *this)
 {

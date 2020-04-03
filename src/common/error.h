@@ -61,28 +61,55 @@ typedef struct ErrorType ErrorType;
 /***********************************************************************************************************************************
 Functions to get information about a generic error type
 ***********************************************************************************************************************************/
+// Error type code
 int errorTypeCode(const ErrorType *errorType);
+
+// Get error type using a code
 const ErrorType *errorTypeFromCode(int code);
+
+// Error type name
 const char *errorTypeName(const ErrorType *errorType);
+
+// Error type parent
 const ErrorType *errorTypeParent(const ErrorType *errorType);
+
+// Does the child error type extend the parent error type?
 bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
 
 /***********************************************************************************************************************************
 Functions to get information about the current error
 ***********************************************************************************************************************************/
+// Error type
 const ErrorType *errorType(void);
+
+// Error code (pulled from error type)
 int errorCode(void);
+
+// Error filename
 const char *errorFileName(void);
+
+// Error function name
 const char *errorFunctionName(void);
+
+// Error file line number
 int errorFileLine(void);
+
+// Is this error an instance of the error type?
 bool errorInstanceOf(const ErrorType *errorTypeTest);
+
+// Error message
 const char *errorMessage(void);
+
+// Error name (pulled from error type)
 const char *errorName(void);
+
+// Error stack trace
 const char *errorStackTrace(void);
 
 /***********************************************************************************************************************************
 Functions to get information about the try stack
 ***********************************************************************************************************************************/
+// Get the depth of the current try statement (0 if none)
 unsigned int errorTryDepth(void);
 
 /***********************************************************************************************************************************
@@ -233,13 +260,28 @@ Internal functions
 
 These functions are used by the macros to implement the error handler and should never be called independently.
 ***********************************************************************************************************************************/
+// Begin the try block
 bool errorInternalTry(const char *fileName, const char *functionName, int fileLine);
+
+// Return jump buffer for current try
 jmp_buf *errorInternalJump(void);
+
+// True when in try state
 bool errorInternalStateTry(void);
+
+// True when in catch state and the expected error matches
 bool errorInternalStateCatch(const ErrorType *errorTypeCatch);
+
+// True when in final state
 bool errorInternalStateFinal(void);
+
+// Process the error through each try and state
 bool errorInternalProcess(bool catch);
+
+// Propagate the error up so it can be caught
 void errorInternalPropagate(void) __attribute__((__noreturn__));
+
+// Throw an error
 void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
     __attribute__((__noreturn__));
@@ -247,6 +289,7 @@ void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
     __attribute__((format(printf, 5, 6))) __attribute__((__noreturn__));
 
+// Throw a system error
 void errorInternalThrowSys(
 #ifdef DEBUG_COVERAGE
     bool error,

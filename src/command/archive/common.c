@@ -67,9 +67,7 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Check for ok/error status files in the spool in/out directory
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
 {
@@ -172,9 +170,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Write an error status file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message)
 {
@@ -203,9 +199,7 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Write an ok status file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning)
 {
@@ -282,9 +276,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Is the segment partial?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 walIsPartial(const String *walSegment)
 {
@@ -298,9 +290,7 @@ walIsPartial(const String *walSegment)
     FUNCTION_LOG_RETURN(BOOL, strEndsWithZ(walSegment, WAL_SEGMENT_PARTIAL_EXT));
 }
 
-/***********************************************************************************************************************************
-Generates the location of the wal directory using a relative wal path and the supplied pg path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 walPath(const String *walFile, const String *pgPath, const String *command)
 {
@@ -356,9 +346,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
-/***********************************************************************************************************************************
-Is the file a segment or some other file (e.g. .history, .backup, etc)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 walIsSegment(const String *walSegment)
 {
@@ -383,12 +371,7 @@ walIsSegment(const String *walSegment)
     FUNCTION_LOG_RETURN(BOOL, regExpMatch(regExpSegment, walSegment));
 }
 
-/***********************************************************************************************************************************
-Find a WAL segment in the repository
-
-The file name can have several things appended such as a hash, compression extension, and partial extension so it is possible to
-have multiple files that match the segment, though more than one match is not a good thing.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
 {
@@ -456,9 +439,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
-/***********************************************************************************************************************************
-Get the next WAL segment given a WAL segment and WAL segment size
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
 {
@@ -505,9 +486,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
     FUNCTION_LOG_RETURN(STRING, strNewFmt("%08X%08X%08X", timeline, major, minor));
 }
 
-/***********************************************************************************************************************************
-Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {

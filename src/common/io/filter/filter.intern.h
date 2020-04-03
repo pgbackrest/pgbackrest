@@ -57,18 +57,35 @@ IoFilter *ioFilterNew(const String *type, void *driver, VariantList *paramList, 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Filter input only (a result is expected)
 void ioFilterProcessIn(IoFilter *this, const Buffer *input);
+
+// Filter input and produce output
 void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
+
+// Move filter to a new parent mem context
 IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Is the filter done?
 bool ioFilterDone(const IoFilter *this);
+
+// Driver for the filter
 void *ioFilterDriver(IoFilter *this);
+
+// Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
+// to the same input again.
 bool ioFilterInputSame(const IoFilter *this);
+
+// Interface for the filter
 const IoFilterInterface *ioFilterInterface(const IoFilter *this);
+
+// Does filter produce output? All In filters produce output.
 bool ioFilterOutput(const IoFilter *this);
+
+// List of filter parameters
 const VariantList *ioFilterParamList(const IoFilter *this);
 
 /***********************************************************************************************************************************

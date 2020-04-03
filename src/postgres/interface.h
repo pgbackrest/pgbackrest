@@ -112,13 +112,21 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Get the catalog version for a PostgreSQL version
 uint32_t pgCatalogVersion(unsigned int pgVersion);
+
+// Get info from pg_control
 PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
+
+// Get the control version for a PostgreSQL version
 uint32_t pgControlVersion(unsigned int pgVersion);
+
+// Convert version string to version number and vice versa
 unsigned int pgVersionFromStr(const String *version);
 String *pgVersionToStr(unsigned int version);
 
+// Get info from WAL header
 PgWal pgWalFromFile(const String *walFile);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
@@ -154,7 +162,10 @@ const String *pgXactPath(unsigned int pgVersion);
 Test Functions
 ***********************************************************************************************************************************/
 #ifdef DEBUG
+    // Create pg_control for testing
     Buffer *pgControlTestToBuffer(PgControl pgControl);
+
+    // Create WAL for testing
     void pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer);
 #endif
 

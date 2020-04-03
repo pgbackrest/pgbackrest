@@ -18,9 +18,7 @@ Restore File
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Copy a file from the backup to the specified destination
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 restoreFile(
     const String *repoFile, const String *repoFileReference, CompressType repoFileCompressType, const String *pgFile,

@@ -29,8 +29,13 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Send keepalives to all remotes
 void protocolKeepAlive(void);
+
+// Local protocol client
 ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
+
+// Remote protocol client
 ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
 // Free (shutdown) a remote
@@ -39,12 +44,16 @@ void protocolRemoteFree(unsigned int hostId);
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Is pg local?
 bool pgIsLocal(unsigned int hostId);
 
 // Error if PostgreSQL is not local, i.e. pg-host is set
 void pgIsLocalVerify(void);
 
+// Is the repository local?
 bool repoIsLocal(void);
+
+// Error if the repository is not local
 void repoIsLocalVerify(void);
 
 // Get enum/string for protocol storage type

@@ -30,12 +30,16 @@ ProtocolCommand *protocolCommandNew(const String *command);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Move to a new parent mem context
 ProtocolCommand *protocolCommandMove(ProtocolCommand *this, MemContext *parentNew);
+
+// Read the command output
 ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Command JSON
 String *protocolCommandJson(const ProtocolCommand *this);
 
 /***********************************************************************************************************************************

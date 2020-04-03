@@ -20,7 +20,10 @@ Constants describing number of sub-units in an interval
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Sleep for specified milliseconds
 void sleepMSec(TimeMSec sleepMSec);
+
+// Epoch time in milliseconds
 TimeMSec timeMSec(void);
 
 // Are the date parts valid? (year >= 1970, month 1-12, day 1-31)

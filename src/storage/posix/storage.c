@@ -630,9 +630,7 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
     .feature = 1 << storageFeaturePath | 1 << storageFeatureCompress | 1 << storageFeatureLimitRead,
