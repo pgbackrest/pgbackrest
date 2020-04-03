@@ -38,9 +38,4 @@ typedef struct StorageWriteInterface
 
 StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
 
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-void *storageWriteDriver(const StorageWrite *this);
-
 #endif

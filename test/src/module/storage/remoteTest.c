@@ -395,9 +395,7 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), hrnReplaceKey("{[path]}/repo/test.txt"), "check name");
-        TEST_RESULT_UINT(
-            storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
-            "nothing more to read");
+        TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRemote, strNew("test.txt")), "get file");
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "    check contents");
@@ -549,7 +547,7 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "    check write size");
-        TEST_RESULT_VOID(storageWriteRemoteClose((StorageWriteRemote *)storageWriteDriver(write)), "close file again");
+        TEST_RESULT_VOID(storageWriteRemoteClose(write->driver), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly

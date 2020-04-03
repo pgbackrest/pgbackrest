@@ -23,9 +23,4 @@ typedef struct StorageReadInterface
 
 StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
 
-/***********************************************************************************************************************************
-Constructor
-***********************************************************************************************************************************/
-void *storageRead(const StorageRead *this);
-
 #endif

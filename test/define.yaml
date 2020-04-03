@@ -443,6 +443,9 @@ unit:
           storage/helper: full
           storage/storage: full
 
+        include:
+          - storage/write
+
   # ********************************************************************************************************************************
   - name: protocol
 

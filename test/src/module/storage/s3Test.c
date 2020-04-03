@@ -813,7 +813,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
-        TEST_RESULT_VOID(storageWriteS3Close((StorageWriteS3 *)storageWriteDriver(write)), "close file again");
+        TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
 
         // Zero-length file
         TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
