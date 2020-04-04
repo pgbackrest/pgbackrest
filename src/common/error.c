@@ -388,15 +388,12 @@ void
 errorInternalThrowSys(
 #ifdef DEBUG_COVERAGE
     bool error,
-#else
-    int errNo,
 #endif
-    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
 #ifdef DEBUG_COVERAGE
     if (error)
     {
-        int errNo = errno;
 #endif
 
     // Format message with system message appended
@@ -419,15 +416,12 @@ void
 errorInternalThrowSysFmt(
 #ifdef DEBUG_COVERAGE
     bool error,
-#else
-    int errNo,
 #endif
-    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
 {
 #ifdef DEBUG_COVERAGE
     if (error)
     {
-        int errNo = errno;
 #endif
 
     // Format message
