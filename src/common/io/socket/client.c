@@ -61,6 +61,7 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);
+    ASSERT(timeout > 0);
 
     SocketClient *this = NULL;
 
@@ -101,7 +102,7 @@ sckClientOpen(SocketClient *this)
     {
         bool connected = false;
         bool retry;
-        Wait *wait = this->timeout > 0 ? waitNew(this->timeout) : NULL;
+        Wait *wait = waitNew(this->timeout);
 
         do
         {
@@ -143,8 +144,34 @@ sckClientOpen(SocketClient *this)
 
                     sckOptionSet(this->fd);
 
+                    // Attempt connection
                     if (connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
-                        THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                    {
+                        // Save the error
+                        int errNo = errno;
+
+                        // The connection has started but since we are in non-blocking mode it has not completed yet
+                        if (errNo == EINPROGRESS)
+                        {
+                            // Wait for write-ready
+                            if (!sckPoll(this->fd, false, true, waitRemaining(wait)))
+                                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(this->host), this->port);
+
+                            // Check that the connection was successful
+                            socklen_t errNoLen = sizeof(errNo);
+
+                            THROW_ON_SYS_ERROR(
+                                getsockopt(this->fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
+                                "unable to get socket error");
+                        }
+
+                        // Throw error if it is still set
+                        if (errNo != 0)
+                        {
+                            THROW_SYS_ERROR_CODE_FMT(
+                                errNo, HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                        }
+                    }
                 }
                 FINALLY()
                 {
@@ -158,7 +185,7 @@ sckClientOpen(SocketClient *this)
             CATCH_ANY()
             {
                 // Retry if wait time has not expired
-                if (wait != NULL && waitMore(wait))
+                if (waitMore(wait))
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;

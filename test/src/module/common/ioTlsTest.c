@@ -207,6 +207,17 @@ testRun(void)
         socketLocal = socketLocalSave;
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("SocketClient"))
+    {
+        SocketClient *client = NULL;
+
+        TEST_ASSIGN(client, sckClientNew(strNew("localhost"), harnessTlsTestPort(), 100), "new client");
+        TEST_ERROR_FMT(
+            sckClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            harnessTlsTestPort());
+    }
+
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
     if (testBegin("asn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
