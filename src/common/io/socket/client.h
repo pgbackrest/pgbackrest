@@ -43,7 +43,10 @@ Functions
 void sckClientOpen(SocketClient *this);
 
 // Wait for the socket to be readable
-void sckClientReadWait(SocketClient *this);
+// void sckClientReadWait(SocketClient *this);
+
+// !!!
+void sckClientPoll(SocketClient *this, bool read, bool write);
 
 // Close the connection
 void sckClientClose(SocketClient *this);

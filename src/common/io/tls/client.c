@@ -7,6 +7,7 @@ TLS Client
 #include <strings.h>
 
 #include <openssl/conf.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 
@@ -62,11 +63,14 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 Report TLS errors.  Returns true if the command should continue and false if it should exit.
 ***********************************************************************************************************************************/
 static bool
-tlsError(TlsClient *this, int code)
+tlsError(TlsClient *this, int code, bool closeOk)
 {
+    int errNo = errno;
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
         FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(BOOL, closeOk);
     FUNCTION_LOG_END();
 
     bool result = false;
@@ -76,7 +80,11 @@ tlsError(TlsClient *this, int code)
         // The connection was closed
         case SSL_ERROR_ZERO_RETURN:
         {
+            if (!closeOk)
+                THROW(ProtocolError, "unexpected eof");
+
             tlsClientClose(this);
+
             break;
         }
 
@@ -84,7 +92,9 @@ tlsError(TlsClient *this, int code)
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
         {
+            sckClientPoll(this->socket, code == SSL_ERROR_WANT_READ, code == SSL_ERROR_WANT_WRITE);
             result = true;
+
             break;
         }
 
@@ -92,11 +102,10 @@ tlsError(TlsClient *this, int code)
         case SSL_ERROR_SYSCALL:
         {
             // Get the error before closing so it is not cleared
-            int errNo = errno;
             tlsClientClose(this);
 
             // Throw the sys error if there is one
-            THROW_ON_SYS_ERROR(errNo, KernelError, "tls failed syscall");
+            THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
 
             break;
         }
@@ -156,7 +165,7 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
 
         // Disable auto-retry to prevent SSL_read() from hanging
-        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
+        // SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
 
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -342,7 +351,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no tls data pending then check the socket
         if (!SSL_pending(this->session))
-            sckClientReadWait(this->socket);
+            sckClientPoll(this->socket, true, false);
 
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
@@ -351,7 +360,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
         if (result <= 0)
         {
             // Break if the error indicates that we should not continue trying
-            if (!tlsError(this, SSL_get_error(this->session, (int)result)))
+            if (!tlsError(this, SSL_get_error(this->session, (int)result), true))
                 break;
         }
         // Update amount of buffer used
@@ -386,14 +395,7 @@ tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeS
     {
         // If error = SSL_ERROR_NONE then this is the first write attempt so continue
         if (writeError != SSL_ERROR_NONE)
-        {
-            // Error if the error indicates that we should not continue trying
-            if (!tlsError(this, writeError))
-                THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
-
-            // Wait for the socket to be readable for tls renegotiation
-            sckClientReadWait(this->socket);
-        }
+            tlsError(this, writeError, false);
     }
     else
     {
@@ -523,7 +525,17 @@ tlsClientOpen(TlsClient *this)
                         "unable to set TLS host name");
                     cryptoError(
                         SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
-                    cryptoError(SSL_connect(this->session) != 1, "unable to negotiate TLS connection");
+
+                    int result = 0;
+
+                    do
+                    {
+                        result = SSL_connect(this->session);
+
+                        if (result <= 0)
+                            tlsError(this, SSL_get_error(this->session, result), false);
+                    }
+                    while (result <= 0);
 
                     // Connection was successful
                     connected = true;
