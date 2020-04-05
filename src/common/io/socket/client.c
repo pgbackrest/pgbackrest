@@ -145,32 +145,30 @@ sckClientOpen(SocketClient *this)
                     sckOptionSet(this->fd);
 
                     // Attempt connection
-                    if (connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
+                    CHECK(connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+
+                    // Save the error
+                    int errNo = errno;
+
+                    // The connection has started but since we are in non-blocking mode it has not completed yet
+                    CHECK(errno == EINPROGRESS);
+
+                    // Wait for write-ready
+                    if (!sckPoll(this->fd, false, true, waitRemaining(wait)))
+                        THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(this->host), this->port);
+
+                    // Check that the connection was successful
+                    socklen_t errNoLen = sizeof(errNo);
+
+                    THROW_ON_SYS_ERROR(
+                        getsockopt(this->fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
+                        "unable to get socket error");
+
+                    // Throw error if it is still set
+                    if (errNo != 0)
                     {
-                        // Save the error
-                        int errNo = errno;
-
-                        // The connection has started but since we are in non-blocking mode it has not completed yet
-                        if (errNo == EINPROGRESS)
-                        {
-                            // Wait for write-ready
-                            if (!sckPoll(this->fd, false, true, waitRemaining(wait)))
-                                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(this->host), this->port);
-
-                            // Check that the connection was successful
-                            socklen_t errNoLen = sizeof(errNo);
-
-                            THROW_ON_SYS_ERROR(
-                                getsockopt(this->fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
-                                "unable to get socket error");
-                        }
-
-                        // Throw error if it is still set
-                        if (errNo != 0)
-                        {
-                            THROW_SYS_ERROR_CODE_FMT(
-                                errNo, HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
-                        }
+                        THROW_SYS_ERROR_CODE_FMT(
+                            errNo, HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
                     }
                 }
                 FINALLY()

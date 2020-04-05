@@ -82,10 +82,14 @@ testTlsServer(void)
         harnessTlsServerReply("0123456789AB");
         harnessTlsServerClose();
 
-        // Need data in read buffer to test tlsWriteContinue()
+        // eof before expected bytes read
         harnessTlsServerAccept();
-        harnessTlsServerReply("0123456789AB");
+        harnessTlsServerReply("0123456789Z");
         harnessTlsServerClose();
+
+        // eof before all bytes written
+        // harnessTlsServerAccept();
+        // harnessTlsServerClose();
 
         exit(0);
     }
@@ -216,6 +220,10 @@ testRun(void)
         TEST_ERROR_FMT(
             sckClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
             harnessTlsTestPort());
+
+        // This address should not be in use in a test environment -- if it is the test will fail
+        TEST_ASSIGN(client, sckClientNew(strNew("172.31.255.255"), harnessTlsTestPort(), 100), "new client");
+        TEST_ERROR_FMT(sckClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", harnessTlsTestPort());
     }
 
     // Additional coverage not provided by testing with actual certificates
@@ -263,12 +271,12 @@ testRun(void)
         TEST_ERROR(
             tlsClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
-        // TEST_ASSIGN(
-        //     client, tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 100), 100, true, NULL, NULL),
-        //     "new client");
-        // TEST_ERROR_FMT(
-        //     tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
-        //     harnessTlsTestPort());
+        TEST_ASSIGN(
+            client, tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 100), 100, true, NULL, NULL),
+            "new client");
+        TEST_ERROR_FMT(
+            tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            harnessTlsTestPort());
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
@@ -388,8 +396,27 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
+        output = bufNew(12);
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
+        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("eof before all bytes read");
+
+        TEST_RESULT_VOID(tlsClientOpen(client), "open client again (was closed by server)");
+
+        output = bufNew(12);
+        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 11, "read output");
+        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("eof before all bytes written");
+        //
+        // TEST_RESULT_BOOL(tlsClientOpen(client), true, "open client again (was closed by server)");
+        // sleepMSec(500);
         // output = bufNew(12);
-        // TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
+        // TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), BUFSTRDEF("willnotwrite")), "write output");
+        // TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), BUFSTRDEF("willnotwrite")), "write output");
         // TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
 
         // -------------------------------------------------------------------------------------------------------------------------

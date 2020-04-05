@@ -60,62 +60,72 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
-Report TLS errors.  Returns true if the command should continue and false if it should exit.
+Process results and report errors. Returns true if the command should continue and false if it should exit.
 ***********************************************************************************************************************************/
-static bool
-tlsError(TlsClient *this, int code, bool closeOk)
+static int
+tlsResult(TlsClient *this, int result, bool closeOk)
 {
-    int errNo = errno;
-
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(INT, result);
         FUNCTION_LOG_PARAM(BOOL, closeOk);
     FUNCTION_LOG_END();
 
-    bool result = false;
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
 
-    switch (code)
+    if (result <= 0)
     {
-        // The connection was closed
-        case SSL_ERROR_ZERO_RETURN:
+        // Get tls error and store errno in case of syscall error
+        int error = SSL_get_error(this->session, result);
+        int errNo = errno;
+
+        LOG_DEBUG_FMT("tls error %d, sys error %d", error, errNo);
+
+        ERR_clear_error();
+
+        switch (error)
         {
-            if (!closeOk)
-                THROW(ProtocolError, "unexpected eof");
+            // The connection was closed
+            case SSL_ERROR_ZERO_RETURN:
+            {
+                tlsClientClose(this);
 
-            tlsClientClose(this);
+                if (!closeOk)
+                    THROW(ProtocolError, "unexpected eof");
 
-            break;
+                result = -1;
+                break;
+            }
+
+            // Try the read/write again
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+            {
+                sckClientPoll(this->socket, error == SSL_ERROR_WANT_READ, error == SSL_ERROR_WANT_WRITE);
+
+                result = 0;
+                break;
+            }
+
+            // A syscall failed (this usually indicates eof)
+            case SSL_ERROR_SYSCALL:
+            {
+                // Get the error before closing so it is not cleared
+                tlsClientClose(this);
+
+                // Throw the sys error if there is one
+                THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
+                break;
+            }
+
+            // Some other tls error that cannot be handled
+            default:
+                THROW_FMT(ServiceError, "tls error [%d]", error);
         }
-
-        // Try the read/write again
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        {
-            sckClientPoll(this->socket, code == SSL_ERROR_WANT_READ, code == SSL_ERROR_WANT_WRITE);
-            result = true;
-
-            break;
-        }
-
-        // A syscall failed (this usually indicates eof)
-        case SSL_ERROR_SYSCALL:
-        {
-            // Get the error before closing so it is not cleared
-            tlsClientClose(this);
-
-            // Throw the sys error if there is one
-            THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
-
-            break;
-        }
-
-        // Some other tls error that cannot be handled
-        default:
-            THROW_FMT(ServiceError, "tls error [%d]", code);
     }
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(INT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -165,7 +175,7 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
 
         // Disable auto-retry to prevent SSL_read() from hanging
-        // SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
+        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
 
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -346,26 +356,25 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 
     ssize_t result = 0;
 
-    // If blocking read keep reading until buffer is full
+    // If no tls data pending then check the socket
+    if (!SSL_pending(this->session))
+        sckClientPoll(this->socket, true, false);
+
+    // If blocking read keep reading until buffer is full or eof
     do
     {
-        // If no tls data pending then check the socket
-        if (!SSL_pending(this->session))
-            sckClientPoll(this->socket, true, false);
-
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
-        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+        result = tlsResult(this, SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes), true);
 
-        if (result <= 0)
-        {
-            // Break if the error indicates that we should not continue trying
-            if (!tlsError(this, SSL_get_error(this->session, (int)result), true))
-                break;
-        }
         // Update amount of buffer used
-        else
+        if (result > 0)
+        {
             bufUsedInc(buffer, (size_t)result);
+        }
+        // If the connection was closed then we are at eof. It is up to the layer above tls to decide if this is an error.
+        else if (result == -1)
+            break;
     }
     while (block && bufRemains(buffer) > 0);
 
@@ -375,41 +384,41 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 /***********************************************************************************************************************************
 Write to the tls session
 ***********************************************************************************************************************************/
-static bool
-tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(INT, writeResult);
-        FUNCTION_LOG_PARAM(INT, writeError);
-        FUNCTION_LOG_PARAM(SIZE, writeSize);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(writeSize > 0);
-
-    bool result = true;
-
-    // Handle errors
-    if (writeResult <= 0)
-    {
-        // If error = SSL_ERROR_NONE then this is the first write attempt so continue
-        if (writeError != SSL_ERROR_NONE)
-            tlsError(this, writeError, false);
-    }
-    else
-    {
-        if ((size_t)writeResult != writeSize)
-        {
-            THROW_FMT(
-                FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
-        }
-
-        result = false;
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
+// static bool
+// tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
+// {
+//     FUNCTION_LOG_BEGIN(logLevelTrace);
+//         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+//         FUNCTION_LOG_PARAM(INT, writeResult);
+//         FUNCTION_LOG_PARAM(INT, writeError);
+//         FUNCTION_LOG_PARAM(SIZE, writeSize);
+//     FUNCTION_LOG_END();
+//
+//     ASSERT(this != NULL);
+//     ASSERT(writeSize > 0);
+//
+//     bool result = true;
+//
+//     // Handle errors
+//     if (writeResult <= 0)
+//     {
+//         // If error = SSL_ERROR_NONE then this is the first write attempt so continue
+//         if (writeError != SSL_ERROR_NONE)
+//             tlsError(this, writeError, false);
+//     }
+//     else
+//     {
+//         if ((size_t)writeResult != writeSize)
+//         {
+//             THROW_FMT(
+//                 FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
+//         }
+//
+//         result = false;
+//     }
+//
+//     FUNCTION_LOG_RETURN(BOOL, result);
+// }
 
 void
 tlsClientWrite(THIS_VOID, const Buffer *buffer)
@@ -426,13 +435,14 @@ tlsClientWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     int result = 0;
-    int error = SSL_ERROR_NONE;
 
-    while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
+    do
     {
-        result = SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer));
-        error = SSL_get_error(this->session, result);
+        result = tlsResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
+
+        CHECK(result == 0 || (size_t)result == bufUsed(buffer));
     }
+    while (result == 0);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -526,16 +536,8 @@ tlsClientOpen(TlsClient *this)
                     cryptoError(
                         SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
 
-                    int result = 0;
-
-                    do
-                    {
-                        result = SSL_connect(this->session);
-
-                        if (result <= 0)
-                            tlsError(this, SSL_get_error(this->session, result), false);
-                    }
-                    while (result <= 0);
+                    // Keep trying the connection until success or error
+                    while (tlsResult(this, SSL_connect(this->session), false) == 0);
 
                     // Connection was successful
                     connected = true;
