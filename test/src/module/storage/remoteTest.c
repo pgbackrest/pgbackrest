@@ -83,34 +83,6 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
-    // Do these tests against a pg remote for coverage
-    // *****************************************************************************************************************************
-    if (testBegin("storageExists()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storagePgGet(1, false), "get remote pg storage");
-        storagePathCreateP(storageTest, strNew("pg"));
-
-        TEST_RESULT_BOOL(storageExistsP(storageRemote, strNew("test.txt")), false, "file does not exist");
-
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TEST"));
-        TEST_RESULT_BOOL(storageExistsP(storageRemote, strNew("test.txt")), true, "file exists");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
-        cfgOptionValidSet(cfgOptRemoteType, true);
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
-    }
-
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
@@ -232,13 +204,13 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("protocol output that is not tested elsewhere");
+        TEST_TITLE("protocol output that is not tested elsewhere (basic)");
 
-        info = (StorageInfo){.type = storageTypeLink, .linkDestination = STRDEF("../")};
+        info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
         TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
         ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -247,6 +219,7 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(BOGUS_STR));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
@@ -255,10 +228,16 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check protocol function directly with a file");
+        TEST_TITLE("check protocol function directly with a file (basic level)");
+
+        // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
+        // id has already been created.  This will just test that the pg storage is selected to provide coverage.
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+        cfgOptionValidSet(cfgOptRemoteType, true);
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
@@ -266,7 +245,26 @@ testRun(void)
             strNewBuf(serverWrite),
             hrnReplaceKey(
                 "{\"out\":true}\n"
-                ".f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
+                ".f\n.1555160001\n.6\n"
+                "{}\n"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file (detail level)");
+
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
+        varLstAdd(paramList, varNewBool(false));
+
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            hrnReplaceKey(
+                "{\"out\":true}\n"
+                ".f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 "{}\n"),
             "check result");
 
@@ -319,47 +317,17 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
+        varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
-                ".\".\"\n.p\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n.1555160000\n"
-                ".\"test\"\n.f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
+                ".\".\"\n.p\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
+                ".\"test\"\n.f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 ".\n"
                 "{\"out\":true}\n"),
             "check result");
-
-        bufUsedSet(serverWrite, 0);
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storageList()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateP(storageTest, strNew("repo"));
-
-        TEST_RESULT_PTR(storageListP(storageRemote, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
-        TEST_RESULT_UINT(strLstSize(storageListP(storageRemote, NULL)), 0, "empty list for missing dir");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("repo/testy"));
-        TEST_RESULT_STR_Z(strLstJoin(storageListP(storageRemote, NULL), ","), "testy" , "list path");
-
-        storagePathCreateP(storageTest, strNew("repo/testy2\""));
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ","),
-            "testy,testy2\"" , "list 2 paths");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo", testPath())));
-        varLstAdd(paramList, varNewStr(strNew("^testy$")));
-
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[\"testy\"]}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
     }
@@ -648,28 +616,6 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp")))), "", "check file");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storagePathExists()"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateP(storageTest, strNew("repo"));
-
-        TEST_RESULT_BOOL(storagePathExistsP(storageRemote, strNew("missing")), false, "path does not exist");
-        TEST_RESULT_BOOL(storagePathExistsP(storageRemote, NULL), true, "path exists");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR, paramList, server), true, "protocol path exists");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************

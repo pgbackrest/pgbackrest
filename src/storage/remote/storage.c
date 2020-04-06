@@ -30,35 +30,6 @@ struct StorageRemote
 };
 
 /**********************************************************************************************************************************/
-static bool
-storageRemoteExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
-        protocolCommandParamAdd(command, VARSTR(file));
-
-        result = varBool(protocolClientExecute(this->client, command, true));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 // Helper to convert protocol storage type to an enum
 static StorageType
 storageRemoteInfoParseType(const char type)
@@ -95,41 +66,47 @@ storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
     FUNCTION_TEST_END();
 
     info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
-    info->userId = jsonToUInt(protocolClientReadLine(client));
-    info->user = jsonToStr(protocolClientReadLine(client));
-    info->groupId = jsonToUInt(protocolClientReadLine(client));
-    info->group = jsonToStr(protocolClientReadLine(client));
-    info->mode = jsonToUInt(protocolClientReadLine(client));
     info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
 
     if (info->type == storageTypeFile)
         info->size = jsonToUInt64(protocolClientReadLine(client));
 
-    if (info->type == storageTypeLink)
-        info->linkDestination = jsonToStr(protocolClientReadLine(client));
+    if (info->level >= storageInfoLevelDetail)
+    {
+        info->userId = jsonToUInt(protocolClientReadLine(client));
+        info->user = jsonToStr(protocolClientReadLine(client));
+        info->groupId = jsonToUInt(protocolClientReadLine(client));
+        info->group = jsonToStr(protocolClientReadLine(client));
+        info->mode = jsonToUInt(protocolClientReadLine(client));
+
+        if (info->type == storageTypeLink)
+            info->linkDestination = jsonToStr(protocolClientReadLine(client));
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static StorageInfo
-storageRemoteInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    StorageInfo result = {.exists = false};
+    StorageInfo result = {.level = level};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
         protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARUINT(level));
         protocolCommandParamAdd(command, VARBOOL(param.followLink));
 
         result.exists = varBool(protocolClientExecute(this->client, command, true));
@@ -161,13 +138,15 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param
 /**********************************************************************************************************************************/
 static bool
 storageRemoteInfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
@@ -183,6 +162,7 @@ storageRemoteInfoList(
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
         protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARUINT(level));
 
         // Send command
         protocolClientWriteCommand(this->client, command);
@@ -195,7 +175,7 @@ storageRemoteInfoList(
 
             while (strSize(name) != 0)
             {
-                StorageInfo info = {.exists = true, .name = jsonToStr(name)};
+                StorageInfo info = {.exists = true, .level = level, .name = jsonToStr(name)};
 
                 storageRemoteInfoParse(this->client, &info);
                 callback(callbackData, &info);
@@ -215,36 +195,6 @@ storageRemoteInfoList(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-static StringList *
-storageRemoteList(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARSTR(param.expression));
-
-        result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -340,35 +290,6 @@ storageRemotePathCreate(
 
 /**********************************************************************************************************************************/
 static bool
-storageRemotePathExists(THIS_VOID, const String *path, StorageInterfacePathExistsParam param)
-{
-    THIS(StorageRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-
-        result = varBool(protocolClientExecute(this->client, command, true));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-static bool
 storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
     THIS(StorageRemote);
@@ -456,14 +377,11 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceRemote =
 {
-    .exists = storageRemoteExists,
     .info = storageRemoteInfo,
     .infoList = storageRemoteInfoList,
-    .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,
-    .pathExists = storageRemotePathExists,
     .pathRemove = storageRemotePathRemove,
     .pathSync = storageRemotePathSync,
     .remove = storageRemoteRemove,

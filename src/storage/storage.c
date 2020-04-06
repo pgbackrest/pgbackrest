@@ -55,9 +55,7 @@ storageNew(
     ASSERT(type != NULL);
     ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
-    ASSERT(interface.exists != NULL);
     ASSERT(interface.info != NULL);
-    ASSERT(interface.list != NULL);
     ASSERT(interface.infoList != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
@@ -153,17 +151,19 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path to the file
-        String *path = storagePathP(this, pathExp);
-
         // Create Wait object of timeout > 0
         Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
 
         // Loop until file exists or timeout
         do
         {
-            // Call driver function
-            result = storageInterfaceExistsP(this->driver, path);
+            // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function
+            // specifically wants to test existence of a *file*, not just the existence of anything with the specified name.
+            StorageInfo info = storageInfoP(
+                this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
+
+            // Only exists if it is a file
+            result = info.exists && info.type == storageTypeFile;
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -239,6 +239,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
@@ -255,7 +256,11 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
         // Call driver function
-        result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
+        if (param.level == storageInfoLevelDefault)
+            param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
+
+        result = storageInterfaceInfoP(
+            this->driver, file, param.level, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -311,11 +316,14 @@ storageInfoListSortCallback(void *data, const StorageInfo *info)
 
 static bool
 storageInfoListSort(
-    const Storage *this, const String *path, SortOrder sortOrder, StorageInfoListCallback callback, void *callbackData)
+    const Storage *this, const String *path, StorageInfoLevel level, const String *expression, SortOrder sortOrder,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
+        FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(ENUM, sortOrder);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
@@ -331,7 +339,7 @@ storageInfoListSort(
         // If no sorting then use the callback directly
         if (sortOrder == sortOrderNone)
         {
-            result = storageInterfaceInfoListP(this->driver, path, callback, callbackData);
+            result = storageInterfaceInfoListP(this->driver, path, level, callback, callbackData, .expression = expression);
         }
         // Else sort the info before sending it to the callback
         else
@@ -343,7 +351,8 @@ storageInfoListSort(
                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
-            result = storageInterfaceInfoListP(this->driver, path, storageInfoListSortCallback, &data);
+            result = storageInterfaceInfoListP(
+                this->driver, path, level, storageInfoListSortCallback, &data, .expression = expression);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -370,7 +379,8 @@ typedef struct StorageInfoListData
     const Storage *storage;                                         // Storage object;
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
-    RegExp *expression;                                             // Filter for names
+    const String *expression;                                       // Filter for names
+    RegExp *regExp;                                                 // Compiled filter for names
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
@@ -404,7 +414,7 @@ storageInfoListCallback(void *data, const StorageInfo *info)
         infoUpdate.name = strNewFmt("%s/%s", strPtr(listData->subPath), strPtr(infoUpdate.name));
 
     // Only continue if there is no expression or the expression matches
-    if (listData->expression == NULL || regExpMatch(listData->expression, infoUpdate.name))
+    if (listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name))
     {
         if (listData->sortOrder != sortOrderDesc)
             listData->callbackFunction(listData->callbackData, &infoUpdate);
@@ -416,8 +426,8 @@ storageInfoListCallback(void *data, const StorageInfo *info)
             data.subPath = infoUpdate.name;
 
             storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.sortOrder, storageInfoListCallback,
-                &data);
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expression,
+                data.sortOrder, storageInfoListCallback, &data);
         }
 
         if (listData->sortOrder == sortOrderDesc)
@@ -436,6 +446,7 @@ storageInfoList(
         FUNCTION_LOG_PARAM(STRING, pathExp);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
@@ -451,6 +462,10 @@ storageInfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Info level
+        if (param.level == storageInfoLevelDefault)
+            param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
+
         // Build the path
         String *path = storagePathP(this, pathExp);
 
@@ -462,18 +477,20 @@ storageInfoList(
                 .storage = this,
                 .callbackFunction = callback,
                 .callbackData = callbackData,
+                .expression = param.expression,
                 .sortOrder = param.sortOrder,
                 .recurse = param.recurse,
                 .path = path,
             };
 
-            if (param.expression != NULL)
-                data.expression = regExpNew(param.expression);
+            if (data.expression != NULL)
+                data.regExp = regExpNew(param.expression);
 
-            result = storageInfoListSort(this, path, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListSort(
+                this, path, param.level, param.expression, param.sortOrder, storageInfoListCallback, &data);
         }
         else
-            result = storageInfoListSort(this, path, param.sortOrder, callback, callbackData);
+            result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
@@ -484,6 +501,26 @@ storageInfoList(
 }
 
 /**********************************************************************************************************************************/
+static void
+storageListCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    // Skip . path
+    if (strEq(info->name, DOT_STR))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    strLstAdd((StringList *)data, info->name);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
@@ -503,23 +540,16 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
-        String *path = storagePathP(this, pathExp);
+        result = strLstNew();
 
-        // Get the list
-        result = storageInterfaceListP(this->driver, path, .expression = param.expression);
-
-        // If the path does not exist
-        if (result == NULL)
+        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
+        // the caller doesn't care if the path is missing.
+        if (!storageInfoListP(
+                this, pathExp, storageListCallback, result, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
+                .expression = param.expression))
         {
-            // Error if requested
-            if (param.errorOnMissing)
-                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_MISSING, strPtr(path));
-
-            // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
-            // when they don't care if the path is missing.
-            if (!param.nullOnMissing)
-                result = strLstNew();
+            if (param.nullOnMissing)
+                result = NULL;
         }
 
         // Move list up to the old context
@@ -781,17 +811,13 @@ storagePathExists(const Storage *this, const String *pathExp)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathExists != NULL);
+    ASSERT(storageFeature(this, storageFeaturePath));
 
-    bool result = false;
+    // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function specifically
+    // wants to test existence of a *path*, not just the existence of anything with the specified name.
+    StorageInfo info = storageInfoP(this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = storageInterfacePathExistsP(this->driver, storagePathP(this, pathExp));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, info.exists && info.type == storageTypePath);
 }
 
 /**********************************************************************************************************************************/

@@ -24,15 +24,12 @@ Remote Storage Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR,             PROTOCOL_COMMAND_STORAGE_PATH_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR,               PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_REMOVE_STR,                  PROTOCOL_COMMAND_STORAGE_REMOVE);
@@ -134,6 +131,8 @@ storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
+// or check for level == storageInfoLevelExists.
 static void
 storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 {
@@ -143,18 +142,22 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
     FUNCTION_TEST_END();
 
     storageRemoteInfoWriteType(server, info->type);
-    protocolServerWriteLine(server, jsonFromUInt(info->userId));
-    protocolServerWriteLine(server, jsonFromStr(info->user));
-    protocolServerWriteLine(server, jsonFromUInt(info->groupId));
-    protocolServerWriteLine(server, jsonFromStr(info->group));
-    protocolServerWriteLine(server, jsonFromUInt(info->mode));
     protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
 
     if (info->type == storageTypeFile)
         protocolServerWriteLine(server, jsonFromUInt64(info->size));
 
-    if (info->type == storageTypeLink)
-        protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
+    if (info->level >= storageInfoLevelDetail)
+    {
+        protocolServerWriteLine(server, jsonFromUInt(info->userId));
+        protocolServerWriteLine(server, jsonFromStr(info->user));
+        protocolServerWriteLine(server, jsonFromUInt(info->groupId));
+        protocolServerWriteLine(server, jsonFromStr(info->group));
+        protocolServerWriteLine(server, jsonFromUInt(info->mode));
+
+        if (info->type == storageTypeLink)
+            protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -199,11 +202,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
-        {
-            protocolServerResponse(server, VARBOOL(storageInterfaceExistsP(driver, varStr(varLstGet(paramList, 0)))));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
+        if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
             protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
             protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
@@ -213,7 +212,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
             StorageInfo info = storageInterfaceInfoP(
-                driver, varStr(varLstGet(paramList, 0)), .followLink = varBool(varLstGet(paramList, 1)));
+                driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
+                .followLink = varBool(varLstGet(paramList, 2)));
 
             protocolServerResponse(server, VARBOOL(info.exists));
 
@@ -226,19 +226,11 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
             bool result = storageInterfaceInfoListP(
-                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
+                driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
+                storageRemoteProtocolInfoListCallback, server);
 
             protocolServerWriteLine(server, NULL);
             protocolServerResponse(server, VARBOOL(result));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
-        {
-            protocolServerResponse(
-                server,
-                varNewVarLst(
-                    varLstNewStrLst(
-                        storageInterfaceListP(
-                            driver, varStr(varLstGet(paramList, 0)), .expression = varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
@@ -355,13 +347,6 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 varUIntForce(varLstGet(paramList, 3)));
 
             protocolServerResponse(server, NULL);
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR))
-        {
-            // Not all drivers implement pathExists()
-            CHECK(interface.pathExists != NULL);
-
-            protocolServerResponse(server, VARBOOL(storageInterfacePathExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {

@@ -422,9 +422,6 @@ storageS3ListInternal(
     {
         const String *continuationToken = NULL;
 
-        // Prepare regexp if an expression was passed
-        RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
-
         // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
@@ -490,9 +487,8 @@ storageS3ListInternal(
                     // Strip off base prefix and final /
                     subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
 
-                    // Add to list after checking expression if present
-                    if (regExp == NULL || regExpMatch(regExp, subPath))
-                        callback(this, callbackData, subPath, storageTypePath, subPathNode);
+                    // Add to list
+                    callback(this, callbackData, subPath, storageTypePath, subPathNode);
                 }
 
                 // Get file list
@@ -508,9 +504,8 @@ storageS3ListInternal(
                     // Strip off the base prefix when present
                     file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
 
-                    // Add to list after checking expression if present
-                    if (regExp == NULL || regExpMatch(regExp, file))
-                        callback(this, callbackData, file, storageTypeFile, fileNode);
+                    // Add to list
+                    callback(this, callbackData, file, storageTypeFile, fileNode);
                 }
 
                 // Get the continuation token and store it in the outer temp context
@@ -530,55 +525,30 @@ storageS3ListInternal(
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageS3Exists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = httpClientResponseCodeOk(storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true).httpClient);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 static StorageInfo
-storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
+storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(ENUM, level);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    StorageInfo result = {0};
-
     // Attempt to get file info
     StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
 
-    // On success load info into a structure
-    if (httpClientResponseCodeOk(httpResult.httpClient))
+    // Does the file exist?
+    StorageInfo result = {.level = level, .exists = httpClientResponseCodeOk(httpResult.httpClient)};
+
+    // Add basic level info if requested and the file exists
+    if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        result.exists = true;
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
@@ -590,6 +560,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
 /**********************************************************************************************************************************/
 typedef struct StorageS3InfoListData
 {
+    StorageInfoLevel level;                                         // Level of info to set
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
@@ -630,12 +601,19 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
     StorageInfo info =
     {
-        .type = type,
         .name = name,
-        .size = type == storageTypeFile ? cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0,
-        .timeModified = type == storageTypeFile ?
-            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0,
+        .level = data->level,
+        .exists = true,
     };
+
+    if (data->level >= storageInfoLevelBasic)
+    {
+        info.type = type;
+        info.size = type == storageTypeFile ?
+            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0;
+        info.timeModified = type == storageTypeFile ?
+            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+    }
 
     data->callback(data->callbackData, &info);
 
@@ -644,16 +622,18 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
 static bool
 storageS3InfoList(
-    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -662,63 +642,12 @@ storageS3InfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageS3InfoListData data = {.callback = callback, .callbackData = callbackData};
-        storageS3ListInternal(this, path, false, false, storageS3InfoListCallback, &data);
+        StorageS3InfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
+        storageS3ListInternal(this, path, param.expression, false, storageS3InfoListCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
-}
-
-/**********************************************************************************************************************************/
-static void
-storageS3ListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-    (void)type;
-    (void)xml;
-
-    strLstAdd((StringList *)callbackData, name);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static StringList *
-storageS3List(THIS_VOID, const String *path, StorageInterfaceListParam param)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = strLstNew();
-
-        storageS3ListInternal(this, path, param.expression, false, storageS3ListCallback, result);
-        strLstMove(result, memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -909,10 +838,8 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceS3 =
 {
-    .exists = storageS3Exists,
     .info = storageS3Info,
     .infoList = storageS3InfoList,
-    .list = storageS3List,
     .newRead = storageS3NewRead,
     .newWrite = storageS3NewWrite,
     .pathRemove = storageS3PathRemove,
