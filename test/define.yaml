@@ -238,14 +238,14 @@ unit:
           common/io/write: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      # - name: io-tls
-      #   total: 6
-      #   containerReq: true
-      #
-      #   coverage:
-      #     common/io/tls/client: full
-      #     common/io/socket/client: full
-      #     common/io/socket/common: full
+      - name: io-tls
+        total: 6
+        containerReq: true
+
+        coverage:
+          common/io/tls/client: full
+          common/io/socket/client: full
+          common/io/socket/common: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       # - name: io-http

@@ -226,44 +226,6 @@ sckClientPoll(SocketClient *this, bool read, bool write)
 
     FUNCTION_LOG_RETURN_VOID();
 }
-//
-// /**********************************************************************************************************************************/
-// void
-// sckClientReadWait(SocketClient *this)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(this->fd != -1);
-//
-//     // Initialize the file descriptor set used for select
-//     fd_set selectSet;
-//     FD_ZERO(&selectSet);
-//
-//     // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-//     FD_SET((unsigned int)this->fd, &selectSet);
-//
-//     // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-//     struct timeval timeoutSelect;
-//     timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-//     timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-//
-//     // Determine if there is data to be read
-//     int result = select(this->fd + 1, &selectSet, NULL, NULL, &timeoutSelect);
-//     THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-//
-//     // If no data available after time allotted then error
-//     if (!result)
-//     {
-//         THROW_FMT(
-//             FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
-//             this->port);
-//     }
-//
-//     FUNCTION_LOG_RETURN_VOID();
-// }
 
 /**********************************************************************************************************************************/
 void

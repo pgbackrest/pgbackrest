@@ -84,6 +84,8 @@ testS3ServerResponse(unsigned int code, const char *message, const char *header,
 static void
 testS3Server(void)
 {
+    FUNCTION_HARNESS_VOID();
+
     if (fork() == 0)
     {
         harnessTlsServerInitDefault();
@@ -504,6 +506,8 @@ testS3Server(void)
         harnessTlsServerClose();
         exit(0);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -757,7 +761,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
     {
-        testS3Server();
+        TEST_RESULT_VOID(testS3Server(), "s3 server begin");
 
         Storage *s3 = storageS3New(
             path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2, host, port,
