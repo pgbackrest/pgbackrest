@@ -16,9 +16,7 @@ Archive Push File
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Copy a file from the source to the archive
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 archivePushFile(
     const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,

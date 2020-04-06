@@ -18,7 +18,7 @@ Storage type
     STRING_DECLARE(STORAGE_POSIX_TYPE_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Storage *storagePosixNew(
     const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction);

@@ -12,7 +12,7 @@ Posix Storage File write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
@@ -139,7 +139,7 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
     ASSERT(this->handle != -1);
 
     // Write the data
-    if (write(this->handle, bufPtr(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
+    if (write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -216,9 +216,7 @@ storageWritePosixHandle(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->handle);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageWrite *
 storageWritePosixNew(
     StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,

@@ -11,6 +11,7 @@ Configuration Load
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
+#include "common/io/socket/common.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -57,9 +58,7 @@ cfgLoadLogSetting(void)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Update options that have complex rules
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 cfgLoadUpdateOption(void)
 {
@@ -270,9 +269,7 @@ cfgLoadUpdateOption(void)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Attempt to set the log file and turn file logging off if the file cannot be opened
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 cfgLoadLogFile(void)
 {
@@ -312,9 +309,7 @@ cfgLoadLogFile(void)
     }
 }
 
-/***********************************************************************************************************************************
-Load the configuration
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 cfgLoad(unsigned int argListSize, const char *argList[])
 {
@@ -341,6 +336,16 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // If a command is set
         if (cfgCommand() != cfgCmdNone)
         {
+            // Initialize TCP settings
+            if (cfgOptionValid(cfgOptSckKeepAlive))
+            {
+                sckInit(
+                    cfgOptionBool(cfgOptSckKeepAlive),
+                    cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
+                    cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
+                    cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
+            }
+
             // Set IO buffer size
             if (cfgOptionValid(cfgOptBufferSize))
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));

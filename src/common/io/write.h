@@ -22,18 +22,34 @@ typedef struct IoWrite IoWrite;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Open the IO
 void ioWriteOpen(IoWrite *this);
+
+// Write data to IO and process filters
 void ioWrite(IoWrite *this, const Buffer *buffer);
+
+// Write linefeed-terminated buffer
 void ioWriteLine(IoWrite *this, const Buffer *buffer);
+
+// Write string
 void ioWriteStr(IoWrite *this, const String *string);
+
+// Write linefeed-terminated string
 void ioWriteStrLine(IoWrite *this, const String *string);
+
+// Flush any data in the output buffer. This does not end writing and will not work if filters are present.
 void ioWriteFlush(IoWrite *this);
+
+// Close the IO and write any additional data that has not been written yet
 void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Filter group. Filters must be set before open and cannot be reset
 IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
+
+// Handle (file descriptor) for the write object. Not all write objects have a handle and -1 will be returned in that case.
 int ioWriteHandle(const IoWrite *this);
 
 /***********************************************************************************************************************************

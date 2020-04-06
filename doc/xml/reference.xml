@@ -242,6 +242,48 @@
 
                         <example>630</example>
                     </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
+                    <config-key id="sck-keep-alive" name="Keep Alive">
+                        <summary>Keep-alive enable.</summary>
+
+                        <text>Enables keep-alive messages on socket connections.</text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-COUNT KEY -->
+                    <config-key id="tcp-keep-alive-count" name="Keep Alive Count">
+                        <summary>Keep-alive count.</summary>
+
+                        <text>Specifies the number of TCP keep-alive messages that can be lost before the connection is considered dead.
+
+                        This option is available on systems that support the <code>TCP_KEEPCNT</code> socket option.</text>
+
+                        <example>3</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-IDLE KEY -->
+                    <config-key id="tcp-keep-alive-idle" name="Keep Alive Idle">
+                        <summary>Keep-alive idle time.</summary>
+
+                        <text>Specifies the amount of time (in seconds) with no network activity after which the operating system should send a TCP keep-alive message.
+
+                        This option is available on systems that support the <code>TCP_KEEPIDLE</code> socket option.</text>
+
+                        <example>60</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-INTERVAL KEY -->
+                    <config-key id="tcp-keep-alive-interval" name="Keep Alive Interval">
+                        <summary>Keep-alive interval time.</summary>
+
+                        <text>Specifies the amount of time (in seconds) after which a TCP keep-alive message that has not been acknowledged should be retransmitted.
+
+                        This option is available on systems that support the <code>TCP_KEEPINTVL</code> socket option.</text>
+
+                        <example>30</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

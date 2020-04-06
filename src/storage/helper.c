@@ -119,9 +119,7 @@ storageHelperStanzaInit(const bool stanzaRequired)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get a local storage object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const Storage *
 storageLocal(void)
 {
@@ -142,11 +140,6 @@ storageLocal(void)
     FUNCTION_TEST_RETURN(storageHelper.storageLocal);
 }
 
-/***********************************************************************************************************************************
-Get a writable local storage object
-
-This should be used very sparingly.  If writes are not needed then always use storageLocal() or a specific storage object instead.
-***********************************************************************************************************************************/
 const Storage *
 storageLocalWrite(void)
 {
@@ -197,9 +190,7 @@ storagePgGet(unsigned int hostId, bool write)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get read-only PostgreSQL storage for a specific host id
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const Storage *
 storagePgId(unsigned int hostId)
 {
@@ -224,9 +215,6 @@ storagePgId(unsigned int hostId)
     FUNCTION_TEST_RETURN(storageHelper.storagePg[hostId - 1]);
 }
 
-/***********************************************************************************************************************************
-Get read-only PostgreSQL storage for the host-id or the default of 1
-***********************************************************************************************************************************/
 const Storage *
 storagePg(void)
 {
@@ -234,9 +222,6 @@ storagePg(void)
     FUNCTION_TEST_RETURN(storagePgId(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
 }
 
-/***********************************************************************************************************************************
-Get write PostgreSQL storage for a specific host id
-***********************************************************************************************************************************/
 const Storage *
 storagePgIdWrite(unsigned int hostId)
 {
@@ -265,9 +250,6 @@ storagePgIdWrite(unsigned int hostId)
     FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[hostId - 1]);
 }
 
-/***********************************************************************************************************************************
-Get write PostgreSQL storage for the host-id or the default of 1
-***********************************************************************************************************************************/
 const Storage *
 storagePgWrite(void)
 {
@@ -411,9 +393,7 @@ storageRepoGet(const String *type, bool write)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get a read-only repository storage object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const Storage *
 storageRepo(void)
 {
@@ -435,9 +415,6 @@ storageRepo(void)
     FUNCTION_TEST_RETURN(storageHelper.storageRepo);
 }
 
-/***********************************************************************************************************************************
-Get a writable repository storage object
-***********************************************************************************************************************************/
 const Storage *
 storageRepoWrite(void)
 {
@@ -464,7 +441,7 @@ storageRepoWrite(void)
 }
 
 /***********************************************************************************************************************************
-Get a spool storage object
+Spool storage path expression
 ***********************************************************************************************************************************/
 static String *
 storageSpoolPathExpression(const String *expression, const String *path)
@@ -499,9 +476,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get a read-only spool storage object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const Storage *
 storageSpool(void)
 {
@@ -524,9 +499,6 @@ storageSpool(void)
     FUNCTION_TEST_RETURN(storageHelper.storageSpool);
 }
 
-/***********************************************************************************************************************************
-Get a writable spool storage object
-***********************************************************************************************************************************/
 const Storage *
 storageSpoolWrite(void)
 {
@@ -553,12 +525,7 @@ storageSpoolWrite(void)
     FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
 }
 
-/***********************************************************************************************************************************
-Free all storage helper objects.
-
-This should be done on any config load to ensure that stanza changes are honored.  Currently this is only done in testing, but in
-the future it will likely be done in production as well.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storageHelperFree(void)
 {

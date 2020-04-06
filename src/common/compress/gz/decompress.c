@@ -12,7 +12,7 @@ Gz Decompress
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -85,7 +85,9 @@ gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
     if (!this->inputSame)
     {
         this->stream.avail_in = (unsigned int)bufUsed(compressed);
-        this->stream.next_in = bufPtr(compressed);
+
+        // Not all versions of zlib (and none by default) will accept const input buffers
+        this->stream.next_in = UNCONSTIFY(unsigned char *, bufPtrConst(compressed));
     }
 
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);
@@ -139,9 +141,7 @@ gzDecompressInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->inputSame);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 gzDecompressNew(void)
 {

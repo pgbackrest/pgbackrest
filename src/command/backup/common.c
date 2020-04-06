@@ -16,9 +16,7 @@ STRING_EXTERN(BACKUP_TYPE_FULL_STR,                                 BACKUP_TYPE_
 STRING_EXTERN(BACKUP_TYPE_DIFF_STR,                                 BACKUP_TYPE_DIFF);
 STRING_EXTERN(BACKUP_TYPE_INCR_STR,                                 BACKUP_TYPE_INCR);
 
-/***********************************************************************************************************************************
-Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 backupRegExp(BackupRegExpParam param)
 {
@@ -83,9 +81,7 @@ backupRegExp(BackupRegExpParam param)
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
-/***********************************************************************************************************************************
-Convert text backup type to an enum and back
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 BackupType
 backupType(const String *type)
 {

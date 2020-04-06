@@ -447,6 +447,7 @@ STRING_EXTERN(CFGOPT_REPO1_S3_URI_STYLE_STR,                        CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_S3_VERIFY_TLS_STR,                       CFGOPT_REPO1_S3_VERIFY_TLS);
 STRING_EXTERN(CFGOPT_REPO1_TYPE_STR,                                CFGOPT_REPO1_TYPE);
 STRING_EXTERN(CFGOPT_RESUME_STR,                                    CFGOPT_RESUME);
+STRING_EXTERN(CFGOPT_SCK_KEEP_ALIVE_STR,                            CFGOPT_SCK_KEEP_ALIVE);
 STRING_EXTERN(CFGOPT_SET_STR,                                       CFGOPT_SET);
 STRING_EXTERN(CFGOPT_SORT_STR,                                      CFGOPT_SORT);
 STRING_EXTERN(CFGOPT_SPOOL_PATH_STR,                                CFGOPT_SPOOL_PATH);
@@ -459,6 +460,9 @@ STRING_EXTERN(CFGOPT_TARGET_STR,                                    CFGOPT_TARGE
 STRING_EXTERN(CFGOPT_TARGET_ACTION_STR,                             CFGOPT_TARGET_ACTION);
 STRING_EXTERN(CFGOPT_TARGET_EXCLUSIVE_STR,                          CFGOPT_TARGET_EXCLUSIVE);
 STRING_EXTERN(CFGOPT_TARGET_TIMELINE_STR,                           CFGOPT_TARGET_TIMELINE);
+STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_COUNT_STR,                      CFGOPT_TCP_KEEP_ALIVE_COUNT);
+STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_IDLE_STR,                       CFGOPT_TCP_KEEP_ALIVE_IDLE);
+STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_INTERVAL_STR,                   CFGOPT_TCP_KEEP_ALIVE_INTERVAL);
 STRING_EXTERN(CFGOPT_TYPE_STR,                                      CFGOPT_TYPE);
 
 /***********************************************************************************************************************************
@@ -1781,6 +1785,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_SCK_KEEP_ALIVE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptSckKeepAlive)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_SET)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptSet)
@@ -1872,6 +1884,30 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_TARGET_TIMELINE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetTimeline)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_COUNT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveCount)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_IDLE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveIdle)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_INTERVAL)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveInterval)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

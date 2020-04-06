@@ -10,7 +10,7 @@ Posix Storage Read
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/read.intern.h"
@@ -195,9 +195,7 @@ storageReadPosixHandle(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->handle);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageRead *
 storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
 {

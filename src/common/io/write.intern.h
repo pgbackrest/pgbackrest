@@ -7,7 +7,7 @@ IO Write Interface Internal
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct IoWriteInterface
 {
@@ -21,12 +21,6 @@ typedef struct IoWriteInterface
     ioWriteNew(driver, (IoWriteInterface){__VA_ARGS__})
 
 IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-void *ioWriteDriver(IoWrite *this);
-const IoWriteInterface *ioWriteInterface(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -21,24 +21,38 @@ Protocol process handler type
 typedef bool (*ProtocolServerProcessHandler)(const String *command, const VariantList *paramList, ProtocolServer *server);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Return an error
 void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
+
+// Process requests
 void protocolServerProcess(ProtocolServer *this);
+
+// Respond to request with output if provided
 void protocolServerResponse(ProtocolServer *this, const Variant *output);
+
+// Add a new handler
 void protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler handler);
+
+// Move to a new parent mem context
 ProtocolServer *protocolServerMove(ProtocolServer *this, MemContext *parentNew);
+
+// Write a line
 void protocolServerWriteLine(const ProtocolServer *this, const String *line);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
+// Read interface
 IoRead *protocolServerIoRead(const ProtocolServer *this);
+
+// Write interface
 IoWrite *protocolServerIoWrite(const ProtocolServer *this);
 
 /***********************************************************************************************************************************

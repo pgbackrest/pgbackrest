@@ -348,13 +348,18 @@ testRun(void)
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
         lockRelease(true);
 
-        // Command does not have umask
+        // Command does not have umask and disables keep-alives
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "--no-" CFGOPT_SCK_KEEP_ALIVE);
         strLstAdd(argList, strNew("info"));
 
+        socketLocal = (struct SocketLocal){.init = false};
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config and don't set umask");
+        TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
+        TEST_RESULT_BOOL(socketLocal.keepAlive, false, "   check socketLocal.keepAlive");
 
         // Set a distinct umask value and test that the umask is reset by configLoad since default for neutral-umask=y
         // -------------------------------------------------------------------------------------------------------------------------
@@ -399,8 +404,11 @@ testRun(void)
         strLstAdd(argList, strNew("help"));
 
         ioBufferSizeSet(333);
+        socketLocal = (struct SocketLocal){.init = false};
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
         TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
+        TEST_RESULT_BOOL(socketLocal.init, false, "socketLocal not updated by help command");
 
         // Help command for backup
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,8 +424,9 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
         TEST_RESULT_UINT(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
 
-        // Command takes lock and opens log file
+        // Command takes lock and opens log file and uses custom tcp settings
         // -------------------------------------------------------------------------------------------------------------------------
+        socketLocal = (struct SocketLocal){.init = false};
         struct stat statLog;
 
         argList = strLstNew();
@@ -430,10 +439,18 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_COUNT "=11");
+        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_IDLE "=2222");
+        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_INTERVAL "=888");
         strLstAdd(argList, strNew("backup"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strPtr(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
+        TEST_RESULT_BOOL(socketLocal.keepAlive, true, "   check socketLocal.keepAlive");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveCount, 11, "   check socketLocal.tcpKeepAliveCount");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "   check socketLocal.tcpKeepAliveIdle");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "   check socketLocal.tcpKeepAliveInterval");
 
         lockRelease(true);
 

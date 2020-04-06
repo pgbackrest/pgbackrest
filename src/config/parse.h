@@ -9,6 +9,7 @@ Parse Configuration
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Parse the command-line arguments and config file to produce final config data
 void configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel);
 
 #endif

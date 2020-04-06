@@ -3125,13 +3125,55 @@ case $host_os in
         ;;
 esac
 
+# Check if the C compiler supports _Static_assert()
+#
+# Test the syntax ({_Static_assert(...)}) because gcc-style compound expressions are needed to wrap it into macros.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+({_Static_assert(1, "foo");})
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  $as_echo "#define HAVE_STATIC_ASSERT 1" >>confdefs.h
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+# Check if the C compiler supports __builtin_types_compatible_p()
+# ----------------------------------------------------------------------------------------------------------------------------------
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int x; static int y[__builtin_types_compatible_p(__typeof__(x), int)];
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  $as_echo "#define HAVE_BUILTIN_TYPES_COMPATIBLE_P 1" >>confdefs.h
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
 CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers"
 
 
 # -Wno-clobbered is not supported on all compilers
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-clobbered" >&5
 $as_echo_n "checking whether C compiler accepts -Wno-clobbered... " >&6; }
 if ${ax_cv_check_cflags__Werror__Wno_clobbered+:} false; then :
@@ -5306,4 +5348,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 20715731e8e51aa203ea7b77c001d51175e2a797
+# Generated from src/build/configure.ac sha1 17c781e6a91b7e2b3fac63e875f04188d84876e8

@@ -11,8 +11,8 @@ Remote Storage Read
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/convert.h"
+#include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/read.intern.h"
@@ -173,9 +173,7 @@ storageReadRemoteEof(THIS_VOID)
     FUNCTION_TEST_RETURN(this->eof);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageRead *
 storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,

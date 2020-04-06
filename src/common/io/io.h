@@ -18,12 +18,16 @@ Default IO timeout to use when nothing else is configured
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Read all IO into a buffer
 Buffer *ioReadBuf(IoRead *read);
+
+// Read all IO but don't store it. Useful for calculating checksums, size, etc.
 bool ioReadDrain(IoRead *read);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Buffer size
 size_t ioBufferSize(void);
 void ioBufferSizeSet(size_t bufferSize);
 

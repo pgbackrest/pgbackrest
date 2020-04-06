@@ -381,6 +381,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_TYPE_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
+#define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
+    STRING_DECLARE(CFGOPT_SCK_KEEP_ALIVE_STR);
 #define CFGOPT_SET                                                  "set"
     STRING_DECLARE(CFGOPT_SET_STR);
 #define CFGOPT_SORT                                                 "sort"
@@ -405,10 +407,16 @@ Option constants
     STRING_DECLARE(CFGOPT_TARGET_EXCLUSIVE_STR);
 #define CFGOPT_TARGET_TIMELINE                                      "target-timeline"
     STRING_DECLARE(CFGOPT_TARGET_TIMELINE_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_COUNT_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_IDLE_STR);
+#define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+    STRING_DECLARE(CFGOPT_TCP_KEEP_ALIVE_INTERVAL_STR);
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            177
+#define CFG_OPTION_TOTAL                                            181
 
 /***********************************************************************************************************************************
 Command enum
@@ -606,6 +614,7 @@ typedef enum
     cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,
+    cfgOptSckKeepAlive,
     cfgOptSet,
     cfgOptSort,
     cfgOptSpoolPath,
@@ -618,6 +627,9 @@ typedef enum
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
+    cfgOptTcpKeepAliveCount,
+    cfgOptTcpKeepAliveIdle,
+    cfgOptTcpKeepAliveInterval,
     cfgOptType,
 } ConfigOption;
 

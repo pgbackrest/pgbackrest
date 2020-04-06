@@ -13,6 +13,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.26dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-ideator id="marc.cousin"/>
+                             <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p><proper>TCP</proper> keep-alive options are configurable.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2020-03-26" version="2.25" title="LZ4 Compression Support">

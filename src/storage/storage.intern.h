@@ -228,7 +228,7 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageInterface
 {
@@ -275,7 +275,10 @@ typedef struct StorageCommon
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Get the storage driver
 void *storageDriver(const Storage *this);
+
+// Get the storage interface
 StorageInterface storageInterface(const Storage *this);
 
 /***********************************************************************************************************************************

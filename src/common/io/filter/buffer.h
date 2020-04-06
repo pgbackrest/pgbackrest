@@ -11,7 +11,7 @@ in a FilterGroup if the last filter is not already an InOut filter, so there is 
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilter *ioBufferNew(void);
 

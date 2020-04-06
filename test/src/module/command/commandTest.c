@@ -121,14 +121,19 @@ testRun(void)
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
-        tlsClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
         httpClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
+
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
         hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
         TEST_RESULT_LOG(
+            "P00 DETAIL: socket statistics: objects 1, sessions 0, retries 0\n"
+            "P00 DETAIL: tls statistics: objects 1, sessions 0, retries 0\n"
             "P00   INFO: http statistics: objects 1, sessions 0, requests 0, retries 0, closes 0\n"
             "P00   INFO: archive-get command end: completed successfully ([TIME]ms)");
+
+        harnessLogLevelReset();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

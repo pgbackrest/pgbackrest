@@ -17,7 +17,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
@@ -183,7 +183,7 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
                 output,
                 lz4Error(
                     LZ4F_compressUpdate(
-                        this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), bufUsed(uncompressed),
+                        this->context, bufRemainsPtr(output), bufRemains(output), bufPtrConst(uncompressed), bufUsed(uncompressed),
                         NULL)));
         }
         // Else flush remaining output
@@ -237,9 +237,7 @@ lz4CompressInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->inputSame);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 lz4CompressNew(int level)
 {

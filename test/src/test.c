@@ -42,9 +42,11 @@ The test code is included directly so it can freely interact with the included C
 {[C_TEST_INCLUDE]}
 
 /***********************************************************************************************************************************
-Include assert.h here since it is not generally used by tests
+Includes that are not generally used by tests
 ***********************************************************************************************************************************/
 #include <assert.h>
+
+#include "common/io/socket/common.h"
 
 /***********************************************************************************************************************************
 main - run the tests
@@ -69,6 +71,9 @@ main(int argListSize, const char *argList[])
     FUNCTION_HARNESS_END();
 
     int result = 0;
+
+    // Use aggressive keep-alive settings for testing
+    sckInit(true, 2, 5, 5);
 
     // Set neutral umask for testing
     umask(0000);

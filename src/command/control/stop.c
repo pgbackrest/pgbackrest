@@ -18,6 +18,7 @@ Stop Command
 #include "storage/storage.h"
 #include "storage/storage.intern.h"
 
+/**********************************************************************************************************************************/
 void
 cmdStop(void)
 {

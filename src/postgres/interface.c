@@ -358,9 +358,7 @@ pgInterfaceVersion(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get the catalog version for a PostgreSQL version
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 uint32_t
 pgCatalogVersion(unsigned int pgVersion)
 {
@@ -371,9 +369,7 @@ pgCatalogVersion(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion());
 }
 
-/***********************************************************************************************************************************
-Get info from pg_control
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 PgControl
 pgControlFromBuffer(const Buffer *controlFile)
 {
@@ -388,7 +384,7 @@ pgControlFromBuffer(const Buffer *controlFile)
 
     for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].controlIs(bufPtr(controlFile)))
+        if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -398,7 +394,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     // If the version was not found then error with the control and catalog version that were found
     if (interface == NULL)
     {
-        PgControlCommon *controlCommon = (PgControlCommon *)bufPtr(controlFile);
+        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
 
         THROW_FMT(
             VersionNotSupportedError,
@@ -408,7 +404,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     }
 
     // Get info from the control file
-    PgControl result = interface->control(bufPtr(controlFile));
+    PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
     // Check the segment size
@@ -426,9 +422,6 @@ pgControlFromBuffer(const Buffer *controlFile)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-/***********************************************************************************************************************************
-Get info from pg_control
-***********************************************************************************************************************************/
 PgControl
 pgControlFromFile(const Storage *storage)
 {
@@ -453,9 +446,7 @@ pgControlFromFile(const Storage *storage)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-/***********************************************************************************************************************************
-Get the control version for a PostgreSQL version
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 uint32_t
 pgControlVersion(unsigned int pgVersion)
 {
@@ -478,9 +469,7 @@ typedef struct PgWalCommon
 
 #define PG_WAL_LONG_HEADER                                          0x0002
 
-/***********************************************************************************************************************************
-Get info from WAL header
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 PgWal
 pgWalFromBuffer(const Buffer *walBuffer)
 {
@@ -491,7 +480,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     ASSERT(walBuffer != NULL);
 
     // Check that this is a long format WAL header
-    if (!(((PgWalCommon *)bufPtr(walBuffer))->flag & PG_WAL_LONG_HEADER))
+    if (!(((const PgWalCommon *)bufPtrConst(walBuffer))->flag & PG_WAL_LONG_HEADER))
         THROW_FMT(FormatError, "first page header in WAL file is expected to be in long format");
 
     // Search for the version of PostgreSQL that uses this WAL magic
@@ -499,7 +488,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
 
     for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].walIs(bufPtr(walBuffer)))
+        if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -513,19 +502,16 @@ pgWalFromBuffer(const Buffer *walBuffer)
             VersionNotSupportedError,
             "unexpected WAL magic %u\n"
                 "HINT: is this version of PostgreSQL supported?",
-            ((PgWalCommon *)bufPtr(walBuffer))->magic);
+            ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
     }
 
     // Get info from the control file
-    PgWal result = interface->wal(bufPtr(walBuffer));
+    PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
-/***********************************************************************************************************************************
-Get info from a WAL segment
-***********************************************************************************************************************************/
 PgWal
 pgWalFromFile(const String *walFile)
 {
@@ -730,9 +716,7 @@ pgXactPath(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
-/***********************************************************************************************************************************
-Create pg_control for testing
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #ifdef DEBUG
 
 Buffer *
@@ -759,9 +743,7 @@ pgControlTestToBuffer(PgControl pgControl)
 
 #endif
 
-/***********************************************************************************************************************************
-Create WAL for testing
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #ifdef DEBUG
 
 void
@@ -782,9 +764,7 @@ pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
 
 #endif
 
-/***********************************************************************************************************************************
-Convert version string to version number
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned int
 pgVersionFromStr(const String *version)
 {
@@ -823,9 +803,6 @@ pgVersionFromStr(const String *version)
     FUNCTION_LOG_RETURN(UINT, result);
 }
 
-/***********************************************************************************************************************************
-Convert version number to string
-***********************************************************************************************************************************/
 String *
 pgVersionToStr(unsigned int version)
 {
@@ -839,9 +816,7 @@ pgVersionToStr(unsigned int version)
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
-/***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 pgControlToLog(const PgControl *pgControl)
 {

@@ -12,6 +12,7 @@ Archive Push File
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Copy a file from the source to the archive
 String *archivePushFile(
     const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
     CipherType cipherType, const String *cipherPass, CompressType compressType, int compressLevel);

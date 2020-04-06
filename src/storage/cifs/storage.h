@@ -13,7 +13,7 @@ Storage type
     STRING_DECLARE(STORAGE_CIFS_TYPE_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Storage *storageCifsNew(
     const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction);

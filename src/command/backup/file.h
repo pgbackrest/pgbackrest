@@ -23,6 +23,7 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Copy a file from the PostgreSQL data directory to the repository
 typedef struct BackupFileResult
 {
     BackupCopyResult backupCopyResult;

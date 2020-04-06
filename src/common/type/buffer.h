@@ -16,34 +16,77 @@ typedef struct Buffer Buffer;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Functions
+Cosntructors
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
+
+// Create a new buffer from a C buffer
 Buffer *bufNewC(const void *buffer, size_t size);
+
+// Create a new buffer using the provided C buffer instead of creating one. Note that this type of buffer cannot be resized.
 Buffer *bufNewUseC(void *buffer, size_t size);
 
 Buffer *bufDup(const Buffer *buffer);
 
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+//Append the contents of another buffer
 Buffer *bufCat(Buffer *this, const Buffer *cat);
+
+// Append a C buffer
 Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
+
+// Append a subset of another buffer
 Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
+
+// Are two buffers equal?
 bool bufEq(const Buffer *this, const Buffer *compare);
+
+// Convert the buffer to a hex string
 String *bufHex(const Buffer *this);
+
+// Move to a new parent mem context
 Buffer *bufMove(Buffer *this, MemContext *parentNew);
+
+// Resize the buffer
 Buffer *bufResize(Buffer *this, size_t size);
 
+// Is the buffer full?
 bool bufFull(const Buffer *this);
+
+// Manage buffer limits
 void bufLimitClear(Buffer *this);
 void bufLimitSet(Buffer *this, size_t limit);
-unsigned char *bufPtr(const Buffer *this);
+
+// Remaining space in the buffer
 size_t bufRemains(const Buffer *this);
-unsigned char *bufRemainsPtr(const Buffer *this);
+
+// Buffer size
 size_t bufSize(const Buffer *this);
+
+// Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
+// bufPtr() then the user is responsible for updating the used size.
 size_t bufUsed(const Buffer *this);
 void bufUsedInc(Buffer *this, size_t inc);
 void bufUsedSet(Buffer *this, size_t used);
 void bufUsedZero(Buffer *this);
 
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Buffer pointer
+unsigned char *bufPtr(Buffer *this);
+
+// Const buffer pointer
+const unsigned char *bufPtrConst(const Buffer *this);
+
+// Pointer to remaining buffer space (after used space)
+unsigned char *bufRemainsPtr(Buffer *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void bufFree(Buffer *this);
 
 /***********************************************************************************************************************************

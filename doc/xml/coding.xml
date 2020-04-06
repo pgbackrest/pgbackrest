@@ -41,6 +41,12 @@ if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.sy
             </code-block>
         </section>
 
+        <section id="function-comment">
+            <title>Function Comments</title>
+
+            <p>Comments for <code>extern</code> functions should be included in the <file>.h</file> file. Comments for <code>static</code> functions and implementation-specific notes for <code>extern</code> functions (i.e., not of interest to the general user) should be included in the <file>.c</file> file.</p>
+        </section>
+
         <section id="inline-comment">
             <title>Inline Comment</title>
 

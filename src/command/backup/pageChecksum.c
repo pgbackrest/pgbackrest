@@ -8,7 +8,7 @@ Page Checksum Filter
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.auto.h"
 
@@ -99,7 +99,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // being passed a const buffer and we should deinitely not be modifying the contents.  When pgPageChecksumTest() returns
             // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
             // before passing it into pgPageChecksumTest()?
-            unsigned char *pagePtr = bufPtr(input) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
+            unsigned char *pagePtr = UNCONSTIFY(unsigned char *, bufPtrConst(input)) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
 
             // Get a pointer to the page header at the beginning of the page
             const PageHeaderData *pageHeader = (const PageHeaderData *)pagePtr;
@@ -216,9 +216,7 @@ pageChecksumResult(THIS_VOID)
     FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit)
 {

@@ -14,7 +14,7 @@ Filter type constant
     STRING_DECLARE(CIPHER_BLOCK_FILTER_TYPE_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
 IoFilter *cipherBlockNewVar(const VariantList *paramList);
@@ -22,6 +22,7 @@ IoFilter *cipherBlockNewVar(const VariantList *paramList);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Add a block cipher to an io object
 IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
 
 #endif

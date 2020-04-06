@@ -109,9 +109,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     FUNCTION_LOG_RETURN(ARCHIVE_GET_CHECK_RESULT, result);
 }
 
-/***********************************************************************************************************************************
-Copy a file from the archive to the specified destination
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 int
 archiveGetFile(
     const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,

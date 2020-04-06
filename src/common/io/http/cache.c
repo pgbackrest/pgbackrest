@@ -6,8 +6,8 @@ Http Client Cache
 #include "common/debug.h"
 #include "common/io/http/cache.h"
 #include "common/log.h"
-#include "common/object.h"
 #include "common/type/list.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -28,9 +28,7 @@ struct HttpClientCache
 
 OBJECT_DEFINE_FREE(HTTP_CLIENT_CACHE);
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 HttpClientCache *
 httpClientCacheNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
@@ -70,9 +68,7 @@ httpClientCacheNew(
     FUNCTION_LOG_RETURN(HTTP_CLIENT_CACHE, this);
 }
 
-/***********************************************************************************************************************************
-Get an http client from the cache
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 HttpClient *
 httpClientCacheGet(HttpClientCache *this)
 {

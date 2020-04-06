@@ -6,8 +6,8 @@ Remote Storage
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/type/json.h"
+#include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/remote/storage.intern.h"
@@ -374,9 +374,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceRemote =
 {
     .info = storageRemoteInfo,

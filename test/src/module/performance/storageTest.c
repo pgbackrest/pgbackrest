@@ -19,7 +19,7 @@ stress testing as needed.
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
 #include "common/io/io.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
 #include "storage/posix/storage.h"

@@ -7,7 +7,10 @@ Archive Get Command
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Get an archive file from the repository (WAL segment, history file, etc.)
 int cmdArchiveGet(void);
+
+// Async version of archive get that runs in parallel for performance
 void cmdArchiveGetAsync(void);
 
 #endif

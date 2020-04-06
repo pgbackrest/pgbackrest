@@ -4,11 +4,11 @@ Posix Storage Internal
 #ifndef STORAGE_POSIX_STORAGE_INTERN_H
 #define STORAGE_POSIX_STORAGE_INTERN_H
 
-#include "common/object.h"
+#include "common/type/object.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Storage *storagePosixNewInternal(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,

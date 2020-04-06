@@ -262,9 +262,7 @@ cfgDefDataFind(
     cfgDefDataFind(                                                                                                                \
         type, commandDefId, configDefineOptionData[optionDefId].data, &dataDefFound, &dataDef, &dataDefList, &dataDefListSize);
 
-/***********************************************************************************************************************************
-Command and option define totals
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned int
 cfgDefCommandTotal(void)
 {
@@ -279,9 +277,7 @@ cfgDefOptionTotal(void)
     FUNCTION_TEST_RETURN(sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData));
 }
 
-/***********************************************************************************************************************************
-Command help description
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId)
 {
@@ -294,9 +290,6 @@ cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId)
     FUNCTION_TEST_RETURN(configDefineCommandData[commandDefId].helpDescription);
 }
 
-/***********************************************************************************************************************************
-Command help summary
-***********************************************************************************************************************************/
 const char *
 cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId)
 {
@@ -309,9 +302,7 @@ cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId)
     FUNCTION_TEST_RETURN(configDefineCommandData[commandDefId].helpSummary);
 }
 
-/***********************************************************************************************************************************
-Option allow lists
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -387,9 +378,7 @@ cfgDefOptionAllowListValueValid(ConfigDefineCommand commandDefId, ConfigDefineOp
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Allow range
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionAllowRange(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -440,9 +429,7 @@ cfgDefOptionAllowRangeMin(ConfigDefineCommand commandDefId, ConfigDefineOption o
         ((double)(((int64_t)(intptr_t)dataDefList[0]) + (((int64_t)(intptr_t)dataDefList[1]) * 1000000000L))) / 100);
 }
 
-/***********************************************************************************************************************************
-Default value for the option
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionDefault(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -464,9 +451,7 @@ cfgDefOptionDefault(ConfigDefineCommand commandDefId, ConfigDefineOption optionD
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Dependencies and depend lists
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionDepend(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -558,9 +543,7 @@ cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOptio
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Option help description
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -582,9 +565,7 @@ cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Option help name alt
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionHelpNameAlt(ConfigDefineOption optionDefId)
 {
@@ -629,9 +610,7 @@ cfgDefOptionHelpNameAltValueTotal(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(dataDefListSize);
 }
 
-/***********************************************************************************************************************************
-Option help section
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionHelpSection(ConfigDefineOption optionDefId)
 {
@@ -644,9 +623,7 @@ cfgDefOptionHelpSection(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].helpSection);
 }
 
-/***********************************************************************************************************************************
-Option help summary
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -668,9 +645,7 @@ cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption opt
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get option id by name
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 int
 cfgDefOptionId(const char *optionName)
 {
@@ -689,9 +664,7 @@ cfgDefOptionId(const char *optionName)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get total indexed values for option
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned int
 cfgDefOptionIndexTotal(ConfigDefineOption optionDefId)
 {
@@ -704,9 +677,7 @@ cfgDefOptionIndexTotal(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].indexTotal);
 }
 
-/***********************************************************************************************************************************
-Is the option for internal use only?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -728,9 +699,7 @@ cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption option
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Does the option accept multiple values?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionMulti(ConfigDefineOption optionDefId)
 {
@@ -745,9 +714,7 @@ cfgDefOptionMulti(ConfigDefineOption optionDefId)
             configDefineOptionData[optionDefId].type == cfgDefOptTypeList);
 }
 
-/***********************************************************************************************************************************
-Name of the option
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionName(ConfigDefineOption optionDefId)
 {
@@ -760,9 +727,7 @@ cfgDefOptionName(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].name);
 }
 
-/***********************************************************************************************************************************
-Option prefix for indexed options
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const char *
 cfgDefOptionPrefix(ConfigDefineOption optionDefId)
 {
@@ -782,9 +747,7 @@ cfgDefOptionPrefix(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Does the option need to be protected from showing up in logs, command lines, etc?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionSecure(ConfigDefineOption optionDefId)
 {
@@ -797,9 +760,7 @@ cfgDefOptionSecure(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].secure);
 }
 
-/***********************************************************************************************************************************
-Is the option required
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
@@ -821,9 +782,7 @@ cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption option
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Get option section
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 ConfigDefSection
 cfgDefOptionSection(ConfigDefineOption optionDefId)
 {
@@ -836,9 +795,7 @@ cfgDefOptionSection(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].section);
 }
 
-/***********************************************************************************************************************************
-Get option data type
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 int
 cfgDefOptionType(ConfigDefineOption optionDefId)
 {
@@ -851,9 +808,7 @@ cfgDefOptionType(ConfigDefineOption optionDefId)
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].type);
 }
 
-/***********************************************************************************************************************************
-Is the option valid for the command?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 cfgDefOptionValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {

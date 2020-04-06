@@ -14,7 +14,7 @@ LZ4 Decompress
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -99,7 +99,8 @@ lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
 
         this->frameDone = lz4Error(
             LZ4F_decompress(
-                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtr(compressed) + this->inputOffset, &srcSize, NULL)) == 0;
+                this->context, bufRemainsPtr(decompressed), &dstSize, bufPtrConst(compressed) + this->inputOffset, &srcSize,
+                NULL)) == 0;
 
         bufUsedInc(decompressed, dstSize);
 
@@ -154,9 +155,7 @@ lz4DecompressInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->inputSame);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 lz4DecompressNew(void)
 {

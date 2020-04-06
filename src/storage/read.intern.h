@@ -8,7 +8,7 @@ Storage Read Interface Internal
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageReadInterface
 {
@@ -22,10 +22,5 @@ typedef struct StorageReadInterface
 } StorageReadInterface;
 
 StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
-
-/***********************************************************************************************************************************
-Constructor
-***********************************************************************************************************************************/
-void *storageRead(const StorageRead *this);
 
 #endif

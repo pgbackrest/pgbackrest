@@ -3,23 +3,8 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
-#ifdef __FreeBSD__
-#include <netinet/in.h>
-#endif
-
-#ifdef __linux__
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#endif
 
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
@@ -33,9 +18,7 @@ TLS Client
 #include "common/io/read.intern.h"
 #include "common/io/write.intern.h"
 #include "common/memContext.h"
-#include "common/object.h"
-#include "common/time.h"
-#include "common/type/keyValue.h"
+#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -49,18 +32,19 @@ Object type
 struct TlsClient
 {
     MemContext *memContext;                                         // Mem context
-    String *host;                                                   // Hostname or IP address
-    unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
+    SocketClient *socket;                                           // Client socket
 
     SSL_CTX *context;                                               // TLS context
-    int socket;                                                     // Client socket
     SSL *session;                                                   // TLS session on the socket
 
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
 };
+
+OBJECT_DEFINE_GET(IoRead, , TLS_CLIENT, IoRead *, read);
+OBJECT_DEFINE_GET(IoWrite, , TLS_CLIENT, IoWrite *, write);
 
 OBJECT_DEFINE_FREE(TLS_CLIENT);
 
@@ -69,7 +53,7 @@ Free connection
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
 {
-    tlsClientClose(this);
+    SSL_free(this->session);
     SSL_CTX_free(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
@@ -125,23 +109,19 @@ tlsError(TlsClient *this, int code)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 TlsClient *
-tlsClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
     FUNCTION_LOG_END();
 
-    ASSERT(host != NULL);
+    ASSERT(socket != NULL);
 
     TlsClient *this = NULL;
 
@@ -152,13 +132,9 @@ tlsClientNew(
         *this = (TlsClient)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .host = strDup(host),
-            .port = port,
+            .socket = sckClientMove(socket, MEM_CONTEXT_NEW()),
             .timeout = timeout,
             .verifyPeer = verifyPeer,
-
-            // Initialize socket to -1 so we know when it is disconnected
-            .socket = -1,
         };
 
         // Setup TLS context
@@ -341,46 +317,6 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Wait for the socket to be readable
-***********************************************************************************************************************************/
-static void
-tlsClientReadWait(TlsClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->session != NULL);
-
-    // Initialize the file descriptor set used for select
-    fd_set selectSet;
-    FD_ZERO(&selectSet);
-
-    // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-    FD_SET((unsigned int)this->socket, &selectSet);
-
-    // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-    struct timeval timeoutSelect;
-    timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-    timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-    // Determine if there is data to be read
-    int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
-    THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-    // If no data read after time allotted then error
-    if (!result)
-    {
-        THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
-            this->port);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Read from the TLS session
 ***********************************************************************************************************************************/
 size_t
@@ -406,7 +342,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no tls data pending then check the socket
         if (!SSL_pending(this->session))
-            tlsClientReadWait(this);
+            sckClientReadWait(this->socket);
 
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
@@ -456,7 +392,7 @@ tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeS
                 THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
 
             // Wait for the socket to be readable for tls renegotiation
-            tlsClientReadWait(this);
+            sckClientReadWait(this->socket);
         }
     }
     else
@@ -492,7 +428,7 @@ tlsClientWrite(THIS_VOID, const Buffer *buffer)
 
     while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
     {
-        result = SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer));
+        result = SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer));
         error = SSL_get_error(this->session, result);
     }
 
@@ -512,11 +448,7 @@ tlsClientClose(TlsClient *this)
     ASSERT(this != NULL);
 
     // Close the socket
-    if (this->socket != -1)
-    {
-        close(this->socket);
-        this->socket = -1;
-    }
+    sckClientClose(this->socket);
 
     // Free the TLS session
     if (this->session != NULL)
@@ -580,76 +512,17 @@ tlsClientOpen(TlsClient *this)
 
                 TRY_BEGIN()
                 {
-                    // Set hits that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-                    struct addrinfo hints = (struct addrinfo)
-                    {
-                        .ai_family = AF_UNSPEC,
-                        .ai_socktype = SOCK_STREAM,
-                        .ai_protocol = IPPROTO_TCP,
-                    };
-
-                    // Convert the port to a zero-terminated string for use with getaddrinfo()
-                    char port[CVT_BASE10_BUFFER_SIZE];
-                    cvtUIntToZ(this->port, port, sizeof(port));
-
-                    // Get an address for the host.  We are only going to try the first address returned.
-                    struct addrinfo *hostAddress;
-                    int result;
-
-                    if ((result = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
-                    {
-                        THROW_FMT(
-                            HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), result,
-                            gai_strerror(result));
-                    }
-
-                    // Connect to the host
-                    TRY_BEGIN()
-                    {
-                        this->socket = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
-                        THROW_ON_SYS_ERROR(this->socket == -1, HostConnectError, "unable to create socket");
-
-                        if (connect(this->socket, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
-                            THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
-                    }
-                    FINALLY()
-                    {
-                        freeaddrinfo(hostAddress);
-                    }
-                    TRY_END();
-
-                    // Enable TCP keepalives
-                    int socketValue = 1;
-
-                    THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, IPPROTO_TCP, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                         "unable set SO_KEEPALIVE");
-
-                    // Set per-connection keepalive options if they are available
-#ifdef TCP_KEEPIDLE
-                    socketValue = 3;
-
-                    THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
-                         "unable set SO_KEEPCNT");
-
-                    // First try + n failures to get to the timeout
-                    socketValue = (int)this->timeout / (socketValue + 1);
-
-                    THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                         "unable set SO_KEEPIDLE");
-
-                    THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
-                         "unable set SO_KEEPINTVL");
-#endif
+                    // Open the socket
+                    sckClientOpen(this->socket);
 
                     // Negotiate TLS
                     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
 
-                    cryptoError(SSL_set_tlsext_host_name(this->session, strPtr(this->host)) != 1, "unable to set TLS host name");
-                    cryptoError(SSL_set_fd(this->session, this->socket) != 1, "unable to add socket to TLS context");
+                    cryptoError(
+                        SSL_set_tlsext_host_name(this->session, strPtr(sckClientHost(this->socket))) != 1,
+                        "unable to set TLS host name");
+                    cryptoError(
+                        SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
                     cryptoError(SSL_connect(this->session) != 1, "unable to negotiate TLS connection");
 
                     // Connection was successful
@@ -686,20 +559,22 @@ tlsClientOpen(TlsClient *this)
             if (verifyResult != X509_V_OK)
             {
                 THROW_FMT(
-                    CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s", strPtr(this->host),
-                    this->port, verifyResult, X509_verify_cert_error_string(verifyResult));
+                    CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",
+                    strPtr(sckClientHost(this->socket)), sckClientPort(this->socket), verifyResult,
+                    X509_verify_cert_error_string(verifyResult));
             }
 
             // Verify that the hostname appears in the certificate
             X509 *certificate = SSL_get_peer_certificate(this->session);
-            bool nameResult = tlsClientHostVerify(this->host, certificate);
+            bool nameResult = tlsClientHostVerify(sckClientHost(this->socket), certificate);
             X509_free(certificate);
 
             if (!nameResult)
             {
                 THROW_FMT(
                     CryptoError,
-                    "unable to find hostname '%s' in certificate common name or subject alternative names", strPtr(this->host));
+                    "unable to find hostname '%s' in certificate common name or subject alternative names",
+                    strPtr(sckClientHost(this->socket)));
             }
         }
 
@@ -717,14 +592,10 @@ tlsClientOpen(TlsClient *this)
         result = true;
     }
 
-    tlsClientStatLocal.request++;
-
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Format statistics to a string
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 tlsClientStatStr(void)
 {
@@ -735,39 +606,9 @@ tlsClientStatStr(void)
     if (tlsClientStatLocal.object > 0)
     {
         result = strNewFmt(
-            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64,
-            tlsClientStatLocal.object, tlsClientStatLocal.session, tlsClientStatLocal.request, tlsClientStatLocal.retry);
+            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", retries %" PRIu64, tlsClientStatLocal.object,
+            tlsClientStatLocal.session, tlsClientStatLocal.retry);
     }
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Get read interface
-***********************************************************************************************************************************/
-IoRead *
-tlsClientIoRead(const TlsClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->read);
-}
-
-/***********************************************************************************************************************************
-Get write interface
-***********************************************************************************************************************************/
-IoWrite *
-tlsClientIoWrite(const TlsClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->write);
 }

@@ -32,7 +32,7 @@ Defaults
 #define STORAGE_S3_DELETE_MAX                                       1000
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,

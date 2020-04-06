@@ -68,25 +68,49 @@ List *lstNewParam(size_t itemSize, ListParam param);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add an item to the end of the list
 void *lstAdd(List *this, const void *item);
+
+// Clear items from a list
 List *lstClear(List *this);
+
+// Get an item from the list
 void *lstGet(const List *this, unsigned int listIdx);
+
+// Does an item exist in the list?
 bool lstExists(const List *this, const void *item);
+
+// Find an item in the list
 void *lstFind(const List *this, const void *item);
 void *lstFindDefault(const List *this, const void *item, void *itemDefault);
 unsigned int lstFindIdx(const List *this, const void *item);
+
+// Get the index of a list item
 unsigned int lstIdx(const List *this, const void *item);
+
+// Insert an item into the list
 void *lstInsert(List *this, unsigned int listIdx, const void *item);
+
+// Memory context for this list
+MemContext *lstMemContext(const List *this);
+
+// Move to a new parent mem context
+List *lstMove(List *this, MemContext *parentNew);
+
+// Remove an item from the list
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);
-MemContext *lstMemContext(const List *this);
-List *lstMove(List *this, MemContext *parentNew);
+
+// Return list size
 unsigned int lstSize(const List *this);
+
+// List sort
 List *lstSort(List *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
-Setters
+Getters/Setters
 ***********************************************************************************************************************************/
+// Set a new comparator
 List *lstComparatorSet(List *this, ListComparator *comparator);
 
 /***********************************************************************************************************************************

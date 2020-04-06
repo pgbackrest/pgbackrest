@@ -18,22 +18,31 @@ Max size allowed for a single log message including header
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize the log system
 void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int logProcessMax, bool dryRun);
+
+// Close the log system
 void logClose(void);
+
+// Set the log file. Returns true if file logging is off or the log file was successfully opened, false if the log file could not be
+// opened.
 bool logFileSet(const char *logFile);
 
+// Check if a log level will be logged to any output. This is useful for log messages that are expensive to generate and should be
+// skipped if they will be discarded.
 bool logAny(LogLevel logLevel);
 
+// Convert log level to string and vice versa
 LogLevel logLevelEnum(const char *logLevel);
 const char *logLevelStr(LogLevel logLevel);
 
 /***********************************************************************************************************************************
 Macros
 
-Macros only call logInternal()/logInternalFmt() if the message will be logged to one of the available outputs.  The also simplify
-each call site by supplying commonly-used values.
+Macros only call logInternal()/logInternalFmt() if the message will be logged to one of the available outputs. Also simplify each
+call site by supplying commonly-used values.
 
 Note that it's possible that that not all the macros below will appear in the code.  In particular the ERROR and ASSERT macros
 should not be used directly.  They are included for completeness and future usage.

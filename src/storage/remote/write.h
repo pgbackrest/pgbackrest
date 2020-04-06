@@ -9,7 +9,7 @@ Remote Storage File write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 StorageWrite *storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,

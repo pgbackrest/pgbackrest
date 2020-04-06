@@ -48,7 +48,7 @@ Hash type sizes
 #define HASH_TYPE_SHA256_SIZE_HEX                                   (HASH_TYPE_SHA256_SIZE * 2)
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilter *cryptoHashNew(const String *type);
 IoFilter *cryptoHashNewVar(const VariantList *paramList);
@@ -56,7 +56,10 @@ IoFilter *cryptoHashNewVar(const VariantList *paramList);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Get hash for one buffer
 Buffer *cryptoHashOne(const String *type, const Buffer *message);
+
+// Get hmac for one message/key
 Buffer *cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message);
 
 #endif
