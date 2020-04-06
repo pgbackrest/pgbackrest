@@ -14,10 +14,10 @@ Backup Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
+#include "common/type/object.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -67,7 +67,7 @@ struct InfoBackup
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
-Create new object
+Internal constructor
 ***********************************************************************************************************************************/
 static InfoBackup *
 infoBackupNewInternal(void)
@@ -85,9 +85,7 @@ infoBackupNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Create new object without loading it from a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackup *
 infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
@@ -293,9 +291,7 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get PostgreSQL info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoPg *
 infoBackupPg(const InfoBackup *this)
 {
@@ -308,9 +304,6 @@ infoBackupPg(const InfoBackup *this)
     FUNCTION_TEST_RETURN(this->infoPg);
 }
 
-/***********************************************************************************************************************************
-Set the infoPg data
-***********************************************************************************************************************************/
 InfoBackup *
 infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
@@ -325,9 +318,7 @@ infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 
-/***********************************************************************************************************************************
-Get total current backups
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 unsigned int
 infoBackupDataTotal(const InfoBackup *this)
 {
@@ -340,9 +331,7 @@ infoBackupDataTotal(const InfoBackup *this)
     FUNCTION_TEST_RETURN(lstSize(this->backup));
 }
 
-/***********************************************************************************************************************************
-Return a structure of the backup data from a specific index
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackupData
 infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 {
@@ -368,19 +357,10 @@ infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
     ASSERT(this != NULL);
     ASSERT(backupLabel != NULL);
 
-    // Loop through all the current backups and return a pointer to the data if the label is found, else NULL
-    for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
-    {
-        if (strCmp(infoBackupData(this, idx).backupLabel, backupLabel) == 0)
-            FUNCTION_TEST_RETURN((InfoBackupData *)lstGet(this->backup, idx));
-    }
-
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(lstFind(this->backup, &backupLabel));
 }
 
-/***********************************************************************************************************************************
-Add a backup to the current list
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 {
@@ -469,9 +449,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Delete a backup from the current backup list
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 {
@@ -493,9 +471,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Return a list of current backup labels, applying a regex expression if provided
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
 infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 {
@@ -555,9 +531,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
 
             // If the backupPrior is in the dependency chain add the label to the list
             if (backupData.backupPrior != NULL && strLstExists(result, backupData.backupPrior))
-            {
                 strLstAdd(result, backupData.backupLabel);
-            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -565,9 +539,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
-/***********************************************************************************************************************************
-Return the cipher passphrase
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 infoBackupCipherPass(const InfoBackup *this)
 {
@@ -580,9 +552,7 @@ infoBackupCipherPass(const InfoBackup *this)
     FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
-/***********************************************************************************************************************************
-Helper function to load backup info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct InfoBackupLoadFileData
 {
     MemContext *memContext;                                         // Mem context
@@ -675,9 +645,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
     FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
 }
 
-/***********************************************************************************************************************************
-Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoBackup *
 infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
@@ -703,8 +671,33 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderAsc);
 
-        // Get the current list of backups from backup.info
+        // Get the list of current backups and remove backups from current that are no longer in the repository
         StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
+
+        for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
+        {
+            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
+            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
+            // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
+            // infoBackup object, then remove it and its dependencies
+            if (!storageExistsP(storage, manifestFileName) && infoBackupDataByLabel(infoBackup, backupLabel) != NULL)
+            {
+                StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+
+                for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+                {
+                    String *removeBackup = strLstGet(backupList, backupIdx);
+
+                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(removeBackup));
+
+                    infoBackupDataDelete(infoBackup, removeBackup);
+                }
+            }
+        }
+
+        // Get the updated current list of backups from backup.info
+        backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
 
         // For each backup in the repo, check if it exists in backup.info
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
@@ -730,9 +723,12 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                     {
                         InfoPgData pgHistory = infoPgData(infoBackup->infoPg, pgIdx);
 
-                        // If there is an exact match with the history, system and version then add it to the current backup list
+                        // If there is an exact match with the history, system and version and there is no backup-prior dependency
+                        // or there is a backup-prior and it is in the list, then add this backup to the current backup list
                         if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
-                            manData->pgVersion == pgHistory.version)
+                            manData->pgVersion == pgHistory.version &&
+                            (manData->backupLabelPrior == NULL ||
+                                infoBackupDataByLabel(infoBackup, manData->backupLabelPrior) != NULL))
                         {
                             LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
                             infoBackupDataAdd(infoBackup, manifest);
@@ -746,31 +742,13 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 }
             }
         }
-
-        // Get the updated list of current backups and remove backups from current that are no longer in the repository
-        backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
-
-        for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
-        {
-            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
-            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
-
-            // Remove backup from the current list in the infoBackup object
-            if (!storageExistsP(storage, manifestFileName))
-            {
-                LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
-                infoBackupDataDelete(infoBackup, backupLabel);
-            }
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, infoBackup);
 }
 
-/***********************************************************************************************************************************
-Helper function to save backup info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
@@ -804,9 +782,7 @@ infoBackupSaveFile(
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 infoBackupDataToLog(const InfoBackupData *this)
 {

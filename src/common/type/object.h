@@ -15,8 +15,8 @@ String) a shorter prefix may be used.
 When a macro exists to create a function definition in a C file there is no equivalent macro to create the prototype in the header.
 The prototype is not repetitious enough to justify a macro and it would only serve to obfuscate the header file.
 ***********************************************************************************************************************************/
-#ifndef COMMON_OBJECT_H
-#define COMMON_OBJECT_H
+#ifndef COMMON_TYPE_OBJECT_H
+#define COMMON_TYPE_OBJECT_H
 
 #include "common/macro.h"
 
@@ -33,6 +33,27 @@ This macro should not be used unless the function is assigned to an interface.
 Create a local "this" variable of the correct type from a THIS_VOID parameter
 ***********************************************************************************************************************************/
 #define THIS(type)                                                  type *this = thisVoid
+
+/***********************************************************************************************************************************
+Define a function used to get an object member variable.
+
+If the object type/prefix is "Object"/"object" then the macro:
+
+OBJECT_DEFINE_GET(Size, const, OBJECT, size_t, size);
+
+will define the function as:
+
+size_t objectSize(const Object *this)
+
+No function logging in required because no functions can be called which means no errors can be thrown.
+***********************************************************************************************************************************/
+#define OBJECT_DEFINE_GET(name, objectQualifier, objectMacro, returnType, objectMember)                                            \
+    returnType                                                                                                                     \
+    GLUE(objectMacro##_PREFIX, name)(objectQualifier objectMacro##_TYPE *this)                                                     \
+    {                                                                                                                              \
+        ASSERT(this != NULL);                                                                                                      \
+        return this->objectMember;                                                                                                 \
+    }
 
 /***********************************************************************************************************************************
 Define a function used by the caller to move an object from one context to another

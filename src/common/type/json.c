@@ -33,9 +33,7 @@ jsonConsumeWhiteSpace(const char *json, unsigned int *jsonPos)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Convert a json string to a bool
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
 jsonToBoolInternal(const char *json, unsigned int *jsonPos)
 {
@@ -82,9 +80,7 @@ jsonToBool(const String *json)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Convert a json number to various integer types
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static Variant *
 jsonToNumberInternal(const char *json, unsigned int *jsonPos)
 {
@@ -224,9 +220,7 @@ jsonToUInt64(const String *json)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Convert a json string to a String
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static String *
 jsonToStrInternal(const char *json, unsigned int *jsonPos)
 {
@@ -242,12 +236,24 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Skip the beginning "
         (*jsonPos)++;
+
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
 
         while (json[*jsonPos] != '"')
         {
             if (json[*jsonPos] == '\\')
             {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(result, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
                 (*jsonPos)++;;
 
                 switch (json[*jsonPos])
@@ -293,11 +299,19 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                 if (json[*jsonPos] == '\0')
                     THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
-                    strCatChr(result, json[*jsonPos]);
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = json + *jsonPos;
+
+                noEscapeSize++;
             }
 
             (*jsonPos)++;;
         };
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(result, noEscape, noEscapeSize);
 
         // Advance the character array pointer to the next element after the string
         (*jsonPos)++;;
@@ -332,9 +346,7 @@ jsonToStr(const String *json)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Convert a json object to a KeyValue
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static KeyValue *
 jsonToKvInternal(const char *json, unsigned int *jsonPos)
 {
@@ -409,9 +421,7 @@ jsonToKv(const String *json)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Convert a json string to an array
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static VariantList *
 jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
 {
@@ -483,9 +493,7 @@ jsonToVarLst(const String *json)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Convert JSON to a variant
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static Variant *
 jsonToVarInternal(const char *json, unsigned int *jsonPos)
 {
@@ -579,9 +587,7 @@ jsonToVar(const String *json)
     FUNCTION_LOG_RETURN(VARIANT, jsonToVarInternal(jsonPtr, &jsonPos));
 }
 
-/***********************************************************************************************************************************
-Convert a boolean to JSON
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 jsonFromBool(bool value)
 {
@@ -592,9 +598,7 @@ jsonFromBool(bool value)
     FUNCTION_TEST_RETURN(value ? TRUE_STR : FALSE_STR);
 }
 
-/***********************************************************************************************************************************
-Convert a number to JSON
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 jsonFromInt(int number)
 {
@@ -647,9 +651,7 @@ jsonFromUInt64(uint64_t number)
     FUNCTION_TEST_RETURN(strNew(working));
 }
 
-/***********************************************************************************************************************************
-Output and escape a string
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
 jsonFromStrInternal(String *json, const String *string)
 {
@@ -670,6 +672,10 @@ jsonFromStrInternal(String *json, const String *string)
     {
         strCatChr(json, '"');
 
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
+
         for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
         {
             char stringChr = strPtr(string)[stringIdx];
@@ -677,38 +683,83 @@ jsonFromStrInternal(String *json, const String *string)
             switch (stringChr)
             {
                 case '"':
-                    strCat(json, "\\\"");
-                    break;
-
                 case '\\':
-                    strCat(json, "\\\\");
-                    break;
-
                 case '\n':
-                    strCat(json, "\\n");
-                    break;
-
                 case '\r':
-                    strCat(json, "\\r");
-                    break;
-
                 case '\t':
-                    strCat(json, "\\t");
-                    break;
-
                 case '\b':
-                    strCat(json, "\\b");
-                    break;
-
                 case '\f':
-                    strCat(json, "\\f");
+                {
+                    // Copy portion of string without escapes
+                    if (noEscapeSize > 0)
+                    {
+                        strCatZN(json, noEscape, noEscapeSize);
+                        noEscapeSize = 0;
+                    }
+
+                    switch (stringChr)
+                    {
+                        case '"':
+                        {
+                            strCat(json, "\\\"");
+                            break;
+                        }
+
+                        case '\\':
+                        {
+                            strCat(json, "\\\\");
+                            break;
+                        }
+
+                        case '\n':
+                        {
+                            strCat(json, "\\n");
+                            break;
+                        }
+
+                        case '\r':
+                        {
+                            strCat(json, "\\r");
+                            break;
+                        }
+
+                        case '\t':
+                        {
+                            strCat(json, "\\t");
+                            break;
+                        }
+
+                        case '\b':
+                        {
+                            strCat(json, "\\b");
+                            break;
+                        }
+
+                        case '\f':
+                        {
+                            strCat(json, "\\f");
+                            break;
+                        }
+                    }
+
                     break;
+                }
 
                 default:
-                    strCatChr(json, stringChr);
+                {
+                    // If escape string is zero size then start it
+                    if (noEscapeSize == 0)
+                        noEscape = strPtr(string) + stringIdx;
+
+                    noEscapeSize++;
                     break;
+                }
             }
         }
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(json, noEscape, noEscapeSize);
 
         strCatChr(json, '"');
     }
@@ -844,8 +895,6 @@ jsonFromKvInternal(const KeyValue *kv)
 }
 
 /***********************************************************************************************************************************
-Convert KeyValue object to JSON string.
-
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
 whitespace.
@@ -878,8 +927,6 @@ jsonFromKv(const KeyValue *kv)
 }
 
 /***********************************************************************************************************************************
-Convert Variant object to JSON string.
-
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.
 ***********************************************************************************************************************************/

@@ -8,8 +8,8 @@ Posix Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing);
+StorageRead *storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit);
 
 #endif

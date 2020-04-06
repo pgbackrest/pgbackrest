@@ -15,7 +15,7 @@ Filter type constant
     STRING_DECLARE(PAGE_CHECKSUM_FILTER_TYPE_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoFilter *pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit);
 IoFilter *pageChecksumNewVar(const VariantList *paramList);

@@ -17,7 +17,7 @@ typedef struct HttpHeader HttpHeader;
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpHeader *httpHeaderNew(const StringList *redactList);
 HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList);
@@ -25,15 +25,22 @@ HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add a header
 HttpHeader *httpHeaderAdd(HttpHeader *this, const String *key, const String *value);
+
+// Get a value using the key
 const String *httpHeaderGet(const HttpHeader *this, const String *key);
+
+// Get list of keys
 StringList *httpHeaderList(const HttpHeader *this);
+
+// Move to a new parent mem context
 HttpHeader *httpHeaderMove(HttpHeader *this, MemContext *parentNew);
+
+// Put a header
 HttpHeader *httpHeaderPut(HttpHeader *this, const String *header, const String *value);
 
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
+// Should the header be redacted when logging?
 bool httpHeaderRedact(const HttpHeader *this, const String *key);
 
 /***********************************************************************************************************************************

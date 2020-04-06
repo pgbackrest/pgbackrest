@@ -42,24 +42,26 @@ typedef enum
     // will need to checked after write to see if it is different.
     storageFeatureCompress,
 
-    // Does the storage support hardlinks?  Hardlinks allow the same file to linked into multiple paths to save space.
+    // Does the storage support hardlinks?  Hardlinks allow the same file to be linked into multiple paths to save space.
     storageFeatureHardLink,
+
+    // Can the storage limit the amount of data read from a file?
+    storageFeatureLimitRead,
 
     // Does the storage support symlinks?  Symlinks allow paths/files/links to be accessed from another path.
     storageFeatureSymLink,
 } StorageFeature;
 
 /***********************************************************************************************************************************
-storageCopy
+Functions
 ***********************************************************************************************************************************/
+// Copy a file
 #define storageCopyP(source, destination)                                                                                          \
     storageCopy(source, destination)
 
 bool storageCopy(StorageRead *source, StorageWrite *destination);
 
-/***********************************************************************************************************************************
-storageExists
-***********************************************************************************************************************************/
+// Does a file exist? This function is only for files, not paths.
 typedef struct StorageExistsParam
 {
     VAR_PARAM_HEADER;
@@ -71,9 +73,7 @@ typedef struct StorageExistsParam
 
 bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
 
-/***********************************************************************************************************************************
-storageGet
-***********************************************************************************************************************************/
+// Read from storage into a buffer
 typedef struct StorageGetParam
 {
     VAR_PARAM_HEADER;
@@ -85,9 +85,7 @@ typedef struct StorageGetParam
 
 Buffer *storageGet(StorageRead *file, StorageGetParam param);
 
-/***********************************************************************************************************************************
-storageInfo
-***********************************************************************************************************************************/
+// File/path info
 typedef struct StorageInfoParam
 {
     VAR_PARAM_HEADER;
@@ -101,9 +99,7 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-/***********************************************************************************************************************************
-storageInfoList
-***********************************************************************************************************************************/
+// Info for all files/paths in a path
 typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
 
 typedef struct StorageInfoListParam
@@ -121,9 +117,7 @@ typedef struct StorageInfoListParam
 bool storageInfoList(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
 
-/***********************************************************************************************************************************
-storageList
-***********************************************************************************************************************************/
+// Get a list of files from a directory
 typedef struct StorageListParam
 {
     VAR_PARAM_HEADER;
@@ -137,22 +131,21 @@ typedef struct StorageListParam
 
 StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
 
-/***********************************************************************************************************************************
-storageMove
-***********************************************************************************************************************************/
+// Move a file
 #define storageMoveP(this, source, destination)                                                                                    \
     storageMove(this, source, destination)
 
 void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
 
-/***********************************************************************************************************************************
-storageNewRead
-***********************************************************************************************************************************/
+// Open a file for reading
 typedef struct StorageNewReadParam
 {
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool compressible;
+
+    // Limit bytes to read from the file (must be varTypeUInt64). NULL for no limit.
+    const Variant *limit;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
@@ -160,9 +153,7 @@ typedef struct StorageNewReadParam
 
 StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
-/***********************************************************************************************************************************
-storageNewWrite
-***********************************************************************************************************************************/
+// Open a file for writing
 typedef struct StorageNewWriteParam
 {
     VAR_PARAM_HEADER;
@@ -183,9 +174,7 @@ typedef struct StorageNewWriteParam
 
 StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
 
-/***********************************************************************************************************************************
-storagePath
-***********************************************************************************************************************************/
+// Get absolute path in the storage
 typedef struct StoragePathParam
 {
     VAR_PARAM_HEADER;
@@ -197,9 +186,7 @@ typedef struct StoragePathParam
 
 String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);
 
-/***********************************************************************************************************************************
-storagePathCreate
-***********************************************************************************************************************************/
+// Create a path
 typedef struct StoragePathCreateParam
 {
     VAR_PARAM_HEADER;
@@ -213,17 +200,13 @@ typedef struct StoragePathCreateParam
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
-/***********************************************************************************************************************************
-storagePathExists
-***********************************************************************************************************************************/
+// Does a path exist?
 #define storagePathExistsP(this, pathExp)                                                                                          \
     storagePathExists(this, pathExp)
 
 bool storagePathExists(const Storage *this, const String *pathExp);
 
-/***********************************************************************************************************************************
-storagePathRemove
-***********************************************************************************************************************************/
+// Remove a path
 typedef struct StoragePathRemoveParam
 {
     VAR_PARAM_HEADER;
@@ -236,25 +219,19 @@ typedef struct StoragePathRemoveParam
 
 void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
 
-/***********************************************************************************************************************************
-storagePathSync
-***********************************************************************************************************************************/
+// Sync a path
 #define storagePathSyncP(this, pathExp)                                                                                            \
     storagePathSync(this, pathExp)
 
 void storagePathSync(const Storage *this, const String *pathExp);
 
-/***********************************************************************************************************************************
-storagePut
-***********************************************************************************************************************************/
+// Write a buffer to storage
 #define storagePutP(file, buffer)                                                                                                  \
     storagePut(file, buffer)
 
 void storagePut(StorageWrite *file, const Buffer *buffer);
 
-/***********************************************************************************************************************************
-storageRemove
-***********************************************************************************************************************************/
+// Remove a file
 typedef struct StorageRemoveParam
 {
     VAR_PARAM_HEADER;
@@ -267,9 +244,12 @@ typedef struct StorageRemoveParam
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
+// Is the feature supported by this storage?
 bool storageFeature(const Storage *this, StorageFeature feature);
+
+// Storage type (posix, cifs, etc.)
 const String *storageType(const Storage *this);
 
 /***********************************************************************************************************************************

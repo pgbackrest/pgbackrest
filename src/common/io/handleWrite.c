@@ -10,7 +10,7 @@ Handle IO Write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -47,7 +47,8 @@ ioHandleWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     THROW_ON_SYS_ERROR_FMT(
-        write(this->handle, bufPtr(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strPtr(this->name));
+        write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError,
+        "unable to write to %s", strPtr(this->name));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -69,9 +70,7 @@ ioHandleWriteHandle(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->handle);
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoWrite *
 ioHandleWriteNew(const String *name, int handle)
 {
@@ -99,9 +98,7 @@ ioHandleWriteNew(const String *name, int handle)
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
-/***********************************************************************************************************************************
-Write a string to the specified handle
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 ioHandleWriteOneStr(int handle, const String *string)
 {

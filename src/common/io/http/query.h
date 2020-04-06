@@ -17,18 +17,29 @@ typedef struct HttpQuery HttpQuery;
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpQuery *httpQueryNew(void);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add a query item
 HttpQuery *httpQueryAdd(HttpQuery *this, const String *key, const String *value);
+
+// Get a value using the key
 const String *httpQueryGet(const HttpQuery *this, const String *key);
+
+// Get list of keys
 StringList *httpQueryList(const HttpQuery *this);
+
+// Move to a new parent mem context
 HttpQuery *httpQueryMove(HttpQuery *this, MemContext *parentNew);
+
+//Put a query item
 HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
+
+// Render the query for inclusion in an http request
 String *httpQueryRender(const HttpQuery *this);
 
 /***********************************************************************************************************************************

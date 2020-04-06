@@ -74,6 +74,8 @@ SRCS = \
 	common/io/http/query.c \
 	common/io/io.c \
 	common/io/read.c \
+	common/io/socket/client.c \
+	common/io/socket/common.c \
 	common/io/tls/client.c \
 	common/io/write.c \
 	common/ini.c \
@@ -161,6 +163,8 @@ LIBS = @LIBS@
 # Directory options
 ####################################################################################################################################
 VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
 bindir = @bindir@
 BUILDDIR=.build
 

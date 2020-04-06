@@ -104,6 +104,9 @@ typedef struct StorageInterfaceNewReadParam
     // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
     // helpful.
     bool compressible;
+
+    // Limit bytes read from the file. NULL for no limit.
+    const Variant *limit;
 } StorageInterfaceNewReadParam;
 
 typedef StorageRead *StorageInterfaceNewRead(
@@ -249,7 +252,7 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageInterface
 {
@@ -299,7 +302,10 @@ typedef struct StorageCommon
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Get the storage driver
 void *storageDriver(const Storage *this);
+
+// Get the storage interface
 StorageInterface storageInterface(const Storage *this);
 
 /***********************************************************************************************************************************

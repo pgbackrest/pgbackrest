@@ -20,11 +20,21 @@ Functions
 StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
-IoRead *storageReadIo(const StorageRead *this);
+// Should a missing file be ignored?
 bool storageReadIgnoreMissing(const StorageRead *this);
+
+// Read interface
+IoRead *storageReadIo(const StorageRead *this);
+
+// Is there a read limit? NULL for no limit.
+const Variant *storageReadLimit(const StorageRead *this);
+
+// File name
 const String *storageReadName(const StorageRead *this);
+
+// Get file type
 const String *storageReadType(const StorageRead *this);
 
 /***********************************************************************************************************************************

@@ -49,9 +49,7 @@ static char functionParamBuffer[32 * 1024];
 
 struct backtrace_state *backTraceState = NULL;
 
-/***********************************************************************************************************************************
-Backtrace init and callbacks
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #ifdef WITH_BACKTRACE
 
 void
@@ -85,9 +83,7 @@ backTraceCallbackError(void *data, const char *msg, int errnum)
 
 #endif
 
-/***********************************************************************************************************************************
-Flag to enable/disable test function logging
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #ifndef NDEBUG
 
 bool stackTraceTestFlag = true;
@@ -109,11 +105,16 @@ stackTraceTest(void)
 {
     return stackTraceTestFlag;
 }
+
+void
+stackTraceTestFileLineSet(unsigned int fileLine)
+{
+    stackTrace[stackSize - 1].fileLine = fileLine;
+}
+
 #endif
 
-/***********************************************************************************************************************************
-Push a new function onto the trace stack
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 LogLevel
 stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel)
 {
@@ -158,9 +159,7 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
     return data->functionLogLevel;
 }
 
-/***********************************************************************************************************************************
-Get parameters for the top function on the stack
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static const char *
 stackTraceParamIdx(int stackIdx)
 {
@@ -191,9 +190,7 @@ stackTraceParam()
     return stackTraceParamIdx(stackSize - 1);
 }
 
-/***********************************************************************************************************************************
-Get the next location where a parameter can be added in the param buffer
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 char *
 stackTraceParamBuffer(const char *paramName)
 {
@@ -233,9 +230,7 @@ stackTraceParamBuffer(const char *paramName)
     return data->param + data->paramSize;
 }
 
-/***********************************************************************************************************************************
-Add a parameter to the function on the top of the stack
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 stackTraceParamAdd(size_t bufferSize)
 {
@@ -247,9 +242,7 @@ stackTraceParamAdd(size_t bufferSize)
         data->paramSize += bufferSize;
 }
 
-/***********************************************************************************************************************************
-Mark that parameters are being logged -- it none appear then the function is void
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 stackTraceParamLog(void)
 {
@@ -258,9 +251,7 @@ stackTraceParamLog(void)
     stackTrace[stackSize - 1].paramLog = true;
 }
 
-/***********************************************************************************************************************************
-Pop a function from the stack trace
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #ifdef NDEBUG
 
 void
@@ -304,9 +295,7 @@ stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *fo
     return (size_t)result;
 }
 
-/***********************************************************************************************************************************
-Generate the stack trace
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 size_t
 stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char *functionName, unsigned int fileLine)
 {
@@ -339,29 +328,19 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
             StackTraceData *data = &stackTrace[stackIdx];
 
             result += stackTraceFmt(
-                buffer, bufferSize, result, "\n%.*s:%s"
+                buffer, bufferSize, result, "\n%.*s:%s", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName);
 
-#ifdef WITH_BACKTRACE
-                ":%u"
-#endif
-                ":(%s)", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName,
+            if (data->fileLine > 0)
+                result += stackTraceFmt(buffer, bufferSize, result, ":%u", data->fileLine);
 
-#ifdef WITH_BACKTRACE
-                data->fileLine,
-#endif
-
-                stackTraceParamIdx(stackIdx));
+            result += stackTraceFmt(buffer, bufferSize, result, ":(%s)", stackTraceParamIdx(stackIdx));
         }
     }
 
     return result;
 }
 
-/***********************************************************************************************************************************
-Clean the stack at and below the try level
-
-Called by the error to cleanup the stack when an exception occurs.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 stackTraceClean(unsigned int tryDepth)
 {

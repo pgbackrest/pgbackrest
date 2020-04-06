@@ -410,8 +410,6 @@ cfgFileLoad(                                                        // NOTE: Pas
 }
 
 /***********************************************************************************************************************************
-Parse the command-line arguments and config file to produce final config data
-
 ??? Add validation of section names and check all sections for invalid options in the check command.  It's too expensive to add the
 logic to this critical path code.
 ***********************************************************************************************************************************/

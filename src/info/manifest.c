@@ -10,11 +10,11 @@ Backup Manifest Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/object.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
+#include "common/type/object.h"
 #include "info/info.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -365,7 +365,7 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
 }
 
 /***********************************************************************************************************************************
-Create new object
+Internal constructor
 ***********************************************************************************************************************************/
 static Manifest *
 manifestNewInternal(void)
@@ -1275,9 +1275,7 @@ manifestBuildComplete(
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Load manifest
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 // Keep track of which values were found during load and which need to be loaded from defaults. There is no point in having
 // multiple structs since most of the fields are the same and the size shouldn't be more than 4/8 bytes.
 typedef struct ManifestLoadFound
@@ -1799,9 +1797,7 @@ manifestNewLoad(IoRead *read)
     FUNCTION_LOG_RETURN(MANIFEST, this);
 }
 
-/***********************************************************************************************************************************
-Save manifest
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct ManifestSaveData
 {
     Manifest *manifest;                                             // Manifest object to be saved
@@ -2344,9 +2340,7 @@ manifestValidate(Manifest *this, bool strict)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Ensure that symlinks do not point to the same directory or a subdirectory of another link
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 manifestLinkCheck(const Manifest *this)
 {
@@ -3001,9 +2995,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Helper function to load backup manifest files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct ManifestLoadFileData
 {
     MemContext *memContext;                                         // Mem context

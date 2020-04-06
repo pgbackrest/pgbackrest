@@ -171,7 +171,7 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *input, Buffer *output)
         if (this->multiplyBuffer == NULL)
         {
             this->multiplyBuffer = bufNew(bufUsed(input) * this->multiplier);
-            unsigned char *inputPtr = bufPtr(input);
+            const unsigned char *inputPtr = bufPtrConst(input);
             unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
 
             for (unsigned int charIdx = 0; charIdx < bufUsed(input); charIdx++)
@@ -251,9 +251,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ioBufferSize() and ioBufferSizeSet()"))
     {
-        TEST_RESULT_SIZE(ioBufferSize(), 65536, "check initial buffer size");
+        TEST_RESULT_UINT(ioBufferSize(), 65536, "check initial buffer size");
         TEST_RESULT_VOID(ioBufferSizeSet(16384), "set buffer size");
-        TEST_RESULT_SIZE(ioBufferSize(), 16384, "check buffer size");
+        TEST_RESULT_UINT(ioBufferSize(), 16384, "check buffer size");
     }
 
     // *****************************************************************************************************************************
@@ -274,7 +274,7 @@ testRun(void)
             "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
-        TEST_RESULT_SIZE(ioRead(read, buffer), 2, "    read 2 bytes");
+        TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
         TEST_RESULT_BOOL(testIoReadCloseCalled, true, "    check io object closed");
@@ -291,7 +291,7 @@ testRun(void)
         TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -323,26 +323,26 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_INT(ioReadHandle(bufferRead), -1, "    handle invalid");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "11", "    check read");
         TEST_RESULT_STR_Z(ioFilterType(sizeFilter), "size", "check filter type");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "22", "    check read");
 
         TEST_ASSIGN(buffer, bufNew(3), "change output buffer size to 3");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 3, "    read 3 bytes");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 3, "    read 3 bytes");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "33X", "    check read");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "XX", "    check read");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    eof");
-        TEST_RESULT_BOOL(ioBufferRead(ioReadDriver(bufferRead), buffer, true), 0, "    eof from driver");
-        TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
+        TEST_RESULT_UINT(ioBufferRead(ioReadDriver(bufferRead), buffer, true), 0, "    eof from driver");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(bufferRead), " close buffer read object");
         TEST_RESULT_STR_Z(
             jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead))),
@@ -397,7 +397,7 @@ testRun(void)
         buffer = bufNew(3);
 
         // Start with a buffer read
-        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 3, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "AAA", "    check buffer");
 
         // Do line reads of various lengths
@@ -407,14 +407,14 @@ testRun(void)
         TEST_RESULT_STR_Z(ioReadLine(read), "12", "read line");
 
         // Read what was left in the line buffer
-        TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 0, "read buffer");
         bufUsedSet(buffer, 2);
-        TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 1, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "AAB", "    check buffer");
         bufUsedSet(buffer, 0);
 
         // Now do a full buffer read from the input
-        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 3, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "DDD", "    check buffer");
 
         // Read line doesn't work without a linefeed
@@ -422,16 +422,16 @@ testRun(void)
 
         // But those bytes can be picked up by a buffer read
         buffer = bufNew(2);
-        TEST_RESULT_INT(ioRead(read, buffer), 2, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 2, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "EF", "    check buffer");
 
         buffer = bufNew(1);
-        TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 1, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "F", "    check buffer");
 
         // Nothing left to read
         TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
-        TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
+        TEST_RESULT_UINT(ioRead(read, buffer), 0, "read buffer");
 
         // Error if buffer is full and there is no linefeed
         ioBufferSizeSet(10);
@@ -536,10 +536,7 @@ testRun(void)
 
                 TEST_ASSIGN(write, ioHandleWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
                 ioWriteOpen(write);
-                TEST_RESULT_INT(
-                    ioWriteHandle(write), ((IoHandleWrite *)ioWriteDriver(write))->handle, "check write handle");
-                TEST_RESULT_PTR(ioWriteDriver(write), write->driver, "check write driver");
-                TEST_RESULT_PTR(ioWriteInterface(write), &write->interface, "check write interface");
+                TEST_RESULT_INT(ioWriteHandle(write), ((IoHandleWrite *)write->driver)->handle, "check write handle");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("test string 1")), "write test string");

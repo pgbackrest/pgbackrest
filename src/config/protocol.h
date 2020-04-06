@@ -18,7 +18,10 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Process config protocol requests
 bool configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+
+// Get option values from another process
 VariantList *configProtocolOption(ProtocolClient *client, const VariantList *paramList);
 
 #endif

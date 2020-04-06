@@ -64,7 +64,7 @@ typedef struct HttpClientStat
 } HttpClientStat;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 HttpClient *httpClientNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
@@ -72,21 +72,37 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Is the http object busy?
+bool httpClientBusy(const HttpClient *this);
+
+// Mark the client as done if read is complete
 void httpClientDone(HttpClient *this);
+
+// Perform a request
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     const Buffer *body, bool returnContent);
+
+// Is this response code OK, i.e. 2XX?
+bool httpClientResponseCodeOk(const HttpClient *this);
+
+// Format statistics to a string
 String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
-bool httpClientBusy(const HttpClient *this);
+// Read interface
 IoRead *httpClientIoRead(const HttpClient *this);
+
+// Get the response code
 unsigned int httpClientResponseCode(const HttpClient *this);
+
+// Response headers
 const HttpHeader *httpClientResponseHeader(const HttpClient *this);
+
+// Response message
 const String *httpClientResponseMessage(const HttpClient *this);
-bool httpClientResponseCodeOk(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Destructor

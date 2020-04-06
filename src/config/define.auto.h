@@ -139,6 +139,7 @@ typedef enum
     cfgDefOptRepoS3VerifyTls,
     cfgDefOptRepoType,
     cfgDefOptResume,
+    cfgDefOptSckKeepAlive,
     cfgDefOptSet,
     cfgDefOptSort,
     cfgDefOptSpoolPath,
@@ -151,6 +152,9 @@ typedef enum
     cfgDefOptTargetAction,
     cfgDefOptTargetExclusive,
     cfgDefOptTargetTimeline,
+    cfgDefOptTcpKeepAliveCount,
+    cfgDefOptTcpKeepAliveIdle,
+    cfgDefOptTcpKeepAliveInterval,
     cfgDefOptType,
 } ConfigDefineOption;
 

@@ -12,8 +12,8 @@ S3 Storage
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
 #include "common/regExp.h"
+#include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
 #include "storage/s3/storage.intern.h"
@@ -906,9 +906,7 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceS3 =
 {
     .exists = storageS3Exists,

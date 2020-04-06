@@ -64,6 +64,7 @@ sub testListGet
     my $bCoverageOnly = shift;
     my $bCOnly = shift;
     my $bContainerOnly = shift;
+    my $bNoPerformance = shift;
 
     my $oyVm = vmGet();
     my $oyTestRun = [];
@@ -114,6 +115,9 @@ sub testListGet
 
                         # Skip this test if it is integration and vm=none
                         next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_TYPE} eq TESTDEF_INTEGRATION);
+
+                        # Skip this test if it is performance and no performance is specified
+                        next if ($bNoPerformance && $hTest->{&TESTDEF_TYPE} eq TESTDEF_PERFORMANCE);
 
                         # Skip this test if it is not C and vm=none.  Perl tests require Docker which is not supported.
                         next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});

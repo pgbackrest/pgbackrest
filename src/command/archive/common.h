@@ -63,18 +63,36 @@ Functions
 // old error may be reported rather than waiting for the async process to succeed or fail.
 void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
 
+// Check for ok/error status files in the spool in/out directory
 bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError);
+
+// Write an ok status file
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
+
+// Write an error status file
 void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
 // Execute the async process.  This function will only return in the calling process and the implementation is platform depedent.
 void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
 
+// Is the segment partial?
 bool walIsPartial(const String *walSegment);
+
+// Is the file a segment or some other file (e.g. .history, .backup, etc)
 bool walIsSegment(const String *walSegment);
+
+// Generates the location of the wal directory using a relative wal path and the supplied pg path
 String *walPath(const String *walFile, const String *pgPath, const String *command);
+
+// Find a WAL segment in the repository. The file name can have several things appended such as a hash, compression extension, and
+// partial extension so it is possible to have multiple files that match the segment, though more than one match is not a good
+// thing.
 String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
+
+// Get the next WAL segment given a WAL segment and WAL segment size
 String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
+
+// Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
 StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
 
 #endif

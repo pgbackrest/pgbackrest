@@ -13,15 +13,34 @@ typedef struct VariantList VariantList;
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
 VariantList *varLstNew(void);
+
+// Create VariantList from StringList
 VariantList *varLstNewStrLst(const StringList *stringList);
+
+// Duplicate a variant list
 VariantList *varLstDup(const VariantList *source);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add to list
 VariantList *varLstAdd(VariantList *this, Variant *data);
+
+// Get by index
 Variant *varLstGet(const VariantList *this, unsigned int listIdx);
+
+// Move to new parent mem context
 VariantList *varLstMove(VariantList *this, MemContext *parentNew);
+
+// List size
 unsigned int varLstSize(const VariantList *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void varLstFree(VariantList *this);
 
 /***********************************************************************************************************************************

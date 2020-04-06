@@ -389,13 +389,13 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -630,12 +630,10 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
-    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress),
+    .feature = 1 << storageFeaturePath | 1 << storageFeatureCompress | 1 << storageFeatureLimitRead,
 
     .exists = storagePosixExists,
     .info = storagePosixInfo,

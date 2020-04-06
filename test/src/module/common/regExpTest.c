@@ -18,7 +18,7 @@ testRun(void)
         {
             TEST_ERROR(regExpNew(strNew("[[[")), FormatError, "Unmatched [ or [^");
         }
-        CATCH(AssertError)
+        CATCH(TestError)
         {
             TEST_ERROR(regExpNew(strNew("[[[")), FormatError, "Unmatched [, [^, [:, [., or [=");
         }
@@ -36,7 +36,7 @@ testRun(void)
         const String *string = STRDEF("abcdef");
         TEST_RESULT_BOOL(regExpMatch(regExp, string), true, "match regexp");
         TEST_RESULT_PTR(regExpMatchPtr(regExp), strPtr(string), "check ptr");
-        TEST_RESULT_SIZE(regExpMatchSize(regExp), 3, "check size");
+        TEST_RESULT_UINT(regExpMatchSize(regExp), 3, "check size");
         TEST_RESULT_STR_Z(regExpMatchStr(regExp), "abc", "check str");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(regExpMatch(regExp, strNew("bcdef")), false, "no match regexp");
         TEST_RESULT_PTR(regExpMatchPtr(regExp), NULL, "check ptr");
-        TEST_RESULT_SIZE(regExpMatchSize(regExp), 0, "check size");
+        TEST_RESULT_UINT(regExpMatchSize(regExp), 0, "check size");
         TEST_RESULT_PTR(regExpMatchStr(regExp), NULL, "check str");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -49,54 +49,72 @@ typedef enum
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
 Variant *varNewBool(bool data);
-bool varBool(const Variant *this);
-bool varBoolForce(const Variant *this);
-
 Variant *varNewDbl(double data);
-double varDbl(const Variant *this);
-double varDblForce(const Variant *this);
-
 Variant *varNewInt(int data);
-int varInt(const Variant *this);
-int varIntForce(const Variant *this);
-
 Variant *varNewInt64(int64_t data);
-int64_t varInt64(const Variant *this);
-int64_t varInt64Force(const Variant *this);
 
+// Note that the KeyValue is not duplicated because it this a heavy-weight operation. It is merely moved into the same MemContext as
+// the Variant.
 Variant *varNewKv(KeyValue *data);
-KeyValue *varKv(const Variant *this);
 
 Variant *varNewStr(const String *data);
 Variant *varNewStrZ(const char *data);
+Variant *varNewUInt(unsigned int data);
+Variant *varNewUInt64(uint64_t data);
+Variant *varNewVarLst(const VariantList *data);
+
+Variant *varDup(const Variant *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Test if Variants are equal
+bool varEq(const Variant *this1, const Variant *this2);
+
+// Variant type
+VariantType varType(const Variant *this);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+bool varBool(const Variant *this);
+bool varBoolForce(const Variant *this);
+
+double varDbl(const Variant *this);
+double varDblForce(const Variant *this);
+
+int varInt(const Variant *this);
+int varIntForce(const Variant *this);
+
+int64_t varInt64(const Variant *this);
+int64_t varInt64Force(const Variant *this);
+
+KeyValue *varKv(const Variant *this);
+
 const String *varStr(const Variant *this);
 String *varStrForce(const Variant *this);
 
-Variant *varNewUInt(unsigned int data);
 unsigned int varUInt(const Variant *this);
 unsigned int varUIntForce(const Variant *this);
 
-Variant *varNewUInt64(uint64_t data);
 uint64_t varUInt64(const Variant *this);
 uint64_t varUInt64Force(const Variant *this);
 
-Variant *varNewVarLst(const VariantList *data);
 VariantList *varVarLst(const Variant *this);
 
-Variant *varDup(const Variant *this);
-bool varEq(const Variant *this1, const Variant *this2);
-VariantType varType(const Variant *this);
-
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void varFree(Variant *this);
 
 /***********************************************************************************************************************************
 Fields that are common between dynamically allocated and constant variants
 
 There is nothing user-accessible here but this construct allows constant variants to be created and then handled by the same
-functions that process dynamically allocated variant.
+functions that process dynamically allocated variants.
 ***********************************************************************************************************************************/
 #define VARIANT_COMMON                                                                                                             \
     VariantType type;                                               /* Variant type */

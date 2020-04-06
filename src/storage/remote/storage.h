@@ -14,7 +14,7 @@ Storage type
     STRING_DECLARE(STORAGE_REMOTE_TYPE_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 Storage *storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,

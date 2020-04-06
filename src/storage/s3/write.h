@@ -8,7 +8,7 @@ S3 Storage File write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 StorageWrite *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
 

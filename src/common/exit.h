@@ -20,7 +20,10 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Setup signal handlers
 void exitInit(void);
+
+// Do cleanup and return result code
 int exitSafe(int result, bool error, SignalType signalType);
 
 #endif

@@ -39,17 +39,29 @@ Functions
 // prevent damage to the repository from an error in dry-run coding in the individual commands.
 void storageHelperDryRunInit(bool dryRun);
 
+// Local storage object. Writable local storage should be used very sparingly. If writes are not needed then always use
+// storageLocal() or a specific storage object instead.
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
-const Storage *storagePg(void);
+
+// PostgreSQL storage by Id
 const Storage *storagePgId(unsigned int hostId);
-const Storage *storagePgWrite(void);
 const Storage *storagePgIdWrite(unsigned int hostId);
+
+// PostgreSQL storage for the host-id or the default of 1
+const Storage *storagePg(void);
+const Storage *storagePgWrite(void);
+
+// Repository storage
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
+
+// Spool storage
 const Storage *storageSpool(void);
 const Storage *storageSpoolWrite(void);
 
+// Free all storage helper objects. This should be done on any config load to ensure that stanza changes are honored. ?? Currently
+// this is only done in testing, but in the future it will likely be done in production as well.
 void storageHelperFree(void);
 
 #endif

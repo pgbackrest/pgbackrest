@@ -176,9 +176,7 @@ storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Process storage protocol requests
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 storageRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
 {
@@ -246,10 +244,11 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                storageInterfaceNewReadP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1))));
+                storageInterfaceNewReadP(
+                    driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), .limit = varLstGet(paramList, 2)));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
+            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 3));
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
@@ -389,9 +388,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
     FUNCTION_LOG_RETURN(BOOL, found);
 }
 
-/***********************************************************************************************************************************
-Get size of the next transfer block
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 ssize_t
 storageRemoteProtocolBlockSize(const String *message)
 {

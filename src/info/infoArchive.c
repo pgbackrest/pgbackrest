@@ -13,7 +13,7 @@ Archive Info Handler
 #include "common/log.h"
 #include "common/ini.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -55,9 +55,7 @@ infoArchiveNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Create new object without loading it from a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoArchive *
 infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
@@ -108,9 +106,7 @@ infoArchiveNewLoad(IoRead *read)
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
-/***********************************************************************************************************************************
-Given a backrest history id and postgres systemId and version, return the archiveId of the best match
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
@@ -190,9 +186,7 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get the current archive id
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 infoArchiveId(const InfoArchive *this)
 {
@@ -205,9 +199,7 @@ infoArchiveId(const InfoArchive *this)
     FUNCTION_TEST_RETURN(infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg)));
 }
 
-/***********************************************************************************************************************************
-Return the cipher passphrase
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 infoArchiveCipherPass(const InfoArchive *this)
 {
@@ -220,9 +212,7 @@ infoArchiveCipherPass(const InfoArchive *this)
     FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
-/***********************************************************************************************************************************
-Get PostgreSQL info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoPg *
 infoArchivePg(const InfoArchive *this)
 {
@@ -235,9 +225,7 @@ infoArchivePg(const InfoArchive *this)
     FUNCTION_TEST_RETURN(this->infoPg);
 }
 
-/***********************************************************************************************************************************
-Set the infoPg data
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 InfoArchive *
 infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
@@ -254,9 +242,7 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
-/***********************************************************************************************************************************
-Helper function to load archive info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct InfoArchiveLoadFileData
 {
     MemContext *memContext;                                         // Mem context
@@ -351,9 +337,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, data.infoArchive);
 }
 
-/***********************************************************************************************************************************
-Helper function to save archive info files
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 infoArchiveSaveFile(
     InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)

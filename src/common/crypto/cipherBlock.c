@@ -14,7 +14,7 @@ Block Cipher
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -331,7 +331,10 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
             this->done = true;
         }
         else
-            destinationSizeActual = cipherBlockProcessBlock(this, bufPtr(source), bufUsed(source), bufRemainsPtr(outputActual));
+        {
+            destinationSizeActual = cipherBlockProcessBlock(
+                this, bufPtrConst(source), bufUsed(source), bufRemainsPtr(outputActual));
+        }
 
         bufUsedInc(outputActual, destinationSizeActual);
 
@@ -377,9 +380,7 @@ cipherBlockInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(this->inputSame);
 }
 
-/***********************************************************************************************************************************
-New block encrypt/decrypt object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
 {
@@ -432,7 +433,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
         // Store the passphrase
         driver->pass = memNew(driver->passSize);
-        memcpy(driver->pass, bufPtr(pass), driver->passSize);
+        memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
 
         // Create param list
         VariantList *paramList = varLstNew();
@@ -461,9 +462,7 @@ cipherBlockNewVar(const VariantList *paramList)
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
 
-/***********************************************************************************************************************************
-Helper function to add a block cipher to an io object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilterGroup *
 cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass)
 {

@@ -114,9 +114,16 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
 /***********************************************************************************************************************************
 Functions and macros to render various data types
 ***********************************************************************************************************************************/
+// Convert object to a zero-terminated string for logging
 size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
+
+// Convert pointer to a zero-terminated string for logging
 size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
+
+// Convert zero-terminated string for logging
 size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
+
+// Convert a type name to a zero-terminated string for logging
 size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 
 #define FUNCTION_LOG_BOOL_TYPE                                                                                                     \

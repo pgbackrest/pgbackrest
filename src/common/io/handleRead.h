@@ -10,7 +10,7 @@ Read from a handle using the IoRead interface.
 #include "common/time.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 IoRead *ioHandleReadNew(const String *name, int handle, TimeMSec timeout);
 

@@ -14,7 +14,10 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Create the stop filename
 String *lockStopFileName(const String *stanza);
+
+// Test for the existence of a stop file
 void lockStopTest(void);
 
 #endif

@@ -23,18 +23,34 @@ typedef struct IoRead IoRead;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Open the IO
 bool ioReadOpen(IoRead *this);
+
+// Read data from IO and process filters
 size_t ioRead(IoRead *this, Buffer *buffer);
+
+// Read linefeed-terminated string
 String *ioReadLine(IoRead *this);
+
+// Read linefeed-terminated string and optionally error on eof
 String *ioReadLineParam(IoRead *this, bool allowEof);
+
+// Close the IO
 void ioReadClose(IoRead *this);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Do reads block when more bytes are requested than are available to read?
 bool ioReadBlock(const IoRead *this);
+
+// Is IO at EOF? All driver reads are complete and all data has been flushed from the filters (if any).
 bool ioReadEof(const IoRead *this);
+
+// Get filter group if filters need to be added
 IoFilterGroup *ioReadFilterGroup(const IoRead *this);
+
+// Handle (file descriptor) for the read object. Not all read objects have a handle and -1 will be returned in that case.
 int ioReadHandle(const IoRead *this);
 
 /***********************************************************************************************************************************

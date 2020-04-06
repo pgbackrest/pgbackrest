@@ -14,7 +14,7 @@ Cryptographic Hash
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
@@ -84,7 +84,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     ASSERT(this->hash == NULL);
     ASSERT(message != NULL);
 
-    cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtr(message), bufUsed(message)), "unable to process message hash");
+    cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtrConst(message), bufUsed(message)), "unable to process message hash");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -133,9 +133,7 @@ cryptoHashResult(THIS_VOID)
     FUNCTION_LOG_RETURN(VARIANT, varNewStr(bufHex(cryptoHash(this))));
 }
 
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 IoFilter *
 cryptoHashNew(const String *type)
 {
@@ -191,9 +189,7 @@ cryptoHashNewVar(const VariantList *paramList)
     return cryptoHashNew(varStr(varLstGet(paramList, 0)));
 }
 
-/***********************************************************************************************************************************
-Get hash for one C buffer
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 Buffer *
 cryptoHashOne(const String *type, const Buffer *message)
 {
@@ -227,9 +223,7 @@ cryptoHashOne(const String *type, const Buffer *message)
     FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
-/***********************************************************************************************************************************
-Get hmac for one message/key
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 Buffer *
 cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
 {
@@ -251,7 +245,7 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     bufUsedSet(result, bufSize(result));
 
     // Calculate the HMAC
-    HMAC(hashType, bufPtr(key), (int)bufUsed(key), bufPtr(message), bufUsed(message), bufPtr(result), NULL);
+    HMAC(hashType, bufPtrConst(key), (int)bufUsed(key), bufPtrConst(message), bufUsed(message), bufPtr(result), NULL);
 
     FUNCTION_LOG_RETURN(BUFFER, result);
 }

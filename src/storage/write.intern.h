@@ -14,7 +14,7 @@ Temporary file extension
 #define STORAGE_FILE_TEMP_EXT                                       PROJECT_BIN ".tmp"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
@@ -37,10 +37,5 @@ typedef struct StorageWriteInterface
 } StorageWriteInterface;
 
 StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-void *storageWriteDriver(const StorageWrite *this);
 
 #endif

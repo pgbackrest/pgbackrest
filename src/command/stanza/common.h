@@ -10,7 +10,10 @@ Stanza Commands Handler
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Generate a cipher
 String *cipherPassGen(CipherType cipherType);
+
+// Validate and return database information
 PgControl pgValidate(void);
 
 #endif

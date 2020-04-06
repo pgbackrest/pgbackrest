@@ -177,8 +177,13 @@ void manifestBuildComplete(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Ensure that symlinks do not point to the same directory or a subdirectory of another link
 void manifestLinkCheck(const Manifest *this);
+
+// Move to a new parent mem context
 Manifest *manifestMove(Manifest *this, MemContext *parentNew);
+
+// Manifest save
 void manifestSave(Manifest *this, IoWrite *write);
 
 // Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
@@ -262,6 +267,7 @@ void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
+// Load backup manifest
 Manifest *manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************

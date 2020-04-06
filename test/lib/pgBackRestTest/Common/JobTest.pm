@@ -66,6 +66,7 @@ sub new
         $self->{strLogLevel},
         $self->{strLogLevelTest},
         $self->{strLogLevelTestFile},
+        $self->{bLogTimestamp},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -99,6 +100,7 @@ sub new
             {name => 'strLogLevel'},
             {name => 'strLogLevelTest'},
             {name => 'strLogLevelTestFile'},
+            {name => 'bLogTimestamp'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -254,6 +256,8 @@ sub run
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 "bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
+                # Remove coverage data from last run
+                "rm -f test.gcda && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
                     $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
@@ -276,6 +280,7 @@ sub run
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                 ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
+                ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                 ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .
@@ -393,6 +398,9 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
+                my $strLogTimestampC = $self->{bLogTimestamp} ? 'true' : 'false';
+                $strTestC =~ s/\{\[C\_TEST\_TIMING\]\}/$strLogTimestampC/g;
+
                 # Set timezone
                 if (defined($self->{strTimeZone}))
                 {
@@ -430,9 +438,24 @@ sub run
 
                 # Create build.auto.h
                 my $strBuildAutoH =
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 ? "#define HAVE_STATIC_ASSERT\n" : '') .
+                    "#define HAVE_BUILTIN_TYPES_COMPATIBLE_P\n" .
                     (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
+
+                # Disable debug/coverage for performance and profile tests
+                my $bPerformance = $self->{oTest}->{&TEST_TYPE} eq TESTDEF_PERFORMANCE;
+
+                if ($bPerformance || $self->{bProfile})
+                {
+                    $self->{bDebug} = false;
+                    $self->{bDebugTestTrace} = false;
+                    $self->{bCoverageUnit} = false;
+                }
+
+                # When optimization is disabled add -ftree-coalesce-vars to make the compiler faster when available
+                my $strNoOptimizeFlags = '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '');
 
                 # Determine which warnings are available
                 my $strWarningFlags =
@@ -454,13 +477,13 @@ sub run
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
-                    ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
+                    ($self->{bDebug} ? '' : ' -DNDEBUG') .
                     ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_CO6 ? ' -DDEBUG_EXEC_TIME' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =
-                    '-O2' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{bOptimize} ? '-O2' : $strNoOptimizeFlags) .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
@@ -469,11 +492,9 @@ sub run
 
                 # Flags used to build test.c
                 my $strTestFlags =
-                    ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
-                    ($self->{oTest}->{&TEST_VM} eq VM_F30 ? '-O2' : '-O0') .
-                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
-                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
-                        ' -fprofile-arcs -ftest-coverage' : '') .
+                    (($self->{bOptimize} && ($self->{bProfile} || $bPerformance)) ? '-O2' : $strNoOptimizeFlags) .
+                    (!$self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
+                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
@@ -482,8 +503,7 @@ sub run
 
                 # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
-                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} ? '-O2' : $strNoOptimizeFlags);
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",
@@ -610,134 +630,10 @@ sub end
         # If C code generate coverage info
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
-            # Generate a list of files to cover
-            my $hTestCoverage =
-                (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}))->{&TESTDEF_COVERAGE};
-
-            my @stryCoveredModule;
-
-            foreach my $strModule (sort(keys(%{$hTestCoverage})))
-            {
-                push (@stryCoveredModule, $strModule);
-            }
-
-            push(
-                @stryCoveredModule,
-                "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
-
-            # Generate coverage reports for the modules
-            my $strLCovConf = $self->{strBackRestBase} . '/test/result/coverage/raw/lcov.conf';
-            coverageLCovConfigGenerate($self->{oStorageTest}, $strLCovConf, $self->{bCoverageSummary});
-
-            my $strLCovExeBase = "lcov --config-file=${strLCovConf}";
-            my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
-            my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
-
-            executeTest(
-                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                "${strLCovExeBase} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
-
-            # Generate coverage report for each module
-            foreach my $strModule (@stryCoveredModule)
-            {
-                my $strModuleName = testRunName($strModule, false);
-                my $strModuleOutName = $strModuleName;
-                my $bTest = false;
-
-                if ($strModuleOutName =~ /^module/mg)
-                {
-                    $strModuleOutName =~ s/^module/test/mg;
-                    $bTest = true;
-                }
-
-                # Disable branch coverage for test files
-                my $strLCovExe = $strLCovExeBase;
-
-                if ($bTest)
-                {
-                    $strLCovExe .= ' --rc lcov_branch_coverage=0';
-                }
-
-                # Generate lcov reports
-                my $strModulePath =
-                    $self->{strTestPath} . "/repo/" .
-                    (${strModuleOutName} =~ /^test\// ?
-                        'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
-                my $strLCovFile = $self->{strBackRestBase} . "/test/result/coverage/raw/${strModuleOutName}.lcov";
-                my $strLCovTotal = $self->{strTestPath} . "/temp/all.lcov";
-
-                executeTest(
-                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
-
-                # Combine with prior run if there was one
-                if ($self->{oStorageTest}->exists($strLCovFile))
-                {
-                    my $strCoverage = ${$self->{oStorageTest}->get($strLCovOutTmp)};
-                    $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
-                    $self->{oStorageTest}->put($strLCovOutTmp, $strCoverage);
-
-                    executeTest(
-                        "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
-                }
-
-                # Update source file
-                my $strCoverage = ${$self->{oStorageTest}->get($strLCovOutTmp)};
-
-                if (defined($strCoverage))
-                {
-                    if (!$bTest && $hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
-                    {
-                        confess &log(ERROR, "module '${strModule}' is marked 'no code' but has code");
-                    }
-
-                    # Get coverage info
-                    my $iTotalLines = (split(':', ($strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
-                    my $iCoveredLines = (split(':', ($strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
-
-                    my $iTotalBranches = 0;
-                    my $iCoveredBranches = 0;
-
-                    if ($strCoverage =~ /^BRF\:/mg && $strCoverage =~ /^BRH\:/mg)
-                    {
-                        # If this isn't here the statements below fail -- huh?
-                        my @match = $strCoverage =~ m/^BRF\:.*$/mg;
-
-                        $iTotalBranches = (split(':', ($strCoverage =~ m/^BRF:.*$/mg)[0]))[1] + 0;
-                        $iCoveredBranches = (split(':', ($strCoverage =~ m/^BRH:.*$/mg)[0]))[1] + 0;
-                    }
-
-                    # Report coverage if this is not a test or if the test does not have complete coverage
-                    if (!$bTest || $iTotalLines != $iCoveredLines || $iTotalBranches != $iCoveredBranches)
-                    {
-                        # Fix source file name
-                        $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
-
-                        $self->{oStorageTest}->put(
-                            $self->{oStorageTest}->openWrite($strLCovFile, {bPathCreate => true}), $strCoverage);
-
-                        if ($self->{oStorageTest}->exists($strLCovTotal))
-                        {
-                            executeTest(
-                                "${strLCovExe} --add-tracefile=${strLCovFile} --add-tracefile=${strLCovTotal} --o=${strLCovTotal}");
-                        }
-                        else
-                        {
-                            $self->{oStorageTest}->copy($strLCovFile, $strLCovTotal)
-                        }
-                    }
-                    else
-                    {
-                        $self->{oStorageTest}->remove($strLCovFile);
-                    }
-                }
-                else
-                {
-                    if ($hTestCoverage->{$strModule} ne TESTDEF_COVERAGE_NOCODE)
-                    {
-                        confess &log(ERROR, "module '${strModule}' is marked 'code' but has no code");
-                    }
-                }
-            }
+            coverageExtract(
+                $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}, $self->{bCoverageSummary},
+                $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
+                $self->{strGCovPath}, $self->{strBackRestBase} . '/test/result');
         }
 
         # Record elapsed time
@@ -746,7 +642,7 @@ sub end
         # Output error
         if ($iExitStatus != 0)
         {
-            &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
+            &log(ERROR, "${strTestDone} (err${iExitStatus}" . ($self->{bLogTimestamp} ? "-${fTestElapsedTime}s)" : '') .
                  (defined($oExecDone->{strOutLog}) && !$self->{bShowOutputAsync} ?
                     ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
             $bFail = true;
@@ -754,7 +650,7 @@ sub end
         # Output success
         else
         {
-            &log(INFO, "${strTestDone} (${fTestElapsedTime}s)".
+            &log(INFO, "${strTestDone}" . ($self->{bLogTimestamp} ? " (${fTestElapsedTime}s)" : '').
                  ($self->{bVmOut} && !$self->{bShowOutputAsync} ?
                      ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
         }

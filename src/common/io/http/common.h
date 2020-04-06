@@ -16,6 +16,7 @@ Functions
 // Convert Last-Modified header to time_t
 time_t httpLastModifiedToTime(const String *lastModified);
 
+// Encode string to conform with URI specifications. If a path is being encoded then / characters won't be encoded.
 String *httpUriEncode(const String *uri, bool path);
 
 #endif

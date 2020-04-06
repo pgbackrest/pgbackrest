@@ -813,7 +813,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
-        TEST_RESULT_VOID(storageWriteS3Close((StorageWriteS3 *)storageWriteDriver(write)), "close file again");
+        TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
 
         // Zero-length file
         TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
@@ -845,7 +845,7 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 9999, "    check exists");
-        TEST_RESULT_UINT(info.timeModified, 1445412480, "    check time");
+        TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
 
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -862,7 +862,7 @@ testRun(void)
         TEST_RESULT_UINT(testStorageInfoList[0].type, storageTypePath, "    check type");
         TEST_RESULT_STR_Z(testStorageInfoList[1].name, "test_file", "    check name");
         TEST_RESULT_UINT(testStorageInfoList[1].size, 787, "    check size");
-        TEST_RESULT_UINT(testStorageInfoList[1].timeModified, 1255369830, "    check time");
+        TEST_RESULT_INT(testStorageInfoList[1].timeModified, 1255369830, "    check time");
         TEST_RESULT_UINT(testStorageInfoList[1].type, storageTypeFile, "    check type");
 
         // storageDriverList()

@@ -11,7 +11,7 @@ Storage Interface
 #include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/object.h"
+#include "common/type/object.h"
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "storage/storage.intern.h"
@@ -35,9 +35,7 @@ struct Storage
 
 OBJECT_DEFINE_FREE(STORAGE);
 
-/***********************************************************************************************************************************
-New storage object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 Storage *
 storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
@@ -93,9 +91,7 @@ storageNew(
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
-/***********************************************************************************************************************************
-Copy a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 storageCopy(StorageRead *source, StorageWrite *destination)
 {
@@ -141,9 +137,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Does a file exist? This function is only for files, not paths.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
 {
@@ -178,9 +172,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Read from storage into a buffer
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 Buffer *
 storageGet(StorageRead *file, StorageGetParam param)
 {
@@ -240,9 +232,7 @@ storageGet(StorageRead *file, StorageGetParam param)
     FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
-/***********************************************************************************************************************************
-File/path info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageInfo
 storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 {
@@ -285,9 +275,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
-/***********************************************************************************************************************************
-Info for all files/paths in a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct StorageInfoListSortData
 {
     MemContext *memContext;                                         // Mem context to use for allocating data in this struct
@@ -495,9 +483,7 @@ storageInfoList(
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Get a list of files from a directory
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
@@ -544,9 +530,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
-/***********************************************************************************************************************************
-Move a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 {
@@ -586,9 +570,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Open a file for reading
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
@@ -597,9 +579,12 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(storageFeature(this, storageFeatureLimitRead) || param.limit == NULL);
+    ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     StorageRead *result = NULL;
 
@@ -607,7 +592,8 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     {
         result = storageReadMove(
             storageInterfaceNewReadP(
-                this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible),
+                this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
+                .limit = param.limit),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -615,9 +601,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     FUNCTION_LOG_RETURN(STORAGE_READ, result);
 }
 
-/***********************************************************************************************************************************
-Open a file for writing
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
@@ -656,9 +640,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     FUNCTION_LOG_RETURN(STORAGE_WRITE, result);
 }
 
-/***********************************************************************************************************************************
-Get the absolute path in the storage
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 {
@@ -759,9 +741,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Create a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
 {
@@ -791,9 +771,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Does a path exist?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 storagePathExists(const Storage *this, const String *pathExp)
 {
@@ -816,9 +794,7 @@ storagePathExists(const Storage *this, const String *pathExp)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Remove a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
 {
@@ -850,9 +826,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Sync a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -876,9 +850,7 @@ void storagePathSync(const Storage *this, const String *pathExp)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Write a buffer to storage
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storagePut(StorageWrite *file, const Buffer *buffer)
 {
@@ -896,9 +868,7 @@ storagePut(StorageWrite *file, const Buffer *buffer)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Remove a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
 {
@@ -924,9 +894,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get the storage driver
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void *
 storageDriver(const Storage *this)
 {
@@ -939,9 +907,7 @@ storageDriver(const Storage *this)
     FUNCTION_TEST_RETURN(this->driver);
 }
 
-/***********************************************************************************************************************************
-Is the feature supported by this storage?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
 storageFeature(const Storage *this, StorageFeature feature)
 {
@@ -955,9 +921,7 @@ storageFeature(const Storage *this, StorageFeature feature)
     FUNCTION_TEST_RETURN(this->interface.feature >> feature & 1);
 }
 
-/***********************************************************************************************************************************
-Get the storage interface
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StorageInterface
 storageInterface(const Storage *this)
 {
@@ -970,9 +934,7 @@ storageInterface(const Storage *this)
     FUNCTION_TEST_RETURN(this->interface);
 }
 
-/***********************************************************************************************************************************
-Get the storage type (posix, cifs, etc.)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 const String *
 storageType(const Storage *this)
 {
@@ -985,9 +947,7 @@ storageType(const Storage *this)
     FUNCTION_TEST_RETURN(this->type);
 }
 
-/***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 String *
 storageToLog(const Storage *this)
 {

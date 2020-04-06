@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.25dev])
+AC_INIT([pgBackRest], [2.26dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -27,6 +27,18 @@ case $host_os in
         AC_SUBST(CPPFLAGS, "${CPPFLAGS} -D_POSIX_C_SOURCE=200809L")
         ;;
 esac
+
+# Check if the C compiler supports _Static_assert()
+#
+# Test the syntax ({_Static_assert(...)}) because gcc-style compound expressions are needed to wrap it into macros.
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [({_Static_assert(1, "foo");})])], [AC_DEFINE(HAVE_STATIC_ASSERT)])
+
+# Check if the C compiler supports __builtin_types_compatible_p()
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([], [[int x; static int y[__builtin_types_compatible_p(__typeof__(x), int)];]])],
+    [AC_DEFINE(HAVE_BUILTIN_TYPES_COMPATIBLE_P)])
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------

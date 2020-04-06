@@ -8,7 +8,7 @@ Storage Read Interface Internal
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageReadInterface
 {
@@ -17,14 +17,10 @@ typedef struct StorageReadInterface
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
+    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
 StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
-
-/***********************************************************************************************************************************
-Constructor
-***********************************************************************************************************************************/
-void *storageRead(const StorageRead *this);
 
 #endif
