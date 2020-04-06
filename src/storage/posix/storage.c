@@ -417,7 +417,7 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
             // These errors indicate that the entry is actually a path so we'll try to delete it that way
             if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
             {
-                storageInterfacePathRemoveP(data->driver, strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)), true);
+                storageInterfacePathRemoveP(data->driver, file, true);
             }
             // Else error
             else
