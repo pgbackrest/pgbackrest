@@ -21,92 +21,96 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
     strCatFmt(data->content, "%s {", strPtr(info->name));
 
-    switch (info->type)
+    if (info->level > storageInfoLevelExists)
     {
-        case storageTypeFile:
+        switch (info->type)
         {
-            strCat(data->content, "file");
-
-            if (!data->sizeOmit)
+            case storageTypeFile:
             {
-                uint64_t size = info->size;
+                    strCat(data->content, "file");
 
-                // If the file is compressed then decompress to get the real size.  Note that only gz is used in unit tests since
-                // it is the only compression type guaranteed to be present.
-                if (data->fileCompressed)
+                if (info->level >= storageInfoLevelBasic && !data->sizeOmit)
                 {
-                    ASSERT(data->storage != NULL);
+                    uint64_t size = info->size;
 
-                    StorageRead *read = storageNewReadP(
-                        data->storage,
-                        data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGz));
-                    size = bufUsed(storageGetP(read));
+                    // If the file is compressed then decompress to get the real size.  Note that only gz is used in unit tests since
+                    // it is the only compression type guaranteed to be present.
+                    if (data->fileCompressed)
+                    {
+                        ASSERT(data->storage != NULL);
+
+                        StorageRead *read = storageNewReadP(
+                            data->storage,
+                            data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
+                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGz));
+                        size = bufUsed(storageGetP(read));
+                    }
+
+                    strCatFmt(data->content, ", s=%" PRIu64, size);
                 }
 
-                strCatFmt(data->content, ", s=%" PRIu64, size);
+                break;
             }
 
-            break;
-        }
-
-        case storageTypeLink:
-        {
-            strCatFmt(data->content, "link, d=%s", strPtr(info->linkDestination));
-            break;
-        }
-
-        case storageTypePath:
-        {
-            strCat(data->content, "path");
-            break;
-        }
-
-        case storageTypeSpecial:
-        {
-            strCat(data->content, "special");
-            break;
-        }
-    }
-
-    if (info->type != storageTypeSpecial)
-    {
-        if (info->type != storageTypeLink)
-        {
-            if (!data->modeOmit || (info->type == storageTypePath && data->modePath != info->mode) ||
-                (info->type == storageTypeFile && data->modeFile != info->mode))
+            case storageTypeLink:
             {
-                strCatFmt(data->content, ", m=%04o", info->mode);
+                strCatFmt(data->content, "link, d=%s", strPtr(info->linkDestination));
+                break;
+            }
+
+            case storageTypePath:
+            {
+                strCat(data->content, "path");
+                break;
+            }
+
+            case storageTypeSpecial:
+            {
+                strCat(data->content, "special");
+                break;
             }
         }
 
-        if (info->type == storageTypeFile)
+        if (info->type != storageTypeSpecial)
         {
-            if (!data->timestampOmit)
-                strCatFmt(data->content, ", t=%" PRIu64, (uint64_t)info->timeModified);
-        }
+            if (info->type != storageTypeLink)
+            {
+                if (info->level >= storageInfoLevelDetail &&
+                    (!data->modeOmit || (info->type == storageTypePath && data->modePath != info->mode) ||
+                    (info->type == storageTypeFile && data->modeFile != info->mode)))
+                {
+                    strCatFmt(data->content, ", m=%04o", info->mode);
+                }
+            }
 
-        if (!data->userOmit || userId() != info->userId)
-        {
-            if (info->user != NULL)
+            if (info->type == storageTypeFile && info->level >= storageInfoLevelBasic)
             {
-                strCatFmt(data->content, ", u=%s", strPtr(info->user));
+                if (!data->timestampOmit)
+                    strCatFmt(data->content, ", t=%" PRIu64, (uint64_t)info->timeModified);
             }
-            else
-            {
-                strCatFmt(data->content, ", u=%d", (int)info->userId);
-            }
-        }
 
-        if (!data->groupOmit || groupId() != info->groupId)
-        {
-            if (info->group != NULL)
+            if (info->level >= storageInfoLevelDetail && (!data->userOmit || userId() != info->userId))
             {
-                strCatFmt(data->content, ", g=%s", strPtr(info->group));
+                if (info->user != NULL)
+                {
+                    strCatFmt(data->content, ", u=%s", strPtr(info->user));
+                }
+                else
+                {
+                    strCatFmt(data->content, ", u=%d", (int)info->userId);
+                }
             }
-            else
+
+            if (info->level >= storageInfoLevelDetail && (!data->groupOmit || groupId() != info->groupId))
             {
-                strCatFmt(data->content, ", g=%d", (int)info->groupId);
+                if (info->group != NULL)
+                {
+                    strCatFmt(data->content, ", g=%s", strPtr(info->group));
+                }
+                else
+                {
+                    strCatFmt(data->content, ", g=%d", (int)info->groupId);
+                }
             }
         }
     }

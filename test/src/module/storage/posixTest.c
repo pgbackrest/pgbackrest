@@ -102,7 +102,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->write, true, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
-        TEST_RESULT_PTR(storageInterface(storageTest).exists, storageTest->interface.exists, "    check interface");
+        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->interface.info, "    check interface");
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
         TEST_RESULT_PTR(storageType(storageTest), storageTest->type, "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
@@ -127,16 +127,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageExistsP(storageTest, fileNoPerm), FileOpenError,
-            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+            "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
         TEST_ERROR_FMT(
-            storagePathExistsP(storageTest, fileNoPerm), PathOpenError,
-            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+            storagePathExistsP(storageTest, fileNoPerm), FileOpenError,
+            "unable to get info for path/file '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileExists = strNewFmt("%s/exists", testPath());
+        String *pathExists = strNewFmt("%s/pathExists", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
+        TEST_SYSTEM_FMT("mkdir %s", strPtr(pathExists));
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, pathExists), false, "not a file");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
@@ -304,7 +307,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePosixInfoListEntry(
-                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"), storageInfoLevelBasic,
                 hrnStorageInfoListCallback, &callbackData),
             "missing path");
         TEST_RESULT_STR_Z(callbackData.content, "", "    check content");
@@ -395,7 +398,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_MISSING,
+            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
              strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         TEST_RESULT_PTR(storageListP(storageTest, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
@@ -404,12 +407,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
@@ -464,7 +467,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageMoveP(storageTest, source, destination), FileMissingError,
-            "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
+            "unable to move missing source '%s': [2] No such file or directory", strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, fileNoPerm);
@@ -623,14 +626,14 @@ testRun(void)
             strPtr(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove1)))), 0, "top path can be removed");
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileRemove = strNewFmt("%s/remove.txt", strPtr(pathRemove2));

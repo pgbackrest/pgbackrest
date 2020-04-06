@@ -409,6 +409,8 @@ unit:
           storage/posix/read: full
           storage/posix/storage: full
           storage/posix/write: full
+
+          # Provide as much coverage as possible for these modules but some coverage needs to be provided by other driver tests
           storage/helper: full
           storage/read: full
           storage/storage: full
@@ -416,7 +418,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 12
+        total: 9
         containerReq: true
         binReq: true
 
