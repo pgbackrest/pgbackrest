@@ -856,9 +856,6 @@ testRun(void)
         HarnessStorageInfoListCallbackData callbackData =
         {
             .content = strNew(""),
-            .modeOmit = true,
-            .userOmit = true,
-            .groupOmit = true,
         };
 
         TEST_ERROR(
@@ -928,8 +925,8 @@ testRun(void)
             "list a file/path in root");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            "path1 {file, s=0, t=0}\n"
-            "test1.txt {file, s=0, t=0}\n",
+            "path1 {}\n"
+            "test1.txt {}\n",
             "    check content");
 
         callbackData.content = strNew("");
@@ -940,7 +937,7 @@ testRun(void)
             "list a file in root with expression");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            "test1.txt {file, s=0, t=0}\n",
+            "test1.txt {}\n",
             "    check content");
 
         callbackData.content = strNew("");
@@ -949,11 +946,11 @@ testRun(void)
             "list files with continuation");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            "path1 {file, s=0, t=0}\n"
-            "test1.txt {file, s=0, t=0}\n"
-            "test2.txt {file, s=0, t=0}\n"
-            "path2 {file, s=0, t=0}\n"
-            "test3.txt {file, s=0, t=0}\n",
+            "path1 {}\n"
+            "test1.txt {}\n"
+            "test2.txt {}\n"
+            "path2 {}\n"
+            "test3.txt {}\n",
             "    check content");
 
         callbackData.content = strNew("");
@@ -964,9 +961,9 @@ testRun(void)
             "list files with expression");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            "test1.path {file, s=0, t=0}\n"
-            "test1.txt {file, s=0, t=0}\n"
-            "test3.txt {file, s=0, t=0}\n",
+            "test1.path {}\n"
+            "test1.txt {}\n"
+            "test3.txt {}\n",
             "    check content");
 
         // storageDriverPathRemove()
