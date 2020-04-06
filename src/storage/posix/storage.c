@@ -408,7 +408,6 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
     if (!strEqZ(info->name, "."))
     {
         StoragePosixPathRemoveData *data = callbackData;
-
         String *file = strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name));
 
         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
