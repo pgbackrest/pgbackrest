@@ -86,7 +86,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
                 strCatFmt(data->content, ", t=%" PRIu64, (uint64_t)info->timeModified);
         }
 
-        if (!data->userOmit || userId() != info->userId)
+        if (!data->userOmit && userId() != info->userId)
         {
             if (info->user != NULL)
             {
@@ -98,7 +98,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             }
         }
 
-        if (!data->groupOmit || groupId() != info->groupId)
+        if (!data->groupOmit && groupId() != info->groupId)
         {
             if (info->group != NULL)
             {

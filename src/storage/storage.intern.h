@@ -50,7 +50,12 @@ typedef String *StoragePathExpressionCallback(const String *expression, const St
 /***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
-// Get information about a file !!! ADD comments
+// Get information about a file/link/path
+//
+// The level parameter controls the amount of information that will be returned. See the StorageInfo type and StorageInfoLevel enum
+// for details about information that must be provided at each level. The driver should only return the amount of information
+// requested even if more is available. All drivers must implement the storageInfoLevelExists and storageInfoLevelBasic levels. Only
+// drivers with the storageFeatureInfoDetail feature must implement the storageInfoLevelDetail level.
 typedef struct StorageInterfaceInfoParam
 {
     VAR_PARAM_HEADER;
@@ -127,12 +132,20 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Get info for a path and all paths/files in the path (does not recurse) !!! ADD comments
+// Get info for a path and all paths/files in the path (does not recurse)
+//
+// See storageInterfaceInfoP() for usage of the level parameter.
 typedef struct StorageInterfaceInfoListParam
 {
     VAR_PARAM_HEADER;
 
-    // Regular expression used to filter the results
+    // Regular expression used to filter the results. The expression is always checked in the callback passed to
+    // storageInterfaceInfoListP() so checking the expression in the driver is entirely optional. The driver should only use the
+    // expression if it can improve performance or limit network transfer.
+    //
+    // Partial matching of the expression is fine as long as nothing that should match is excluded, e.g. it is OK to prefix match
+    // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
+    // anything that matches the expression exactly.
     const String *expression;
 } StorageInterfaceInfoListParam;
 

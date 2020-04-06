@@ -4,6 +4,7 @@ Test S3 Storage
 #include <unistd.h>
 
 #include "common/harnessConfig.h"
+#include "common/harnessStorage.h"
 #include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
@@ -519,24 +520,6 @@ testS3Server(void)
 }
 
 /***********************************************************************************************************************************
-Callback and data for storageInfoList() tests
-***********************************************************************************************************************************/
-unsigned int testStorageInfoListSize = 0;
-StorageInfo testStorageInfoList[256];
-
-void
-testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
-{
-    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
-    {
-        testStorageInfoList[testStorageInfoListSize] = *info;
-        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
-        testStorageInfoListSize++;
-    }
-    MEM_CONTEXT_END();
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -867,26 +850,32 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 0, "    check exists");
         TEST_RESULT_INT(info.timeModified, 0, "    check time");
 
-        // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list basic level");
+
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = strNew(""),
+            .modeOmit = true,
+            .userOmit = true,
+            .groupOmit = true,
+        };
+
         TEST_ERROR(
-            storageInfoListP(s3, strNew("/"), testStorageInfoListCallback, NULL, .errorOnMissing = true),
+            storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
             AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
         TEST_RESULT_VOID(
-            storageInfoListP(s3, strNew("/path/to"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
+            storageInfoListP(s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "info list files");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "test_path {path}\n"
+            "test_file {file, s=787, t=1255369830}\n",
+            "    check content");
 
-        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    file and path returned");
-        TEST_RESULT_STR_Z(testStorageInfoList[0].name, "test_path", "    check name");
-        TEST_RESULT_UINT(testStorageInfoList[0].size, 0, "    check size");
-        TEST_RESULT_UINT(testStorageInfoList[0].type, storageTypePath, "    check type");
-        TEST_RESULT_STR_Z(testStorageInfoList[1].name, "test_file", "    check name");
-        TEST_RESULT_UINT(testStorageInfoList[1].size, 787, "    check size");
-        TEST_RESULT_INT(testStorageInfoList[1].timeModified, 1255369830, "    check time");
-        TEST_RESULT_UINT(testStorageInfoList[1].type, storageTypeFile, "    check type");
-
-        // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("various errors");
+
         TEST_ERROR(
             storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
             "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
@@ -930,16 +919,55 @@ testRun(void)
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>RequestTimeTooSkewed</Code>"
                 "<Message>The difference between the request time and the current time is too large.</Message></Error>");
 
-        TEST_RESULT_STR_Z(strLstJoin(storageListP(s3, strNew("/")), ","), "path1,test1.txt", "list a file/path in root");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list exists level");
+
+        callbackData.content = strNew("");
+        TEST_RESULT_VOID(
+            storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+            "list a file/path in root");
         TEST_RESULT_STR_Z(
-            strLstJoin(storageListP(s3, strNew("/"), .expression = strNew("^test.*$")), ","), "test1.txt",
+            callbackData.content,
+            "path1 {file, s=0, t=0}\n"
+            "test1.txt {file, s=0, t=0}\n",
+            "    check content");
+
+        callbackData.content = strNew("");
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                .level = storageInfoLevelExists),
             "list a file in root with expression");
         TEST_RESULT_STR_Z(
-            strLstJoin(storageListP(s3, strNew("/path/to")), ","),
-            "path1,test1.txt,test2.txt,path2,test3.txt", "list files with continuation");
+            callbackData.content,
+            "test1.txt {file, s=0, t=0}\n",
+            "    check content");
+
+        callbackData.content = strNew("");
+        TEST_RESULT_VOID(
+            storageInfoListP(s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+            "list files with continuation");
         TEST_RESULT_STR_Z(
-            strLstJoin(storageListP(s3, strNew("/path/to"), .expression = strNew("^test(1|3)")), ","),
-            "test1.path,test1.txt,test3.txt", "list files with expression");
+            callbackData.content,
+            "path1 {file, s=0, t=0}\n"
+            "test1.txt {file, s=0, t=0}\n"
+            "test2.txt {file, s=0, t=0}\n"
+            "path2 {file, s=0, t=0}\n"
+            "test3.txt {file, s=0, t=0}\n",
+            "    check content");
+
+        callbackData.content = strNew("");
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                .level = storageInfoLevelExists),
+            "list files with expression");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "test1.path {file, s=0, t=0}\n"
+            "test1.txt {file, s=0, t=0}\n"
+            "test3.txt {file, s=0, t=0}\n",
+            "    check content");
 
         // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------

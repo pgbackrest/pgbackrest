@@ -422,9 +422,6 @@ storageS3ListInternal(
     {
         const String *continuationToken = NULL;
 
-        // Prepare regexp if an expression was passed
-        RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
-
         // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
@@ -490,9 +487,8 @@ storageS3ListInternal(
                     // Strip off base prefix and final /
                     subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
 
-                    // Add to list after checking expression if present
-                    if (regExp == NULL || regExpMatch(regExp, subPath))
-                        callback(this, callbackData, subPath, storageTypePath, subPathNode);
+                    // Add to list
+                    callback(this, callbackData, subPath, storageTypePath, subPathNode);
                 }
 
                 // Get file list
@@ -508,9 +504,8 @@ storageS3ListInternal(
                     // Strip off the base prefix when present
                     file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
 
-                    // Add to list after checking expression if present
-                    if (regExp == NULL || regExpMatch(regExp, file))
-                        callback(this, callbackData, file, storageTypeFile, fileNode);
+                    // Add to list
+                    callback(this, callbackData, file, storageTypeFile, fileNode);
                 }
 
                 // Get the continuation token and store it in the outer temp context

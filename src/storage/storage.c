@@ -557,7 +557,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         result = strLstNew();
 
         // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
-        // the caller don't care if the path is missing.
+        // the caller doesn't care if the path is missing.
         if (!storageInfoListP(
                 this, pathExp, storageListCallback, result, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
                 .expression = param.expression))
