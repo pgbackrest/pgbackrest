@@ -26,6 +26,9 @@ Getters/Setters
 void harnessLogLevelReset(void);
 void harnessLogLevelSet(LogLevel logLevel);
 
+// Set the process id used for logging
+void hrnLogProcessIdSet(unsigned int processId);
+
 /***********************************************************************************************************************************
 Internal Setters
 ***********************************************************************************************************************************/

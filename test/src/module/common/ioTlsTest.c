@@ -16,7 +16,7 @@ testTlsServerAltName(void)
 {
     if (fork() == 0)
     {
-        logProcessIdSet(1);
+        hrnLogProcessIdSet(1);
 
         harnessTlsServerInit(
             harnessTlsTestPort(),
@@ -62,7 +62,7 @@ testTlsServer(void)
 {
     if (fork() == 0)
     {
-        logProcessIdSet(1);
+        hrnLogProcessIdSet(1);
 
         harnessTlsServerInitDefault();
 
