@@ -442,7 +442,7 @@ testRun(void)
         TEST_RESULT_PTR(httpClientStatStr(), NULL, "no stats yet");
 
         TEST_ASSIGN(
-            client, httpClientNew(strNew("localhost"), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
+            client, httpClientNew(strNew("localhost"), harnessTlsTestPort(), 5000, testContainer(), NULL, NULL), "new client");
 
         TEST_ERROR_FMT(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), HostConnectError,
@@ -453,12 +453,12 @@ testRun(void)
 
         // Test no output from server
         TEST_ASSIGN(
-            client, httpClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
+            client, httpClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 5000, testContainer(), NULL, NULL), "new client");
         client->timeout = 0;
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
-            "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+            "unexpected eof while reading line");
 
         // Test invalid http version
         TEST_ERROR(
@@ -619,7 +619,7 @@ testRun(void)
         HttpClient *client2 = NULL;
 
         TEST_ASSIGN(
-            cache, httpClientCacheNew(strNew("localhost"), harnessTlsTestPort(), 500, true, NULL, NULL), "new http client cache");
+            cache, httpClientCacheNew(strNew("localhost"), harnessTlsTestPort(), 5000, true, NULL, NULL), "new http client cache");
         TEST_ASSIGN(client1, httpClientCacheGet(cache), "get http client");
         TEST_RESULT_PTR(client1, *(HttpClient **)lstGet(cache->clientList, 0), "    check http client");
         TEST_RESULT_PTR(httpClientCacheGet(cache), *(HttpClient **)lstGet(cache->clientList, 0), "    get same http client");

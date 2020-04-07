@@ -2,15 +2,15 @@
 Tls Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <openssl/conf.h>
-#include <openssl/ssl.h>
-
 #include "common/crypto/common.h"
 #include "common/error.h"
+#include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 #include "common/type/buffer.h"
 #include "common/wait.h"
 
@@ -22,10 +22,8 @@ Test defaults
 ***********************************************************************************************************************************/
 #define TLS_TEST_HOST                                               "tls.test.pgbackrest.org"
 
+static TlsClient *tlsServer;
 static int testServerSocket = 0;
-static SSL_CTX *testServerContext = NULL;
-static int testClientSocket = 0;
-static SSL *testClientSSL = NULL;
 
 /***********************************************************************************************************************************
 Initialize TLS and listen on the specified port for TLS connections
@@ -40,20 +38,7 @@ harnessTlsServerInit(unsigned int port, const char *serverCert, const char *serv
             THROW(AssertError, "unable to add test host to /etc/hosts");
     }
 
-    // Initialize ssl and create a context
-    cryptoInit();
-
-    const SSL_METHOD *method = SSLv23_method();
-    cryptoError(method == NULL, "unable to load TLS method");
-
-    testServerContext = SSL_CTX_new(method);
-    cryptoError(testServerContext == NULL, "unable to create TLS context");
-
-    // Configure the context by setting key and cert
-    cryptoError(
-        SSL_CTX_use_certificate_file(testServerContext, serverCert, SSL_FILETYPE_PEM) <= 0, "unable to load server certificate");
-    cryptoError(
-        SSL_CTX_use_PrivateKey_file(testServerContext, serverKey, SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
+    tlsServer = tlsClientNewServer(10000, STR(serverCert), STR(serverKey));
 
     // Create the socket
     struct sockaddr_in address;
@@ -104,23 +89,13 @@ harnessTlsServerInitDefault(void)
 
 /***********************************************************************************************************************************
 Expect an exact string from the client
-
-This is a very unforgiving function and short input will leave the server hanging.  Definitely room for improvement here.
 ***********************************************************************************************************************************/
 void
 harnessTlsServerExpect(const char *expected)
 {
     Buffer *buffer = bufNew(strlen(expected));
-    int readBytes = 0;
 
-    // Read expected bytes
-    do
-    {
-        int lastBytes = SSL_read(testClientSSL, bufRemainsPtr(buffer), (int)bufRemains(buffer));
-        readBytes += lastBytes;
-        bufUsedSet(buffer, (size_t)readBytes);
-    }
-    while (bufRemains(buffer));
+    ioRead(tlsClientIoRead(tlsServer), buffer);
 
     // Treat and ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
     String *actual = strNewBuf(buffer);
@@ -142,7 +117,8 @@ Send a reply to the client
 void
 harnessTlsServerReply(const char *reply)
 {
-    SSL_write(testClientSSL, reply, (int)strlen(reply));
+    ioWrite(tlsClientIoWrite(tlsServer), BUF((unsigned char *)reply, strlen(reply)));
+    ioWriteFlush(tlsClientIoWrite(tlsServer));
 }
 
 /***********************************************************************************************************************************
@@ -154,15 +130,12 @@ harnessTlsServerAccept(void)
     struct sockaddr_in addr;
     unsigned int len = sizeof(addr);
 
-    testClientSocket = accept(testServerSocket, (struct sockaddr *)&addr, &len);
+    int testClientSocket = accept(testServerSocket, (struct sockaddr *)&addr, &len);
 
     if (testClientSocket < 0)
         THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
-    testClientSSL = SSL_new(testServerContext);
-    SSL_set_fd(testClientSSL, testClientSocket);
-
-    cryptoError(SSL_accept(testClientSSL) <= 0, "unable to accept TLS connection");
+    tlsClientAccept(tlsServer, sckClientNewServer(testClientSocket, STRDEF("127.0.0.1"), 0, 10000));
 }
 
 /***********************************************************************************************************************************
@@ -171,9 +144,7 @@ Close the connection
 void
 harnessTlsServerClose(void)
 {
-    SSL_shutdown(testClientSSL);
-    SSL_free(testClientSSL);
-    close(testClientSocket);
+    tlsClientClose(tlsServer);
 }
 
 /**********************************************************************************************************************************/

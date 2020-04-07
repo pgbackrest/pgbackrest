@@ -130,6 +130,67 @@ tlsResult(TlsClient *this, int result, bool closeOk)
 
 /**********************************************************************************************************************************/
 TlsClient *
+tlsClientNewServer(TimeMSec timeout, const String *certificateFile, const String *privateKeyFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(STRING, certificateFile);
+        FUNCTION_LOG_PARAM(STRING, privateKeyFile);
+    FUNCTION_LOG_END();
+
+    ASSERT(certificateFile != NULL);
+    ASSERT(privateKeyFile != NULL);
+
+    TlsClient *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("TlsClient")
+    {
+        this = memNew(sizeof(TlsClient));
+
+        *this = (TlsClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .timeout = timeout,
+        };
+
+        // Setup TLS context
+        // -------------------------------------------------------------------------------------------------------------------------
+        cryptoInit();
+
+        // Select the TLS method to use.  To maintain compatibility with older versions of OpenSSL we need to use an SSL method,
+        // but SSL versions will be excluded in SSL_CTX_set_options().
+        const SSL_METHOD *method = SSLv23_method();
+        cryptoError(method == NULL, "unable to load TLS method");
+
+        // Create the TLS context
+        this->context = SSL_CTX_new(method);
+        cryptoError(this->context == NULL, "unable to create TLS context");
+
+        memContextCallbackSet(this->memContext, tlsClientFreeResource, this);
+
+        // Exclude SSL versions to only allow TLS and also disable compression
+        SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
+
+        // Disable auto-retry to prevent SSL_read() from hanging
+        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
+
+        // Set certificate and private key
+        cryptoError(
+            SSL_CTX_use_certificate_file(this->context, strPtr(certificateFile), SSL_FILETYPE_PEM) <= 0,
+            "unable to load certificate");
+        cryptoError(
+            SSL_CTX_use_PrivateKey_file(this->context, strPtr(privateKeyFile), SSL_FILETYPE_PEM) <= 0,
+            "unable to load private key");
+
+        tlsClientStatLocal.object++;
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(TLS_CLIENT, this);
+}
+
+/**********************************************************************************************************************************/
+TlsClient *
 tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
@@ -381,45 +442,6 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     FUNCTION_LOG_RETURN(SIZE, (size_t)result);
 }
 
-/***********************************************************************************************************************************
-Write to the tls session
-***********************************************************************************************************************************/
-// static bool
-// tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-//         FUNCTION_LOG_PARAM(INT, writeResult);
-//         FUNCTION_LOG_PARAM(INT, writeError);
-//         FUNCTION_LOG_PARAM(SIZE, writeSize);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(writeSize > 0);
-//
-//     bool result = true;
-//
-//     // Handle errors
-//     if (writeResult <= 0)
-//     {
-//         // If error = SSL_ERROR_NONE then this is the first write attempt so continue
-//         if (writeError != SSL_ERROR_NONE)
-//             tlsError(this, writeError, false);
-//     }
-//     else
-//     {
-//         if ((size_t)writeResult != writeSize)
-//         {
-//             THROW_FMT(
-//                 FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
-//         }
-//
-//         result = false;
-//     }
-//
-//     FUNCTION_LOG_RETURN(BOOL, result);
-// }
-
 void
 tlsClientWrite(THIS_VOID, const Buffer *buffer)
 {
@@ -459,15 +481,15 @@ tlsClientClose(TlsClient *this)
 
     ASSERT(this != NULL);
 
-    // Close the socket
-    sckClientClose(this->socket);
-
-    // Free the TLS session
     if (this->session != NULL)
     {
+        SSL_shutdown(this->session);
         SSL_free(this->session);
         this->session = NULL;
     }
+
+    // Close the socket
+    sckClientClose(this->socket);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -487,6 +509,58 @@ tlsClientEof(THIS_VOID)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(BOOL, this->session == NULL);
+}
+
+/***********************************************************************************************************************************
+Accept a connection
+***********************************************************************************************************************************/
+void
+tlsClientAccept(TlsClient *this, SocketClient *socket)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(socket != NULL);
+
+    // if (this->socket != NULL)
+    //     sckClientFree(this->socket);
+
+    this->socket = sckClientMove(socket, this->memContext);
+
+    // Free the read/write interfaces
+    ioReadFree(this->read);
+    this->read = NULL;
+    ioWriteFree(this->write);
+    this->write = NULL;
+
+    // Negotiate TLS
+    cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
+
+    // cryptoError(
+    //     SSL_set_tlsext_host_name(this->session, strPtr(sckClientHost(this->socket))) != 1,
+    //     "unable to set TLS host name");
+    cryptoError(
+        SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
+
+    // Keep trying the accept until success or error
+    while (tlsResult(this, SSL_accept(this->session), false) == 0);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        // Create read and write interfaces
+        this->write = ioWriteNewP(this, .write = tlsClientWrite);
+        ioWriteOpen(this->write);
+        this->read = ioReadNewP(this, .block = true, .eof = tlsClientEof, .read = tlsClientRead);
+        ioReadOpen(this->read);
+    }
+    MEM_CONTEXT_END();
+
+    tlsClientStatLocal.session++;
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

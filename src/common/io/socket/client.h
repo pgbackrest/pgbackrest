@@ -35,6 +35,7 @@ typedef struct SocketClientStat
 Constructors
 ***********************************************************************************************************************************/
 SocketClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
+SocketClient *sckClientNewServer(int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions

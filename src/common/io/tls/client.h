@@ -44,12 +44,14 @@ typedef struct TlsClientStat
 Constructors
 ***********************************************************************************************************************************/
 TlsClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+TlsClient *tlsClientNewServer(TimeMSec timeout, const String *certificateFile, const String *privateKeyFile);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Open tls connection
 bool tlsClientOpen(TlsClient *this);
+void tlsClientAccept(TlsClient *this, SocketClient *socket);
 
 // Close tls connection
 void tlsClientClose(TlsClient *this);

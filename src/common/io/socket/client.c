@@ -52,6 +52,44 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 SocketClient *
+sckClientNewServer(int fd, const String *host, unsigned int port, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+    ASSERT(timeout > 0);
+
+    SocketClient *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("SocketClient")
+    {
+        this = memNew(sizeof(SocketClient));
+
+        *this = (SocketClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .timeout = timeout,
+            .fd = fd,
+        };
+
+        sckOptionSet(this->fd);
+
+        sckClientStatLocal.object++;
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(SOCKET_CLIENT, this);
+}
+
+/**********************************************************************************************************************************/
+SocketClient *
 sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
