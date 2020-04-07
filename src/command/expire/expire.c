@@ -114,7 +114,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
-// CSHANG Maybe this should only be a warning? David thinks if valid label format then just warn.
+// CSHANG Maybe this should only be a warning? David thinks if valid label format then just warn. Is there a regex for format?
         if (backupData == NULL)
         {
             THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist\n"
@@ -649,7 +649,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 Remove expired backups from repo
 ***********************************************************************************************************************************/
 static void
-removeExpiredBackup(InfoBackup *infoBackup)
+removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -657,16 +657,42 @@ removeExpiredBackup(InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
-    // Get all the current backups in backup.info
+    // Get all the current backups in backup.info - these will not be expired
     StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
+
+    // Get all the backups on disk
     StringList *backupList = strLstSort(
         storageListP(
             storageRepo(), STORAGE_REPO_BACKUP_STR,
             .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
         sortOrderDesc);
 
+    // Initialize the index to the lastest backup on disk
+    unsigned int backupIdx = 0;
+
+    // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired (if the last
+    // backup is a full backup then it will never have an ancestor, so this processing will be skipped)
+    if (adhocBackupLabel != NULL && strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
+    {
+        String *manifestFileName = strNewFmt(
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(strLstGet(backupList, backupIdx)));
+        String *manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFileName));
+
+        // If the latest backup has a backup.manifest.copy but no backup.manifest, it may be resumable
+        if (!storageExistsP(storageRepo(), manifestFileName) && storageExistsP(storageRepo(), manifestCopyFileName))
+        {
+            Manifest *manifestResume = manifestLoadFile(
+                storageRepo(), manifestCopyFileName, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                infoPgCipherPass(infoBackupPg(infoBackup)));
+
+            // Since we will never execute this code if the possible resumable backup is a full backup then check to see if the
+            // prior backup that the resumable relies on exists and if so, skip removing it
+            if (infoBackupDataByLabel(infoBackup, manifestData(manifestResume)->backupLabelPrior) != NULL)
+                backupIdx = 1;
+        }
+    }
     // Remove non-current backups from disk
-    for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+    for (; backupIdx < strLstSize(backupList); backupIdx++)
     {
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
@@ -701,9 +727,14 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
+        const String *adhocBackupLabel = NULL;
+
         // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
         if (cfgOptionValid(cfgOptSet) && cfgOptionTest(cfgOptSet))
-            expireAdhocBackup(infoBackup, cfgOptionStr(cfgOptSet));
+        {
+            adhocBackupLabel = cfgOptionStr(cfgOptSet);
+            expireAdhocBackup(infoBackup, adhocBackupLabel);
+        }
         else
         {
             expireFullBackup(infoBackup);
@@ -719,7 +750,7 @@ cmdExpire(void)
         }
 
         // Remove all files on disk that are now expired
-        removeExpiredBackup(infoBackup);
+        removeExpiredBackup(infoBackup, adhocBackupLabel);
         removeExpiredArchive(infoBackup);
     }
     MEM_CONTEXT_TEMP_END();

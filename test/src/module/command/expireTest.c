@@ -1252,6 +1252,21 @@ testRun(void)
             "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
     }
 
+/* CSHANG
+    // *****************************************************************************************************************************
+    if (testBegin("expireAdhocBackup()"))
+    {
+
+Test for:
+- attempt to supply more than on --set
+- last backup removed (no resumable after or maybe a FULL resumable) MUST check to see what happens with archive - should be nothing
+- backup removed is somewhere in the middle - again what happens to archives
+- after upgrade and prio db-1 backup removed - archive for all db-1 should also be removed
+NOTE: For archive testing (meaning from running cmdExpire), will need an archive.info file on disk
+
+    }
+*/
+
     // *****************************************************************************************************************************
     if (testBegin("archiveIdComparator()"))
     {
