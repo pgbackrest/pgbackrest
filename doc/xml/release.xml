@@ -52,6 +52,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="marc.cousin"/>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-contributor id="luca.ferrari"/>
                         </release-item-contributor-list>

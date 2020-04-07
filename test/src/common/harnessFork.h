@@ -40,6 +40,8 @@ There should not be any code outside the HARNESS_FORK_CHILD_BEGIN/END() and HARN
 
 #include <common/fork.h>
 
+#include <common/harnessLog.h>
+
 /***********************************************************************************************************************************
 Define the max number of child processes allowed
 ***********************************************************************************************************************************/
@@ -140,6 +142,9 @@ Create a child process
         if (HARNESS_FORK_PROCESS_ID(HARNESS_FORK_PROCESS_TOTAL()) == 0)                                                            \
         {                                                                                                                          \
             unsigned int HARNESS_FORK_PROCESS_IDX() = HARNESS_FORK_PROCESS_TOTAL();                                                \
+                                                                                                                                   \
+            /* Change log process id to aid in debugging */                                                                        \
+            hrnLogProcessIdSet(HARNESS_FORK_PROCESS_IDX() + 1);                                                                                                 \
                                                                                                                                    \
             if (pipeRequired)                                                                                                      \
             {                                                                                                                      \

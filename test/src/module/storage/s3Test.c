@@ -89,6 +89,9 @@ testS3Server(void)
 
     if (fork() == 0)
     {
+        // Change log process id to aid in debugging
+        hrnLogProcessIdSet(1);
+
         harnessTlsServerInitDefault();
         harnessTlsServerAccept();
 
