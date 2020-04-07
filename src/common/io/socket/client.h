@@ -16,9 +16,8 @@ Object type
 
 typedef struct SocketClient SocketClient;
 
-#include "common/io/read.h"
-#include "common/io/write.h"
 #include "common/time.h"
+#include "common/io/socket/session.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -41,13 +40,7 @@ SocketClient *sckClientNewServer(int fd, const String *host, unsigned int port, 
 Functions
 ***********************************************************************************************************************************/
 // Open the connection
-void sckClientOpen(SocketClient *this);
-
-// Wait for the socket to be readable
-// void sckClientReadWait(SocketClient *this);
-
-// !!!
-void sckClientPoll(SocketClient *this, bool read, bool write);
+SocketSession *sckClientOpen(SocketClient *this);
 
 // Close the connection
 void sckClientClose(SocketClient *this);
@@ -58,9 +51,6 @@ SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Socket file descriptor
-int sckClientFd(SocketClient *this);
-
 // Socket host
 const String *sckClientHost(const SocketClient *this);
 

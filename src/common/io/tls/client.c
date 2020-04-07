@@ -35,11 +35,11 @@ struct TlsClient
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
-    SocketClient *socket;                                           // Client socket
+    SocketClient *socketClient;                                     // Client socket
 
+    SocketSession *socketSession;                                   // Socket session
     SSL_CTX *context;                                               // TLS context
     SSL *session;                                                   // TLS session on the socket
-
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
 };
@@ -102,7 +102,7 @@ tlsResult(TlsClient *this, int result, bool closeOk)
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
             {
-                sckClientPoll(this->socket, error == SSL_ERROR_WANT_READ, error == SSL_ERROR_WANT_WRITE);
+                sckSessionReady(this->socketSession, error == SSL_ERROR_WANT_READ, error == SSL_ERROR_WANT_WRITE);
 
                 result = 0;
                 break;
@@ -212,7 +212,7 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         *this = (TlsClient)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .socket = sckClientMove(socket, MEM_CONTEXT_NEW()),
+            .socketClient = sckClientMove(socket, MEM_CONTEXT_NEW()),
             .timeout = timeout,
             .verifyPeer = verifyPeer,
         };
@@ -419,7 +419,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 
     // If no tls data pending then check the socket
     if (!SSL_pending(this->session))
-        sckClientPoll(this->socket, true, false);
+        sckSessionReady(this->socketSession, true, false);
 
     // If blocking read keep reading until buffer is full or eof
     do
@@ -486,10 +486,11 @@ tlsClientClose(TlsClient *this)
         SSL_shutdown(this->session);
         SSL_free(this->session);
         this->session = NULL;
-    }
 
-    // Close the socket
-    sckClientClose(this->socket);
+        // Free the socket
+        sckSessionFree(this->socketSession);
+        this->socketSession = NULL;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -515,20 +516,17 @@ tlsClientEof(THIS_VOID)
 Accept a connection
 ***********************************************************************************************************************************/
 void
-tlsClientAccept(TlsClient *this, SocketClient *socket)
+tlsClientAccept(TlsClient *this, SocketSession *socketSession)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, socketSession);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(socket != NULL);
+    ASSERT(socketSession != NULL);
 
-    // if (this->socket != NULL)
-    //     sckClientFree(this->socket);
-
-    this->socket = sckClientMove(socket, this->memContext);
+    this->socketSession = sckSessionMove(socketSession, this->memContext);
 
     // Free the read/write interfaces
     ioReadFree(this->read);
@@ -539,11 +537,8 @@ tlsClientAccept(TlsClient *this, SocketClient *socket)
     // Negotiate TLS
     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
 
-    // cryptoError(
-    //     SSL_set_tlsext_host_name(this->session, strPtr(sckClientHost(this->socket))) != 1,
-    //     "unable to set TLS host name");
     cryptoError(
-        SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
+        SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS context");
 
     // Keep trying the accept until success or error
     while (tlsResult(this, SSL_accept(this->session), false) == 0);
@@ -599,16 +594,16 @@ tlsClientOpen(TlsClient *this)
                 TRY_BEGIN()
                 {
                     // Open the socket
-                    sckClientOpen(this->socket);
+                    this->socketSession = sckSessionMove(sckClientOpen(this->socketClient), this->memContext);
 
                     // Negotiate TLS
                     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
 
                     cryptoError(
-                        SSL_set_tlsext_host_name(this->session, strPtr(sckClientHost(this->socket))) != 1,
+                        SSL_set_tlsext_host_name(this->session, strPtr(sckSessionHost(this->socketSession))) != 1,
                         "unable to set TLS host name");
                     cryptoError(
-                        SSL_set_fd(this->session, sckClientFd(this->socket)) != 1, "unable to add socket to TLS context");
+                        SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS context");
 
                     // Keep trying the connection until success or error
                     while (tlsResult(this, SSL_connect(this->session), false) == 0);
@@ -648,13 +643,13 @@ tlsClientOpen(TlsClient *this)
             {
                 THROW_FMT(
                     CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",
-                    strPtr(sckClientHost(this->socket)), sckClientPort(this->socket), verifyResult,
+                    strPtr(sckSessionHost(this->socketSession)), sckSessionPort(this->socketSession), verifyResult,
                     X509_verify_cert_error_string(verifyResult));
             }
 
             // Verify that the hostname appears in the certificate
             X509 *certificate = SSL_get_peer_certificate(this->session);
-            bool nameResult = tlsClientHostVerify(sckClientHost(this->socket), certificate);
+            bool nameResult = tlsClientHostVerify(sckSessionHost(this->socketSession), certificate);
             X509_free(certificate);
 
             if (!nameResult)
@@ -662,7 +657,7 @@ tlsClientOpen(TlsClient *this)
                 THROW_FMT(
                     CryptoError,
                     "unable to find hostname '%s' in certificate common name or subject alternative names",
-                    strPtr(sckClientHost(this->socket)));
+                    strPtr(sckSessionHost(this->socketSession)));
             }
         }
 

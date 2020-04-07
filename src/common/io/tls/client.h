@@ -51,7 +51,7 @@ Functions
 ***********************************************************************************************************************************/
 // Open tls connection
 bool tlsClientOpen(TlsClient *this);
-void tlsClientAccept(TlsClient *this, SocketClient *socket);
+void tlsClientAccept(TlsClient *this, SocketSession *socketSession);
 
 // Close tls connection
 void tlsClientClose(TlsClient *this);

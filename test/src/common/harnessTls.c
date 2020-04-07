@@ -10,6 +10,7 @@ Tls Test Harness
 #include "common/crypto/common.h"
 #include "common/error.h"
 #include "common/io/socket/client.h"
+#include "common/io/socket/common.h"
 #include "common/io/tls/client.h"
 #include "common/type/buffer.h"
 #include "common/wait.h"
@@ -135,7 +136,9 @@ harnessTlsServerAccept(void)
     if (testClientSocket < 0)
         THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
-    tlsClientAccept(tlsServer, sckClientNewServer(testClientSocket, STRDEF("127.0.0.1"), 0, 10000));
+    sckOptionSet(testClientSocket);
+
+    tlsClientAccept(tlsServer, sckSessionNew(sckSessionTypeServer, testClientSocket, STRDEF("127.0.0.1"), 0, 10000));
 }
 
 /***********************************************************************************************************************************

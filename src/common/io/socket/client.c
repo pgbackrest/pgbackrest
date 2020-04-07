@@ -31,62 +31,12 @@ struct SocketClient
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-
-    int fd;                                                         // File descriptor
 };
 
-OBJECT_DEFINE_GET(Fd, , SOCKET_CLIENT, int, fd);
 OBJECT_DEFINE_GET(Host, const, SOCKET_CLIENT, const String *, host);
 OBJECT_DEFINE_GET(Port, const, SOCKET_CLIENT, unsigned int, port);
 
 OBJECT_DEFINE_MOVE(SOCKET_CLIENT);
-
-/***********************************************************************************************************************************
-Free connection
-***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(SOCKET_CLIENT, LOG, logLevelTrace)
-{
-    close(this->fd);
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
-
-/**********************************************************************************************************************************/
-SocketClient *
-sckClientNewServer(int fd, const String *host, unsigned int port, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(host != NULL);
-    ASSERT(timeout > 0);
-
-    SocketClient *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("SocketClient")
-    {
-        this = memNew(sizeof(SocketClient));
-
-        *this = (SocketClient)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-            .host = strDup(host),
-            .port = port,
-            .timeout = timeout,
-            .fd = fd,
-        };
-
-        sckOptionSet(this->fd);
-
-        sckClientStatLocal.object++;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(SOCKET_CLIENT, this);
-}
 
 /**********************************************************************************************************************************/
 SocketClient *
@@ -113,9 +63,6 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .host = strDup(host),
             .port = port,
             .timeout = timeout,
-
-            // Initialize file descriptor to -1 so we know when the socket is disconnected
-            .fd = -1,
         };
 
         sckClientStatLocal.object++;
@@ -126,7 +73,7 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-void
+SocketSession *
 sckClientOpen(SocketClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -134,7 +81,8 @@ sckClientOpen(SocketClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->fd == -1);
+
+    int fd = -1;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -175,15 +123,13 @@ sckClientOpen(SocketClient *this)
                 // Connect to the host
                 TRY_BEGIN()
                 {
-                    this->fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
-                    THROW_ON_SYS_ERROR(this->fd == -1, HostConnectError, "unable to create socket");
+                    fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+                    THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
-                    memContextCallbackSet(this->memContext, sckClientFreeResource, this);
-
-                    sckOptionSet(this->fd);
+                    sckOptionSet(fd);
 
                     // Attempt connection
-                    CHECK(connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+                    CHECK(connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
 
                     // Save the error
                     int errNo = errno;
@@ -192,14 +138,14 @@ sckClientOpen(SocketClient *this)
                     CHECK(errno == EINPROGRESS);
 
                     // Wait for write-ready
-                    if (!sckPoll(this->fd, false, true, waitRemaining(wait)))
+                    if (!sckPoll(fd, false, true, waitRemaining(wait)))
                         THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(this->host), this->port);
 
                     // Check that the connection was successful
                     socklen_t errNoLen = sizeof(errNo);
 
                     THROW_ON_SYS_ERROR(
-                        getsockopt(this->fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
+                        getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
                         "unable to get socket error");
 
                     // Throw error if it is still set
@@ -220,6 +166,9 @@ sckClientOpen(SocketClient *this)
             }
             CATCH_ANY()
             {
+                if (fd != -1)
+                    close(fd);
+
                 // Retry if wait time has not expired
                 if (waitMore(wait))
                 {
@@ -228,8 +177,6 @@ sckClientOpen(SocketClient *this)
 
                     sckClientStatLocal.retry++;
                 }
-
-                sckClientClose(this);
             }
             TRY_END();
         }
@@ -242,50 +189,8 @@ sckClientOpen(SocketClient *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(SOCKET_SESSION, sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout));
 }
-
-/**********************************************************************************************************************************/
-void
-sckClientPoll(SocketClient *this, bool read, bool write)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
-        FUNCTION_LOG_PARAM(BOOL, read);
-        FUNCTION_LOG_PARAM(BOOL, write);
-    FUNCTION_LOG_END();
-
-    if (!sckPoll(this->fd, read, write, this->timeout))
-    {
-        THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
-            this->port);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-sckClientClose(SocketClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close the socket
-    if (this->fd != -1)
-    {
-        memContextCallbackClear(this->memContext);
-        sckClientFreeResource(this);
-        this->fd = -1;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 
 /**********************************************************************************************************************************/
 String *
