@@ -96,10 +96,10 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel)
 }
 
 /***********************************************************************************************************************************
-Function to expire a backup and all its dependents.
+Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
-expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
+expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -114,9 +114,12 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
-
+// CSHANG Maybe this should only be a warning? David thinks if valid label format then just warn.
         if (backupData == NULL)
-            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist", strPtr(backupLabel));
+        {
+            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist\n"
+            "HINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
+        }
 
         StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
 
@@ -129,24 +132,14 @@ expireBackupSet(InfoBackup *infoBackup, const String *backupLabel)
 
         // Warn if most recent (last) backup is being expired
         if (strCmp(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, backupLabel) == 0)
-            LOG_WARN_FMT("most recent backup '%s' will be expired", strPtr(backupLabel));
+            LOG_WARN_FMT("most recent backup '%s' and any dependents will be expired", strPtr(backupLabel));
 
-        // Get the backup and all its dependents
-        StringList *backupList = infoBackupDataDependentList(infoBackup, backupLabel);
+        StringList *backupExpired = expireBackup(infoBackup, backupLabel);
+        result = strLstSize(backupExpired);
 
-        // Initialize the log message
-        String *backupExpired = strNew("");
-
-        // Expire each backup in the list
-        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
-        {
-            expireBackup(infoBackup, strLstGet(backupList, backupIdx), backupExpired);
-            result++;
-        }
-
-        // If the message contains a comma, then prepend "set:"
+        // Log the expired backup list (prepend "set:" if there were any dependednts that were also expired)
         LOG_INFO_FMT(
-            "adhoc expire backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+            "adhoc expire backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -709,20 +702,23 @@ cmdExpire(void)
             cfgOptionStr(cfgOptRepoCipherPass));
 
         // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
-        if (cfgOptionValid(cfgOptSet) || cfgOptionTest(cfgOptSet))
-            expireBackupSet(infoBackup, cfgOptionStr(cfgOptSet));
-
-        expireFullBackup(infoBackup);
-        expireDiffBackup(infoBackup);
-
-        // Store the new backup info only if the dry-run mode is disabled
-        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+        if (cfgOptionValid(cfgOptSet) && cfgOptionTest(cfgOptSet))
+            expireAdhocBackup(infoBackup, cfgOptionStr(cfgOptSet));
+        else
         {
-            infoBackupSaveFile(
-                infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+            expireFullBackup(infoBackup);
+            expireDiffBackup(infoBackup);
+
+            // Store the new backup info only if the dry-run mode is disabled
+            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+            {
+                infoBackupSaveFile(
+                    infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    cfgOptionStr(cfgOptRepoCipherPass));
+            }
         }
 
+        // Remove all files on disk that are now expired
         removeExpiredBackup(infoBackup);
         removeExpiredArchive(infoBackup);
     }
