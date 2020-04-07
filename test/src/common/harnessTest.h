@@ -117,6 +117,8 @@ Test that an expected error is actually thrown and error when it isn't
         THROW_FMT(                                                                                                                 \
             TestError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected),   \
             errorMessageExpected);                                                                                                 \
+                                                                                                                                   \
+    stackTraceTestFileLineSet(0);                                                                                                  \
 }
 
 /***********************************************************************************************************************************
@@ -130,6 +132,8 @@ Test error with a formatted expected message
         THROW_FMT(AssertError, "error message needs more than the %zu characters available", sizeof(TEST_ERROR_FMT_buffer));       \
                                                                                                                                    \
     TEST_ERROR(statement, errorTypeExpected, TEST_ERROR_FMT_buffer);                                                               \
+                                                                                                                                   \
+    stackTraceTestFileLineSet(0);                                                                                                  \
 }
 
 /***********************************************************************************************************************************
