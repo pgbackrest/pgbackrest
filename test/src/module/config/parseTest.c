@@ -179,7 +179,7 @@ testRun(void)
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathMissingError,
-                "unable to list files for missing path '/BOGUS'");
+                "unable to list file info for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
         value = strLstNew();

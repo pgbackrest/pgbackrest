@@ -50,6 +50,9 @@ typedef enum
 
     // Does the storage support symlinks?  Symlinks allow paths/files/links to be accessed from another path.
     storageFeatureSymLink,
+
+    // Does the storage support detailed info, i.e. user, group, mode, link destination, etc.
+    storageFeatureInfoDetail,
 } StorageFeature;
 
 /***********************************************************************************************************************************
@@ -89,6 +92,7 @@ Buffer *storageGet(StorageRead *file, StorageGetParam param);
 typedef struct StorageInfoParam
 {
     VAR_PARAM_HEADER;
+    StorageInfoLevel level;
     bool ignoreMissing;
     bool followLink;
     bool noPathEnforce;
@@ -105,6 +109,7 @@ typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *i
 typedef struct StorageInfoListParam
 {
     VAR_PARAM_HEADER;
+    StorageInfoLevel level;
     bool errorOnMissing;
     bool recurse;
     SortOrder sortOrder;
