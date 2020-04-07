@@ -14,6 +14,8 @@ Test server with subject alternate names
 static void
 testTlsServerAltName(void)
 {
+    FUNCTION_HARNESS_VOID();
+
     if (fork() == 0)
     {
         // Change log process id to aid in debugging
@@ -53,6 +55,8 @@ testTlsServerAltName(void)
 
         exit(0);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -61,6 +65,8 @@ Test server
 static void
 testTlsServer(void)
 {
+    FUNCTION_HARNESS_VOID();
+
     if (fork() == 0)
     {
         // Change log process id to aid in debugging
@@ -95,6 +101,8 @@ testTlsServer(void)
 
         exit(0);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -279,7 +287,7 @@ testRun(void)
         }
 
         // Start server to test various certificate errors
-        testTlsServerAltName();
+        TEST_RESULT_VOID(testTlsServerAltName(), "tls alt name server begin");
 
         TEST_ERROR(
             tlsClientOpen(
@@ -342,7 +350,7 @@ testRun(void)
         tlsClientStatLocal = (TlsClientStat){0};
         TEST_RESULT_PTR(tlsClientStatStr(), NULL, "no stats yet");
 
-        testTlsServer();
+        TEST_RESULT_VOID(testTlsServer(), "tls server begin");
         ioBufferSizeSet(12);
 
         TEST_ASSIGN(

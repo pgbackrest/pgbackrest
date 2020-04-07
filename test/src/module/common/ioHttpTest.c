@@ -12,6 +12,8 @@ Test server
 static void
 testHttpServer(void)
 {
+    FUNCTION_HARNESS_VOID();
+
     if (fork() == 0)
     {
         // Change log process id to aid in debugging
@@ -317,6 +319,8 @@ testHttpServer(void)
 
         exit(0);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -452,7 +456,7 @@ testRun(void)
             "unable to connect to 'localhost:%u': [111] Connection refused", harnessTlsTestPort());
 
         // Start http test server
-        testHttpServer();
+        TEST_RESULT_VOID(testHttpServer(), "http server begin");
 
         // Test no output from server
         TEST_ASSIGN(
