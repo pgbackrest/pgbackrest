@@ -22,6 +22,7 @@ testRun(void)
         TimeMSec begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
+        TEST_RESULT_UINT(waitRemaining(wait), 200, "    check remaining time");
         TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
         TEST_RESULT_UINT(wait->sleepTime, 20, "    check sleep time");
         TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
