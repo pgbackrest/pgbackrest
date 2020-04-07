@@ -16,6 +16,9 @@ testTlsServerAltName(void)
 {
     if (fork() == 0)
     {
+        // Change log process id to aid in debugging
+        hrnLogProcessIdSet(1);
+
         harnessTlsServerInit(
             harnessTlsTestPort(),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath())),
@@ -60,6 +63,9 @@ testTlsServer(void)
 {
     if (fork() == 0)
     {
+        // Change log process id to aid in debugging
+        hrnLogProcessIdSet(1);
+
         harnessTlsServerInitDefault();
 
         // First protocol exchange

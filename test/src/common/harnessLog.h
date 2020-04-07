@@ -26,6 +26,13 @@ Getters/Setters
 void harnessLogLevelReset(void);
 void harnessLogLevelSet(LogLevel logLevel);
 
+// Set the process id used for logging. Ignore the request if the logging module is not active yet.
+#ifndef NO_LOG
+    void hrnLogProcessIdSet(unsigned int processId);
+#else
+    #define hrnLogProcessIdSet(processId)
+#endif
+
 /***********************************************************************************************************************************
 Internal Setters
 ***********************************************************************************************************************************/

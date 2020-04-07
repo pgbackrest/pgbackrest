@@ -52,7 +52,7 @@ cfgLoadLogSetting(void)
         logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
     logInit(
-        logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax,
+        logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, 0, logProcessMax,
         cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 
     FUNCTION_LOG_RETURN_VOID();
