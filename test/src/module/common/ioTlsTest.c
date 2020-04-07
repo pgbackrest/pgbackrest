@@ -16,6 +16,8 @@ testTlsServerAltName(void)
 {
     if (fork() == 0)
     {
+        logProcessIdSet(1);
+
         harnessTlsServerInit(
             harnessTlsTestPort(),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath())),
@@ -60,6 +62,8 @@ testTlsServer(void)
 {
     if (fork() == 0)
     {
+        logProcessIdSet(1);
+
         harnessTlsServerInitDefault();
 
         // First protocol exchange

@@ -30,6 +30,8 @@ void logClose(void);
 // opened.
 bool logFileSet(const char *logFile);
 
+void logProcessIdSet(int processId);
+
 // Check if a log level will be logged to any output. This is useful for log messages that are expensive to generate and should be
 // skipped if they will be discarded.
 bool logAny(LogLevel logLevel);

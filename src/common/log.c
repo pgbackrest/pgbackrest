@@ -38,6 +38,7 @@ DEBUG_UNIT_EXTERN bool logFileBanner = false;
 static bool logTimestamp = false;
 
 // Size of the process id field
+static int logProcessId = -1;
 static int logProcessSize = 2;
 
 // Prefix DRY-RUN to log messages
@@ -169,6 +170,12 @@ logInit(
     logAnySet();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+logProcessIdSet(int processId)
+{
+    logProcessId = processId;
 }
 
 /***********************************************************************************************************************************
@@ -376,7 +383,8 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
 
     // Add process and aligned log level
     result.bufferPos += (size_t)snprintf(
-        logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6,
+        logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "P%0*u %*s: ", logProcessSize,
+        logProcessId == -1 ? processId : (unsigned int)logProcessId, 6,
         logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
