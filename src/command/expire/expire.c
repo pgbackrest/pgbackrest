@@ -114,11 +114,18 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
-// CSHANG Maybe this should only be a warning? David thinks if valid label format then just warn. Is there a regex for format?
+
+        // If the label is not a current backup
         if (backupData == NULL)
         {
-            THROW_FMT(OptionInvalidValueError, "backup '%s' does not exist\n"
-            "HINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
+            // If the label format is valid, then warn that the backup is not in the current list
+            if (regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
+            {
+                LOG_WARN_FMT(
+                    "backup '%s' does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
+            }
+            else
+                THROW_FMT(OptionInvalidValueError, "backup label '%s' is not a valid label format", strPtr(backupLabel));
         }
 
         StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
@@ -130,16 +137,26 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
                 strPtr(backupLabel));
         }
 
-        // Warn if most recent (last) backup is being expired
-        if (strCmp(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, backupLabel) == 0)
-            LOG_WARN_FMT("most recent backup '%s' and any dependents will be expired", strPtr(backupLabel));
+        // Save off what is currently the latest backup (it may be removed)
+        String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
 
+        // Expire the requested backup and any dependents
         StringList *backupExpired = expireBackup(infoBackup, backupLabel);
+
+        // If the latest backup was removed, then update the latest link if not a dry-run
+        if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
+        {
+            LOG_WARN_FMT("most recent backup '%s' has been expired", strPtr(latestBackup));
+
+            // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
+            if (!cfgOptionBool(cfgOptDryRun))
+                backupLinkLatest(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
+        }
+
         result = strLstSize(backupExpired);
 
-        // Log the expired backup list (prepend "set:" if there were any dependednts that were also expired)
-        LOG_INFO_FMT(
-            "adhoc expire backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
+        // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
+        LOG_INFO_FMT("adhoc expire backup %s%s", (result > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
     }
     MEM_CONTEXT_TEMP_END();
 
