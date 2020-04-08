@@ -46,4 +46,7 @@ String *backupRegExp(BackupRegExpParam param);
 BackupType backupType(const String *type);
 const String *backupTypeStr(BackupType type);
 
+// Create a symlink to the most recent backup (if supported)
+void backupLinkLatest(const String *backupLabel);
+
 #endif
