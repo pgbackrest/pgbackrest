@@ -435,7 +435,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredBackup(infoBackup), "remove backups not in backup.info current");
+        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL), "remove backups not in backup.info current");
 
         harnessLogResult(
             "P00   INFO: remove expired backup 20181119-152100F_20181119-152152D\n"
@@ -466,7 +466,7 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
-        TEST_RESULT_VOID(removeExpiredBackup(infoBackup), "remove backups - backup.info current empty");
+        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL), "remove backups - backup.info current empty");
 
         harnessLogResult("P00   INFO: remove expired backup 20181119-152138F");
         TEST_RESULT_STR_Z(
@@ -1252,20 +1252,165 @@ testRun(void)
             "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
     }
 
-/* CSHANG
     // *****************************************************************************************************************************
     if (testBegin("expireAdhocBackup()"))
     {
 
-Test for:
-- attempt to supply more than on --set
-- last backup removed (no resumable after or maybe a FULL resumable) MUST check to see what happens with archive - should be nothing
-- backup removed is somewhere in the middle - again what happens to archives
-- after upgrade and prio db-1 backup removed - archive for all db-1 should also be removed
-NOTE: For archive testing (meaning from running cmdExpire), will need an archive.info file on disk
+// CSHANG Test for:
+// - attempt to supply more than on --set
+// - last backup removed (no resumable after or maybe a FULL resumable) MUST check to see what happens with archive - should be nothing
+// - backup removed is somewhere in the middle - again what happens to archives
+// - after upgrade and prio db-1 backup removed - archive for all db-1 should also be removed
+// NOTE: For archive testing (meaning from running cmdExpire), will need an archive.info file on disk
+//
+//
+// F1, D1, I1, D2, F2, Aborted I2 (F2 dependent)
+// Expire D1 - F1, D2, F2 and aborted I2 remain
+// Expire F2 (latest and aborted) - F1, D2 remain, confirm latest updated to D2
+// Expire F1 - error
 
+        // Create backup.info
+        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[backup:current]\n"
+                "20181119-152800F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000020000000000000002\",\"backup-archive-stop\":\"000000020000000000000002\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152152D={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000004\","
+                "\"backup-archive-stop\":\"000000020000000000000005\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152155I={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000007\","
+                "\"backup-archive-stop\":\"000000020000000000000007\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
+                "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152252D={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000009\","
+                "\"backup-archive-stop\":\"000000020000000000000009\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000004\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "\n"
+                "[db]\n"
+                "db-catalog-version=201909212\n"
+                "db-control-version=1201\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"12\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"9.4\"}\n"
+                "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"12\"}\n"));
+
+        // Add backup directories with manifest file including a resumable backup dependent on last backup
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        // Resumable backup
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strPtr(backupStanzaPath))),
+            harnessInfoChecksumZ(
+                "[backup]\n"
+                "backup-label=20181119-152900F_20181119-153000I\n"
+                "backup-prior=\"20181119-152900F\"\n"
+                "backup-timestamp-copy-start=0\n"
+                "backup-timestamp-start=0\n"
+                "backup-timestamp-stop=0\n"
+                "backup-type=\"incr\"\n"
+                "\n"
+                "[backup:db]\n"
+                "db-catalog-version=201909212\n"
+                "db-control-version=1201\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"12\"\n"
+                "\n"
+                "[backup:option]\n"
+                "option-archive-check=false\n"
+                "option-archive-copy=false\n"
+                "option-checksum-page=false\n"
+                "option-compress=false\n"
+                "option-compress-type=\"none\"\n"
+                "option-hardlink=false\n"
+                "option-online=false\n"
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[db]\n"
+                "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+                "\n"
+                "[target:file:default]\n"
+                "group=\"postgres\"\n"
+                "master=false\n"
+                "mode=\"0600\"\n"
+                "user=\"postgres\"\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "\n"
+                "[target:path:default]\n"
+                "group=\"postgres\"\n"
+                "mode=\"0700\"\n"
+                "user=\"postgres\"\n"));
+
+        InfoBackup *infoBackup = NULL;
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+
+        // Create "latest" symlink
+        const String *latestLink = storagePathP(storageTest, strNewFmt("%s/" BACKUP_LINK_LATEST, strPtr(backupStanzaPath)));
+        String *backupLabel = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath), strPtr(infoBackupData(infoBackup,
+            infoBackupDataTotal(infoBackup) - 1).backupLabel));
+        THROW_ON_SYS_ERROR_FMT(
+            symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
+            strPtr(latestLink), strPtr(backupLabel));
+
+        // Create archive directories and generate archive
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "12-2", "0000000100000000");
     }
-*/
 
     // *****************************************************************************************************************************
     if (testBegin("archiveIdComparator()"))

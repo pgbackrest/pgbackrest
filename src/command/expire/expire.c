@@ -138,7 +138,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
         }
 
         // Save off what is currently the latest backup (it may be removed)
-        String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+        const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
 
         // Expire the requested backup and any dependents
         StringList *backupExpired = expireBackup(infoBackup, backupLabel);
@@ -670,6 +670,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, adhocBackupLabel);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
