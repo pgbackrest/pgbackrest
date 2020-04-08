@@ -52,7 +52,7 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 SocketSession *
 sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, host);
