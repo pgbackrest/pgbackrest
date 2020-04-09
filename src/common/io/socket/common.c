@@ -18,6 +18,7 @@ Socket Common Functions
 #include "common/debug.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
+#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -134,6 +135,21 @@ sckOptionSet(int fd)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
+// static bool
+// sckReadyResult(int result, int errNo, Wait *wait)
+// {
+//     FUNCTION_LOG_BEGIN(logLevelTrace);
+//         FUNCTION_LOG_PARAM(INT, result);
+//         FUNCTION_LOG_PARAM(INT, errNo);
+//         FUNCTION_LOG_PARAM(WAIT, wait);
+//     FUNCTION_LOG_END();
+//
+//     if (result == -1 && errNo != EINTR)
+//         THROW_SYS_ERROR_CODE_FMT(errNo, KernelError, "unable to poll socket");
+//
+//     FUNCTION_LOG_RETURN(BOOL, result == -1 && waitMore(wait));
+// }
 
 bool
 sckPoll(int fd, bool read, bool write, uint64_t timeout)
@@ -148,65 +164,26 @@ sckPoll(int fd, bool read, bool write, uint64_t timeout)
     ASSERT(fd != -1);
     ASSERT(read || write);
 
-// 	/* We use poll(2) if available, otherwise select(2) */
-// #ifdef HAVE_POLL
-	struct pollfd input_fd = {.fd = fd, .events = POLLERR};
+    // Poll settings
+    struct pollfd input_fd = {.fd = fd, .events = POLLERR};
 
-	if (read)
-		input_fd.events |= POLLIN;
+    if (read)
+        input_fd.events |= POLLIN;
 
-	if (write)
-		input_fd.events |= POLLOUT;
+    if (write)
+        input_fd.events |= POLLOUT;
 
+    // Loop until timeout or ready
+    // Wait *wait = waitNew(timeout);
     int result = 0;
 
-    do
-    {
-        result = poll(&input_fd, 1, (int)timeout);
+    THROW_ON_SYS_ERROR((result = poll(&input_fd, 1, (int)timeout)) == -1, KernelError, "unable to poll socket");
+    //
+    // do
+    // {
+    //     result = poll(&input_fd, 1, (int)waitRemaining(wait));
+    // }
+    // while (sckReadyResult(result, errno, wait));
 
-        if (result == -1 && errno != EINTR)
-            THROW_ON_SYS_ERROR_FMT(result == -1, KernelError, "unable to poll socket");
-    }
-    while (result == -1);
-
-    FUNCTION_LOG_RETURN(BOOL, result != 0);
-// #else							/* !HAVE_POLL */
-//
-// 	fd_set		input_mask;
-// 	fd_set		output_mask;
-// 	fd_set		except_mask;
-// 	struct timeval timeout;
-// 	struct timeval *ptr_timeout;
-//
-// 	if (!forRead && !forWrite)
-// 		return 0;
-//
-// 	FD_ZERO(&input_mask);
-// 	FD_ZERO(&output_mask);
-// 	FD_ZERO(&except_mask);
-// 	if (forRead)
-// 		FD_SET(sock, &input_mask);
-//
-// 	if (forWrite)
-// 		FD_SET(sock, &output_mask);
-// 	FD_SET(sock, &except_mask);
-//
-// 	/* Compute appropriate timeout interval */
-// 	if (end_time == ((time_t) -1))
-// 		ptr_timeout = NULL;
-// 	else
-// 	{
-// 		time_t		now = time(NULL);
-//
-// 		if (end_time > now)
-// 			timeout.tv_sec = end_time - now;
-// 		else
-// 			timeout.tv_sec = 0;
-// 		timeout.tv_usec = 0;
-// 		ptr_timeout = &timeout;
-// 	}
-//
-// 	return select(sock + 1, &input_mask, &output_mask,
-// 				  &except_mask, ptr_timeout);
-// #endif							/* HAVE_POLL */
+    FUNCTION_LOG_RETURN(BOOL, result > 0);
 }
