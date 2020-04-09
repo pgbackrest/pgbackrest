@@ -127,36 +127,38 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
             else
                 THROW_FMT(OptionInvalidValueError, "backup label '%s' is not a valid label format", strPtr(backupLabel));
         }
-
-        StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
-
-        if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+        else
         {
-            THROW_FMT(
-                OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
-                strPtr(backupLabel));
+            StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+
+            if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+            {
+                THROW_FMT(
+                    OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
+                    strPtr(backupLabel));
+            }
+
+            // Save off what is currently the latest backup (it may be removed)
+            const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+
+            // Expire the requested backup and any dependents
+            StringList *backupExpired = expireBackup(infoBackup, backupLabel);
+
+            // If the latest backup was removed, then update the latest link if not a dry-run
+            if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
+            {
+                LOG_WARN_FMT("most recent backup '%s' has been expired", strPtr(latestBackup));
+
+                // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
+                if (!cfgOptionBool(cfgOptDryRun))
+                    backupLinkLatest(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
+            }
+
+            result = strLstSize(backupExpired);
+
+            // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
+            LOG_INFO_FMT("adhoc expire backup %s%s", (result > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
         }
-
-        // Save off what is currently the latest backup (it may be removed)
-        const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
-
-        // Expire the requested backup and any dependents
-        StringList *backupExpired = expireBackup(infoBackup, backupLabel);
-
-        // If the latest backup was removed, then update the latest link if not a dry-run
-        if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
-        {
-            LOG_WARN_FMT("most recent backup '%s' has been expired", strPtr(latestBackup));
-
-            // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
-            if (!cfgOptionBool(cfgOptDryRun))
-                backupLinkLatest(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
-        }
-
-        result = strLstSize(backupExpired);
-
-        // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
-        LOG_INFO_FMT("adhoc expire backup %s%s", (result > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
     }
     MEM_CONTEXT_TEMP_END();
 
