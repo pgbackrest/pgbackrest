@@ -15,8 +15,7 @@ testRun(void)
     {
         Wait *wait = NULL;
 
-        TEST_ERROR(waitNew(10), AssertError, "assertion 'waitTime >= 100 && waitTime <= 999999000' failed");
-        TEST_ERROR(waitNew(9999999000), AssertError, "assertion 'waitTime >= 100 && waitTime <= 999999000' failed");
+        TEST_ERROR(waitNew(9999999000), AssertError, "assertion 'waitTime <= 999999000' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TimeMSec begin = timeMSec();
