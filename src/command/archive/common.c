@@ -391,7 +391,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *wait = timeout > 0 ? waitNew(timeout) : NULL;
+        Wait *wait = waitNew(timeout);
 
         do
         {
@@ -422,7 +422,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                 MEM_CONTEXT_PRIOR_END();
             }
         }
-        while (result == NULL && wait != NULL && waitMore(wait));
+        while (result == NULL && waitMore(wait));
     }
     MEM_CONTEXT_TEMP_END();
 

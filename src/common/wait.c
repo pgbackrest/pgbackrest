@@ -34,7 +34,7 @@ waitNew(TimeMSec waitTime)
         FUNCTION_LOG_PARAM(TIMEMSEC, waitTime);
     FUNCTION_LOG_END();
 
-    ASSERT(waitTime >= 100 && waitTime <= 999999000);
+    ASSERT(waitTime <= 999999000);
 
     // Allocate wait object
     Wait *this = NULL;
