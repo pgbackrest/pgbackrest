@@ -18,8 +18,18 @@ testRun(void)
         TEST_ERROR(waitNew(9999999000), AssertError, "assertion 'waitTime <= 999999000' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("0ms wait");
+
         TimeMSec begin = timeMSec();
 
+        TEST_ASSIGN(wait, waitNew(0), "new wait");
+        TEST_RESULT_UINT(waitRemaining(wait), 0, "    check remaining time");
+        TEST_RESULT_UINT(wait->waitTime, 0, "    check wait time");
+        TEST_RESULT_UINT(wait->sleepTime, 0, "    check sleep time");
+        TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
+        TEST_RESULT_BOOL(waitMore(wait), false, "    no wait more");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
         TEST_RESULT_UINT(waitRemaining(wait), 200, "    check remaining time");
         TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
