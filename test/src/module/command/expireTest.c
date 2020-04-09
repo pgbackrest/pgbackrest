@@ -1257,15 +1257,16 @@ testRun(void)
     {
 
 // CSHANG Test for:
-// - attempt to supply more than on --set
+// - attempt to supply more than one --set
 // - last backup removed (no resumable after or maybe a FULL resumable) MUST check to see what happens with archive - should be nothing
 // - backup removed is somewhere in the middle - again what happens to archives
 // - after upgrade and prio db-1 backup removed - archive for all db-1 should also be removed
 // NOTE: For archive testing (meaning from running cmdExpire), will need an archive.info file on disk
 //
 //
-// F1, D1, I1, D2, F2, Aborted I2 (F2 dependent)
-// Expire D1 - F1, D2, F2 and aborted I2 remain
+// f0, F1, D1, I1, D2, F2, Aborted I2 (F2 dependent)
+// Expire D1 - F0, F1, D2, F2 and aborted I2 remain
+// Expire F0 - no dependents and archive removed
 // Expire F2 (latest and aborted) - F1, D2 remain, confirm latest updated to D2
 // Expire F1 - error
 
@@ -1273,6 +1274,14 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
                 "[backup:current]\n"
+                "20181119-152138F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000001\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
                 "20181119-152800F={"
                 "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
                 "\"backup-archive-start\":\"000000020000000000000002\",\"backup-archive-stop\":\"000000020000000000000002\","
@@ -1308,7 +1317,7 @@ testRun(void)
                 "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
                 "20181119-152900F={"
                 "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000004\","
+                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","
                 "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
                 "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
                 "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
@@ -1330,6 +1339,9 @@ testRun(void)
 
         // Add backup directories with manifest file including a resumable backup dependent on last backup
         storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE,
             strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
         storagePutP(
@@ -1350,6 +1362,7 @@ testRun(void)
             strPtr(backupStanzaPath))),
             harnessInfoChecksumZ(
                 "[backup]\n"
+                "backup-archive-start=\"000000010000000000000005\"\n"
                 "backup-label=20181119-152900F_20181119-153000I\n"
                 "backup-prior=\"20181119-152900F\"\n"
                 "backup-timestamp-copy-start=0\n"
@@ -1407,9 +1420,88 @@ testRun(void)
             symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
             strPtr(latestLink), strPtr(backupLabel));
 
+        // Create archive info
+        storagePutP(
+            storageNewWriteP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}"));
+
         // Create archive directories and generate archive
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
         archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "12-2", "0000000100000000");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid backup label");
+
+        TEST_RESULT_UINT(
+            expireAdhocBackup(infoBackup, STRDEF("20201119-123456F_20201119-234567I")), 0,
+            "label format OK but backup does not exist");
+        harnessLogResult(
+            "P00   WARN: backup '20201119-123456F_20201119-234567I' does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed");
+
+        TEST_ERROR(
+            expireAdhocBackup(infoBackup, STRDEF(BOGUS_STR)), OptionInvalidValueError,
+            "backup label '" BOGUS_STR "' is not a valid label format");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire backup and dependent");
+
+        StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
+        TEST_RESULT_BOOL(
+            (storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+                strPtr(backupStanzaPath)))),
+            true, "only adhoc and dependents removed - resumable and all other backups remain");
+        harnessLogResult(
+            "P00   INFO: expire adhoc backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire full and archive (no dependents)");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--set=20181119-152138F");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
+        TEST_RESULT_BOOL(
+            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+                strPtr(backupStanzaPath)))),
+            true, "only adhoc full removed");
+        harnessLogResult(
+            "P00   INFO: expire adhoc backup: 20181119-152800F\n"
+            "P00   INFO: remove expired backup 20181119-152800F\n"
+            "P00   INFO: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000001");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("expire latest and resumable");
     }
 
     // *****************************************************************************************************************************
