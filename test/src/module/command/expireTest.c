@@ -1399,11 +1399,10 @@ testRun(void)
 
         // Create "latest" symlink
         const String *latestLink = storagePathP(storageTest, strNewFmt("%s/" BACKUP_LINK_LATEST, strPtr(backupStanzaPath)));
-        String *backupLabel = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath), strPtr(infoBackupData(infoBackup,
-            infoBackupDataTotal(infoBackup) - 1).backupLabel));
         THROW_ON_SYS_ERROR_FMT(
-            symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
-            strPtr(latestLink), strPtr(backupLabel));
+            symlink(strPtr(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel), strPtr(latestLink)) == -1,
+            FileOpenError, "unable to create symlink '%s' to '%s'", strPtr(latestLink),
+            strPtr(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel));
 
         // Create archive info
         storagePutP(
@@ -1459,6 +1458,8 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
                 strPtr(backupStanzaPath)))),
             true, "only adhoc and dependents removed - resumable and all other backups remain");
+        TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST)).linkDestination,
+            STRDEF("20181119-152900F"), "latest link not updated");
         harnessLogResult(
             "P00   INFO: expire adhoc backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
             "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
@@ -1518,6 +1519,8 @@ testRun(void)
             "P00   INFO: remove expired backup 20181119-152900F\n"
             "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000020000000000000002\n"
             "P00 DETAIL: no archive to remove, archiveId = 9.4-1");
+        TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST)).linkDestination,
+            STRDEF("20181119-152800F_20181119-152252D"), "latest link updated");
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "12-2", "0000000100000000")), sortOrderAsc), ", "),
