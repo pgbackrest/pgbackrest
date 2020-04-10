@@ -1255,28 +1255,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("expireAdhocBackup()"))
     {
-
-// CSHANG Test for:
-// - attempt to supply more than one --set
-// - last backup removed (no resumable after or maybe a FULL resumable) MUST check to see what happens with archive - should be nothing
-// - backup removed is somewhere in the middle - again what happens to archives
-// - after upgrade and prio db-1 backup removed - archive for all db-1 should also be removed
-// NOTE: For archive testing (meaning from running cmdExpire), will need an archive.info file on disk
-//
-//
-// f0, F1, D1, I1, D2, F2, Aborted I2 (F2 dependent)
-// Expire D1 - F0, F1, D2, F2 and aborted I2 remain
-// Expire F0 - no dependents and archive removed
-// Expire F2 (latest and aborted) - F1, D2 remain, confirm latest updated to D2
-// Expire F1 - error
-
         // Create backup.info
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
                 "[backup:current]\n"
                 "20181119-152138F={"
                 "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000001\","
+                "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","
                 "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
                 "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
                 "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
@@ -1363,7 +1348,7 @@ testRun(void)
             harnessInfoChecksumZ(
                 "[backup]\n"
                 "backup-archive-start=\"000000010000000000000005\"\n"
-                "backup-label=20181119-152900F_20181119-153000I\n"
+                "backup-label=null\n"
                 "backup-prior=\"20181119-152900F\"\n"
                 "backup-timestamp-copy-start=0\n"
                 "backup-timestamp-start=0\n"
@@ -1444,12 +1429,12 @@ testRun(void)
             expireAdhocBackup(infoBackup, STRDEF("20201119-123456F_20201119-234567I")), 0,
             "label format OK but backup does not exist");
         harnessLogResult(
-            "P00   WARN: backup '20201119-123456F_20201119-234567I' does not exist\n"
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
 
         TEST_ERROR(
             expireAdhocBackup(infoBackup, STRDEF(BOGUS_STR)), OptionInvalidValueError,
-            "backup label '" BOGUS_STR "' is not a valid label format");
+            "'" BOGUS_STR "' is not a valid backup label format");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
@@ -1458,6 +1443,9 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
         harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Set the log level to detail so archive expiration messages are seen
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
         TEST_RESULT_BOOL(
@@ -1474,7 +1462,13 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: expire adhoc backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
             "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
-            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D");
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000020000000000000001,"
+            " stop = 000000020000000000000001\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000020000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: remove archive: archiveId = 12-2, start = 000000010000000000000001, stop = 000000010000000000000001");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire full and archive (no dependents)");
@@ -1484,7 +1478,7 @@ testRun(void)
         strLstAddZ(argList, "--set=20181119-152138F");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire full backup");
         TEST_RESULT_BOOL(
             (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
             storageExistsP(
@@ -1496,12 +1490,156 @@ testRun(void)
                 strPtr(backupStanzaPath)))),
             true, "only adhoc full removed");
         harnessLogResult(
-            "P00   INFO: expire adhoc backup: 20181119-152800F\n"
-            "P00   INFO: remove expired backup 20181119-152800F\n"
-            "P00   INFO: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000001");
+            "P00   INFO: expire adhoc backup 20181119-152138F\n"
+            "P00   INFO: remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000020000000000000002\n"
+            "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000020000000000000001, stop = 000000020000000000000001\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 12-2");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("expire latest and resumable");
+        TEST_TITLE("expire latest and resumable");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--set=20181119-152900F");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest backup");
+        TEST_RESULT_BOOL(
+            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))) &&
+            storageExistsP(
+                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath)))),
+            true, "latest and resumable removed");
+        harnessLogResult(
+            "P00   WARN: expiring latest backup 20181119-152900F\n"
+            "P00   INFO: expire adhoc backup 20181119-152900F\n"
+            "P00   INFO: remove expired backup 20181119-152900F_20181119-153000I\n"
+            "P00   INFO: remove expired backup 20181119-152900F\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000020000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 9.4-1");
+        TEST_RESULT_STR(
+            strLstJoin(strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "12-2", "0000000100000000")), sortOrderAsc), ", "),
+            archiveExpectList(2, 5, "0000000100000000"),
+            "no archives removed from latest");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on expire last full backup");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=20181119-152800F");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ERROR(
+            cmdExpire(), BackupSetInvalidError,
+            "full backup 20181119-152800F cannot be expired until another full backup has been created");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("adhoc dry-run");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=20181119-152800F_20181119-152252D");
+        strLstAddZ(argList, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Load the backup info then remove the manifest file for code coverage
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        storageRemoveP(
+            storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath)));
+
+        String *adhocBackupLabel = strNew("20181119-152800F_20181119-152252D");
+        TEST_RESULT_UINT(expireAdhocBackup(infoBackup, adhocBackupLabel), 1, "adhoc expire last dependent backup");
+        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, adhocBackupLabel), "code coverage: removeExpireBackup with no manifests");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] expiring latest backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] expire adhoc backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F_20181119-152252D");
+
+        // Restore the manifest file and rerun the test
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest backup");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] expiring latest backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] expire adhoc backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152800F_20181119-152252D\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F, archiveId = 9.4-1,"
+            " start = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] no archive to remove, archiveId = 9.4-1");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("resumable possibly based on adhoc expire backup");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=20181119-152800F_20181119-152252D");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Resumable backup
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-153000D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strPtr(backupStanzaPath))),
+            harnessInfoChecksumZ(
+                "[backup]\n"
+                "backup-archive-start=\"000000020000000000000010\"\n"
+                "backup-label=null\n"
+                "backup-prior=\"20181119-152800F\"\n"
+                "backup-timestamp-copy-start=0\n"
+                "backup-timestamp-start=0\n"
+                "backup-timestamp-stop=0\n"
+                "backup-type=\"incr\"\n"
+                "\n"
+                "[backup:db]\n"
+                "db-catalog-version=201909212\n"
+                "db-control-version=1201\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"12\"\n"
+                "\n"
+                "[backup:option]\n"
+                "option-archive-check=false\n"
+                "option-archive-copy=false\n"
+                "option-checksum-page=false\n"
+                "option-compress=false\n"
+                "option-compress-type=\"none\"\n"
+                "option-hardlink=false\n"
+                "option-online=false\n"
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[db]\n"
+                "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+                "\n"
+                "[target:file:default]\n"
+                "group=\"postgres\"\n"
+                "master=false\n"
+                "mode=\"0600\"\n"
+                "user=\"postgres\"\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "\n"
+                "[target:path:default]\n"
+                "group=\"postgres\"\n"
+                "mode=\"0700\"\n"
+                "user=\"postgres\"\n"));
+
+
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
+        harnessLogResult(
+            "P00   WARN: expiring latest backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: expire adhoc backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152252D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000020000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 9.4-1");
+
+        harnessLogLevelReset();
     }
 
     // *****************************************************************************************************************************

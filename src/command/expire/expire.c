@@ -15,6 +15,7 @@ Expire Command
 #include "storage/helper.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 /***********************************************************************************************************************************
 Helper functions and structures
@@ -122,10 +123,10 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
             if (regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
             {
                 LOG_WARN_FMT(
-                    "backup '%s' does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
+                    "backup %s does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
             }
             else
-                THROW_FMT(OptionInvalidValueError, "backup label '%s' is not a valid label format", strPtr(backupLabel));
+                THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strPtr(backupLabel));
         }
         else
         {
@@ -134,7 +135,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
             if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
             {
                 THROW_FMT(
-                    OptionInvalidValueError, "full backup '%s' cannot be expired until another full backup has been performed",
+                    BackupSetInvalidError, "full backup %s cannot be expired until another full backup has been created",
                     strPtr(backupLabel));
             }
 
@@ -147,7 +148,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
             // If the latest backup was removed, then update the latest link if not a dry-run
             if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
             {
-                LOG_WARN_FMT("expiring latest backup '%s'", strPtr(latestBackup));
+                LOG_WARN_FMT("expiring latest backup %s", strPtr(latestBackup));
 
                 // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
                 if (!cfgOptionBool(cfgOptDryRun))
@@ -299,16 +300,6 @@ removeExpiredArchive(InfoBackup *infoBackup)
     {
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
         const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
-/* CSHANG I think this is an error or we need to change the docs
---repo-retention-archive)
-Number of backups worth of continuous WAL to retain.
-If this value is not set, then the archive to expire will default to the repo-retention-full (or repo-retention-diff) value
-corresponding to the repo-retention-archive-type if set to full (or diff). This will ensure that WAL is only expired for backups
-that are already expired.
-==> I read this as "if the repo-retention-archive-type=full" whether it was set by the user or if it was defaulted by the system
-"then the repo-retention-archive will default to repo-retention-full".  So if I set repo-retention-full=1 and I do not exlicitly set
-repo-retention-archive or repo-retention-archive-type then repo-retention-archive will be set to 1. I thought this was done in the load.c
-*/
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionUInt(cfgOptRepoRetentionArchive) : 0;
 
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
@@ -710,14 +701,14 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel)
         // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
         if (!storageExistsP(storageRepo(), manifestFileName) && storageExistsP(storageRepo(), manifestCopyFileName))
         {
-            // If there is no possibility that the resumable backup is related to the expired adhoc backup then don't remove it
+            // If the resumable backup is not related to the expired adhoc backup then don't remove it
             if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
                 backupIdx = 1;
             // Else it may be related to the adhoc backup so check if its ancestor still exists
             else
             {
                 Manifest *manifestResume = manifestLoadFile(
-                    storageRepo(), manifestCopyFileName, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    storageRepo(), manifestFileName, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                     infoPgCipherPass(infoBackupPg(infoBackup)));
 
                 // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
@@ -776,8 +767,7 @@ cmdExpire(void)
             expireFullBackup(infoBackup);
             expireDiffBackup(infoBackup);
         }
-// CSHANG something seems to be wrong with the archive retention
-LOG_INFO_FMT("retention-full %u, retention-archive: %u\n", cfgOptionUInt(cfgOptRepoRetentionFull), cfgOptionUInt(cfgOptRepoRetentionArchive));
+
         // Store the new backup info only if the dry-run mode is disabled
         if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
         {
@@ -785,7 +775,7 @@ LOG_INFO_FMT("retention-full %u, retention-archive: %u\n", cfgOptionUInt(cfgOptR
                 infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
         }
-// CSHANG This is a problem because we should not call either if we actually did not run adhoc expire (basically id the --set was not in current but was a valid format)
+
         // Remove all files on disk that are now expired
         removeExpiredBackup(infoBackup, adhocBackupLabel);
         removeExpiredArchive(infoBackup);
