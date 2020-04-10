@@ -417,9 +417,9 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 
     ssize_t result = 0;
 
-    // If no tls data pending then check the socket
+    // If no tls data pending then check the socket to reduce blocking
     if (!SSL_pending(this->session))
-        sckSessionReady(this->socketSession, true, false);
+        sckSessionReadyRead(this->socketSession);
 
     // If blocking read keep reading until buffer is full or eof
     do

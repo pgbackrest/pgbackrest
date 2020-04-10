@@ -136,23 +136,8 @@ sckOptionSet(int fd)
 }
 
 /**********************************************************************************************************************************/
-// static bool
-// sckReadyResult(int result, int errNo, Wait *wait)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(INT, result);
-//         FUNCTION_LOG_PARAM(INT, errNo);
-//         FUNCTION_LOG_PARAM(WAIT, wait);
-//     FUNCTION_LOG_END();
-//
-//     if (result == -1 && errNo != EINTR)
-//         THROW_SYS_ERROR_CODE_FMT(errNo, KernelError, "unable to poll socket");
-//
-//     FUNCTION_LOG_RETURN(BOOL, result == -1 && waitMore(wait));
-// }
-
 bool
-sckPoll(int fd, bool read, bool write, uint64_t timeout)
+sckReady(int fd, bool read, bool write, uint64_t timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);
@@ -163,6 +148,7 @@ sckPoll(int fd, bool read, bool write, uint64_t timeout)
 
     ASSERT(fd != -1);
     ASSERT(read || write);
+    ASSERT(timeout < INT_MAX);
 
     // Poll settings
     struct pollfd input_fd = {.fd = fd, .events = POLLERR};
@@ -173,17 +159,22 @@ sckPoll(int fd, bool read, bool write, uint64_t timeout)
     if (write)
         input_fd.events |= POLLOUT;
 
-    // Loop until timeout or ready
-    // Wait *wait = waitNew(timeout);
+    // Wait for ready or timeout
     int result = 0;
 
     THROW_ON_SYS_ERROR((result = poll(&input_fd, 1, (int)timeout)) == -1, KernelError, "unable to poll socket");
-    //
-    // do
-    // {
-    //     result = poll(&input_fd, 1, (int)waitRemaining(wait));
-    // }
-    // while (sckReadyResult(result, errno, wait));
 
     FUNCTION_LOG_RETURN(BOOL, result > 0);
+}
+
+bool
+sckReadyRead(int fd, uint64_t timeout)
+{
+    return sckReady(fd, true, false, timeout);
+}
+
+bool
+sckReadyWrite(int fd, uint64_t timeout)
+{
+    return sckReady(fd, false, true, timeout);
 }

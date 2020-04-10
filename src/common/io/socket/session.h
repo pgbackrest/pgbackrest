@@ -32,8 +32,10 @@ SocketSession *sckSessionNew(SocketSessionType type, int fd, const String *host,
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Check if there is data ready to read or write on the socket
+// Check if there is data ready to read/write on the socket
 void sckSessionReady(SocketSession *this, bool read, bool write);
+void sckSessionReadyRead(SocketSession *this);
+void sckSessionReadyWrite(SocketSession *this);
 
 // Move the socket to a new parent mem context
 SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);

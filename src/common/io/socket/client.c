@@ -138,7 +138,7 @@ sckClientOpen(SocketClient *this)
                     CHECK(errno == EINPROGRESS);
 
                     // Wait for write-ready
-                    if (!sckPoll(fd, false, true, waitRemaining(wait)))
+                    if (!sckReadyWrite(fd, waitRemaining(wait)))
                         THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(this->host), this->port);
 
                     // Check that the connection was successful

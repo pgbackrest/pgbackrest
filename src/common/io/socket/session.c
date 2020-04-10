@@ -100,14 +100,26 @@ sckSessionReady(SocketSession *this, bool read, bool write)
     ASSERT(this != NULL);
     ASSERT(this->fd != -1);
 
-    if (!sckPoll(this->fd, read, write, this->timeout))
+    if (!sckReady(this->fd, read, write, this->timeout))
     {
         THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
-            this->port);
+            FileReadError, "timeout after %" PRIu64 "ms waiting for %s%s%s from '%s:%u'", this->timeout, read ? "read" : "",
+            read && write ? "/" : "", write ? "write" : "", strPtr(this->host), this->port);
     }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+sckSessionReadyRead(SocketSession *this)
+{
+    sckSessionReady(this, true, false);
+}
+
+void
+sckSessionReadyWrite(SocketSession *this)
+{
+    sckSessionReady(this, false, true);
 }
 
 /**********************************************************************************************************************************/

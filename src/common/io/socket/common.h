@@ -15,7 +15,9 @@ void sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tc
 // Set options on a socket
 void sckOptionSet(int fd);
 
-// !!!
-bool sckPoll(int fd, bool read, bool write, uint64_t timeout);
+// Wait until the socket is ready to read/write or timeout
+bool sckReady(int fd, bool read, bool write, uint64_t timeout);
+bool sckReadyRead(int fd, uint64_t timeout);
+bool sckReadyWrite(int fd, uint64_t timeout);
 
 #endif
