@@ -52,7 +52,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *wait = lockTimeout != 0 ? waitNew(lockTimeout) : NULL;
+        Wait *wait = waitNew(lockTimeout);
         bool retry = false;
         int errNo = 0;
 
@@ -85,9 +85,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 }
             }
         }
-        while (result == -1 && ((wait != NULL && waitMore(wait)) || retry));
-
-        waitFree(wait);
+        while (result == -1 && (waitMore(wait) || retry));
 
         // If the lock was not successful
         if (result == -1)
