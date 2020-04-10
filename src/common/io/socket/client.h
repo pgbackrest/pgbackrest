@@ -16,6 +16,9 @@ Object type
 
 typedef struct SocketClient SocketClient;
 
+#include "common/io/read.h"
+#include "common/io/socket/session.h"
+#include "common/io/write.h"
 #include "common/time.h"
 #include "common/io/socket/session.h"
 #include "common/type/string.h"
@@ -42,20 +45,8 @@ Functions
 // Open the connection
 SocketSession *sckClientOpen(SocketClient *this);
 
-// Close the connection
-void sckClientClose(SocketClient *this);
-
-// Move the socket to a new parent mem context
+// Move to a new parent mem context
 SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Socket host
-const String *sckClientHost(const SocketClient *this);
-
-// Socket port
-unsigned int sckClientPort(const SocketClient *this);
 
 // Statistics as a formatted string
 String *sckClientStatStr(void);

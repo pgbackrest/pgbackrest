@@ -35,7 +35,7 @@ struct TlsClient
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
-    SocketClient *socketClient;                                     // Client socket
+    SocketClient *socketClient;                                     // Socket client
 
     SocketSession *socketSession;                                   // Socket session
     SSL_CTX *context;                                               // TLS context
@@ -481,6 +481,7 @@ tlsClientClose(TlsClient *this)
 
     ASSERT(this != NULL);
 
+    // Free the TLS session
     if (this->session != NULL)
     {
         SSL_shutdown(this->session);
@@ -526,7 +527,8 @@ tlsClientAccept(TlsClient *this, SocketSession *socketSession)
     ASSERT(this != NULL);
     ASSERT(socketSession != NULL);
 
-    this->socketSession = sckSessionMove(socketSession, this->memContext);
+    // !!! THIS SHOULD BE A MOVE, BUT THIS IS TEMP CODE
+    this->socketSession = socketSession;
 
     // Free the read/write interfaces
     ioReadFree(this->read);
@@ -594,7 +596,11 @@ tlsClientOpen(TlsClient *this)
                 TRY_BEGIN()
                 {
                     // Open the socket
-                    this->socketSession = sckSessionMove(sckClientOpen(this->socketClient), this->memContext);
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        this->socketSession = sckClientOpen(this->socketClient);
+                    }
+                    MEM_CONTEXT_END();
 
                     // Negotiate TLS
                     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");

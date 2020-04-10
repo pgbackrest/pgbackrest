@@ -1,5 +1,9 @@
 /***********************************************************************************************************************************
 Socket Session
+
+A simple socket session intended to allow access to services that are exposed via a socket.
+
+Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_SOCKET_SESSION_H
 #define COMMON_IO_SOCKET_SESSION_H
@@ -62,9 +66,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *sckSessionToLog(const SocketSession *this);
 
-#define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                            \
+#define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
     SocketSession *
-#define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
 
 #endif

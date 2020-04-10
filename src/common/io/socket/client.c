@@ -13,6 +13,7 @@ Socket Client
 #include "common/log.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
+#include "common/io/socket/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -32,9 +33,6 @@ struct SocketClient
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
 };
-
-OBJECT_DEFINE_GET(Host, const, SOCKET_CLIENT, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_CLIENT, unsigned int, port);
 
 OBJECT_DEFINE_MOVE(SOCKET_CLIENT);
 
@@ -82,7 +80,7 @@ sckClientOpen(SocketClient *this)
 
     ASSERT(this != NULL);
 
-    int fd = -1;
+    SocketSession *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -94,6 +92,7 @@ sckClientOpen(SocketClient *this)
         {
             // Assume there will be no retry
             retry = false;
+            int fd = -1;
 
             TRY_BEGIN()
             {
@@ -111,13 +110,13 @@ sckClientOpen(SocketClient *this)
 
                 // Get an address for the host.  We are only going to try the first address returned.
                 struct addrinfo *hostAddress;
-                int result;
+                int resultAddr;
 
-                if ((result = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
+                if ((resultAddr = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
                 {
                     THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), result,
-                        gai_strerror(result));
+                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), resultAddr,
+                        gai_strerror(resultAddr));
                 }
 
                 // Connect to the host
@@ -161,6 +160,13 @@ sckClientOpen(SocketClient *this)
                 }
                 TRY_END();
 
+                // Create the session
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout);
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 // Connection was successful
                 connected = true;
             }
@@ -189,7 +195,7 @@ sckClientOpen(SocketClient *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(SOCKET_SESSION, sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout));
+    FUNCTION_LOG_RETURN(SOCKET_SESSION, result);
 }
 
 /**********************************************************************************************************************************/

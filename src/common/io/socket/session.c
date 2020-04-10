@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Socket Client
+Socket Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -24,14 +24,11 @@ struct SocketSession
 {
     MemContext *memContext;                                         // Mem context
     SocketSessionType type;                                         // Type (server or client)
+    int fd;                                                         // File descriptor
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-
-    int fd;                                                         // File descriptor
 };
-
-OBJECT_DEFINE_MOVE(SOCKET_SESSION);
 
 OBJECT_DEFINE_GET(Fd, , SOCKET_SESSION, int, fd);
 OBJECT_DEFINE_GET(Host, const, SOCKET_SESSION, const String *, host);
@@ -62,7 +59,6 @@ sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int p
 
     ASSERT(fd != -1);
     ASSERT(host != NULL);
-    ASSERT(timeout > 0);
 
     SocketSession *this = NULL;
 
@@ -74,10 +70,10 @@ sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int p
         {
             .memContext = MEM_CONTEXT_NEW(),
             .type = type,
+            .fd = fd,
             .host = strDup(host),
             .port = port,
             .timeout = timeout,
-            .fd = fd,
         };
 
         memContextCallbackSet(this->memContext, sckSessionFreeResource, this);
