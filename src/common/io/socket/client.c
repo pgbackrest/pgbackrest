@@ -47,7 +47,6 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);
-    ASSERT(timeout > 0);
 
     SocketClient *this = NULL;
 

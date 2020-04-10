@@ -41,9 +41,6 @@ void sckSessionReady(SocketSession *this, bool read, bool write);
 void sckSessionReadyRead(SocketSession *this);
 void sckSessionReadyWrite(SocketSession *this);
 
-// Move the socket to a new parent mem context
-SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
-
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/

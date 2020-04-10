@@ -18,7 +18,6 @@ Socket Common Functions
 #include "common/debug.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Local variables
