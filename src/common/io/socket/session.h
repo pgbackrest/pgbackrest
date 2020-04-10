@@ -1,62 +1,65 @@
 /***********************************************************************************************************************************
-Socket Client
+Socket Session
 
-A simple socket client intended to allow access to services that are exposed via a socket.
+A simple socket session intended to allow access to services that are exposed via a socket.
 
-Currently this is not a full-featured client and is only intended to isolate socket functionality from the tls code.
+Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_SOCKET_CLIENT_H
-#define COMMON_IO_SOCKET_CLIENT_H
+#ifndef COMMON_IO_SOCKET_SESSION_H
+#define COMMON_IO_SOCKET_SESSION_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_CLIENT_TYPE                                          SocketClient
-#define SOCKET_CLIENT_PREFIX                                        sckClient
+#define SOCKET_SESSION_TYPE                                         SocketSession
+#define SOCKET_SESSION_PREFIX                                       sckSession
 
-typedef struct SocketClient SocketClient;
+typedef struct SocketSession SocketSession;
 
 #include "common/io/read.h"
-#include "common/io/socket/session.h"
 #include "common/io/write.h"
 #include "common/time.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Statistics
-***********************************************************************************************************************************/
-typedef struct SocketClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} SocketClientStat;
-
-/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-SocketClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
+SocketSession *sckSessionNew(int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Open the connection
-SocketSession *sckClientOpen(SocketClient *this);
+// Wait for the socket to be readable
+void sckSessionReadWait(SocketSession *this);
 
-// Move to a new parent mem context
-SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
+// Close the connection
+void sckSessionClose(SocketSession *this);
 
-// Statistics as a formatted string
-String *sckClientStatStr(void);
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Socket file descriptor
+int sckSessionFd(SocketSession *this);
+
+// Socket host
+const String *sckSessionHost(const SocketSession *this);
+
+// Socket port
+unsigned int sckSessionPort(const SocketSession *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
+void sckSessionFree(SocketSession *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *sckClientToLog(const SocketClient *this);
+String *sckSessionToLog(const SocketSession *this);
 
-#define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
-    SocketClient *
-#define FUNCTION_LOG_SOCKET_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
+#define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
+    SocketSession *
+#define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
 
 #endif
