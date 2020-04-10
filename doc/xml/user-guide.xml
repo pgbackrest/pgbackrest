@@ -20,7 +20,7 @@
         <variable key="os-centos6-pg-version">9.5</variable>
         <variable key="os-centos7-pg-version">9.6</variable>
 
-        <!-- User-defined package to use in documentation (use "apt" to install the current pgpd apt package) -->
+        <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
 
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
