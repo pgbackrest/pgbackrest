@@ -136,13 +136,13 @@ sckOptionSet(int fd)
 
 /**********************************************************************************************************************************/
 bool
-sckReady(int fd, bool read, bool write, uint64_t timeout)
+sckReady(int fd, bool read, bool write, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(BOOL, read);
         FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(UINT64, timeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(fd != -1);
@@ -167,13 +167,13 @@ sckReady(int fd, bool read, bool write, uint64_t timeout)
 }
 
 bool
-sckReadyRead(int fd, uint64_t timeout)
+sckReadyRead(int fd, TimeMSec timeout)
 {
     return sckReady(fd, true, false, timeout);
 }
 
 bool
-sckReadyWrite(int fd, uint64_t timeout)
+sckReadyWrite(int fd, TimeMSec timeout)
 {
     return sckReady(fd, false, true, timeout);
 }

@@ -30,9 +30,10 @@ struct SocketSession
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
 };
 
+OBJECT_DEFINE_MOVE(SOCKET_SESSION);
+
 OBJECT_DEFINE_GET(Fd, , SOCKET_SESSION, int, fd);
-OBJECT_DEFINE_GET(Host, const, SOCKET_SESSION, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_SESSION, unsigned int, port);
+OBJECT_DEFINE_GET(Type, const, SOCKET_SESSION, SocketSessionType, type);
 
 OBJECT_DEFINE_FREE(SOCKET_SESSION);
 
@@ -49,7 +50,7 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 SocketSession *
 sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -85,37 +86,41 @@ sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int p
 
 /**********************************************************************************************************************************/
 void
-sckSessionReady(SocketSession *this, bool read, bool write)
+sckSessionReadyRead(SocketSession *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
-        FUNCTION_LOG_PARAM(BOOL, read);
-        FUNCTION_LOG_PARAM(BOOL, write);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->fd != -1);
 
-    if (!sckReady(this->fd, read, write, this->timeout))
+    if (!sckReady(this->fd, true, false, this->timeout))
     {
         THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for %s%s%s from '%s:%u'", this->timeout, read ? "read" : "",
-            read && write ? "/" : "", write ? "write" : "", strPtr(this->host), this->port);
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
     }
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 void
-sckSessionReadyRead(SocketSession *this)
-{
-    sckSessionReady(this, true, false);
-}
-
-void
 sckSessionReadyWrite(SocketSession *this)
 {
-    sckSessionReady(this, false, true);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (!sckReady(this->fd, true, false, this->timeout))
+    {
+        THROW_FMT(
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

@@ -36,7 +36,6 @@ typedef struct SocketClientStat
 Constructors
 ***********************************************************************************************************************************/
 SocketClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
-SocketClient *sckClientNewServer(int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
@@ -49,6 +48,15 @@ SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
 
 // Statistics as a formatted string
 String *sckClientStatStr(void);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Socket host
+const String *sckClientHost(const SocketClient *this);
+
+// Socket port
+unsigned int sckClientPort(const SocketClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

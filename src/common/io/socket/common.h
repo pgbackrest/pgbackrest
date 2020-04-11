@@ -4,7 +4,7 @@ Socket Common Functions
 #ifndef COMMON_IO_SOCKET_COMMON_H
 #define COMMON_IO_SOCKET_COMMON_H
 
-#include <time.h>
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -16,8 +16,8 @@ void sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tc
 void sckOptionSet(int fd);
 
 // Wait until the socket is ready to read/write or timeout
-bool sckReady(int fd, bool read, bool write, uint64_t timeout);
-bool sckReadyRead(int fd, uint64_t timeout);
-bool sckReadyWrite(int fd, uint64_t timeout);
+bool sckReady(int fd, bool read, bool write, TimeMSec timeout);
+bool sckReadyRead(int fd, TimeMSec timeout);
+bool sckReadyWrite(int fd, TimeMSec timeout);
 
 #endif
