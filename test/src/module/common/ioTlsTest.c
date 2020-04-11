@@ -216,6 +216,27 @@ testRun(void)
             TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
             TEST_RESULT_INT(keepAliveIdleValue, 3113, "check TCP_KEEPIDLE");
             TEST_RESULT_INT(keepAliveIntervalValue, 818, "check TCP_KEEPINTVL");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("connect to non-blocking socket to test write ready");
+
+            // Put the socket in non-blocking mode
+            int flags;
+
+            THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
+            THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
+
+            // Attempt connection
+            CHECK(connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+
+            // Create socket session and wait for timeout
+            SocketSession *session = NULL;
+            TEST_ASSIGN(session, sckSessionNew(sckSessionTypeClient, fd, strNew(host), 7777, 100), "new socket");
+
+            TEST_ERROR(
+                sckSessionReadyWrite(session), ProtocolError, "timeout after 100ms waiting for write to '172.31.255.255:7777'");
+
+            TEST_RESULT_VOID(sckSessionFree(session), "free socket session");
         }
         FINALLY()
         {
@@ -258,21 +279,6 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("**")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("*.")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("a.bogus.host.com"), strNew("*.host.com")), false, "invalid host");
-    }
-
-    // Additional coverage not provided by other tests
-    // *****************************************************************************************************************************
-    if (testBegin("tlsError()"))
-    {
-        // TlsClient *client = NULL;
-        //
-        // TEST_ASSIGN(
-        //     client, tlsClientNew(sckClientNew(strNew("99.99.99.99.99"), harnessTlsTestPort(), 100), 0, true, NULL, NULL),
-        //     "new client");
-        //
-        // TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_WANT_READ), true, "continue after want read");
-        // TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_ZERO_RETURN), false, "check connection closed error");
-        // TEST_ERROR(tlsError(client, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
     }
 
     // *****************************************************************************************************************************
