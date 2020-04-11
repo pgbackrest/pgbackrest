@@ -29,6 +29,7 @@ Functions
 ***********************************************************************************************************************************/
 // Check if there is data ready to read/write on the socket
 void sckSessionReadyRead(SocketSession *this);
+void sckSessionReadyWrite(SocketSession *this);
 
 /***********************************************************************************************************************************
 Getters/Setters

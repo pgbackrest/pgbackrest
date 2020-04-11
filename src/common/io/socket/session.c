@@ -100,6 +100,25 @@ sckSessionReadyRead(SocketSession *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+void
+sckSessionReadyWrite(SocketSession *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (!sckReady(this->fd, true, false, this->timeout))
+    {
+        THROW_FMT(
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 String *
 sckSessionToLog(const SocketSession *this)
