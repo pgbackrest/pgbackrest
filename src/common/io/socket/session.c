@@ -32,8 +32,6 @@ struct SocketSession
 OBJECT_DEFINE_MOVE(SOCKET_SESSION);
 
 OBJECT_DEFINE_GET(Fd, , SOCKET_SESSION, int, fd);
-OBJECT_DEFINE_GET(Host, const, SOCKET_SESSION, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_SESSION, unsigned int, port);
 
 OBJECT_DEFINE_FREE(SOCKET_SESSION);
 

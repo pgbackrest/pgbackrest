@@ -39,12 +39,6 @@ Getters/Setters
 // Socket file descriptor
 int sckSessionFd(SocketSession *this);
 
-// Socket host
-const String *sckSessionHost(const SocketSession *this);
-
-// Socket port
-unsigned int sckSessionPort(const SocketSession *this);
-
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

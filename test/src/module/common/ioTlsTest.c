@@ -132,7 +132,10 @@ testRun(void)
         const char *port = "7777";
 
         if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
-            THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        }
 
         TRY_BEGIN()
         {
@@ -236,21 +239,6 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("**")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("*.")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("a.bogus.host.com"), strNew("*.host.com")), false, "invalid host");
-    }
-
-    // Additional coverage not provided by other tests
-    // *****************************************************************************************************************************
-    if (testBegin("tlsSessionError()"))
-    {
-        // TlsClient *client = NULL;
-        //
-        // TEST_ASSIGN(
-        //     client, tlsClientNew(sckClientNew(strNew("99.99.99.99.99"), harnessTlsTestPort(), 0), 0, true, NULL, NULL),
-        //     "new client");
-        //
-        // TEST_RESULT_BOOL(tlsSessionError(client, SSL_ERROR_WANT_READ), true, "continue after want read");
-        // TEST_RESULT_BOOL(tlsSessionError(client, SSL_ERROR_ZERO_RETURN), false, "check connection closed error");
-        // TEST_ERROR(tlsSessionError(client, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
     }
 
     // *****************************************************************************************************************************
@@ -394,6 +382,9 @@ testRun(void)
         output = bufNew(12);
         TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 0, "read no output after eof");
         TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
+
+        TEST_RESULT_VOID(tlsSessionClose(session), "close again");
+        TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
