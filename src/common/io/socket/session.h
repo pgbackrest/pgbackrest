@@ -16,8 +16,6 @@ Object type
 
 typedef struct SocketSession SocketSession;
 
-#include "common/io/read.h"
-#include "common/io/write.h"
 #include "common/time.h"
 #include "common/type/string.h"
 
@@ -29,11 +27,8 @@ SocketSession *sckSessionNew(int fd, const String *host, unsigned int port, Time
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Wait for the socket to be readable
-void sckSessionReadWait(SocketSession *this);
-
-// Close the connection
-void sckSessionClose(SocketSession *this);
+// Check if there is data ready to read/write on the socket
+void sckSessionReadyRead(SocketSession *this);
 
 /***********************************************************************************************************************************
 Getters/Setters

@@ -358,6 +358,9 @@ testRun(void)
             "new client");
         TEST_RESULT_VOID(tlsClientOpen(client), "open client");
 
+        TEST_RESULT_BOOL(sckReadyRead(client->socketSession->fd, 0), false, "socket is not read ready");
+        TEST_RESULT_BOOL(sckReadyWrite(client->socketSession->fd, 0), true, "socket is write ready");
+
         const Buffer *input = BUFSTRDEF("some protocol info");
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));
@@ -377,7 +380,7 @@ testRun(void)
 
         output = bufNew(12);
         TEST_ERROR_FMT(
-            ioRead(tlsClientIoRead(client), output), FileReadError,
+            ioRead(tlsClientIoRead(client), output), ProtocolError,
             "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -4,6 +4,7 @@ Socket Common Functions
 #include "build.auto.h"
 
 #include <fcntl.h>
+#include <poll.h>
 
 #ifdef __FreeBSD__
 #include <netinet/in.h>
@@ -125,4 +126,48 @@ sckOptionSet(int fd)
     }
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+bool
+sckReady(int fd, bool read, bool write, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(BOOL, read);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(fd != -1);
+    ASSERT(read || write);
+    ASSERT(timeout < INT_MAX);
+
+    // Poll settings
+    struct pollfd input_fd = {.fd = fd, .events = POLLERR};
+
+    if (read)
+        input_fd.events |= POLLIN;
+
+    if (write)
+        input_fd.events |= POLLOUT;
+
+    // Wait for ready or timeout
+    int result = 0;
+
+    THROW_ON_SYS_ERROR((result = poll(&input_fd, 1, (int)timeout)) == -1, KernelError, "unable to poll socket");
+
+    FUNCTION_LOG_RETURN(BOOL, result > 0);
+}
+
+bool
+sckReadyRead(int fd, TimeMSec timeout)
+{
+    return sckReady(fd, true, false, timeout);
+}
+
+bool
+sckReadyWrite(int fd, TimeMSec timeout)
+{
+    return sckReady(fd, false, true, timeout);
 }
