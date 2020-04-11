@@ -132,7 +132,10 @@ testRun(void)
         const char *port = "7777";
 
         if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
-            THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        }
 
         TRY_BEGIN()
         {
@@ -259,21 +262,6 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("a.bogus.host.com"), strNew("*.host.com")), false, "invalid host");
     }
 
-    // Additional coverage not provided by other tests
-    // *****************************************************************************************************************************
-    if (testBegin("tlsError()"))
-    {
-        TlsClient *client = NULL;
-
-        TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(strNew("99.99.99.99.99"), harnessTlsTestPort(), 0), 0, true, NULL, NULL),
-            "new client");
-
-        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_WANT_READ), true, "continue after want read");
-        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_ZERO_RETURN), false, "check connection closed error");
-        TEST_ERROR(tlsError(client, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
-    }
-
     // *****************************************************************************************************************************
     if (testBegin("TlsClient verification"))
     {
@@ -364,6 +352,7 @@ testRun(void)
     if (testBegin("TlsClient general usage"))
     {
         TlsClient *client = NULL;
+        TlsSession *session = NULL;
 
         // Reset statistics
         sckClientStatLocal = (SocketClientStat){0};
@@ -377,57 +366,59 @@ testRun(void)
         TEST_ASSIGN(
             client, tlsClientNew(sckClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 500), 500, testContainer(), NULL, NULL),
             "new client");
-        TEST_RESULT_VOID(tlsClientOpen(client), "open client");
+        TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
-        TEST_RESULT_BOOL(sckReadyRead(client->socketSession->fd, 0), false, "socket is not read ready");
-        TEST_RESULT_BOOL(sckReadyWrite(client->socketSession->fd, 0), true, "socket is write ready");
-        TEST_RESULT_VOID(sckSessionReadyWrite(client->socketSession), "socket session is write ready");
+        TEST_RESULT_BOOL(sckReadyRead(session->socketSession->fd, 0), false, "socket is not read ready");
+        TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 0), true, "socket is write ready");
+        TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
 
         const Buffer *input = BUFSTRDEF("some protocol info");
-        TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
-        ioWriteFlush(tlsClientIoWrite(client));
+        TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
+        ioWriteFlush(tlsSessionIoWrite(session));
 
-        TEST_RESULT_STR_Z(ioReadLine(tlsClientIoRead(client)), "something:0", "read line");
-        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
+        TEST_RESULT_STR_Z(ioReadLine(tlsSessionIoRead(session)), "something:0", "read line");
+        TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
         Buffer *output = bufNew(12);
-        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 12, "read output");
+        TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 12, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "some content", "    check output");
-        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
+        TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
         output = bufNew(8);
-        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 8, "read output");
+        TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 8, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "    check output");
-        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
+        TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
         output = bufNew(12);
         TEST_ERROR_FMT(
-            ioRead(tlsClientIoRead(client), output), ProtocolError,
+            ioRead(tlsSessionIoRead(session), output), ProtocolError,
             "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
         // -------------------------------------------------------------------------------------------------------------------------
         input = BUFSTRDEF("more protocol info");
-        TEST_RESULT_VOID(tlsClientOpen(client), "open client again (it is already open)");
-        TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
-        ioWriteFlush(tlsClientIoWrite(client));
+        TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
+        ioWriteFlush(tlsSessionIoWrite(session));
 
         output = bufNew(12);
-        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 12, "read output");
+        TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 12, "read output");
         TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "    check output");
-        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
+        TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
         output = bufNew(12);
-        TEST_RESULT_UINT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
-        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
+        TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 0, "read no output after eof");
+        TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
+
+        TEST_RESULT_VOID(tlsSessionClose(session), "close again");
+        TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(tlsClientOpen(client), "open client again (was closed by server)");
-        TEST_RESULT_BOOL(tlsWriteContinue(client, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
-        TEST_RESULT_BOOL(tlsWriteContinue(client, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
+        TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
+        TEST_RESULT_BOOL(tlsSessionWriteContinue(session, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
+        TEST_RESULT_BOOL(tlsSessionWriteContinue(session, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
         TEST_ERROR(
-            tlsWriteContinue(client, 77, 0, 88), FileWriteError,
+            tlsSessionWriteContinue(session, 77, 0, 88), FileWriteError,
             "unable to write to tls, write size 77 does not match expected size 88");
-        TEST_ERROR(tlsWriteContinue(client, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
+        TEST_ERROR(tlsSessionWriteContinue(session, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(sckClientStatStr() != NULL, true, "check statistics exist");

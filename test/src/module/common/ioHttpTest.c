@@ -464,7 +464,7 @@ testRun(void)
         client->timeout = 0;
 
         TEST_ERROR_FMT(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), ProtocolError,
             "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
         // Test invalid http version
