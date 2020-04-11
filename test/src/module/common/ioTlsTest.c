@@ -132,7 +132,10 @@ testRun(void)
         const char *port = "7777";
 
         if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
-            THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+        }
 
         TRY_BEGIN()
         {
