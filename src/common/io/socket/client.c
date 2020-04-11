@@ -13,6 +13,7 @@ Socket Client
 #include "common/log.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
+#include "common/io/socket/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -31,24 +32,9 @@ struct SocketClient
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-
-    int fd;                                                         // File descriptor
 };
 
-OBJECT_DEFINE_GET(Fd, , SOCKET_CLIENT, int, fd);
-OBJECT_DEFINE_GET(Host, const, SOCKET_CLIENT, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_CLIENT, unsigned int, port);
-
 OBJECT_DEFINE_MOVE(SOCKET_CLIENT);
-
-/***********************************************************************************************************************************
-Free connection
-***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(SOCKET_CLIENT, LOG, logLevelTrace)
-{
-    close(this->fd);
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 SocketClient *
@@ -74,9 +60,6 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .host = strDup(host),
             .port = port,
             .timeout = timeout,
-
-            // Initialize file descriptor to -1 so we know when the socket is disconnected
-            .fd = -1,
         };
 
         sckClientStatLocal.object++;
@@ -87,7 +70,7 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-void
+SocketSession *
 sckClientOpen(SocketClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -95,7 +78,8 @@ sckClientOpen(SocketClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->fd == -1);
+
+    SocketSession *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -107,6 +91,7 @@ sckClientOpen(SocketClient *this)
         {
             // Assume there will be no retry
             retry = false;
+            int fd = -1;
 
             TRY_BEGIN()
             {
@@ -124,26 +109,24 @@ sckClientOpen(SocketClient *this)
 
                 // Get an address for the host.  We are only going to try the first address returned.
                 struct addrinfo *hostAddress;
-                int result;
+                int resultAddr;
 
-                if ((result = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
+                if ((resultAddr = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
                 {
                     THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), result,
-                        gai_strerror(result));
+                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), resultAddr,
+                        gai_strerror(resultAddr));
                 }
 
                 // Connect to the host
                 TRY_BEGIN()
                 {
-                    this->fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
-                    THROW_ON_SYS_ERROR(this->fd == -1, HostConnectError, "unable to create socket");
+                    fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+                    THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
-                    memContextCallbackSet(this->memContext, sckClientFreeResource, this);
+                    sckOptionSet(fd);
 
-                    sckOptionSet(this->fd);
-
-                    if (connect(this->fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
+                    if (connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
                         THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
                 }
                 FINALLY()
@@ -152,11 +135,21 @@ sckClientOpen(SocketClient *this)
                 }
                 TRY_END();
 
+                // Create the session
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = sckSessionNew(fd, this->host, this->port, this->timeout);
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 // Connection was successful
                 connected = true;
             }
             CATCH_ANY()
             {
+                if (fd != -1)
+                    close(fd);
+
                 // Retry if wait time has not expired
                 if (waitMore(wait))
                 {
@@ -165,8 +158,6 @@ sckClientOpen(SocketClient *this)
 
                     sckClientStatLocal.retry++;
                 }
-
-                sckClientClose(this);
             }
             TRY_END();
         }
@@ -179,68 +170,8 @@ sckClientOpen(SocketClient *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(SOCKET_SESSION, result);
 }
-
-/**********************************************************************************************************************************/
-void
-sckClientReadWait(SocketClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->fd != -1);
-
-    // Initialize the file descriptor set used for select
-    fd_set selectSet;
-    FD_ZERO(&selectSet);
-
-    // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-    FD_SET((unsigned int)this->fd, &selectSet);
-
-    // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-    struct timeval timeoutSelect;
-    timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-    timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-    // Determine if there is data to be read
-    int result = select(this->fd + 1, &selectSet, NULL, NULL, &timeoutSelect);
-    THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-    // If no data available after time allotted then error
-    if (!result)
-    {
-        THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
-            this->port);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-sckClientClose(SocketClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close the socket
-    if (this->fd != -1)
-    {
-        memContextCallbackClear(this->memContext);
-        sckClientFreeResource(this);
-        this->fd = -1;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 
 /**********************************************************************************************************************************/
 String *
