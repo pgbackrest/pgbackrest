@@ -109,7 +109,7 @@ sckSessionReadyWrite(SocketSession *this)
 
     ASSERT(this != NULL);
 
-    if (!sckReady(this->fd, true, false, this->timeout))
+    if (!sckReady(this->fd, false, true, this->timeout))
     {
         THROW_FMT(
             ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strPtr(this->host),
