@@ -133,7 +133,6 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
             // A syscall failed (this usually indicates eof)
             case SSL_ERROR_SYSCALL:
             {
-                // Get the error before closing so it is not cleared
                 tlsSessionClose(this, false);
 
                 // Throw the sys error if there is one

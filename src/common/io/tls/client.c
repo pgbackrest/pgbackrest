@@ -93,9 +93,6 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
 
-        // Disable auto-retry to prevent SSL_read() from hanging
-        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
-
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
         if (this->verifyPeer)
