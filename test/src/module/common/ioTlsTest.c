@@ -398,7 +398,7 @@ testRun(void)
                 TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 0, "read no output after eof");
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
 
-                TEST_RESULT_VOID(tlsSessionClose(session), "close again");
+                TEST_RESULT_VOID(tlsSessionClose(session, false), "close again");
                 TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
                 // -----------------------------------------------------------------------------------------------------------------

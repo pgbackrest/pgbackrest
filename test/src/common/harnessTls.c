@@ -11,6 +11,8 @@ Tls Test Harness
 
 #include "common/crypto/common.h"
 #include "common/error.h"
+#include "common/io/socket/session.h"
+#include "common/io/tls/session.intern.h"
 #include "common/type/buffer.h"
 #include "common/wait.h"
 
@@ -24,8 +26,7 @@ Test defaults
 
 static int testServerSocket = 0;
 static SSL_CTX *testServerContext = NULL;
-static int testClientSocket = 0;
-static SSL *testClientSSL = NULL;
+static TlsSession *testServerSession = NULL;
 
 /***********************************************************************************************************************************
 Initialize TLS and listen on the specified port for TLS connections
@@ -104,23 +105,13 @@ harnessTlsServerInitDefault(void)
 
 /***********************************************************************************************************************************
 Expect an exact string from the client
-
-This is a very unforgiving function and short input will leave the server hanging.  Definitely room for improvement here.
 ***********************************************************************************************************************************/
 void
 harnessTlsServerExpect(const char *expected)
 {
     Buffer *buffer = bufNew(strlen(expected));
-    int readBytes = 0;
 
-    // Read expected bytes
-    do
-    {
-        int lastBytes = SSL_read(testClientSSL, bufRemainsPtr(buffer), (int)bufRemains(buffer));
-        readBytes += lastBytes;
-        bufUsedSet(buffer, (size_t)readBytes);
-    }
-    while (bufRemains(buffer));
+    ioRead(tlsSessionIoRead(testServerSession), buffer);
 
     // Treat and ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
     String *actual = strNewBuf(buffer);
@@ -142,7 +133,8 @@ Send a reply to the client
 void
 harnessTlsServerReply(const char *reply)
 {
-    SSL_write(testClientSSL, reply, (int)strlen(reply));
+    ioWrite(tlsSessionIoWrite(testServerSession), BUF((unsigned char *)reply, strlen(reply)));
+    ioWriteFlush(tlsSessionIoWrite(testServerSession));
 }
 
 /***********************************************************************************************************************************
@@ -154,15 +146,15 @@ harnessTlsServerAccept(void)
     struct sockaddr_in addr;
     unsigned int len = sizeof(addr);
 
-    testClientSocket = accept(testServerSocket, (struct sockaddr *)&addr, &len);
+    int testClientSocket = accept(testServerSocket, (struct sockaddr *)&addr, &len);
 
     if (testClientSocket < 0)
         THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
-    testClientSSL = SSL_new(testServerContext);
-    SSL_set_fd(testClientSSL, testClientSocket);
+    SSL *testClientSSL = SSL_new(testServerContext);
 
-    cryptoError(SSL_accept(testClientSSL) <= 0, "unable to accept TLS connection");
+    testServerSession = tlsSessionNew(
+        testClientSSL, sckSessionNew(sckSessionTypeServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
 }
 
 /***********************************************************************************************************************************
@@ -171,17 +163,18 @@ Close the connection
 void
 harnessTlsServerClose(void)
 {
-    SSL_shutdown(testClientSSL);
-    SSL_free(testClientSSL);
-    close(testClientSocket);
+    tlsSessionClose(testServerSession, true);
+    tlsSessionFree(testServerSession);
+    testServerSession = NULL;
 }
 
 /**********************************************************************************************************************************/
 void
 harnessTlsServerAbort(void)
 {
-    SSL_free(testClientSSL);
-    close(testClientSocket);
+    tlsSessionClose(testServerSession, false);
+    tlsSessionFree(testServerSession);
+    testServerSession = NULL;
 }
 
 /**********************************************************************************************************************************/

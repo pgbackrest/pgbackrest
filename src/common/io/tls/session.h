@@ -25,6 +25,10 @@ typedef struct TlsSession TlsSession;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Close the session. Shutdown should not be attempted after an error, which means the client never has the oppottunity to do a
+// shutdown since the connection is held open until it is disconnected by the server.
+void tlsSessionClose(TlsSession *this, bool shutdown);
+
 // Move to a new parent mem context
 TlsSession *tlsSessionMove(TlsSession *this, MemContext *parentNew);
 
