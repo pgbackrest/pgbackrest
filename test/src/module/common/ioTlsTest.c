@@ -17,9 +17,6 @@ testTlsServerAltName(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Change log process id to aid in debugging
-    hrnLogProcessIdSet(1);
-
     harnessTlsServerInit(
         harnessTlsTestPort(),
         strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath())),
@@ -62,9 +59,6 @@ static void
 testTlsServer(void)
 {
     FUNCTION_HARNESS_VOID();
-
-    // Change log process id to aid in debugging
-    hrnLogProcessIdSet(1);
 
     harnessTlsServerInitDefault();
 
@@ -324,8 +318,10 @@ testRun(void)
                     CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
                 TEST_ERROR_FMT(
                     tlsClientOpen(
-                        tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, true, NULL, strNew("/bogus"))),
-                    CryptoError, "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                        tlsClientNew(
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, true, NULL, strNew("/bogus"))),
+                    CryptoError,
+                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     harnessTlsTestPort());
 
                 if (testContainer())
@@ -357,7 +353,8 @@ testRun(void)
                             sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
                         NULL)),
-                    CryptoError, "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                    CryptoError,
+                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     harnessTlsTestPort());
 
                 TEST_RESULT_VOID(
@@ -426,7 +423,7 @@ testRun(void)
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
                     "timeout after 2000ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
-                // -------------------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 input = BUFSTRDEF("more protocol info");
                 TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
                 ioWriteFlush(tlsSessionIoWrite(session));
@@ -443,7 +440,7 @@ testRun(void)
                 TEST_RESULT_VOID(tlsSessionClose(session), "close again");
                 // TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
-                // -------------------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("eof before all bytes read");
 
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
@@ -452,7 +449,7 @@ testRun(void)
                 TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 11, "read output");
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
 
-                // -------------------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 // TEST_RESULT_BOOL(tlsSessionWriteContinue(session, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
                 // TEST_RESULT_BOOL(tlsSessionWriteContinue(session, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
                 // TEST_ERROR(
@@ -460,7 +457,7 @@ testRun(void)
                 //     "unable to write to tls, write size 77 does not match expected size 88");
                 // TEST_ERROR(tlsSessionWriteContinue(session, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
 
-                // -------------------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_RESULT_BOOL(sckClientStatStr() != NULL, true, "check statistics exist");
                 TEST_RESULT_BOOL(tlsClientStatStr() != NULL, true, "check statistics exist");
 
