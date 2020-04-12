@@ -101,17 +101,15 @@ tlsSessionError(TlsSession *this, int code)
             break;
         }
 
-        // A syscall failed (this usually indicates eof)
+        // A syscall failed (usually indicates unexpected eof)
         case SSL_ERROR_SYSCALL:
         {
             // Get the error before closing so it is not cleared
             int errNo = errno;
             tlsSessionClose(this);
 
-            // Throw the sys error if there is one
-            THROW_ON_SYS_ERROR(errNo, KernelError, "tls failed syscall");
-
-            break;
+            // Throw the sys error
+            THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
         }
 
         // Some other tls error that cannot be handled
