@@ -502,6 +502,7 @@ httpClientDone(HttpClient *this)
 
     if (this->ioRead != NULL)
     {
+        // If it looks like we were in the middle of a response then close the TLS session so we can start clean next time
         if (!this->contentEof)
             tlsClientClose(this->tls);
 
