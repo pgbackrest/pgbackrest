@@ -175,18 +175,28 @@ The seldom used "THROWP" variants allow an error to be thrown with a pointer to 
 /***********************************************************************************************************************************
 Throw an error when a system call fails
 ***********************************************************************************************************************************/
+#define THROW_SYS_ERROR(errorType, message)                                                                                        \
+    errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message)
+#define THROW_SYS_ERROR_FMT(errorType, ...)                                                                                        \
+    errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR(errorType, message)                                                                                       \
+    errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message)
+#define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                       \
+    errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+
+#define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                            \
+    errorInternalThrowSys(errNo, &errorType, __FILE__, __func__, __LINE__, message)
+#define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                            \
+    errorInternalThrowSysFmt(errNo, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR_CODE(errNo, errorType, message)                                                                           \
+    errorInternalThrowSys(errNo, errorType, __FILE__, __func__, __LINE__, message)
+#define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                           \
+    errorInternalThrowSysFmt(errNo, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+
 // When coverage testing define special versions of the macros that don't contain branches.  These macros are less efficient because
-// they need to call errorInternalThrowSys*() before determining if there is an error or not, but they allow coverage testing for
+// they need to call errorInternalThrowOnSys*() before determining if there is an error or not, but they allow coverage testing for
 // THROW*_ON*() calls that contain conditionals.
 #ifdef DEBUG_COVERAGE
-    #define THROW_SYS_ERROR(errorType, message)                                                                                    \
-        errorInternalThrowSys(true, errno, &errorType, __FILE__, __func__, __LINE__, message)
-    #define THROW_SYS_ERROR_FMT(errorType, ...)                                                                                    \
-        errorInternalThrowSysFmt(true, errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
-    #define THROWP_SYS_ERROR(errorType, message)                                                                                   \
-        errorInternalThrowSys(true, errno, errorType, __FILE__, __func__, __LINE__, message)
-    #define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                   \
-        errorInternalThrowSysFmt(true, errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
     // The expression can't be passed directly to errorInternalThrowSys*() because we need to be sure it is evaluated before passing
     // errno. Depending on optimization that might not happen.
@@ -194,50 +204,32 @@ Throw an error when a system call fails
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
-            errorInternalThrowSys(error, errno, &errorType, __FILE__, __func__, __LINE__, message);                                \
+            errorInternalThrowOnSys(error, errno, &errorType, __FILE__, __func__, __LINE__, message);                              \
         } while(0)
 
     #define THROW_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                     \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
-            errorInternalThrowSysFmt(error, errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                         \
+            errorInternalThrowOnSysFmt(error, errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                       \
         } while(0)
 
     #define THROWP_ON_SYS_ERROR(expression, errorType, message)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
-            errorInternalThrowSys(error, errno, errorType, __FILE__, __func__, __LINE__, message);                                 \
+            errorInternalThrowOnSys(error, errno, errorType, __FILE__, __func__, __LINE__, message);                               \
         } while(0)
 
     #define THROWP_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
-            errorInternalThrowSysFmt(error, errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                          \
+            errorInternalThrowOnSysFmt(error, errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                        \
         } while(0)
-
-    #define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                        \
-        errorInternalThrowSys(true, errNo, &errorType, __FILE__, __func__, __LINE__, message)
-    #define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                        \
-        errorInternalThrowSysFmt(true, errNo, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
-    #define THROWP_SYS_ERROR_CODE(errNo, errorType, message)                                                                       \
-        errorInternalThrowSys(true, errNo, errorType, __FILE__, __func__, __LINE__, message)
-    #define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                       \
-        errorInternalThrowSysFmt(true, errNo, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 // Else define the normal macros which check for an error first
 #else
-    #define THROW_SYS_ERROR(errorType, message)                                                                                    \
-        errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message)
-    #define THROW_SYS_ERROR_FMT(errorType, ...)                                                                                    \
-        errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
-    #define THROWP_SYS_ERROR(errorType, message)                                                                                   \
-        errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message)
-    #define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                   \
-        errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
-
     #define THROW_ON_SYS_ERROR(expression, errorType, message)                                                                     \
         do                                                                                                                         \
         {                                                                                                                          \
@@ -265,15 +257,6 @@ Throw an error when a system call fails
             if (expression)                                                                                                        \
                 errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                             \
         } while(0)
-
-    #define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                        \
-        errorInternalThrowSys(errNo, &errorType, __FILE__, __func__, __LINE__, message)
-    #define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                        \
-        errorInternalThrowSysFmt(errNo, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
-    #define THROWP_SYS_ERROR_CODE(errNo, errorType, message)                                                                       \
-        errorInternalThrowSys(errNo, errorType, __FILE__, __func__, __LINE__, message)
-    #define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                       \
-        errorInternalThrowSysFmt(errNo, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #endif
 
 /***********************************************************************************************************************************
@@ -318,25 +301,23 @@ void errorInternalThrowFmt(
 
 // Throw a system error
 void errorInternalThrowSys(
-#ifdef DEBUG_COVERAGE
-    bool error,
-#endif
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
-#ifdef DEBUG_COVERAGE
-    ;
-#else
     __attribute__((__noreturn__));
-#endif
 
+// Throw a formatted system error
 void errorInternalThrowSysFmt(
-#ifdef DEBUG_COVERAGE
-    bool error,
-#endif
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
-#ifdef DEBUG_COVERAGE
-    __attribute__((format(printf, 7, 8)));
-#else
     __attribute__((format(printf, 6, 7))) __attribute__((__noreturn__));
+
+// Versions of the above for coverage testing which checks the error condition inside the function
+#ifdef DEBUG_COVERAGE
+    void errorInternalThrowOnSys(
+        bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
+        const char *message);
+
+    void errorInternalThrowOnSysFmt(
+        bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
+        const char *format, ...) __attribute__((format(printf, 7, 8)));
 #endif
 
 /***********************************************************************************************************************************
