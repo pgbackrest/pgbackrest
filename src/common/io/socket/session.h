@@ -39,8 +39,9 @@ Functions
 // Move to a new parent mem context
 SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
 
-// Wait for the socket to be readable
-void sckSessionReadWait(SocketSession *this);
+// Check if there is data ready to read/write on the socket
+void sckSessionReadyRead(SocketSession *this);
+void sckSessionReadyWrite(SocketSession *this);
 
 /***********************************************************************************************************************************
 Getters/Setters

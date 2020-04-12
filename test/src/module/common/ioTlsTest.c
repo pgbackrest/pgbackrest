@@ -118,7 +118,7 @@ testRun(void)
 
         struct addrinfo *hostAddress;
         int result;
-        const char *host = "127.0.0.1";
+        const char *host = "172.31.255.255";
         const char *port = "7777";
 
         if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
@@ -202,6 +202,27 @@ testRun(void)
             TEST_RESULT_INT(keepAliveCountValue, 32, "check TCP_KEEPCNT");
             TEST_RESULT_INT(keepAliveIdleValue, 3113, "check TCP_KEEPIDLE");
             TEST_RESULT_INT(keepAliveIntervalValue, 818, "check TCP_KEEPINTVL");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("connect to non-blocking socket to test write ready");
+
+            // Put the socket in non-blocking mode
+            int flags;
+
+            THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
+            THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
+
+            // Attempt connection
+            CHECK(connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+
+            // Create socket session and wait for timeout
+            SocketSession *session = NULL;
+            TEST_ASSIGN(session, sckSessionNew(sckSessionTypeClient, fd, strNew(host), 7777, 100), "new socket");
+
+            TEST_ERROR(
+                sckSessionReadyWrite(session), ProtocolError, "timeout after 100ms waiting for write to '172.31.255.255:7777'");
+
+            TEST_RESULT_VOID(sckSessionFree(session), "free socket session");
         }
         FINALLY()
         {
@@ -362,6 +383,10 @@ testRun(void)
                     "new client");
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
+                TEST_RESULT_BOOL(sckReadyRead(session->socketSession->fd, 0), false, "socket is not read ready");
+                TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 0), true, "socket is write ready");
+                TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
+
                 const Buffer *input = BUFSTRDEF("some protocol info");
                 TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
                 ioWriteFlush(tlsSessionIoWrite(session));
@@ -381,7 +406,7 @@ testRun(void)
 
                 output = bufNew(12);
                 TEST_ERROR_FMT(
-                    ioRead(tlsSessionIoRead(session), output), FileReadError,
+                    ioRead(tlsSessionIoRead(session), output), ProtocolError,
                     "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
                 // -----------------------------------------------------------------------------------------------------------------
