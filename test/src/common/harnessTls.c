@@ -12,7 +12,7 @@ Tls Test Harness
 #include "common/crypto/common.h"
 #include "common/error.h"
 #include "common/io/socket/session.h"
-#include "common/io/tls/session.h"
+#include "common/io/tls/session.intern.h"
 #include "common/type/buffer.h"
 #include "common/wait.h"
 
@@ -154,7 +154,7 @@ harnessTlsServerAccept(void)
     SSL *testClientSSL = SSL_new(testServerContext);
 
     testServerSession = tlsSessionNew(
-        testClientSSL, sckSessionNew(sckSessionTypeServer, testClientSocket, STRDEF("client"), 0, 10000), 10000);
+        testClientSSL, sckSessionNew(sckSessionTypeServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
 }
 
 /***********************************************************************************************************************************
@@ -163,7 +163,16 @@ Close the connection
 void
 harnessTlsServerClose(void)
 {
-    tlsSessionClose(testServerSession);
+    tlsSessionClose(testServerSession, true);
+    tlsSessionFree(testServerSession);
+    testServerSession = NULL;
+}
+
+/**********************************************************************************************************************************/
+void
+harnessTlsServerAbort(void)
+{
+    tlsSessionClose(testServerSession, false);
     tlsSessionFree(testServerSession);
     testServerSession = NULL;
 }

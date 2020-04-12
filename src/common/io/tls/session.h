@@ -1,7 +1,11 @@
 /***********************************************************************************************************************************
 TLS Session
 
-!!!
+TLS sessions are created by calling tlsClientOpen().
+
+TLS sessions are generally reused so the user must be prepared to retry their transaction on a read/write error if the server closes
+the session before it is reused. If this behavior is not desirable then tlsSessionFree()/tlsClientOpen() can be called to get a new
+session.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_TLS_SESSION_H
 #define COMMON_IO_TLS_SESSION_H
@@ -14,22 +18,16 @@ Object type
 
 typedef struct TlsSession TlsSession;
 
-#include <openssl/ssl.h>
-
 #include "common/io/read.h"
 #include "common/io/socket/session.h"
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
-Constructors
-***********************************************************************************************************************************/
-TlsSession *tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Close the session gracefully
-void tlsSessionClose(TlsSession *this);
+// Close the session. Shutdown should not be attempted after an error, which means the client never has the oppottunity to do a
+// shutdown since the connection is held open until it is disconnected by the server.
+void tlsSessionClose(TlsSession *this, bool shutdown);
 
 // Move to a new parent mem context
 TlsSession *tlsSessionMove(TlsSession *this, MemContext *parentNew);

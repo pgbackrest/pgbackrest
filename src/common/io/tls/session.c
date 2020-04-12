@@ -3,24 +3,17 @@ TLS Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <string.h>
-#include <strings.h>
-
-#include <openssl/conf.h>
 #include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/x509v3.h>
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
-#include "common/io/tls/session.h"
+#include "common/io/tls/session.intern.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -52,28 +45,32 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_SESSION, LOG, logLevelTrace)
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
-/***********************************************************************************************************************************
-Close the connection
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
-tlsSessionClose(TlsSession *this)
+tlsSessionClose(TlsSession *this, bool shutdown)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
+        FUNCTION_LOG_PARAM(BOOL, shutdown);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    // Free the TLS session
+    // If not already closed
     if (this->session != NULL)
     {
-        SSL_shutdown(this->session);
-        SSL_free(this->session);
-        this->session = NULL;
+        // Shutdown on request
+        if (shutdown)
+            SSL_shutdown(this->session);
 
-        // Free the socket
+        // Free the socket session
         sckSessionFree(this->socketSession);
         this->socketSession = NULL;
+
+        // Free the TLS session
+        memContextCallbackClear(this->memContext);
+        tlsSessionFreeResource(this);
+        this->session = NULL;
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -109,7 +106,7 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
             // The connection was closed
             case SSL_ERROR_ZERO_RETURN:
             {
-                tlsSessionClose(this);
+                tlsSessionClose(this, false);
 
                 if (!closeOk)
                     THROW(ProtocolError, "unexpected eof");
@@ -137,11 +134,10 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
             case SSL_ERROR_SYSCALL:
             {
                 // Get the error before closing so it is not cleared
-                tlsSessionClose(this);
+                tlsSessionClose(this, false);
 
                 // Throw the sys error if there is one
                 THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
-                break;
             }
 
             // Some other tls error that cannot be handled
@@ -273,17 +269,17 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
             .timeout = timeout,
         };
 
-        // Initiate TLS connection
+        // Ensure session is freed
+        memContextCallbackSet(this->memContext, tlsSessionFreeResource, this);
+
+        // Negotiate TLS session
         cryptoError(
             SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS session");
 
-        // Keep trying the connection until success or error
         if (sckSessionType(this->socketSession) == sckSessionTypeClient)
             while (tlsSessionResult(this, SSL_connect(this->session), false) == 0);
         else
             while (tlsSessionResult(this, SSL_accept(this->session), false) == 0);
-
-        memContextCallbackSet(this->memContext, tlsSessionFreeResource, this);
 
         // Create read and write interfaces
         this->write = ioWriteNewP(this, .write = tlsSessionWrite);

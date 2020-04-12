@@ -82,14 +82,10 @@ testTlsServer(void)
     harnessTlsServerReply("0123456789AB");
     harnessTlsServerClose();
 
-    // eof before expected bytes read
+    // Test aborted connection before read complete
     harnessTlsServerAccept();
-    harnessTlsServerReply("0123456789Z");
-    harnessTlsServerClose();
-
-    // eof before all bytes written
-    // harnessTlsServerAccept();
-    // harnessTlsServerClose();
+    harnessTlsServerReply("0123456789AB");
+    harnessTlsServerAbort();
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -437,25 +433,16 @@ testRun(void)
                 TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 0, "read no output after eof");
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
 
-                TEST_RESULT_VOID(tlsSessionClose(session), "close again");
+                TEST_RESULT_VOID(tlsSessionClose(session, false), "close again");
                 // TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("eof before all bytes read");
+                TEST_TITLE("aborted connection before read complete");
 
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
 
-                output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 11, "read output");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                // TEST_RESULT_BOOL(tlsSessionWriteContinue(session, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
-                // TEST_RESULT_BOOL(tlsSessionWriteContinue(session, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
-                // TEST_ERROR(
-                //     tlsSessionWriteContinue(session, 77, 0, 88), FileWriteError,
-                //     "unable to write to tls, write size 77 does not match expected size 88");
-                // TEST_ERROR(tlsSessionWriteContinue(session, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
+                output = bufNew(13);
+                TEST_ERROR(ioRead(tlsSessionIoRead(session), output), KernelError, "tls failed syscall");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_RESULT_BOOL(sckClientStatStr() != NULL, true, "check statistics exist");
