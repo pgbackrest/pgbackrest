@@ -77,8 +77,67 @@ tlsSessionClose(TlsSession *this, bool shutdown)
 }
 
 /***********************************************************************************************************************************
-!!!
+Process result from SSL_read(), SSL_write(), SSL_connect(), and SSL_accept().
 ***********************************************************************************************************************************/
+static int
+tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool closeOk)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_SESSION, this);
+        FUNCTION_LOG_PARAM(INT, errorTls);
+        FUNCTION_LOG_PARAM(INT, errorSys);
+        FUNCTION_LOG_PARAM(BOOL, closeOk);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+
+    int result = -1;
+
+    switch (errorTls)
+    {
+        // The connection was closed
+        case SSL_ERROR_ZERO_RETURN:
+        {
+            tlsSessionClose(this, false);
+
+            if (!closeOk)
+                THROW(ProtocolError, "unexpected eof");
+
+            break;
+        }
+
+        // Try the read again
+        case SSL_ERROR_WANT_READ:
+        {
+            sckSessionReadyRead(this->socketSession);
+            result = 0;
+            break;
+        }
+
+        // Try the write again
+        case SSL_ERROR_WANT_WRITE:
+        {
+            sckSessionReadyWrite(this->socketSession);
+            result = 0;
+            break;
+        }
+
+        // Else an error that we cannot handle
+        default:
+        {
+            tlsSessionClose(this, false);
+
+            if (errorTls == SSL_ERROR_SYSCALL)
+                THROW_SYS_ERROR_CODE(errorSys, KernelError, "tls failed syscall");
+            else
+                THROW_FMT(ServiceError, "tls error [%d]", errorTls);
+        }
+    }
+
+    FUNCTION_LOG_RETURN(INT, result);
+}
+
 static int
 tlsSessionResult(TlsSession *this, int result, bool closeOk)
 {
@@ -94,53 +153,10 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
     if (result <= 0)
     {
         // Get tls error and store errno in case of syscall error
-        int error = SSL_get_error(this->session, result);
-        int errNo = errno;
+        int errorTls = SSL_get_error(this->session, result);
+        int errorSys = errno;
 
-        ERR_clear_error();
-
-        switch (error)
-        {
-            // The connection was closed
-            case SSL_ERROR_ZERO_RETURN:
-            {
-                tlsSessionClose(this, false);
-
-                if (!closeOk)
-                    THROW(ProtocolError, "unexpected eof");
-
-                result = -1;
-                break;
-            }
-
-            // Try the read/write again
-            case SSL_ERROR_WANT_READ:
-            {
-                sckSessionReadyRead(this->socketSession);
-                result = 0;
-                break;
-            }
-
-            case SSL_ERROR_WANT_WRITE:
-            {
-                sckSessionReadyWrite(this->socketSession);
-                result = 0;
-                break;
-            }
-
-            // A syscall failed (this usually indicates eof)
-            case SSL_ERROR_SYSCALL:
-            {
-                tlsSessionClose(this, false);
-
-                // Throw the sys error if there is one
-                THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
-            }
-
-            // Some other tls error that cannot be handled
-            default:
-                THROW_FMT(ServiceError, "tls error [%d]", error);
-        }
+        result = tlsSessionResultProcess(this, errorTls, errorSys, closeOk);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
