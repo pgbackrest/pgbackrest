@@ -309,7 +309,7 @@ testRun(void)
                 TEST_ERROR(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 500), 500, true, strNew("bogus.crt"),
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true, strNew("bogus.crt"),
                             strNew("/bogus"))),
                     CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
                 TEST_ERROR_FMT(
@@ -415,9 +415,11 @@ testRun(void)
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
                 output = bufNew(12);
+                session->socketSession->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
-                    "timeout after 5000ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+                    "timeout after 100ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+                session->socketSession->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 input = BUFSTRDEF("more protocol info");

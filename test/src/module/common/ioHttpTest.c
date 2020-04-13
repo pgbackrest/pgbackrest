@@ -464,7 +464,7 @@ testRun(void)
             {
                 // Test no output from server
                 TEST_ASSIGN(
-                    client, httpClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 2000, testContainer(), NULL, NULL),
+                    client, httpClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 5000, testContainer(), NULL, NULL),
                     "new client");
                 client->timeout = 0;
 
@@ -508,7 +508,7 @@ testRun(void)
                     "[503] Slow Down");
 
                 // Request with no content
-                client->timeout = 2000;
+                client->timeout = 5000;
 
                 HttpHeader *headerRequest = httpHeaderNew(NULL);
                 httpHeaderAdd(headerRequest, strNew("host"), strNew("myhost.com"));
