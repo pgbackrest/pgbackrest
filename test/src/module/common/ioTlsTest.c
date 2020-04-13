@@ -315,7 +315,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, true, NULL, strNew("/bogus"))),
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true, NULL, strNew("/bogus"))),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     harnessTlsTestPort());
@@ -325,19 +325,19 @@ testRun(void)
                     TEST_RESULT_VOID(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 2000), 0, true,
+                                sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         "success on valid ca file and match common name");
                     TEST_RESULT_VOID(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 2000), 0, true,
+                                sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         "success on valid ca file and match alt name");
                     TEST_ERROR(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 2000), 0, true,
+                                sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         CryptoError,
                         "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
@@ -346,7 +346,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, true,
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
                         NULL)),
                     CryptoError,
@@ -355,7 +355,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(
                     tlsClientOpen(
-                        tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 2000), 0, false, NULL, NULL)),
+                        tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, false, NULL, NULL)),
                         "success on no verify");
             }
             HARNESS_FORK_PARENT_END();
@@ -389,7 +389,7 @@ testRun(void)
 
                 TEST_ASSIGN(
                     client,
-                    tlsClientNew(sckClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 2000), 0, testContainer(), NULL, NULL),
+                    tlsClientNew(sckClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 5000), 0, testContainer(), NULL, NULL),
                     "new client");
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
@@ -417,7 +417,7 @@ testRun(void)
                 output = bufNew(12);
                 TEST_ERROR_FMT(
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
-                    "timeout after 2000ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+                    "timeout after 5000ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
                 // -----------------------------------------------------------------------------------------------------------------
                 input = BUFSTRDEF("more protocol info");
