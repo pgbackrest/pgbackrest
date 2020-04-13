@@ -91,7 +91,7 @@ test.pl [options]
    --smart              perform bin/package builds only when source timestamps have changed
    --dev                --smart --no-optimize
    --dev-test           does nothing -- kept for backward compatibility
-   --expect             --vm=co7 --db=9.6 --log-force
+   --expect             --vm=co7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)

@@ -3,7 +3,7 @@ Storage Interface Internal
 
 Storage drivers are implemented using this interface.
 
-The interface has required and optional functions. Currently the otional functions are only implemented by the Posix driver which
+The interface has required and optional functions. Currently the optional functions are only implemented by the Posix driver which
 can store either a repository or a PostgreSQL cluster. Drivers that are intended to store repositories only need to implement the
 required functions.
 
