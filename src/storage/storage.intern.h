@@ -1,5 +1,14 @@
 /***********************************************************************************************************************************
 Storage Interface Internal
+
+Storage drivers are implemented using this interface.
+
+The interface has required and optional functions. Currently the otional functions are only implemented by the Posix driver which
+can store either a repository or a PostgreSQL cluster. Drivers that are intended to store repositories only need to implement the
+required functions.
+
+The behavior of required functions is further modified by storage features defined by the StorageFeature enum. Details are included
+in the description of each function.
 ***********************************************************************************************************************************/
 #ifndef STORAGE_STORAGE_INTERN_H
 #define STORAGE_STORAGE_INTERN_H
@@ -77,8 +86,7 @@ typedef struct StorageInterfaceNewReadParam
 {
     VAR_PARAM_HEADER;
 
-    // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
-    // helpful.
+    // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 
     // Limit bytes read from the file. NULL for no limit.
@@ -117,12 +125,11 @@ typedef struct StorageInterfaceNewWriteParam
     bool syncFile;
     bool syncPath;
 
-    // Ensure the file written atomically.  If this is false it's OK to write atomically if that's all the storage supperts
-    // (e.g. S3).  Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
+    // Ensure the file is written atomically. If this is false it's OK to write atomically if that's all the storage supports
+    // (e.g. S3). Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
     bool atomic;
 
-    // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
-    // helpful.
+    // Is the file compressible?  This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 } StorageInterfaceNewWriteParam;
 
@@ -188,7 +195,7 @@ typedef void StorageInterfaceRemove(void *thisVoid, const String *file, StorageI
 /***********************************************************************************************************************************
 Optional interface functions
 ***********************************************************************************************************************************/
-// Move a file atomically
+// Move a path/file atomically
 typedef struct StorageInterfaceMoveParam
 {
     VAR_PARAM_HEADER;
@@ -275,10 +282,10 @@ typedef struct StorageCommon
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Get the storage driver
+// Storage driver
 void *storageDriver(const Storage *this);
 
-// Get the storage interface
+// Storage interface
 StorageInterface storageInterface(const Storage *this);
 
 /***********************************************************************************************************************************
