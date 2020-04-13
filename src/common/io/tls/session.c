@@ -99,11 +99,10 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
         // The connection was closed
         case SSL_ERROR_ZERO_RETURN:
         {
-            tlsSessionClose(this, false);
-
             if (!closeOk)
                 THROW(ProtocolError, "unexpected eof");
 
+            tlsSessionClose(this, false);
             break;
         }
 
@@ -123,16 +122,13 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
             break;
         }
 
+        // A syscall failed (this usually indicates eof)
+        case SSL_ERROR_SYSCALL:
+            THROW_SYS_ERROR_CODE(errorSys, KernelError, "tls failed syscall");
+
         // Else an error that we cannot handle
         default:
-        {
-            tlsSessionClose(this, false);
-
-            if (errorTls == SSL_ERROR_SYSCALL)
-                THROW_SYS_ERROR_CODE(errorSys, KernelError, "tls failed syscall");
-            else
-                THROW_FMT(ServiceError, "tls error [%d]", errorTls);
-        }
+            THROW_FMT(ServiceError, "tls error [%d]", errorTls);
     }
 
     FUNCTION_LOG_RETURN(INT, result);

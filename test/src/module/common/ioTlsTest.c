@@ -393,10 +393,21 @@ testRun(void)
                     "new client");
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("read/write ready");
+
                 TEST_RESULT_BOOL(sckReadyRead(session->socketSession->fd, 0), false, "socket is not read ready");
                 TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 0), true, "socket is write ready");
                 TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("uncovered errors");
+
+                TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
+                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "tls error [4]");
+                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected eof");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 const Buffer *input = BUFSTRDEF("some protocol info");
                 TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
                 ioWriteFlush(tlsSessionIoWrite(session));
@@ -436,7 +447,6 @@ testRun(void)
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
 
                 TEST_RESULT_VOID(tlsSessionClose(session, false), "close again");
-                // TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("aborted connection before read complete");

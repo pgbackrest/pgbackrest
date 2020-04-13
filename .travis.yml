@@ -30,7 +30,7 @@ jobs:
     - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
 
     # All unit tests (with coverage) on the newest gcc available
-    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance --param=no-coverage"
+    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
 
     # All integration tests
     - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
