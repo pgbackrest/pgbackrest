@@ -151,8 +151,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create Wait object of timeout > 0
-        Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
+        Wait *wait = waitNew(param.timeout);
 
         // Loop until file exists or timeout
         do
@@ -165,7 +164,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
             // Only exists if it is a file
             result = info.exists && info.type == storageTypeFile;
         }
-        while (!result && wait != NULL && waitMore(wait));
+        while (!result && waitMore(wait));
     }
     MEM_CONTEXT_TEMP_END();
 

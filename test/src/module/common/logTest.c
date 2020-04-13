@@ -120,14 +120,14 @@ testRun(void)
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
 
-        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 99, true), "init logging");
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 0, 99, true), "init logging");
         TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
         TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
         TEST_RESULT_INT(logLevelFile, logLevelError, "file logging is error");
         TEST_RESULT_INT(logProcessSize, 2, "process field size is 2");
         TEST_RESULT_BOOL(logDryRun, true, "dry run is true");
 
-        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 100, false), "init logging");
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelError, true, 0, 100, false), "init logging");
         TEST_RESULT_INT(logProcessSize, 3, "process field size is 3");
         TEST_RESULT_BOOL(logDryRun, false, "dry run is false");
     }
@@ -168,12 +168,12 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("logInternal() and logInternalFmt()"))
     {
-        TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 1, false), "init logging to off");
+        TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 0, 1, false), "init logging to off");
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format"),
             "message not logged anywhere");
 
-        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true, 1, false), "init logging to warn (timestamp on)");
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true, 0, 1, false), "init logging to warn (timestamp on)");
         TEST_RESULT_VOID(logFileSet(BOGUS_STR), "ignore bogus filename because file logging is off");
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "TEST"), "log timestamp");
@@ -193,29 +193,31 @@ testRun(void)
         snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
         logHandleStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, false, 1, false), "init logging to warn (timestamp off)");
+        TEST_RESULT_VOID(
+            logInit(logLevelWarn, logLevelOff, logLevelOff, false, 44, 1, false), "init logging to warn (timestamp off)");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternalFmt(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format %d", 99), "log warn");
-        TEST_RESULT_Z(logBuffer, "P00   WARN: format 99\n", "    check log");
+            logInternalFmt(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, UINT_MAX, "file", "function", 0, "format %d", 99),
+            "log warn");
+        TEST_RESULT_Z(logBuffer, "P44   WARN: format 99\n", "    check log");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
-            logInternal(logLevelWarn, logLevelError, logLevelError, 0, "file", "function", 0, "NOT OUTPUT"), "out of range");
+            logInternal(logLevelWarn, logLevelError, logLevelError, UINT_MAX, "file", "function", 0, "NOT OUTPUT"), "out of range");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message"), "log error");
-        TEST_RESULT_Z(logBuffer, "P00  ERROR: [026]: message\n", "    check log");
+            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, UINT_MAX, "file", "function", 26, "message"), "log error");
+        TEST_RESULT_Z(logBuffer, "P44  ERROR: [026]: message\n", "    check log");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message1\nmessage2"),
+            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, UINT_MAX, "file", "function", 26, "message1\nmessage2"),
             "log error with multiple lines");
-        TEST_RESULT_Z(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P44  ERROR: [026]: message1\nmessage2\n", "    check log");
 
-        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 999, false), "init logging to debug");
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 999, false), "init logging to debug");
 
         // Log to file
         char fileFile[1024];
@@ -230,16 +232,17 @@ testRun(void)
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
-            logInternal(logLevelDebug, logLevelTrace, logLevelTrace, 0, "test.c", "test_func", 0, "NOT OUTPUT"), "out of range");
+            logInternal(logLevelDebug, logLevelTrace, logLevelTrace, UINT_MAX, "test.c", "test_func", 0, "NOT OUTPUT"),
+            "out of range");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "test.c", "test_func", 0, "message"), "log debug");
+            logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, UINT_MAX, "test.c", "test_func", 0, "message"), "log debug");
         TEST_RESULT_Z(logBuffer, "P000  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
         TEST_RESULT_VOID(
-            logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99, true), "reduce process-id size and dry-run");
+            logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, true), "reduce process-id size and dry-run");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
 
         logBuffer[0] = 0;
@@ -255,7 +258,7 @@ testRun(void)
         TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
 
         // Close logging again
-        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99, false), "reduce log size");
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
         TEST_RESULT_BOOL(logHandleFile != -1, true, "log file is open");
 
@@ -268,9 +271,9 @@ testRun(void)
         // Check stdout
         testLogResult(
             stdoutFile,
-            "P00   WARN: format 99\n"
-            "P00  ERROR: [026]: message\n"
-            "P00  ERROR: [026]: message1\n"
+            "P44   WARN: format 99\n"
+            "P44  ERROR: [026]: message\n"
+            "P44  ERROR: [026]: message1\n"
             "            message2");
 
         // Check stderr

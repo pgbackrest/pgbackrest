@@ -4,6 +4,7 @@ Log Handler
 #ifndef COMMON_LOG_H
 #define COMMON_LOG_H
 
+#include <limits.h>
 #include <stdbool.h>
 
 #include "common/logLevel.h"
@@ -21,7 +22,7 @@ Functions
 // Initialize the log system
 void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
-    unsigned int logProcessMax, bool dryRun);
+    unsigned int processId, unsigned int logProcessMax, bool dryRun);
 
 // Close the log system
 void logClose(void);
@@ -111,7 +112,7 @@ do                                                                              
     LOG_PID_FMT(logLevelTrace, processId, 0, __VA_ARGS__)
 
 #define LOG(logLevel, code, message)                                                                                               \
-    LOG_PID(logLevel, 0, code, message)
+    LOG_PID(logLevel, UINT_MAX, code, message)
 
 #define LOG_ASSERT(message)                                                                                                        \
     LOG(logLevelAssert, errorTypeCode(&AssertError), message)
@@ -129,7 +130,7 @@ do                                                                              
     LOG(logLevelTrace, 0, message)
 
 #define LOG_FMT(logLevel, code, ...)                                                                                               \
-    LOG_PID_FMT(logLevel, 0, code, __VA_ARGS__)
+    LOG_PID_FMT(logLevel, UINT_MAX, code, __VA_ARGS__)
 
 #define LOG_ASSERT_FMT(...)                                                                                                        \
     LOG_FMT(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)

@@ -37,6 +37,9 @@ DEBUG_UNIT_EXTERN bool logFileBanner = false;
 // Is the timestamp printed in the log?
 static bool logTimestamp = false;
 
+// Default process id if none is specified
+DEBUG_UNIT_EXTERN unsigned int logProcessId = 0;
+
 // Size of the process id field
 static int logProcessSize = 2;
 
@@ -143,13 +146,14 @@ logAny(LogLevel logLevel)
 void
 logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
-    unsigned int logProcessMax, bool dryRunParam)
+    unsigned int processId, unsigned int logProcessMax, bool dryRunParam)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
         FUNCTION_TEST_PARAM(ENUM, logLevelStdErrParam);
         FUNCTION_TEST_PARAM(ENUM, logLevelFileParam);
         FUNCTION_TEST_PARAM(BOOL, logTimestampParam);
+        FUNCTION_TEST_PARAM(UINT, processId);
         FUNCTION_TEST_PARAM(UINT, logProcessMax);
         FUNCTION_TEST_PARAM(BOOL, dryRunParam);
     FUNCTION_TEST_END();
@@ -157,12 +161,14 @@ logInit(
     ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
+    ASSERT(processId <= 999);
     ASSERT(logProcessMax <= 999);
 
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
+    logProcessId = processId;
     logProcessSize = logProcessMax > 99 ? 3 : 2;
     logDryRun = dryRunParam;
 
@@ -238,7 +244,7 @@ logClose(void)
     FUNCTION_TEST_VOID();
 
     // Disable all logging
-    logInit(logLevelOff, logLevelOff, logLevelOff, false, 1, false);
+    logInit(logLevelOff, logLevelOff, logLevelOff, false, 0, 1, false);
 
     // Close the log file if it is open
     logFileClose();
@@ -376,8 +382,8 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
 
     // Add process and aligned log level
     result.bufferPos += (size_t)snprintf(
-        logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6,
-        logLevelStr(logLevel));
+        logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "P%0*u %*s: ", logProcessSize,
+        processId == (unsigned int)-1 ? logProcessId : processId, 6, logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
     result.logBufferStdErr = logBuffer + result.bufferPos - strlen(logLevelStr(logLevel)) - 2;

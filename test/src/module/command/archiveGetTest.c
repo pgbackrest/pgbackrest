@@ -627,7 +627,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
@@ -644,7 +644,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), false,
@@ -666,7 +666,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(harnessLogResult("P01   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))), false,
@@ -698,7 +698,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(harnessLogResult("P01   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, walFile), true, "check WAL segment was moved");
 
@@ -718,7 +718,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);

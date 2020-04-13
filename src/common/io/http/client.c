@@ -245,7 +245,7 @@ httpClientRequest(
     {
         bool complete = false;
         bool retry;
-        Wait *wait = this->timeout > 0 ? waitNew(this->timeout) : NULL;
+        Wait *wait = waitNew(this->timeout);
 
         do
         {
@@ -443,7 +443,7 @@ httpClientRequest(
             CATCH_ANY()
             {
                 // Retry if wait time has not expired
-                if (wait != NULL && waitMore(wait))
+                if (waitMore(wait))
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
@@ -502,6 +502,7 @@ httpClientDone(HttpClient *this)
 
     if (this->ioRead != NULL)
     {
+        // If it looks like we were in the middle of a response then close the TLS session so we can start clean next time
         if (!this->contentEof)
             tlsClientClose(this->tls);
 

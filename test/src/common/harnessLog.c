@@ -23,6 +23,7 @@ Expose log internal data for unit testing/debugging
 extern LogLevel logLevelFile;
 extern int logHandleFile;
 extern bool logFileBanner;
+extern unsigned int logProcessId;
 extern void logAnySet(void);
 
 /***********************************************************************************************************************************
@@ -72,7 +73,7 @@ harnessLogInit(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, logProcessId, 99, false);
     logFileBanner = true;
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
@@ -88,7 +89,7 @@ harnessLogDryRunSet(bool dryRun)
 {
     logDryRunTest = dryRun;
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, logProcessId, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************
@@ -101,7 +102,7 @@ harnessLogLevelSet(LogLevel logLevel)
 {
     logLevelTest = logLevel;
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, logProcessId, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************
@@ -114,7 +115,7 @@ harnessLogLevelReset(void)
 {
     logLevelTest = logLevelInfo;
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, 99, logDryRunTest);
+    logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, logProcessId, 99, logDryRunTest);
 }
 
 /***********************************************************************************************************************************
@@ -126,6 +127,12 @@ void
 harnessLogLevelDefaultSet(LogLevel logLevel)
 {
     logLevelTestDefault = logLevel;
+}
+
+/**********************************************************************************************************************************/
+void hrnLogProcessIdSet(unsigned int processId)
+{
+    logProcessId = processId;
 }
 
 /***********************************************************************************************************************************
