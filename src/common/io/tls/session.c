@@ -97,8 +97,6 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
         int error = SSL_get_error(this->session, result);
         int errNo = errno;
 
-        LOG_DEBUG_FMT("tls error %d, sys error %d", error, errNo);
-
         ERR_clear_error();
 
         switch (error)
@@ -213,13 +211,12 @@ tlsSessionWrite(THIS_VOID, const Buffer *buffer)
 
     int result = 0;
 
-    do
+    while (result == 0)
     {
         result = tlsSessionResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
 
         CHECK(result == 0 || (size_t)result == bufUsed(buffer));
     }
-    while (result == 0);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -271,14 +268,20 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         // Ensure session is freed
         memContextCallbackSet(this->memContext, tlsSessionFreeResource, this);
 
-        // Negotiate TLS session
+        // Assign socket to TLS session
         cryptoError(
             SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS session");
 
-        if (sckSessionType(this->socketSession) == sckSessionTypeClient)
-            while (tlsSessionResult(this, SSL_connect(this->session), false) == 0);
-        else
-            while (tlsSessionResult(this, SSL_accept(this->session), false) == 0);
+        // Negotiate TLS session
+        int result = 0;
+
+        while (result == 0)
+        {
+            if (sckSessionType(this->socketSession) == sckSessionTypeClient)
+                result = tlsSessionResult(this, SSL_connect(this->session), false);
+            else
+                result = tlsSessionResult(this, SSL_accept(this->session), false);
+        }
 
         // Create read and write interfaces
         this->write = ioWriteNewP(this, .write = tlsSessionWrite);
