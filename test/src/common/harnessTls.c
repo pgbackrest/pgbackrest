@@ -171,6 +171,15 @@ Close the connection
 void
 harnessTlsServerClose(void)
 {
+    SSL_shutdown(testClientSSL);
+    SSL_free(testClientSSL);
+    close(testClientSocket);
+}
+
+/**********************************************************************************************************************************/
+void
+harnessTlsServerAbort(void)
+{
     SSL_free(testClientSSL);
     close(testClientSocket);
 }

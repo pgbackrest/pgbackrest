@@ -31,6 +31,9 @@ void harnessTlsServerExpect(const char *expected);
 void harnessTlsServerReply(const char *reply);
 void harnessTlsServerClose(void);
 
+// Abort the server session (i.e. don't perform proper TLS shutdown)
+void harnessTlsServerAbort(void);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
