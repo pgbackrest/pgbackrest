@@ -129,9 +129,7 @@ sckOptionSet(int fd)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-!!! TALK ABOUT EINTR
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
 sckReadyRetry(int result, int errNo, bool first, Wait *wait)
 {
@@ -145,7 +143,7 @@ sckReadyRetry(int result, int errNo, bool first, Wait *wait)
     // Process errors
     if (result == -1)
     {
-        // Dont error on an interrupt
+        // Don't error on an interrupt. If the interrupt lasts long enough there may be a timeout, though.
         if (errNo != EINTR)
             THROW_SYS_ERROR_CODE(errNo, KernelError, "unable to poll socket");
 
