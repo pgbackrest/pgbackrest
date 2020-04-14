@@ -19,7 +19,7 @@
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
-    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:19.04">
+    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:18.04">
         {[copy-ca-cert]}
 
         # Fix root tty
@@ -52,9 +52,9 @@
     <section id="environment">
         <title>Building a Development Environment</title>
 
-        <p>This example is based on <proper>Ubuntu 19.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
+        <p>This example is based on <proper>Ubuntu 18.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
 
-        <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u19" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
+        <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u18" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
 
         <execute-list host="{[host-contrib]}">
             <title>Install development tools</title>
@@ -150,13 +150,13 @@
         <section id="with-docker" depend="/environment">
             <title>With Docker</title>
 
-            <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u19</id> for <proper>Ubuntu 19.04</proper>.</p>
+            <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
 
             <execute-list host="{[host-contrib]}">
                 <title>Build a VM</title>
 
                 <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u19</exe-cmd>
+                    <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
                     <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>
@@ -165,7 +165,7 @@
                 <title>Run a Test</title>
 
                 <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u19 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                    <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
                     <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                 </execute>
             </execute-list>

@@ -6,7 +6,7 @@ This documentation is intended to assist contributors to pgBackRest by outlining
 
 ## Building a Development Environment
 
-This example is based on Ubuntu 19.04, but it should work on many versions of Debian and Ubuntu.
+This example is based on Ubuntu 18.04, but it should work on many versions of Debian and Ubuntu.
 
 pgbackrest-dev => Install development tools
 ```
@@ -119,23 +119,23 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 ### With Docker
 
-Build a container to run tests. The vm must be pre-configured but a variety are available. The vm names are all three character abbreviations, e.g. `u19` for Ubuntu 19.04.
+Build a container to run tests. The vm must be pre-configured but a variety are available. The vm names are all three character abbreviations, e.g. `u18` for Ubuntu 18.04.
 
 pgbackrest-dev => Build a VM
 ```
-pgbackrest/test/test.pl --vm-build --vm=u19
+pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
     P00   INFO: test begin - log level info
-    P00   INFO: Using cached pgbackrest/test:u19-base-20200310A image (9eb97f565e47a76e98743c98a862f91e8df5e2b1) ...
-    P00   INFO: Building pgbackrest/test:u19-test image ...
+    P00   INFO: Using cached pgbackrest/test:u18-base-20200310A image (5e295130131d5fe96e2483885c171677b52c8ce3) ...
+    P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
 ```
 
 pgbackrest-dev => Run a Test
 ```
-pgbackrest/test/test.pl --vm=u19 --dev --module=mock --test=archive --run=2
+pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
@@ -143,13 +143,13 @@ pgbackrest/test/test.pl --vm=u19 --dev --module=mock --test=archive --run=2
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
-    P00   INFO:     bin dependencies have changed for u19, rebuilding...
-    P00   INFO:     build bin for u19 (/home/vagrant/test/bin/u19)
+    P00   INFO:     bin dependencies have changed for u18, rebuilding...
+    P00   INFO:     build bin for u18 (/home/vagrant/test/bin/u18)
     P00   INFO:     bin dependencies have changed for none, rebuilding...
     P00   INFO:     build bin for none (/home/vagrant/test/bin/none)
     P00   INFO: 1 test selected
                 
-    P00   INFO: P1-T1/1 - vm=u19, module=mock, test=archive, run=2
+    P00   INFO: P1-T1/1 - vm=u18, module=mock, test=archive, run=2
     P00   INFO: no code modules had all tests run required for coverage
     P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
