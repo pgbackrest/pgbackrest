@@ -175,28 +175,30 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
 
 /**********************************************************************************************************************************/
 static bool
-sckReadyRetry(int result, int errNo, bool first, Wait *wait)
+sckReadyRetry(int pollResult, int errNo, bool first, Wait *wait)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, result);
+        FUNCTION_TEST_PARAM(INT, pollResult);
         FUNCTION_TEST_PARAM(INT, errNo);
         FUNCTION_TEST_PARAM(BOOL, first);
         FUNCTION_TEST_PARAM(WAIT, wait);
     FUNCTION_TEST_END();
 
+    // No retry by default
+    bool result = false;
+
     // Process errors
-    if (result == -1)
+    if (pollResult == -1)
     {
         // Don't error on an interrupt. If the interrupt lasts long enough there may be a timeout, though.
         if (errNo != EINTR)
             THROW_SYS_ERROR_CODE(errNo, KernelError, "unable to poll socket");
 
         // Retry if first iteration or time remaining
-        FUNCTION_TEST_RETURN(first || waitMore(wait));
+        result = first || waitMore(wait);
     }
 
-    // Poll returned a result so no retry
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_TEST_RETURN(result);
 }
 
 bool
