@@ -136,6 +136,44 @@ sckOptionSet(int fd)
 }
 
 /**********************************************************************************************************************************/
+void
+sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM_P(VOID, hostAddress);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    // Attempt connection
+    CHECK(connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+
+    // Save the error
+    int errNo = errno;
+
+    // The connection has started but since we are in non-blocking mode it has not completed yet
+    CHECK(errno == EINPROGRESS);
+
+    // Wait for write-ready
+    if (!sckReadyWrite(fd, timeout))
+        THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(host), port);
+
+    // Check that the connection was successful
+    socklen_t errNoLen = sizeof(errNo);
+
+    THROW_ON_SYS_ERROR(
+        getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError, "unable to get socket error");
+
+    // Throw error if it is still set
+    if (errNo != 0)
+        THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strPtr(host), port);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 static bool
 sckReadyRetry(int result, int errNo, bool first, Wait *wait)
 {
