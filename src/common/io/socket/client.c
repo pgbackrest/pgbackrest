@@ -36,6 +36,9 @@ struct SocketClient
 
 OBJECT_DEFINE_MOVE(SOCKET_CLIENT);
 
+OBJECT_DEFINE_GET(Host, const, SOCKET_CLIENT, const String *, host);
+OBJECT_DEFINE_GET(Port, const, SOCKET_CLIENT, unsigned int, port);
+
 /**********************************************************************************************************************************/
 SocketClient *
 sckClientNew(const String *host, unsigned int port, TimeMSec timeout)

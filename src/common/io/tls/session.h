@@ -1,57 +1,53 @@
 /***********************************************************************************************************************************
-Socket Session
+TLS Session
 
-A simple socket session intended to allow access to services that are exposed via a socket.
+TLS sessions are created by calling tlsClientOpen().
 
-Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
+TLS sessions are generally reused so the user must be prepared to retry their transaction on a read/write error if the server closes
+the session before it is reused. If this behavior is not desirable then tlsSessionFree()/tlsClientOpen() can be called to get a new
+session.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_SOCKET_SESSION_H
-#define COMMON_IO_SOCKET_SESSION_H
+#ifndef COMMON_IO_TLS_SESSION_H
+#define COMMON_IO_TLS_SESSION_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_SESSION_TYPE                                         SocketSession
-#define SOCKET_SESSION_PREFIX                                       sckSession
+#define TLS_SESSION_TYPE                                            TlsSession
+#define TLS_SESSION_PREFIX                                          tlsSession
 
-typedef struct SocketSession SocketSession;
+typedef struct TlsSession TlsSession;
 
-#include "common/time.h"
-#include "common/type/string.h"
-
-/***********************************************************************************************************************************
-Constructors
-***********************************************************************************************************************************/
-SocketSession *sckSessionNew(int fd, const String *host, unsigned int port, TimeMSec timeout);
+#include "common/io/read.h"
+#include "common/io/socket/session.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
-
-// Wait for the socket to be readable
-void sckSessionReadWait(SocketSession *this);
+TlsSession *tlsSessionMove(TlsSession *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Socket file descriptor
-int sckSessionFd(SocketSession *this);
+// Read interface
+IoRead *tlsSessionIoRead(TlsSession *this);
+
+// Write interface
+IoWrite *tlsSessionIoWrite(TlsSession *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void sckSessionFree(SocketSession *this);
+void tlsSessionFree(TlsSession *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *sckSessionToLog(const SocketSession *this);
-
-#define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
-    SocketSession *
-#define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
+#define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
+    TlsSession *
+#define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "TlsSession", buffer, bufferSize)
 
 #endif
