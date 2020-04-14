@@ -187,8 +187,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     do
     {
         // Read and handle errors
-        size_t expectedBytes = bufRemains(buffer);
-        result = tlsSessionResult(this, SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes), true);
+        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer));
 
         // Update amount of buffer used
         if (result > 0)

@@ -18,6 +18,7 @@ Socket Common Functions
 #include "common/debug.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
+#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -134,7 +135,34 @@ sckOptionSet(int fd)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!! TALK ABOUT EINTR
+***********************************************************************************************************************************/
+static bool
+sckReadyRetry(int result, int errNo, bool first, Wait *wait)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, result);
+        FUNCTION_TEST_PARAM(INT, errNo);
+        FUNCTION_TEST_PARAM(BOOL, first);
+        FUNCTION_TEST_PARAM(WAIT, wait);
+    FUNCTION_TEST_END();
+
+    // Process errors
+    if (result == -1)
+    {
+        // Dont error on an interrupt
+        if (errNo != EINTR)
+            THROW_SYS_ERROR_CODE(errNo, KernelError, "unable to poll socket");
+
+        // Retry if first iteration or time remaining
+        FUNCTION_TEST_RETURN(first || waitMore(wait));
+    }
+
+    // Poll returned a result so no retry
+    FUNCTION_TEST_RETURN(false);
+}
+
 bool
 sckReady(int fd, bool read, bool write, TimeMSec timeout)
 {
@@ -150,18 +178,27 @@ sckReady(int fd, bool read, bool write, TimeMSec timeout)
     ASSERT(timeout < INT_MAX);
 
     // Poll settings
-    struct pollfd input_fd = {.fd = fd, .events = POLLERR};
+    struct pollfd inputFd = {.fd = fd, .events = POLLERR};
 
     if (read)
-        input_fd.events |= POLLIN;
+        inputFd.events |= POLLIN;
 
     if (write)
-        input_fd.events |= POLLOUT;
+        inputFd.events |= POLLOUT;
 
     // Wait for ready or timeout
-    int result = 0;
+    bool first = true;
+    Wait *wait = waitNew(timeout);
+    int result = -1;
+    int errNo = EINTR;
 
-    THROW_ON_SYS_ERROR((result = poll(&input_fd, 1, (int)timeout)) == -1, KernelError, "unable to poll socket");
+    while (sckReadyRetry(result, errNo, first, wait))
+    {
+        result = poll(&inputFd, 1, (int)waitRemaining(wait));
+
+        errNo = errno;
+        first = false;
+    }
 
     FUNCTION_LOG_RETURN(BOOL, result > 0);
 }
