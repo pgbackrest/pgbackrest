@@ -9,6 +9,15 @@ Currently this is not a full-featured session and is only intended to isolate so
 #define COMMON_IO_SOCKET_SESSION_H
 
 /***********************************************************************************************************************************
+Test result operations
+***********************************************************************************************************************************/
+typedef enum
+{
+    sckSessionTypeClient,
+    sckSessionTypeServer,
+} SocketSessionType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 #define SOCKET_SESSION_TYPE                                         SocketSession
@@ -22,7 +31,7 @@ typedef struct SocketSession SocketSession;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-SocketSession *sckSessionNew(int fd, const String *host, unsigned int port, TimeMSec timeout);
+SocketSession *sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
@@ -38,6 +47,9 @@ Getters/Setters
 ***********************************************************************************************************************************/
 // Socket file descriptor
 int sckSessionFd(SocketSession *this);
+
+// Socket type
+SocketSessionType sckSessionType(const SocketSession *this);
 
 /***********************************************************************************************************************************
 Destructor
