@@ -261,13 +261,41 @@ testRun(void)
         TRY_BEGIN()
         {
             errno = E2BIG;
-            THROW_SYS_ERROR(AssertError, "message");
+            THROW_ON_SYS_ERROR(true, AssertError, "message");
         }
         CATCH_ANY()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
             assert(strcmp(errorMessage(), "message: [7] Argument list too long") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = 0;
+            THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message 77") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = E2BIG;
+            THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message 77: [7] Argument list too long") == 0);
         }
         TRY_END();
 
