@@ -7,6 +7,7 @@ Socket Common Functions
 #include <netdb.h>
 
 #include "common/time.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
