@@ -131,28 +131,30 @@ sckOptionSet(int fd)
 
 /**********************************************************************************************************************************/
 static bool
-sckReadyRetry(int result, int errNo, bool first, Wait *wait)
+sckReadyRetry(int pollResult, int errNo, bool first, Wait *wait)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, result);
-        FUNCTION_TEST_PARAM(INT, errNo);
-        FUNCTION_TEST_PARAM(BOOL, first);
-        FUNCTION_TEST_PARAM(WAIT, wait);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, pollResult);
+        FUNCTION_LOG_PARAM(INT, errNo);
+        FUNCTION_LOG_PARAM(BOOL, first);
+        FUNCTION_LOG_PARAM(WAIT, wait);
+    FUNCTION_LOG_END();
+
+    bool result = false;
 
     // Process errors
-    if (result == -1)
+    if (pollResult == -1)
     {
         // Don't error on an interrupt. If the interrupt lasts long enough there may be a timeout, though.
         if (errNo != EINTR)
             THROW_SYS_ERROR_CODE(errNo, KernelError, "unable to poll socket");
 
         // Retry if first iteration or time remaining
-        FUNCTION_TEST_RETURN(first || waitMore(wait));
+        result = first || waitMore(wait);
     }
 
     // Poll returned a result so no retry
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 bool

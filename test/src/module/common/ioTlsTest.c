@@ -387,6 +387,8 @@ testRun(void)
                 TEST_TITLE("socket read/write ready");
 
                 TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, true, waitNew(1000)), true, "retry after interrupt");
+                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, false, waitNew(100)), true, "retry before timeout");
+                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, false, waitNew(0)), false, "no retry after timeout");
                 TEST_ERROR(
                     sckReadyRetry(-1, EINVAL, true, waitNew(1000)), KernelError, "unable to poll socket: [22] Invalid argument");
 
