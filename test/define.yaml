@@ -561,6 +561,9 @@ unit:
           command/backup/common: full
           command/backup/pageChecksum: full
 
+        include:
+          - storage/storage
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 10

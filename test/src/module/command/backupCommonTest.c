@@ -334,6 +334,8 @@ testRun(void)
     {
         String *backupStanzaPath = strNew("repo/backup/db");
         String *backupLatest = strNew("20181119-152800F");
+
+        // Create a backup directory by creating a file
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/%s/test" , strPtr(backupStanzaPath), strPtr(backupLatest))),
             BUFSTRDEF("tmp"));
@@ -342,6 +344,40 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on latest link creation");
+
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt("sudo chmod 555 %s/%s", testPath(), strPtr(backupStanzaPath)))), 0,
+            "remove perms from backup repo before link creation");
+        TEST_ERROR_FMT(
+            backupLinkLatest(backupLatest), FileOpenError,
+            "unable to create symlink '%s/%s/" BACKUP_LINK_LATEST "' to '%s': [13] Permission denied", testPath(),
+            strPtr(backupStanzaPath), strPtr(backupLatest));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path sync not enabled (code coverage)");
+
+        // Disable storage features for code coverage
+        ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePathSync;
+        ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureSymLink;
+
+        TEST_RESULT_VOID(backupLinkLatest(backupLatest), "attempt to create backup latest symlink");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("%s/" BACKUP_LINK_LATEST, strPtr(backupStanzaPath))), false,
+            "link does not exist");
+
+        // Enable storage features
+        ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePathSync;
+        ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureSymLink;
+
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt("sudo chmod 777 %s/%s", testPath(), strPtr(backupStanzaPath)))), 0,
+            "restore permissions");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("latest link creation success");
 
         TEST_RESULT_VOID(backupLinkLatest(backupLatest), "create backup latest symlink");
         TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST)).linkDestination,
