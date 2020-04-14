@@ -152,8 +152,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
             sckSessionReadyRead(this->socketSession);
 
         // Read and handle errors
-        size_t expectedBytes = bufRemains(buffer);
-        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer));
 
         if (result <= 0)
         {
