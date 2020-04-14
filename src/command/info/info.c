@@ -65,6 +65,10 @@ VARIANT_STRDEF_STATIC(STANZA_KEY_STATUS_VAR,                        "status");
 VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_STR,                   "backup/expire running");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
 #define INFO_STANZA_STATUS_ERROR                                    "error"
@@ -77,12 +81,6 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups");
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
-
-// Locks
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD,                  "held");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_STR,                   "backup/expire running");
 
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
@@ -109,7 +107,7 @@ stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant
     // Construct a specific lock part
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
-    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD, VARBOOL(backupLockHeld));
+    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -462,11 +460,10 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
         {
             // Try to acquire a lock. If not possible, assume another backup is already running.
-            static LockType lockTypeToFind = lockTypeBackup;
-            runningBackup = lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeToFind, 0, false) == true ? false : true;
+            runningBackup = !lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeBackup, 0, false);
 
             // Release immediately the lock acquired
-            lockRelease(false);
+            lockRelease(!runningBackup);
         }
 
         // If a status has not already been set and there are no backups then set status to no backup
@@ -797,7 +794,7 @@ infoRender(void)
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-                       if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD)))
+                       if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
                        {
                            strCatFmt(
                                resultStr, "%s (%s, %s)\n", INFO_STANZA_STATUS_ERROR,
@@ -827,7 +824,7 @@ infoRender(void)
                     else
                     {
                         // Change displayed status if lock is found
-                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD)))
+                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
                             strCatFmt(resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, strPtr(varStr(STATUS_KEY_LOCK_BACKUP_STR)));
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
