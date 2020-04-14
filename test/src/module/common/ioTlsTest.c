@@ -383,10 +383,18 @@ testRun(void)
                     "new client");
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("socket read/write ready");
+
+                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, true, waitNew(1000)), true, "retry after interrupt");
+                TEST_ERROR(
+                    sckReadyRetry(-1, EINVAL, true, waitNew(1000)), KernelError, "unable to poll socket: [22] Invalid argument");
+
                 TEST_RESULT_BOOL(sckReadyRead(session->socketSession->fd, 0), false, "socket is not read ready");
-                TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 0), true, "socket is write ready");
+                TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 100), true, "socket is write ready");
                 TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
 
+                // -----------------------------------------------------------------------------------------------------------------
                 const Buffer *input = BUFSTRDEF("some protocol info");
                 TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
                 ioWriteFlush(tlsSessionIoWrite(session));
