@@ -133,13 +133,14 @@ sckOptionSet(int fd)
 static bool
 sckReadyRetry(int pollResult, int errNo, bool first, Wait *wait)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, pollResult);
-        FUNCTION_LOG_PARAM(INT, errNo);
-        FUNCTION_LOG_PARAM(BOOL, first);
-        FUNCTION_LOG_PARAM(WAIT, wait);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, pollResult);
+        FUNCTION_TEST_PARAM(INT, errNo);
+        FUNCTION_TEST_PARAM(BOOL, first);
+        FUNCTION_TEST_PARAM(WAIT, wait);
+    FUNCTION_TEST_END();
 
+    // No retry by default
     bool result = false;
 
     // Process errors
@@ -153,8 +154,7 @@ sckReadyRetry(int pollResult, int errNo, bool first, Wait *wait)
         result = first || waitMore(wait);
     }
 
-    // Poll returned a result so no retry
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 bool
