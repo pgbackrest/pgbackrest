@@ -78,6 +78,7 @@ SRCS = \
 	common/io/socket/common.c \
 	common/io/socket/session.c \
 	common/io/tls/client.c \
+	common/io/tls/session.c \
 	common/io/write.c \
 	common/ini.c \
 	common/lock.c \
