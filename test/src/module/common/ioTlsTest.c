@@ -82,6 +82,11 @@ testTlsServer(void)
     harnessTlsServerReply("0123456789AB");
     harnessTlsServerClose();
 
+    // Test aborted connection before read complete
+    harnessTlsServerAccept();
+    harnessTlsServerReply("0123456789AB");
+    harnessTlsServerAbort();
+
     // Need data in read buffer to test tlsWriteContinue()
     harnessTlsServerAccept();
     harnessTlsServerReply("0123456789AB");
@@ -397,7 +402,16 @@ testRun(void)
                 TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("aborted connection before read complete");
+
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
+
+                output = bufNew(13);
+                TEST_ERROR(ioRead(tlsSessionIoRead(session), output), KernelError, "tls failed syscall");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
+
                 TEST_RESULT_BOOL(tlsSessionWriteContinue(session, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
                 TEST_RESULT_BOOL(tlsSessionWriteContinue(session, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
                 TEST_ERROR(
