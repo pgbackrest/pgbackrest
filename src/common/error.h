@@ -193,7 +193,7 @@ Throw an error when a system call fails
 #define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                           \
     errorInternalThrowSysFmt(errNo, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
-// When coverage testing define special versions of the macros that don't contain branches.  These macros are less efficient because
+// When coverage testing, define special versions of the macros that don't contain branches. These macros are less efficient because
 // they need to call errorInternalThrowOnSys*() before determining if there is an error or not, but they allow coverage testing for
 // THROW*_ON*() calls that contain conditionals.
 #ifdef DEBUG_COVERAGE

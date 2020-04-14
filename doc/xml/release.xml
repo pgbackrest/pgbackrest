@@ -41,6 +41,38 @@
 
                         <p>Split session functionality of <code>SocketClient</code> out into <code>SocketSession</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Split session functionality of <code>TlsClient</code> out into <code>TlsSession</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>SocketSession</code>/<code>TlsSession</code> for test servers.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Always throw error when <proper>OpenSSL</proper> returns <code>SSL_ERROR_SYSCALL</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>__noreturn_</code> on error functions when coverage testing.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

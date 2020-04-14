@@ -113,7 +113,7 @@ harnessTlsServerExpect(const char *expected)
 
     ioRead(tlsSessionIoRead(testServerSession), buffer);
 
-    // Treat and ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
+    // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
     String *actual = strNewBuf(buffer);
 
     for (unsigned int actualIdx = 0; actualIdx < strSize(actual); actualIdx++)
