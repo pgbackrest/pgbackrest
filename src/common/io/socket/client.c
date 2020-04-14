@@ -141,7 +141,7 @@ sckClientOpen(SocketClient *this)
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = sckSessionNew(fd, this->host, this->port, this->timeout);
+                    result = sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout);
                 }
                 MEM_CONTEXT_PRIOR_END();
 

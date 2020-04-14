@@ -43,14 +43,13 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_SESSION, LOG, logLevelTrace)
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
-/***********************************************************************************************************************************
-Close the connection
-***********************************************************************************************************************************/
-static void
-tlsSessionClose(TlsSession *this)
+/**********************************************************************************************************************************/
+void
+tlsSessionClose(TlsSession *this, bool shutdown)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
+        FUNCTION_LOG_PARAM(BOOL, shutdown);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -58,6 +57,10 @@ tlsSessionClose(TlsSession *this)
     // If not already closed
     if (this->session != NULL)
     {
+        // Shutdown on request
+        if (shutdown)
+            SSL_shutdown(this->session);
+
         // Free the socket session
         sckSessionFree(this->socketSession);
         this->socketSession = NULL;
@@ -89,7 +92,7 @@ tlsSessionError(TlsSession *this, int code)
         // The connection was closed
         case SSL_ERROR_ZERO_RETURN:
         {
-            tlsSessionClose(this);
+            tlsSessionClose(this, false);
             break;
         }
 
@@ -106,7 +109,7 @@ tlsSessionError(TlsSession *this, int code)
         {
             // Get the error before closing so it is not cleared
             int errNo = errno;
-            tlsSessionClose(this);
+            tlsSessionClose(this, false);
 
             // Throw the sys error
             THROW_SYS_ERROR_CODE(errNo, KernelError, "tls failed syscall");
@@ -282,12 +285,17 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
             .timeout = timeout,
         };
 
-        // Initiate TLS connection
+        // Ensure session is freed
+        memContextCallbackSet(this->memContext, tlsSessionFreeResource, this);
+
+        // Negotiate TLS session
         cryptoError(
             SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS session");
-        cryptoError(SSL_connect(this->session) != 1, "unable to negotiate TLS connection");
 
-        memContextCallbackSet(this->memContext, tlsSessionFreeResource, this);
+        if (sckSessionType(this->socketSession) == sckSessionTypeClient)
+            cryptoError(SSL_connect(this->session) != 1, "unable to negotiate client TLS session");
+        else
+            cryptoError(SSL_accept(this->session) != 1, "unable to negotiate server TLS session");
 
         // Create read and write interfaces
         this->write = ioWriteNewP(this, .write = tlsSessionWrite);
