@@ -1,60 +1,69 @@
 /***********************************************************************************************************************************
-TLS Client
+Socket Session
 
-A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because
-SSL methods are disabled so only TLS connections are allowed.
+A simple socket session intended to allow access to services that are exposed via a socket.
 
-This object is intended to be used for multiple TLS sessions so tlsClientOpen() can be called each time a new session is needed.
+Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_TLS_CLIENT_H
-#define COMMON_IO_TLS_CLIENT_H
+#ifndef COMMON_IO_SOCKET_SESSION_H
+#define COMMON_IO_SOCKET_SESSION_H
+
+/***********************************************************************************************************************************
+Test result operations
+***********************************************************************************************************************************/
+typedef enum
+{
+    sckSessionTypeClient,
+    sckSessionTypeServer,
+} SocketSessionType;
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define TLS_CLIENT_TYPE                                             TlsClient
-#define TLS_CLIENT_PREFIX                                           tlsClient
+#define SOCKET_SESSION_TYPE                                         SocketSession
+#define SOCKET_SESSION_PREFIX                                       sckSession
 
-typedef struct TlsClient TlsClient;
+typedef struct SocketSession SocketSession;
 
-#include "common/io/socket/client.h"
-#include "common/io/tls/session.h"
-
-/***********************************************************************************************************************************
-Statistics
-***********************************************************************************************************************************/
-typedef struct TlsClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} TlsClientStat;
+#include "common/time.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-TlsClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+SocketSession *sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Open tls session
-TlsSession *tlsClientOpen(TlsClient *this);
+// Move to a new parent mem context
+SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
 
-// Statistics as a formatted string
-String *tlsClientStatStr(void);
+// Wait for the socket to be readable
+void sckSessionReadWait(SocketSession *this);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Socket file descriptor
+int sckSessionFd(SocketSession *this);
+
+// Socket type
+SocketSessionType sckSessionType(const SocketSession *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void tlsClientFree(TlsClient *this);
+void sckSessionFree(SocketSession *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
-    TlsClient *
-#define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "TlsClient", buffer, bufferSize)
+String *sckSessionToLog(const SocketSession *this);
+
+#define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
+    SocketSession *
+#define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
 
 #endif

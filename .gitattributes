@@ -1,0 +1,2 @@
+# Classify all .h files as C
+*.h linguist-language=C

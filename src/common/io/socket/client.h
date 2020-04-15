@@ -17,6 +17,7 @@ Object type
 typedef struct SocketClient SocketClient;
 
 #include "common/io/read.h"
+#include "common/io/socket/session.h"
 #include "common/io/write.h"
 #include "common/time.h"
 #include "common/type/string.h"
@@ -40,31 +41,22 @@ SocketClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeo
 Functions
 ***********************************************************************************************************************************/
 // Open the connection
-void sckClientOpen(SocketClient *this);
+SocketSession *sckClientOpen(SocketClient *this);
 
-// Wait for the socket to be readable
-void sckClientReadWait(SocketClient *this);
-
-// Close the connection
-void sckClientClose(SocketClient *this);
-
-// Move the socket to a new parent mem context
+// Move to a new parent mem context
 SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
+
+// Statistics as a formatted string
+String *sckClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Socket file descriptor
-int sckClientFd(SocketClient *this);
-
 // Socket host
 const String *sckClientHost(const SocketClient *this);
 
 // Socket port
 unsigned int sckClientPort(const SocketClient *this);
-
-// Statistics as a formatted string
-String *sckClientStatStr(void);
 
 /***********************************************************************************************************************************
 Macros for function logging

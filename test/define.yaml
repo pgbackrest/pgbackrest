@@ -239,13 +239,15 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 4
         containerReq: true
 
         coverage:
           common/io/tls/client: full
+          common/io/tls/session: full
           common/io/socket/client: full
           common/io/socket/common: full
+          common/io/socket/session: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
