@@ -129,7 +129,10 @@ sckOptionSet(int fd)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Use poll() to determine when data is ready to read/write on a socket. Retry after EINTR with whatever time is left on the timer.
+***********************************************************************************************************************************/
+// Helper to determine when poll() should be retried
 static bool
 sckReadyRetry(int pollResult, int errNo, bool first, Wait *wait)
 {
