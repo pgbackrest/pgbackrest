@@ -78,7 +78,11 @@ tlsSessionClose(TlsSession *this, bool shutdown)
 
 /***********************************************************************************************************************************
 Process result from SSL_read(), SSL_write(), SSL_connect(), and SSL_accept().
+
+Returns 0 if the function should be tried again with the same parameters, -1 if the connect was closed gracefully, or > 0 with the
+read/write size.
 ***********************************************************************************************************************************/
+// Helper to process error conditions
 static int
 tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool closeOk)
 {
@@ -124,11 +128,11 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
 
         // A syscall failed (this usually indicates eof)
         case SSL_ERROR_SYSCALL:
-            THROW_SYS_ERROR_CODE(errorSys, KernelError, "tls failed syscall");
+            THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
 
         // Else an error that we cannot handle
         default:
-            THROW_FMT(ServiceError, "tls error [%d]", errorTls);
+            THROW_FMT(ServiceError, "TLS error [%d]", errorTls);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
@@ -148,7 +152,7 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
 
     if (result <= 0)
     {
-        // Get tls error and store errno in case of syscall error
+        // Get TLS error and store errno in case of syscall error
         int errorTls = SSL_get_error(this->session, result);
         int errorSys = errno;
 
@@ -179,7 +183,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
 
     ssize_t result = 0;
 
-    // If no tls data pending then check the socket to reduce blocking
+    // If no TLS data pending then check the socket to reduce blocking
     if (!SSL_pending(this->session))
         sckSessionReadyRead(this->socketSession);
 
@@ -194,7 +198,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
         {
             bufUsedInc(buffer, (size_t)result);
         }
-        // If the connection was closed then we are at eof. It is up to the layer above tls to decide if this is an error.
+        // If the connection was closed then we are at eof. It is up to the layer above TLS to decide if this is an error.
         else if (result == -1)
             break;
     }
@@ -204,7 +208,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
 }
 
 /***********************************************************************************************************************************
-Write to the tls session
+Write to the TLS session
 ***********************************************************************************************************************************/
 static void
 tlsSessionWrite(THIS_VOID, const Buffer *buffer)
