@@ -112,7 +112,6 @@ testRun(void)
         };
 
         int result;
-
         const char *port = "7777";
 
         const char *hostLocal = "127.0.0.1";
