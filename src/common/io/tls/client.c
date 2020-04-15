@@ -6,17 +6,14 @@ TLS Client
 #include <string.h>
 #include <strings.h>
 
-#include <openssl/conf.h>
-#include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/io/tls/client.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
-#include "common/io/write.intern.h"
+#include "common/io/tls/client.h"
+#include "common/io/tls/session.intern.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -36,16 +33,8 @@ struct TlsClient
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
     SocketClient *socketClient;                                     // Socket client
 
-    SocketSession *socketSession;                                   // Socket session
     SSL_CTX *context;                                               // TLS context
-    SSL *session;                                                   // TLS session on the socket
-
-    IoRead *read;                                                   // Read interface
-    IoWrite *write;                                                 // Write interface
 };
-
-OBJECT_DEFINE_GET(IoRead, , TLS_CLIENT, IoRead *, read);
-OBJECT_DEFINE_GET(IoWrite, , TLS_CLIENT, IoWrite *, write);
 
 OBJECT_DEFINE_FREE(TLS_CLIENT);
 
@@ -54,61 +43,9 @@ Free connection
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
 {
-    SSL_free(this->session);
     SSL_CTX_free(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
-
-/***********************************************************************************************************************************
-Report TLS errors.  Returns true if the command should continue and false if it should exit.
-***********************************************************************************************************************************/
-static bool
-tlsError(TlsClient *this, int code)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(INT, code);
-    FUNCTION_LOG_END();
-
-    bool result = false;
-
-    switch (code)
-    {
-        // The connection was closed
-        case SSL_ERROR_ZERO_RETURN:
-        {
-            tlsClientClose(this);
-            break;
-        }
-
-        // Try the read/write again
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-        {
-            result = true;
-            break;
-        }
-
-        // A syscall failed (this usually indicates eof)
-        case SSL_ERROR_SYSCALL:
-        {
-            // Get the error before closing so it is not cleared
-            int errNo = errno;
-            tlsClientClose(this);
-
-            // Throw the sys error if there is one
-            THROW_ON_SYS_ERROR(errNo, KernelError, "tls failed syscall");
-
-            break;
-        }
-
-        // Some other tls error that cannot be handled
-        default:
-            THROW_FMT(ServiceError, "tls error [%d]", code);
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
 
 /**********************************************************************************************************************************/
 TlsClient *
@@ -318,173 +255,9 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Read from the TLS session
-***********************************************************************************************************************************/
-size_t
-tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
-{
-    THIS(TlsClient);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
-        FUNCTION_LOG_PARAM(BOOL, block);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->session != NULL);
-    ASSERT(buffer != NULL);
-    ASSERT(!bufFull(buffer));
-
-    ssize_t result = 0;
-
-    // If blocking read keep reading until buffer is full
-    do
-    {
-        // If no tls data pending then check the socket
-        if (!SSL_pending(this->session))
-            sckSessionReadWait(this->socketSession);
-
-        // Read and handle errors
-        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer));
-
-        if (result <= 0)
-        {
-            // Break if the error indicates that we should not continue trying
-            if (!tlsError(this, SSL_get_error(this->session, (int)result)))
-                break;
-        }
-        // Update amount of buffer used
-        else
-            bufUsedInc(buffer, (size_t)result);
-    }
-    while (block && bufRemains(buffer) > 0);
-
-    FUNCTION_LOG_RETURN(SIZE, (size_t)result);
-}
-
-/***********************************************************************************************************************************
-Write to the tls session
-***********************************************************************************************************************************/
-static bool
-tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(INT, writeResult);
-        FUNCTION_LOG_PARAM(INT, writeError);
-        FUNCTION_LOG_PARAM(SIZE, writeSize);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(writeSize > 0);
-
-    bool result = true;
-
-    // Handle errors
-    if (writeResult <= 0)
-    {
-        // If error = SSL_ERROR_NONE then this is the first write attempt so continue
-        if (writeError != SSL_ERROR_NONE)
-        {
-            // Error if the error indicates that we should not continue trying
-            if (!tlsError(this, writeError))
-                THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
-
-            // Wait for the socket to be readable for tls renegotiation
-            sckSessionReadWait(this->socketSession);
-        }
-    }
-    else
-    {
-        if ((size_t)writeResult != writeSize)
-        {
-            THROW_FMT(
-                FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
-        }
-
-        result = false;
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-void
-tlsClientWrite(THIS_VOID, const Buffer *buffer)
-{
-    THIS(TlsClient);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->session != NULL);
-    ASSERT(buffer != NULL);
-
-    int result = 0;
-    int error = SSL_ERROR_NONE;
-
-    while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
-    {
-        result = SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer));
-        error = SSL_get_error(this->session, result);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Close the connection
-***********************************************************************************************************************************/
-void
-tlsClientClose(TlsClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close the socket
-    if (this->socketSession != NULL)
-    {
-        sckSessionFree(this->socketSession);
-        this->socketSession = NULL;
-    }
-
-    // Free the TLS session
-    if (this->session != NULL)
-    {
-        SSL_free(this->session);
-        this->session = NULL;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Has session been closed by the server?
-***********************************************************************************************************************************/
-bool
-tlsClientEof(THIS_VOID)
-{
-    THIS(TlsClient);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(BOOL, this->session == NULL);
-}
-
-/***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
-bool
+TlsSession *
 tlsClientOpen(TlsClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -493,114 +266,92 @@ tlsClientOpen(TlsClient *this)
 
     ASSERT(this != NULL);
 
-    bool result = false;
+    TlsSession *result = NULL;
+    SSL *session = NULL;
 
-    if (this->session == NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Free the read/write interfaces
-        ioReadFree(this->read);
-        this->read = NULL;
-        ioWriteFree(this->write);
-        this->write = NULL;
+        bool connected = false;
+        bool retry;
+        Wait *wait = waitNew(this->timeout);
 
-        MEM_CONTEXT_TEMP_BEGIN()
+        do
         {
-            bool connected = false;
-            bool retry;
-            Wait *wait = waitNew(this->timeout);
+            // Assume there will be no retry
+            retry = false;
 
-            do
+            TRY_BEGIN()
             {
-                // Assume there will be no retry
-                retry = false;
+                // Create internal TLS session
+                cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
 
-                TRY_BEGIN()
+                // Set server host name used for validation
+                cryptoError(
+                    SSL_set_tlsext_host_name(session, strPtr(sckClientHost(this->socketClient))) != 1,
+                    "unable to set TLS host name");
+
+                // Create the TLS session
+                result = tlsSessionNew(session, sckClientOpen(this->socketClient), this->timeout);
+
+                // Connection was successful
+                connected = true;
+            }
+            CATCH_ANY()
+            {
+                tlsSessionFree(result);
+                result = NULL;
+
+                // Retry if wait time has not expired
+                if (waitMore(wait))
                 {
-                    // Open the socket
-                    MEM_CONTEXT_BEGIN(this->memContext)
-                    {
-                        this->socketSession = sckClientOpen(this->socketClient);
-                    }
-                    MEM_CONTEXT_END();
+                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                    retry = true;
 
-                    // Negotiate TLS
-                    cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
-
-                    cryptoError(
-                        SSL_set_tlsext_host_name(this->session, strPtr(sckSessionHost(this->socketSession))) != 1,
-                        "unable to set TLS host name");
-                    cryptoError(
-                        SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS context");
-                    cryptoError(SSL_connect(this->session) != 1, "unable to negotiate TLS connection");
-
-                    // Connection was successful
-                    connected = true;
+                    tlsClientStatLocal.retry++;
                 }
-                CATCH_ANY()
-                {
-                    // Retry if wait time has not expired
-                    if (waitMore(wait))
-                    {
-                        LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
-                        retry = true;
-
-                        tlsClientStatLocal.retry++;
-                    }
-
-                    tlsClientClose(this);
-                }
-                TRY_END();
             }
-            while (!connected && retry);
-
-            if (!connected)
-                RETHROW();
+            TRY_END();
         }
-        MEM_CONTEXT_TEMP_END();
+        while (!connected && retry);
 
-        // Verify that the certificate presented by the server is valid
-        if (this->verifyPeer)
+        if (!connected)
+            RETHROW();
+
+        tlsSessionMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    tlsClientStatLocal.session++;
+
+    // Verify that the certificate presented by the server is valid
+    if (this->verifyPeer)
+    {
+        // Verify that the chain of trust leads to a valid CA
+        long int verifyResult = SSL_get_verify_result(session);
+
+        if (verifyResult != X509_V_OK)
         {
-            // Verify that the chain of trust leads to a valid CA
-            long int verifyResult = SSL_get_verify_result(this->session);
-
-            if (verifyResult != X509_V_OK)
-            {
-                THROW_FMT(
-                    CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",
-                    strPtr(sckSessionHost(this->socketSession)), sckSessionPort(this->socketSession), verifyResult,
-                    X509_verify_cert_error_string(verifyResult));
-            }
-
-            // Verify that the hostname appears in the certificate
-            X509 *certificate = SSL_get_peer_certificate(this->session);
-            bool nameResult = tlsClientHostVerify(sckSessionHost(this->socketSession), certificate);
-            X509_free(certificate);
-
-            if (!nameResult)
-            {
-                THROW_FMT(
-                    CryptoError,
-                    "unable to find hostname '%s' in certificate common name or subject alternative names",
-                    strPtr(sckSessionHost(this->socketSession)));
-            }
+            THROW_FMT(
+                CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",
+                strPtr(sckClientHost(this->socketClient)), sckClientPort(this->socketClient), verifyResult,
+                X509_verify_cert_error_string(verifyResult));
         }
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        // Verify that the hostname appears in the certificate
+        X509 *certificate = SSL_get_peer_certificate(session);
+        bool nameResult = tlsClientHostVerify(sckClientHost(this->socketClient), certificate);
+        X509_free(certificate);
+
+        if (!nameResult)
         {
-            // Create read and write interfaces
-            this->write = ioWriteNewP(this, .write = tlsClientWrite);
-            ioWriteOpen(this->write);
-            this->read = ioReadNewP(this, .block = true, .eof = tlsClientEof, .read = tlsClientRead);
-            ioReadOpen(this->read);
+            THROW_FMT(
+                CryptoError,
+                "unable to find hostname '%s' in certificate common name or subject alternative names",
+                strPtr(sckClientHost(this->socketClient)));
         }
-        MEM_CONTEXT_END();
-
-        tlsClientStatLocal.session++;
-        result = true;
     }
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(TLS_SESSION, result);
 }
 
 /**********************************************************************************************************************************/

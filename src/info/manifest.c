@@ -843,7 +843,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 }
 
 // Regular expression constants
-#define RELATION_EXP                                                "[0-9]+(|_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
+#define RELATION_EXP                                                "[0-9]+(_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
 #define DB_PATH_EXP                                                                                                                \
     "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
 

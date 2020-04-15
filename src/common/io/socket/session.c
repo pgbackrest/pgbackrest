@@ -23,15 +23,17 @@ Object type
 struct SocketSession
 {
     MemContext *memContext;                                         // Mem context
+    SocketSessionType type;                                         // Type (server or client)
     int fd;                                                         // File descriptor
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
 };
 
+OBJECT_DEFINE_MOVE(SOCKET_SESSION);
+
 OBJECT_DEFINE_GET(Fd, , SOCKET_SESSION, int, fd);
-OBJECT_DEFINE_GET(Host, const, SOCKET_SESSION, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_SESSION, unsigned int, port);
+OBJECT_DEFINE_GET(Type, const, SOCKET_SESSION, SocketSessionType, type);
 
 OBJECT_DEFINE_FREE(SOCKET_SESSION);
 
@@ -46,9 +48,10 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 SocketSession *
-sckSessionNew(int fd, const String *host, unsigned int port, TimeMSec timeout)
+sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
@@ -67,6 +70,7 @@ sckSessionNew(int fd, const String *host, unsigned int port, TimeMSec timeout)
         *this = (SocketSession)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .type = type,
             .fd = fd,
             .host = strDup(host),
             .port = port,
@@ -122,5 +126,7 @@ sckSessionReadWait(SocketSession *this)
 String *
 sckSessionToLog(const SocketSession *this)
 {
-    return strNewFmt("{fd: %d, host: %s, port: %u, timeout: %" PRIu64 "}", this->fd, strPtr(this->host), this->port, this->timeout);
+    return strNewFmt(
+        "{type: %s, fd %d, host: %s, port: %u, timeout: %" PRIu64 "}", this->type == sckSessionTypeClient ? "client" : "server",
+        this->fd, strPtr(this->host), this->port, this->timeout);
 }

@@ -55,7 +55,8 @@ struct HttpClient
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Request timeout
 
-    TlsClient *tls;                                                 // Tls client
+    TlsClient *tlsClient;                                           // TLS client
+    TlsSession *tlsSession;                                         // Current TLS session
     IoRead *ioRead;                                                 // Read io interface
 
     unsigned int responseCode;                                      // Response code (e.g. 200, 404)
@@ -97,8 +98,8 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
         // If close was requested and no content specified then the server may send content up until the eof
         if (this->closeOnContentEof && !this->contentChunked && this->contentSize == 0)
         {
-            ioRead(tlsClientIoRead(this->tls), buffer);
-            this->contentEof = ioReadEof(tlsClientIoRead(this->tls));
+            ioRead(tlsSessionIoRead(this->tlsSession), buffer);
+            this->contentEof = ioReadEof(tlsSessionIoRead(this->tlsSession));
         }
         // Else read using specified encoding or size
         else
@@ -111,7 +112,8 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
                     // Read length of next chunk
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
-                        this->contentRemaining = cvtZToUInt64Base(strPtr(strTrim(ioReadLine(tlsClientIoRead(this->tls)))), 16);
+                        this->contentRemaining = cvtZToUInt64Base(
+                            strPtr(strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)))), 16);
                     }
                     MEM_CONTEXT_TEMP_END();
 
@@ -130,10 +132,10 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
                         bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
 
                     actualBytes = bufRemains(buffer);
-                    this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
+                    this->contentRemaining -= ioRead(tlsSessionIoRead(this->tlsSession), buffer);
 
                     // Error if EOF but content read is not complete
-                    if (ioReadEof(tlsClientIoRead(this->tls)))
+                    if (ioReadEof(tlsSessionIoRead(this->tlsSession)))
                         THROW(FileReadError, "unexpected EOF reading HTTP content");
 
                     // Clear limit (this works even if the limit was not set and it is easier than checking)
@@ -147,7 +149,7 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
                     // around to check.
                     if (this->contentChunked)
                     {
-                        ioReadLine(tlsClientIoRead(this->tls));
+                        ioReadLine(tlsSessionIoRead(this->tlsSession));
                     }
                     // If total content size was provided then this is eof
                     else
@@ -159,7 +161,10 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
 
         // If the server notified that it would close the connection after sending content then close the client side
         if (this->contentEof && this->closeOnContentEof)
-            tlsClientClose(this->tls);
+        {
+            tlsSessionFree(this->tlsSession);
+            this->tlsSession = NULL;
+        }
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
@@ -208,7 +213,7 @@ httpClientNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
-            .tls = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
+            .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
         };
 
         httpClientStatLocal.object++;
@@ -270,14 +275,21 @@ httpClientRequest(
 
             TRY_BEGIN()
             {
-                if (tlsClientOpen(this->tls))
-                    httpClientStatLocal.session++;
+                if (this->tlsSession == NULL)
+                {
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        this->tlsSession = tlsClientOpen(this->tlsClient);
+                        httpClientStatLocal.session++;
+                    }
+                    MEM_CONTEXT_END();
+                }
 
                 // Write the request
                 String *queryStr = httpQueryRender(query);
 
                 ioWriteStrLine(
-                    tlsClientIoWrite(this->tls),
+                    tlsSessionIoWrite(this->tlsSession),
                     strNewFmt(
                         "%s %s%s%s " HTTP_VERSION "\r", strPtr(verb), strPtr(httpUriEncode(uri, true)), queryStr == NULL ? "" : "?",
                         queryStr == NULL ? "" : strPtr(queryStr)));
@@ -291,23 +303,23 @@ httpClientRequest(
                     {
                         const String *headerKey = strLstGet(headerList, headerIdx);
                         ioWriteStrLine(
-                            tlsClientIoWrite(this->tls),
+                            tlsSessionIoWrite(this->tlsSession),
                             strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(requestHeader, headerKey))));
                     }
                 }
 
                 // Write out blank line to end the headers
-                ioWriteLine(tlsClientIoWrite(this->tls), CR_BUF);
+                ioWriteLine(tlsSessionIoWrite(this->tlsSession), CR_BUF);
 
                 // Write out body if any
                 if (body != NULL)
-                    ioWrite(tlsClientIoWrite(this->tls), body);
+                    ioWrite(tlsSessionIoWrite(this->tlsSession), body);
 
                 // Flush all writes
-                ioWriteFlush(tlsClientIoWrite(this->tls));
+                ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
                 // Read status and make sure it starts with the correct http version
-                String *status = strTrim(ioReadLine(tlsClientIoRead(this->tls)));
+                String *status = strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)));
 
                 if (!strBeginsWith(status, HTTP_VERSION_STR))
                     THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
@@ -338,7 +350,7 @@ httpClientRequest(
                 do
                 {
                     // Read the next header
-                    String *header = strTrim(ioReadLine(tlsClientIoRead(this->tls)));
+                    String *header = strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)));
 
                     // If the header is empty then we have reached the end of the headers
                     if (strSize(header) == 0)
@@ -429,7 +441,10 @@ httpClientRequest(
 
                 // If the server notified that it would close the connection and there is no content then close the client side
                 if (this->closeOnContentEof && !contentExists)
-                    tlsClientClose(this->tls);
+                {
+                    tlsSessionFree(this->tlsSession);
+                    this->tlsSession = NULL;
+                }
 
                 // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
                 // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
@@ -451,7 +466,8 @@ httpClientRequest(
                     httpClientStatLocal.retry++;
                 }
 
-                tlsClientClose(this->tls);
+                tlsSessionFree(this->tlsSession);
+                this->tlsSession = NULL;
             }
             TRY_END();
         }
@@ -504,7 +520,10 @@ httpClientDone(HttpClient *this)
     {
         // If it looks like we were in the middle of a response then close the TLS session so we can start clean next time
         if (!this->contentEof)
-            tlsClientClose(this->tls);
+        {
+            tlsSessionFree(this->tlsSession);
+            this->tlsSession = NULL;
+        }
 
         ioReadFree(this->ioRead);
         this->ioRead = NULL;

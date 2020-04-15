@@ -50,6 +50,15 @@ SocketClient *sckClientMove(SocketClient *this, MemContext *parentNew);
 String *sckClientStatStr(void);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Socket host
+const String *sckClientHost(const SocketClient *this);
+
+// Socket port
+unsigned int sckClientPort(const SocketClient *this);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 String *sckClientToLog(const SocketClient *this);
