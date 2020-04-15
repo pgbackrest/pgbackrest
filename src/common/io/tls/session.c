@@ -182,17 +182,17 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(buffer != NULL);
     ASSERT(!bufFull(buffer));
 
-    ssize_t result = 0;
-
-    // If no TLS data pending then check the socket to reduce blocking
-    if (!SSL_pending(this->session))
-        sckSessionReadyRead(this->socketSession);
+    int result = 0;
 
     // If blocking read keep reading until buffer is full
     do
     {
+        // If no TLS data pending then check the socket to reduce blocking
+        if (!SSL_pending(this->session))
+            sckSessionReadyRead(this->socketSession);
+
         // Read and handle errors
-        result = tlsSessionResult(this, (int)SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer)), true);
+        result = tlsSessionResult(this, SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer)), true);
 
         // Update amount of buffer used
         if (result > 0)

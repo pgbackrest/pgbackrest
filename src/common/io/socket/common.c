@@ -159,6 +159,9 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
+    ASSERT(host != NULL);
+    ASSERT(hostAddress != NULL);
+
     // Attempt connection
     if (connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
     {
@@ -172,7 +175,7 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
             if (!sckReadyWrite(fd, timeout))
                 THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(host), port);
 
-            // Check that the connection was successful
+            // Check for success or error. If the connection was successful this will set errNo to 0.
             socklen_t errNoLen = sizeof(errNo);
 
             THROW_ON_SYS_ERROR(
