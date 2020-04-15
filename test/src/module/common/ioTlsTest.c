@@ -116,20 +116,21 @@ testRun(void)
             .ai_protocol = IPPROTO_TCP,
         };
 
-        struct addrinfo *hostAddress;
         int result;
-        const char *host = "172.31.255.255";
         const char *port = "7777";
 
-        if ((result = getaddrinfo(host, port, &hints, &hostAddress)) != 0)
+        const char *hostBad = "172.31.255.255";
+        struct addrinfo *hostBadAddress;
+
+        if ((result = getaddrinfo(hostBad, port, &hints, &hostBadAddress)) != 0)
         {
             THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
-                HostConnectError, "unable to get address for '%s': [%d] %s", host, result, gai_strerror(result));
+                HostConnectError, "unable to get address for '%s': [%d] %s", hostBad, result, gai_strerror(result));
         }
 
         TRY_BEGIN()
         {
-            int fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+            int fd = socket(hostBadAddress->ai_family, hostBadAddress->ai_socktype, hostBadAddress->ai_protocol);
             THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
             // ---------------------------------------------------------------------------------------------------------------------
@@ -213,11 +214,11 @@ testRun(void)
             THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
 
             // Attempt connection
-            CHECK(connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1);
+            CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
 
             // Create socket session and wait for timeout
             SocketSession *session = NULL;
-            TEST_ASSIGN(session, sckSessionNew(sckSessionTypeClient, fd, strNew(host), 7777, 100), "new socket");
+            TEST_ASSIGN(session, sckSessionNew(sckSessionTypeClient, fd, strNew(hostBad), 7777, 100), "new socket");
 
             TEST_ERROR(
                 sckSessionReadyWrite(session), ProtocolError, "timeout after 100ms waiting for write to '172.31.255.255:7777'");
@@ -227,7 +228,7 @@ testRun(void)
         FINALLY()
         {
             // This needs to be freed or valgrind will complain
-            freeaddrinfo(hostAddress);
+            freeaddrinfo(hostBadAddress);
         }
         TRY_END();
 
