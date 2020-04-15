@@ -1124,7 +1124,7 @@
                     <option id="set" name="Set">
                         <summary>Backup set to expire.</summary>
 
-                        <text>Using this option, the backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives from the <backrest/> repository for the specified backup set.</admonition></text>
+                        <text>Using this option, the backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set.</admonition></text>
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
