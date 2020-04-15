@@ -3,8 +3,6 @@ TLS Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <openssl/err.h>
-
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
