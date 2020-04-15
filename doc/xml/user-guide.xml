@@ -1160,6 +1160,8 @@
 
             <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.</p>
 
+            <p>Next to the '<id>status</id>' information, the specific '<i>backup/expire running</i>' message will appear if one of those commands are currently running on the host.</p>
+
             <p>The backups are displayed oldest to newest.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
             <p>The '<id>timestamp start/stop</id>' defines the time period when the backup ran.  The '<id>timestamp stop</id>' can be used to determine the backup to use when performing Point-In-Time Recovery.  More information about Point-In-Time Recovery can be found in the <link section="/pitr">Point-In-Time Recovery</link> section.</p>
