@@ -430,7 +430,7 @@ testRun(void)
 
                 TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
                 TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
-                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected eof");
+                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 const Buffer *input = BUFSTRDEF("some protocol info");

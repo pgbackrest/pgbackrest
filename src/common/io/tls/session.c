@@ -79,8 +79,10 @@ tlsSessionClose(TlsSession *this, bool shutdown)
 /***********************************************************************************************************************************
 Process result from SSL_read(), SSL_write(), SSL_connect(), and SSL_accept().
 
-Returns 0 if the function should be tried again with the same parameters, -1 if the connect was closed gracefully, or > 0 with the
-read/write size.
+Returns:
+0 if the function should be tried again with the same parameters
+-1 if the connection was closed gracefully
+> 0 with the read/write size if SSL_read()/SSL_write() was called
 ***********************************************************************************************************************************/
 // Helper to process error conditions
 static int
@@ -104,13 +106,13 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
         case SSL_ERROR_ZERO_RETURN:
         {
             if (!closeOk)
-                THROW(ProtocolError, "unexpected eof");
+                THROW(ProtocolError, "unexpected TLS eof");
 
             tlsSessionClose(this, false);
             break;
         }
 
-        // Try the read again
+        // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
         {
             sckSessionReadyRead(this->socketSession);
@@ -118,7 +120,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
             break;
         }
 
-        // Try the write again
+        // Try again after waiting for write ready
         case SSL_ERROR_WANT_WRITE:
         {
             sckSessionReadyWrite(this->socketSession);
@@ -126,11 +128,11 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
             break;
         }
 
-        // A syscall failed (this usually indicates eof)
+        // A syscall failed (this usually indicates unexpected eof)
         case SSL_ERROR_SYSCALL:
             THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
 
-        // Else an error that we cannot handle
+        // Any other error that we cannot handle
         default:
             THROW_FMT(ServiceError, "TLS error [%d]", errorTls);
     }
@@ -150,6 +152,7 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
     ASSERT(this != NULL);
     ASSERT(this->session != NULL);
 
+    // Process errors
     if (result <= 0)
     {
         // Get TLS error and store errno in case of syscall error
@@ -230,6 +233,7 @@ tlsSessionWrite(THIS_VOID, const Buffer *buffer)
     {
         result = tlsSessionResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
 
+        // Either a retry or all data was written
         CHECK(result == 0 || (size_t)result == bufUsed(buffer));
     }
 
