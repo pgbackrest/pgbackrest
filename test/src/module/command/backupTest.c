@@ -500,7 +500,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                missingFile, true, 0, NULL, false, 0, missingFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
+                missingFile, true, 0, true, NULL, false, 0, missingFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
@@ -511,6 +511,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(missingFile));       // pgFile
         varLstAdd(paramList, varNewBool(true));             // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(0));              // pgFileSize
+        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
         varLstAdd(paramList, NULL);                         // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
@@ -531,7 +532,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             backupFile(
-                missingFile, false, 0, NULL, false, 0, missingFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
+                missingFile, false, 0, true, NULL, false, 0, missingFile, false, false, 1, backupLabel, false, cipherTypeNone,
+                NULL),
             FileMissingError, "unable to open missing file '%s/pg/missing' for read", testPath());
 
         // Create a pg file to backup
@@ -546,7 +548,8 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            backupFile(pgFile, false, 9999999, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
+            backupFile(
+                pgFile, false, 9999999, true, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         ((Storage *)storageRepo())->interface.feature = feature;
@@ -570,7 +573,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, false, 1, backupLabel, false, cipherTypeNone,
+                pgFile, false, 9, true, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, false, 1, backupLabel, false, cipherTypeNone,
                 NULL),
             "file checksummed with pageChecksum enabled");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
@@ -590,7 +593,8 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
+        varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
+        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
         varLstAdd(paramList, NULL);                         // pgFileChecksum
         varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
@@ -606,7 +610,7 @@ testRun(void)
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
-            "{\"out\":[1,9,9,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",{\"align\":false,\"valid\":false}]}\n",
+            "{\"out\":[1,12,12,\"719e82b52966b075c1ee276547e924179628fe69\",{\"align\":false,\"valid\":false}]}\n",
             "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -615,8 +619,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1, backupLabel,
-                true, cipherTypeNone, NULL),
+                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 0, "    repo size not set since already exists in repo");
@@ -632,8 +636,9 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
+        varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
+        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
+        varLstAdd(paramList, varNewStrZ("719e82b52966b075c1ee276547e924179628fe69"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
@@ -647,7 +652,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[4,9,0,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
+            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"719e82b52966b075c1ee276547e924179628fe69\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -655,8 +660,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, true, false, 1, backupLabel,
-                true, cipherTypeNone, NULL),
+                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, true, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
@@ -670,7 +675,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9999999, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
+                pgFile, false, 9999999, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true, false, 1,
                 backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
@@ -687,8 +692,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false, false, 1,
-                backupLabel, true, cipherTypeNone, NULL),
+                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
+                false, 1, backupLabel, true, cipherTypeNone, NULL),
             "backup file");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    check copy result");
@@ -705,7 +710,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
+                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeNone, NULL),
             "    db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
@@ -723,7 +728,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                missingFile, true, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
+                missingFile, true, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeNone, NULL),
             "    file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=0 size");
@@ -736,7 +741,7 @@ testRun(void)
         // No prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
-            backupFile(pgFile, false, 9, NULL, false, 0, pgFile, false, true, 3, backupLabel, false, cipherTypeNone, NULL),
+            backupFile(pgFile, false, 9, true, NULL, false, 0, pgFile, false, true, 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
@@ -753,8 +758,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, true, 3, backupLabel,
-                false, cipherTypeNone, NULL),
+                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, true, 3,
+                backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
@@ -773,6 +778,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
+        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
@@ -798,7 +804,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                strNew("zerofile"), false, 0, NULL, false, 0, strNew("zerofile"), false, false, 1, backupLabel, false,
+                strNew("zerofile"), false, 0, true, NULL, false, 0, strNew("zerofile"), false, false, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=pgFile size 0");
@@ -839,7 +845,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeAes256Cbc,
+                pgFile, false, 9, true, NULL, false, 0, pgFile, false, false, 1, backupLabel, false, cipherTypeAes256Cbc,
                 strNew("12345678")),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
@@ -856,7 +862,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
+                pgFile, false, 8, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, false, 1,
                 backupLabel, true, cipherTypeAes256Cbc, strNew("12345678")),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
@@ -873,7 +879,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false, false, 0,
+                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false, false, 0,
                 backupLabel, false, cipherTypeAes256Cbc, strNew("12345678")),
             "pg and repo file exists, repo checksum no match, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
@@ -891,6 +897,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(pgFile));                // pgFile
         varLstAdd(paramList, varNewBool(false));                // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(9));                  // pgFileSize
+        varLstAdd(paramList, varNewBool(true));                 // pgFileCopyExactSize
         varLstAdd(paramList, varNewStrZ("1234567890123456789012345678901234567890"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));                // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit

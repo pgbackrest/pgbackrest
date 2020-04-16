@@ -34,9 +34,10 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 BackupFileResult backupFile(
-    const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,
-    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, CompressType repoFileCompressType,
-    int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass);
+    const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, bool pgFileCopyExactSize, const String *pgFileChecksum,
+    bool pgFileChecksumPage, uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference,
+    CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType,
+    const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
