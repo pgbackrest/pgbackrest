@@ -765,7 +765,7 @@ testRun(void)
             {
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,
-                    host, port, 1000, testContainer(), NULL, NULL);
+                    host, port, 5000, testContainer(), NULL, NULL);
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -982,7 +982,7 @@ testRun(void)
                 // Switch to path-style URIs
                 s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, accessKey, secretAccessKey, NULL, 16, 2,
-                    host, port, 1000, testContainer(), NULL, NULL);
+                    host, port, 5000, testContainer(), NULL, NULL);
 
                 TEST_ERROR(
                     storagePathRemoveP(s3, strNew("/")), AssertError,

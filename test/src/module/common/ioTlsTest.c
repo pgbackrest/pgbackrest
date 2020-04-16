@@ -87,11 +87,6 @@ testTlsServer(void)
     harnessTlsServerReply("0123456789AB");
     harnessTlsServerAbort();
 
-    // Need data in read buffer to test tlsWriteContinue()
-    harnessTlsServerAccept();
-    harnessTlsServerReply("0123456789AB");
-    harnessTlsServerClose();
-
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
@@ -118,6 +113,15 @@ testRun(void)
 
         int result;
         const char *port = "7777";
+
+        const char *hostLocal = "127.0.0.1";
+        struct addrinfo *hostLocalAddress;
+
+        if ((result = getaddrinfo(hostLocal, port, &hints, &hostLocalAddress)) != 0)
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", hostLocal, result, gai_strerror(result));
+        }
 
         const char *hostBad = "172.31.255.255";
         struct addrinfo *hostBadAddress;
@@ -207,12 +211,6 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("connect to non-blocking socket to test write ready");
 
-            // Put the socket in non-blocking mode
-            int flags;
-
-            THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
-            THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
-
             // Attempt connection
             CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
 
@@ -224,16 +222,46 @@ testRun(void)
                 sckSessionReadyWrite(session), ProtocolError, "timeout after 100ms waiting for write to '172.31.255.255:7777'");
 
             TEST_RESULT_VOID(sckSessionFree(session), "free socket session");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("unable to connect to blocking socket");
+
+            socketLocal.block = true;
+            TEST_ERROR(
+                sckClientOpen(sckClientNew(STR(hostLocal), 7777, 0)), HostConnectError,
+                "unable to connect to '127.0.0.1:7777': [111] Connection refused");
+            socketLocal.block = false;
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("uncovered conditions for sckConnect()");
+
+            TEST_RESULT_BOOL(sckConnectInProgress(EINTR), true, "connection in progress (EINTR)");
         }
         FINALLY()
         {
-            // This needs to be freed or valgrind will complain
+            // These need to be freed or valgrind will complain
+            freeaddrinfo(hostLocalAddress);
             freeaddrinfo(hostBadAddress);
         }
         TRY_END();
 
         // Restore socket settings
         socketLocal = socketLocalSave;
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("SocketClient"))
+    {
+        SocketClient *client = NULL;
+
+        TEST_ASSIGN(client, sckClientNew(strNew("localhost"), harnessTlsTestPort(), 100), "new client");
+        TEST_ERROR_FMT(
+            sckClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            harnessTlsTestPort());
+
+        // This address should not be in use in a test environment -- if it is the test will fail
+        TEST_ASSIGN(client, sckClientNew(strNew("172.31.255.255"), harnessTlsTestPort(), 100), "new client");
+        TEST_ERROR_FMT(sckClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", harnessTlsTestPort());
     }
 
     // Additional coverage not provided by testing with actual certificates
@@ -300,13 +328,13 @@ testRun(void)
                 TEST_ERROR(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 500), 500, true, strNew("bogus.crt"),
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true, strNew("bogus.crt"),
                             strNew("/bogus"))),
                     CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
                 TEST_ERROR_FMT(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 500), 500, true, NULL, strNew("/bogus"))),
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true, NULL, strNew("/bogus"))),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     harnessTlsTestPort());
@@ -316,19 +344,19 @@ testRun(void)
                     TEST_RESULT_VOID(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 500), 500, true,
+                                sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         "success on valid ca file and match common name");
                     TEST_RESULT_VOID(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 500), 500, true,
+                                sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         "success on valid ca file and match alt name");
                     TEST_ERROR(
                         tlsClientOpen(
                             tlsClientNew(
-                                sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 500), 500, true,
+                                sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
                                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                         CryptoError,
                         "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
@@ -337,7 +365,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     tlsClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 500), 500, true,
+                            sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
                         NULL)),
                     CryptoError,
@@ -346,7 +374,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(
                     tlsClientOpen(
-                        tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 500), 500, false, NULL, NULL)),
+                        tlsClientNew(sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, false, NULL, NULL)),
                         "success on no verify");
             }
             HARNESS_FORK_PARENT_END();
@@ -380,7 +408,7 @@ testRun(void)
 
                 TEST_ASSIGN(
                     client,
-                    tlsClientNew(sckClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 500), 500, testContainer(), NULL, NULL),
+                    tlsClientNew(sckClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 5000), 0, testContainer(), NULL, NULL),
                     "new client");
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
 
@@ -404,6 +432,13 @@ testRun(void)
                 TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("uncovered errors");
+
+                TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
+                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
+                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 const Buffer *input = BUFSTRDEF("some protocol info");
                 TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
                 ioWriteFlush(tlsSessionIoWrite(session));
@@ -422,9 +457,11 @@ testRun(void)
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "    check eof = false");
 
                 output = bufNew(12);
+                session->socketSession->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
-                    "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+                    "timeout after 100ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
+                session->socketSession->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 input = BUFSTRDEF("more protocol info");
@@ -441,26 +478,16 @@ testRun(void)
                 TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "    check eof = true");
 
                 TEST_RESULT_VOID(tlsSessionClose(session, false), "close again");
-                TEST_ERROR(tlsSessionError(session, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("aborted connection before read complete");
+                TEST_TITLE("aborted connection before read complete (blocking socket)");
 
+                socketLocal.block = true;
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
+                socketLocal.block = false;
 
                 output = bufNew(13);
-                TEST_ERROR(ioRead(tlsSessionIoRead(session), output), KernelError, "tls failed syscall");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
-
-                TEST_RESULT_BOOL(tlsSessionWriteContinue(session, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
-                TEST_RESULT_BOOL(tlsSessionWriteContinue(session, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
-                TEST_ERROR(
-                    tlsSessionWriteContinue(session, 77, 0, 88), FileWriteError,
-                    "unable to write to tls, write size 77 does not match expected size 88");
-                TEST_ERROR(
-                    tlsSessionWriteContinue(session, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
+                TEST_ERROR(ioRead(tlsSessionIoRead(session), output), KernelError, "TLS syscall error");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_RESULT_BOOL(sckClientStatStr() != NULL, true, "check statistics exist");

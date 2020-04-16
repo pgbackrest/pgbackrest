@@ -3,10 +3,8 @@ Socket Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <netinet/in.h>
-#include <sys/select.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -129,9 +127,7 @@ sckClientOpen(SocketClient *this)
                     THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
                     sckOptionSet(fd);
-
-                    if (connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
-                        THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                    sckConnect(fd, this->host, this->port, hostAddress, waitRemaining(wait));
                 }
                 FINALLY()
                 {
