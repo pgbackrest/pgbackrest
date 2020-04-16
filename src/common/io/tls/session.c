@@ -149,7 +149,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no tls data pending then check the socket
         if (!SSL_pending(this->session))
-            sckSessionReadWait(this->socketSession);
+            sckSessionReadyRead(this->socketSession);
 
         // Read and handle errors
         result = SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer));
@@ -198,7 +198,7 @@ tlsSessionWriteContinue(TlsSession *this, int writeResult, int writeError, size_
                 THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
 
             // Wait for the socket to be readable for tls renegotiation
-            sckSessionReadWait(this->socketSession);
+            sckSessionReadyRead(this->socketSession);
         }
     }
     else

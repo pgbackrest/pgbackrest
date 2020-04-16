@@ -45,6 +45,16 @@
 
                         <p><proper>TCP</proper> keep-alive options are configurable.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>poll()</code> instead of <code>select()</code> for monitoring socket read/write ready.</p>
+                    </release-item>
+
                 </release-improvement-list>
 
                 <release-development-list>
