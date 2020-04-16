@@ -4300,8 +4300,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "Using this option, the backup set (i.e. the backup label provided and all of its dependent backups, if any) "
                         "will be expired regardless of retention rules except that at least one full backup must remain in the "
                         "repository. \n"
-                    "WARNING: Use this option with extreme caution -- it will permanently remove all backups and archives from the "
-                        "pgBackRest repository for the specified backup set."
+                    "WARNING: Use this option with extreme caution -- it will permanently remove all backups and archives not "
+                        "required to make a backup consistent from the pgBackRest repository for the specified backup set."
                 )
             )
 
