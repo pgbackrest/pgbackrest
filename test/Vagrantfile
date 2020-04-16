@@ -119,6 +119,46 @@ Vagrant.configure(2) do |config|
         default.vm.synced_folder "..", "/home/vagrant/pgbackrest"
     end
 
+    # FreeBSD 12
+    #
+    # Basic environment to build pgBackRest.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    config.vm.define "fb12", autostart: false do |fb12|
+        fb12.vm.box = "generic/freebsd12"
+        fb12.vm.box_version = "2.0.6"
+
+        fb12.vm.provider :virtualbox do |vb|
+            vb.name = "pgbackrest-test-fb12"
+        end
+
+        # Provision the VM
+        fb12.vm.provision "shell", inline: <<-SHELL
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build Begin' && date
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Build Tools' && date
+
+            pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build End' && date
+        SHELL
+    end
+
+    # MacOS
+    #
+    # Basic environment to build pgBackRest using homebrew installed in the local user account.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # cd ~
+    # mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+    # homebrew/bin/brew install libpq libxml2
+    # export LDFLAGS="-L${HOME?}/homebrew/opt/openssl@1.1/lib -L${HOME?}/homebrew/opt/libpq/lib -L${HOME?}/homebrew/opt/libxml2/lib"
+    # export CPPFLAGS="-I${HOME?}/homebrew/opt/openssl@1.1/include -I/${HOME?}/homebrew/opt/libpq/include"
+    # export CPPFLAGS="${CPPFLAGS?} -I${HOME?}/homebrew/opt/libxml2/include/libxml2"
+    #
+    # cd [repo]/src && ./configure && make
+
     # Don't share the default vagrant folder
     config.vm.synced_folder ".", "/vagrant", disabled: true
 end

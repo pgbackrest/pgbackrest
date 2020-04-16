@@ -1,0 +1,48 @@
+# Cirrus CI Build Definitions
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+# Build the branch if it is integration or ends in -ci/-cic (-cic targets only Cirrus CI)
+only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
+
+# No auto-cancel on integration
+auto_cancellation: $CIRRUS_BRANCH != 'integration'
+
+# FreeBSD 12
+# ----------------------------------------------------------------------------------------------------------------------------------
+freebsd_12_task:
+  only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
+
+  freebsd_instance:
+    image_family: freebsd-12-1
+
+  install_script: pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
+
+  script:
+    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
+    - gmake -s -C ${CIRRUS_WORKING_DIR}/src
+    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+
+  debug_script:
+    - ls -lah ${CIRRUS_WORKING_DIR}
+    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
+
+# MacOS Catalina
+# ----------------------------------------------------------------------------------------------------------------------------------
+macos_catalina_task:
+  osx_instance:
+    image: catalina-xcode
+
+  environment:
+    LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib
+    CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2
+
+  install_script: brew install openssl@1.1 libpq libxml2
+
+  script:
+    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
+    - make -s -C ${CIRRUS_WORKING_DIR}/src
+    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+
+  debug_script:
+    - ls -lah ${CIRRUS_WORKING_DIR}
+    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
