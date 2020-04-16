@@ -4,15 +4,10 @@ Socket Common Functions
 #include "build.auto.h"
 
 #include <fcntl.h>
-
-#ifdef __FreeBSD__
-#include <netinet/in.h>
-#endif
-
-#ifdef __linux__
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "common/debug.h"
 #include "common/io/socket/common.h"
