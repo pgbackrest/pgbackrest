@@ -140,6 +140,7 @@ typedef enum
     cfgDefOptRepoS3VerifyTls,
     cfgDefOptRepoType,
     cfgDefOptResume,
+    cfgDefOptSckBlock,
     cfgDefOptSckKeepAlive,
     cfgDefOptSet,
     cfgDefOptSort,

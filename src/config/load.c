@@ -340,6 +340,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             if (cfgOptionValid(cfgOptSckKeepAlive))
             {
                 sckInit(
+                    cfgOptionBool(cfgOptSckBlock),
                     cfgOptionBool(cfgOptSckKeepAlive),
                     cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
                     cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,

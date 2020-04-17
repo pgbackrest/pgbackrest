@@ -13,7 +13,7 @@ Socket Common Functions
 Functions
 ***********************************************************************************************************************************/
 // Initialize settings for socket connections (some are used only for TCP)
-void sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
+void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
 
 // Set options on a socket
 void sckOptionSet(int fd);

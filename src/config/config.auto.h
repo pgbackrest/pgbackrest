@@ -383,6 +383,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_TYPE_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
+#define CFGOPT_SCK_BLOCK                                            "sck-block"
+    STRING_DECLARE(CFGOPT_SCK_BLOCK_STR);
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
     STRING_DECLARE(CFGOPT_SCK_KEEP_ALIVE_STR);
 #define CFGOPT_SET                                                  "set"
@@ -418,7 +420,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            182
+#define CFG_OPTION_TOTAL                                            183
 
 /***********************************************************************************************************************************
 Command enum
@@ -617,6 +619,7 @@ typedef enum
     cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,
+    cfgOptSckBlock,
     cfgOptSckKeepAlive,
     cfgOptSet,
     cfgOptSort,

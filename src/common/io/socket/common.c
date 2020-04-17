@@ -32,9 +32,10 @@ static struct SocketLocal
 
 /**********************************************************************************************************************************/
 void
-sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
+sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BOOL, block);
         FUNCTION_LOG_PARAM(BOOL, keepAlive);
         FUNCTION_LOG_PARAM(INT, tcpKeepAliveCount);
         FUNCTION_LOG_PARAM(INT, tcpKeepAliveIdle);
@@ -46,7 +47,7 @@ sckInit(bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeep
     ASSERT(tcpKeepAliveInterval >= 0);
 
     socketLocal.init = true;
-    socketLocal.block = false;
+    socketLocal.block = block;
     socketLocal.keepAlive = keepAlive;
     socketLocal.tcpKeepAliveCount = tcpKeepAliveCount;
     socketLocal.tcpKeepAliveIdle = tcpKeepAliveIdle;

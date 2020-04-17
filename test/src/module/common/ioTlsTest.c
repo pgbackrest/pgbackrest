@@ -140,7 +140,7 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("enable options");
 
-            sckInit(true, 32, 3113, 818);
+            sckInit(false, true, 32, 3113, 818);
             sckOptionSet(fd);
 
             TEST_RESULT_INT(fcntl(fd, F_GETFD), FD_CLOEXEC, "check FD_CLOEXEC");
@@ -189,7 +189,7 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("disable keep-alive");
 
-            sckInit(false, 0, 0, 0);
+            sckInit(false, false, 0, 0, 0);
             sckOptionSet(fd);
 
             TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
@@ -200,7 +200,7 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("enable keep-alive but disable options");
 
-            sckInit(true, 0, 0, 0);
+            sckInit(false, true, 0, 0, 0);
             sckOptionSet(fd);
 
             TEST_RESULT_INT(keepAliveValue, 1, "check SO_KEEPALIVE");
