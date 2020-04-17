@@ -350,6 +350,10 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             if (cfgOptionValid(cfgOptBufferSize))
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
+            // Set IO timeout
+            if (cfgOptionValid(cfgOptIoTimeout))
+                ioTimeoutMsSet((TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * MSEC_PER_SEC));
+
             // Open the log file if this command logs to a file
             cfgLoadLogFile();
 

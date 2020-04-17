@@ -146,6 +146,7 @@ use constant CFGOPT_COMPRESS                                        => 'compress
 use constant CFGOPT_COMPRESS_TYPE                                   => 'compress-type';
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
+use constant CFGOPT_IO_TIMEOUT                                      => 'io-timeout';
 use constant CFGOPT_NEUTRAL_UMASK                                   => 'neutral-umask';
 use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
@@ -1308,6 +1309,31 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
+    },
+
+    &CFGOPT_IO_TIMEOUT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => 60,
+        &CFGDEF_ALLOW_RANGE => [.1, 3600],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_REPO_CREATE => {},
+            &CFGCMD_REPO_GET => {},
+            &CFGCMD_REPO_LS => {},
+            &CFGCMD_REPO_PUT => {},
+            &CFGCMD_REPO_RM => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+        }
     },
 
     &CFGOPT_LOCK_PATH =>

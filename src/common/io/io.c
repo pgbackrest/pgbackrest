@@ -19,6 +19,9 @@ should set their buffer size using ioBufferSize() but there may be cases where a
 
 static size_t bufferSize = (8 * IO_BUFFER_BLOCK_SIZE);
 
+// I/O timeout in milliseconds
+static TimeMSec timeoutMs = 60000;
+
 /**********************************************************************************************************************************/
 size_t
 ioBufferSize(void)
@@ -35,6 +38,26 @@ ioBufferSizeSet(size_t bufferSizeParam)
     FUNCTION_TEST_END();
 
     bufferSize = bufferSizeParam;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+TimeMSec
+ioTimeoutMs(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(timeoutMs);
+}
+
+void
+ioTimeoutMsSet(TimeMSec timeoutMsParam)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME_MSEC, timeoutMsParam);
+    FUNCTION_TEST_END();
+
+    timeoutMs = timeoutMsParam;
 
     FUNCTION_TEST_RETURN_VOID();
 }

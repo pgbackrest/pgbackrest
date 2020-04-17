@@ -6,6 +6,7 @@ Storage Helper
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "config/define.h"
@@ -383,7 +384,7 @@ storageRepoGet(const String *type, bool write)
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
             cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_S3_PARTSIZE_MIN,
-            STORAGE_S3_DELETE_MAX, host, port, STORAGE_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifyTls),
+            STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(), cfgOptionBool(cfgOptRepoS3VerifyTls),
             cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
             cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL);
     }

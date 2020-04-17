@@ -360,6 +360,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config and don't set umask");
         TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
         TEST_RESULT_BOOL(socketLocal.keepAlive, false, "   check socketLocal.keepAlive");
+        TEST_RESULT_UINT(ioTimeoutMs(), 60000, "   check io timeout");
 
         // Set a distinct umask value and test that the umask is reset by configLoad since default for neutral-umask=y
         // -------------------------------------------------------------------------------------------------------------------------
@@ -369,11 +370,13 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--log-level-file=off"));
+        strLstAdd(argList, strNew("--io-timeout=95.5"));
         strLstAdd(argList, strNew("archive-get"));
 
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for neutral-umask");
         TEST_RESULT_INT(umask(0111), 0000, "    umask was reset");
+        TEST_RESULT_UINT(ioTimeoutMs(), 95500, "   check io timeout");
 
         // Set a distinct umask value and test that the umask is not reset by configLoad with option --no-neutral-umask
         // -------------------------------------------------------------------------------------------------------------------------

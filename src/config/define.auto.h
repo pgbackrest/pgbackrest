@@ -79,6 +79,7 @@ typedef enum
     cfgDefOptForce,
     cfgDefOptHostId,
     cfgDefOptIgnoreMissing,
+    cfgDefOptIoTimeout,
     cfgDefOptLinkAll,
     cfgDefOptLinkMap,
     cfgDefOptLockPath,

@@ -107,6 +107,8 @@ Option constants
     STRING_DECLARE(CFGOPT_HOST_ID_STR);
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
     STRING_DECLARE(CFGOPT_IGNORE_MISSING_STR);
+#define CFGOPT_IO_TIMEOUT                                           "io-timeout"
+    STRING_DECLARE(CFGOPT_IO_TIMEOUT_STR);
 #define CFGOPT_LINK_ALL                                             "link-all"
     STRING_DECLARE(CFGOPT_LINK_ALL_STR);
 #define CFGOPT_LINK_MAP                                             "link-map"
@@ -416,7 +418,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            181
+#define CFG_OPTION_TOTAL                                            182
 
 /***********************************************************************************************************************************
 Command enum
@@ -477,6 +479,7 @@ typedef enum
     cfgOptForce,
     cfgOptHostId,
     cfgOptIgnoreMissing,
+    cfgOptIoTimeout,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,

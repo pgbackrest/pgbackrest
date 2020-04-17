@@ -328,6 +328,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
     },
 
+    // io-timeout option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_IO_TIMEOUT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptIoTimeout,
+    },
+    {
+        .name = "reset-" CFGOPT_IO_TIMEOUT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptIoTimeout,
+    },
+
     // link-all option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2443,6 +2455,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptFilter,
     cfgOptHostId,
     cfgOptIgnoreMissing,
+    cfgOptIoTimeout,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,

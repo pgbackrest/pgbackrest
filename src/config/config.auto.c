@@ -310,6 +310,7 @@ STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTE
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
 STRING_EXTERN(CFGOPT_HOST_ID_STR,                                   CFGOPT_HOST_ID);
 STRING_EXTERN(CFGOPT_IGNORE_MISSING_STR,                            CFGOPT_IGNORE_MISSING);
+STRING_EXTERN(CFGOPT_IO_TIMEOUT_STR,                                CFGOPT_IO_TIMEOUT);
 STRING_EXTERN(CFGOPT_LINK_ALL_STR,                                  CFGOPT_LINK_ALL);
 STRING_EXTERN(CFGOPT_LINK_MAP_STR,                                  CFGOPT_LINK_MAP);
 STRING_EXTERN(CFGOPT_LOCK_PATH_STR,                                 CFGOPT_LOCK_PATH);
@@ -684,6 +685,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_IGNORE_MISSING)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptIgnoreMissing)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_IO_TIMEOUT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptIoTimeout)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

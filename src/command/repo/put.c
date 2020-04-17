@@ -88,7 +88,7 @@ cmdStoragePut(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        storagePutProcess(ioHandleReadNew(STRDEF("stdin"), STDIN_FILENO, IO_TIMEOUT_DEFAULT));
+        storagePutProcess(ioHandleReadNew(STRDEF("stdin"), STDIN_FILENO, ioTimeoutMs()));
     }
     MEM_CONTEXT_TEMP_END();
 
