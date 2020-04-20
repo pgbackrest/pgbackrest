@@ -811,11 +811,47 @@ src/common/io/read.intern.h:
   class: core
   type: c/h
 
+src/common/io/socket/client.c:
+  class: core
+  type: c
+
+src/common/io/socket/client.h:
+  class: core
+  type: c/h
+
+src/common/io/socket/common.c:
+  class: core
+  type: c
+
+src/common/io/socket/common.h:
+  class: core
+  type: c/h
+
+src/common/io/socket/session.c:
+  class: core
+  type: c
+
+src/common/io/socket/session.h:
+  class: core
+  type: c/h
+
 src/common/io/tls/client.c:
   class: core
   type: c
 
 src/common/io/tls/client.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/session.c:
+  class: core
+  type: c
+
+src/common/io/tls/session.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/session.intern.h:
   class: core
   type: c/h
 
@@ -860,10 +896,6 @@ src/common/memContext.c:
   type: c
 
 src/common/memContext.h:
-  class: core
-  type: c/h
-
-src/common/type/object.h:
   class: core
   type: c/h
 
@@ -936,6 +968,10 @@ src/common/type/mcv.c:
   type: c
 
 src/common/type/mcv.h:
+  class: core
+  type: c/h
+
+src/common/type/object.h:
   class: core
   type: c/h
 
@@ -1599,10 +1635,6 @@ test/lib/pgBackRestTest/Env/Manifest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/LibCAuto.pm:
-  class: test/harness/auto
-  type: perl
-
 test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
   class: test/module
   type: perl
@@ -1835,10 +1867,6 @@ test/src/module/common/memContextTest.c:
   class: test/module
   type: c
 
-test/src/module/common/objectTest.c:
-  class: test/module
-  type: c
-
 test/src/module/common/regExpTest.c:
   class: test/module
   type: c
@@ -1872,6 +1900,10 @@ test/src/module/common/typeListTest.c:
   type: c
 
 test/src/module/common/typeMcvTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeObjectTest.c:
   class: test/module
   type: c
 
@@ -1944,6 +1976,10 @@ test/src/module/info/infoTest.c:
   type: c
 
 test/src/module/info/manifestTest.c:
+  class: test/module
+  type: c
+
+test/src/module/performance/storageTest.c:
   class: test/module
   type: c
 
