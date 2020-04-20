@@ -1405,6 +1405,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)

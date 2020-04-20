@@ -1327,23 +1327,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [.1, 3600],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        }
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
     },
 
     &CFGOPT_LOCK_PATH =>
