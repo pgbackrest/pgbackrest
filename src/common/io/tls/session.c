@@ -3,6 +3,8 @@ TLS Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <openssl/err.h>
+
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -84,11 +86,12 @@ Returns:
 ***********************************************************************************************************************************/
 // Helper to process error conditions
 static int
-tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool closeOk)
+tlsSessionResultProcess(TlsSession *this, int errorTls, uint64_t errorTlsDetail, int errorSys, bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
         FUNCTION_LOG_PARAM(INT, errorTls);
+        FUNCTION_LOG_PARAM(UINT64, errorTlsDetail);
         FUNCTION_LOG_PARAM(INT, errorSys);
         FUNCTION_LOG_PARAM(BOOL, closeOk);
     FUNCTION_LOG_END();
@@ -132,7 +135,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
 
         // Any other error that we cannot handle
         default:
-            THROW_FMT(ServiceError, "TLS error [%d]", errorTls);
+            THROW_FMT(ServiceError, "TLS error [%d:%" PRIu64 "]", errorTls, errorTlsDetail);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
@@ -155,9 +158,10 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
     {
         // Get TLS error and store errno in case of syscall error
         int errorTls = SSL_get_error(this->session, result);
+        long unsigned int errorTlsDetail = ERR_get_error();
         int errorSys = errno;
 
-        result = tlsSessionResultProcess(this, errorTls, errorSys, closeOk);
+        result = tlsSessionResultProcess(this, errorTls, errorTlsDetail, errorSys, closeOk);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
@@ -191,7 +195,9 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
         if (!SSL_pending(this->session))
             sckSessionReadyRead(this->socketSession);
 
-        // Read and handle errors
+        // Read and handle errors. The error queue must be cleared before this operation.
+        ERR_clear_error();
+
         result = tlsSessionResult(this, SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer)), true);
 
         // Update amount of buffer used
@@ -229,6 +235,9 @@ tlsSessionWrite(THIS_VOID, const Buffer *buffer)
 
     while (result == 0)
     {
+        // Write and handle errors. The error queue must be cleared before this operation.
+        ERR_clear_error();
+
         result = tlsSessionResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
 
         // Either a retry or all data was written
@@ -289,11 +298,13 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         cryptoError(
             SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS session");
 
-        // Negotiate TLS session
+        // Negotiate TLS session. The error queue must be cleared before this operation.
         int result = 0;
 
         while (result == 0)
         {
+            ERR_clear_error();
+
             if (sckSessionType(this->socketSession) == sckSessionTypeClient)
                 result = tlsSessionResult(this, SSL_connect(this->session), false);
             else
