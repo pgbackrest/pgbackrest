@@ -1393,7 +1393,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("I/O timeout.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Timeout used for connections and read/write operations.\n"
+            "Timeout, in seconds, used for connections and read/write operations.\n"
             "\n"
             "Note that the entire read/write operation does not need to complete within this timeout but some progress must be "
                 "made, even if it is only a single byte."

@@ -192,7 +192,7 @@
                     <config-key id="io-timeout" name="I/O Timeout">
                         <summary>I/O timeout.</summary>
 
-                        <text>Timeout used for connections and read/write operations.
+                        <text>Timeout, in seconds, used for connections and read/write operations.
 
                         Note that the entire read/write operation does not need to complete within this timeout but <i>some</i> progress must be made, even if it is only a single byte.</text>
 
