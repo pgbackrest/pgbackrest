@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.27dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-04-20" version="2.26" title="Non-blocking TLS">
             <release-core-list>
                 <release-bug-list>

@@ -1,5 +1,10 @@
 [
     {
+        "commit": "2352ecf7c0db8d12cda4759709b4cd570e1b5de4",
+        "date": "2020-04-20 15:44:31 -0400",
+        "subject": "v2.26: Non-blocking TLS"
+    },
+    {
         "commit": "93e4fe0199bdff3de34eee92b6ace99dab1acb98",
         "date": "2020-04-20 13:11:34 -0400",
         "subject": "Specify that the io-timeout option is measured in seconds."
