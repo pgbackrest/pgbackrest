@@ -90,7 +90,6 @@
         <source key="coding"/>
         <source key="contributing"/>
         <source key="documentation"/>
-        <source key="test"/>
     </source-list>
 
     <render-list>
@@ -121,7 +120,6 @@
                 e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
             -->
             <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
-            <render-source key="test" file="../../../test/README.md"/>
             <render-source key="documentation" file="../../README.md"/>
         </render>
     </render-list>
