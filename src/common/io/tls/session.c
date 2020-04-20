@@ -3,6 +3,8 @@ TLS Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <openssl/err.h>
+
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -191,7 +193,9 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
         if (!SSL_pending(this->session))
             sckSessionReadyRead(this->socketSession);
 
-        // Read and handle errors
+        // Read and handle errors. The error queue must be cleared before this operation.
+        ERR_clear_error();
+
         result = tlsSessionResult(this, SSL_read(this->session, bufRemainsPtr(buffer), (int)bufRemains(buffer)), true);
 
         // Update amount of buffer used
@@ -229,6 +233,9 @@ tlsSessionWrite(THIS_VOID, const Buffer *buffer)
 
     while (result == 0)
     {
+        // Write and handle errors. The error queue must be cleared before this operation.
+        ERR_clear_error();
+
         result = tlsSessionResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
 
         // Either a retry or all data was written
@@ -289,11 +296,13 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         cryptoError(
             SSL_set_fd(this->session, sckSessionFd(this->socketSession)) != 1, "unable to add socket to TLS session");
 
-        // Negotiate TLS session
+        // Negotiate TLS session. The error queue must be cleared before this operation.
         int result = 0;
 
         while (result == 0)
         {
+            ERR_clear_error();
+
             if (sckSessionType(this->socketSession) == sckSessionTypeClient)
                 result = tlsSessionResult(this, SSL_connect(this->session), false);
             else
