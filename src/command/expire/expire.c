@@ -130,16 +130,25 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
         }
         else
         {
-            StringList *fullList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+            // Get a list of all full backups with most recent in position 0
+            StringList *fullList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
 
-            if (strLstSize(fullList) == 1 && strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+            // If the requested backup to expire is the latest full backup
+            if (strCmp(strLstGet(fullList, 0), backupLabel) == 0)
             {
-                THROW_FMT(
-                    BackupSetInvalidError, "full backup %s cannot be expired until another full backup has been created",
-                    strPtr(backupLabel));
+                // If the latest full backup requested is the only backup or the prior full backup is not for the same db-id
+                // then the backup requested cannot be expired
+                if (strLstSize(fullList) == 1 || infoBackupDataByLabel(infoBackup, backupLabel)->backupPgId !=
+                    infoBackupDataByLabel(infoBackup, strLstGet(fullList, 1))->backupPgId)
+                {
+                    THROW_FMT(
+                        BackupSetInvalidError, "full backup %s cannot be expired until another full backup has been created",
+                        strPtr(backupLabel));
+                }
             }
 
-            // Save off what is currently the latest backup (it may be removed)
+            // Save off what is currently the latest backup (it may be removed if it is the adhoc backup or is a dependent of the
+            // adhoc backup
             const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
 
             // Expire the requested backup and any dependents
@@ -148,7 +157,16 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
             // If the latest backup was removed, then update the latest link if not a dry-run
             if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
             {
-                LOG_WARN_FMT("expiring latest backup %s", strPtr(latestBackup));
+                // If retention settings have been configured, then there may be holes in the archives. For example, if the archive
+                // for db-id=1 has 01,02,03,04,05 and F1 backup has archive start-stop 02-03 and rentention-full=1
+                // (hence retention-archive=1 and retention-archive-type=full), then when F2 backup is created and assuming its
+                // archive start-stop=05-06 then archives 01 and 04 will be removed resulting in F1 not being able to play through
+                // PITR, which is expected. Now adhoc expire is attempted on F2 - it will be allowed but now there will be no
+                // backups that can be recovered through PITR until the next full backup is created. Same problem for differential
+                // backups with retention-diff.
+                LOG_WARN_FMT(
+                    "expiring latest backup %s - the ability to perform point-in-time-recovery (PITR) may be affected",
+                    strPtr(latestBackup));
 
                 // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
                 if (!cfgOptionBool(cfgOptDryRun))
