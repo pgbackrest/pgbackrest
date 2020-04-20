@@ -1482,6 +1482,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(
                     command, VARBOOL(!strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))));
                 protocolCommandParamAdd(command, VARUINT64(file->size));
+                protocolCommandParamAdd(command, VARBOOL(!file->primary));
                 protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
                 protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
                 protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));

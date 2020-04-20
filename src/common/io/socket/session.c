@@ -3,10 +3,6 @@ Socket Session
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/select.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
 #include "common/debug.h"
@@ -86,36 +82,37 @@ sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int p
 
 /**********************************************************************************************************************************/
 void
-sckSessionReadWait(SocketSession *this)
+sckSessionReadyRead(SocketSession *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->fd != -1);
 
-    // Initialize the file descriptor set used for select
-    fd_set selectSet;
-    FD_ZERO(&selectSet);
-
-    // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-    FD_SET((unsigned int)this->fd, &selectSet);
-
-    // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-    struct timeval timeoutSelect;
-    timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-    timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-    // Determine if there is data to be read
-    int result = select(this->fd + 1, &selectSet, NULL, NULL, &timeoutSelect);
-    THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-    // If no data available after time allotted then error
-    if (!result)
+    if (!sckReadyRead(this->fd, this->timeout))
     {
         THROW_FMT(
-            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+sckSessionReadyWrite(SocketSession *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (!sckReadyWrite(this->fd, this->timeout))
+    {
+        THROW_FMT(
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strPtr(this->host),
             this->port);
     }
 

@@ -4,116 +4,161 @@ Vagrant.configure(2) do |config|
         vb.cpus = 8
     end
 
-    config.vm.box = "ubuntu/bionic64"
-    config.vm.box_version = "20180719.0.0"
-
-    # Increase disk size if the vagrant-disksize plugin is available
-    # To install the plugin: vagrant plugin install vagrant-disksize
+    # Increase disk size if the vagrant-disksize plugin is available. To install the plugin: vagrant plugin install vagrant-disksize
     if Vagrant.has_plugin?('vagrant-disksize')
       config.disksize.size = '64GB'
     end
 
-    config.vm.provider :virtualbox do |vb|
-        vb.name = "pgbackrest-test"
+    # Ubuntu 18.04
+    #
+    # Full development and test environment which should be used by default.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    config.vm.define "default", primary: true do |default|
+        default.vm.box = "ubuntu/bionic64"
+        default.vm.box_version = "20180719.0.0"
+
+        default.vm.provider :virtualbox do |vb|
+            vb.name = "pgbackrest-test"
+        end
+
+        # Provision the VM
+        default.vm.provision "shell", inline: <<-SHELL
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build Begin' && date
+
+            # Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning
+            export DEBIAN_FRONTEND=noninteractive
+
+            # Assign a host name
+            sed -i 's/^127\.0\.0\.1\t.*/127\.0\.0\.1\tlocalhost pgbackrest-test/' /etc/hosts
+            hostnamectl set-hostname pgbackrest-test
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Update Apt' && date
+            apt-get update
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Synchronize Date' && date
+            apt-get install -y ntpdate
+            ntpdate pool.ntp.org
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Use Google DNS' && date
+            echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
+            /etc/init.d/networking restart
+
+            # Set time sync settings so builds don't fail with clock skew errors. If a build does fail with "clock skew detected",
+            # rerun the following at the command line.
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Time Sync Settings' && date
+            sudo /etc/init.d/virtualbox-guest-utils stop
+            sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
+
+            # Create /tmp/pgbackrest and give ownership to root so we know unit tests are not writing there
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Create /tmp/pgbackrest owned by root' && date
+            sudo mkdir -p /tmp/pgbackrest
+            sudo chown root:root /tmp/pgbackrest
+            sudo chmod 700 /tmp/pgbackrest
+
+            # Mount tmpfs at /home/vagrant/test for faster testing
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Mount tmpfs' && date
+            sudo -u vagrant mkdir -p -m 770 /home/vagrant/test
+            echo 'tmpfs /home/vagrant/test tmpfs size=2560M 0 1' >> /etc/fstab
+            mount -a
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Perl Modules' && date
+            apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-libyaml-perl
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Build Tools' && date
+            apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
+                 libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Docker' && date
+            curl -fsSL https://get.docker.com | sh
+            sudo usermod -aG docker vagrant
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Dev Utilities' && date
+            apt-get install -y vim htop
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo '/tmp/pgbackrest owned by root so tests do not use it' && date
+            mkdir -p 700 /tmp/pgbackrest
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'create link to repo in old location to make the transition less painful' && date
+            ln -s /home/vagrant/pgbackrest /backrest
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            # echo 'Install TeX Live' && date
+            # Not installed by default since latex is only needed for releases and PDF development/testing
+            # apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+            # apt-get install -y texlive-font-utils
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build VM Images' && date
+            sudo su - vagrant -c '/backrest/test/test.pl --vm-build'
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build End' && date
+
+            # Useful commands
+            #-----------------------------------------------------------------------------------------------------------------------
+            # Force remove all containers:
+            # docker rm -f $(docker ps -a -q)
+            # Force remove all images:
+            # docker rmi -f $(docker images -q)
+        SHELL
+
+        # Mount pgbackrest path for testing
+        default.vm.synced_folder "..", "/home/vagrant/pgbackrest"
     end
 
-    # Provision the VM
-    config.vm.provision "shell", inline: <<-SHELL
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Build Begin' && date
+    # FreeBSD 12
+    #
+    # Basic environment to build pgBackRest.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    config.vm.define "fb12", autostart: false do |fb12|
+        fb12.vm.box = "generic/freebsd12"
+        fb12.vm.box_version = "2.0.6"
 
-        # Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning
-        export DEBIAN_FRONTEND=noninteractive
+        fb12.vm.provider :virtualbox do |vb|
+            vb.name = "pgbackrest-test-fb12"
+        end
 
-        # Assign a host name
-        sed -i 's/^127\.0\.0\.1\t.*/127\.0\.0\.1\tlocalhost pgbackrest-test/' /etc/hosts
-        hostnamectl set-hostname pgbackrest-test
+        # Provision the VM
+        fb12.vm.provision "shell", inline: <<-SHELL
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build Begin' && date
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Update Apt' && date
-        apt-get update
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Install Build Tools' && date
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Synchronize Date' && date
-        apt-get install -y ntpdate
-        ntpdate pool.ntp.org
+            pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Use Google DNS' && date
-        echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
-        /etc/init.d/networking restart
+            #-----------------------------------------------------------------------------------------------------------------------
+            echo 'Build End' && date
+        SHELL
+    end
 
-        # Set time sync settings so builds don't fail with clock skew errors. If a build does fail with "clock skew detected",
-        # rerun the following at the command line.
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Time Sync Settings' && date
-        sudo /etc/init.d/virtualbox-guest-utils stop
-        sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
+    # MacOS
+    #
+    # Basic environment to build pgBackRest using homebrew installed in the local user account.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # cd ~
+    # mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+    # homebrew/bin/brew install libpq libxml2
+    # export LDFLAGS="-L${HOME?}/homebrew/opt/openssl@1.1/lib -L${HOME?}/homebrew/opt/libpq/lib -L${HOME?}/homebrew/opt/libxml2/lib"
+    # export CPPFLAGS="-I${HOME?}/homebrew/opt/openssl@1.1/include -I/${HOME?}/homebrew/opt/libpq/include"
+    # export CPPFLAGS="${CPPFLAGS?} -I${HOME?}/homebrew/opt/libxml2/include/libxml2"
+    #
+    # cd [repo]/src && ./configure && make
 
-        # Create /tmp/pgbackrest and give ownership to root so we know unit tests are not writing there
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Create /tmp/pgbackrest owned by root' && date
-        sudo mkdir -p /tmp/pgbackrest
-        sudo chown root:root /tmp/pgbackrest
-        sudo chmod 700 /tmp/pgbackrest
-
-        # Mount tmpfs at /home/vagrant/test for faster testing
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Mount tmpfs' && date
-        sudo -u vagrant mkdir -p -m 770 /home/vagrant/test
-        echo 'tmpfs /home/vagrant/test tmpfs size=2560M 0 1' >> /etc/fstab
-        mount -a
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Perl Modules' && date
-        apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-libyaml-perl
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Build Tools' && date
-        apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Docker' && date
-        curl -fsSL https://get.docker.com | sh
-        sudo usermod -aG docker vagrant
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Dev Utilities' && date
-        apt-get install -y vim htop
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo '/tmp/pgbackrest owned by root so tests do not use it' && date
-        mkdir -p 700 /tmp/pgbackrest
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'create link to repo in old location to make the transition less painful' && date
-        ln -s /home/vagrant/pgbackrest /backrest
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # echo 'Install TeX Live' && date
-        # Not installed by default since latex is only needed for releases and PDF development/testing
-        # apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
-        # apt-get install -y texlive-font-utils
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Build VM Images' && date
-        sudo su - vagrant -c '/backrest/test/test.pl --vm-build'
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Build End' && date
-
-        # Useful commands
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Force remove all containers:
-        # docker rm -f $(docker ps -a -q)
-        # Force remove all images:
-        # docker rmi -f $(docker images -q)
-    SHELL
-
-  # Don't share the default vagrant folder
-  config.vm.synced_folder ".", "/vagrant", disabled: true
-
-  # Mount pgbackrest path for testing
-  config.vm.synced_folder "..", "/home/vagrant/pgbackrest"
+    # Don't share the default vagrant folder
+    config.vm.synced_folder ".", "/vagrant", disabled: true
 end

@@ -146,9 +146,11 @@ use constant CFGOPT_COMPRESS                                        => 'compress
 use constant CFGOPT_COMPRESS_TYPE                                   => 'compress-type';
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
+use constant CFGOPT_IO_TIMEOUT                                      => 'io-timeout';
 use constant CFGOPT_NEUTRAL_UMASK                                   => 'neutral-umask';
 use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
+use constant CFGOPT_SCK_BLOCK                                       => 'sck-block';
 use constant CFGOPT_SCK_KEEP_ALIVE                                  => 'sck-keep-alive';
 use constant CFGOPT_TCP_KEEP_ALIVE_COUNT                            => 'tcp-keep-alive-count';
 use constant CFGOPT_TCP_KEEP_ALIVE_IDLE                             => 'tcp-keep-alive-idle';
@@ -1125,6 +1127,15 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_SCK_BLOCK =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+    },
+
     &CFGOPT_SCK_KEEP_ALIVE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1312,6 +1323,15 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
+    },
+
+    &CFGOPT_IO_TIMEOUT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => 60,
+        &CFGDEF_ALLOW_RANGE => [.1, 3600],
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
     },
 
     &CFGOPT_LOCK_PATH =>

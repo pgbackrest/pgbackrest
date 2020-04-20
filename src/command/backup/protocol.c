@@ -39,11 +39,11 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
             // Backup the file
             BackupFileResult result = backupFile(
                 varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-                varStr(varLstGet(paramList, 3)), varBool(varLstGet(paramList, 4)),
-                varUInt64(varLstGet(paramList, 5)), varStr(varLstGet(paramList, 6)),
-                varBool(varLstGet(paramList, 7)), (CompressType)varUIntForce(varLstGet(paramList, 8)),
-                varIntForce(varLstGet(paramList, 9)), varStr(varLstGet(paramList, 10)), varBool(varLstGet(paramList, 11)),
-                varStr(varLstGet(paramList, 12)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc, varStr(varLstGet(paramList, 12)));
+                varBool(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)), varBool(varLstGet(paramList, 5)),
+                varUInt64(varLstGet(paramList, 6)), varStr(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)),
+                (CompressType)varUIntForce(varLstGet(paramList, 9)), varIntForce(varLstGet(paramList, 10)),
+                varStr(varLstGet(paramList, 11)), varBool(varLstGet(paramList, 12)),
+                varStr(varLstGet(paramList, 13)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc, varStr(varLstGet(paramList, 13)));
 
             // Return backup result
             VariantList *resultList = varLstNew();

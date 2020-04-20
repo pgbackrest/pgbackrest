@@ -249,11 +249,15 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("ioBufferSize() and ioBufferSizeSet()"))
+    if (testBegin("ioBufferSize()/ioBufferSizeSet() and ioTimeoutMs()/ioTimeoutMsSet()"))
     {
         TEST_RESULT_UINT(ioBufferSize(), 65536, "check initial buffer size");
         TEST_RESULT_VOID(ioBufferSizeSet(16384), "set buffer size");
         TEST_RESULT_UINT(ioBufferSize(), 16384, "check buffer size");
+
+        TEST_RESULT_UINT(ioTimeoutMs(), 60000, "check initial timeout ms");
+        TEST_RESULT_VOID(ioTimeoutMsSet(77777), "set timeout ms");
+        TEST_RESULT_UINT(ioTimeoutMs(), 77777, "check timeout ms");
     }
 
     // *****************************************************************************************************************************

@@ -29,12 +29,47 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                             <!-- Actually tester, but we don't have a tag for that yet -->
+                             <release-item-reviewer id="slava.pagerduty"/>
+                        </release-item-contributor-list>
+
+                        <p>Non-blocking TLS implementation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Only limit backup copy size for WAL-logged files.</p>
+
+                        <p>The prior behavior could possibly lead to <file>postgresql.conf</file> or <file>postgresql.auto.conf</file> being truncated in the backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-ideator id="marc.cousin"/>
                              <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p><proper>TCP</proper> keep-alive options are configurable.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <br-option>io-timeout</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>poll()</code> instead of <code>select()</code> for monitoring socket read/write ready.</p>
+                    </release-item>
+
                 </release-improvement-list>
 
                 <release-development-list>
@@ -8353,6 +8388,11 @@
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="slava.pagerduty">
+            <contributor-name-display>slava-pagerduty</contributor-name-display>
+            <contributor-id type="github">slava-pagerduty</contributor-id>
         </contributor>
 
         <contributor id="stefan.fercot">

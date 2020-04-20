@@ -73,7 +73,7 @@ main(int argListSize, const char *argList[])
     int result = 0;
 
     // Use aggressive keep-alive settings for testing
-    sckInit(true, 2, 5, 5);
+    sckInit(false, true, 2, 5, 5);
 
     // Set neutral umask for testing
     umask(0000);

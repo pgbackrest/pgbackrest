@@ -9,11 +9,7 @@ Common IO functions.
 #include <stddef.h>
 
 #include <common/io/read.h>
-
-/***********************************************************************************************************************************
-Default IO timeout to use when nothing else is configured
-***********************************************************************************************************************************/
-#define IO_TIMEOUT_DEFAULT                                          60000
+#include <common/time.h>
 
 /***********************************************************************************************************************************
 Functions
@@ -30,5 +26,10 @@ Getters/Setters
 // Buffer size
 size_t ioBufferSize(void);
 void ioBufferSizeSet(size_t bufferSize);
+
+// I/O timeout in milliseconds. Used to timeout on connections and read/write operations. Note that an *entire* read/write operation
+// does not need to take place within this timeout but at least some progress needs to be made, even if it is only a byte.
+TimeMSec ioTimeoutMs(void);
+void ioTimeoutMsSet(TimeMSec timeout);
 
 #endif

@@ -340,6 +340,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             if (cfgOptionValid(cfgOptSckKeepAlive))
             {
                 sckInit(
+                    cfgOptionBool(cfgOptSckBlock),
                     cfgOptionBool(cfgOptSckKeepAlive),
                     cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
                     cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
@@ -349,6 +350,10 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Set IO buffer size
             if (cfgOptionValid(cfgOptBufferSize))
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
+
+            // Set IO timeout
+            if (cfgOptionValid(cfgOptIoTimeout))
+                ioTimeoutMsSet((TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * MSEC_PER_SEC));
 
             // Open the log file if this command logs to a file
             cfgLoadLogFile();

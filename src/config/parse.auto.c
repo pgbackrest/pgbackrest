@@ -328,6 +328,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
     },
 
+    // io-timeout option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_IO_TIMEOUT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptIoTimeout,
+    },
+    {
+        .name = "reset-" CFGOPT_IO_TIMEOUT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptIoTimeout,
+    },
+
     // link-all option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2228,6 +2240,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
     },
 
+    // sck-block option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_SCK_BLOCK,
+        .val = PARSE_OPTION_FLAG | cfgOptSckBlock,
+    },
+    {
+        .name = "no-" CFGOPT_SCK_BLOCK,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckBlock,
+    },
+    {
+        .name = "reset-" CFGOPT_SCK_BLOCK,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckBlock,
+    },
+
     // sck-keep-alive option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2443,6 +2470,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptFilter,
     cfgOptHostId,
     cfgOptIgnoreMissing,
+    cfgOptIoTimeout,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,
@@ -2566,6 +2594,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoRetentionFull,
     cfgOptRepoType,
     cfgOptResume,
+    cfgOptSckBlock,
     cfgOptSckKeepAlive,
     cfgOptSet,
     cfgOptSort,

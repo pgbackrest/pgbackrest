@@ -36,14 +36,16 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 BackupFileResult
 backupFile(
-    const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, const String *pgFileChecksum, bool pgFileChecksumPage,
-    uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference, CompressType repoFileCompressType,
-    int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType, const String *cipherPass)
+    const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, bool pgFileCopyExactSize, const String *pgFileChecksum,
+    bool pgFileChecksumPage, uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference,
+    CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType,
+    const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pgFile);                         // Database file to copy to the repo
         FUNCTION_LOG_PARAM(BOOL, pgFileIgnoreMissing);              // Is it OK if the database file is missing?
         FUNCTION_LOG_PARAM(UINT64, pgFileSize);                     // Size of the database file
+        FUNCTION_LOG_PARAM(BOOL, pgFileCopyExactSize);              // Copy only pgFileSize bytes even if the file has grown
         FUNCTION_LOG_PARAM(STRING, pgFileChecksum);                 // Checksum to verify the database file
         FUNCTION_LOG_PARAM(BOOL, pgFileChecksumPage);               // Should page checksums be validated
         FUNCTION_LOG_PARAM(UINT64, pgFileChecksumPageLsnLimit);     // Upper LSN limit to which page checksums must be valid
@@ -86,7 +88,9 @@ backupFile(
                 // since the manifest was built we don't need to consider the extra bytes since they will be replayed from WAL
                 // during recovery.
                 IoRead *read = storageReadIo(
-                    storageNewReadP(storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .limit = VARUINT64(pgFileSize)));
+                    storageNewReadP(
+                        storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing,
+                        .limit = pgFileCopyExactSize ? VARUINT64(pgFileSize) : NULL));
                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                 ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -196,7 +200,7 @@ backupFile(
             // during recovery.
             StorageRead *read = storageNewReadP(
                 storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible,
-                .limit = VARUINT64(pgFileSize));
+                .limit = pgFileCopyExactSize ? VARUINT64(pgFileSize) : NULL);
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 

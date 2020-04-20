@@ -188,6 +188,17 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - IO-TIMEOUT KEY -->
+                    <config-key id="io-timeout" name="I/O Timeout">
+                        <summary>I/O timeout.</summary>
+
+                        <text>Timeout used for connections and read/write operations.
+
+                        Note that the entire read/write operation does not need to complete within this timeout but <i>some</i> progress must be made, even if it is only a single byte.</text>
+
+                        <example>120</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
