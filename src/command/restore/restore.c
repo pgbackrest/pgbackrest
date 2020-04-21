@@ -764,32 +764,28 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Is this the . path, i.e. the root path for this list?
-    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
-
-    // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
-    if (!cleanData->delta)
+    // Skip all . paths because they have already been cleaned on the previous level of recursion
+    if (strEq(info->name, DOT_STR))
     {
-        if (!dotPath)
-        {
-            THROW_FMT(
-                PathNotEmptyError,
-                "unable to restore to path '%s' because it contains files\n"
-                "HINT: try using --delta if this is what you intended.",
-                strPtr(cleanData->targetPath));
-        }
-
         FUNCTION_TEST_RETURN_VOID();
         return;
     }
 
+    // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
+    if (!cleanData->delta)
+    {
+        THROW_FMT(
+            PathNotEmptyError,
+            "unable to restore to path '%s' because it contains files\n"
+            "HINT: try using --delta if this is what you intended.",
+            strPtr(cleanData->targetPath));
+    }
+
     // Construct the name used to find this file/link/path in the manifest
-    const String *manifestName = dotPath ?
-        cleanData->targetName : strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
+    const String *manifestName = strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
 
     // Construct the path of this file/link/path in the PostgreSQL data directory
-    const String *pgPath = dotPath ?
-        cleanData->targetPath : strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
+    const String *pgPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
 
     switch (info->type)
     {
@@ -841,23 +837,18 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             if (manifestPath != NULL)
             {
                 // Check ownership/permissions
-                if (dotPath)
-                {
-                    restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
-                    restoreCleanMode(pgPath, manifestPath->mode, info);
-                }
-                // Recurse into the path
-                else
-                {
-                    RestoreCleanCallbackData cleanDataSub = *cleanData;
-                    cleanDataSub.targetName = strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
-                    cleanDataSub.targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
-                    cleanDataSub.basePath = false;
+                restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
+                restoreCleanMode(pgPath, manifestPath->mode, info);
 
-                    storageInfoListP(
-                        storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
-                        .errorOnMissing = true, .sortOrder = sortOrderAsc);
-                }
+                // Recurse into the path
+                RestoreCleanCallbackData cleanDataSub = *cleanData;
+                cleanDataSub.targetName = strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
+                cleanDataSub.targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
+                cleanDataSub.basePath = false;
+
+                storageInfoListP(
+                    storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
+                    .errorOnMissing = true, .sortOrder = sortOrderAsc);
             }
             else
             {
@@ -1050,6 +1041,14 @@ restoreCleanBuild(Manifest *manifest)
                     // to fix permissions/ownership on the target paths.
                     if (delta)
                         LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
+
+                    // Check target ownership/permissions
+                    const ManifestPath *manifestPath = manifestPathFind(cleanData->manifest, cleanData->targetName);
+                    StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .followLink = true);
+
+                    restoreCleanOwnership(
+                        cleanData->targetPath, manifestPath->user, manifestPath->group, info.userId, info.groupId, false);
+                    restoreCleanMode(cleanData->targetPath, manifestPath->mode, &info);
 
                     // Clean the target
                     storageInfoListP(
