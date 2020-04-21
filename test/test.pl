@@ -961,10 +961,10 @@ eval
                             "mkdir /root/package-src && " .
                             "wget -q -O /root/package-src/pgbackrest-conf.patch " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
-                                "f=rpm/redhat/master/non-common/pgbackrest/master/pgbackrest-conf.patch' && " .
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest-conf.patch' && " .
                             "wget -q -O /root/package-src/pgbackrest.spec " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
-                                "f=rpm/redhat/master/non-common/pgbackrest/master/pgbackrest.spec'\"");
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest.spec'\"");
 
                         # Create build directories
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
