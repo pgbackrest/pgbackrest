@@ -1706,7 +1706,7 @@ my %hConfigDefine =
             &CFGCMD_EXPIRE => {},
         }
     },
-
+# CSHANG Should probably change this to a string or however buffer size handles entering 1GB, 10KB, etc (which I can't seem to find at the moment)
     &CFGOPT_REPO_RETENTION_PERIOD =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1715,10 +1715,6 @@ my %hConfigDefine =
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX], ### TODO Determine proper interval ?
-        &CFGDEF_NAME_ALT =>
-        {
-            'retention-period' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
