@@ -96,6 +96,72 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel)
 }
 
 /***********************************************************************************************************************************
+Expire backups based on dates
+***********************************************************************************************************************************/
+static unsigned int
+expireTimeBackup(InfoBackup *infoBackup)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        unsigned int backupRetentionDays = cfgOptionTest(cfgOptRepoRetentionPeriod) ? cfgOptionUInt(cfgOptRepoRetentionPeriod) : 0;
+        // Find all the expired differential backups
+        if (backupRetentionDays > 0)
+        {
+            // Get the min date to keep
+            TimeMSec minDateToKeepMSec = timeMSec();
+            time_t minDateToKeepSec = (time_t)(minDateToKeepMSec / MSEC_PER_SEC - backupRetentionDays * 24 * 3600);
+
+            const String *lastBackupLabelToKeep = NULL;
+            /*
+             * Find out the point where we will have to stop purging backups.
+             * We start by the end of the list, skipping any non-full backup.
+             * This way, if we have F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration at D2b,
+             * we will purge only F1, D1a, D1b and D1c, keeping the next full backups and all intermediate non-full
+             */
+            unsigned int i = infoBackupDataTotal(infoBackup);
+            if (i > 0)
+            {
+                do
+                {
+                    i--;
+                    InfoBackupData info = infoBackupData(infoBackup, i);
+                    lastBackupLabelToKeep = info.backupLabel;
+                    if ((info.backupTimestampStart < minDateToKeepSec) && (backupType(info.backupType) == backupTypeFull))
+                    {
+                        // We can start deleting after this backup. This way, we keep one full backup and the potential differentials in between
+                        break;
+                    }
+                } while (i != 0);
+                LOG_INFO_FMT("deleting all backups older than %s", strPtr(lastBackupLabelToKeep));
+                String *backupExpired = strNew("");
+                /*
+                 * Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry
+                 */
+                while (strCmp(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep) != 0)
+                {
+                    result++;
+                    expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel, backupExpired);
+                }
+                LOG_INFO_FMT(
+                    "expire backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(UINT, result);
+}
+
+
+/***********************************************************************************************************************************
 Expire differential backups
 ***********************************************************************************************************************************/
 static unsigned int
@@ -650,7 +716,14 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        expireFullBackup(infoBackup);
+        if (cfgOptionTest(cfgOptRepoRetentionDiff))
+        {
+            expireTimeBackup(infoBackup);
+        }
+        else
+        {
+            expireFullBackup(infoBackup);
+        }
         expireDiffBackup(infoBackup);
 
         // Store the new backup info only if the dry-run mode is disabled

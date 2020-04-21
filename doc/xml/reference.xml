@@ -402,6 +402,16 @@
                         <example>2</example>
                     </config-key>
 
+                    <!-- CONFIG - RETENTION SECTION - REPO-DAYS-RETENTION KEY -->
+                    <config-key id="repo-retention-period" name="Retention Period">
+                        <summary>Maximum age for the last backup retained.</summary>
+
+                        <text>Any backup older before the first full backup older than <setting>repo-retention-period</setting> days will be removed from the repository. When not defined, only the number of backup retention rules will be applied.</text>
+
+                        <example>30</example>
+                    </config-key>
+
+
                     <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->
                     <config-key id="repo-retention-diff" name="Differential Retention">
                         <summary>Number of differential backups to retain.</summary>

@@ -197,6 +197,7 @@ use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
 use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
+use constant CFGOPT_REPO_RETENTION_PERIOD                           => CFGDEF_PREFIX_REPO . '-retention-period';
 
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
@@ -1698,6 +1699,25 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        }
+    },
+
+    &CFGOPT_REPO_RETENTION_PERIOD =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX], ### TODO Determine proper interval ?
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-period' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
