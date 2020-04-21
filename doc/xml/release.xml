@@ -13,6 +13,19 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.27dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>--set</br-option> option to the <cmd>expire</cmd> command.</p>
+
+                        <p>Allow the user to remove a specified backup regardless of retention settings.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
         </release>
 
         <release date="2020-04-20" version="2.26" title="Non-blocking TLS">
@@ -28,18 +41,6 @@
                         <p><proper>MacOS</proper> was not happy about this though other platforms seemed to work fine.</p>
                     </release-item>
                 </release-bug-list>
-
-                <release-feature-list>
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Add <br-option>--set</br-option> option to the <cmd>expire</cmd> command.</p>
-
-                        <p>Allow the user to remove a specified backup regardless of retention settings.</p>
-                    </release-item>
-                </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
