@@ -1,5 +1,415 @@
 [
     {
+        "commit": "2352ecf7c0db8d12cda4759709b4cd570e1b5de4",
+        "date": "2020-04-20 15:44:31 -0400",
+        "subject": "v2.26: Non-blocking TLS"
+    },
+    {
+        "commit": "93e4fe0199bdff3de34eee92b6ace99dab1acb98",
+        "date": "2020-04-20 13:11:34 -0400",
+        "subject": "Specify that the io-timeout option is measured in seconds."
+    },
+    {
+        "commit": "1c319e051b26930da69bef8eebbe1414db820a1a",
+        "date": "2020-04-20 11:49:11 -0400",
+        "subject": "Remove stray copy of LibCAuto.pm.",
+        "body": "This was removed in 79cfd3ae but accidentally added back in 2fa69af8, probably due to an incorrectly resolved merge conflict."
+    },
+    {
+        "commit": "4b28f79c92b497eb336ab9b180f029a6bffda5c1",
+        "date": "2020-04-20 11:08:58 -0400",
+        "subject": "Clear error queue before each SSL_*() call.",
+        "body": "The documentation recommends clearing the error queue before each SSL_*() call.\n\nSince we always check the results of SSL_*() for errors instead of blindly calling SSL_get_error() it's not clear this makes any difference, but it still seems like a good idea to be sure there are no stray errors in the queue."
+    },
+    {
+        "commit": "6f41ce1182c3417f4a7844cbe5de5875c27e4363",
+        "date": "2020-04-20 09:45:08 -0400",
+        "subject": "Add expire to commands that support io-timeout.",
+        "body": "The command list was not complete. Copy the command list from buffer-size to make sure all commands are included."
+    },
+    {
+        "commit": "21a1cf9a2f18cc294474efda064a2ae08cc8d18d",
+        "date": "2020-04-17 09:55:40 -0400",
+        "subject": "Add sck-block option.",
+        "body": "This option puts sockets into blocking mode.\n\nIt is only intended for internal use and is not included in the test matrix."
+    },
+    {
+        "commit": "5d25e508aeb8febd509f26225425b391fe45ad06",
+        "date": "2020-04-17 09:18:52 -0400",
+        "subject": "Add io-timeout option.",
+        "body": "Timeout used for connections and read/write operations.\n\nNote that the entire read/write operation does not need to complete within this timeout but some progress must be made, even if it is only a single byte."
+    },
+    {
+        "commit": "c88684e2bf32cef8cc185cca4ef213457b03fa62",
+        "date": "2020-04-16 16:05:44 -0400",
+        "subject": "Non-blocking TLS implementation.",
+        "body": "The prior blocking implementation seemed to be prone to locking up on some (especially recent) kernel versions. Since we were unable to reproduce the issue in a development environment we can only speculate as to the cause, but there is a good chance that blocking sockets were the issue or contributed to the issue.\n\nSo move to a non-blocking implementation to hopefully clear up these issues. Testing in production environments that were prone to locking shows that the approach is promising and at the very least not a regression.\n\nThe main differences from the blocking version are the non-blocking connect() implementation and handling of WANT_READ/WANT_WRITE retries for all SSL*() functions.\n\nTimeouts in the tests needed to be increased because socket connect() and TLS SSL_connect() were not included in the timeout before. The tests don't run any slower, though. In fact, all platforms but Ubuntu 12.04 worked fine with the shorter timeouts."
+    },
+    {
+        "commit": "2260a7512aab7a50473466cc524aabb2a5002edf",
+        "date": "2020-04-16 15:02:33 -0400",
+        "subject": "Use poll() instead of select() for monitoring socket read/write ready.",
+        "body": "select() is a bit old-fashioned and cumbersome to use. Since the select() code needed to be modified to handle write ready this seems like a good time to upgrade to poll().\n\npoll() has been around for a long time so there doesn't seem to be any need to provide a fallback to select().\n\nAlso change the error on timeout from FileReadError to ProtocolError. This works better for read vs. write and failure to poll() is indicative of a protocol error or unexpected EOF."
+    },
+    {
+        "commit": "e5e81d3839648617266285ca519f76835b79f611",
+        "date": "2020-04-16 14:48:16 -0400",
+        "subject": "Only limit backup copy size for WAL-logged files.",
+        "body": "The prior behavior introduced in dcddf3a5 could possibly lead to postgresql.conf or postgresql.auto.conf being truncated in the backup since they are copied via tmp files and could change size during the backup.\n\nIn general it seems safer to limit this feature to WAL-logged files which will be reconstructed during recovery."
+    },
+    {
+        "commit": "85f4eef55e62dcaf05705ce3123cb04b59c2a1f4",
+        "date": "2020-04-16 14:13:53 -0400",
+        "subject": "Add Cirrus CI and Vagrant configuration for FreeBSD and MacOS.",
+        "body": "Building on these platforms gives us better coverage for our build code. Cirrus CI was chosen because it is the only service that supports FreeBSD (that we could find).\n\nThe FreedBSD configuration for Vagrant is currently just enough to perform a build.\n\nThe MacOS configuration is not actually for Vagrant (yet) but does show the steps needed to setup the build environment on MacOS."
+    },
+    {
+        "commit": "09fc69f3e8a0f8ccf6ce95b5d7e59b68b00d14ff",
+        "date": "2020-04-16 13:58:46 -0400",
+        "subject": "Make existing Vagrantfile configuration the default.",
+        "body": "This allows us to add new configurations mostly without changing the behavior of vagrant from the command line, i.e. vagrant up and vagrant ssh will continue to bring up the default configuration.\n\nHowever, vagrant destroy -f will remove all configurations. That's really only a change in behavior if more than one configuration is running, which is not currently possible."
+    },
+    {
+        "commit": "34d7338604b423b858e315db58a7a0976ad30e17",
+        "date": "2020-04-16 11:50:35 -0400",
+        "subject": "Fix headers for FreeBSD/MacOS.",
+        "body": "It looks like Linux is tolerant of the BSD headers so remove the conditionals.\n\nEventually it might be a good idea to include these based on configure rules but that seems over overkill for now."
+    },
+    {
+        "commit": "492180837ee654bb5052bbaca3d04111ee89a4c6",
+        "date": "2020-04-14 18:03:41 -0400",
+        "subject": "Classify all .h files as C.",
+        "body": "Github classifies many C header files as C++, perhaps because they don't contain anything definitively C-like.\n\nAdd an override to ensure .h files are always classified as C since this project contains no C++."
+    },
+    {
+        "commit": "0c07c5111fb73821abed678166cc7bfb132f2285",
+        "date": "2020-04-14 15:33:43 -0400",
+        "subject": "Remove empty subexpression from manifest regular expression.",
+        "body": "MacOS was not happy about this though other platforms seemed to work fine.\n\nThis was likely a typo or a relic from refactoring."
+    },
+    {
+        "commit": "8fb0a8fd6ed7453202ca6bee6516bb5489f9a555",
+        "date": "2020-04-14 15:28:43 -0400",
+        "subject": "Remove incorrect Github id.",
+        "body": "This was a copy-pasto from another contributor entry."
+    },
+    {
+        "commit": "02ebba02b29739b0ff7a1c8e3833c3ff8732041c",
+        "date": "2020-04-14 15:23:19 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "9ffa2c618fe54710a37448302a0efa1368a041f0",
+        "date": "2020-04-14 15:22:49 -0400",
+        "subject": "Use SocketSession/TlsSession for test servers.",
+        "body": "A session looks much the same whether it is initiated from the client or the server, so use the session objects to implement the TLS, HTTP, and S3 test servers.\n\nFor TLS, at least, there are some differences between client and server sessions so add a client/server type to SocketSession to determine how the session was initiated.\n\nAside from reducing code duplication, the main advantage is that the test server will now timeout rather than hanging indefinitely when less input that expected is received."
+    },
+    {
+        "commit": "71fb28bf3f7387a225c8a32b810772f3f2b09820",
+        "date": "2020-04-14 15:20:50 -0400",
+        "subject": "Always throw error when OpenSSL returns SSL_ERROR_SYSCALL.",
+        "body": "Previously an error was only thrown when errno was set but in practice this is usually not the case. This may have something to do with getting errno late but attempts to get it earlier have not been successful. It appears that errno usually gets cleared and spot research seems to indicate that other users have similar issues.\n\nAn error at this point indicates unexpected EOF so it seems better to just throw an error all the time and be consistent.\n\nTo test this properly our test server needs to call SSL_shutdown() except when the client expects this error."
+    },
+    {
+        "commit": "9f2d647badb666c31ba25c4df8c7294331287a23",
+        "date": "2020-04-14 15:02:18 -0400",
+        "subject": "Split session functionality of TlsClient out into TlsSession.",
+        "body": "This abstraction allows the session code to be shared between the TLS client and (upcoming) server code.\n\nSession management is no longer implemented in TlsClient so the HttpClient was updated to free and create sessions as needed. No test changes were required for HttpClient so the functionality should be unchanged.\n\nMechanical changes to the TLS tests were required to use TlsSession where appropriate rather than TlsClient. There should be no change in functionality other than how sessions are managed, i.e. using tlsClientOpen()/tlsSessionFree() rather than just tlsClientOpen()."
+    },
+    {
+        "commit": "c9481bb95f1edaa93b26f8fce767950e00b40543",
+        "date": "2020-04-14 14:51:14 -0400",
+        "subject": "Update contributing.xml to use Ubuntu 18.04.",
+        "body": "Ubuntu 19.04 was EOL in January and has been removed from the repository servers.\n\nIt may be best to stick to LTS versions from now on."
+    },
+    {
+        "commit": "f03d1b5b7b880b25a19a087ec5e29e3393e2ce43",
+        "date": "2020-04-14 11:43:50 -0400",
+        "subject": "Use __noreturn_ on error functions when coverage testing.",
+        "body": "The errorInternalThrowSys*() functions were marked as returning during coverage testing even when they had no possibility to return, i.e. the error parameter was set to constant true. This meant the compiler would treat the functions as returning even when they would not.\n\nInstead create completely separate functions for coverage to use for THROW_ON_SYS_ERROR*() that can return and leave the regular functions marked __noreturn__."
+    },
+    {
+        "commit": "b7d8d61526e1ed7e617953fc36736d89f9295252",
+        "date": "2020-04-13 16:59:02 -0400",
+        "subject": "Split session functionality of SocketClient out into SocketSession.",
+        "body": "This abstraction allows the session code to be shared between the socket client and (upcoming) server code. There should no difference in how the code works -- only the organization has changed. Note that no changes to the tests were required.\n\nThis same abstraction will be required for TlsClient but that will be done in a separate commit because it requires test changes."
+    },
+    {
+        "commit": "b5347070af5e3e5b9d6a44555aed0212b5cd022a",
+        "date": "2020-04-13 16:44:29 -0400",
+        "subject": "Remove extraneous assignment.",
+        "body": "This is likely leftover cruft from a prior refactor."
+    },
+    {
+        "commit": "9d2223b18881bf862d6ca5da7a2ad28b86421fb1",
+        "date": "2020-04-13 14:57:01 -0400",
+        "subject": "Improve comments and fix typos in the storage interface."
+    },
+    {
+        "commit": "310d42ca35431bb196dfc81300b7d8dfa96bbd35",
+        "date": "2020-04-13 14:51:04 -0400",
+        "subject": "Correct option name in test.pl help."
+    },
+    {
+        "commit": "71ce6375571bf9253b7aebad5ee44774fb3cbb07",
+        "date": "2020-04-12 09:01:41 -0400",
+        "subject": "Use standard HARNESS_FORK*() macros to fork test servers.",
+        "body": "These forks were done in a custom way (not sure why) and lack the capability of the standard macros for the parent to wait for child exit.\n\nThis mean that the server would continue to run after the tests were complete and that multiple servers could run at once. This caused subtle timing and connection issues that required larger timeouts to resolve.\n\nDon't change the timeouts here since they need to be adjusted in future commits anyway."
+    },
+    {
+        "commit": "42246401b8805c14d8b2a6938dfef152d2905d70",
+        "date": "2020-04-11 16:24:45 -0400",
+        "subject": "Add comment."
+    },
+    {
+        "commit": "674b65886face9b2f7966c4f9ff1dc321b90e61c",
+        "date": "2020-04-11 16:21:03 -0400",
+        "subject": "Suppress uncoverable error in common/io-tls test module.",
+        "body": "It is pretty much impossible for a static IP to not resolve to an address but in theory the error could catch other conditions so it seems best to keep it."
+    },
+    {
+        "commit": "9a751c2d98f27c4e270d6d47c0262cad68aee68f",
+        "date": "2020-04-10 12:56:28 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "63b9f46a34ce20c172394a625858d807b1e2a5a9",
+        "date": "2020-04-09 18:25:25 -0400",
+        "subject": "Update contributing documentation and remove test/README.md.",
+        "body": "When the Vagrant file was updated to use pgbackrest/ vs /backrest/ as the location for executing tests and building the documentation, parts of the contributing.xml (and hence the CONTRIBUTING.md) were not updated since some parts of the document are not actually executed when the CONTRIBUTING.md is built from contributing.xml: those parts that are executed were updated but those parts that are not executed were not.\n\nThis commit fixes the contributing.xml issue but also removes test/README.md as its contents were out of date and redundant given that they are covered in CONTRIBUTING.md."
+    },
+    {
+        "commit": "55c3a3c8d3d58c4b02327be39b3cf080f3805358",
+        "date": "2020-04-09 18:13:35 -0400",
+        "subject": "Allow zero wait times in Wait object.",
+        "body": "This limitation forced extra logic in cases where zero wait times were needed.\n\nRemove the limitation and the extra logic in cases where zero wait times are possible."
+    },
+    {
+        "commit": "c292e8957ded825483f08060ce8857ad935637fd",
+        "date": "2020-04-07 14:56:09 -0400",
+        "subject": "Add some debugging to tests that fork servers.",
+        "body": "Help identify whether errors are happening in the forked server or the main test by showing the line number where the server was forked off in the stack trace."
+    },
+    {
+        "commit": "099bd85ed7cdca017fbfae4d12134a00fcf2236b",
+        "date": "2020-04-07 14:42:05 -0400",
+        "subject": "Reset line number in TEST_ERROR*() macros.",
+        "body": "If these are not reset then an error not wrapped in a TEST_ERROR*() macro may show the line number of the previous error in a stack trace, which is confusing.\n\nIt is better for the line number to be unreported than wrong."
+    },
+    {
+        "commit": "627b49535222bf8408b2593b633a79c8eba3b832",
+        "date": "2020-04-07 14:35:36 -0400",
+        "subject": "Add waitRemaining() to get remaining wait time.",
+        "body": "This can be used to set timeouts so they do not wait longer than needed."
+    },
+    {
+        "commit": "ac3cfa4c9c31a00fb9f88ad65430cd0c550fee49",
+        "date": "2020-04-07 14:23:31 -0400",
+        "subject": "Allow default process id to be specified in logInit().",
+        "body": "The default process id was previously always 0 but there are cases where it is useful to be able to set the default.\n\nCurrently the only use case is for testing but the upcoming server code will also make use of it."
+    },
+    {
+        "commit": "2ec379fa40142462fd018a385affa14346ca76e7",
+        "date": "2020-04-07 11:10:58 -0400",
+        "subject": "Add ideator to release note."
+    },
+    {
+        "commit": "5e55d588507e7948dbb48bb8d9427ab4d4503c20",
+        "date": "2020-04-06 16:09:18 -0400",
+        "subject": "Simplify storage driver info and list functions.",
+        "body": "The storage driver requires two list functions to be implemented, list and infoList. But the former is a subset of the latter so implementing both in every driver is wasteful. The reason both exist is that in Posix it is cheaper to get a list of names than it is to stat files to get size, time, etc. In S3 these operations are equivalent.\n\nIntroduce storageInfoLevelType to determine the amount of information required by the caller. That way Posix can work efficiently and all drivers can return only the data required which saves some bandwidth. The storageList() and storageInfoList() functions remain in the storage interface since they are useful -- the only change is simplifying the drivers with no external impact.\n\nNote that since list() accepted an expression infoList() must now do so. Checking the expression is optional for the driver but can be used to limit results or save IO costs.\n\nSimilarly, exists() and pathExists() are just specialized forms of info() so adapt them to call info() instead."
+    },
+    {
+        "commit": "7679f8f88622cd14d442e69d133bd108783cdd80",
+        "date": "2020-04-04 13:59:50 -0400",
+        "subject": "Fix issue with THROW*_SYS_ERROR_CODE*() using wrong errno.",
+        "body": "When DEBUG_COVERAGE was defined errno was being used instead of the value being passed. This apparently worked by happenstance in the single existing usage but it won't work in general."
+    },
+    {
+        "commit": "f984aec66508354e8537b3f8c226f0e574592306",
+        "date": "2020-04-03 18:15:32 -0400",
+        "subject": "Standardize some section names in headers.",
+        "body": "It's better to start out with plural forms rather than flip back and forth as functions are added and subtracted. So, use \"Constructors\" instead of \"Constructor\".\n\nUse \"Getters/Setters\" rather than \"Getters\" or \"Setters\" to avoid similar churn."
+    },
+    {
+        "commit": "1aca2cc90290ffefcc95530dba55e19313754219",
+        "date": "2020-04-03 18:01:28 -0400",
+        "subject": "Move extern function comments to headers.",
+        "body": "This has been the policy for some time but due to migration pressure only new functions and refactors have been following this rule. Now it seems sensible to make a clean sweep and move all the comments that have not been moved already (i.e. most of them).\n\nOnly obvious typos and gross inaccuracies in the comments have been fixed. For this most part this was a copy and paste operation.\n\nUseless comments, e.g. \"New object\", were not copied. Even so, there are surely many deficient comments left.\n\nSome rearranging was done where needed and functions were placed in the proper sections, e.g. \"Constructors\", \"Functions\", etc.\n\nA few function prototypes were found that not longer had an implementation. These were removed, but there may be more.\n\nThe coding document has been updated to reflect this policy, which is not new but has never been documented."
+    },
+    {
+        "commit": "3fbde30c6fac4c752a3a1f47bbf309571b123b7a",
+        "date": "2020-04-03 13:25:38 -0400",
+        "subject": "Add/remove dependent backups during backup.info reconstruct.",
+        "body": "Prior to performing a backup or expiring backups, the backup.info file is validated by reconstructing it from the backups in the repository. When a backup had already been removed from the repo, it was removed from the backup.info file but its dependents were not.\n\nNow, the dependent backups will also be removed from backup.info and only backups in the repo that have their full dependency chain will be added to backup.info if they are missing."
+    },
+    {
+        "commit": "f3ae74b0d62a7b85e1452d46dd60aafbeb88226d",
+        "date": "2020-04-03 08:38:28 -0400",
+        "subject": "Remove storageRead() and storageWriteDriver().",
+        "body": "These functions were only being used in the tests. This usage likely dates to before the include directive was available in define.yaml."
+    },
+    {
+        "commit": "1214f1d70b5a34bd648892519777c6bd3b33619d",
+        "date": "2020-04-03 08:18:07 -0400",
+        "subject": "Update RHEL package location.",
+        "body": "This changed upstream so update the file paths."
+    },
+    {
+        "commit": "713211d89fd341e5b39b5273c4cb0cea495c245d",
+        "date": "2020-04-02 17:25:49 -0400",
+        "subject": "Clean up const usage in bufPtr() and bufRemainsPtr().",
+        "body": "These functions accepted const Buffer objects and returned non-const pointers which is definitely not a good idea. Add bufPtrConst() to handle cases where only a const return value is needed and update call sites.\n\nUse UNCONSTIFY() in cases where library code out of our control requires a non-const pointer. This includes the already-documented exception in command/backup/pageChecksum and input buffers in the gzCompress and gzDecompress filters."
+    },
+    {
+        "commit": "76b88a3cd58cb69ba8660247ed0959707c12401c",
+        "date": "2020-04-02 16:58:38 -0400",
+        "subject": "Add UNCONSTIFY() macro.",
+        "body": "Allows casting const-ness away from an expression, but doesn't allow changing the type. Enforcement of the latter currently only works for gcc-like compilers.\n\nNote that it is not safe to cast const-ness away if the result will ever be modified (it would be undefined behavior). Doing so can cause compiler mis-optimizations or runtime crashes (by modifying read-only memory). It is only safe to use when the result will not be modified, but API design or language restrictions prevent you from declaring that (e.g. because a function returns both const and non-const variables).\n\nNote that this only works in function scope, not for global variables (it would be nice, but not trivial, to improve that).\n\nUNCONSTIFY() requires static assert which is a feature in its own right."
+    },
+    {
+        "commit": "78beb16d6f30b2de561b391579c30b2811a94cd3",
+        "date": "2020-04-01 19:33:11 -0400",
+        "subject": "Remove unused getters in common/io/write module.",
+        "body": "These were probably added for symmetry with IoRead but we would prefer to remove those getters.\n\nSo, just remove the equivalents in IoWrite."
+    },
+    {
+        "commit": "f19c59ab38452bd4d247aa3a073c5c525b3b3cbe",
+        "date": "2020-04-01 18:03:16 -0400",
+        "subject": "Remove unused exports from pgBackRestBuild::Config::Data.",
+        "body": "These were once used heavily in the Perl code but now only a few of them are used in the documentation.\n\nRemove the unused exports as there is generally no need create them for new commands/options."
+    },
+    {
+        "commit": "3aedcd17760e677058e679ffaa7500ce57e42805",
+        "date": "2020-04-01 17:20:47 -0400",
+        "subject": "Enable FD_CLOEXEC.",
+        "body": "PostgreSQL enables this option when available which seems like a good idea since we also do not share connections between processes.\n\nNote that as in PostgreSQL there is no way to disable this option."
+    },
+    {
+        "commit": "967f2c0d7f56702059f433c248c1d2640dc26fde",
+        "date": "2020-04-01 16:56:15 -0400",
+        "subject": "Enable TCP_NODELAY.",
+        "body": "PostgreSQL enables this option when available which seems like a good idea since we also buffer transmissions.\n\nNote that as in PostgreSQL there is no way to disable this option."
+    },
+    {
+        "commit": "a1a0a23c6a086bb9f95ebdd280cca4c4f7ce683d",
+        "date": "2020-04-01 16:51:29 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "789e364e6b35260a5805f1643761cd7f24b2bfdc",
+        "date": "2020-04-01 15:44:51 -0400",
+        "subject": "Rename tcp-keep-alive option to sck-keep-alive.",
+        "body": "This is really a socket option so the new name is clearer.\n\nSince common/io/socket/tcp will contains a mix of options it makes sense to rename it to socket and cascade name changes as needed."
+    },
+    {
+        "commit": "5c6fb88bef242c071fd02671798b296bd65fa47f",
+        "date": "2020-03-31 18:13:11 -0400",
+        "subject": "TCP keep-alive options are configurable.",
+        "body": "Prior to 2.25 the individual TCP keep-alive options were not being configured due to a missing header. In 2.25 they were being configured incorrectly due to a disconnect between the timeout specified in ms and what was expected by the TCP options, i.e. seconds.\n\nInstead make the TCP keep-alive options directly configurable, with correct units and better testing. Keep-alive is enabled by default (though it can be defaulted to the system setting instead) and the rest of the options are not set by default. This is in line with what PostgreSQL does, though PostgreSQL does not allow keep-alive to be defaulted.\n\nAlso move configuration of TCP options before connect() as PostgreSQL does."
+    },
+    {
+        "commit": "8989118cc656eeb3458404a4a9beff059c0c984c",
+        "date": "2020-03-31 12:43:29 -0400",
+        "subject": "Add SocketClient object.",
+        "body": "This functionality was embedded into TlsClient but that was starting to get unwieldy.\n\nAdd SocketClient to contain all socket-related client functionality."
+    },
+    {
+        "commit": "abb76398079fdfb7842bbd1f83fe46e33a5121b5",
+        "date": "2020-03-31 11:10:26 -0400",
+        "subject": "Add OBJECT_DEFINE_GET() macro to define object getters.",
+        "body": "Simple object getters involve a lot of boilerplate code so create a macro to simplify implementing them."
+    },
+    {
+        "commit": "da43db354343d629029fd78ceefecaa57bf58c73",
+        "date": "2020-03-30 20:52:57 -0400",
+        "subject": "Move common/object.h to common/type/object.h.",
+        "body": "This header does not contain a type but is used to define types so this seems like a better location."
+    },
+    {
+        "commit": "a29e25a845bed5d3b635766dd3ea7ca6a793ac47",
+        "date": "2020-03-29 21:25:48 -0400",
+        "subject": "Add storage filter performance test.",
+        "body": "This test allows the important storage filters to be benchmarked by MiB/s."
+    },
+    {
+        "commit": "1e0b0c9344c3cdb7e11ff67820a681bba1c1c05d",
+        "date": "2020-03-29 09:17:39 -0400",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "bf7b989103d6804362b4fb0994b96f13f5cc0dd8",
+        "date": "2020-03-28 18:25:51 -0400",
+        "subject": "Add time since last test started to test output.",
+        "body": "This makes it easier to see the timing of each step in the test."
+    },
+    {
+        "commit": "7e519e72d516dc03f60c25252928a24de8cc6e58",
+        "date": "2020-03-28 18:20:29 -0400",
+        "subject": "Add TEST_TITLE_FMT() macro."
+    },
+    {
+        "commit": "e1c72f6f97e9020874e1f31c97d1e1ff7269104d",
+        "date": "2020-03-28 17:48:57 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "af734d69f4fc32502ae9b5baa7ba2ee244d0462c",
+        "date": "2020-03-27 08:22:58 -0400",
+        "subject": "Restore prefix/exec_prefix Makefile variables removed in 237a3da4."
+    },
+    {
+        "commit": "4b1d995bbacac8baebd8a71045d87a2126ad851b",
+        "date": "2020-03-26 22:20:09 -0400",
+        "subject": "Update packages required for each CI job.",
+        "body": "Documentation builds and tests have only a few packages in common so rearrange packages to save some time and clarify dependencies.\n\nRemove the libperl-dev package which became obsolete when the LibC module was removed in 79cfd3ae.\n\nAdd a few comments for good measure."
+    },
+    {
+        "commit": "65285ff5b28f81a5e223337f93fe127d2eed2872",
+        "date": "2020-03-26 22:00:40 -0400",
+        "subject": "Rearrange Travis CI jobs based on current runtimes.",
+        "body": "The runtimes of the tests have change with recent updates and it is generally best to order the slowest tests first."
+    },
+    {
+        "commit": "0f742204e84c1a9529085fcfad61318e1c1a1842",
+        "date": "2020-03-26 21:39:40 -0400",
+        "subject": "Add comments to make the purpose of each CI job clearer."
+    },
+    {
+        "commit": "09d26d54ceb42a1f14de4ed59541f602b7c99ee6",
+        "date": "2020-03-26 21:16:21 -0400",
+        "subject": "Updates for key changes in travis.yaml.",
+        "body": "The format has evolved over time and the old keys were showing warnings during builds."
+    },
+    {
+        "commit": "3d255dce3c83fe0de49ab5a5ff3d71151e0761b3",
+        "date": "2020-03-26 21:05:36 -0400",
+        "subject": "Add performance/storage test.",
+        "body": "The primary purpose of this test (currently) is to measure the performance of storageRemoteInfoList(), which is critical for building a manifest when the PostgreSQL host is remote.\n\nThe starting baseline of 1 million files is perhaps a bit aggressive but it seems very likely to blow up if there are performance regressions."
+    },
+    {
+        "commit": "b64755d6352c9e3e4ac2508b47e2a223f755afe5",
+        "date": "2020-03-26 20:52:05 -0400",
+        "subject": "Increase baseline of the performance/type test.",
+        "body": "Recent performance improvements allow increasing the baseline of this test.\n\nIn general it is best if the baseline is large enough to cause the test to blow up if there are performance regressions."
+    },
+    {
+        "commit": "50cf7370ee171053225a5d4511fd186da2c4c61e",
+        "date": "2020-03-26 20:36:09 -0400",
+        "subject": "Add --no-performance to test.pl to suppress performance tests.",
+        "body": "Performance tests do not need to be run on all platforms. Using vm=none to run performance tests seems best ... for performance."
+    },
+    {
+        "commit": "24e03e1320fcc19059599c136de293183cb77f43",
+        "date": "2020-03-26 20:25:42 -0400",
+        "subject": "Remove RHEL package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "fa8642237146bc1b79fd57271219e0e9aa07882e",
+        "date": "2020-03-26 17:20:58 -0400",
+        "subject": "Begin v2.26 development."
+    },
+    {
         "commit": "fd3dca036b1436564dec17b7c23b62b9d9fa1051",
         "date": "2020-03-26 17:14:53 -0400",
         "subject": "v2.25: LZ4 Compression Support"

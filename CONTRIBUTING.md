@@ -45,12 +45,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 62 tests selected
+--> P00   INFO: 63 tests selected
                 
-    P00   INFO: P1-T01/62 - vm=none, module=common, test=error
-           [filtered 59 lines of output]
-    P00   INFO: P1-T61/62 - vm=none, module=command, test=repo
-    P00   INFO: P1-T62/62 - vm=none, module=performance, test=type
+    P00   INFO: P1-T01/63 - vm=none, module=common, test=error
+           [filtered 60 lines of output]
+    P00   INFO: P1-T62/63 - vm=none, module=performance, test=type
+    P00   INFO: P1-T63/63 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -71,24 +71,31 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
         run 001 - waitNew(), waitMore, and waitFree()
-            l0018 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
-            l0019 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
-            l0024 -     new wait = 0.2 sec
-            l0025 -         check wait time
-            l0026 -         check sleep time
-            l0027 -         check sleep prev time
-            l0028 -         check begin time
-            l0034 -         lower range check
-            l0035 -         upper range check
-            l0037 -         free wait
-            l0042 -     new wait = 1.1 sec
-            l0043 -         check wait time
-            l0044 -         check sleep time
-            l0045 -         check sleep prev time
-            l0046 -         check begin time
-            l0052 -         lower range check
-            l0053 -         upper range check
-            l0055 -         free wait
+            l0018 -     expect AssertError: assertion 'waitTime <= 999999000' failed
+            l0021 - 0ms wait
+            l0025 -     new wait
+            l0026 -         check remaining time
+            l0027 -         check wait time
+            l0028 -         check sleep time
+            l0029 -         check sleep prev time
+            l0030 -         no wait more
+            l0033 -     new wait = 0.2 sec
+            l0034 -         check remaining time
+            l0035 -         check wait time
+            l0036 -         check sleep time
+            l0037 -         check sleep prev time
+            l0038 -         check begin time
+            l0044 -         lower range check
+            l0045 -         upper range check
+            l0047 -         free wait
+            l0052 -     new wait = 1.1 sec
+            l0053 -         check wait time
+            l0054 -         check sleep time
+            l0055 -         check sleep prev time
+            l0056 -         check begin time
+            l0062 -         lower range check
+            l0063 -         upper range check
+            l0065 -         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     

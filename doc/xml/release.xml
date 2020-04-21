@@ -12,12 +12,15 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.26dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.27dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2020-04-20" version="2.26" title="Non-blocking TLS">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="david.raftis"/>
+                             <release-item-contributor id="david.raftis"/>
                         </release-item-contributor-list>
 
                         <p>Remove empty subexpression from manifest regular expression.</p>
@@ -41,10 +44,10 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                             <!-- Actually tester, but we don't have a tag for that yet -->
+                             <release-item-reviewer id="slava.moudry"/>
                              <release-item-reviewer id="cynthia.shang"/>
                              <release-item-reviewer id="stephen.frost"/>
-                             <!-- Actually tester, but we don't have a tag for that yet -->
-                             <release-item-reviewer id="slava.pagerduty"/>
                         </release-item-contributor-list>
 
                         <p>Non-blocking TLS implementation.</p>
@@ -72,16 +75,6 @@
                     <release-item>
                         <p>Add <br-option>io-timeout</br-option> option.</p>
                     </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
-                             <release-item-reviewer id="stephen.frost"/>
-                        </release-item-contributor-list>
-
-                        <p>Use <code>poll()</code> instead of <code>select()</code> for monitoring socket read/write ready.</p>
-                    </release-item>
-
                 </release-improvement-list>
 
                 <release-development-list>
@@ -107,6 +100,15 @@
                         </release-item-contributor-list>
 
                         <p>Split session functionality of <code>TlsClient</code> out into <code>TlsSession</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>poll()</code> instead of <code>select()</code> for monitoring socket read/write ready.</p>
                     </release-item>
 
                     <release-item>
@@ -8402,8 +8404,8 @@
             <contributor-id type="github">slardiere</contributor-id>
         </contributor>
 
-        <contributor id="slava.pagerduty">
-            <contributor-name-display>slava-pagerduty</contributor-name-display>
+        <contributor id="slava.moudry">
+            <contributor-name-display>Slava Moudry</contributor-name-display>
             <contributor-id type="github">slava-pagerduty</contributor-id>
         </contributor>
 
