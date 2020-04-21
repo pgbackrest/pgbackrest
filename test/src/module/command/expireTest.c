@@ -1594,12 +1594,13 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath)))),
             true, "only last prior backup removed");
         harnessLogResult(
+            strPtr(strNewFmt(
             "P00   INFO: expire adhoc backup set: 20181119-152800F, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: remove expired backup 20181119-152800F\n"
-            "P00   INFO: remove archive path: /home/vagrant/test/test-0/repo/archive/db/9.4-1\n"
+            "P00   INFO: remove archive path: %s/repo/archive/db/9.4-1\n"
             "P00 DETAIL: archive retention on backup 20181119-152850F, archiveId = 12-2, start = 000000010000000000000002\n"
-            "P00 DETAIL: no archive to remove, archiveId = 12-2");
+            "P00 DETAIL: no archive to remove, archiveId = 12-2", testPath())));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on expire last full backup on disk");
