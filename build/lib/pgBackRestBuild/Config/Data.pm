@@ -197,7 +197,7 @@ use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
 use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
-use constant CFGOPT_REPO_RETENTION_PERIOD                           => CFGDEF_PREFIX_REPO . '-retention-period';
+use constant CFGOPT_REPO_RETENTION_FULL_PERIOD                      => CFGDEF_PREFIX_REPO . '-retention-full-period';
 
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
@@ -1706,15 +1706,15 @@ my %hConfigDefine =
             &CFGCMD_EXPIRE => {},
         }
     },
-# CSHANG Should probably change this to a string or however buffer size handles entering 1GB, 10KB, etc (which I can't seem to find at the moment)
-    &CFGOPT_REPO_RETENTION_PERIOD =>
+
+    &CFGOPT_REPO_RETENTION_FULL_PERIOD =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX], ### TODO Determine proper interval ?
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},

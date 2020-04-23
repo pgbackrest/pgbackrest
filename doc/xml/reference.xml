@@ -304,7 +304,7 @@
 
                 <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
 
-                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if retention-full is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
+                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-period</setting> is set then there must be at least that many number of days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
@@ -403,10 +403,10 @@
                     </config-key>
 
                     <!-- CONFIG - RETENTION SECTION - REPO-DAYS-RETENTION KEY -->
-                    <config-key id="repo-retention-period" name="Retention Period">
-                        <summary>Maximum age for the last backup retained.</summary>
+                    <config-key id="repo-retention-full-period" name="Full Retention Period">
+                        <summary>Maximum age for the last full backup to retain.</summary>
 
-                        <text>Any backup older before the first full backup older than <setting>repo-retention-period</setting> days will be removed from the repository. When not defined, only the number of backup retention rules will be applied.</text>
+                        <text>Determines the number of days to keep full backups. Any backup older than <setting>repo-retention-full-period</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full-period</setting> setting. For example, if the setting is 30 days and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired. This setting superceeds <setting>repo-retention-full</setting>. Archived WAL older than the oldest full backup remaining will be expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</text>
 
                         <example>30</example>
                     </config-key>
@@ -434,7 +434,7 @@
                     <config-key id="repo-retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of continuous WAL to retain.</summary>
 
-                        <text><admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>If this value is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
+                        <text><admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>If this value is not set and <setting>repo-retention-full-period</setting> is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired. If <setting>repo-retention-full-period</setting> is set, then this value will default to removing archives that are earlier than the oldest full backup retained.
 
                         This option must be set if <setting>repo-retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>repo-retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
 

@@ -2005,21 +2005,16 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionFull,
     },
 
-    // repo-retention-period option and deprecations
+    // repo-retention-full-period option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_REPO1_RETENTION_PERIOD,
+        .name = CFGOPT_REPO1_RETENTION_FULL_PERIOD,
         .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionPeriod,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionFullPeriod,
     },
     {
-        .name = "reset-" CFGOPT_REPO1_RETENTION_PERIOD,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionPeriod,
-    },
-    {
-        .name = "retention-period",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionPeriod,
+        .name = "reset-" CFGOPT_REPO1_RETENTION_FULL_PERIOD,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionFullPeriod,
     },
 
     // repo-s3-bucket option and deprecations
@@ -2609,7 +2604,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoRetentionArchiveType,
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
-    cfgOptRepoRetentionPeriod,
+    cfgOptRepoRetentionFullPeriod,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSckBlock,

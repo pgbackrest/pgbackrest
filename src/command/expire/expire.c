@@ -99,59 +99,58 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel)
 Expire backups based on dates
 ***********************************************************************************************************************************/
 static unsigned int
-expireTimeBackup(InfoBackup *infoBackup)
+expireTimeBasedFullBackup(InfoBackup *infoBackup, const unsigned int backupRetentionDays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(UINT, backupRetentionDays);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
+    ASSERT(backupRetentionDays > 0);
 
     unsigned int result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int backupRetentionDays = cfgOptionTest(cfgOptRepoRetentionPeriod) ? cfgOptionUInt(cfgOptRepoRetentionPeriod) : 0;
-        // Find all the expired differential backups
-        if (backupRetentionDays > 0)
-        {
-            // Get the min date to keep
-            TimeMSec minDateToKeepMSec = timeMSec();
-            time_t minDateToKeepSec = (time_t)(minDateToKeepMSec / MSEC_PER_SEC - backupRetentionDays * 24 * 3600);
+        // Get the min date to keep and the list of full backups
+        TimeMSec minDateToKeepMSec = timeMSec();
+        time_t minDateToKeepSec = (time_t)(minDateToKeepMSec / MSEC_PER_SEC - backupRetentionDays * 24 * 3600);
+        const String *lastBackupLabelToKeep = NULL;
+        StringList *fullBackupList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+        unsigned int i = strLstSize(fullBackupList);
 
-            const String *lastBackupLabelToKeep = NULL;
-            /*
-             * Find out the point where we will have to stop purging backups.
-             * We start by the end of the list, skipping any non-full backup.
-             * This way, if we have F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration at D2b,
-             * we will purge only F1, D1a, D1b and D1c, keeping the next full backups and all intermediate non-full
-             */
-            unsigned int i = infoBackupDataTotal(infoBackup);
-            if (i > 0)
+        /*
+         * Find out the point where we will have to stop purging backups.
+         * We start by the end of the list, skipping any non-full backup.
+         * This way, if we have F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration at D2b,
+         * we will purge only F1, D1a, D1b and D1c, keeping the next full backups and all intermediate non-full
+         */
+        if (i > 0)
+        {
+            do
             {
-                do
+                i--;
+                InfoBackupData *info = infoBackupDataByLabel(infoBackup, strLstGet(fullBackupList, i));
+                lastBackupLabelToKeep = info->backupLabel;
+                if (info->backupTimestampStart < minDateToKeepSec)
                 {
-                    i--;
-                    InfoBackupData info = infoBackupData(infoBackup, i);
-                    lastBackupLabelToKeep = info.backupLabel;
-                    if ((info.backupTimestampStart < minDateToKeepSec) && (backupType(info.backupType) == backupTypeFull))
-                    {
-                        // We can start deleting after this backup. This way, we keep one full backup and the potential differentials in between
-                        break;
-                    }
-                } while (i != 0);
-                LOG_INFO_FMT("deleting all backups older than %s", strPtr(lastBackupLabelToKeep));
-                String *backupExpired = strNew("");
-                /*
-                 * Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry
-                 */
-                while (strCmp(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep) != 0)
-                {
-                    result++;
-                    expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel, backupExpired);
+                    // We can start deleting after this backup. This way, we keep one full backup and its dependents
+                    break;
                 }
+            } while (i != 0);
+
+            LOG_INFO_FMT("deleting all backups older than %s", strPtr(lastBackupLabelToKeep));
+
+            // Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry
+            while (strCmp(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep) != 0)
+            {
+                StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel);
+                result += strLstSize(backupExpired);
+
+                // Log the expired backups. If there is more than one backup, then prepend "set:"
                 LOG_INFO_FMT(
-                    "expire backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                    "expire backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
             }
         }
     }
@@ -296,6 +295,12 @@ removeExpiredArchive(InfoBackup *infoBackup)
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
         const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionUInt(cfgOptRepoRetentionArchive) : 0;
+        bool timeBasedFullRetention = cfgOptionTest(cfgOptRepoRetentionFullPeriod);
+
+        // If retention-full-period is set and valid and archive retention was not explicitly set then set it greater than the
+        // number of full backups remaining so that all archive prior to the oldest full backup is expired
+        if (timeBasedFullRetention && archiveRetention == 0)
+            archiveRetention = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true))) + 1;
 
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
@@ -463,9 +468,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // forever.
                         else
                         {
-                            LOG_INFO_FMT(
-                                "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
-                                strPtr(archiveId));
+                            // Don't display log message if using time-based retention
+                            if (!timeBasedFullRetention)
+                            {
+                                LOG_INFO_FMT(
+                                    "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
+                                    strPtr(archiveId));
+                            }
                             strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
                         }
 
@@ -716,14 +725,11 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        if (cfgOptionTest(cfgOptRepoRetentionDiff))
-        {
-            expireTimeBackup(infoBackup);
-        }
+        if (cfgOptionTest(cfgOptRepoRetentionFullPeriod))
+            expireTimeBasedFullBackup(infoBackup, cfgOptionUInt(cfgOptRepoRetentionFullPeriod));
         else
-        {
             expireFullBackup(infoBackup);
-        }
+
         expireDiffBackup(infoBackup);
 
         // Store the new backup info only if the dry-run mode is disabled

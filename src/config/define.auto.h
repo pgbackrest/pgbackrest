@@ -126,7 +126,7 @@ typedef enum
     cfgDefOptRepoRetentionArchiveType,
     cfgDefOptRepoRetentionDiff,
     cfgDefOptRepoRetentionFull,
-    cfgDefOptRepoRetentionPeriod,
+    cfgDefOptRepoRetentionFullPeriod,
     cfgDefOptRepoS3Bucket,
     cfgDefOptRepoS3CaFile,
     cfgDefOptRepoS3CaPath,

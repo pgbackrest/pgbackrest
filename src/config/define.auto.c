@@ -3400,9 +3400,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "NOTE: WAL segments required to make a backup consistent are always retained until the backup is expired regardless of "
                 "how this option is configured.\n"
             "\n"
-            "If this value is not set, then the archive to expire will default to the repo-retention-full (or repo-retention-diff) "
-                "value corresponding to the repo-retention-archive-type if set to full (or diff). This will ensure that WAL is "
-                "only expired for backups that are already expired.\n"
+            "If this value is not set and repo-retention-full-period is not set, then the archive to expire will default to the "
+                "repo-retention-full (or repo-retention-diff) value corresponding to the repo-retention-archive-type if set to "
+                "full (or diff). This will ensure that WAL is only expired for backups that are already expired. If "
+                "repo-retention-full-period is set, then this value will default to removing archives that are earlier than the "
+                "oldest full backup retained.\n"
             "\n"
             "This option must be set if repo-retention-archive-type is set to incr. If disk space is at a premium, then this "
                 "setting, in conjunction with repo-retention-archive-type, can be used to aggressively expire WAL segments. "
@@ -3542,7 +3544,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("repo-retention-period")
+        CFGDEFDATA_OPTION_NAME("repo-retention-full-period")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
@@ -3552,11 +3554,15 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum age for the last backup retained.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum age for the last full backup to retain.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Any backup older before the first full backup older than repo-retention-period days will be removed from the "
-                "repository. When not defined, only the number of backup retention rules will be applied."
+            "Determines the number of days to keep full backups. Any backup older than repo-retention-full-period will be removed "
+                "from the repository if there is at least one backup that is equal to or greater than the "
+                "repo-retention-full-period setting. For example, if the setting is 30 days and there are 2 full backups: one 25 "
+                "days old and one 35 days old, no full backups will be expired. This setting superceeds repo-retention-full. "
+                "Archived WAL older than the oldest full backup remaining will be expired unless repo-retention-archive-type and "
+                "repo-retention-archive are explicitly set."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3569,7 +3575,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-period")
         )
     )
 

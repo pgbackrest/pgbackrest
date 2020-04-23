@@ -213,9 +213,10 @@ testRun(void)
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 0, "retention-full not set");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.");
+            "P00   WARN: neither option repo1-retention-full nor repo1-retention-full-period is set, the repository may run out of"
+            " space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' or option"
+            " 'repo1-retention-full-period' to the maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup no dependencies expired");
@@ -504,9 +505,10 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.\n"
+            "P00   WARN: neither option repo1-retention-full nor repo1-retention-full-period is set, the repository may run out of"
+            " space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' or option"
+            " 'repo1-retention-full-period' to the maximum.\n"
             "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -518,9 +520,10 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention set, retention type default, no current backups");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.");
+            "P00   WARN: neither option repo1-retention-full nor repo1-retention-full-period is set, the repository may run out of"
+            " space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' or option"
+            " 'repo1-retention-full-period' to the maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no archive on disk");
@@ -1250,6 +1253,16 @@ testRun(void)
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
             archiveExpectList(6, 7, "0000000100000000"),
             "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("expireTimeBasedFullBackup()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PLACEHOLDER");
+
+        // TimeMSec minDateToKeepMSec = timeMSec();
+        // time_t minDateToKeepSec = (time_t)(minDateToKeepMSec / MSEC_PER_SEC - backupRetentionDays * 24 * 3600);
     }
 
     // *****************************************************************************************************************************
