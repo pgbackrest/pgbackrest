@@ -1615,7 +1615,6 @@ testRun(void)
             cmdExpire(), BackupSetInvalidError,
             "full backup 20181119-152850F cannot be expired until another full backup has been created");
 
-
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("adhoc dry-run");
 
