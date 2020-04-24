@@ -134,7 +134,7 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(cipherTypeNone, NULL), ArchiveMismatchError,
+            archivePushCheck(true, cipherTypeNone, NULL), ArchiveMismatchError,
             "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.4, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
@@ -149,7 +149,7 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.6\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(cipherTypeNone, NULL), ArchiveMismatchError,
+            archivePushCheck(true, cipherTypeNone, NULL), ArchiveMismatchError,
             "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.6, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
@@ -164,11 +164,10 @@ testRun(void)
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"));
 
         ArchivePushCheckResult result = {0};
-        TEST_ASSIGN(result, archivePushCheck(cipherTypeNone, NULL), "get archive check result");
+        TEST_ASSIGN(result, archivePushCheck(true, cipherTypeNone, NULL), "get archive check result");
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_UINT(result.pgWalSegmentSize, 16 * 1024 * 1024, "check wal segment size");
         TEST_RESULT_STR_Z(result.archiveId, "9.6-1", "check archive id");
         TEST_RESULT_STR_Z(result.archiveCipherPass, NULL, "check archive cipher pass (not set in this test)");
     }
@@ -292,12 +291,17 @@ testRun(void)
 
         TEST_ERROR(cmdArchivePush(), ArchiveDuplicateError, "WAL file '000000010000000100000001' already exists in the archive");
 
-        // Save it to a new file instead
-        argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("WAL with absolute path and no pg1-path");
+
+        argListTemp = strLstNew();
+        strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
+        // strLstAdd(argListTemp, strNewFmt("--" CFGOPT_PG1_PATH "=%s/pg", testPath()));
+        strLstAdd(argListTemp, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer2);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");

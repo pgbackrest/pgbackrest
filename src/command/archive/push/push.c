@@ -195,15 +195,15 @@ typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    unsigned int pgWalSegmentSize;                                  // PostgreSQL WAL segment size
     String *archiveId;                                              // Archive id for current pg version
     String *archiveCipherPass;                                      // Archive cipher passphrase
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
-archivePushCheck(CipherType cipherType, const String *cipherPass)
+archivePushCheck(bool pgPathSet, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BOOL, pgPathSet);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
@@ -212,9 +212,6 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get info from pg_control
-        PgControl controlInfo = pgControlFromFile(storagePg());
-
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
 
@@ -222,22 +219,27 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
         String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
         InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
 
-        // Ensure that the version and system identifier match
-        if (controlInfo.version != archiveInfo.version || controlInfo.systemId != archiveInfo.systemId)
+        // Ensure that stanza version and system identifier match pg_control when available
+        if (pgPathSet)
         {
-            THROW_FMT(
-                ArchiveMismatchError,
-                "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
-                "\nHINT: are you archiving to the correct stanza?",
-                strPtr(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strPtr(pgVersionToStr(archiveInfo.version)),
-                archiveInfo.systemId);
+            // Get info from pg_control
+            PgControl controlInfo = pgControlFromFile(storagePg());
+
+            if (controlInfo.version != archiveInfo.version || controlInfo.systemId != archiveInfo.systemId)
+            {
+                THROW_FMT(
+                    ArchiveMismatchError,
+                    "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
+                    "\nHINT: are you archiving to the correct stanza?",
+                    strPtr(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strPtr(pgVersionToStr(archiveInfo.version)),
+                    archiveInfo.systemId);
+            }
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.pgVersion = controlInfo.version;
-            result.pgSystemId = controlInfo.systemId;
-            result.pgWalSegmentSize = controlInfo.walSegmentSize;
+            result.pgVersion = archiveInfo.version;
+            result.pgSystemId = archiveInfo.systemId;
             result.archiveId = strDup(archiveId);
             result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
         }
@@ -279,6 +281,9 @@ cmdArchivePush(void)
             bool pushed = false;                                        // Has the WAL segment been pushed yet?
             bool forked = false;                                        // Has the async process been forked yet?
             bool throwOnError = false;                                  // Should we throw errors?
+
+            // pg1-path is not optional for async mode
+            CHECK(cfgOptionTest(cfgOptPgPath));
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
@@ -343,7 +348,7 @@ cmdArchivePush(void)
 
             // Get archive info
             ArchivePushCheckResult archiveInfo = archivePushCheck(
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
             // Check if the push queue has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
@@ -486,7 +491,7 @@ cmdArchivePushAsync(void)
 
                 // Get archive info
                 jobData.archiveInfo = archivePushCheck(
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    true, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
