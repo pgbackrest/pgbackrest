@@ -556,8 +556,9 @@ unit:
           command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      # --test=backup and --test=backup-common must must be run together to get full coverage of backup/common
       - name: backup-common
-        total: 4
+        total: 3
 
         coverage:
           command/backup/common: full
@@ -573,6 +574,7 @@ unit:
 
         coverage:
           command/backup/backup: full
+          command/backup/common: full
           command/backup/file: full
           command/backup/protocol: full
 

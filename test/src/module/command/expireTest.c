@@ -1552,6 +1552,8 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: expiring latest backup 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may be"
             " affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: expire adhoc backup 20181119-152900F\n"
             "P00   INFO: remove expired backup 20181119-152900F_20181119-153000I\n"
             "P00   INFO: remove expired backup 20181119-152900F\n"
@@ -1672,6 +1674,8 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: [DRY-RUN] expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
             " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] remove expired backup 20181119-152850F_20181119-152252D");
 
@@ -1778,6 +1782,8 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform point-in-time-recovery"
             " (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: archive retention on backup 20181119-152850F, archiveId = 12-2, start = 000000010000000000000002\n"

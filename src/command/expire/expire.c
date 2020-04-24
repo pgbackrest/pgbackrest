@@ -114,19 +114,17 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        InfoBackupData *backupData = infoBackupDataByLabel(infoBackup, backupLabel);
-
-        // If the label is not a current/valid backup then notify user and exit
-        if (backupData == NULL)
+        // If the label format is invalid, then error
+        if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
         {
-            // If the label format is valid, then warn that the backup is not in the current list
-            if (regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
-            {
-                LOG_WARN_FMT(
-                    "backup %s does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
-            }
-            else
-                THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strPtr(backupLabel));
+            THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strPtr(backupLabel));
+        }
+
+        // If the label is not a current backup then notify user and exit
+        if (infoBackupDataByLabel(infoBackup, backupLabel) == NULL)
+        {
+            LOG_WARN_FMT(
+                "backup %s does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
         }
         else
         {
@@ -165,8 +163,9 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
                 // backups that can be recovered through PITR until the next full backup is created. Same problem for differential
                 // backups with retention-diff.
                 LOG_WARN_FMT(
-                    "expiring latest backup %s - the ability to perform point-in-time-recovery (PITR) may be affected",
-                    strPtr(latestBackup));
+                    "expiring latest backup %s - the ability to perform point-in-time-recovery (PITR) may be affected\n"
+                    "HINT: non-default settings for '%s'/'%s' (even in prior expires) can cause gaps in the WAL.",
+                    strPtr(latestBackup), cfgOptionName(cfgOptRepoRetentionArchive), cfgOptionName(cfgOptRepoRetentionArchiveType));
 
                 // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
                 if (!cfgOptionBool(cfgOptDryRun))
@@ -721,7 +720,9 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel)
         {
             // If the resumable backup is not related to the expired adhoc backup then don't remove it
             if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
+            {
                 backupIdx = 1;
+            }
             // Else it may be related to the adhoc backup so check if its ancestor still exists
             else
             {

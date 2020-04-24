@@ -6,11 +6,7 @@ Test Common Functions and Definitions for Backup and Expire Commands
 #include "common/type/json.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.auto.h"
-#include "storage/helper.h"
 #include "storage/posix/storage.h"
-
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -19,9 +15,6 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("backupRegExp()"))
@@ -327,54 +320,6 @@ testRun(void)
         TEST_RESULT_STR_Z(backupTypeStr(backupTypeFull), "full", "backup type str full");
         TEST_RESULT_STR_Z(backupTypeStr(backupTypeDiff), "diff", "backup type str diff");
         TEST_RESULT_STR_Z(backupTypeStr(backupTypeIncr), "incr", "backup type str incr");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("backupLinkLatest()"))
-    {
-        String *backupStanzaPath = strNew("repo/backup/db");
-        String *backupLatest = strNew("20181119-152800F");
-
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on latest link creation");
-
-        TEST_ERROR_FMT(
-            backupLinkLatest(backupLatest), FileOpenError,
-            "unable to create symlink '%s/%s/" BACKUP_LINK_LATEST "' to '%s': [2] No such file or directory", testPath(),
-            strPtr(backupStanzaPath), strPtr(backupLatest));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path sync not enabled (code coverage)");
-
-        // Create a backup directory by creating a file
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/%s/test" , strPtr(backupStanzaPath), strPtr(backupLatest))),
-            BUFSTRDEF("tmp"));
-
-        // Disable storage features for code coverage
-        ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePathSync;
-        ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureSymLink;
-
-        TEST_RESULT_VOID(backupLinkLatest(backupLatest), "attempt to create backup latest symlink");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/" BACKUP_LINK_LATEST, strPtr(backupStanzaPath))), false,
-            "link does not exist");
-
-        // Enable storage features
-        ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePathSync;
-        ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureSymLink;
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("latest link creation success");
-
-        TEST_RESULT_VOID(backupLinkLatest(backupLatest), "create backup latest symlink");
-        TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST)).linkDestination,
-            backupLatest, "latest link set");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
