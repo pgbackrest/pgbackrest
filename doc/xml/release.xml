@@ -13,6 +13,17 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.27dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-contributor id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <cmd>backup</cmd>/<cmd>expire</cmd> running status to the <cmd>info</cmd> command.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
         </release>
 
         <release date="2020-04-20" version="2.26" title="Non-blocking TLS">
