@@ -477,11 +477,38 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("removeExpiredArchive() & cmdExpire()"))
     {
+        TEST_TITLE("check repo local");
+
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        strLstAddZ(argList, "--repo1-host=/repo/not/local");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ERROR_FMT(
+            cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check stop file");
+
+        argList = strLstDup(argListAvoidWarn);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Create the stop file
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
+        TEST_ERROR_FMT(cmdExpire(), StopError, "stop file exists for stanza db");
+        TEST_RESULT_VOID(
+            storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "remove the stop file");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive not set");
 
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
+        argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Create backup.info without current backups

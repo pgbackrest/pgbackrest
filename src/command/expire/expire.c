@@ -5,6 +5,7 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/control/common.h"
 #include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -12,6 +13,7 @@ Expire Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 #include <stdlib.h>
@@ -640,11 +642,14 @@ cmdExpire(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // Verify the repo is local
+    repoIsLocalVerify();
+
+    // Test for stop file
+    lockStopTest();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
