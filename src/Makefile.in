@@ -48,6 +48,9 @@ SRCS = \
 	common/compress/lz4/common.c \
 	common/compress/lz4/compress.c \
 	common/compress/lz4/decompress.c \
+	common/compress/zst/common.c \
+	common/compress/zst/compress.c \
+	common/compress/zst/decompress.c \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \

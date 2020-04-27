@@ -244,6 +244,44 @@ testRun(void)
 #endif // HAVE_LIBLZ4
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("zstd"))
+    {
+#ifdef HAVE_LIBZST
+        // Run standard test suite
+        // testSuite(compressTypeZst, NULL); // !!! SET DECOMPRESS COMMAND
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zstError()");
+
+        TEST_RESULT_UINT(zstError(0), 0, "check success");
+        TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
+        //
+        // Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
+        //
+        // compress->inputSame = true;
+        // compress->flushing = true;
+        //
+        // TEST_RESULT_STR_Z(
+        //     lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
+        //
+        // Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
+        //
+        // decompress->inputSame = true;
+        // decompress->done = true;
+        // decompress->inputOffset = 999;
+        //
+        // TEST_RESULT_STR_Z(
+        //     lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
+        //     "format object");
+#else
+        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+#endif // HAVE_LIBZST
+    }
+
     // Test everything in the helper that is not tested in the individual compression type tests
     // *****************************************************************************************************************************
     if (testBegin("helper"))
@@ -258,7 +296,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

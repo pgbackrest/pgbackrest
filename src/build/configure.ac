@@ -125,6 +125,13 @@ AC_CHECK_LIB(
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
 
+# Check optional zst library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [zstd], [ZSTD_isError],
+    [AC_CHECK_HEADER(zstd.h, [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")],
+        [AC_MSG_ERROR([header file <zstd.h> is required])])])
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CONFIG_HEADERS([build.auto.h])

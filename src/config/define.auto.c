@@ -848,7 +848,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 "none",
                 "gz",
-                "lz4"
+                "lz4",
+                "zst"
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("gz")

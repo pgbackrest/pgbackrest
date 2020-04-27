@@ -4070,6 +4070,58 @@ fi
 fi
 
 
+# Check optional zst library
+# ----------------------------------------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_isError in -lzstd" >&5
+$as_echo_n "checking for ZSTD_isError in -lzstd... " >&6; }
+if ${ac_cv_lib_zstd_ZSTD_isError+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzstd  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ZSTD_isError ();
+int
+main ()
+{
+return ZSTD_isError ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_zstd_ZSTD_isError=yes
+else
+  ac_cv_lib_zstd_ZSTD_isError=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_isError" >&5
+$as_echo "$ac_cv_lib_zstd_ZSTD_isError" >&6; }
+if test "x$ac_cv_lib_zstd_ZSTD_isError" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "zstd.h" "ac_cv_header_zstd_h" "$ac_includes_default"
+if test "x$ac_cv_header_zstd_h" = xyes; then :
+  $as_echo "#define HAVE_LIBZST 1" >>confdefs.h
+ LIBS="${LIBS} -lzstd"
+
+else
+  as_fn_error $? "header file <zstd.h> is required" "$LINENO" 5
+fi
+
+
+fi
+
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 ac_config_headers="$ac_config_headers build.auto.h"
@@ -5348,4 +5400,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 8f4c0f8a2389f1f0f30c72c1a50c0c8905474095
+# Generated from src/build/configure.ac sha1 44c52f09b2324ae9fc4688176bc5a205db329281

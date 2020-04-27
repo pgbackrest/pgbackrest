@@ -390,6 +390,11 @@ sub containerBuild
             {
                 $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
             }
+
+            if (vmWithZst($strOS))
+            {
+                $strScript .= ' zstd libzstd-dev';
+            }
         }
 
         # If no specific version of lcov is requested then install the default package
