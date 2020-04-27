@@ -100,6 +100,38 @@ spool-path=[TEST_PATH]/db-master/spool
 archive-copy=y
 start-fast=y
 
+diff backup - backup for adhoc expire (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
++ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
+----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
+
+[global]
+archive-async=y
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-master/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
+
+[global:backup]
+archive-copy=y
+start-fast=y
+
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -114,6 +146,10 @@ start all stanzas (db-master host)
 
 incr backup - fail on archive_mode=always (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
+expire --set=[BACKUP-DIFF-1] (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-1]  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (db-master host)

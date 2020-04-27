@@ -817,6 +817,7 @@ sub expire
         'expire' .
         (defined($$oParam{iRetentionFull}) ? " full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " diff=$$oParam{iRetentionDiff}" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' (' . $self->nameGet() . ' host)';
     &log(INFO, "        ${strComment}");
 
@@ -828,6 +829,7 @@ sub expire
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         '  --stanza=' . $self->stanza() . ' expire',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});

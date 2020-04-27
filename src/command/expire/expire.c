@@ -17,6 +17,7 @@ Expire Command
 #include "storage/helper.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 /***********************************************************************************************************************************
 Helper functions and structures
@@ -95,6 +96,93 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Function to expire a selected backup (and all its dependents) regardless of retention rules.
+***********************************************************************************************************************************/
+static unsigned int
+expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(backupLabel != NULL);
+
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If the label format is invalid, then error
+        if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
+        {
+            THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strPtr(backupLabel));
+        }
+
+        // If the label is not a current backup then notify user and exit
+        if (infoBackupDataByLabel(infoBackup, backupLabel) == NULL)
+        {
+            LOG_WARN_FMT(
+                "backup %s does not exist\nHINT: run the info command and confirm the backup is listed", strPtr(backupLabel));
+        }
+        else
+        {
+            // Get a list of all full backups with most recent in position 0
+            StringList *fullList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
+
+            // If the requested backup to expire is the latest full backup
+            if (strCmp(strLstGet(fullList, 0), backupLabel) == 0)
+            {
+                // If the latest full backup requested is the only backup or the prior full backup is not for the same db-id
+                // then the backup requested cannot be expired
+                if (strLstSize(fullList) == 1 || infoBackupDataByLabel(infoBackup, backupLabel)->backupPgId !=
+                    infoBackupDataByLabel(infoBackup, strLstGet(fullList, 1))->backupPgId)
+                {
+                    THROW_FMT(
+                        BackupSetInvalidError, "full backup %s cannot be expired until another full backup has been created",
+                        strPtr(backupLabel));
+                }
+            }
+
+            // Save off what is currently the latest backup (it may be removed if it is the adhoc backup or is a dependent of the
+            // adhoc backup
+            const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+
+            // Expire the requested backup and any dependents
+            StringList *backupExpired = expireBackup(infoBackup, backupLabel);
+
+            // If the latest backup was removed, then update the latest link if not a dry-run
+            if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
+            {
+                // If retention settings have been configured, then there may be holes in the archives. For example, if the archive
+                // for db-id=1 has 01,02,03,04,05 and F1 backup has archive start-stop 02-03 and rentention-full=1
+                // (hence retention-archive=1 and retention-archive-type=full), then when F2 backup is created and assuming its
+                // archive start-stop=05-06 then archives 01 and 04 will be removed resulting in F1 not being able to play through
+                // PITR, which is expected. Now adhoc expire is attempted on F2 - it will be allowed but now there will be no
+                // backups that can be recovered through PITR until the next full backup is created. Same problem for differential
+                // backups with retention-diff.
+                LOG_WARN_FMT(
+                    "expiring latest backup %s - the ability to perform point-in-time-recovery (PITR) may be affected\n"
+                    "HINT: non-default settings for '%s'/'%s' (even in prior expires) can cause gaps in the WAL.",
+                    strPtr(latestBackup), cfgOptionName(cfgOptRepoRetentionArchive), cfgOptionName(cfgOptRepoRetentionArchiveType));
+
+                // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
+                if (!cfgOptionBool(cfgOptDryRun))
+                    backupLinkLatest(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
+            }
+
+            result = strLstSize(backupExpired);
+
+            // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
+            LOG_INFO_FMT("expire adhoc backup %s%s", (result > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -600,24 +688,59 @@ removeExpiredArchive(InfoBackup *infoBackup)
 Remove expired backups from repo
 ***********************************************************************************************************************************/
 static void
-removeExpiredBackup(InfoBackup *infoBackup)
+removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, adhocBackupLabel);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
 
-    // Get all the current backups in backup.info
+    // Get all the current backups in backup.info - these will not be expired
     StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
+
+    // Get all the backups on disk
     StringList *backupList = strLstSort(
         storageListP(
             storageRepo(), STORAGE_REPO_BACKUP_STR,
             .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
         sortOrderDesc);
 
+    // Initialize the index to the lastest backup on disk
+    unsigned int backupIdx = 0;
+
+    // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
+    if (adhocBackupLabel != NULL)
+    {
+        String *manifestFileName = strNewFmt(
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(strLstGet(backupList, backupIdx)));
+        String *manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFileName));
+
+        // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
+        if (!storageExistsP(storageRepo(), manifestFileName) && storageExistsP(storageRepo(), manifestCopyFileName))
+        {
+            // If the resumable backup is not related to the expired adhoc backup then don't remove it
+            if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
+            {
+                backupIdx = 1;
+            }
+            // Else it may be related to the adhoc backup so check if its ancestor still exists
+            else
+            {
+                Manifest *manifestResume = manifestLoadFile(
+                    storageRepo(), manifestFileName, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    infoPgCipherPass(infoBackupPg(infoBackup)));
+
+                // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
+                if (infoBackupDataByLabel(infoBackup, manifestData(manifestResume)->backupLabelPrior) != NULL)
+                    backupIdx = 1;
+            }
+        }
+    }
+
     // Remove non-current backups from disk
-    for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+    for (; backupIdx < strLstSize(backupList); backupIdx++)
     {
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
@@ -655,8 +778,19 @@ cmdExpire(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        expireFullBackup(infoBackup);
-        expireDiffBackup(infoBackup);
+        const String *adhocBackupLabel = NULL;
+
+        // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
+        if (cfgOptionValid(cfgOptSet) && cfgOptionTest(cfgOptSet))
+        {
+            adhocBackupLabel = cfgOptionStr(cfgOptSet);
+            expireAdhocBackup(infoBackup, adhocBackupLabel);
+        }
+        else
+        {
+            expireFullBackup(infoBackup);
+            expireDiffBackup(infoBackup);
+        }
 
         // Store the new backup info only if the dry-run mode is disabled
         if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
@@ -666,7 +800,8 @@ cmdExpire(void)
                 cfgOptionStr(cfgOptRepoCipherPass));
         }
 
-        removeExpiredBackup(infoBackup);
+        // Remove all files on disk that are now expired
+        removeExpiredBackup(infoBackup, adhocBackupLabel);
         removeExpiredArchive(infoBackup);
     }
     MEM_CONTEXT_TEMP_END();
