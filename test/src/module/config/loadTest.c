@@ -40,6 +40,7 @@ testRun(void)
         cfgExeSet(exe);
 
         cfgOptionValidSet(cfgOptRepoHost, true);
+        cfgOptionValidSet(cfgOptRepoHostCmd, true);
         cfgOptionValidSet(cfgOptPgHost, true);
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "hosts are not set so don't update commands");
@@ -65,8 +66,11 @@ testRun(void)
         cfgOptionValidSet(cfgOptPgHostCmd + 1, true);
         cfgOptionSet(cfgOptPgHostCmd + 1, cfgSourceParam, varNewStr(exeOther));
 
+        cfgOptionValidSet(cfgOptPgHostCmd + 2, true);
+
         cfgOptionValidSet(cfgOptPgHost + cfgOptionIndexTotal(cfgOptPgHost) - 1, true);
         cfgOptionSet(cfgOptPgHost + cfgOptionIndexTotal(cfgOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
+        cfgOptionValidSet(cfgOptPgHostCmd + cfgOptionIndexTotal(cfgOptPgHost) - 1, true);
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
         TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
