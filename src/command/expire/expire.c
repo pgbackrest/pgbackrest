@@ -12,6 +12,7 @@ Expire Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 #include <stdlib.h>
@@ -640,11 +641,11 @@ cmdExpire(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // Verify the repo is local
+    repoIsLocalVerify();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),

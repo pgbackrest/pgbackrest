@@ -23,6 +23,16 @@
                         <p>Add <cmd>backup</cmd>/<cmd>expire</cmd> running status to the <cmd>info</cmd> command.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Throw user-friendly error if <cmd>expire</cmd> is not run on repository host.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-core-list>
         </release>
 

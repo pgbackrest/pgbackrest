@@ -477,11 +477,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("removeExpiredArchive() & cmdExpire()"))
     {
+        TEST_TITLE("check repo local");
+
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        strLstAddZ(argList, "--repo1-host=/repo/not/local");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ERROR_FMT(
+            cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive not set");
 
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
+        argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Create backup.info without current backups
