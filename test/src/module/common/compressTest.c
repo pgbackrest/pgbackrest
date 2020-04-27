@@ -245,11 +245,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("zstd"))
+    if (testBegin("zst"))
     {
 #ifdef HAVE_LIBZST
         // Run standard test suite
-        // testSuite(compressTypeZst, NULL); // !!! SET DECOMPRESS COMMAND
+        // testSuite(compressTypeZst, "zstd -dc");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstError()");
@@ -278,7 +278,7 @@ testRun(void)
         //     lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
         //     "format object");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
 #endif // HAVE_LIBZST
     }
 
