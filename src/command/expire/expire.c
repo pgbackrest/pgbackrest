@@ -296,7 +296,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
         const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionUInt(cfgOptRepoRetentionArchive) : 0;
         bool timeBasedFullRetention = cfgOptionTest(cfgOptRepoRetentionFullPeriod);
-
+// CSHANG David wanted to make this set to the MAX but that value would need to be retrieved somehow and currently that is only done by cfgDefOptionAllowRangeMax(commandDefId, optionDefId) -- so need to figure out if we can use that here
         // If retention-full-period is set and valid and archive retention was not explicitly set then set it greater than the
         // number of full backups remaining so that all archive prior to the oldest full backup is expired
         if (timeBasedFullRetention && archiveRetention == 0)
@@ -306,7 +306,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-             LOG_INFO_FMT("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+            LOG_INFO_FMT("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
         }
         else
         {

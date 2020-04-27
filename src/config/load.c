@@ -165,10 +165,15 @@ cfgLoadUpdateOption(void)
                 "WAL segments will not be expired: option '" CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE "=%s' but",
                 strPtr(archiveRetentionType));
 
-            // If the archive retention is not explicitly set then determine what the archive retention should be defaulted to.
-            // If retention-full-period is set, do not default the archive retention setting.
-            if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFullPeriod + optionIdx))
+            // If the archive retention is not explicitly set then determine what the archive retention should be defaulted to
+            if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
             {
+                // If retention-full-period is set, default the archive retention setting to max value
+                // CSHANG But this will force archiving - so how do we NOT perform archive expiration? Or do we just say if they do period retention than all archive prior to the oldest full backup remaining will be expired - so if they want to keep it though, they can't...I guess it's like how we have it now - if retention-full is set and retention-archive is not, we set it to full
+                if (cfgOptionTest(cfgOptRepoRetentionFullPeriod + optionIdx))
+                {
+                    cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault, varNewUInt(UINT_MAX));
+                }
                 // If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive
                 // to this value, else ignore archiving
                 if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
