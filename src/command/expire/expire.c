@@ -5,6 +5,7 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/control/common.h"
 #include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -643,6 +644,9 @@ cmdExpire(void)
 
     // Verify the repo is local
     repoIsLocalVerify();
+
+    // Test for stop file
+    lockStopTest();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

@@ -490,6 +490,21 @@ testRun(void)
             cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check stop file");
+
+        argList = strLstDup(argListAvoidWarn);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Create the stop file
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
+        TEST_ERROR_FMT(cmdExpire(), StopError, "stop file exists for stanza db");
+        TEST_RESULT_VOID(
+            storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "remove the stop file");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive not set");
 
         // Load Parameters
