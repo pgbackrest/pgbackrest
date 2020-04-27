@@ -47,7 +47,7 @@ storageGetProcess(IoWrite *destination)
             if (repoCipherType != cipherTypeNone)
             {
                 // Check for a passphrase parameter
-                const String *cipherPass = cfgOptionStr(cfgOptCipherPass);
+                const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
 
                 // If not passed as a parameter use the repo passphrase
                 if (cipherPass == NULL)

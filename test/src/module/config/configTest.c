@@ -199,7 +199,8 @@ testRun(void)
 
         TEST_ERROR(cfgOptionStr(cfgOptStanza), AssertError, "option 'stanza' is not valid for the current command");
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptStanza, true), "set stanza valid");
-        TEST_RESULT_PTR(cfgOptionStr(cfgOptStanza), NULL, "stanza defaults to null");
+        TEST_ERROR(cfgOptionStr(cfgOptStanza), AssertError, "option 'stanza' is null but non-null was requested");
+        TEST_RESULT_PTR(cfgOptionStrNull(cfgOptStanza), NULL, "stanza defaults to null");
         TEST_ERROR(
             cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'stanza' must be set with String variant");

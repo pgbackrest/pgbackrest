@@ -106,12 +106,12 @@ storageHelperStanzaInit(const bool stanzaRequired)
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
     if (!storageHelper.stanzaInit)
     {
-        if (stanzaRequired && cfgOptionStr(cfgOptStanza) == NULL)
+        if (stanzaRequired && cfgOptionStrNull(cfgOptStanza) == NULL)
             THROW(AssertError, "stanza cannot be NULL for this storage object");
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
+            storageHelper.stanza = strDup(cfgOptionStrNull(cfgOptStanza));
             storageHelper.stanzaInit = true;
         }
         MEM_CONTEXT_END();

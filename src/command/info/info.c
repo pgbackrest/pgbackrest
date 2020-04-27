@@ -396,7 +396,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
             // Attempt to load the backup info file
             info = infoBackupLoadFile(
                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE),
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
         {
@@ -443,7 +443,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveLoadFile(
                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
 
@@ -738,10 +738,10 @@ infoRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get stanza if specified
-        const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
+        const String *stanza = cfgOptionStrNull(cfgOptStanza);
 
         // Get the backup label if specified
-        const String *backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
+        const String *backupLabel = cfgOptionStrNull(cfgOptSet);
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();

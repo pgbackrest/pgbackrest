@@ -920,7 +920,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
+        TEST_RESULT_PTR(cfgOptionStrNull(cfgOptRepoCipherPass), NULL, "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "dcba", "check cipher pass after");
 
