@@ -650,7 +650,11 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "10-2", "0000000100000000");
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=4");
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=3");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=3");
 
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
@@ -666,9 +670,6 @@ testRun(void)
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
             archiveExpectList(3, 10, "0000000100000000"),
             "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
-        harnessLogResult(
-            "P00   INFO: full backup total < 4 - using oldest full backup for 9.4-1 archive retention\n"
-            "P00   INFO: full backup total < 4 - using oldest full backup for 10-2 archive retention");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - latest archive not expired");
@@ -1025,23 +1026,6 @@ testRun(void)
             archiveExpectList(1, 5, "0000000100000000"), "nothing removed from 9.4-1/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("retention-archive-type=incr");
-
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=4");
-        strLstAddZ(argList, "--repo1-retention-archive-type=incr");
-        harnessCfgLoad(cfgCmdExpire, argList);
-
-        TEST_RESULT_VOID(
-            removeExpiredArchive(infoBackup), "full count as incr but not enough backups, retention set to first full");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
-            archiveExpectList(2, 5, "0000000100000000"), "only removed archive prior to first full");
-        harnessLogResult(
-            "P00   INFO: full backup total < 4 - using oldest full backup for 9.4-1 archive retention");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("prior backup has no archive-start");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1056,6 +1040,7 @@ testRun(void)
             "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000010000000000000002,"
             " stop = 000000010000000000000002\n"
             "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 9.4-1, start = 000000010000000000000004\n"
+            "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000003, stop = 000000010000000000000003");
 
         harnessLogLevelReset();
