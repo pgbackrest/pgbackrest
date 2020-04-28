@@ -43,7 +43,8 @@ static String *
 zstDecompressToLog(const ZstDecompress *this)
 {
     return strNewFmt(
-        "{inputSame: %s, inputPos %zu, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputPos, cvtBoolToConstZ(this->done));
+        "{inputSame: %s, inputPos %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputPos,
+        cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_ZST_DECOMPRESS_TYPE                                                                                           \
@@ -94,9 +95,6 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
 
         this->frameDone = zstError(ZSTD_decompressStream(this->context, &out, &in)) == 0;
         bufUsedInc(decompressed, out.pos);
-        LOG_DEBUG_FMT("DONE %d", this->done);
-        LOG_DEBUG_FMT("INPUT POS %zu, SIZE %zu", in.pos, in.size);
-        LOG_DEBUG_FMT("OUTPUT POS %zu, SIZE %zu", out.pos, out.size);
 
         if (in.pos < in.size)
         {

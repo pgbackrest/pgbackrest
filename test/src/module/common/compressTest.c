@@ -141,13 +141,13 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ERROR(testDecompress(decompressFilter(type), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
-    // TEST_TITLE("error on truncated compression data");
-    //
-    // Buffer *truncated = bufNew(0);
-    // bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
-    //
-    // TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
-    // TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
+    TEST_TITLE("error on truncated compression data");
+
+    Buffer *truncated = bufNew(0);
+    bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
+
+    TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
+    TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("compress a large zero input buffer into small output buffer");
