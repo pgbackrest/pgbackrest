@@ -5,6 +5,7 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/control/common.h"
 #include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -12,6 +13,7 @@ Expire Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 #include <stdlib.h>
@@ -294,12 +296,11 @@ removeExpiredArchive(InfoBackup *infoBackup)
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
         const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionUInt(cfgOptRepoRetentionArchive) : 0;
-        bool timeBasedFullRetention = cfgOptionTest(cfgOptRepoRetentionFullPeriod);
-// CSHANG David wanted to make this set to the MAX but that value would need to be retrieved somehow and currently that is only done by cfgDefOptionAllowRangeMax(commandDefId, optionDefId) -- so need to figure out if we can use that here
-        // If retention-full-period is set and valid and archive retention was not explicitly set then set it greater than the
-        // number of full backups remaining so that all archive prior to the oldest full backup is expired
-        if (timeBasedFullRetention && archiveRetention == 0)
-            archiveRetention = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true))) + 1;
+
+        // If retention period is valid and set and archive retention was not explicitly set then set it to the number of
+        // full backups remaining so that all archive prior to the oldest full backup is expired
+        if (cfgOptionTest(cfgOptRepoRetentionFullPeriod) && archiveRetention == 0)
+            archiveRetention = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)));
 
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
@@ -330,8 +331,9 @@ removeExpiredArchive(InfoBackup *infoBackup)
                     sortOrderDesc);
             }
 
-            // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
-            if (strLstSize(globalBackupRetentionList) > 0)
+            // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention
+            // then preserve current archive logs - too soon to expire them.
+            if (strLstSize(globalBackupRetentionList) > 0 && archiveRetention <= strLstSize(globalBackupRetentionList))
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
@@ -441,40 +443,20 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // If we get here, then a local backup was found for retention
                         StringList *localBackupArchiveRetentionList = strLstNew();
 
-                        // If the archive retention is less than or equal to the number of all backups, then perform selective
-                        // expiration
-                        if (archiveRetention <= strLstSize(globalBackupRetentionList))
+                        // From the full list of backups in archive retention, find the intersection of local backups to retain
+                        // from oldest to newest
+                        for (unsigned int globalIdx = strLstSize(globalBackupArchiveRetentionList) - 1;
+                             (int)globalIdx >= 0; globalIdx--)
                         {
-                            // From the full list of backups in archive retention, find the intersection of local backups to retain
-                            // from oldest to newest
-                            for (unsigned int globalIdx = strLstSize(globalBackupArchiveRetentionList) - 1;
-                                 (int)globalIdx >= 0; globalIdx--)
+                            for (unsigned int localIdx = 0; localIdx < strLstSize(localBackupRetentionList); localIdx++)
                             {
-                                for (unsigned int localIdx = 0; localIdx < strLstSize(localBackupRetentionList); localIdx++)
+                                if (strCmp(
+                                        strLstGet(globalBackupArchiveRetentionList, globalIdx),
+                                        strLstGet(localBackupRetentionList, localIdx)) == 0)
                                 {
-                                    if (strCmp(
-                                            strLstGet(globalBackupArchiveRetentionList, globalIdx),
-                                            strLstGet(localBackupRetentionList, localIdx)) == 0)
-                                    {
-                                        strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
-                                    }
+                                    strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
                                 }
                             }
-                        }
-                        // Else if there are not enough backups yet globally to start archive expiration then set the archive
-                        // retention to the oldest backup so anything prior to that will be removed as it is not needed but
-                        // everything else is. This is incase there are old archives left around so that they don't stay around
-                        // forever.
-                        else
-                        {
-                            // Don't display log message if using time-based retention
-                            if (!timeBasedFullRetention)
-                            {
-                                LOG_INFO_FMT(
-                                    "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
-                                    strPtr(archiveId));
-                            }
-                            strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
                         }
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest
@@ -714,11 +696,14 @@ cmdExpire(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // Verify the repo is local
+    repoIsLocalVerify();
+
+    // Test for stop file
+    lockStopTest();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),

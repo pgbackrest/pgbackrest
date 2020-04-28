@@ -2268,6 +2268,11 @@ testRun(void)
         strLstAddZ(argList, "--db-include=16384");
         harnessCfgLoad(cfgCmdRestore, argList);
 
+        // Move pg1-path and put a link in its place. This tests that restore works when pg1-path is a symlink yet should be
+        // completely invisible in the manifest and logging.
+        TEST_SYSTEM_FMT("mv %s %s-data", strPtr(pgPath), strPtr(pgPath));
+        TEST_SYSTEM_FMT("ln -s %s-data %s ", strPtr(pgPath), strPtr(pgPath));
+
         // Write recovery.conf so we don't get a preserve warning
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
 

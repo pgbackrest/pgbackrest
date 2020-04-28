@@ -173,6 +173,26 @@ sub contributorTextGet
             push @{$stryItemContributor}, $self->{strContributorDefault}
         }
 
+        # Add the default user as a reviewer if there are no reviewers listed and default user is not already a contributor
+        if (@$stryItemContributor == 0 && $strContributorType eq XML_RELEASE_ITEM_REVIEWER)
+        {
+            my $bFound = false;
+
+            foreach my $strContributor (@{$$hItemContributorType{&XML_RELEASE_ITEM_CONTRIBUTOR}})
+            {
+                if ($strContributor eq $self->{strContributorDefault})
+                {
+                    $bFound = true;
+                    last;
+                }
+            }
+
+            if (!$bFound)
+            {
+                push @{$stryItemContributor}, $self->{strContributorDefault}
+            }
+        }
+
         $$hItemContributorType{$strContributorType} = $stryItemContributor;
     }
 
@@ -197,7 +217,7 @@ sub contributorTextGet
     }
 
     # Remove the default user if they are the only one in a group (to prevent the entire page from being splattered with one name)
-    foreach my $strContributorType (XML_RELEASE_ITEM_IDEATOR, XML_RELEASE_ITEM_CONTRIBUTOR, XML_RELEASE_ITEM_REVIEWER)
+    foreach my $strContributorType (XML_RELEASE_ITEM_IDEATOR, XML_RELEASE_ITEM_CONTRIBUTOR)
     {
         if (@{$$hItemContributorType{$strContributorType}} == 1 &&
             @{$$hItemContributorType{$strContributorType}}[0] eq $self->{strContributorDefault})

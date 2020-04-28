@@ -232,7 +232,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
                     break;
             }
 
-            sk_GENERAL_NAME_free(altNameStack);
+            sk_GENERAL_NAME_pop_free(altNameStack, GENERAL_NAME_free);
         }
 
         // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName

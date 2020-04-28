@@ -12,6 +12,7 @@ Info Command
 #include "command/info/info.h"
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -63,6 +64,9 @@ VARIANT_STRDEF_STATIC(STANZA_KEY_CIPHER_VAR,                        "cipher");
 VARIANT_STRDEF_STATIC(STANZA_KEY_STATUS_VAR,                        "status");
 VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -77,15 +81,18 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid ba
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
 
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           "backup/expire running");
+
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
 ***********************************************************************************************************************************/
 static void
-stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
+stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(STRING, message);
+        FUNCTION_TEST_PARAM(BOOL, backupLockHeld);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
@@ -97,6 +104,11 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 
     kvAdd(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
     kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(message));
+
+    // Construct a specific lock part
+    KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
+    KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
+    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -390,7 +402,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         {
             // If there is no backup.info then set the status to indicate missing
             stanzaStatus(
-                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
+                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, false, stanzaInfo);
         }
         CATCH(CryptoError)
         {
@@ -444,16 +456,28 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
         kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
 
+        // If a status has not already been set, check if there's a local backup running
+        static bool backupLockHeld = false;
+
+        if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
+        {
+            // Try to acquire a lock. If not possible, assume another backup or expire is already running.
+            backupLockHeld = !lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeBackup, 0, false);
+
+            // Immediately release the lock acquired
+            lockRelease(!backupLockHeld);
+        }
+
         // If a status has not already been set and there are no backups then set status to no backup
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL &&
             varLstSize(kvGetList(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR)) == 0)
         {
-            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
+            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, backupLockHeld, stanzaInfo);
         }
 
         // If a status has still not been set then set it to OK
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
-            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
+            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, backupLockHeld, stanzaInfo);
 
         varLstAdd(result, stanzaInfo);
     }
@@ -468,7 +492,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(varLstNew()));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(varLstNew()));
 
-        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
+        stanzaStatus(
+            INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, false, stanzaInfo);
         varLstAdd(result, stanzaInfo);
     }
 
@@ -766,11 +791,26 @@ infoRender(void)
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));
                     int statusCode = varInt(kvGet(stanzaStatus, STATUS_KEY_CODE_VAR));
 
+                    // Get the lock info
+                    KeyValue *lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
+                    KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
+
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-                        strCatFmt(
-                            resultStr, "%s (%s)\n", INFO_STANZA_STATUS_ERROR,
-                            strPtr(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))));
+                        // Change displayed status if backup lock is found
+                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s, %s)\n", INFO_STANZA_STATUS_ERROR,
+                                strPtr(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
+                                strPtr(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR));
+                        }
+                        else
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s)\n", INFO_STANZA_STATUS_ERROR,
+                                strPtr(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))));
+                        }
 
                         if (statusCode == INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA ||
                             statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
@@ -786,7 +826,16 @@ infoRender(void)
                         continue;
                     }
                     else
-                        strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
+                    {
+                        // Change displayed status if backup lock is found
+                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, strPtr(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR));
+                        }
+                        else
+                            strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
+                    }
 
                     // Cipher
                     strCatFmt(resultStr, "    cipher: %s\n",

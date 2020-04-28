@@ -5,6 +5,7 @@ Test Info Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -67,6 +68,7 @@ testRun(void)
                     "\"name\":\"stanza1\","
                     "\"status\":{"
                         "\"code\":3,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza data\""
                         "}"
                 "}"
@@ -163,6 +165,7 @@ testRun(void)
                      "\"name\":\"stanza1\","
                      "\"status\":{"
                         "\"code\":2,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"
@@ -179,6 +182,79 @@ testRun(void)
             "    db (current)\n"
             "        wal archive min/max (9.4-3): none present\n",
             "text - single stanza, no valid backups");
+
+        // Repeat prior tests while a backup lock is held
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                TEST_RESULT_INT_NE(
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
+                    "create backup/expire lock");
+
+                sleepMSec(1000);
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                sleepMSec(250);
+
+                harnessCfgLoad(cfgCmdInfo, argList);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "["
+                        "{"
+                            "\"archive\":["
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":2"
+                                    "},"
+                                    "\"id\":\"9.4-3\","
+                                    "\"max\":null,"
+                                    "\"min\":null"
+                                "}"
+                            "],"
+                             "\"backup\":[],"
+                             "\"cipher\":\"aes-256-cbc\","
+                             "\"db\":["
+                                "{"
+                                    "\"id\":1,"
+                                    "\"system-id\":6569239123849665666,"
+                                    "\"version\":\"9.3\""
+                                "},"
+                                "{"
+                                    "\"id\":2,"
+                                    "\"system-id\":6569239123849665679,"
+                                    "\"version\":\"9.4\""
+                                "}"
+                            "],"
+                             "\"name\":\"stanza1\","
+                             "\"status\":{"
+                                "\"code\":2,"
+                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"message\":\"no valid backups\""
+                            "}"
+                        "}"
+                    "]",
+                    "json - single stanza, no valid backups, backup/expire lock detected");
+
+                harnessCfgLoad(cfgCmdInfo, argListText);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: error (no valid backups, backup/expire running)\n"
+                    "    cipher: aes-256-cbc\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4-3): none present\n",
+                    "text - single stanza, no valid backups, backup/expire lock detected");
+
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
 
         // Add WAL segments
         //--------------------------------------------------------------------------------------------------------------------------
@@ -331,6 +407,7 @@ testRun(void)
                      "\"name\":\"stanza1\","
                      "\"status\":{"
                         "\"code\":0,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"ok\""
                     "}"
                 "}"
@@ -356,6 +433,130 @@ testRun(void)
             "    db (current)\n"
             "        wal archive min/max (9.4-3): none present\n",
             "text - single stanza, valid backup, no priors, no archives in latest DB");
+
+        // Repeat prior tests while a backup lock is held
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                TEST_RESULT_INT_NE(
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
+                    "create backup/expire lock");
+
+                sleepMSec(1000);
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                sleepMSec(250);
+
+                harnessCfgLoad(cfgCmdInfo, argList);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "["
+                        "{"
+                             "\"archive\":["
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":1"
+                                    "},"
+                                    "\"id\":\"9.4-1\","
+                                    "\"max\":\"000000020000000000000003\","
+                                    "\"min\":\"000000010000000000000002\""
+                                "},"
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":3"
+                                    "},"
+                                    "\"id\":\"9.4-3\","
+                                    "\"max\":null,"
+                                    "\"min\":null"
+                                "}"
+                            "],"
+                             "\"backup\":["
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":null,"
+                                        "\"stop\":null"
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.04\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":26897030,"
+                                        "\"repository\":{"
+                                            "\"delta\":3159,"
+                                            "\"size\":3159776"
+                                        "},"
+                                        "\"size\":26897030"
+                                    "},"
+                                    "\"label\":\"20181116-154756F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1542383276,"
+                                        "\"stop\":1542383289"
+                                    "},"
+                                    "\"type\":\"full\""
+                                "}"
+                            "],"
+                             "\"cipher\":\"none\","
+                             "\"db\":["
+                                "{"
+                                    "\"id\":1,"
+                                    "\"system-id\":6569239123849665679,"
+                                    "\"version\":\"9.4\""
+                                "},"
+                                "{"
+                                    "\"id\":2,"
+                                    "\"system-id\":6569239123849665666,"
+                                    "\"version\":\"9.3\""
+                                "},"
+                                "{"
+                                    "\"id\":3,"
+                                    "\"system-id\":6569239123849665679,"
+                                    "\"version\":\"9.4\""
+                                "}"
+                            "],"
+                             "\"name\":\"stanza1\","
+                             "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+
+                harnessCfgLoad(cfgCmdInfo, argListText);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (backup/expire running)\n"
+                    "    cipher: none\n"
+                    "\n"
+                    "    db (prior)\n"
+                    "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+                    "\n"
+                    "        full backup: 20181116-154756F\n"
+                    "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
+                    "            wal start/stop: n/a\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repository size: 3MB, repository backup size: 3KB\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4-3): none present\n",
+                    "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
 
         // backup.info/archive.info files exist, backups exist, archives exist
         //--------------------------------------------------------------------------------------------------------------------------
@@ -717,6 +918,7 @@ testRun(void)
                      "\"name\":\"stanza1\","
                      "\"status\":{"
                         "\"code\":0,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"ok\""
                     "}"
                 "},"
@@ -743,6 +945,7 @@ testRun(void)
                      "\"name\":\"stanza2\","
                      "\"status\":{"
                         "\"code\":2,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"
@@ -941,6 +1144,7 @@ testRun(void)
                      "\"name\":\"silly\","
                      "\"status\":{"
                         "\"code\":1,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza path\""
                     "}"
                 "}"
@@ -986,6 +1190,7 @@ testRun(void)
                      "\"name\":\"stanza2\","
                      "\"status\":{"
                         "\"code\":2,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"

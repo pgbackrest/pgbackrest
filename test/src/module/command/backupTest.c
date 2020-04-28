@@ -2226,6 +2226,11 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
+            // Move pg1-path and put a link in its place. This tests that backup works when pg1-path is a symlink yet should be
+            // completely invisible in the manifest and logging.
+            TEST_SYSTEM_FMT("mv %s %s-data", strPtr(pg1Path), strPtr(pg1Path));
+            TEST_SYSTEM_FMT("ln -s %s-data %s ", strPtr(pg1Path), strPtr(pg1Path));
+
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT);
             memset(bufPtr(relation), 0, bufSize(relation));
