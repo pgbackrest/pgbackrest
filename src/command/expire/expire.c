@@ -116,8 +116,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const unsigned int backupRetention
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the min date to keep and the list of full backups
-        TimeMSec minDateToKeepMSec = timeMSec();
-        time_t minDateToKeepSec = (time_t)(minDateToKeepMSec / MSEC_PER_SEC - backupRetentionDays * 24 * 3600);
+        time_t minDateToKeepSec = time(NULL) - (backupRetentionDays * 24 * 3600);
         const String *lastBackupLabelToKeep = NULL;
         StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderAsc);
         unsigned int i = strLstSize(currentBackupList);
