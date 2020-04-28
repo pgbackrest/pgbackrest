@@ -1,7 +1,5 @@
 /***********************************************************************************************************************************
 ZST Compress
-
-Developed using the documentation in !!!
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -31,11 +29,11 @@ Object type
 typedef struct ZstCompress
 {
     MemContext *memContext;                                         // Context to store data
+    ZSTD_CCtx *context;                                             // Compression context
     IoFilter *filter;                                               // Filter interface
 
-    Buffer *buffer;                                                 // For when the output buffer can't accept all compressed data
-    bool first;                                                     // Is this the first call to process?
     bool inputSame;                                                 // Is the same input required on the next process call?
+    size_t inputPos;                                                // Current position in input buffer
     bool flushing;                                                  // Is input complete and flushing in progress?
 } ZstCompress;
 
@@ -58,7 +56,7 @@ Free compression context
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_COMPRESS, LOG, logLevelTrace)
 {
-    // !!!
+    ZSTD_freeCCtx(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -78,11 +76,41 @@ zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 
     ASSERT(this != NULL);
     ASSERT(!(this->flushing && !this->inputSame));
-    // ASSERT(this->context != NULL);
+    ASSERT(this->context != NULL);
     ASSERT(compressed != NULL);
     ASSERT(!this->flushing || uncompressed == NULL);
 
-    bufCat(compressed, uncompressed);
+    // Initialize output buffer
+    ZSTD_outBuffer out = {.dst = bufRemainsPtr(compressed), .size = bufRemains(compressed)};
+
+    // If input is NULL then start flushing
+    if (uncompressed == NULL)
+    {
+        this->flushing = true;
+        this->inputSame = zstError(ZSTD_endStream(this->context, &out));
+    }
+    // Else still have input data
+    else
+    {
+        ZSTD_inBuffer in = {.src = bufPtrConst(uncompressed) + this->inputPos, .size = bufUsed(uncompressed) - this->inputPos};
+
+        zstError(ZSTD_compressStream(this->context, &out, &in));
+
+        if (in.pos < in.size)
+        {
+            ASSERT(out.pos == out.size);
+
+            this->inputSame = true;
+            this->inputPos += in.pos;
+        }
+        else
+        {
+            this->inputSame = false;
+            this->inputPos = 0;
+        }
+    }
+
+    bufUsedInc(compressed, out.pos);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -140,13 +168,14 @@ zstCompressNew(int level)
         *driver = (ZstCompress)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .context = ZSTD_createCCtx(),
         };
-
-        // Create zst context
-        // !!! zstError(ZSTF_createCompressionContext(&driver->context, ZSTF_VERSION));
 
         // Set callback to ensure zst context is freed
         memContextCallbackSet(driver->memContext, zstCompressFreeResource, driver);
+
+        // Initialize context
+        zstError(ZSTD_initCStream(driver->context, level));
 
         // Create param list
         VariantList *paramList = varLstNew();

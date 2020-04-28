@@ -27,9 +27,12 @@ Object type
 typedef struct ZstDecompress
 {
     MemContext *memContext;                                         // Context to store data
+    ZSTD_DCtx *context;                                             // Decompression context
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
+    size_t inputPos;                                                // Current position in input buffer
+    bool frameDone;                                                 // Has the current frame completed?
     bool done;                                                      // Is decompression done?
 } ZstDecompress;
 
@@ -39,7 +42,8 @@ Render as string for logging
 static String *
 zstDecompressToLog(const ZstDecompress *this)
 {
-    return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+    return strNewFmt(
+        "{inputSame: %s, inputPos %zu, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputPos, cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_ZST_DECOMPRESS_TYPE                                                                                           \
@@ -52,7 +56,7 @@ Free decompression context
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_DECOMPRESS, LOG, logLevelTrace)
 {
-    // !!!
+    ZSTD_freeDCtx(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -71,10 +75,42 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    // ASSERT(this->context != NULL);
+    ASSERT(this->context != NULL);
     ASSERT(decompressed != NULL);
 
-    // !!! IMPLEMENT
+    if (compressed == NULL)
+    {
+        // If the current frame being decompressed was not completed then error
+        if (!this->frameDone)
+            THROW(FormatError, "unexpected eof in compressed data");
+
+        this->done = true;
+    }
+    else
+    {
+        // Initialize input/output buffer
+        ZSTD_inBuffer in = {.src = bufPtrConst(compressed) + this->inputPos, .size = bufUsed(compressed) - this->inputPos};
+        ZSTD_outBuffer out = {.dst = bufRemainsPtr(decompressed), .size = bufRemains(decompressed)};
+
+        this->frameDone = zstError(ZSTD_decompressStream(this->context, &out, &in)) == 0;
+        bufUsedInc(decompressed, out.pos);
+        LOG_DEBUG_FMT("DONE %d", this->done);
+        LOG_DEBUG_FMT("INPUT POS %zu, SIZE %zu", in.pos, in.size);
+        LOG_DEBUG_FMT("OUTPUT POS %zu, SIZE %zu", out.pos, out.size);
+
+        if (in.pos < in.size)
+        {
+            ASSERT(out.pos == out.size);
+
+            this->inputSame = true;
+            this->inputPos += in.pos;
+        }
+        else
+        {
+            this->inputPos = 0;
+            this->inputSame = false;
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -128,13 +164,14 @@ zstDecompressNew(void)
         *driver = (ZstDecompress)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .context = ZSTD_createDCtx(),
         };
-
-        // Create zst context
-        // !!!
 
         // Set callback to ensure zst context is freed
         memContextCallbackSet(driver->memContext, zstDecompressFreeResource, driver);
+
+        // Initialize context
+        zstError(ZSTD_initDStream(driver->context));
 
         // Create filter interface
         this = ioFilterNewP(
