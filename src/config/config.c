@@ -814,6 +814,10 @@ cfgOptionInternal(ConfigOption optionId, VariantType typeRequested, bool nullAll
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
+    // Check that the option is valid for the current command
+    if (!cfgOptionValid(optionId))
+        THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionName(optionId));
+
     // If the option is not NULL then check it is the requested type
     Variant *result = configStatic.option[optionId].value;
 

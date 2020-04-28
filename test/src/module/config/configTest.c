@@ -147,6 +147,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(cfgOption(cfgOptOnline), NULL, "online is null");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewBool(false)), "set online");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptOnline, true), "set online valid");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "online is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewStrZ("1")), "set online");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), true, "online is set");
@@ -155,6 +156,7 @@ testRun(void)
         TEST_ERROR(cfgOptionInt64(cfgOptOnline), AssertError, "option 'online' is type 0 but 3 was requested");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt64(1)), "set compress-level");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptCompressLevel, true), "set compress-level valid");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 1, "compress-level is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, varNewStrZ("3")), "set compress-level");
         TEST_RESULT_INT(cfgOptionUInt(cfgOptCompressLevel), 3, "compress-level is set");
@@ -163,10 +165,12 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptArchivePushQueueMax, true), "set archive-push-queue-max valid");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1)), "set protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptProtocolTimeout, true), "set protocol-timeout valid");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1.1, "protocol-timeout is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceConfig, varNewStrZ("3.3")), "set protocol-timeout");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 3.3, "protocol-timeout is set");
@@ -180,9 +184,11 @@ testRun(void)
             cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'recovery-option' must be set with KeyValue variant");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptRecoveryOption, cfgSourceConfig, varNewKv(kvNew())), "set recovery-option");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptRecoveryOption, true), "set recovery-option valid");
         TEST_RESULT_INT(varLstSize(kvKeyList(cfgOptionKv(cfgOptRecoveryOption))), 0, "recovery-option is set");
         TEST_ERROR(cfgOptionLst(cfgOptRecoveryOption), AssertError, "option 'recovery-option' is type 4 but 8 was requested");
 
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptDbInclude, true), "set db-include valid");
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include defaults to empty");
         TEST_ERROR(
             cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewDbl(1.1)), AssertError,
@@ -191,6 +197,8 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include is set");
         TEST_ERROR(cfgOptionStr(cfgOptDbInclude), AssertError, "option 'db-include' is type 8 but 5 was requested");
 
+        TEST_ERROR(cfgOptionStr(cfgOptStanza), AssertError, "option 'stanza' is not valid for the current command");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptStanza, true), "set stanza valid");
         TEST_RESULT_PTR(cfgOptionStr(cfgOptStanza), NULL, "stanza defaults to null");
         TEST_ERROR(
             cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewDbl(1.1)), AssertError,
