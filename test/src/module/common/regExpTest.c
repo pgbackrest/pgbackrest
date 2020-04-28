@@ -24,6 +24,9 @@ testRun(void)
         }
         TRY_END();
 
+
+        TEST_ERROR(regExpErrorCheck(REG_BADBR), FormatError, "Invalid content of \\{\\}");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new regexp");
 
