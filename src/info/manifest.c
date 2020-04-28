@@ -2378,8 +2378,14 @@ manifestLinkCheck(const Manifest *this)
 
                 if (link2->type == manifestTargetTypeLink && link1 != link2)
                 {
-                    if (!(link1->file != NULL && link2->file != NULL) &&
-                        strBeginsWith(
+                    // Don't check link1 against a file link. If link1 is a file there's no need to compare because they cannot have
+                    // conflicting paths. If link1 is a path we want to make sure that the file link is not located within it but to
+                    // do that we need to wait until the file link is link1 and the path link is link2, which happens on another
+                    // interation of the outer loop.
+                    if (link2->file != NULL)
+                        continue;
+
+                    if (strBeginsWith(
                             strNewFmt("%s/", strPtr(manifestTargetPath(this, link1))),
                             strNewFmt("%s/", strPtr(manifestTargetPath(this, link2)))))
                     {
