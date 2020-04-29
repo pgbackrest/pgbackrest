@@ -81,6 +81,7 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
     ASSERT(this->context != NULL);
     ASSERT(decompressed != NULL);
 
+    // When there is no more input then decompression is done
     if (compressed == NULL)
     {
         // If the current frame being decompressed was not completed then error
@@ -95,16 +96,20 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
         ZSTD_inBuffer in = {.src = bufPtrConst(compressed) + this->inputOffset, .size = bufUsed(compressed) - this->inputOffset};
         ZSTD_outBuffer out = {.dst = bufRemainsPtr(decompressed), .size = bufRemains(decompressed)};
 
+        // Perform decompression. Track frame done so we can detect unexpected EOF.
         this->frameDone = zstError(ZSTD_decompressStream(this->context, &out, &in)) == 0;
         bufUsedInc(decompressed, out.pos);
 
+        // If the input buffer was not entirely consumed then set inputSame and store the offset where processing will restart
         if (in.pos < in.size)
         {
+            // Output buffer should be completely full
             ASSERT(out.pos == out.size);
 
             this->inputSame = true;
             this->inputOffset += in.pos;
         }
+        // Else ready for more input
         else
         {
             this->inputOffset = 0;

@@ -95,21 +95,26 @@ zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     // Else still have input data
     else
     {
+        // Initialize input buffer
         ZSTD_inBuffer in =
         {
             .src = bufPtrConst(uncompressed) + this->inputOffset,
             .size = bufUsed(uncompressed) - this->inputOffset,
         };
 
+        // Perform compression
         zstError(ZSTD_compressStream(this->context, &out, &in));
 
+        // If the input buffer was not entirely consumed then set inputSame and store the offset where processing will restart
         if (in.pos < in.size)
         {
+            // Output buffer should be completely full
             ASSERT(out.pos == out.size);
 
             this->inputSame = true;
             this->inputOffset += in.pos;
         }
+        // Else ready for more input
         else
         {
             this->inputSame = false;

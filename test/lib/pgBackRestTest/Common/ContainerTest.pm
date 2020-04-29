@@ -371,11 +371,6 @@ sub containerBuild
             {
                 $strScript .= ' perl-JSON-PP';
             }
-
-            if (vmWithZst($strOS))
-            {
-                $strScript .= ' zstd libzstd-devel';
-            }
         }
         else
         {
@@ -395,8 +390,16 @@ sub containerBuild
             {
                 $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
             }
+        }
 
-            if (vmWithZst($strOS))
+        # Add zst command-line tool and development libs when available
+        if (vmWithZst($strOS))
+        {
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+            {
+                $strScript .= ' zstd libzstd-devel';
+            }
+            else
             {
                 $strScript .= ' zstd libzstd-dev';
             }

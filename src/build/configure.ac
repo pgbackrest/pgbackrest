@@ -127,8 +127,6 @@ AC_CHECK_LIB(
 
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------
-#if ZSTD_VERSION_MAJOR < 1 #error "ZSTD_VERSION_MAJOR must be >= 1"#endif
-
 AC_CHECK_LIB(
     [zstd], [ZSTD_isError],
     [AC_CHECK_HEADER(zstd.h,
