@@ -143,6 +143,8 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
+        &VMDEF_WITH_ZST => true,
+
         &VM_DB =>
         [
             PG_VERSION_10,
