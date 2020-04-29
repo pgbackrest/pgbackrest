@@ -94,6 +94,13 @@ testSuite(CompressType type, const char *decompressCmd)
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
 
+    // -------------------------------------------------------------------------------------------------------------------------
+    TEST_TITLE("compressed output can be decompressed with command-line tool");
+
+    storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
+    TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
+    TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
+
     TEST_RESULT_BOOL(
         bufEq(compressed, testCompress(compressFilter(type, 1), decompressed, 1024, 1)), true,
         "simple data - compress large in/small out buffer");
@@ -124,16 +131,6 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_RESULT_BOOL(
         bufEq(decompressed, testDecompress(decompressFilter(type), compressed, 1, 1)), true,
         "simple data - decompress small in/small out buffer");
-
-    // -------------------------------------------------------------------------------------------------------------------------
-    if (decompressCmd != NULL)
-    {
-        TEST_TITLE("compressed output can be decompressed with command-line tool");
-
-        storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
-        TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
-        TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
-    }
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("error on no compression data");
