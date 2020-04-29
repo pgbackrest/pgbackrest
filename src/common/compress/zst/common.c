@@ -7,6 +7,7 @@ ZST Common
 
 #include <zstd.h>
 
+// Check the version -- this is done in configure but it makes sense to be sure
 #if ZSTD_VERSION_MAJOR < 1
     #error "ZSTD_VERSION_MAJOR must be >= 1"
 #endif

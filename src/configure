@@ -4072,8 +4072,6 @@ fi
 
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------
-#if ZSTD_VERSION_MAJOR < 1 #error "ZSTD_VERSION_MAJOR must be >= 1"#endif
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_isError in -lzstd" >&5
 $as_echo_n "checking for ZSTD_isError in -lzstd... " >&6; }
 if ${ac_cv_lib_zstd_ZSTD_isError+:} false; then :
@@ -5419,4 +5417,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 7bd65089ed491ae483fc6c343f8d66bba8f21f2c
+# Generated from src/build/configure.ac sha1 93fbf56725f3dab1089ddd4d7768f4414bf7941c
