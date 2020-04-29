@@ -5,6 +5,8 @@ ZST Decompress
 
 #ifdef HAVE_LIBZST
 
+#include <zstd.h>
+
 #include "common/compress/zst/common.h"
 #include "common/compress/zst/decompress.h"
 #include "common/debug.h"
