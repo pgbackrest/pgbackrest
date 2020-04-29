@@ -224,6 +224,7 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -402,9 +403,9 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_WITH_ZST => true,
 
         &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [

@@ -371,6 +371,11 @@ sub containerBuild
             {
                 $strScript .= ' perl-JSON-PP';
             }
+
+            if (vmWithZst($strOS))
+            {
+                $strScript .= ' zstd libzstd-devel';
+            }
         }
         else
         {
