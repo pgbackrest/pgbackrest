@@ -64,7 +64,9 @@ sub run
     foreach my $strBackupDestination (
         $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
-        my $strCompressType = $bHostBackup && !$bHostStandby ? (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : GZ) : NONE;
+        my $strCompressType =
+            $bHostBackup && !$bHostStandby ?
+                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ? ZST : GZ) : NONE;
         my $bRepoEncrypt = ($strCompressType ne NONE && !$bS3) ? true : false;
 
         # If compression was used then switch it for the next test that uses compression
