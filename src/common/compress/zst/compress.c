@@ -29,7 +29,7 @@ Object type
 typedef struct ZstCompress
 {
     MemContext *memContext;                                         // Context to store data
-    ZSTD_CCtx *context;                                             // Compression context
+    ZSTD_CStream *context;                                          // Compression context
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -56,7 +56,7 @@ Free compression context
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_COMPRESS, LOG, logLevelTrace)
 {
-    ZSTD_freeCCtx(this->context);
+    ZSTD_freeCStream(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -168,7 +168,7 @@ zstCompressNew(int level)
         *driver = (ZstCompress)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .context = ZSTD_createCCtx(),
+            .context = ZSTD_createCStream(),
         };
 
         // Set callback to ensure zst context is freed

@@ -4072,9 +4072,9 @@ fi
 
 # Check optional zst library
 # ----------------------------------------------------------------------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_isError in -lzstd" >&5
-$as_echo_n "checking for ZSTD_isError in -lzstd... " >&6; }
-if ${ac_cv_lib_zstd_ZSTD_isError+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_createCStream in -lzstd" >&5
+$as_echo_n "checking for ZSTD_createCStream in -lzstd... " >&6; }
+if ${ac_cv_lib_zstd_ZSTD_createCStream+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -4088,27 +4088,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char ZSTD_isError ();
+char ZSTD_createCStream ();
 int
 main ()
 {
-return ZSTD_isError ();
+return ZSTD_createCStream ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_zstd_ZSTD_isError=yes
+  ac_cv_lib_zstd_ZSTD_createCStream=yes
 else
-  ac_cv_lib_zstd_ZSTD_isError=no
+  ac_cv_lib_zstd_ZSTD_createCStream=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_isError" >&5
-$as_echo "$ac_cv_lib_zstd_ZSTD_isError" >&6; }
-if test "x$ac_cv_lib_zstd_ZSTD_isError" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_createCStream" >&5
+$as_echo "$ac_cv_lib_zstd_ZSTD_createCStream" >&6; }
+if test "x$ac_cv_lib_zstd_ZSTD_createCStream" = xyes; then :
   ac_fn_c_check_header_mongrel "$LINENO" "zstd.h" "ac_cv_header_zstd_h" "$ac_includes_default"
 if test "x$ac_cv_header_zstd_h" = xyes; then :
   $as_echo "#define HAVE_LIBZST 1" >>confdefs.h
@@ -5400,4 +5400,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 44c52f09b2324ae9fc4688176bc5a205db329281
+# Generated from src/build/configure.ac sha1 65bef23db474949fde8b84931e0ffe4197eb8a86

@@ -27,7 +27,7 @@ Object type
 typedef struct ZstDecompress
 {
     MemContext *memContext;                                         // Context to store data
-    ZSTD_DCtx *context;                                             // Decompression context
+    ZSTD_DStream *context;                                          // Decompression context
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -57,7 +57,7 @@ Free decompression context
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_DECOMPRESS, LOG, logLevelTrace)
 {
-    ZSTD_freeDCtx(this->context);
+    ZSTD_freeDStream(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -162,7 +162,7 @@ zstDecompressNew(void)
         *driver = (ZstDecompress)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .context = ZSTD_createDCtx(),
+            .context = ZSTD_createDStream(),
         };
 
         // Set callback to ensure zst context is freed

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 ZST Common
 
-Developed using the documentation in https://github.com/facebook/zstd/blob/v1.3.3/lib/zstd.h.
+Developed using the documentation in https://github.com/facebook/zstd/blob/v1.0.0/lib/zstd.h.
 ***********************************************************************************************************************************/
 #ifndef COMMON_COMPRESS_ZST_COMMON_H
 #define COMMON_COMPRESS_ZST_COMMON_H

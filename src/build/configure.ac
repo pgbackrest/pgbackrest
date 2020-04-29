@@ -128,7 +128,7 @@ AC_CHECK_LIB(
 # Check optional zst library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB(
-    [zstd], [ZSTD_isError],
+    [zstd], [ZSTD_createCStream],
     [AC_CHECK_HEADER(zstd.h, [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
 

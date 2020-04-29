@@ -7,6 +7,10 @@ ZST Common
 
 #include <zstd.h>
 
+#if ZSTD_VERSION_MAJOR < 1
+    #error "ZSTD_VERSION_MAJOR must be >= 1"
+#endif
+
 #include "common/compress/zst/common.h"
 #include "common/debug.h"
 
