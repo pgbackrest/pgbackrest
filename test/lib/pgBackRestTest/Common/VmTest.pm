@@ -197,6 +197,7 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [

@@ -74,7 +74,7 @@ static const struct CompressHelperLocal
         .compressNew = zstCompressNew,
         .decompressType = ZST_DECOMPRESS_FILTER_TYPE,
         .decompressNew = zstDecompressNew,
-        .levelDefault = 1,
+        .levelDefault = 3,
 #endif
     },
     {

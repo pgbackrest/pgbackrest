@@ -1,5 +1,5 @@
-run 002 - rmt 1, s3 1, enc 0, cmp gz
-====================================
+run 002 - rmt 1, s3 1, enc 0, cmp zst
+=====================================
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -70,9 +70,9 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --cmd-ssh=/usr/bin/ssh --compress-type=gz [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --cmd-ssh=/usr/bin/ssh --compress-type=zst [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --cmd-ssh=/usr/bin/ssh --compress-level=3 --compress-level-network=1 --compress-type=gz --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --cmd-ssh=/usr/bin/ssh --compress-level=3 --compress-level-network=1 --compress-type=zst --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000001' to the archive
 P00   INFO: archive-push command end: completed successfully
 
@@ -88,9 +88,9 @@ P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000
 P00   INFO: found 000000010000000100000001 in the archive
 P00   INFO: archive-get command end: completed successfully
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress-type=gz --archive-async --process-max=2 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress-type=zst --archive-async --process-max=2 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --archive-async --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=gz --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --process-max=2 --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --archive-async --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=zst --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --process-max=2 --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --spool-path=[TEST_PATH]/db-master/spool --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000002' to the archive asynchronously
 P00   INFO: archive-push command end: completed successfully
 
