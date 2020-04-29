@@ -350,8 +350,9 @@ removeExpiredArchive(InfoBackup *infoBackup)
                     sortOrderDesc);
             }
 
-            // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
-            if (strLstSize(globalBackupRetentionList) > 0)
+            // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention
+            // then preserve current archive logs - too soon to expire them.
+            if (strLstSize(globalBackupRetentionList) > 0 && archiveRetention <= strLstSize(globalBackupRetentionList))
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
@@ -461,36 +462,20 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // If we get here, then a local backup was found for retention
                         StringList *localBackupArchiveRetentionList = strLstNew();
 
-                        // If the archive retention is less than or equal to the number of all backups, then perform selective
-                        // expiration
-                        if (archiveRetention <= strLstSize(globalBackupRetentionList))
+                        // From the full list of backups in archive retention, find the intersection of local backups to retain
+                        // from oldest to newest
+                        for (unsigned int globalIdx = strLstSize(globalBackupArchiveRetentionList) - 1;
+                             (int)globalIdx >= 0; globalIdx--)
                         {
-                            // From the full list of backups in archive retention, find the intersection of local backups to retain
-                            // from oldest to newest
-                            for (unsigned int globalIdx = strLstSize(globalBackupArchiveRetentionList) - 1;
-                                 (int)globalIdx >= 0; globalIdx--)
+                            for (unsigned int localIdx = 0; localIdx < strLstSize(localBackupRetentionList); localIdx++)
                             {
-                                for (unsigned int localIdx = 0; localIdx < strLstSize(localBackupRetentionList); localIdx++)
+                                if (strCmp(
+                                        strLstGet(globalBackupArchiveRetentionList, globalIdx),
+                                        strLstGet(localBackupRetentionList, localIdx)) == 0)
                                 {
-                                    if (strCmp(
-                                            strLstGet(globalBackupArchiveRetentionList, globalIdx),
-                                            strLstGet(localBackupRetentionList, localIdx)) == 0)
-                                    {
-                                        strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
-                                    }
+                                    strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
                                 }
                             }
-                        }
-                        // Else if there are not enough backups yet globally to start archive expiration then set the archive
-                        // retention to the oldest backup so anything prior to that will be removed as it is not needed but
-                        // everything else is. This is incase there are old archives left around so that they don't stay around
-                        // forever.
-                        else
-                        {
-                            LOG_INFO_FMT(
-                                "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
-                                strPtr(archiveId));
-                            strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
                         }
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest

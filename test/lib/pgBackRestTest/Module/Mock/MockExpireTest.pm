@@ -153,10 +153,6 @@ sub run
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, undef, $strDescription);
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Use oldest full backup for archive retention';
-            $oExpireTest->process($self->stanza(), 10, 10, CFGOPTVAL_BACKUP_TYPE_FULL, 10, $strDescription);
         }
 
         ############################################################################################################################
