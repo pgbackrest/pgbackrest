@@ -30,10 +30,11 @@ typedef struct ZstCompress
 {
     MemContext *memContext;                                         // Context to store data
     ZSTD_CStream *context;                                          // Compression context
+    int level;                                                      // Compression level
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
-    size_t inputPos;                                                // Current position in input buffer
+    size_t inputOffset;                                             // Current offset in input buffer
     bool flushing;                                                  // Is input complete and flushing in progress?
 } ZstCompress;
 
@@ -43,7 +44,9 @@ Render as string for logging
 static String *
 zstCompressToLog(const ZstCompress *this)
 {
-    return strNewFmt("{inputSame: %s, flushing: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->flushing));
+    return strNewFmt(
+        "{level: %d, inputSame: %s, inputOffset: %zu, flushing: %s}", this->level, cvtBoolToConstZ(this->inputSame),
+        this->inputOffset, cvtBoolToConstZ(this->flushing));
 }
 
 #define FUNCTION_LOG_ZST_COMPRESS_TYPE                                                                                             \
@@ -92,7 +95,11 @@ zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     // Else still have input data
     else
     {
-        ZSTD_inBuffer in = {.src = bufPtrConst(uncompressed) + this->inputPos, .size = bufUsed(uncompressed) - this->inputPos};
+        ZSTD_inBuffer in =
+        {
+            .src = bufPtrConst(uncompressed) + this->inputOffset,
+            .size = bufUsed(uncompressed) - this->inputOffset,
+        };
 
         zstError(ZSTD_compressStream(this->context, &out, &in));
 
@@ -101,12 +108,12 @@ zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
             ASSERT(out.pos == out.size);
 
             this->inputSame = true;
-            this->inputPos += in.pos;
+            this->inputOffset += in.pos;
         }
         else
         {
             this->inputSame = false;
-            this->inputPos = 0;
+            this->inputOffset = 0;
         }
     }
 
@@ -169,13 +176,14 @@ zstCompressNew(int level)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .context = ZSTD_createCStream(),
+            .level = level,
         };
 
         // Set callback to ensure zst context is freed
         memContextCallbackSet(driver->memContext, zstCompressFreeResource, driver);
 
         // Initialize context
-        zstError(ZSTD_initCStream(driver->context, level));
+        zstError(ZSTD_initCStream(driver->context, driver->level));
 
         // Create param list
         VariantList *paramList = varLstNew();

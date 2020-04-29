@@ -33,7 +33,7 @@ typedef struct ZstDecompress
     IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
-    size_t inputPos;                                                // Current position in input buffer
+    size_t inputOffset;                                             // Current offset in input buffer
     bool frameDone;                                                 // Has the current frame completed?
     bool done;                                                      // Is decompression done?
 } ZstDecompress;
@@ -45,7 +45,7 @@ static String *
 zstDecompressToLog(const ZstDecompress *this)
 {
     return strNewFmt(
-        "{inputSame: %s, inputPos %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputPos,
+        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
         cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
@@ -92,7 +92,7 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
     else
     {
         // Initialize input/output buffer
-        ZSTD_inBuffer in = {.src = bufPtrConst(compressed) + this->inputPos, .size = bufUsed(compressed) - this->inputPos};
+        ZSTD_inBuffer in = {.src = bufPtrConst(compressed) + this->inputOffset, .size = bufUsed(compressed) - this->inputOffset};
         ZSTD_outBuffer out = {.dst = bufRemainsPtr(decompressed), .size = bufRemains(decompressed)};
 
         this->frameDone = zstError(ZSTD_decompressStream(this->context, &out, &in)) == 0;
@@ -103,11 +103,11 @@ zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
             ASSERT(out.pos == out.size);
 
             this->inputSame = true;
-            this->inputPos += in.pos;
+            this->inputOffset += in.pos;
         }
         else
         {
-            this->inputPos = 0;
+            this->inputOffset = 0;
             this->inputSame = false;
         }
     }

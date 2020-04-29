@@ -157,7 +157,7 @@ testSuite(CompressType type, const char *decompressCmd)
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
-        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 1024),
+        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
         "zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
@@ -258,25 +258,26 @@ testRun(void)
         TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
-        //
-        // Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
-        //
-        // compress->inputSame = true;
-        // compress->flushing = true;
-        //
-        // TEST_RESULT_STR_Z(
-        //     lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
-        //
-        // Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
-        //
-        // decompress->inputSame = true;
-        // decompress->done = true;
-        // decompress->inputOffset = 999;
-        //
-        // TEST_RESULT_STR_Z(
-        //     lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-        //     "format object");
+        TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
+
+        ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
+
+        compress->inputSame = true;
+        compress->inputOffset = 49;
+        compress->flushing = true;
+
+        TEST_RESULT_STR_Z(
+            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+
+        ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+        decompress->inputOffset = 999;
+
+        TEST_RESULT_STR_Z(
+            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
+            "format object");
 #else
         TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
 #endif // HAVE_LIBZST
