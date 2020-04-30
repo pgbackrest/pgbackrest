@@ -530,6 +530,8 @@ sub run
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
         }
 
+        my $strAdhocBackup;
+
         # Execute stop and make sure the backup fails
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
@@ -537,6 +539,9 @@ sub run
         if ($bTestExtra && !$bS3)
         {
             $oHostDbMaster->clusterRestart();
+
+            # Add backup for adhoc expire
+            $strAdhocBackup = $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_DIFF, 'backup for adhoc expire');
 
             $oHostDbMaster->stop();
 
@@ -628,6 +633,12 @@ sub run
 
             # Start a new backup to make the next test restart it
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
+        }
+
+        if (defined($strAdhocBackup))
+        {
+            # Adhoc expire the latest backup - no other tests should be affected
+            $oHostBackup->expire({strOptionalParam => '--set=' . $strAdhocBackup});
         }
 
         # Drop a table

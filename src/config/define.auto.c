@@ -4405,12 +4405,33 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdExpire)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Backup set to expire.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be "
+                        "expired regardless of backup retention rules except that at least one full backup must remain in the "
+                        "repository. \n"
+                    "WARNING: Use this option with extreme caution -- it will permanently remove all backups and archives not "
+                        "required to make a backup consistent from the pgBackRest repository for the specified backup set. This "
+                        "process may negate the ability to perform PITR. If --repo-retention-full and/or --repo-retention-archive "
+                        "options are configured, then it is recommended that you override these options by setting their values to "
+                        "the maximum while performing adhoc expiration."
+                )
+            )
+
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)

@@ -39,16 +39,20 @@ Handle errors
 static void
 regExpError(int error)
 {
+    char buffer[4096];
+    regerror(error, NULL, buffer, sizeof(buffer));
+    THROW(FormatError, buffer);
+}
+
+static void
+regExpErrorCheck(int error)
+{
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, error);
     FUNCTION_TEST_END();
 
     if (error != 0 && error != REG_NOMATCH)
-    {
-        char buffer[4096];
-        regerror(error, NULL, buffer, sizeof(buffer));
-        THROW(FormatError, buffer);
-    }
+        regExpError(error);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -108,7 +112,7 @@ regExpMatch(RegExp *this, const String *string)
     int result = regexec(&this->regExp, strPtr(string), 1, &matchPtr, 0);
 
     // Check for an error
-    regExpError(result);
+    regExpErrorCheck(result);
 
     // Store match results
     if (result == 0)

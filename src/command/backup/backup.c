@@ -39,7 +39,6 @@ Backup Command
 Backup constants
 ***********************************************************************************************************************************/
 #define BACKUP_PATH_HISTORY                                         "backup.history"
-#define BACKUP_LINK_LATEST                                          "latest"
 
 /**********************************************************************************************************************************
 Generate a unique backup label that does not contain a timestamp from a previous backup
@@ -1901,21 +1900,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
         // used by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *const latestLink = storagePathP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
-
-        // Remove an existing latest link/file in case symlink capabilities have changed
-        storageRemoveP(storageRepoWrite(), latestLink);
-
-        if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError,
-                "unable to create symlink '%s' to '%s'", strPtr(latestLink), strPtr(backupLabel));
-        }
-
-        // Sync backup path if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
-            storagePathSyncP(storageRepoWrite(), STORAGE_REPO_BACKUP_STR);
+        backupLinkLatest(backupLabel);
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------

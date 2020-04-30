@@ -138,20 +138,23 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
         else
         {
             // Read if not EOF
-            if (!ioReadEofDriver(this))
+            if (this->input != NULL)
             {
-                bufUsedZero(this->input);
+                if (!ioReadEofDriver(this))
+                {
+                    bufUsedZero(this->input);
 
-                // If blocking then limit the amount of data requested
-                if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
-                    bufLimitSet(this->input, bufRemains(buffer));
+                    // If blocking then limit the amount of data requested
+                    if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
+                        bufLimitSet(this->input, bufRemains(buffer));
 
-                this->interface.read(this->driver, this->input, block);
-                bufLimitClear(this->input);
+                    this->interface.read(this->driver, this->input, block);
+                    bufLimitClear(this->input);
+                }
+                // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
+                else
+                    this->input = NULL;
             }
-            // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
-            else
-                this->input = NULL;
 
             // Process the input buffer (or flush if NULL)
             if (this->input == NULL || bufUsed(this->input) > 0)
