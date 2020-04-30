@@ -271,7 +271,7 @@ cmdArchivePush(void)
         lockStopTest();
 
         // Get the segment name
-        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
+        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
         String *archiveFile = strBase(walFile);
 
         if (cfgOptionBool(cfgOptArchiveAsync))
@@ -343,7 +343,7 @@ cmdArchivePush(void)
 
             // Get archive info
             ArchivePushCheckResult archiveInfo = archivePushCheck(
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // Check if the push queue has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
@@ -486,7 +486,7 @@ cmdArchivePushAsync(void)
 
                 // Get archive info
                 jobData.archiveInfo = archivePushCheck(
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(

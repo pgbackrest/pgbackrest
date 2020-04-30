@@ -18,7 +18,7 @@ cmdStart(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Remove the stop file so processes can run
-        String *stopFile = lockStopFileName(cfgOptionStr(cfgOptStanza));
+        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file exists, then remove it
         if (storageExistsP(storageLocal(), stopFile))

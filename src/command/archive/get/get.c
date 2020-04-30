@@ -261,7 +261,7 @@ cmdArchiveGet(void)
             // Get the archive file
             result = archiveGetFile(
                 storageLocalWrite(), walSegment, walDestination, false, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
 
         // Log whether or not the file was found
