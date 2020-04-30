@@ -304,7 +304,7 @@
 
                 <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
 
-                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-period</setting> is set then there must be at least that many number of days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
+                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many number of days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
@@ -402,15 +402,14 @@
                         <example>2</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-DAYS-RETENTION KEY -->
-                    <config-key id="repo-retention-full-period" name="Full Retention Period">
-                        <summary>Maximum age for the last full backup to retain.</summary>
+                    <!-- CONFIG - RETENTION SECTION - REPO-RETENTION-FULL-TYPE KEY -->
+                    <config-key id="repo-retention-full-type" name="Full Retention Type">
+                        <summary>Retention type for full backups.</summary>
 
-                        <text>Determines the number of days to keep full backups. Any backup older than <setting>repo-retention-full-period</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full-period</setting> setting. For example, if the setting is 30 days and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired. This setting superceeds <setting>repo-retention-full</setting>. Archived WAL older than the oldest full backup remaining will be expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</text>
+                        <text>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or a number for the full backups to keep. If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if the <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 days old backup would leave only the 25 days old backup which would violate the 30 days retention policy. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</text>
 
                         <example>30</example>
                     </config-key>
-
 
                     <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->
                     <config-key id="repo-retention-diff" name="Differential Retention">
