@@ -614,17 +614,19 @@ storagePosixNewInternal(
 }
 
 Storage *
-storagePosixNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction)
+storagePosixNew(const String *path, StoragePosixNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(MODE, modeFile);
-        FUNCTION_LOG_PARAM(MODE, modePath);
-        FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(MODE, param.modeFile);
+        FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(BOOL, param.write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storagePosixNewInternal(STORAGE_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, true));
+        STORAGE,
+        storagePosixNewInternal(
+            STORAGE_POSIX_TYPE_STR, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true));
 }

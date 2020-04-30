@@ -22,8 +22,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);

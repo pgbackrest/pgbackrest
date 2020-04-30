@@ -83,7 +83,7 @@ testSuite(CompressType type, const char *decompressCmd)
     varLstAdd(compressParamList, varNewUInt(1));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     TEST_TITLE("simple data");
 

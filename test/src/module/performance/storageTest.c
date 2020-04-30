@@ -277,11 +277,7 @@ testRun(void)
         uint64_t rateOut = 100000;
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(
-            storageNewReadP(
-                storagePosixNew(STR(testRepoPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
-                STRDEF("test/data/filecopy.table.bin")));
-
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // -------------------------------------------------------------------------------------------------------------------------

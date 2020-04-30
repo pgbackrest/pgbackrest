@@ -413,8 +413,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNew(
-            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+        Storage *storage = storagePosixNewP(strNew(testPath()));
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 
