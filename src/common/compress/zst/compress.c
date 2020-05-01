@@ -90,7 +90,7 @@ zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     if (uncompressed == NULL)
     {
         this->flushing = true;
-        this->inputSame = zstError(ZSTD_endStream(this->context, &out));
+        this->inputSame = zstError(ZSTD_endStream(this->context, &out)) != 0;
     }
     // Else still have input data
     else

@@ -29,4 +29,4 @@ zstError(size_t error)
     FUNCTION_TEST_RETURN(error);
 }
 
-#endif // HAVE_LIBLZ4
+#endif // HAVE_LIBZST
