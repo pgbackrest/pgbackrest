@@ -52,7 +52,7 @@ Adapted from PostgreSQL src/include/c.h.
 ***********************************************************************************************************************************/
 #ifdef HAVE_STATIC_ASSERT
     #define STATIC_ASSERT_STMT(condition, message)                                                                                 \
-        do {_Static_assert(condition, message);} while(0)
+        do {_Static_assert(condition, message);} while (0)
 
     #define STATIC_ASSERT_EXPR(condition, message)                                                                                 \
         ((void)({STATIC_ASSERT_STMT(condition, message); true;}))

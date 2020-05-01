@@ -205,28 +205,28 @@ Throw an error when a system call fails
         {                                                                                                                          \
             bool error = expression;                                                                                               \
             errorInternalThrowOnSys(error, errno, &errorType, __FILE__, __func__, __LINE__, message);                              \
-        } while(0)
+        } while (0)
 
     #define THROW_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                     \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
             errorInternalThrowOnSysFmt(error, errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                       \
-        } while(0)
+        } while (0)
 
     #define THROWP_ON_SYS_ERROR(expression, errorType, message)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
             errorInternalThrowOnSys(error, errno, errorType, __FILE__, __func__, __LINE__, message);                               \
-        } while(0)
+        } while (0)
 
     #define THROWP_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             bool error = expression;                                                                                               \
             errorInternalThrowOnSysFmt(error, errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                        \
-        } while(0)
+        } while (0)
 
 // Else define the normal macros which check for an error first
 #else
@@ -235,28 +235,28 @@ Throw an error when a system call fails
         {                                                                                                                          \
             if (expression)                                                                                                        \
                 errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message);                                   \
-        } while(0)
+        } while (0)
 
     #define THROW_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                     \
         do                                                                                                                         \
         {                                                                                                                          \
             if (expression)                                                                                                        \
                 errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                            \
-        } while(0)
+        } while (0)
 
     #define THROWP_ON_SYS_ERROR(expression, errorType, message)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             if (expression)                                                                                                        \
                 errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message);                                    \
-        } while(0)
+        } while (0)
 
     #define THROWP_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                    \
         do                                                                                                                         \
         {                                                                                                                          \
             if (expression)                                                                                                        \
                 errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                             \
-        } while(0)
+        } while (0)
 #endif
 
 /***********************************************************************************************************************************
