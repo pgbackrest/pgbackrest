@@ -66,6 +66,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <br-option>pg-path1</br-option> to be optional for synchronous <cmd>archive-push</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
