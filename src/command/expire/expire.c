@@ -321,7 +321,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
                 backupIdx--;
                 InfoBackupData *info = infoBackupDataByLabel(infoBackup, strLstGet(currentBackupList, backupIdx));
                 lastBackupLabelToKeep = info->backupLabel;
-                if (info->backupTimestampStop <= minTimestamp)
+                if (info->backupTimestampStop < minTimestamp)
                 {
                     // We can start deleting before this backup. This way, we keep one full backup and its dependents
                     break;
@@ -831,7 +831,8 @@ cmdExpire(void)
             cfgOptionStr(cfgOptRepoCipherPass));
 
         const String *adhocBackupLabel = NULL;
-        bool timeBasedFullRetention = strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
+        bool timeBasedFullRetention = strEqZ(
+            cfgOptionStr(cfgOptRepoRetentionFullType), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
 
         // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
         if (cfgOptionTest(cfgOptSet))
@@ -841,10 +842,13 @@ cmdExpire(void)
         }
         else
         {
-            // If time-based retention for full backups is set, then expire based on time period if provided
-            if (timeBasedFullRetention && cfgOptionUInt(cfgOptRepoRetentionFull) > 0)
+            // If time-based retention for full backups is set, then expire based on time period
+            if (timeBasedFullRetention)
             {
-                expireTimeBasedBackup(infoBackup, time(NULL) - cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600);
+                // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
+                // warned by the config system that retetntion-full was not set)
+                if (cfgOptionTest(cfgOptRepoRetentionFull))
+                    expireTimeBasedBackup(infoBackup, time(NULL) - cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600);
             }
             else
                 expireFullBackup(infoBackup);

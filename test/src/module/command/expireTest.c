@@ -1839,7 +1839,6 @@ testRun(void)
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "no backups to expire");
 
         //--------------------------------------------------------------------------------------------------------------------------
-
         // Create backup.info and archive.info
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase);
         storagePutP(
@@ -1873,24 +1872,45 @@ testRun(void)
             storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152600D/" BACKUP_MANIFEST_FILE,
             strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
 
+        // Genreate archive for backups in backup.info
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000100000000");
+
+        // Set the log level to detail so archive expiration messages are seen
+        harnessLogLevelSet(logLevelDetail);
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup equals expire");
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup not expired");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup to young to be expired");
+
+        StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full-type=time");
+        strLstAddZ(argList, "--repo1-retention-full=41");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_RESULT_VOID(cmdExpire(), "run expire");
+        // harnessLogResult(
+        //     "P00   WARN: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform point-in-time-recovery"
+        //     " (PITR) may be affected\n"
+        //     "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
+        //     " (even in prior expires) can cause gaps in the WAL.\n"
+        //     "P00   INFO: expire adhoc backup 20181119-152850F_20181119-152252D\n"
+        //     "P00   INFO: remove expired backup 20181119-152850F_20181119-152252D\n"
+        //     "P00 DETAIL: archive retention on backup 20181119-152850F, archiveId = 12-2, start = 000000010000000000000002\n"
+        //     "P00 DETAIL: no archive to remove, archiveId = 12-2");
+
+
 // CSHANG
         //     "\"db-version\":\"9.4\"}", timeNow - (41 * secPerDay), timeNow - (40 * secPerDay), timeNow - (30 * secPerDay),
         // timeNow - (30 * secPerDay), timeNow - (25 * secPerDay), timeNow - (25 * secPerDay), timeNow - (20 * secPerDay),
         // timeNow - (20 * secPerDay), timeNow - (10 * secPerDay), timeNow - (10 * secPerDay), timeNow - (5 * secPerDay),
         // timeNow - (5 * secPerDay));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no older backups to expire");
-
-        StringList *argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
-
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
-
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "no backups expired");
-
+        harnessLogLevelReset();
     }
 
     // *****************************************************************************************************************************
