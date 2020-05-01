@@ -170,10 +170,10 @@ cfgLoadUpdateOption(void)
                 // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the repo-retention-archive
                 // to this value when retention-full-type is 'count', else ignore archiving. If the retention-full-type is 'time'
                 // then the the expire command will default the archive retention accordingly.
-                if (strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT) &&
-                    strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
+                if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
                 {
-                    if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+                    if (strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT)
+                        && cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
                             VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));

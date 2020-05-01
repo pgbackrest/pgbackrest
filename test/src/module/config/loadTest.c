@@ -153,6 +153,11 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config no retention warning");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
 
+        strLstAdd(argList, strNew("--repo1-retention-full-type=time"));
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config no retention warning");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive),false, "    repo1-retention-archive not set - full time-based");
+
         // Munge repo-type for coverage.  This will go away when there are multiple repos.
         cfgOptionSet(cfgOptRepoType, cfgSourceParam, NULL);
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "load config no repo-type");
