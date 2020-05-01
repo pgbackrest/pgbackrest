@@ -243,13 +243,13 @@ backupInit(const InfoBackup *infoBackup)
             result->pgIdStandby = dbInfo.standbyId;
             result->dbStandby = dbInfo.standby;
             result->storageStandby = storagePgId(result->pgIdStandby);
-            result->hostStandby = cfgOptionStr(cfgOptPgHost + result->pgIdStandby - 1);
+            result->hostStandby = cfgOptionStrNull(cfgOptPgHost + result->pgIdStandby - 1);
         }
     }
 
     // Add primary info
     result->storagePrimary = storagePgId(result->pgIdPrimary);
-    result->hostPrimary = cfgOptionStr(cfgOptPgHost + result->pgIdPrimary - 1);
+    result->hostPrimary = cfgOptionStrNull(cfgOptPgHost + result->pgIdPrimary - 1);
 
     // Get pg_control info from the primary
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
@@ -1754,7 +1754,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
             // Loop through all the segments in the lsn range
             InfoArchive *infoArchive = infoArchiveLoadFile(
                 storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
             const String *archiveId = infoArchiveId(infoArchive);
 
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
@@ -1908,7 +1908,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1932,7 +1932,7 @@ cmdBackup(void)
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 

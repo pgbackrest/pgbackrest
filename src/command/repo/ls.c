@@ -167,8 +167,8 @@ storageListRender(IoWrite *write)
 
         // List content of the path
         storageInfoListP(
-            storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = cfgOptionStr(cfgOptFilter),
-            .recurse = cfgOptionBool(cfgOptRecurse));
+            storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder,
+            .expression = cfgOptionStrNull(cfgOptFilter), .recurse = cfgOptionBool(cfgOptRecurse));
     }
 
     if (data.json)

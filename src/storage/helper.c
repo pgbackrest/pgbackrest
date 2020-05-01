@@ -106,12 +106,12 @@ storageHelperStanzaInit(const bool stanzaRequired)
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
     if (!storageHelper.stanzaInit)
     {
-        if (stanzaRequired && cfgOptionStr(cfgOptStanza) == NULL)
+        if (stanzaRequired && cfgOptionStrNull(cfgOptStanza) == NULL)
             THROW(AssertError, "stanza cannot be NULL for this storage object");
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
+            storageHelper.stanza = strDup(cfgOptionStrNull(cfgOptStanza));
             storageHelper.stanzaInit = true;
         }
         MEM_CONTEXT_END();
@@ -383,10 +383,8 @@ storageRepoGet(const String *type, bool write)
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
-            cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_S3_PARTSIZE_MIN,
-            STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(), cfgOptionBool(cfgOptRepoS3VerifyTls),
-            cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
-            cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL);
+            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(),
+            cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
     }
     else
         THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));

@@ -424,7 +424,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
                     storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                    cfgOptionStr(cfgOptRepoCipherPass));
+                    cfgOptionStrNull(cfgOptRepoCipherPass));
 
                 InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
 
@@ -828,7 +828,7 @@ cmdExpire(void)
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
 
         const String *adhocBackupLabel = NULL;
         bool timeBasedFullRetention = strEqZ(
@@ -861,7 +861,7 @@ cmdExpire(void)
         {
             infoBackupSaveFile(
                 infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
 
         // Remove all files on disk that are now expired

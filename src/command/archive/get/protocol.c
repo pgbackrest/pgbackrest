@@ -46,7 +46,7 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
                 VARINT(
                     archiveGetFile(
                         storageSpoolWrite(), walSegment, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)), true,
-                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass))));
+                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass))));
         }
         else
             found = false;

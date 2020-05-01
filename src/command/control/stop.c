@@ -26,7 +26,7 @@ cmdStop(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *stopFile = lockStopFileName(cfgOptionStr(cfgOptStanza));
+        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file does not already exist, then create it
         if (!storageExistsP(storageLocal(), stopFile))
