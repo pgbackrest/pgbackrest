@@ -328,17 +328,28 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
                 }
             } while (backupIdx != 0);
 
+            // Count number of full backups being expired
+            unsigned int numFullExpired = 0;
+
             // Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry which is
             // always the oldest so if it is not the backup to keep then we can remove it
             while (!strEq(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep))
             {
                 StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel);
                 result += strLstSize(backupExpired);
+                numFullExpired++;
 
                 // Log the expired backups. If there is more than one backup, then prepend "set:"
                 LOG_INFO_FMT(
                     "expire time-based backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""),
                     strPtr(strLstJoin(backupExpired, ", ")));
+            }
+
+            if (strEqZ(cfgOptionStr(cfgOptRepoRetentionArchiveType), CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL) &&
+                !cfgOptionTest(cfgOptRepoRetentionArchive) && numFullExpired > 0)
+            {
+                cfgOptionSet(
+                    cfgOptRepoRetentionArchive, cfgSourceDefault, varNewUInt(strLstSize(currentBackupList) - numFullExpired));
             }
         }
     }
@@ -383,16 +394,16 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
         const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionUInt(cfgOptRepoRetentionArchive) : 0;
 
-        // If retention full type is time based and archive retention was not explicitly set then set it to the number of
-        // full backups remaining so that all archive prior to the oldest full backup is expired
-        if (timeBasedFullRetention && archiveRetention == 0)
-            archiveRetention = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)));
-
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-            LOG_INFO_FMT("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+            // Only notify user if not time-based retention
+            if (!timeBasedFullRetention)
+            {
+                LOG_INFO_FMT(
+                    "option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+            }
         }
         else
         {
@@ -846,7 +857,7 @@ cmdExpire(void)
             if (timeBasedFullRetention)
             {
                 // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
-                // warned by the config system that retetntion-full was not set)
+                // warned by the config system that retention-full was not set)
                 if (cfgOptionTest(cfgOptRepoRetentionFull))
                     expireTimeBasedBackup(infoBackup, time(NULL) - cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600);
             }

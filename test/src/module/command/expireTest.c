@@ -1879,30 +1879,32 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("oldest backup equals expire");
-
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup not expired");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("oldest backup to young to be expired");
+        TEST_TITLE("oldest backup not expired");
 
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full-type=time");
-        strLstAddZ(argList, "--repo1-retention-full=41");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_RESULT_UINT(
+            expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup stop time equals retention time");
+        harnessLogResult(
+            "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
+            " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+            " maximum.");
+
+        strLstAddZ(argList, "--repo1-retention-full=35");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
-        TEST_RESULT_VOID(cmdExpire(), "run expire");
+        TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young - no backups nor archives are not expired");
+
+// CSHANG Once oldest is expired, put it and its archives back on disk (without manifests) but missing from backup.info and make sure we do actually remove the backup and the archives again.
+
         // harnessLogResult(
-        //     "P00   WARN: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform point-in-time-recovery"
-        //     " (PITR) may be affected\n"
-        //     "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
-        //     " (even in prior expires) can cause gaps in the WAL.\n"
-        //     "P00   INFO: expire adhoc backup 20181119-152850F_20181119-152252D\n"
-        //     "P00   INFO: remove expired backup 20181119-152850F_20181119-152252D\n"
-        //     "P00 DETAIL: archive retention on backup 20181119-152850F, archiveId = 12-2, start = 000000010000000000000002\n"
-        //     "P00 DETAIL: no archive to remove, archiveId = 12-2");
+        //     "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000010000000000000002\n"
+        //     "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000001");
 
 
 // CSHANG
