@@ -167,7 +167,6 @@ testRun(void)
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_UINT(result.pgWalSegmentSize, 16 * 1024 * 1024, "check wal segment size");
         TEST_RESULT_STR_Z(result.archiveId, "9.6-1", "check archive id");
         TEST_RESULT_STR_Z(result.archiveCipherPass, NULL, "check archive cipher pass (not set in this test)");
     }

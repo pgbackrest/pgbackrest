@@ -195,7 +195,6 @@ typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    unsigned int pgWalSegmentSize;                                  // PostgreSQL WAL segment size
     String *archiveId;                                              // Archive id for current pg version
     String *archiveCipherPass;                                      // Archive cipher passphrase
 } ArchivePushCheckResult;
@@ -237,7 +236,6 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
         {
             result.pgVersion = controlInfo.version;
             result.pgSystemId = controlInfo.systemId;
-            result.pgWalSegmentSize = controlInfo.walSegmentSize;
             result.archiveId = strDup(archiveId);
             result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
         }
