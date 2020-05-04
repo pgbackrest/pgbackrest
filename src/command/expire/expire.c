@@ -398,12 +398,13 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
+            String *msg = strNew("- archive logs will not be expired");
+
             // Only notify user if not time-based retention
             if (!timeBasedFullRetention)
-            {
-                LOG_INFO_FMT(
-                    "option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
-            }
+                LOG_INFO_FMT("option '%s' is not set %s", cfgOptionName(cfgOptRepoRetentionArchive), strPtr(msg));
+            else
+                LOG_INFO_FMT("time-based archive retention not met %s", strPtr(msg));
         }
         else
         {
