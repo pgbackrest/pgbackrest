@@ -103,8 +103,6 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
-use constant VM_U19                                                 => 'u19';
-    push @EXPORT, qw(VM_U19);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -423,36 +421,6 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-    },
-
-    # Ubuntu 19.04
-    &VM_U19 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'disco',
-        &VM_IMAGE => 'ubuntu:19.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_COVERAGE_C => true,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_LCOV_VERSION => '1.14',
-        &VMDEF_WITH_BACKTRACE => true,
-
-        &VM_DB =>
-        [
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-
-        &VM_DB_TEST =>
-        [
             PG_VERSION_12,
         ],
     },
