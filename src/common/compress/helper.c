@@ -12,6 +12,9 @@ Compression Helper
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/compress/lz4/decompress.h"
+#include "common/compress/zst/common.h"
+#include "common/compress/zst/compress.h"
+#include "common/compress/zst/decompress.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "version.h"
@@ -22,7 +25,6 @@ Compression type constants
 #define COMPRESS_TYPE_NONE                                          "none"
 
 // Constants for currently unsupported compression types
-#define ZST_EXT                                                     "zst"
 #define BZ2_EXT                                                     "bz2"
 #define XZ_EXT                                                      "xz"
 
@@ -67,6 +69,13 @@ static const struct CompressHelperLocal
     {
         .type = STRDEF(ZST_EXT),
         .ext = STRDEF("." ZST_EXT),
+#ifdef HAVE_LIBZST
+        .compressType = ZST_COMPRESS_FILTER_TYPE,
+        .compressNew = zstCompressNew,
+        .decompressType = ZST_DECOMPRESS_FILTER_TYPE,
+        .decompressNew = zstDecompressNew,
+        .levelDefault = 3,
+#endif
     },
     {
         .type = STRDEF(XZ_EXT),

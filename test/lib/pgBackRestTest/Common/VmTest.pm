@@ -51,6 +51,8 @@ use constant VMDEF_WITH_BACKTRACE                                   => 'with-bac
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
+use constant VMDEF_WITH_ZST                                         => 'with-zst';
+    push @EXPORT, qw(VMDEF_WITH_ZST);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -139,6 +141,8 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
+        &VMDEF_WITH_ZST => true,
+
         &VM_DB =>
         [
             PG_VERSION_10,
@@ -191,6 +195,7 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -220,6 +225,7 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -399,6 +405,7 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -574,6 +581,18 @@ sub vmWithLz4
 }
 
 push @EXPORT, qw(vmWithLz4);
+
+####################################################################################################################################
+# Does the VM support liblzst?
+####################################################################################################################################
+sub vmWithZst
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_WITH_ZST}) ? $oyVm->{$strVm}{&VMDEF_WITH_ZST} : false);
+}
+
+push @EXPORT, qw(vmWithZst);
 
 ####################################################################################################################################
 # Will integration tests be run in debug mode?

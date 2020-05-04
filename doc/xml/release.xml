@@ -55,6 +55,16 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>Zstandard</proper> compression support.</p>
+
+                        <p>Note that setting <br-option>compress-type=zst</br-option> will make new backups and archive incompatible (unrestorable) with prior versions of <backrest/>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-contributor id="stefan.fercot"/>
                         </release-item-contributor-list>
 
