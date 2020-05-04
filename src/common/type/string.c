@@ -33,7 +33,7 @@ STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
 STRING_EXTERN(NULL_STR,                                             NULL_Z);
-STRING_EXTERN(QUOTE_STR,                                            QUOTE_Z);
+STRING_EXTERN(QUOTED_STR,                                           QUOTED_Z);
 STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
 STRING_EXTERN(Y_STR,                                                "y");
 STRING_EXTERN(ZERO_STR,                                             "0");

@@ -236,7 +236,7 @@ storageWriteS3Close(THIS_VOID)
 
             // Validate the ETag and create the UID by stripping off the quotes
             CHECK(eTag != NULL);
-            CHECK(strBeginsWith(eTag, QUOTE_STR) && strEndsWith(eTag, QUOTE_STR));
+            CHECK(strBeginsWith(eTag, QUOTED_STR) && strEndsWith(eTag, QUOTED_STR));
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
