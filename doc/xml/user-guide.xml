@@ -274,14 +274,13 @@
         {[copy-ca-cert]}
 
         # Fix root tty
-        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
+        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile
 
-        # Suppress dpkg interactive output
-            rm /etc/apt/apt.conf.d/70debconf
-
-        # Install base packages
-        RUN apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates locales 2>&amp;1
+        # Install base packages (suppress dpkg interactive output)
+        RUN export DEBIAN_FRONTEND=noninteractive &amp;&amp; \
+            rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
+            apt-get update &amp;&amp; \
+            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates tzdata locales 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-certificates
