@@ -117,7 +117,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
             else
                 strLstAddInternal(this, strNew(stringBase));
         }
-        while(stringMatch != NULL);
+        while (stringMatch != NULL);
     }
     MEM_CONTEXT_END();
 
@@ -196,7 +196,7 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
                 strLstAddInternal(this, strNew(stringBase));
             }
         }
-        while(stringMatch != NULL);
+        while (stringMatch != NULL);
     }
     MEM_CONTEXT_END();
 

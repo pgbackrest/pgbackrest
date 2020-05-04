@@ -283,7 +283,7 @@ Test system calls
                 AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
                 TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
         }                                                                                                                          \
-    } while(0)
+    } while (0)
 
 #define TEST_SYSTEM_FMT(...)                                                                                                       \
     do                                                                                                                             \
@@ -294,7 +294,7 @@ Test system calls
             THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
                                                                                                                                    \
         TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Test log result
@@ -311,7 +311,7 @@ Test log result
             THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
-    } while(0)
+    } while (0)
 
 #define TEST_RESULT_LOG_FMT(...)                                                                                                   \
     do                                                                                                                             \
@@ -326,7 +326,7 @@ Test log result
         }                                                                                                                          \
                                                                                                                                    \
         TEST_RESULT_LOG(TEST_RESULT_LOG_FMT_buffer);                                                                               \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Logging macros
@@ -337,7 +337,7 @@ Logging macros
         hrnTestLogPrefix(__LINE__, true);                                                                                          \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 #define TEST_LOG_FMT(format, ...)                                                                                                  \
     do                                                                                                                             \
@@ -345,7 +345,7 @@ Logging macros
         hrnTestLogPrefix(__LINE__, true);                                                                                          \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Test title macro
@@ -356,7 +356,7 @@ Test title macro
         hrnTestLogPrefix(__LINE__, false);                                                                                         \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 #define TEST_TITLE_FMT(format, ...)                                                                                                \
     do                                                                                                                             \
@@ -364,7 +364,7 @@ Test title macro
         hrnTestLogPrefix(__LINE__, false);                                                                                         \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.

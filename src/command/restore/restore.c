@@ -352,7 +352,7 @@ restoreManifestMap(Manifest *manifest)
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
         KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
-        const String *tablespaceMapAllPath = cfgOptionStr(cfgOptTablespaceMapAll);
+        const String *tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
 
         if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
         {
@@ -2017,7 +2017,7 @@ cmdRestore(void)
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // Get the backup set
         const String *backupSet = restoreBackupSet(infoBackup);

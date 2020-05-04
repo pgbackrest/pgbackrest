@@ -831,8 +831,8 @@ cfgOptionInternal(ConfigOption optionId, VariantType typeRequested, bool nullAll
         }
     }
     // Else check the option is allowed to be NULL
-    else
-        CHECK(nullAllowed);
+    else if (!nullAllowed)
+        THROW_FMT(AssertError, "option '%s' is null but non-null was requested", cfgOptionName(optionId));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -943,6 +943,16 @@ cfgOptionLst(ConfigOption optionId)
 
 const String *
 cfgOptionStr(ConfigOption optionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionInternal(optionId, varTypeString, false)));
+}
+
+const String *
+cfgOptionStrNull(ConfigOption optionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, optionId);

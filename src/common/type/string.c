@@ -48,7 +48,7 @@ Maximum size of a string
         if ((size) > STRING_SIZE_MAX)                                                                                              \
             THROW(AssertError, "string size must be <= " STRINGIFY(STRING_SIZE_MAX) " bytes");                                     \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 /***********************************************************************************************************************************
 Object type

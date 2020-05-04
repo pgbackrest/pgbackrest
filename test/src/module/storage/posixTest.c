@@ -48,10 +48,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-    Storage *storageTmp = storagePosixNew(
-        strNew("/tmp"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTmp = storagePosixNewP(strNew("/tmp"), .write = true);
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
@@ -86,7 +84,7 @@ testRun(void)
     if (testBegin("storageNew() and storageFree()"))
     {
         Storage *storageTest = NULL;
-        TEST_ASSIGN(storageTest, storagePosixNew(strNew("/"), 0640, 0750, false, NULL), "new storage (defaults)");
+        TEST_ASSIGN(storageTest, storagePosixNewP(strNew("/")), "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "    check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "     check path mode");
@@ -94,7 +92,10 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "    check expression function is not set");
 
         TEST_ASSIGN(
-            storageTest, storagePosixNew(strNew("/path/to"), 0600, 0700, true, storageTestPathExpression),
+            storageTest,
+            storagePosixNewP(
+                strNew("/path/to"), .modeFile = 0600, .modePath = 0700, .write = true,
+                .pathExpressionFunction = storageTestPathExpression),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "    check file mode");
@@ -543,7 +544,7 @@ testRun(void)
     {
         Storage *storageTest = NULL;
 
-        TEST_ASSIGN(storageTest, storagePosixNew(strNew("/"), 0640, 0750, false, NULL), "new storage /");
+        TEST_ASSIGN(storageTest, storagePosixNewP(strNew("/")), "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "    root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, strNew("/")), "/", "    same as root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, strNew("subdir")), "/subdir", "    simple subdir");
@@ -553,7 +554,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            storageTest, storagePosixNew(strNew("/path/to"), 0640, 0750, false, storageTestPathExpression),
+            storageTest, storagePosixNewP(strNew("/path/to"), .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to with expression");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "    root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, strNew("/path/to")), "/path/to", "    absolute root dir");
@@ -682,8 +683,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storagePathSyncP(
-                storagePosixNew(strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL), strNew("/proc")),
+            storagePathSyncP(storagePosixNewP(strNew("/"), .write = true), strNew("/proc")),
             PathSyncError, STORAGE_ERROR_PATH_SYNC ": [22] Invalid argument", "/proc");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -767,7 +767,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePut() and storageGet()"))
     {
-        Storage *storageTest = storagePosixNew(strNew("/"), 0640, 0750, true, NULL);
+        Storage *storageTest = storagePosixNewP(strNew("/"), .write = true);
 
         TEST_ERROR_FMT(
             storageGetP(storageNewReadP(storageTest, strNew(testPath()))), FileReadError,

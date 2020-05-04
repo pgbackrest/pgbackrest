@@ -19,8 +19,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageData = storagePosixNew(
-        strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageData = storagePosixNewP(strNew(testDataPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
@@ -157,9 +156,7 @@ testRun(void)
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
-                    storageExistsP(
-                        storagePosixNew(strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
-                        STRDEF("lock/test-archive" LOCK_FILE_EXT)),
+                    storageExistsP(storagePosixNewP(strNew(testDataPath())), STRDEF("lock/test-archive" LOCK_FILE_EXT)),
                     true, "lock exists");
 
                 protocolClientFree(client);

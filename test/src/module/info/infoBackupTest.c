@@ -16,8 +16,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))

@@ -21,8 +21,7 @@ Test Run
 void
 testRun(void)
 {
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
@@ -174,10 +173,8 @@ testRun(void)
 
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
 
-        Storage *storagePg = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        Storage *storagePgWrite = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        Storage *storagePg = storagePosixNewP(strNewFmt("%s/pg", testPath()));
+        Storage *storagePgWrite = storagePosixNewP(strNewFmt("%s/pg", testPath()), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8.3 with custom exclusions and special file");
@@ -1874,6 +1871,15 @@ testRun(void)
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of or the same directory as"
                 " link 'base/1' (/pg/base-1)");
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check that a file link in the parent path of a path link does not conflict");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
+        TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
+        manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
 
         // ManifestFile getters
         const ManifestFile *file = NULL;

@@ -20,7 +20,18 @@ Storage type
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storagePosixNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction);
+typedef struct StoragePosixNewParam
+{
+    VAR_PARAM_HEADER;
+    bool write;
+    mode_t modeFile;
+    mode_t modePath;
+    StoragePathExpressionCallback *pathExpressionFunction;
+} StoragePosixNewParam;
+
+#define storagePosixNewP(path, ...)                                                                                                \
+    storagePosixNew(path, (StoragePosixNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Storage *storagePosixNew(const String *path, StoragePosixNewParam param);
 
 #endif

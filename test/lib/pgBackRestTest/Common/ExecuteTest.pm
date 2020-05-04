@@ -141,7 +141,7 @@ sub endRetry
         );
 
     # Drain the output and error streams and look for test points
-    while(waitpid($self->{pId}, WNOHANG) == 0)
+    while (waitpid($self->{pId}, WNOHANG) == 0)
     {
         my $bFound = false;
 

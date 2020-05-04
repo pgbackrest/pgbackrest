@@ -960,6 +960,18 @@
             </backrest-config>
         </section>
 
+        <!-- =================================================================================================================== -->
+        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
+            <title>S3-Compatible Object Store Support</title>
+
+            <block id="s3-setup">
+                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
+        </section>
+
         <!-- SECTION => QUICKSTART - CONFIGURE ARCHIVING -->
         <section id="configure-archiving">
             <title>Configure Archiving</title>
@@ -1036,17 +1048,6 @@
             </backrest-config>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
-        </section>
-
-        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
-            <title>S3-Compatible Object Store Support</title>
-
-            <block id="s3-setup">
-                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
-                <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
-                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
-                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
-            </block>
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
