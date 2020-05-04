@@ -97,6 +97,7 @@ typedef struct ManifestFile
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
+    const String *uid;                                              // Unique indentifier (e.g. ETag)
     const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
@@ -209,8 +210,8 @@ unsigned int manifestFileTotal(const Manifest *this);
 
 // Update a file with new data
 void manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *uid,
+    const Variant *reference, bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

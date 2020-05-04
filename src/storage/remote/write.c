@@ -26,6 +26,7 @@ typedef struct StorageWriteRemote
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
+    const String *uid;                                              // Unique identifier, if any
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
@@ -152,12 +153,34 @@ storageWriteRemoteClose(THIS_VOID)
         ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
         ioWriteFlush(protocolClientIoWrite(this->client));
         ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutput(this->client, true));
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->uid = varStr(protocolClientReadOutput(this->client, true));
+        }
+        MEM_CONTEXT_END();
+
         this->client = NULL;
 
         memContextCallbackClear(this->memContext);
     }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static const String *
+storageWriteRemoteUid(void *thisVoid)
+{
+    THIS(StorageWriteRemote);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_WRITE_REMOTE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->uid);
 }
 
 /**********************************************************************************************************************************/
@@ -216,6 +239,8 @@ storageWriteRemoteNew(
                 .syncPath = syncPath,
                 .user = strDup(user),
                 .timeModified = timeModified,
+
+                .uid = storageWriteRemoteUid,
 
                 .ioInterface = (IoWriteInterface)
                 {

@@ -52,6 +52,7 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
             varLstAdd(resultList, varNewUInt64(result.repoSize));
             varLstAdd(resultList, varNewStr(result.copyChecksum));
             varLstAdd(resultList, result.pageChecksumResult != NULL ? varNewKv(result.pageChecksumResult) : NULL);
+            varLstAdd(resultList, varNewStr(result.uid));
 
             protocolServerResponse(server, varNewVarLst(resultList));
         }

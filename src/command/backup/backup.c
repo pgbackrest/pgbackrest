@@ -619,8 +619,8 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             else
             {
                 manifestFileUpdate(
-                    resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
-                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
+                    resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, fileResume->uid,
+                    NULL, fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
             }
 
             // Remove the file if it could not be resumed
@@ -978,6 +978,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 .size = strSize(content),
                 .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
                 .timestamp = timestamp,
+                .uid = storageWriteUid(write),
             };
 
             memcpy(
@@ -1087,6 +1088,7 @@ backupJobResult(
             const uint64_t repoSize = varUInt64(varLstGet(jobResult, 2));
             const String *const copyChecksum = varStr(varLstGet(jobResult, 3));
             const KeyValue *const checksumPageResult = varKv(varLstGet(jobResult, 4));
+            const String *const uid = varStr(varLstGet(jobResult, 5));
 
             // Increment backup copy progress
             sizeCopied += copySize;
@@ -1212,7 +1214,7 @@ backupJobResult(
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), VARSTR(NULL), file->checksumPage,
+                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), uid, VARSTR(NULL), file->checksumPage,
                     checksumPageError, checksumPageErrorList);
             }
         }
@@ -1806,13 +1808,13 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                     const String *manifestName = strNewFmt(
                         MANIFEST_TARGET_PGDATA "/%s/%s", strPtr(pgWalPath(manifestData(manifest)->pgVersion)), strPtr(walSegment));
 
-                    storageCopyP(
-                        read,
-                        storageNewWriteP(
-                            storageRepoWrite(),
-                            strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                strPtr(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
+                    StorageWrite *write = storageNewWriteP(
+                        storageRepoWrite(),
+                        strNewFmt(
+                            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
+                            strPtr(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType))))));
+
+                    storageCopyP(read, write);
 
                     // Add to manifest
                     ManifestFile file =
@@ -1825,6 +1827,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         .size = walSegmentSize,
                         .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
                         .timestamp = manifestData(manifest)->backupTimestampStop,
+                        .uid = storageWriteUid(write),
                     };
 
                     memcpy(file.checksumSha1, strPtr(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);

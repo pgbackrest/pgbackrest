@@ -30,7 +30,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
         TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
-        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 120 : 92, "check size of ManifestFile");
+        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 128 : 96, "check size of ManifestFile");
     }
 
     // *****************************************************************************************************************************
@@ -1682,18 +1682,19 @@ testRun(void)
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
-                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
+                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114"                         \
+                ",\"uid\":\"xxx\"}\n"                                                                                              \
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
-                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
+                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114,\"uid\":\"xyx\"}\n"        \
             "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"  \
-                ",\"timestamp\":1565282115}\n"                                                                                     \
+                ",\"timestamp\":1565282115,\"uid\":\"yyy\"}\n"                                                                     \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
-                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
+                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116,\"uid\":\"yxy\"}\n"              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
-            "pg_data/postgresql.conf={\"master\":true,\"size\":4457,\"timestamp\":1565282114}\n"                                   \
+                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114,\"uid\":\"yxx\"}\n"                   \
+            "pg_data/postgresql.conf={\"master\":true,\"size\":4457,\"timestamp\":1565282114,\"uid\":\"xxy\"}\n"                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120"         \
-                ",\"user\":false}\n"                                                                                               \
+                ",\"uid\":\"zzz\",\"user\":false}\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
@@ -1785,8 +1786,9 @@ testRun(void)
         TEST_TITLE("manifest validation");
 
         // Munge files to produce errors
-        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL);
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, NULL, false, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, STRDEF("yxx"), NULL, true, false, NULL);
+        ((ManifestFile *)manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf")))->uid = NULL;
 
         TEST_ERROR(
             manifestValidate(manifest, false), FormatError,
@@ -1798,13 +1800,15 @@ testRun(void)
             "manifest validation failed:\n"
             "invalid checksum '6e99b589e550e68e934fd235ccba59fe5b592a9e' for zero size file 'pg_data/base/32768/33000.32767'\n"
             "missing checksum for file 'pg_data/postgresql.conf'\n"
+            "missing uid for file 'pg_data/postgresql.conf'\n"
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL);
         manifestFileUpdate(
-            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
-            false, NULL);
+            manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, STRDEF("yxx"), NULL, true, false, NULL);
+        manifestFileUpdate(
+            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", STRDEF("xxy"),
+            NULL, false, false, NULL);
 
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
@@ -1897,10 +1901,11 @@ testRun(void)
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, NULL, false, false, NULL),
             "update file");
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),
+            manifestFileUpdate(
+                manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, STRDEF("xxy"), varNewStr(NULL), false, false, NULL),
             "update file");
 
         // ManifestDb getters

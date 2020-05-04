@@ -11,6 +11,7 @@ Zero-terminated strings that are generally useful
 #define DASH_Z                                                      "-"
 #define FALSE_Z                                                     "false"
 #define NULL_Z                                                      "null"
+#define QUOTE_Z                                                     "\""
 #define TRUE_Z                                                      "true"
 
 #endif

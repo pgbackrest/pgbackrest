@@ -16,6 +16,8 @@ Temporary file extension
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+typedef const String *StorageWriteInterfaceUid(void *thisVoid);
+
 typedef struct StorageWriteInterface
 {
     const String *type;
@@ -32,6 +34,8 @@ typedef struct StorageWriteInterface
     bool syncPath;
     time_t timeModified;                                            // Time file was last modified
     const String *user;                                             // User that owns the file
+
+    StorageWriteInterfaceUid *uid;                                  // Unique identifier for the file
 
     IoWriteInterface ioInterface;
 } StorageWriteInterface;

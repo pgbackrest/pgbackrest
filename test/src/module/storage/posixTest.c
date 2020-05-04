@@ -731,6 +731,7 @@ testRun(void)
         TEST_RESULT_INT(
             ioWriteHandle(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->handle, "check write handle");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
+        TEST_RESULT_STR_Z(storageWriteUid(file), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "   check uid");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).timeModified, 1, "    check file modified times");
@@ -760,6 +761,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(file->driver), "   close file again");
+        TEST_RESULT_STR_Z(storageWriteUid(file), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "   check uid");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "    check file mode");
     }

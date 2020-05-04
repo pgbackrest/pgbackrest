@@ -576,7 +576,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{}\n"
-            "{\"out\":{\"buffer\":null,\"size\":18}}\n",
+            "{\"out\":{\"buffer\":null,\"size\":18}}\n"
+            "{\"out\":\"29c2dc070e1163c96f62fd72eb4dcd8a2a27d266\"}\n",
             "check result");
 
         TEST_RESULT_STR_Z(

@@ -41,6 +41,7 @@ typedef struct StorageWriteS3
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
+    const String *uid;                                              // Final ETag for the object
 } StorageWriteS3;
 
 /***********************************************************************************************************************************
@@ -188,6 +189,8 @@ storageWriteS3Close(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            const String *eTag = NULL;
+
             // If a multi-part upload was started we need to finish that way
             if (this->uploadId != NULL)
             {
@@ -206,16 +209,40 @@ storageWriteS3Close(THIS_VOID)
                 }
 
                 // Finalize the multi-part upload
-                storageS3Request(
+                StorageS3RequestResult httpResult = storageS3Request(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
+                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true,
+                    false);
+
+                // First check for an eTag header and if it is missing then check the XML. The reason for this is that Minio has a
+                // bug where it does not properly quote the XML ETag. We could just strip it but that would require checking that
+                // the server is Minio.
+                eTag = httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_ETAG_STR);
+
+                if (eTag == NULL)
+                {
+                    eTag = xmlNodeContent(
+                        xmlNodeChild(xmlDocumentRoot(xmlDocumentNewBuf(httpResult.response)), S3_XML_TAG_ETAG_STR, false));
+                }
             }
             // Else upload all the data in a single put
             else
             {
-                storageS3Request(
+                StorageS3RequestResult httpResult = storageS3Request(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, true, false);
+
+                eTag = httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_ETAG_STR);
             }
+
+            // Validate the ETag and create the UID by stripping off the quotes
+            CHECK(eTag != NULL);
+            CHECK(strBeginsWith(eTag, QUOTE_STR) && strEndsWith(eTag, QUOTE_STR));
+
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                this->uid = strSubN(eTag, 1, strSize(eTag) - 2);
+            }
+            MEM_CONTEXT_END();
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
@@ -224,6 +251,21 @@ storageWriteS3Close(THIS_VOID)
     }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static const String *
+storageWriteS3Uid(void *thisVoid)
+{
+    THIS(StorageWriteS3);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_WRITE_S3, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->uid);
 }
 
 /**********************************************************************************************************************************/
@@ -258,6 +300,8 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+
+                .uid = storageWriteS3Uid,
 
                 .ioInterface = (IoWriteInterface)
                 {

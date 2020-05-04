@@ -132,11 +132,11 @@ testS3Server(void)
 
     harnessTlsServerAccept();
     harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD", storageS3UriStyleHost));
-    harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+    harnessTlsServerReply(testS3ServerResponse(200, "OK", "etag:\"allatonce\"", NULL));
 
     // Zero-length file
     harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "", storageS3UriStyleHost));
-    harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+    harnessTlsServerReply(testS3ServerResponse(200, "OK", "etag:\"zerolength\"", NULL));
 
     // File is written in chunks with nothing left over on close
     harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL, storageS3UriStyleHost));
@@ -164,7 +164,12 @@ testS3Server(void)
             "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
             "</CompleteMultipartUpload>\n",
         storageS3UriStyleHost));
-    harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+    harnessTlsServerReply(
+        testS3ServerResponse(
+            200, "OK", "etag:\"chunknothingleft\"",
+            "<CompleteMultipartUploadOutput>"
+            "<ETag>chunknothingleft</ETag>"
+            "</CompleteMultipartUploadOutput>"));
 
     // File is written in chunks with something left over on close
     harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL, storageS3UriStyleHost));
@@ -192,7 +197,11 @@ testS3Server(void)
             "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
             "</CompleteMultipartUpload>\n",
         storageS3UriStyleHost));
-    harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+    harnessTlsServerReply(
+        testS3ServerResponse(200, "OK", NULL,
+        "<CompleteMultipartUploadOutput>"
+        "<ETag>\"chunksomethingleft\"</ETag>"
+        "</CompleteMultipartUploadOutput>"));
 
     // storageDriverExists()
     // -------------------------------------------------------------------------------------------------------------------------
@@ -817,24 +826,28 @@ testRun(void)
                 TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
                 TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+                TEST_RESULT_STR_Z(storageWriteUid(write), "allatonce", "    check uid");
 
                 TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
 
                 // Zero-length file
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write zero-length file");
+                TEST_RESULT_STR_Z(storageWriteUid(write), "zerolength", "    check uid");
 
                 // File is written in chunks with nothing left over on close
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
                 TEST_RESULT_VOID(
                     storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")),
                     "write file in chunks -- nothing left on close");
+                TEST_RESULT_STR_Z(storageWriteUid(write), "chunknothingleft", "    check uid");
 
                 // File is written in chunks with something left over on close
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
                 TEST_RESULT_VOID(
                     storagePutP(write, BUFSTRDEF("12345678901234567890")),
                     "write file in chunks -- something left on close");
+                TEST_RESULT_STR_Z(storageWriteUid(write), "chunksomethingleft", "    check uid");
 
                 // storageDriverExists()
                 // -----------------------------------------------------------------------------------------------------------------

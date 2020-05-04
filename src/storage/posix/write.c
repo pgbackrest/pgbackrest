@@ -8,7 +8,9 @@ Posix Storage File write
 #include <unistd.h>
 #include <utime.h>
 
+#include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -33,6 +35,8 @@ typedef struct StorageWritePosix
     const String *nameTmp;
     const String *path;
     int handle;
+    IoFilter *uidFilter;                                            // Filter to calculate UID from bytes written
+    const String *uid;                                              // Final UID for the file
 } StorageWritePosix;
 
 /***********************************************************************************************************************************
@@ -100,6 +104,13 @@ storageWritePosixOpen(THIS_VOID)
     // Set free callback to ensure file handle is freed
     memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
 
+    // Create SHA1 hash to calculate UID
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->uidFilter = cryptoHashNew(HASH_TYPE_SHA1_STR);
+    }
+    MEM_CONTEXT_END();
+
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
@@ -138,6 +149,9 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->handle != -1);
 
+    // Calculate uid
+    ioFilterProcessIn(this->uidFilter, buffer);
+
     // Write the data
     if (write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
@@ -162,6 +176,13 @@ storageWritePosixClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->handle != -1)
     {
+        // Finalize UID
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->uid = varStr(ioFilterResult(this->uidFilter));
+        }
+        MEM_CONTEXT_END();
+
         // Sync the file
         if (this->interface.syncFile)
             THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strPtr(this->nameTmp));
@@ -217,6 +238,21 @@ storageWritePosixHandle(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const String *
+storageWritePosixUid(void *thisVoid)
+{
+    THIS(StorageWritePosix);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->uid);
+}
+
+/**********************************************************************************************************************************/
 StorageWrite *
 storageWritePosixNew(
     StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
@@ -267,6 +303,8 @@ storageWritePosixNew(
                 .syncPath = syncPath,
                 .user = strDup(user),
                 .timeModified = timeModified,
+
+                .uid = storageWritePosixUid,
 
                 .ioInterface = (IoWriteInterface)
                 {

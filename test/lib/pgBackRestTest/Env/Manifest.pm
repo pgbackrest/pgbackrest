@@ -169,6 +169,8 @@ use constant MANIFEST_SUBKEY_TABLESPACE_ID                          => 'tablespa
     push @EXPORT, qw(MANIFEST_SUBKEY_TABLESPACE_ID);
 use constant MANIFEST_SUBKEY_TABLESPACE_NAME                        => 'tablespace-name';
     push @EXPORT, qw(MANIFEST_SUBKEY_TABLESPACE_NAME);
+use constant MANIFEST_SUBKEY_UID                                    => 'uid';
+    push @EXPORT, qw(MANIFEST_SUBKEY_UID);
 use constant MANIFEST_SUBKEY_USER                                   => 'user';
     push @EXPORT, qw(MANIFEST_SUBKEY_USER);
 
