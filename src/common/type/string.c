@@ -19,23 +19,24 @@ String Handler
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
-STRING_EXTERN(BRACKETL_STR,                                         "[");
-STRING_EXTERN(BRACKETR_STR,                                         "]");
+STRING_EXTERN(BRACKETL_STR,                                         BRACKETL_Z);
+STRING_EXTERN(BRACKETR_STR,                                         BRACKETR_Z);
 STRING_EXTERN(COLON_STR,                                            COLON_Z);
-STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(CR_STR,                                               CR_Z);
 STRING_EXTERN(DASH_STR,                                             DASH_Z);
-STRING_EXTERN(DOT_STR,                                              ".");
-STRING_EXTERN(DOTDOT_STR,                                           "..");
-STRING_EXTERN(EMPTY_STR,                                            "");
-STRING_EXTERN(EQ_STR,                                               "=");
+STRING_EXTERN(DOT_STR,                                              DOT_Z);
+STRING_EXTERN(DOTDOT_STR,                                           DOTDOT_Z);
+STRING_EXTERN(EMPTY_STR,                                            EMPTY_Z);
+STRING_EXTERN(EQ_STR,                                               EQ_Z);
 STRING_EXTERN(FALSE_STR,                                            FALSE_Z);
-STRING_EXTERN(FSLASH_STR,                                           "/");
-STRING_EXTERN(LF_STR,                                               "\n");
-STRING_EXTERN(N_STR,                                                "n");
+STRING_EXTERN(FSLASH_STR,                                           FSLASH_Z);
+STRING_EXTERN(LF_STR,                                               LF_Z);
+STRING_EXTERN(N_STR,                                                N_Z);
 STRING_EXTERN(NULL_STR,                                             NULL_Z);
+STRING_EXTERN(QUOTED_STR,                                           QUOTED_Z);
 STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
-STRING_EXTERN(Y_STR,                                                "y");
-STRING_EXTERN(ZERO_STR,                                             "0");
+STRING_EXTERN(Y_STR,                                                Y_Z);
+STRING_EXTERN(ZERO_STR,                                             ZERO_Z);
 
 /***********************************************************************************************************************************
 Maximum size of a string
