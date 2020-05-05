@@ -66,7 +66,7 @@ sub run
     {
         my $strCompressType =
             $bHostBackup && !$bHostStandby ?
-                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ? ZST : GZ) : NONE;
+                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ? ZST : ($bS3 ? BZ2 : GZ)) : NONE;
         my $bRepoEncrypt = ($strCompressType ne NONE && !$bS3) ? true : false;
 
         # If compression was used then switch it for the next test that uses compression

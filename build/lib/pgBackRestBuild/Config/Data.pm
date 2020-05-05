@@ -1235,6 +1235,7 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_LIST =>
         [
             'none',
+            'bz2',
             'gz',
             'lz4',
             'zst',

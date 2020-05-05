@@ -262,9 +262,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
-        total: 4
+        total: 5
 
         coverage:
+          common/compress/bz2/common: full
+          common/compress/bz2/compress: full
+          common/compress/bz2/decompress: full
           common/compress/gz/common: full
           common/compress/gz/compress: full
           common/compress/gz/decompress: full
