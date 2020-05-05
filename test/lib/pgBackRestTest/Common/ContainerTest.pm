@@ -361,7 +361,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4";
+                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2";
 
             if ($strOS eq VM_CO6)
             {
@@ -380,7 +380,8 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
+                "        libbz2-dev bzip2";
 
             if ($strOS eq VM_U12)
             {

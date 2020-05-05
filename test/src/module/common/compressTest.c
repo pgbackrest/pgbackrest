@@ -147,19 +147,23 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
-    TEST_TITLE("compress a large zero input buffer into small output buffer");
+    TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    memset(bufPtr(decompressed), 0, bufSize(decompressed));
+    unsigned char *c = bufPtr(decompressed);
+
+    for (size_t i = 0; i < bufSize(decompressed); i++)
+        c[i] = (unsigned char)(i % 94 + 32);
+
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
         compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
-        "zero data - compress large in/small out buffer");
+        "non-zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
         bufEq(decompressed, testDecompress(decompressFilter(type), compressed, bufSize(compressed), 1024 * 256)), true,
-        "zero data - decompress large in/small out buffer");
+        "non-zero data - decompress large in/small out buffer");
 }
 
 /***********************************************************************************************************************************
@@ -201,6 +205,49 @@ testRun(void)
         decompress->done = true;
 
         TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("bz2"))
+    {
+        // Run standard test suite
+        testSuite(compressTypeBz2, "bzip2 -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2Error()");
+
+        TEST_RESULT_INT(bz2Error(BZ_OK), BZ_OK, "check ok");
+        TEST_RESULT_INT(bz2Error(BZ_RUN_OK), BZ_RUN_OK, "check run ok");
+        TEST_RESULT_INT(bz2Error(BZ_FLUSH_OK), BZ_FLUSH_OK, "check flush ok");
+        TEST_RESULT_INT(bz2Error(BZ_FINISH_OK), BZ_FINISH_OK, "check finish ok");
+        TEST_RESULT_INT(bz2Error(BZ_STREAM_END), BZ_STREAM_END, "check stream end");
+        TEST_ERROR(bz2Error(BZ_SEQUENCE_ERROR), AssertError, "bz2 error: [-1] sequence error");
+        TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] parameter error");
+        TEST_ERROR(bz2Error(BZ_MEM_ERROR), AssertError, "bz2 error: [-3] memory error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR), AssertError, "bz2 error: [-4] data error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), AssertError, "bz2 error: [-5] data error magic");
+        TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] io error");
+        TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] unexpected eof");
+        TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] outbuff full");
+        TEST_ERROR(bz2Error(BZ_CONFIG_ERROR), AssertError, "bz2 error: [-9] config error");
+        TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
+
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
+
+		compress->stream.avail_in = 999;
+
+        TEST_RESULT_STR_Z(
+            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+
+        Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+
+        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
     }
 
     // *****************************************************************************************************************************

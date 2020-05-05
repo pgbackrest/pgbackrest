@@ -518,7 +518,7 @@ sub run
                     "BUILDFLAGS=${strBuildFlags}\n" .
                     "HARNESSFLAGS=${strHarnessFlags}\n" .
                     "TESTFLAGS=${strTestFlags}\n" .
-                    "LDFLAGS=-lcrypto -lssl -lxml2 -lz" .
+                    "LDFLAGS=-lcrypto -lssl -lxml2 -lz -lbz2" .
                         (vmWithLz4($self->{oTest}->{&TEST_VM}) ? ' -llz4' : '') .
                         (vmWithZst($self->{oTest}->{&TEST_VM}) ? ' -lzstd' : '') .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
