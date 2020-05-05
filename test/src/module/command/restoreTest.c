@@ -202,16 +202,18 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoFileReferenceFull, true, strNew("normal"), strNew("ffffffffffffffffffffffffffffffffffffffff"),
-                false, 7, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                strNew("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, false, false, strNew("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, true, strNew("normal"), strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"),
-                false, 7, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, false, false, strNew("badpass")),
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), strNew("normal"));

@@ -740,7 +740,8 @@ testRun(void)
         // No prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
-            backupFile(pgFile, false, 9, true, NULL, false, 0, pgFile, false, true, 3, backupLabel, false, cipherTypeNone, NULL),
+            backupFile(
+                pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
@@ -757,8 +758,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, true, 3,
-                backupLabel, false, cipherTypeNone, NULL),
+                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, compressTypeGz,
+                3, backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
