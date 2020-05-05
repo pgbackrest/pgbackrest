@@ -1285,25 +1285,6 @@ For better control, use the options below.
 
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
-  --sbindir=DIR           system admin executables [EPREFIX/sbin]
-  --libexecdir=DIR        program executables [EPREFIX/libexec]
-  --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-  --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-  --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-  --libdir=DIR            object code libraries [EPREFIX/lib]
-  --includedir=DIR        C header files [PREFIX/include]
-  --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-  --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
-  --datadir=DIR           read-only architecture-independent data [DATAROOTDIR]
-  --infodir=DIR           info documentation [DATAROOTDIR/info]
-  --localedir=DIR         locale-dependent data [DATAROOTDIR/locale]
-  --mandir=DIR            man documentation [DATAROOTDIR/man]
-  --docdir=DIR            documentation root [DATAROOTDIR/doc/pgbackrest]
-  --htmldir=DIR           html documentation [DOCDIR]
-  --dvidir=DIR            dvi documentation [DOCDIR]
-  --pdfdir=DIR            pdf documentation [DOCDIR]
-  --psdir=DIR             ps documentation [DOCDIR]
 _ACEOF
 
   cat <<\_ACEOF
@@ -5494,3 +5475,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+# Generated from src/build/configure.ac sha1 a4acd8b59dcdff7e986a8454335119e955d63c91
