@@ -32,7 +32,7 @@ typedef struct Bz2Compress
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flushing;                                                  // Is input complete and flushing in progress?
-	bool done;
+    bool done;
 } Bz2Compress;
 
 /***********************************************************************************************************************************
@@ -75,46 +75,46 @@ bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-	ASSERT(!this->done);
-	ASSERT(compressed != NULL);
-	ASSERT(!this->flushing || uncompressed == NULL);
-	ASSERT(this->flushing || (!this->inputSame || this->stream.avail_in != 0));
+    ASSERT(!this->done);
+    ASSERT(compressed != NULL);
+    ASSERT(!this->flushing || uncompressed == NULL);
+    ASSERT(this->flushing || (!this->inputSame || this->stream.avail_in != 0));
 
     // If input is NULL then start flushing
     if (uncompressed == NULL)
     {
-		this->stream.avail_in = 0;
+        this->stream.avail_in = 0;
         this->flushing = true;
     }
     // Else still have input data
     else
     {
-		// Is new input allowed?
-		if (!this->inputSame)
-		{
-			this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
+        // Is new input allowed?
+        if (!this->inputSame)
+        {
+            this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
 
-			// bzip2 does not accept const input buffers
-			this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
-		}
-	}
+            // bzip2 does not accept const input buffers
+            this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
+        }
+    }
 
-	// Initialize compressed output buffer
-	this->stream.avail_out = (unsigned int)bufRemains(compressed);
-	this->stream.next_out = (char *)bufPtr(compressed) + bufUsed(compressed);
+    // Initialize compressed output buffer
+    this->stream.avail_out = (unsigned int)bufRemains(compressed);
+    this->stream.next_out = (char *)bufPtr(compressed) + bufUsed(compressed);
 
-	// Perform compression, check for error
-	bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
+    // Perform compression, check for error
+    int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
 
-	// Set buffer used space
-	bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
+    // Set buffer used space
+    bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
 
-	// Is compression done?
-	if (this->flushing && this->stream.avail_out > 0)
-		this->done = true;
+    // Is compression done?
+    if (this->flushing && result == BZ_STREAM_END)
+        this->done = true;
 
-	// Can more input be provided on the next call?
-	this->inputSame = this->flushing ? !this->done : this->stream.avail_in != 0;
+    // Can more input be provided on the next call?
+    this->inputSame = this->flushing ? !this->done : this->stream.avail_in != 0;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -161,7 +161,7 @@ bz2CompressNew(int level)
         FUNCTION_LOG_PARAM(INT, level);
     FUNCTION_LOG_END();
 
-    ASSERT(level >= 0);
+    ASSERT(level > 0);
 
     IoFilter *this = NULL;
 
