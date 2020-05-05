@@ -104,13 +104,13 @@ bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 	this->stream.next_out = (char *)bufPtr(compressed) + bufUsed(compressed);
 
 	// Perform compression, check for error
-	bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
+	int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
 
 	// Set buffer used space
 	bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
 
 	// Is compression done?
-	if (this->flushing && this->stream.avail_out > 0)
+	if (this->flushing && result == BZ_STREAM_END)
 		this->done = true;
 
 	// Can more input be provided on the next call?
@@ -161,7 +161,7 @@ bz2CompressNew(int level)
         FUNCTION_LOG_PARAM(INT, level);
     FUNCTION_LOG_END();
 
-    ASSERT(level >= 0);
+    ASSERT(level > 0);
 
     IoFilter *this = NULL;
 

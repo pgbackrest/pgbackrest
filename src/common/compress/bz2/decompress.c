@@ -42,7 +42,7 @@ static String *
 bz2DecompressToLog(const Bz2Decompress *this)
 {
     return strNewFmt(
-        "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+        "{inputSame: %s, done: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 

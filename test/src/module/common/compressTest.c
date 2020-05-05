@@ -218,24 +218,24 @@ testRun(void)
         TEST_RESULT_INT(bz2Error(BZ_FINISH_OK), BZ_FINISH_OK, "check finish ok");
         TEST_RESULT_INT(bz2Error(BZ_STREAM_END), BZ_STREAM_END, "check stream end");
         TEST_ERROR(bz2Error(BZ_SEQUENCE_ERROR), AssertError, "bz2 error: [-1] sequence error");
-        TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] file error");
-        TEST_ERROR(bz2Error(BZ_MEM_ERROR), AssertError, "bz2 error: [-3] stream error");
+        TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] parameter error");
+        TEST_ERROR(bz2Error(BZ_MEM_ERROR), AssertError, "bz2 error: [-3] memory error");
         TEST_ERROR(bz2Error(BZ_DATA_ERROR), AssertError, "bz2 error: [-4] data error");
-        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), AssertError, "bz2 error: [-5] insufficient memory");
-        TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] no space in buffer");
-        TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] incompatible version");
-        TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] incompatible version");
-        TEST_ERROR(bz2Error(BZ_CONFIG_ERROR), AssertError, "bz2 error: [-9] incompatible version");
-        TEST_ERROR(bz2Error(-999), AssertError, "bz2 threw error: [-999] unknown error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), AssertError, "bz2 error: [-5] data error magic");
+        TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] io error");
+        TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] unexpected eof");
+        TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] outbuff full");
+        TEST_ERROR(bz2Error(BZ_CONFIG_ERROR), AssertError, "bz2 error: [-9] config error");
+        TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
-        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(0));
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
 
 		compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, avail_in: 999}", "format object");
+        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
 
         Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
 
