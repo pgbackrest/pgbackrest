@@ -42,7 +42,7 @@ static String *
 bz2CompressToLog(const Bz2Compress *this)
 {
     return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+        "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
