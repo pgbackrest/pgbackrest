@@ -775,7 +775,7 @@
             <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
                     yum install make gcc postgresql-devel openssl-devel libxml2-devel
-                    lz4-devel libzstd-devel libbz2-devel
+                    lz4-devel libzstd-devel bzip2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

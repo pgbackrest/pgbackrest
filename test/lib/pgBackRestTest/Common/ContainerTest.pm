@@ -361,17 +361,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4";
-
-            # Install bzip2 development libraries and command-line tool
-            if ($strOS eq VM_F30)
-            {
-                $strScript .= ' bzip2-devel bzip2';
-            }
-            else
-            {
-                $strScript .= ' libbz2-devel bzip2';
-            }
+                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2";
 
             if ($strOS eq VM_CO6)
             {
