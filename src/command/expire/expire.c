@@ -860,7 +860,7 @@ cmdExpire(void)
                 // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
                 // warned by the config system that retention-full was not set)
                 if (cfgOptionTest(cfgOptRepoRetentionFull))
-                    expireTimeBasedBackup(infoBackup, time(NULL) - cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600);
+                    expireTimeBasedBackup(infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600));
             }
             else
                 expireFullBackup(infoBackup);
