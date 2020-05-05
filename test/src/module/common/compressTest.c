@@ -147,19 +147,26 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
-    TEST_TITLE("compress a large zero input buffer into small output buffer");
+    TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
     memset(bufPtr(decompressed), 0, bufSize(decompressed));
+
+    unsigned char *c = bufPtr(decompressed);
+    for (size_t i = 0; i < bufSize(decompressed); i++)
+    {
+        c[i] = (unsigned char) (i % 94 + 32);
+    }
+
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
         compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
-        "zero data - compress large in/small out buffer");
+        "non-zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
         bufEq(decompressed, testDecompress(decompressFilter(type), compressed, bufSize(compressed), 1024 * 256)), true,
-        "zero data - decompress large in/small out buffer");
+        "non-zero data - decompress large in/small out buffer");
 }
 
 /***********************************************************************************************************************************
