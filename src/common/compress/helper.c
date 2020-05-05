@@ -49,15 +49,6 @@ static const struct CompressHelperLocal
         .ext = STRDEF(""),
     },
     {
-        .type = STRDEF(GZ_EXT),
-        .ext = STRDEF("." GZ_EXT),
-        .compressType = GZ_COMPRESS_FILTER_TYPE,
-        .compressNew = gzCompressNew,
-        .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
-        .decompressNew = gzDecompressNew,
-        .levelDefault = 6,
-    },
-    {
         .type = STRDEF(BZ2_EXT),
         .ext = STRDEF("." BZ2_EXT),
         .compressType = BZ2_COMPRESS_FILTER_TYPE,
@@ -65,6 +56,15 @@ static const struct CompressHelperLocal
         .decompressType = BZ2_DECOMPRESS_FILTER_TYPE,
         .decompressNew = bz2DecompressNew,
         .levelDefault = 9,
+    },
+    {
+        .type = STRDEF(GZ_EXT),
+        .ext = STRDEF("." GZ_EXT),
+        .compressType = GZ_COMPRESS_FILTER_TYPE,
+        .compressNew = gzCompressNew,
+        .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
+        .decompressNew = gzDecompressNew,
+        .levelDefault = 6,
     },
     {
         .type = STRDEF(LZ4_EXT),
