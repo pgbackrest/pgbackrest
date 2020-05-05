@@ -233,16 +233,16 @@ testRun(void)
 
         Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(0));
 
-		compress->availIn = 999;
+		compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, availIn: 999}", "format object");
+        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, avail_in: 999}", "format object");
 
         Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
     }
 
     // *****************************************************************************************************************************
