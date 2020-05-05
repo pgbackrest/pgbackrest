@@ -1285,6 +1285,25 @@ For better control, use the options below.
 
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
+  --sbindir=DIR           system admin executables [EPREFIX/sbin]
+  --libexecdir=DIR        program executables [EPREFIX/libexec]
+  --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
+  --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
+  --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
+  --libdir=DIR            object code libraries [EPREFIX/lib]
+  --includedir=DIR        C header files [PREFIX/include]
+  --oldincludedir=DIR     C header files for non-gcc [/usr/include]
+  --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
+  --datadir=DIR           read-only architecture-independent data [DATAROOTDIR]
+  --infodir=DIR           info documentation [DATAROOTDIR/info]
+  --localedir=DIR         locale-dependent data [DATAROOTDIR/locale]
+  --mandir=DIR            man documentation [DATAROOTDIR/man]
+  --docdir=DIR            documentation root [DATAROOTDIR/doc/pgbackrest]
+  --htmldir=DIR           html documentation [DOCDIR]
+  --dvidir=DIR            dvi documentation [DOCDIR]
+  --pdfdir=DIR            pdf documentation [DOCDIR]
+  --psdir=DIR             ps documentation [DOCDIR]
 _ACEOF
 
   cat <<\_ACEOF
@@ -4018,6 +4037,64 @@ fi
 
 
 
+# Check required bzip2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for BZ2_bzCompress in -lbz2" >&5
+$as_echo_n "checking for BZ2_bzCompress in -lbz2... " >&6; }
+if ${ac_cv_lib_bz2_BZ2_bzCompress+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbz2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char BZ2_bzCompress ();
+int
+main ()
+{
+return BZ2_bzCompress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_bz2_BZ2_bzCompress=yes
+else
+  ac_cv_lib_bz2_BZ2_bzCompress=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_bz2_BZ2_bzCompress" >&5
+$as_echo "$ac_cv_lib_bz2_BZ2_bzCompress" >&6; }
+if test "x$ac_cv_lib_bz2_BZ2_bzCompress" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBBZ2 1
+_ACEOF
+
+  LIBS="-lbz2 $LIBS"
+
+else
+  as_fn_error $? "library 'bz2' is required" "$LINENO" 5
+fi
+
+ac_fn_c_check_header_mongrel "$LINENO" "bzlib.h" "ac_cv_header_bzlib_h" "$ac_includes_default"
+if test "x$ac_cv_header_bzlib_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <bzlib.h> is required" "$LINENO" 5
+fi
+
+
+
 # Check optional lz4 library
 # ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4F_isError in -llz4" >&5
@@ -5417,4 +5494,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 93fbf56725f3dab1089ddd4d7768f4414bf7941c

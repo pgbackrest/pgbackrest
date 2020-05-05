@@ -42,6 +42,9 @@ SRCS = \
 	command/stanza/delete.c \
 	command/stanza/upgrade.c \
 	common/compress/helper.c \
+	common/compress/bz2/common.c \
+	common/compress/bz2/compress.c \
+	common/compress/bz2/decompress.c \
 	common/compress/gz/common.c \
 	common/compress/gz/compress.c \
 	common/compress/gz/decompress.c \

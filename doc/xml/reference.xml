@@ -141,6 +141,7 @@
 
                         <text>The following compression types are supported:
                         <ul>
+                            <li><id>bz2</id> - BZip2 compression format</li>
                             <li><id>gz</id> - gzip compression format</li>
                             <li><id>lz4</id> - lz4 compression format (not available on all platforms)</li>
                             <li><id>zst</id> - Zstandard compression format (not available on all platforms)</li>
