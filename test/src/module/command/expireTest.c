@@ -1839,6 +1839,7 @@ testRun(void)
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "no backups to expire");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        // Set up
         StringList *argListTime = strLstDup(argListBase);
         strLstAddZ(argListTime, "--repo1-retention-full-type=time");
 
@@ -1888,14 +1889,23 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
-        TEST_RESULT_UINT(
-            expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup stop time equals retention time");
+        TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
         harnessLogResult(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
             " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-            " maximum.");
+            " maximum.\n"
+            "P00   INFO: time-based archive retention not met - archive logs will not be expired");
 
+        // Stop time equals retention time
+        TEST_RESULT_UINT(
+            expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup stop time equals retention time");
+        TEST_RESULT_STR_Z(
+            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
+            "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
+            "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
+
+        // Add a time period
         strLstAddZ(argList, "--repo1-retention-full=35");
         harnessCfgLoad(cfgCmdExpire, argList);
 
@@ -1911,13 +1921,6 @@ testRun(void)
             "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
         harnessLogResult("P00   INFO: time-based archive retention not met - archive logs will not be expired");
 
-
-
-// CSHANG
-// Need a test with retention-archive = maximum but retention-full causes expire
-        // strLstAddZ(argList, "--repo1-retention-archive=9999999");
-        // harnessCfgLoad(cfgCmdExpire, argList);
-// Need test where archive-type=diff to ensure not affected by time-based expire - maybe an earlier test?
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("oldest backup expired");
 
@@ -1925,7 +1928,6 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=30");
         strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
-
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run");
         harnessLogResult(
             "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
@@ -1937,8 +1939,7 @@ testRun(void)
 
         strLstAddZ(argList, "--repo1-retention-archive=9999999");
         harnessCfgLoad(cfgCmdExpire, argList);
-
-        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, only backup expired");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
         harnessLogResult(
             "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
@@ -1948,7 +1949,6 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=1"); // 1-day: expire all non-essential archive prior to newest full backup
         strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
-
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
         harnessLogResult(
             "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
@@ -2022,7 +2022,6 @@ testRun(void)
             "P00   INFO: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000010000000000000004\n"
             "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000003");
-
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("newest backup - retention met but must keep one");
