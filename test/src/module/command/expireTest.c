@@ -86,7 +86,7 @@ testRun(void)
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
 
     time_t timeNow = time(NULL); // time in seconds since Epoch
-    unsigned int secPerDay = 24 * 3600;
+    time_t secPerDay = 24 * 3600;
 
     String *backupInfoContent = strNewFmt(
         "[backup:current]\n"
