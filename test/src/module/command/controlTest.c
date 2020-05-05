@@ -16,8 +16,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageData = storagePosixNew(
-        strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageData = storagePosixNewP(strNew(testDataPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("lockStopFileName()"))

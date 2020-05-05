@@ -247,7 +247,7 @@ cfgDefDataFind(
 
             offset += size + 1;
         }
-        while(type != configDefDataTypeEnd);
+        while (type != configDefDataTypeEnd);
     }
 
     FUNCTION_TEST_RETURN_VOID();

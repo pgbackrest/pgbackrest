@@ -21,8 +21,7 @@ Test Run
 void
 testRun(void)
 {
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
@@ -174,10 +173,8 @@ testRun(void)
 
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
 
-        Storage *storagePg = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        Storage *storagePgWrite = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        Storage *storagePg = storagePosixNewP(strNewFmt("%s/pg", testPath()));
+        Storage *storagePgWrite = storagePosixNewP(strNewFmt("%s/pg", testPath()), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8.3 with custom exclusions and special file");
@@ -1194,7 +1191,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in future forces delta");
 
-        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, true), "validate manifest");
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, compressTypeGz), "validate manifest");
         TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
         TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGz, "check compress");

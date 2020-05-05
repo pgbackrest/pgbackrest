@@ -132,8 +132,7 @@ storageLocal(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocal =  storagePosixNew(
-                FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+            storageHelper.storageLocal =  storagePosixNewP(FSLASH_STR);
         }
         MEM_CONTEXT_END();
     }
@@ -152,8 +151,7 @@ storageLocalWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocalWrite = storagePosixNew(
-                FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+            storageHelper.storageLocalWrite = storagePosixNewP(FSLASH_STR, .write = true);
         }
         MEM_CONTEXT_END();
     }
@@ -184,8 +182,7 @@ storagePgGet(unsigned int hostId, bool write)
     // Use Posix storage
     else
     {
-        result = storagePosixNew(
-            cfgOptionStr(cfgOptPgPath + hostId - 1), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL);
+        result = storagePosixNewP(cfgOptionStr(cfgOptPgPath + hostId - 1), .write = write);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -362,8 +359,8 @@ storageRepoGet(const String *type, bool write)
     // Use Posix storage
     else if (strEqZ(type, STORAGE_TYPE_POSIX))
     {
-        result = storagePosixNew(
-            cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression);
+        result = storagePosixNewP(
+            cfgOptionStr(cfgOptRepoPath), .write = write, .pathExpressionFunction = storageRepoPathExpression);
     }
     // Use S3 storage
     else if (strEqZ(type, STORAGE_TYPE_S3))
@@ -488,9 +485,8 @@ storageSpool(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageSpool = storagePosixNew(
-                cfgOptionStr(cfgOptSpoolPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false,
-                storageSpoolPathExpression);
+            storageHelper.storageSpool = storagePosixNewP(
+                cfgOptionStr(cfgOptSpoolPath), .pathExpressionFunction = storageSpoolPathExpression);
         }
         MEM_CONTEXT_END();
     }
@@ -514,9 +510,8 @@ storageSpoolWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageSpoolWrite = storagePosixNew(
-                cfgOptionStr(cfgOptSpoolPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true,
-                storageSpoolPathExpression);
+            storageHelper.storageSpoolWrite = storagePosixNewP(
+                cfgOptionStr(cfgOptSpoolPath), .write = true, .pathExpressionFunction = storageSpoolPathExpression);
         }
         MEM_CONTEXT_END();
     }

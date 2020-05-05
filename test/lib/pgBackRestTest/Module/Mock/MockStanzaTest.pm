@@ -45,10 +45,10 @@ sub run
         {vm => VM1, remote =>  true, s3 =>  true, encrypt => false, compress =>  GZ},
         {vm => VM2, remote => false, s3 =>  true, encrypt =>  true, compress =>  GZ},
         {vm => VM2, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
-        {vm => VM3, remote => false, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM3, remote => false, s3 => false, encrypt => false, compress => ZST},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, compress => LZ4},
         {vm => VM4, remote => false, s3 =>  true, encrypt => false, compress => LZ4},
-        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true, compress =>  GZ},
+        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm

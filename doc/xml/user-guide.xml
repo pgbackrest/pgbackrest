@@ -274,14 +274,13 @@
         {[copy-ca-cert]}
 
         # Fix root tty
-        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
+        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile
 
-        # Suppress dpkg interactive output
-            rm /etc/apt/apt.conf.d/70debconf
-
-        # Install base packages
-        RUN apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates locales 2>&amp;1
+        # Install base packages (suppress dpkg interactive output)
+        RUN export DEBIAN_FRONTEND=noninteractive &amp;&amp; \
+            rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
+            apt-get update &amp;&amp; \
+            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates tzdata locales 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-certificates
@@ -767,13 +766,16 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config liblz4-dev</exe-cmd>
+                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
+                    liblz4-dev libzstd-dev
+                </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install make gcc postgresql-devel openssl-devel libxml2-devel lz4-devel
+                    yum install make gcc postgresql-devel openssl-devel libxml2-devel
+                    lz4-devel libzstd-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -957,6 +959,18 @@
             </backrest-config>
         </section>
 
+        <!-- =================================================================================================================== -->
+        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
+            <title>S3-Compatible Object Store Support</title>
+
+            <block id="s3-setup">
+                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
+        </section>
+
         <!-- SECTION => QUICKSTART - CONFIGURE ARCHIVING -->
         <section id="configure-archiving">
             <title>Configure Archiving</title>
@@ -1033,17 +1047,6 @@
             </backrest-config>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
-        </section>
-
-        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
-            <title>S3-Compatible Object Store Support</title>
-
-            <block id="s3-setup">
-                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
-                <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
-                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
-                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
-            </block>
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->

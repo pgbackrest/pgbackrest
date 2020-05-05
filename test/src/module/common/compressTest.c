@@ -83,7 +83,7 @@ testSuite(CompressType type, const char *decompressCmd)
     varLstAdd(compressParamList, varNewUInt(1));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     TEST_TITLE("simple data");
 
@@ -154,7 +154,7 @@ testSuite(CompressType type, const char *decompressCmd)
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
-        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 1024),
+        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
         "zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
@@ -241,6 +241,45 @@ testRun(void)
 #endif // HAVE_LIBLZ4
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("zst"))
+    {
+#ifdef HAVE_LIBZST
+        // Run standard test suite
+        testSuite(compressTypeZst, "zstd -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zstError()");
+
+        TEST_RESULT_UINT(zstError(0), 0, "check success");
+        TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
+
+        ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
+
+        compress->inputSame = true;
+        compress->inputOffset = 49;
+        compress->flushing = true;
+
+        TEST_RESULT_STR_Z(
+            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+
+        ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+        decompress->inputOffset = 999;
+
+        TEST_RESULT_STR_Z(
+            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
+            "format object");
+#else
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+#endif // HAVE_LIBZST
+    }
+
     // Test everything in the helper that is not tested in the individual compression type tests
     // *****************************************************************************************************************************
     if (testBegin("helper"))
@@ -255,7 +294,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

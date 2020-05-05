@@ -392,6 +392,19 @@ sub containerBuild
             }
         }
 
+        # Add zst command-line tool and development libs when available
+        if (vmWithZst($strOS))
+        {
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+            {
+                $strScript .= ' zstd libzstd-devel';
+            }
+            else
+            {
+                $strScript .= ' zstd libzstd-dev';
+            }
+        }
+
         # If no specific version of lcov is requested then install the default package
         if (!defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
         {

@@ -24,8 +24,7 @@ testRun(void)
     // PQfinish() is strictly checked
     harnessPqScriptStrictSet(true);
 
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     String *pg1 = strNew("pg1");
     String *pg1Path = strNewFmt("%s/%s", testPath(), strPtr(pg1));

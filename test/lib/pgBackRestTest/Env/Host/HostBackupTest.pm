@@ -99,6 +99,8 @@ use constant GZ                                                     => 'gz';
     push @EXPORT, qw(GZ);
 use constant LZ4                                                    => 'lz4';
     push @EXPORT, qw(LZ4);
+use constant ZST                                                    => 'zst';
+    push @EXPORT, qw(ZST);
 
 ####################################################################################################################################
 # new
