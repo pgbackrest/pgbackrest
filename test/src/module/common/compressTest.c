@@ -204,6 +204,48 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("bz2"))
+    {
+        // Run standard test suite
+        testSuite(compressTypeBz2, "bzip2 -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2Error()");
+
+        TEST_RESULT_INT(bz2Error(BZ_OK), BZ_OK, "check ok");
+        TEST_RESULT_INT(bz2Error(BZ_RUN_OK), BZ_RUN_OK, "check run ok");
+        TEST_RESULT_INT(bz2Error(BZ_FLUSH_OK), BZ_FLUSH_OK, "check flush ok");
+        TEST_RESULT_INT(bz2Error(BZ_FINISH_OK), BZ_FINISH_OK, "check finish ok");
+        TEST_RESULT_INT(bz2Error(BZ_STREAM_END), BZ_STREAM_END, "check stream end");
+        TEST_ERROR(bz2Error(BZ_SEQUENCE_ERROR), AssertError, "bz2 error: [-1] sequence error");
+        TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] file error");
+        TEST_ERROR(bz2Error(BZ_MEM_ERROR), AssertError, "bz2 error: [-3] stream error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR), AssertError, "bz2 error: [-4] data error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), AssertError, "bz2 error: [-5] insufficient memory");
+        TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] no space in buffer");
+        TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] incompatible version");
+        TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] incompatible version");
+        TEST_ERROR(bz2Error(BZ_CONFIG_ERROR), AssertError, "bz2 error: [-9] incompatible version");
+        TEST_ERROR(bz2Error(-999), AssertError, "bz2 threw error: [-999] unknown error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
+
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(0));
+
+		compress->availIn = 999;
+
+        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, availIn: 999}", "format object");
+
+        Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+
+        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("lz4"))
     {
 #ifdef HAVE_LIBLZ4
