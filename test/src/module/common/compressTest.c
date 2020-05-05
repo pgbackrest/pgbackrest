@@ -231,7 +231,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
-        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew());
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(0));
 
 		compress->availIn = 999;
 
