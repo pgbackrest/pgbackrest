@@ -65,10 +65,10 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id=""/>
+                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Add <proper>BZip2</proper> compression support.</p>
+                        <p>Add <proper>bzip2</proper> compression support.</p>
 
                         <p>Note that setting <br-option>compress-type=bz2</br-option> will make new backups and archive incompatible (unrestorable) with prior versions of <backrest/>.</p>
                     </release-item>
