@@ -21,7 +21,7 @@ bz2Error(int error)
     {
         const char *errorMsg;
         const ErrorType *errorType = &FormatError;
-        
+
         switch (error)
         {
             case BZ_SEQUENCE_ERROR:
@@ -93,6 +93,7 @@ bz2Error(int error)
                 errorType = &AssertError;
             }
         }
+
         THROWP_FMT(errorType, "bz2 error: [%d] %s", error, errorMsg);
     }
 

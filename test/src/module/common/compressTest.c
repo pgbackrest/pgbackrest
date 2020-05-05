@@ -150,13 +150,10 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    memset(bufPtr(decompressed), 0, bufSize(decompressed));
-
     unsigned char *c = bufPtr(decompressed);
+
     for (size_t i = 0; i < bufSize(decompressed); i++)
-    {
-        c[i] = (unsigned char) (i % 94 + 32);
-    }
+        c[i] = (unsigned char)(i % 94 + 32);
 
     bufUsedSet(decompressed, bufSize(decompressed));
 
@@ -242,7 +239,8 @@ testRun(void)
 
 		compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+        TEST_RESULT_STR_Z(
+            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
 
         Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
 

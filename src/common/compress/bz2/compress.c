@@ -32,7 +32,7 @@ typedef struct Bz2Compress
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flushing;                                                  // Is input complete and flushing in progress?
-    bool done;
+    bool done;                                                      // Is compression done?
 } Bz2Compress;
 
 /***********************************************************************************************************************************
