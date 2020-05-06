@@ -180,7 +180,7 @@ harnessTlsServerAbort(void)
 /**********************************************************************************************************************************/
 const String *harnessTlsTestHost(void)
 {
-    return strNew(testContainer() ? TLS_TEST_HOST : "localhost");
+    return strNew(testContainer() ? TLS_TEST_HOST : "127.0.0.1");
 }
 
 /**********************************************************************************************************************************/
