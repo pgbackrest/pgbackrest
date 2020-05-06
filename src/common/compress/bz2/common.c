@@ -20,77 +20,71 @@ bz2Error(int error)
     if (error < 0)
     {
         const char *errorMsg;
-        const ErrorType *errorType = &FormatError;
+        const ErrorType *errorType = &AssertError;
 
         switch (error)
         {
             case BZ_SEQUENCE_ERROR:
             {
                 errorMsg = "sequence error";
-                errorType = &AssertError;
                 break;
             }
 
             case BZ_PARAM_ERROR:
             {
                 errorMsg = "parameter error";
-                errorType = &AssertError;
                 break;
             }
 
             case BZ_MEM_ERROR:
             {
                 errorMsg = "memory error";
-                errorType = &AssertError;
+                errorType = &MemoryError;
                 break;
             }
 
             case BZ_DATA_ERROR:
             {
                 errorMsg = "data error";
-                errorType = &AssertError;
+                errorType = &FormatError;
                 break;
             }
 
             case BZ_DATA_ERROR_MAGIC:
             {
                 errorMsg = "data error magic";
-                errorType = &AssertError;
+                errorType = &FormatError;
                 break;
             }
 
             case BZ_IO_ERROR:
             {
                 errorMsg = "io error";
-                errorType = &AssertError;
                 break;
             }
 
             case BZ_UNEXPECTED_EOF:
             {
                 errorMsg = "unexpected eof";
-                errorType = &AssertError;
                 break;
             }
 
             case BZ_OUTBUFF_FULL:
             {
                 errorMsg = "outbuff full";
-                errorType = &AssertError;
                 break;
             }
 
             case BZ_CONFIG_ERROR:
             {
                 errorMsg = "config error";
-                errorType = &AssertError;
                 break;
             }
 
             default:
             {
                 errorMsg = "unknown error";
-                errorType = &AssertError;
+                break;
             }
         }
 
