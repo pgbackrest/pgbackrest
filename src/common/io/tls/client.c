@@ -271,7 +271,6 @@ tlsClientOpen(TlsClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool connected = false;
         bool retry;
         Wait *wait = waitNew(this->timeout);
 
@@ -292,9 +291,6 @@ tlsClientOpen(TlsClient *this)
 
                 // Create the TLS session
                 result = tlsSessionNew(session, sckClientOpen(this->socketClient), this->timeout);
-
-                // Connection was successful
-                connected = true;
             }
             CATCH_ANY()
             {
@@ -309,13 +305,12 @@ tlsClientOpen(TlsClient *this)
 
                     tlsClientStatLocal.retry++;
                 }
+                else
+                    RETHROW();
             }
             TRY_END();
         }
-        while (!connected && retry);
-
-        if (!connected)
-            RETHROW();
+        while (retry);
 
         tlsSessionMove(result, memContextPrior());
     }

@@ -85,7 +85,6 @@ sckClientOpen(SocketClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool connected = false;
         bool retry;
         Wait *wait = waitNew(this->timeout);
 
@@ -141,9 +140,6 @@ sckClientOpen(SocketClient *this)
                     result = sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout);
                 }
                 MEM_CONTEXT_PRIOR_END();
-
-                // Connection was successful
-                connected = true;
             }
             CATCH_ANY()
             {
@@ -158,13 +154,12 @@ sckClientOpen(SocketClient *this)
 
                     sckClientStatLocal.retry++;
                 }
+                else
+                    RETHROW();
             }
             TRY_END();
         }
-        while (!connected && retry);
-
-        if (!connected)
-            RETHROW();
+        while (retry);
 
         sckClientStatLocal.session++;
     }

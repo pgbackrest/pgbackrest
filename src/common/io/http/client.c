@@ -248,7 +248,6 @@ httpClientRequest(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool complete = false;
         bool retry;
         Wait *wait = waitNew(this->timeout);
 
@@ -451,12 +450,12 @@ httpClientRequest(
                 // and choose errors in this class to retry.
                 if (httpClientResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
                     THROW_FMT(ServiceError, "[%u] %s", httpClientResponseCode(this), strPtr(httpClientResponseMessage(this)));
-
-                // Request was successful
-                complete = true;
             }
             CATCH_ANY()
             {
+                tlsSessionFree(this->tlsSession);
+                this->tlsSession = NULL;
+
                 // Retry if wait time has not expired
                 if (waitMore(wait))
                 {
@@ -465,16 +464,12 @@ httpClientRequest(
 
                     httpClientStatLocal.retry++;
                 }
-
-                tlsSessionFree(this->tlsSession);
-                this->tlsSession = NULL;
+                else
+                    RETHROW();
             }
             TRY_END();
         }
-        while (!complete && retry);
-
-        if (!complete)
-            RETHROW();
+        while (retry);
 
         // Move the result buffer (if any) to the parent context
         bufMove(result, memContextPrior());
