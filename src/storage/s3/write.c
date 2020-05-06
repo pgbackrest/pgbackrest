@@ -216,7 +216,8 @@ storageWriteS3Close(THIS_VOID)
 
                 // First check for an eTag header and if it is missing then check the XML. The reason for this is that Minio has a
                 // bug where it does not properly quote the XML ETag. We could just strip it but that would require checking that
-                // the server is Minio.
+                // the server is Minio. The bug has now been fixed in Minio at 8eb99d3a but it will be some time before that fix is
+                // in all versions run in the field.
                 eTag = httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_ETAG_STR);
 
                 if (eTag == NULL)
