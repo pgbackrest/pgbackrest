@@ -118,6 +118,11 @@ AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 AC_CHECK_HEADER(zlib.h, [], [AC_MSG_ERROR([header file <zlib.h> is required])])
 
+# Check required bzip2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB([bz2], [BZ2_bzCompress], [], [AC_MSG_ERROR([library 'bz2' is required])])
+AC_CHECK_HEADER(bzlib.h, [], [AC_MSG_ERROR([header file <bzlib.h> is required])])
+
 # Check optional lz4 library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB(

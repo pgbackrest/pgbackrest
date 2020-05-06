@@ -178,15 +178,17 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("sparse-zero"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             false, "zero sparse 1TB file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("sparse-zero")).size, 0x10000000000UL, "    check size");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("normal-zero"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 0, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, false, false, NULL),
             true, "zero-length file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("normal-zero")).size, 0, "    check size");
 
@@ -202,16 +204,18 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoFileReferenceFull, true, strNew("normal"), strNew("ffffffffffffffffffffffffffffffffffffffff"),
-                false, 7, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                strNew("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, false, false, strNew("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, true, strNew("normal"), strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"),
-                false, 7, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, false, false, strNew("badpass")),
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), strNew("normal"));
@@ -232,8 +236,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
@@ -243,16 +248,18 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing");
 
         ioBufferSizeSet(oldBufferSize);
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
         // Change the existing file so it no longer matches by size
@@ -260,8 +267,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
@@ -270,8 +278,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
@@ -281,8 +290,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
@@ -291,14 +301,16 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432153, true, true, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
@@ -306,8 +318,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
-                false, 0, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
+                strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
 
         // Check protocol function directly

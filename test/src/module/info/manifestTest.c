@@ -1191,7 +1191,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in future forces delta");
 
-        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, true), "validate manifest");
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, compressTypeGz), "validate manifest");
         TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
         TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGz, "check compress");
