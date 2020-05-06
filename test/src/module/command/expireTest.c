@@ -85,8 +85,8 @@ testRun(void)
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
 
-    time_t timeNow = time(NULL); // time in seconds since Epoch
-    time_t secPerDay = 24 * 3600;
+    uint64_t timeNow = (uint64_t)time(NULL); // time in seconds since Epoch
+    uint64_t secPerDay = 24 * 3600;
 
     String *backupInfoContent = strNewFmt(
         "[backup:current]\n"
@@ -95,7 +95,7 @@ testRun(void)
         "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152800F={"
@@ -103,7 +103,7 @@ testRun(void)
         "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152800F_20181119-152152D={"
@@ -111,7 +111,7 @@ testRun(void)
         "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"diff\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152800F_20181119-152155I={"
@@ -120,7 +120,7 @@ testRun(void)
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
         "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"incr\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"incr\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F={"
@@ -128,7 +128,7 @@ testRun(void)
         "\"backup-archive-start\":\"000000010000000000000009\",\"backup-archive-stop\":\"000000010000000000000009\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F_20181119-152600D={"
@@ -136,7 +136,7 @@ testRun(void)
         "\"backup-archive-stop\":\"000000010000000000000011\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
-        "\"backup-timestamp-start\":%" PRId64 ",\"backup-timestamp-stop\":%" PRId64 ",\"backup-type\":\"diff\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "\n"
@@ -1835,7 +1835,7 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                 "\"db-version\":\"9.4\"}"))), "empty backup.info");
 
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "no backups to expire");
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0, "no backups to expire");
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Set up
@@ -1898,7 +1898,8 @@ testRun(void)
 
         // Stop time equals retention time
         TEST_RESULT_UINT(
-            expireTimeBasedBackup(infoBackup, timeNow - (40 * secPerDay)), 0, "oldest backup stop time equals retention time");
+            expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0,
+            "oldest backup stop time equals retention time");
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
             "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
@@ -2011,7 +2012,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Expire oldest from backup.info only, leaving the backup and archives on disk then save backup.info without oldest backup
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, timeNow - (25 * secPerDay)), 1, "expire oldest backup");
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * secPerDay))), 1, "expire oldest backup");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, backupInfoFileName, cipherTypeNone, NULL),
             "save backup.info without oldest");
