@@ -2,6 +2,7 @@ branches:
   only:
     - integration
     - /-ci$/
+    - /-cit$/
 
 os: linux
 dist: trusty
