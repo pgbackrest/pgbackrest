@@ -266,6 +266,9 @@
         </variable>
 
         <variable key="copy-ca-cert">COPY {[fake-cert-path-relative]}/ca.crt {[ca-cert-path]}/pgbackrest-ca.crt</variable>
+
+        <!-- Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42) -->
+        <variable key="sudo-disable-core-dump">RUN echo "Set disable_coredump false" >> /etc/sudo.conf</variable>
     </variable-list>
 
     <!-- Setup hosts used to build the documentation
@@ -281,6 +284,8 @@
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates tzdata locales 2>&amp;1
+
+        {[sudo-disable-core-dump]}
 
         # Install CA certificate
         RUN update-ca-certificates
@@ -317,6 +322,8 @@
 
         # Install packages
         RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+
+        {[sudo-disable-core-dump]}
 
         # Install CA certificate
         RUN update-ca-trust enable &amp;&amp; \
