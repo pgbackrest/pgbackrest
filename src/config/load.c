@@ -135,17 +135,18 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull) && cfgCommandRole() == cfgCmdRoleDefault)
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
             // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)))
             {
                 LOG_WARN_FMT(
-                    "option %s is not set, the repository may run out of space"
-                        "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
-                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
+                    "option '%s' is not set for '%s=%s', the repository may run out of space"
+                    "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
+                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx), cfgOptionName(cfgOptRepoRetentionFullType + optionIdx),
+                    strPtr(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx)),
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
             }
         }
@@ -166,11 +167,13 @@ cfgLoadUpdateOption(void)
             // If the archive retention is not explicitly set then determine what it should be defaulted to
             if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
             {
-                // If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive
-                // to this value, else ignore archiving
+                // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the repo-retention-archive
+                // to this value when retention-full-type is 'count', else ignore archiving. If the retention-full-type is 'time'
+                // then the the expire command will default the archive retention accordingly.
                 if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
                 {
-                    if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+                    if (strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT)
+                        && cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
                             VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));

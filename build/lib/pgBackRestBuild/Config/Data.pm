@@ -197,6 +197,7 @@ use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
 use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
+use constant CFGOPT_REPO_RETENTION_FULL_TYPE                        => CFGDEF_PREFIX_REPO . '-retention-full-type';
 
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
@@ -1705,6 +1706,22 @@ my %hConfigDefine =
         {
             'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
+        &CFGDEF_COMMAND => CFGOPT_REPO_RETENTION_FULL_TYPE,
+    },
+
+    &CFGOPT_REPO_RETENTION_FULL_TYPE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEFAULT => 'count',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'count',
+            'time',
+        ],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},

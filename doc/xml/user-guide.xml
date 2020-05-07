@@ -1483,7 +1483,7 @@
         <section id="full">
             <title>Full Backup Retention</title>
 
-            <p>Set <br-option>repo1-retention-full</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
+            <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the number of full backups required to be retained or the number of days to retain full backups.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-full</br-option></title>

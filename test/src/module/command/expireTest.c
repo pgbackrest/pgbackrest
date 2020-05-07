@@ -85,15 +85,17 @@ testRun(void)
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
 
-    const Buffer *backupInfoBase = harnessInfoChecksumZ
-    (
+    uint64_t timeNow = (uint64_t)time(NULL); // time in seconds since Epoch
+    uint64_t secPerDay = 24 * 3600;
+
+    String *backupInfoContent = strNewFmt(
         "[backup:current]\n"
         "20181119-152138F={"
         "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
         "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152800F={"
@@ -101,40 +103,40 @@ testRun(void)
         "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152800F_20181119-152152D={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
-        "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
-        "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-        "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
-        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-        "20181119-152800F_20181119-152155I={"
         "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
         "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+        "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        "20181119-152800F_20181119-152155I={"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000007\","
+        "\"backup-archive-stop\":\"000000010000000000000007\",\"backup-info-repo-size\":2369186,"
+        "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
         "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
-        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"incr\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F={"
         "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-        "\"backup-archive-start\":\"000000010000000000000007\",\"backup-archive-stop\":\"000000010000000000000007\","
+        "\"backup-archive-start\":\"000000010000000000000009\",\"backup-archive-stop\":\"000000010000000000000009\","
         "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
         "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"full\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F_20181119-152600D={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
-        "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000011\","
+        "\"backup-archive-stop\":\"000000010000000000000011\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
-        "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "\n"
@@ -147,8 +149,12 @@ testRun(void)
         "\n"
         "[db:history]\n"
         "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}"
-    );
+            "\"db-version\":\"9.4\"}", timeNow - (41 * secPerDay), timeNow - (40 * secPerDay), timeNow - (30 * secPerDay),
+        timeNow - (30 * secPerDay), timeNow - (25 * secPerDay), timeNow - (25 * secPerDay), timeNow - (20 * secPerDay),
+        timeNow - (20 * secPerDay), timeNow - (10 * secPerDay), timeNow - (10 * secPerDay), timeNow - (5 * secPerDay),
+        timeNow - (5 * secPerDay));
+
+    const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
 
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
@@ -214,9 +220,10 @@ testRun(void)
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 0, "retention-full not set");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.");
+            "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
+            " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+            " maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup no dependencies expired");
@@ -530,12 +537,16 @@ testRun(void)
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention not set");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.\n"
+            "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
+            " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+            " maximum.\n"
             "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true), "archive retention not set - retention-full-type=time");
+        harnessLogResult("P00   INFO: time-based archive retention not met - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no current backups");
@@ -544,11 +555,12 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=4");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention set, retention type default, no current backups");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention set, retention type default, no current backups");
         harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.");
+            "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
+            " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+            " maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no archive on disk");
@@ -642,7 +654,7 @@ testRun(void)
                 "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "no archive on disk");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true), "no archive on disk");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - remove archives across timelines");
@@ -655,7 +667,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=3");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=3");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=3");
 
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
@@ -679,7 +691,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=2");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=2");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=2");
 
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
@@ -704,7 +716,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=1");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=1");
 
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
@@ -731,7 +743,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
-            removeExpiredArchive(infoBackup),
+            removeExpiredArchive(infoBackup, false),
             "full counts as differential and incremental associated with differential expires");
 
         String *result = strNew("");
@@ -768,7 +780,7 @@ testRun(void)
         // Regenerate archive
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "differential and full count as an incremental");
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "differential and full count as an incremental");
 
         result = strNew("");
         strCatFmt(
@@ -1020,7 +1032,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
-            removeExpiredArchive(infoBackup), "backup selected for retention does not have archive-start so do nothing");
+            removeExpiredArchive(infoBackup, false), "backup selected for retention does not have archive-start so do nothing");
         TEST_RESULT_STR(
             strLstJoin(strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
@@ -1036,7 +1048,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(
-            removeExpiredArchive(infoBackup), "backup earlier than selected for retention does not have archive-start");
+            removeExpiredArchive(infoBackup, false), "backup earlier than selected for retention does not have archive-start");
         harnessLogResult(
             "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000010000000000000002,"
             " stop = 000000010000000000000002\n"
@@ -1800,6 +1812,233 @@ testRun(void)
             "P00   INFO: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: archive retention on backup 20181119-152850F, archiveId = 12-2, start = 000000010000000000000002\n"
             "P00 DETAIL: no archive to remove, archiveId = 12-2");
+
+        harnessLogLevelReset();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("expireTimeBasedBackup()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no current backups");
+
+        InfoBackup *infoBackup = NULL;
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}"))), "empty backup.info");
+
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0, "no backups to expire");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Set up
+        StringList *argListTime = strLstDup(argListBase);
+        strLstAddZ(argListTime, "--repo1-retention-full-type=time");
+
+        // Create backup.info and archive.info
+        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase);
+        storagePutP(
+            storageNewWriteP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "db-system-id=6625592122879095702\n"
+                "db-version=\"9.4\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}"));
+
+        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152600D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+
+        // Genreate archive for backups in backup.info
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 11, "9.4-1", "0000000100000000");
+
+        // Set the log level to detail so archive expiration messages are seen
+        harnessLogLevelSet(logLevelDetail);
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup not expired");
+
+        StringList *argList = strLstDup(argListTime);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
+        harnessLogResult(
+            "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
+            " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+            " maximum.\n"
+            "P00   INFO: time-based archive retention not met - archive logs will not be expired");
+
+        // Stop time equals retention time
+        TEST_RESULT_UINT(
+            expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0,
+            "oldest backup stop time equals retention time");
+        TEST_RESULT_STR_Z(
+            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
+            "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
+            "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
+
+        // Add a time period
+        strLstAddZ(argList, "--repo1-retention-full=35");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
+        TEST_RESULT_STR(
+            strLstJoin(strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+            archiveExpectList(1, 11, "0000000100000000"),
+            "no archives expired");
+        TEST_RESULT_STR_Z(
+            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
+            "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
+            "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
+        harnessLogResult("P00   INFO: time-based archive retention not met - archive logs will not be expired");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup expired");
+
+        argList = strLstDup(argListTime);
+        strLstAddZ(argList, "--repo1-retention-full=30");
+        strLstAddZ(argList, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run");
+        harnessLogResult(
+            "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F, archiveId = 9.4-1,"
+            " start = 000000010000000000000004\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000001,"
+            " stop = 000000010000000000000003");
+
+        strLstAddZ(argList, "--repo1-retention-archive=9999999");
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
+        harnessLogResult(
+            "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
+
+        argList = strLstDup(argListTime);
+        strLstAddZ(argList, "--repo1-retention-full=30");
+        strLstAddZ(argList, "--repo1-retention-archive=1"); // 1-day: expire all non-essential archive prior to newest full backup
+        strLstAddZ(argList, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
+        harnessLogResult(
+            "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F, archiveId = 9.4-1,"
+            " start = 000000010000000000000004, stop = 000000010000000000000004\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152152D, archiveId = 9.4-1,"
+            " start = 000000010000000000000006, stop = 000000010000000000000006\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152155I, archiveId = 9.4-1,"
+            " start = 000000010000000000000007, stop = 000000010000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F, archiveId = 9.4-1,"
+            " start = 000000010000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000001,"
+            " stop = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000005,"
+            " stop = 000000010000000000000005\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000008,"
+            " stop = 000000010000000000000008");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo1-retention-archive-type=diff");
+
+        argList = strLstDup(argListTime);
+        strLstAddZ(argList, "--repo1-retention-full=30");
+        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        strLstAddZ(argList, "--repo1-retention-archive=1"); // 1-diff: expire all non-essential archive prior to newest diff backup
+        strLstAddZ(argList, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired, retention archive is DIFF - dry-run");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
+            "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
+            " to the maximum.\n"
+            "P00   INFO: [DRY-RUN] expire time-based backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F, archiveId = 9.4-1,"
+            " start = 000000010000000000000004, stop = 000000010000000000000004\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152152D, archiveId = 9.4-1,"
+            " start = 000000010000000000000006, stop = 000000010000000000000006\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152155I, archiveId = 9.4-1,"
+            " start = 000000010000000000000007, stop = 000000010000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F, archiveId = 9.4-1,"
+            " start = 000000010000000000000009, stop = 000000010000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F_20181119-152600D, archiveId = 9.4-1,"
+            " start = 000000010000000000000011\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000001,"
+            " stop = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000005,"
+            " stop = 000000010000000000000005\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000008,"
+            " stop = 000000010000000000000008\n"
+            "P00 DETAIL: [DRY-RUN] remove archive: archiveId = 9.4-1, start = 000000010000000000000010,"
+            " stop = 000000010000000000000010");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire oldest full");
+
+        argList = strLstDup(argListTime);
+        strLstAddZ(argList, "--repo1-retention-full=25");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Expire oldest from backup.info only, leaving the backup and archives on disk then save backup.info without oldest backup
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * secPerDay))), 1, "expire oldest backup");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, backupInfoFileName, cipherTypeNone, NULL),
+            "save backup.info without oldest");
+        harnessLogResult("P00   INFO: expire time-based backup 20181119-152138F");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired");
+        harnessLogResult(
+            "P00   INFO: remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F, archiveId = 9.4-1, start = 000000010000000000000004\n"
+            "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000003");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("newest backup - retention met but must keep one");
+
+        argList = strLstDup(argListTime);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
+        harnessLogResult(
+            "P00   INFO: expire time-based backup set: 20181119-152800F, 20181119-152800F_20181119-152152D,"
+            " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00   INFO: remove expired backup 20181119-152800F\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 9.4-1, start = 000000010000000000000009\n"
+            "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000004, stop = 000000010000000000000008");
 
         harnessLogLevelReset();
     }
