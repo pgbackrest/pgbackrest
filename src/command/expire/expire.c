@@ -177,7 +177,6 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel)
 
             // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
             LOG_INFO_FMT("expire adhoc backup %s%s", (result > 1 ? "set: " : ""), strPtr(strLstJoin(backupExpired, ", ")));
-
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -287,7 +286,7 @@ expireFullBackup(InfoBackup *infoBackup)
 }
 
 /***********************************************************************************************************************************
-Expire backups based on dates
+Expire backups based on time
 ***********************************************************************************************************************************/
 static unsigned int
 expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
@@ -309,9 +308,9 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
         unsigned int backupIdx = strLstSize(currentBackupList);
 
         // Find out the point where we will have to stop purging backups. Starting with the newest backup (the end of the list),
-        // find the first backup that is older than the expire time period by checking the backup stop time.
-        // This way, if the backups are F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration time period is at D2b,
-        // then purge only F1, D1a, D1b and D1c, and keep the next full backups (F2 and F3) and all intermediate non-full backups.
+        // find the first backup that is older than the expire time period by checking the backup stop time. This way, if the
+        // backups are F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration time period is at D2b, then purge only F1, D1a, D1b
+        // and D1c, and keep the next full backups (F2 and F3) and all intermediate non-full backups.
         if (backupIdx > 0)
         {
             const String *lastBackupLabelToKeep = NULL;
@@ -319,14 +318,15 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
             do
             {
                 backupIdx--;
+
                 InfoBackupData *info = infoBackupDataByLabel(infoBackup, strLstGet(currentBackupList, backupIdx));
                 lastBackupLabelToKeep = info->backupLabel;
+
+                // We can start deleting before this backup. This way, we keep one full backup and its dependents.
                 if (info->backupTimestampStop < minTimestamp)
-                {
-                    // We can start deleting before this backup. This way, we keep one full backup and its dependents
                     break;
-                }
-            } while (backupIdx != 0);
+            }
+            while (backupIdx != 0);
 
             // Count number of full backups being expired
             unsigned int numFullExpired = 0;
@@ -336,6 +336,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
             while (!strEq(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep))
             {
                 StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel);
+
                 result += strLstSize(backupExpired);
                 numFullExpired++;
 
