@@ -46,6 +46,17 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="pierre.ducroquet"/>
+                        </release-item-contributor-list>
+
+                        <p>Add time-based retention for full backups.</p>
+
+                        <p>The <br-option>--repo-retention-full-type</br-option> option allows retention of full backups based on a time period, specified in days.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>--set</br-option> option to the <cmd>expire</cmd> command.</p>
@@ -79,17 +90,6 @@
                         </release-item-contributor-list>
 
                         <p>Add <cmd>backup</cmd>/<cmd>expire</cmd> running status to the <cmd>info</cmd> command.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                            <release-item-contributor id="pierre.ducroquet"/>
-                        </release-item-contributor-list>
-
-                        <p>Add <br-option>--repo-retention-full-type</br-option> option.</p>
-
-                        <p>Provide the ability to expire full backups based on a time period of days.</p>
                     </release-item>
                 </release-feature-list>
 
