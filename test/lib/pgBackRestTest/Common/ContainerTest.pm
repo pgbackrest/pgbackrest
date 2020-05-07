@@ -492,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F30)
+                elsif ($strOS eq VM_F32)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
