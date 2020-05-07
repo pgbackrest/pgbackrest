@@ -1715,7 +1715,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED => false,
         &CFGDEF_DEFAULT => 'count',
         &CFGDEF_ALLOW_LIST =>
         [
