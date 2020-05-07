@@ -3523,7 +3523,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of full backups to retain.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Full backup retention count/time.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "When a full backup expires, all differential and incremental backups associated with the full backup will also "
@@ -3561,12 +3561,12 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Retention type for full backups.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Determines whether the repo-retention-full setting represents a time period (days) or a number for the full backups "
-                "to keep. If set to time then full backups older than repo-retention-full will be removed from the repository if "
-                "there is at least one backup that is equal to or greater than the repo-retention-full setting. For example, if "
-                "the repo-retention-full is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full "
-                "backups will be expired because expiring the 35 days old backup would leave only the 25 days old backup which "
-                "would violate the 30 days retention policy. Archived WAL older than the oldest full backup remaining will be "
+            "Determines whether the repo-retention-full setting represents a time period (days) or count of full backups to keep. "
+                "If set to time then full backups older than repo-retention-full will be removed from the repository if there is "
+                "at least one backup that is equal to or greater than the repo-retention-full setting. For example, if the "
+                "repo-retention-full is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full "
+                "backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which "
+                "would violate the 30 day retention policy. Archived WAL older than the oldest full backup remaining will be "
                 "automatically expired unless repo-retention-archive-type and repo-retention-archive are explicitly set."
         )
 
