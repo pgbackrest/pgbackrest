@@ -6,6 +6,7 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
+#include "common/time.h"
 #include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -861,7 +862,7 @@ cmdExpire(void)
                 // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
                 // warned by the config system that retention-full was not set)
                 if (cfgOptionTest(cfgOptRepoRetentionFull))
-                    expireTimeBasedBackup(infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * 24 * 3600));
+                    expireTimeBasedBackup(infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * SEC_PER_DAY));
             }
             else
                 expireFullBackup(infoBackup);

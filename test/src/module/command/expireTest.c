@@ -86,7 +86,6 @@ testRun(void)
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
 
     uint64_t timeNow = (uint64_t)time(NULL); // time in seconds since Epoch
-    uint64_t secPerDay = 24 * 3600;
 
     String *backupInfoContent = strNewFmt(
         "[backup:current]\n"
@@ -149,10 +148,10 @@ testRun(void)
         "\n"
         "[db:history]\n"
         "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}", timeNow - (41 * secPerDay), timeNow - (40 * secPerDay), timeNow - (30 * secPerDay),
-        timeNow - (30 * secPerDay), timeNow - (25 * secPerDay), timeNow - (25 * secPerDay), timeNow - (20 * secPerDay),
-        timeNow - (20 * secPerDay), timeNow - (10 * secPerDay), timeNow - (10 * secPerDay), timeNow - (5 * secPerDay),
-        timeNow - (5 * secPerDay));
+            "\"db-version\":\"9.4\"}", timeNow - (41 * SEC_PER_DAY), timeNow - (40 * SEC_PER_DAY), timeNow - (30 * SEC_PER_DAY),
+        timeNow - (30 * SEC_PER_DAY), timeNow - (25 * SEC_PER_DAY), timeNow - (25 * SEC_PER_DAY), timeNow - (20 * SEC_PER_DAY),
+        timeNow - (20 * SEC_PER_DAY), timeNow - (10 * SEC_PER_DAY), timeNow - (10 * SEC_PER_DAY), timeNow - (5 * SEC_PER_DAY),
+        timeNow - (5 * SEC_PER_DAY));
 
     const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
 
@@ -414,7 +413,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}"));
+                "\"db-version\":\"9.4\"}"));
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
@@ -1835,7 +1834,7 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                 "\"db-version\":\"9.4\"}"))), "empty backup.info");
 
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0, "no backups to expire");
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY))), 0, "no backups to expire");
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Set up
@@ -1898,7 +1897,7 @@ testRun(void)
 
         // Stop time equals retention time
         TEST_RESULT_UINT(
-            expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * secPerDay))), 0,
+            expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY))), 0,
             "oldest backup stop time equals retention time");
         TEST_RESULT_STR_Z(
             strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
@@ -2012,7 +2011,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Expire oldest from backup.info only, leaving the backup and archives on disk then save backup.info without oldest backup
-        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * secPerDay))), 1, "expire oldest backup");
+        TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * SEC_PER_DAY))), 1, "expire oldest backup");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, backupInfoFileName, cipherTypeNone, NULL),
             "save backup.info without oldest");
