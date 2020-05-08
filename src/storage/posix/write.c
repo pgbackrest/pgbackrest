@@ -8,7 +8,6 @@ Posix Storage File write
 #include <unistd.h>
 #include <utime.h>
 
-#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/io/write.intern.h"
@@ -35,7 +34,6 @@ typedef struct StorageWritePosix
     const String *nameTmp;
     const String *path;
     int handle;
-    IoFilter *uidFilter;                                            // Filter to calculate UID from bytes written
     const String *uid;                                              // Final UID for the file
 } StorageWritePosix;
 
@@ -104,13 +102,6 @@ storageWritePosixOpen(THIS_VOID)
     // Set free callback to ensure file handle is freed
     memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
 
-    // Create SHA1 hash to calculate UID
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->uidFilter = cryptoHashNew(HASH_TYPE_SHA1_STR);
-    }
-    MEM_CONTEXT_END();
-
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
@@ -149,9 +140,6 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->handle != -1);
 
-    // Calculate uid
-    ioFilterProcessIn(this->uidFilter, buffer);
-
     // Write the data
     if (write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
@@ -176,13 +164,6 @@ storageWritePosixClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->handle != -1)
     {
-        // Finalize UID
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            this->uid = varStr(ioFilterResult(this->uidFilter));
-        }
-        MEM_CONTEXT_END();
-
         // Sync the file
         if (this->interface.syncFile)
             THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strPtr(this->nameTmp));
@@ -215,6 +196,16 @@ storageWritePosixClose(THIS_VOID)
         // Sync the path
         if (this->interface.syncPath)
             storageInterfacePathSyncP(this->storage, this->path);
+
+        // The uid is a combination of the size and mtime reported by info
+        StorageInfo info = storageInterfaceInfoP(this->storage, this->interface.name, storageInfoLevelBasic);
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->uid = strNewFmt("%" PRIu64 "-%" PRId64, info.size, info.timeModified);
+        }
+        MEM_CONTEXT_END();
+
     }
 
     FUNCTION_LOG_RETURN_VOID();
