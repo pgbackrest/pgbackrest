@@ -252,6 +252,9 @@ sub run
 
         if ($self->{oTest}->{&TEST_C})
         {
+            # Build filename for valgrind suppressions
+            my $strValgrindSuppress = $self->{strGCovPath} . '/test/valgrind.suppress.' . $self->{oTest}->{&TEST_VM};
+
             $strCommand =
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 "bash -l -c '" .
@@ -259,9 +262,11 @@ sub run
                 # Remove coverage data from last run
                 "rm -f test.gcda && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
+                # Test with valgrind when requested
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
                     $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
-                    " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
+                    ' valgrind -q --gen-suppressions=all ' .
+                    ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
                 " ./test.bin 2>&1'";
         }

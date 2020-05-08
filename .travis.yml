@@ -2,6 +2,7 @@ branches:
   only:
     - integration
     - /-ci$/
+    - /-cit$/
 
 os: linux
 dist: trusty
@@ -30,7 +31,7 @@ jobs:
     - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
 
     # All unit tests (with coverage) on the newest gcc available
-    - env: PGB_CI="test --vm=f30 --param=c-only --param=no-performance"
+    - env: PGB_CI="test --vm=f32 --param=c-only --param=no-performance"
 
     # All integration tests
     - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
@@ -39,7 +40,8 @@ jobs:
     - env: PGB_CI=" doc --vm=co6"
 
     # Performance tests and unit tests (with coverage) run without a container in a non-UTC timezone
-    - dist: bionic
+    - arch: arm64
+      dist: bionic
       env:
         - PGB_CI="test --vm=none --param=tz=America/New_York"
       services:

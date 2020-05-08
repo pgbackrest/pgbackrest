@@ -492,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F30)
+                elsif ($strOS eq VM_F32)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -593,6 +593,8 @@ sub containerBuild
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 $strScript .=
+                    # Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42)
+                    "    echo \"Set disable_coredump false\" >> /etc/sudo.conf && \\\n" .
                     "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
                     "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
             }

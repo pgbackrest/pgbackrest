@@ -77,7 +77,7 @@ Free cipher context
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CIPHER_BLOCK, LOG, logLevelTrace)
 {
-    EVP_CIPHER_CTX_cleanup(this->cipherContext);
+    EVP_CIPHER_CTX_free(this->cipherContext);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
