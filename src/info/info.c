@@ -503,8 +503,8 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
     MEM_CONTEXT_TEMP_BEGIN()
     {
         unsigned int try = 0;
-        bool done = false;
-        bool loaded = false;
+        volatile bool done = false;                                 // Are all files tried? Must be preserved even on error.
+        volatile bool loaded = false;                               // Was a file loaded? Must be preserved even on error.
         const ErrorType *loadErrorType = NULL;
         String *loadErrorMessage = NULL;
 
