@@ -70,7 +70,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
             uint64_t size = bufUsed(storageGetP(read));
-            const String *uid = strNewFmt("%" PRIu64 "-%" PRId64, info->size, info->timeModified);
+            const String *uid = strNewFmt("%" PRIu64 "-%" PRId64, info->size, (int64_t)info->timeModified);
             const String *checksum = varStr(
                 ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR));
 

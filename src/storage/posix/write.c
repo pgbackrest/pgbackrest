@@ -202,7 +202,7 @@ storageWritePosixClose(THIS_VOID)
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->uid = strNewFmt("%" PRIu64 "-%" PRId64, info.size, info.timeModified);
+            this->uid = strNewFmt("%" PRIu64 "-%" PRId64, info.size, (int64_t)info.timeModified);
         }
         MEM_CONTEXT_END();
 
