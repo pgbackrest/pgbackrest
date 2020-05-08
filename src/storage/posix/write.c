@@ -34,7 +34,7 @@ typedef struct StorageWritePosix
     const String *nameTmp;
     const String *path;
     int handle;
-    const String *uid;                                              // Final UID for the file
+    const String *uid;                                              // File unique identifier
 } StorageWritePosix;
 
 /***********************************************************************************************************************************

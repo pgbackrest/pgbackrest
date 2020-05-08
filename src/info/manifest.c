@@ -1413,7 +1413,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                     file.checksumSha1, strPtr(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
             }
 
-            // Unique identifier is optional
+            // Unique identifier may not be present in older manifests
             const Variant *uid = kvGet(fileKv, MANIFEST_KEY_UID_VAR);
 
             if (uid != NULL)
@@ -2101,6 +2101,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
                 kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
 
+                // Unique indentifier may not be present for partial manifest saves
                 if (file->uid != NULL)
                     kvPut(fileKv, MANIFEST_KEY_UID_VAR, varNewStr(file->uid));
 

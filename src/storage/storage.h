@@ -53,9 +53,6 @@ typedef enum
 
     // Does the storage support detailed info, i.e. user, group, mode, link destination, etc.
     storageFeatureInfoDetail,
-
-    // Does the storage support a unique identifier that can retrieved cheaply to verify data at rest? An example is S3 ETag.
-    storageFeatureUID,
 } StorageFeature;
 
 /***********************************************************************************************************************************

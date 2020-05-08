@@ -41,7 +41,7 @@ typedef struct StorageWriteS3
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
-    const String *uid;                                              // Final ETag for the object
+    const String *uid;                                              // File unique identifier
 } StorageWriteS3;
 
 /***********************************************************************************************************************************

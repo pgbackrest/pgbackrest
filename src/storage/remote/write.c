@@ -26,7 +26,7 @@ typedef struct StorageWriteRemote
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
-    const String *uid;                                              // Unique identifier, if any
+    const String *uid;                                              // File unique identifier
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
