@@ -3404,11 +3404,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "NOTE: WAL segments required to make a backup consistent are always retained until the backup is expired regardless of "
                 "how this option is configured.\n"
             "\n"
-            "If this value is not set and repo-retention-full-type is the default, then the archive to expire will default to the "
-                "repo-retention-full (or repo-retention-diff) value corresponding to the repo-retention-archive-type if set to "
+            "If this value is not set and repo-retention-full-type is count (default), then the archive to expire will default to "
+                "the repo-retention-full (or repo-retention-diff) value corresponding to the repo-retention-archive-type if set to "
                 "full (or diff). This will ensure that WAL is only expired for backups that are already expired. If "
-                "repo-retention-full-type is not the default, then this value will default to removing archives that are earlier "
-                "than the oldest full backup retained after satisfying the repo-retention-full setting.\n"
+                "repo-retention-full-type is time, then this value will default to removing archives that are earlier than the "
+                "oldest full backup retained after satisfying the repo-retention-full setting.\n"
             "\n"
             "This option must be set if repo-retention-archive-type is set to incr. If disk space is at a premium, then this "
                 "setting, in conjunction with repo-retention-archive-type, can be used to aggressively expire WAL segments. "
@@ -3563,11 +3563,12 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Determines whether the repo-retention-full setting represents a time period (days) or count of full backups to keep. "
                 "If set to time then full backups older than repo-retention-full will be removed from the repository if there is "
-                "at least one backup that is equal to or greater than the repo-retention-full setting. For example, if the "
+                "at least one backup that is equal to or greater than the repo-retention-full setting. For example, if "
                 "repo-retention-full is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full "
                 "backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which "
-                "would violate the 30 day retention policy. Archived WAL older than the oldest full backup remaining will be "
-                "automatically expired unless repo-retention-archive-type and repo-retention-archive are explicitly set."
+                "would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be "
+                "expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless "
+                "repo-retention-archive-type and repo-retention-archive are explicitly set."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

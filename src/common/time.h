@@ -16,7 +16,7 @@ typedef uint64_t TimeMSec;
 Constants describing number of sub-units in an interval
 ***********************************************************************************************************************************/
 #define MSEC_PER_SEC                                                ((TimeMSec)1000)
-#define SEC_PER_DAY                                                 ((TimeMSec)86400)
+#define SEC_PER_DAY                                                 ((time_t)86400)
 
 /***********************************************************************************************************************************
 Functions
