@@ -2005,6 +2005,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionFull,
     },
 
+    // repo-retention-full-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_RETENTION_FULL_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionFullType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_RETENTION_FULL_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionFullType,
+    },
+
     // repo-s3-bucket option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2592,6 +2604,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoRetentionArchiveType,
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
+    cfgOptRepoRetentionFullType,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSckBlock,

@@ -50,7 +50,7 @@ backrest-checksum="[CHECKSUM]"
 full backup - create pg_stat link, pg_clog dir (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=[BUFFER-SIZE] --checksum-page --process-max=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: invalid page checksums found in file db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 at pages 0, 3-5, 7
 P00   WARN: invalid page checksum found in file db-master:[TEST_PATH]/db-master/db/base/base/16384/17000 at page 1
@@ -242,7 +242,7 @@ backrest-checksum="[CHECKSUM]"
 full backup - resume (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --checksum-page --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
@@ -475,7 +475,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
@@ -676,7 +676,7 @@ backrest-checksum="[CHECKSUM]"
 incr backup - resume and add tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -891,7 +891,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - drop tablespace 11 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
@@ -1119,7 +1119,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add files and remove tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-1]
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
@@ -1328,7 +1328,7 @@ backrest-checksum="[CHECKSUM]"
 incr backup - update files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
@@ -1539,7 +1539,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - updates since last full (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
@@ -1753,7 +1753,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - remove files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter compress-type option to 'lz4', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -1966,7 +1966,7 @@ backrest-checksum="[CHECKSUM]"
 full backup - update file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2179,7 +2179,7 @@ expire full=1 (backup host)
 diff backup - add file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --checksum-page --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2422,7 +2422,7 @@ diff backup - option backup-standby reset - backup performed from master (backup
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]

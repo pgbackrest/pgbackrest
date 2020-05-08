@@ -2431,7 +2431,7 @@ Expire diff with repo-retention-archive with warning repo-retention-diff not set
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --stanza=db
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'
             HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff' to the maximum.
@@ -2589,7 +2589,7 @@ Expire full with repo-retention-archive with warning repo-retention-full not set
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=full --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --stanza=db
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.2-1, start = 00000001000000020000002A, stop = 00000001000000020000002C
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.2-1, start = 000000010000000200000036, stop = 000000010000000200000038
@@ -2936,7 +2936,7 @@ Expire no archive with warning since neither repo-retention-archive nor repo-ret
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=diff --stanza=db
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option 'repo1-retention-archive' nor option 'repo1-retention-diff' is set
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired

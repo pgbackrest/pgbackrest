@@ -6,6 +6,7 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
+#include "common/time.h"
 #include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -17,7 +18,6 @@ Expire Command
 #include "storage/helper.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 /***********************************************************************************************************************************
 Helper functions and structures
@@ -287,6 +287,80 @@ expireFullBackup(InfoBackup *infoBackup)
 }
 
 /***********************************************************************************************************************************
+Expire backups based on time
+***********************************************************************************************************************************/
+static unsigned int
+expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(TIME, minTimestamp);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(minTimestamp > 0);
+
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get the list of full backups
+        StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderAsc);
+        unsigned int backupIdx = strLstSize(currentBackupList);
+
+        // Find out the point where we will have to stop purging backups. Starting with the newest backup (the end of the list),
+        // find the first backup that is older than the expire time period by checking the backup stop time. This way, if the
+        // backups are F1 D1a D1b D1c F2 D2a D2b F3 D3a D3b and the expiration time period is at D2b, then purge only F1, D1a, D1b
+        // and D1c, and keep the next full backups (F2 and F3) and all intermediate non-full backups.
+        if (backupIdx > 0)
+        {
+            const String *lastBackupLabelToKeep = NULL;
+
+            do
+            {
+                backupIdx--;
+
+                InfoBackupData *info = infoBackupDataByLabel(infoBackup, strLstGet(currentBackupList, backupIdx));
+                lastBackupLabelToKeep = info->backupLabel;
+
+                // We can start deleting before this backup. This way, we keep one full backup and its dependents.
+                if (info->backupTimestampStop < minTimestamp)
+                    break;
+            }
+            while (backupIdx != 0);
+
+            // Count number of full backups being expired
+            unsigned int numFullExpired = 0;
+
+            // Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry which is
+            // always the oldest so if it is not the backup to keep then we can remove it
+            while (!strEq(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep))
+            {
+                StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel);
+
+                result += strLstSize(backupExpired);
+                numFullExpired++;
+
+                // Log the expired backups. If there is more than one backup, then prepend "set:"
+                LOG_INFO_FMT(
+                    "expire time-based backup %s%s", (strLstSize(backupExpired) > 1 ? "set: " : ""),
+                    strPtr(strLstJoin(backupExpired, ", ")));
+            }
+
+            if (strEqZ(cfgOptionStr(cfgOptRepoRetentionArchiveType), CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL) &&
+                !cfgOptionTest(cfgOptRepoRetentionArchive) && numFullExpired > 0)
+            {
+                cfgOptionSet(
+                    cfgOptRepoRetentionArchive, cfgSourceDefault, varNewUInt(strLstSize(currentBackupList) - numFullExpired));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(UINT, result);
+}
+
+/***********************************************************************************************************************************
 Log detailed information about archive logs removed
 ***********************************************************************************************************************************/
 static void
@@ -307,10 +381,11 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId)
 Process archive retention
 ***********************************************************************************************************************************/
 static void
-removeExpiredArchive(InfoBackup *infoBackup)
+removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(BOOL, timeBasedFullRetention);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -325,7 +400,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-             LOG_INFO_FMT("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+            String *msg = strNew("- archive logs will not be expired");
+
+            // Only notify user if not time-based retention
+            if (!timeBasedFullRetention)
+                LOG_INFO_FMT("option '%s' is not set %s", cfgOptionName(cfgOptRepoRetentionArchive), strPtr(msg));
+            else
+                LOG_INFO_FMT("time-based archive retention not met %s", strPtr(msg));
         }
         else
         {
@@ -764,16 +845,28 @@ cmdExpire(void)
             cfgOptionStrNull(cfgOptRepoCipherPass));
 
         const String *adhocBackupLabel = NULL;
+        bool timeBasedFullRetention = strEqZ(
+            cfgOptionStr(cfgOptRepoRetentionFullType), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
 
         // If the --set option is valid (i.e. expire is called on its own) and is set then attempt to expire the requested backup
-        if (cfgOptionValid(cfgOptSet) && cfgOptionTest(cfgOptSet))
+        if (cfgOptionTest(cfgOptSet))
         {
             adhocBackupLabel = cfgOptionStr(cfgOptSet);
             expireAdhocBackup(infoBackup, adhocBackupLabel);
         }
         else
         {
-            expireFullBackup(infoBackup);
+            // If time-based retention for full backups is set, then expire based on time period
+            if (timeBasedFullRetention)
+            {
+                // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
+                // warned by the config system that retention-full was not set)
+                if (cfgOptionTest(cfgOptRepoRetentionFull))
+                    expireTimeBasedBackup(infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * SEC_PER_DAY));
+            }
+            else
+                expireFullBackup(infoBackup);
+
             expireDiffBackup(infoBackup);
         }
 
@@ -787,7 +880,7 @@ cmdExpire(void)
 
         // Remove all files on disk that are now expired
         removeExpiredBackup(infoBackup, adhocBackupLabel);
-        removeExpiredArchive(infoBackup);
+        removeExpiredArchive(infoBackup, timeBasedFullRetention);
     }
     MEM_CONTEXT_TEMP_END();
 

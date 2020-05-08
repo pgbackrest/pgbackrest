@@ -46,6 +46,17 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="pierre.ducroquet"/>
+                        </release-item-contributor-list>
+
+                        <p>Add time-based retention for full backups.</p>
+
+                        <p>The <br-option>--repo-retention-full-type</br-option> option allows retention of full backups based on a time period, specified in days.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>--set</br-option> option to the <cmd>expire</cmd> command.</p>
@@ -8453,6 +8464,11 @@
         <contributor id="pavel.suderevsky">
             <contributor-name-display>Pavel Suderevsky</contributor-name-display>
             <contributor-id type="github">psuderevsky</contributor-id>
+        </contributor>
+
+        <contributor id="pierre.ducroquet">
+            <contributor-name-display>Pierre Ducroquet</contributor-name-display>
+            <contributor-id type="github">PierreDucroquet</contributor-id>
         </contributor>
 
         <contributor id="pritam.barhate">
