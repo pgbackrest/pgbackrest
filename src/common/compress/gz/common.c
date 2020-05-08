@@ -16,7 +16,7 @@ gzError(int error)
     if (error != Z_OK && error != Z_STREAM_END)
     {
         const char *errorMsg;
-        const ErrorType *errorType = &FormatError;
+        const ErrorType *errorType = &AssertError;
 
         switch (error)
         {
@@ -24,7 +24,6 @@ gzError(int error)
             case Z_NEED_DICT:
             {
                 errorMsg = "need dictionary";
-                errorType = &AssertError;
                 break;
             }
 
@@ -32,19 +31,20 @@ gzError(int error)
             case Z_ERRNO:
             {
                 errorMsg = "file error";
-                errorType = &AssertError;
                 break;
             }
 
             case Z_STREAM_ERROR:
             {
                 errorMsg = "stream error";
+                errorType = &FormatError;
                 break;
             }
 
             case Z_DATA_ERROR:
             {
                 errorMsg = "data error";
+                errorType = &FormatError;
                 break;
             }
 
@@ -59,20 +59,20 @@ gzError(int error)
             case Z_BUF_ERROR:
             {
                 errorMsg = "no space in buffer";
-                errorType = &AssertError;
                 break;
             }
 
             case Z_VERSION_ERROR:
             {
                 errorMsg = "incompatible version";
+                errorType = &FormatError;
                 break;
             }
 
             default:
             {
                 errorMsg = "unknown error";
-                errorType = &AssertError;
+                break;
             }
         }
 

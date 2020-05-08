@@ -150,10 +150,12 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    unsigned char *c = bufPtr(decompressed);
+    unsigned char *chr = bufPtr(decompressed);
 
-    for (size_t i = 0; i < bufSize(decompressed); i++)
-        c[i] = (unsigned char)(i % 94 + 32);
+    // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
+    // sure that we fill the compression library's small output buffer
+    for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
+        chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
 
     bufUsedSet(decompressed, bufSize(decompressed));
 
@@ -223,9 +225,9 @@ testRun(void)
         TEST_RESULT_INT(bz2Error(BZ_STREAM_END), BZ_STREAM_END, "check stream end");
         TEST_ERROR(bz2Error(BZ_SEQUENCE_ERROR), AssertError, "bz2 error: [-1] sequence error");
         TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] parameter error");
-        TEST_ERROR(bz2Error(BZ_MEM_ERROR), AssertError, "bz2 error: [-3] memory error");
-        TEST_ERROR(bz2Error(BZ_DATA_ERROR), AssertError, "bz2 error: [-4] data error");
-        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), AssertError, "bz2 error: [-5] data error magic");
+        TEST_ERROR(bz2Error(BZ_MEM_ERROR), MemoryError, "bz2 error: [-3] memory error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR), FormatError, "bz2 error: [-4] data error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), FormatError, "bz2 error: [-5] data error magic");
         TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] io error");
         TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] unexpected eof");
         TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] outbuff full");
@@ -237,7 +239,7 @@ testRun(void)
 
         Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
 
-		compress->stream.avail_in = 999;
+        compress->stream.avail_in = 999;
 
         TEST_RESULT_STR_Z(
             bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
