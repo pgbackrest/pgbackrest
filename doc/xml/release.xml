@@ -77,6 +77,8 @@
                     <release-item>
                         <release-item-contributor-list>
                              <release-item-contributor id="stephen.frost"/>
+                             <release-item-reviewer id="david.steele"/>
+                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <proper>bzip2</proper> compression support.</p>

@@ -152,11 +152,8 @@ testSuite(CompressType type, const char *decompressCmd)
     decompressed = bufNew(1024 * 1024 - 1);
     unsigned char *chr = bufPtr(decompressed);
 
-    /*
-     * Step through the buffer, setting the individual bytes in a simple pattern
-     * (visible ASCII characters, DEC 32 - 126), to make sure that we fill the
-     * compression library's small output buffer 
-     */
+    // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
+    // sure that we fill the compression library's small output buffer
     for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
         chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
 
