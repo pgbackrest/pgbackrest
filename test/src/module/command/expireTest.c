@@ -155,6 +155,10 @@ testRun(void)
 
     const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
 
+    // Sleep the remainder of the current second. If cmdExpire() gets the same time as timeNow then expiration won't work as
+    // expected in the tests.
+    sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
     {
