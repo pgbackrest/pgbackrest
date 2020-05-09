@@ -78,8 +78,8 @@ storageWritePosixOpen(THIS_VOID)
     // Open the file
     this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
 
-    // Attempt the create the path if it is missing
-    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)
+    // Attempt to create the path if it is missing
+    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)                                        // {vm_covered}
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
@@ -91,10 +91,10 @@ storageWritePosixOpen(THIS_VOID)
     // Handle errors
     if (this->handle == -1)
     {
-        if (errno == ENOENT)
+        if (errno == ENOENT)                                                                                        // {vm_covered}
             THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strPtr(this->interface.name));
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strPtr(this->interface.name));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strPtr(this->interface.name));             // {vm_covered}
     }
 
     // Set free callback to ensure file handle is freed

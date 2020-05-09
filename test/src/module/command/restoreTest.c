@@ -919,24 +919,23 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '{[user]}'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (testContainer())
-        {
-            TEST_TITLE("owner is root and ownership of pg_data is bad");
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_TITLE("owner is root and ownership of pg_data is bad");
 
-            manifestPathAdd(manifest, &path);
-            manifestFileAdd(manifest, &file);
+        manifestPathAdd(manifest, &path);
+        manifestFileAdd(manifest, &file);
 
-            TEST_SYSTEM_FMT("sudo chown 77777:77777 %s", strPtr(pgPath));
+        TEST_SYSTEM_FMT("sudo chown 77777:77777 %s", strPtr(pgPath));
 
-            userLocalData.userName = STRDEF("root");
-            userLocalData.groupName = STRDEF("root");
+        userLocalData.userName = STRDEF("root");
+        userLocalData.groupName = STRDEF("root");
 
-            TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-            TEST_RESULT_LOG(
-                "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
-                "P00   WARN: unknown group in backup manifest mapped to 'root'");
-        }
+        TEST_RESULT_LOG(
+            "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
+            "P00   WARN: unknown group in backup manifest mapped to 'root'");
+#endif // TEST_CONTAINER_REQUIRED
     }
 
     // *****************************************************************************************************************************

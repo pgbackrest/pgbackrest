@@ -74,13 +74,13 @@ storageReadPosixOpen(THIS_VOID)
     // Handle errors
     if (this->handle == -1)
     {
-        if (errno == ENOENT)
+        if (errno == ENOENT)                                                                                        // {vm_covered}
         {
             if (!this->interface.ignoreMissing)
                 THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(this->interface.name));
         }
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strPtr(this->interface.name));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strPtr(this->interface.name));              // {vm_covered}
     }
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)

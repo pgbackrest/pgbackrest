@@ -501,6 +501,7 @@ sub run
                     (($self->{bOptimize} && ($self->{bProfile} || $bPerformance)) ? '-O2' : $strNoOptimizeFlags) .
                     (!$self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -fprofile-arcs -ftest-coverage' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_NONE ? '' : " -DTEST_CONTAINER_REQUIRED") .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
@@ -638,7 +639,8 @@ sub end
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
             coverageExtract(
-                $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}, $self->{bCoverageSummary},
+                $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME},
+                $self->{oTest}->{&TEST_VM} ne VM_NONE, $self->{bCoverageSummary},
                 $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
                 $self->{strGCovPath}, $self->{strBackRestBase} . '/test/result');
         }

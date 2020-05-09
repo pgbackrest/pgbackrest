@@ -607,11 +607,11 @@ restoreManifestOwner(Manifest *manifest)
             StorageInfo pathInfo = storageInfoP(storagePg(), manifestTargetBase(manifest)->path);
 
             // If user/group is null then set it to root
-            if (pathInfo.user == NULL)
-                pathInfo.user = userName();
+            if (pathInfo.user == NULL)                                                                              // {vm_covered}
+                pathInfo.user = userName();                                                                         // {vm_covered}
 
-            if (pathInfo.group == NULL)
-                pathInfo.group = groupName();
+            if (pathInfo.group == NULL)                                                                             // {vm_covered}
+                pathInfo.group = groupName();                                                                       // {vm_covered}
 
             if (userNull || groupNull)
             {

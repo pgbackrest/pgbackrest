@@ -12,6 +12,8 @@ Test Tls Client
 /***********************************************************************************************************************************
 Test server with subject alternate names
 ***********************************************************************************************************************************/
+#ifdef TEST_CONTAINER_REQUIRED
+
 static void
 testTlsServerAltName(void)
 {
@@ -26,20 +28,17 @@ testTlsServerAltName(void)
     harnessTlsServerAccept();
     harnessTlsServerClose();
 
-    if (testContainer())
-    {
-        // Success on valid ca file and match common name
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
+    // Success on valid ca file and match common name
+    harnessTlsServerAccept();
+    harnessTlsServerClose();
 
-        // Success on valid ca file and match alt name
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
+    // Success on valid ca file and match alt name
+    harnessTlsServerAccept();
+    harnessTlsServerClose();
 
-        // Unable to find matching hostname in certificate
-        harnessTlsServerAccept();
-        harnessTlsServerClose();
-    }
+    // Unable to find matching hostname in certificate
+    harnessTlsServerAccept();
+    harnessTlsServerClose();
 
     // Certificate error
     harnessTlsServerAccept();
@@ -51,6 +50,8 @@ testTlsServerAltName(void)
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
+
+#endif // TEST_CONTAINER_REQUIRED
 
 /***********************************************************************************************************************************
 Test server
@@ -226,10 +227,12 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("unable to connect to blocking socket");
 
+            SocketClient *socketClient = sckClientNew(STR(hostLocal), 7777, 0);
+            TEST_RESULT_UINT(sckClientPort(socketClient), 7777, " check port");
+
             socketLocal.block = true;
             TEST_ERROR(
-                sckClientOpen(sckClientNew(STR(hostLocal), 7777, 0)), HostConnectError,
-                "unable to connect to '127.0.0.1:7777': [111] Connection refused");
+                sckClientOpen(socketClient), HostConnectError, "unable to connect to '127.0.0.1:7777': [111] Connection refused");
             socketLocal.block = false;
 
             // ---------------------------------------------------------------------------------------------------------------------
@@ -304,14 +307,12 @@ testRun(void)
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-        if (testContainer())
+#ifdef TEST_CONTAINER_REQUIRED
+        if (system(                                                                                         // {uncoverable_branch}
+                "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
+                    " sudo tee -a /etc/hosts > /dev/null") != 0)
         {
-            if (system(                                                                                 // {uncoverable_branch}
-                    "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
-                        " sudo tee -a /etc/hosts > /dev/null") != 0)
-            {
-                THROW(AssertError, "unable to add test hosts to /etc/hosts");                           // {uncovered+}
-            }
+            THROW(AssertError, "unable to add test hosts to /etc/hosts");                                   // {uncovered+}
         }
 
         HARNESS_FORK_BEGIN()
@@ -331,6 +332,7 @@ testRun(void)
                             sckClientNew(strNew("localhost"), harnessTlsTestPort(), 5000), 0, true, strNew("bogus.crt"),
                             strNew("/bogus"))),
                     CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
+
                 TEST_ERROR_FMT(
                     tlsClientOpen(
                         tlsClientNew(
@@ -339,28 +341,25 @@ testRun(void)
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     harnessTlsTestPort());
 
-                if (testContainer())
-                {
-                    TEST_RESULT_VOID(
-                        tlsClientOpen(
-                            tlsClientNew(
-                                sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
-                                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-                        "success on valid ca file and match common name");
-                    TEST_RESULT_VOID(
-                        tlsClientOpen(
-                            tlsClientNew(
-                                sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
-                                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-                        "success on valid ca file and match alt name");
-                    TEST_ERROR(
-                        tlsClientOpen(
-                            tlsClientNew(
-                                sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
-                                strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-                        CryptoError,
-                        "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
-                }
+                TEST_RESULT_VOID(
+                    tlsClientOpen(
+                        tlsClientNew(
+                            sckClientNew(strNew("test.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
+                            strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                    "success on valid ca file and match common name");
+                TEST_RESULT_VOID(
+                    tlsClientOpen(
+                        tlsClientNew(
+                            sckClientNew(strNew("host.test2.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
+                            strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                    "success on valid ca file and match alt name");
+                TEST_ERROR(
+                    tlsClientOpen(
+                        tlsClientNew(
+                            sckClientNew(strNew("test3.pgbackrest.org"), harnessTlsTestPort(), 5000), 0, true,
+                            strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                    CryptoError,
+                    "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
                 TEST_ERROR_FMT(
                     tlsClientOpen(
@@ -380,6 +379,7 @@ testRun(void)
             HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
+#endif // TEST_CONTAINER_REQUIRED
     }
 
     // *****************************************************************************************************************************

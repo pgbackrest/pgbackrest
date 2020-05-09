@@ -35,12 +35,14 @@ sub coverageLCovConfigGenerate
 {
     my $oStorage = shift;
     my $strOutFile = shift;
+    my $bContainer = shift;
     my $bCoverageSummary = shift;
 
     my $strBranchFilter =
         'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|assert|switch\s)\(|\{\+{0,1}' .
         ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
-    my $strLineFilter = '\{\+{0,1}uncover' . ($bCoverageSummary ? 'able' : '(ed|able)') . '[^_]';
+    my $strLineFilter =
+        '\{\+{0,1}' . ($bCoverageSummary ? 'uncoverable' : '(uncover(ed|able)' . ($bContainer ? '' : '|vm_covered') . ')') . '[^_]';
 
     my $strConfig =
         "# LCOV Settings\n" .
@@ -80,12 +82,19 @@ sub coverageExtract
     my $oStorage = shift;
     my $strModule = shift;
     my $strTest = shift;
+    my $bContainer = shift;
     my $bSummary = shift;
     my $strContainerImage = shift;
     my $strWorkPath = shift;
     my $strWorkTmpPath = shift;
     my $strWorkUnitPath = shift;
     my $strTestResultCoveragePath = shift . '/coverage';
+
+    # Coverage summary must be run in a container
+    if ($bSummary && !$bContainer)
+    {
+        confess &log(ERROR, "coverage summary must be run on containers for full coverage");
+    }
 
     # Generate a list of files to cover
     my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
@@ -101,7 +110,7 @@ sub coverageExtract
 
     # Generate coverage reports for the modules
     my $strLCovConf = "${strTestResultCoveragePath}/raw/lcov.conf";
-    coverageLCovConfigGenerate($oStorage, $strLCovConf, $bSummary);
+    coverageLCovConfigGenerate($oStorage, $strLCovConf, $bContainer, $bSummary);
 
     my $strLCovExe = "lcov --config-file=${strLCovConf}";
     my $strLCovOut = "${strWorkUnitPath}/test.lcov";
