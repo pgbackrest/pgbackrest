@@ -205,14 +205,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true, compress => LZ4},
-        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false, compress => BZ2},
-        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false, compress =>  GZ},
-        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true, compress => ZST},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false, compress => LZ4},
-        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false, compress =>  GZ},
-        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true, compress => ZST},
+        {vm => VM1, remote => false, storage =>    S3, encrypt => false, delta =>  true, compress => LZ4},
+        {vm => VM1, remote =>  true, storage => POSIX, encrypt =>  true, delta => false, compress => BZ2},
+        {vm => VM2, remote => false, storage => POSIX, encrypt =>  true, delta =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, storage =>    S3, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM3, remote => false, storage => POSIX, encrypt => false, delta =>  true, compress => ZST},
+        {vm => VM3, remote =>  true, storage =>    S3, encrypt =>  true, delta => false, compress => LZ4},
+        {vm => VM4, remote => false, storage => POSIX, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, storage =>    S3, encrypt =>  true, delta =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm
@@ -220,21 +220,22 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $bDeltaBackup = $rhRun->{delta};
         my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
+        if (!$self->begin("rmt ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
+            strCompressType => NONE});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
-        if ($bS3)
+        if ($strStorage eq S3)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
             $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
@@ -263,7 +264,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL_NETWORK} = $bRemote ? 1 : 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} = JSON::PP::false;
 
         if ($bEncrypt)
@@ -492,14 +493,14 @@ sub run
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
                     ($bRemote ? ' --pg1-socket-path=/test_socket_path' : '') .
                     ' --buffer-size=16384 --checksum-page --process-max=1',
-                strRepoType => $bS3 ? undef : STORAGE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                strRepoType => $strStorage eq S3 ? undef : CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 65536;
 
         # Stop operations and make sure the correct error occurs
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bS3)
+        if ($strStorage eq POSIX)
         {
             # Test global stop
             $oHostDbMaster->stop({bForce => true});
@@ -582,7 +583,7 @@ sub run
         # Create a temp file in backup temp root to be sure it's deleted correctly
         my $strTempFile = "${strResumePath}/file.tmp";
 
-        if ($bS3)
+        if ($strStorage eq S3)
         {
             storageRepo()->put($strTempFile, "TEMP");
         }
@@ -842,7 +843,7 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
         if (!$bRemote)
         {
@@ -863,7 +864,7 @@ sub run
             $strType, 'drop tablespace 11',
             {oExpectedManifest => \%oManifest, strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
         # Restore
         #---------------------------------------------------------------------------------------------------------------------------
@@ -918,7 +919,7 @@ sub run
             $strType, 'add files and remove tablespace 2',
             {oExpectedManifest => \%oManifest, strOptionalParam => '--process-max=1'});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
         # Incr Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -943,7 +944,7 @@ sub run
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
         # Diff Backup with files removed
         #---------------------------------------------------------------------------------------------------------------------------
@@ -962,7 +963,7 @@ sub run
         }
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
-        if (!$bS3)
+        if ($strStorage eq POSIX)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'repo1-hardlink' => 'y'}});
         }
@@ -982,7 +983,7 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--process-max=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
         # Full Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -992,7 +993,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = $strCompressType;
 
-        if (!$bS3)
+        if ($strStorage eq POSIX)
         {
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
             $oHostBackup->{bHardLink} = true;
@@ -1102,7 +1103,7 @@ sub run
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
         # directory is identical).
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bRemote && !$bS3)
+        if (!$bRemote && $strStorage eq POSIX)
         {
             executeTest(
                 'ls -1Rtr ' . $oHostBackup->repoBackupPath(PATH_BACKUP_HISTORY),

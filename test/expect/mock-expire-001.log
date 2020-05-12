@@ -1,5 +1,5 @@
-run 001 - simple, enc 0, s3 0
-=============================
+run 001 - simple, enc 0, storage posix
+======================================
 
 * full backup: label = [BACKUP-FULL-1], start = 000000010000000000000000, stop = 000000010000000000000002
 * incr backup: label = [BACKUP-INCR-1], prior = [BACKUP-FULL-1], start = 000000010000000000000006, stop = 0000000100000000000000FB

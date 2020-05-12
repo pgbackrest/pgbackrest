@@ -83,14 +83,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>  GZ},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress => LZ4},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress => BZ2},
-        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress => BZ2},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress => LZ4},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress => ZST},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress => ZST},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote => false, storage => POSIX, encrypt => false, compress =>  GZ},
+        {vm => VM1, remote =>  true, storage =>    S3, encrypt =>  true, compress => LZ4},
+        {vm => VM2, remote => false, storage =>    S3, encrypt => false, compress => BZ2},
+        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress => BZ2},
+        {vm => VM3, remote => false, storage => POSIX, encrypt =>  true, compress => LZ4},
+        {vm => VM3, remote =>  true, storage =>    S3, encrypt => false, compress => ZST},
+        {vm => VM4, remote => false, storage =>    S3, encrypt =>  true, compress => ZST},
+        {vm => VM4, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -98,15 +98,16 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
 
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
+        if (!$self->begin("rmt ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt, strCompressType => NONE});
+            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
+            strCompressType => NONE});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(DETAIL)}});
@@ -205,7 +206,7 @@ sub run
         # Create a temp file to make sure it is deleted later (skip when S3 since it doesn't use temp files)
         my $strArchiveTmp;
 
-        if (!$bS3)
+        if ($strStorage eq POSIX)
         {
             # Should succeed when temp file already exists
             &log(INFO, '    succeed when tmp WAL file exists');
@@ -341,8 +342,8 @@ sub run
         &log(INFO, "    get second WAL (${strSourceFile})");
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" . (!$bS3 ? " --repo-type=cifs" : '') .
-                " --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" .
+            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists

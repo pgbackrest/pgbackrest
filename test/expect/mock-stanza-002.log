@@ -1,5 +1,5 @@
-run 002 - remote 1, s3 1, enc 1, cmp lz4
-========================================
+run 002 - remote 1, storage s3, enc 1, cmp lz4
+==============================================
 
 stanza-create db - fail on missing control file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --log-level-file=[LOG-LEVEL-FILE] stanza-create

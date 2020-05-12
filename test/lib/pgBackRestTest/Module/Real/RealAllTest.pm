@@ -53,21 +53,22 @@ sub run
     # Should the test use lz4 compression?
     my $bLz4Compress = true;
 
-    foreach my $bS3 (false, true)
+    foreach my $strStorage (POSIX, S3)
     {
-    foreach my $bHostBackup ($bS3 ? (true) : (false, true))
+    foreach my $bHostBackup ($strStorage eq S3 ? (true) : (false, true))
     {
     # Standby should only be tested for pg versions that support it
-    foreach my $bHostStandby ($bS3 ? (false) : (false, true))
+    foreach my $bHostStandby ($strStorage eq S3 ? (false) : (false, true))
     {
     # Master and standby backup destinations on need to be tested on one db version since it is not version specific
     foreach my $strBackupDestination (
-        $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
+        $strStorage eq S3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
         my $strCompressType =
             $bHostBackup && !$bHostStandby ?
-                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ? ZST : ($bS3 ? BZ2 : GZ)) : NONE;
-        my $bRepoEncrypt = ($strCompressType ne NONE && !$bS3) ? true : false;
+                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ?
+                    ZST : ($strStorage eq S3 ? BZ2 : GZ)) : NONE;
+        my $bRepoEncrypt = ($strCompressType ne NONE && $strStorage eq POSIX) ? true : false;
 
         # If compression was used then switch it for the next test that uses compression
         if ($strCompressType ne NONE)
@@ -80,13 +81,14 @@ sub run
         my $strDbVersionMostRecent = ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1];
 
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}, s3 ${bS3}, " .
-                "enc ${bRepoEncrypt}",
+            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}" .
+                ", storage ${strStorage}, enc ${bRepoEncrypt}",
             # Use the most recent db version on the expect vm for expect testing
             $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
 
         # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
-        if (($bS3 || $bHostBackup) && (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))
+        if (($strStorage eq S3 || $bHostBackup) &&
+            (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))
         {
             &log(INFO, "skipped - this test is run this OS using PG ${strDbVersionMostRecent}");
             next;
@@ -107,10 +109,11 @@ sub run
         }
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             strCompressType => $strCompressType, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+             strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
+             bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
         my $bTestLocal = $self->runCurrent() == 1;
@@ -119,7 +122,7 @@ sub run
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
-        if ($bS3)
+        if ($strStorage eq S3)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
             $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
@@ -538,7 +541,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
         # the logs will to be deleted to avoid causing issues further down the line.
-        if ($bTestExtra && !$bS3)
+        if ($bTestExtra && $strStorage eq POSIX)
         {
             $oHostDbMaster->clusterRestart();
 
@@ -1001,7 +1004,7 @@ sub run
 
         # Test no-online backups
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra & !$bS3)
+        if ($bTestExtra & $strStorage eq POSIX)
         {
             # Create a postmaster.pid file so it appears that the server is running
             storageTest()->put($oHostDbMaster->dbBasePath() . '/postmaster.pid', '99999');
@@ -1020,7 +1023,7 @@ sub run
 
         # Stanza-delete --force without access to pgbackrest on database host
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra && !$bS3 && $bHostBackup)
+        if ($bTestExtra && $strStorage eq POSIX && $bHostBackup)
         {
             # With stanza-delete --force, allow stanza to be deleted regardless of accessibility of database host
             if ($bHostBackup)

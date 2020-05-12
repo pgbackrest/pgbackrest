@@ -73,10 +73,12 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
-use constant STORAGE_CIFS                                           => 'cifs';
-    push @EXPORT, qw(STORAGE_CIFS);
-use constant STORAGE_S3                                             => 's3';
-    push @EXPORT, qw(STORAGE_S3);
+use constant CIFS                                                   => 'cifs';
+    push @EXPORT, qw(CIFS);
+use constant POSIX                                                  => STORAGE_POSIX;
+    push @EXPORT, qw(POSIX);
+use constant S3                                                     => 's3';
+    push @EXPORT, qw(S3);
 
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
@@ -456,7 +458,7 @@ sub backupEnd
     my $strLatestLink = $self->repoBackupPath(LINK_LATEST);
     my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq STORAGE_POSIX) && $self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -1181,9 +1183,9 @@ sub configCreate
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
         # S3 settings
-        if ($oParam->{bS3})
+        if ($oParam->{strStorage} eq S3)
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = STORAGE_S3;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = S3;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key'} = HOST_S3_ACCESS_KEY;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key-secret'} = HOST_S3_ACCESS_SECRET_KEY;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-bucket'} = HOST_S3_BUCKET;
