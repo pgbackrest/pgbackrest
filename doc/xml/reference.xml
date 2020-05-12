@@ -229,7 +229,7 @@
 
                         The asynchronous <cmd>archive-push</cmd> command writes acknowledgements into the spool path when it has successfully stored WAL in the archive (and errors on failure) so the foreground process can quickly notify <postgres/>. Acknowledgement files are very small (zero on success and a few hundred bytes on error).
 
-                        The asynchronous <cmd>archive-push</cmd> process queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it.  Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.
+                        The asynchronous <cmd>archive-get</cmd> command queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it.  Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.
 
                         The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived for <cmd>archive-push</cmd> and rebuild the queue for <cmd>archive-get</cmd>.
 

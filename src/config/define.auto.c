@@ -4543,7 +4543,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "in the archive (and errors on failure) so the foreground process can quickly notify PostgreSQL. Acknowledgement "
                 "files are very small (zero on success and a few hundred bytes on error).\n"
             "\n"
-            "The asynchronous archive-push process queues WAL in the spool path so it can be provided very quickly when PostgreSQL "
+            "The asynchronous archive-get command queues WAL in the spool path so it can be provided very quickly when PostgreSQL "
                 "requests it. Moving files to PostgreSQL is most efficient when the spool path is on the same filesystem as "
                 "pg_xlog/pg_wal.\n"
             "\n"
