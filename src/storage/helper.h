@@ -27,6 +27,7 @@ Storage path constants
 /***********************************************************************************************************************************
 Repository storage types
 ***********************************************************************************************************************************/
+#define STORAGE_TYPE_AZURE                                          "azure"
 #define STORAGE_TYPE_CIFS                                           "cifs"
 #define STORAGE_TYPE_POSIX                                          "posix"
 #define STORAGE_TYPE_S3                                             "s3"

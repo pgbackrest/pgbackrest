@@ -12,6 +12,7 @@ Storage Helper
 #include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
+#include "storage/azure/storage.h"
 #include "storage/cifs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
@@ -349,6 +350,16 @@ storageRepoGet(const String *type, bool write)
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
             protocolRemoteGet(protocolStorageTypeRepo, 1), cfgOptionUInt(cfgOptCompressLevelNetwork));
+    }
+    // Use Azure storage
+    else if (strEqZ(type, STORAGE_TYPE_AZURE))
+    {
+        result = storageAzureNew(
+            cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoAzureContainer),
+            cfgOptionStr(cfgOptRepoAzureAccount), cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_PARTSIZE_MIN,
+            cfgOptionStrNull(cfgOptRepoAzureHost), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
+            cfgOptionBool(cfgOptRepoAzureVerifyTls), cfgOptionStrNull(cfgOptRepoAzureCaFile),
+            cfgOptionStrNull(cfgOptRepoAzureCaPath));
     }
     // Use CIFS storage
     else if (strEqZ(type, STORAGE_TYPE_CIFS))

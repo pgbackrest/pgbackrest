@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-S3 Storage File write
+Azure Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -9,58 +9,58 @@ S3 Storage File write
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
-#include "storage/s3/write.h"
+#include "storage/azure/write.h"
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
-S3 query tokens
+Azure query tokens
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_QUERY_PART_NUMBER_STR,                             "partNumber");
-STRING_STATIC(S3_QUERY_UPLOADS_STR,                                 "uploads");
-STRING_STATIC(S3_QUERY_UPLOAD_ID_STR,                               "uploadId");
+STRING_STATIC(AZURE_QUERY_PART_NUMBER_STR,                          "partNumber");
+STRING_STATIC(AZURE_QUERY_UPLOADS_STR,                              "uploads");
+STRING_STATIC(AZURE_QUERY_UPLOAD_ID_STR,                            "uploadId");
 
 /***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_XML_TAG_ETAG_STR,                                  "ETag");
-STRING_STATIC(S3_XML_TAG_UPLOAD_ID_STR,                             "UploadId");
-STRING_STATIC(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR,             "CompleteMultipartUpload");
-STRING_STATIC(S3_XML_TAG_PART_STR,                                  "Part");
-STRING_STATIC(S3_XML_TAG_PART_NUMBER_STR,                           "PartNumber");
+STRING_STATIC(AZURE_XML_TAG_ETAG_STR,                               "ETag");
+STRING_STATIC(AZURE_XML_TAG_UPLOAD_ID_STR,                          "UploadId");
+STRING_STATIC(AZURE_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR,          "CompleteMultipartUpload");
+STRING_STATIC(AZURE_XML_TAG_PART_STR,                               "Part");
+STRING_STATIC(AZURE_XML_TAG_PART_NUMBER_STR,                        "PartNumber");
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageWriteS3
+typedef struct StorageWriteAzure
 {
     MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
-    StorageS3 *storage;                                             // Storage that created this object
+    StorageAzure *storage;                                             // Storage that created this object
 
     size_t partSize;
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
-} StorageWriteS3;
+} StorageWriteAzure;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
-    StorageWriteS3 *
-#define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageWriteS3", buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_WRITE_AZURE_TYPE                                                                                      \
+    StorageWriteAzure *
+#define FUNCTION_LOG_STORAGE_WRITE_AZURE_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(value, "StorageWriteAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Open(THIS_VOID)
+storageWriteAzureOpen(THIS_VOID)
 {
-    THIS(StorageWriteS3);
+    THIS(StorageWriteAzure);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -80,10 +80,10 @@ storageWriteS3Open(THIS_VOID)
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Part(StorageWriteS3 *this)
+storageWriteAzurePart(StorageWriteAzure *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -98,14 +98,14 @@ storageWriteS3Part(StorageWriteS3 *this)
             // Initiate mult-part upload
             XmlNode *xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
-                    storageS3Request(
+                    storageAzureRequest(
                         this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                        httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false).response));
+                        httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false).response));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_UPLOAD_ID_STR, true));
+                this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_UPLOAD_ID_STR, true));
                 this->uploadPartList = strLstNew();
             }
             MEM_CONTEXT_END();
@@ -113,13 +113,13 @@ storageWriteS3Part(StorageWriteS3 *this)
 
         // Upload the part and add etag to part list
         HttpQuery *query = httpQueryNew();
-        httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
-        httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
+        httpQueryAdd(query, AZURE_QUERY_UPLOAD_ID_STR, this->uploadId);
+        httpQueryAdd(query, AZURE_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
         strLstAdd(
             this->uploadPartList,
             httpHeaderGet(
-                storageS3Request(
+                storageAzureRequest(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, true, false).responseHeader,
                 HTTP_HEADER_ETAG_STR));
 
@@ -134,12 +134,12 @@ storageWriteS3Part(StorageWriteS3 *this)
 Write to internal buffer
 ***********************************************************************************************************************************/
 static void
-storageWriteS3(THIS_VOID, const Buffer *buffer)
+storageWriteAzure(THIS_VOID, const Buffer *buffer)
 {
-    THIS(StorageWriteS3);
+    THIS(StorageWriteAzure);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
     FUNCTION_LOG_END();
 
@@ -160,7 +160,7 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
         // If the part buffer is full then write it
         if (bufRemains(this->partBuffer) == 0)
         {
-            storageWriteS3Part(this);
+            storageWriteAzurePart(this);
             bufUsedZero(this->partBuffer);
         }
     }
@@ -173,12 +173,12 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
 Close the file
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Close(THIS_VOID)
+storageWriteAzureClose(THIS_VOID)
 {
-    THIS(StorageWriteS3);
+    THIS(StorageWriteAzure);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -193,27 +193,27 @@ storageWriteS3Close(THIS_VOID)
             {
                 // If there is anything left in the part buffer then write it
                 if (bufUsed(this->partBuffer) > 0)
-                    storageWriteS3Part(this);
+                    storageWriteAzurePart(this);
 
                 // Generate the xml part list
-                XmlDocument *partList = xmlDocumentNew(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
+                XmlDocument *partList = xmlDocumentNew(AZURE_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
 
                 for (unsigned int partIdx = 0; partIdx < strLstSize(this->uploadPartList); partIdx++)
                 {
-                    XmlNode *partNode = xmlNodeAdd(xmlDocumentRoot(partList), S3_XML_TAG_PART_STR);
-                    xmlNodeContentSet(xmlNodeAdd(partNode, S3_XML_TAG_PART_NUMBER_STR), strNewFmt("%u", partIdx + 1));
-                    xmlNodeContentSet(xmlNodeAdd(partNode, S3_XML_TAG_ETAG_STR), strLstGet(this->uploadPartList, partIdx));
+                    XmlNode *partNode = xmlNodeAdd(xmlDocumentRoot(partList), AZURE_XML_TAG_PART_STR);
+                    xmlNodeContentSet(xmlNodeAdd(partNode, AZURE_XML_TAG_PART_NUMBER_STR), strNewFmt("%u", partIdx + 1));
+                    xmlNodeContentSet(xmlNodeAdd(partNode, AZURE_XML_TAG_ETAG_STR), strLstGet(this->uploadPartList, partIdx));
                 }
 
                 // Finalize the multi-part upload
-                storageS3Request(
+                storageAzureRequest(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
+                    httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
             }
             // Else upload all the data in a single put
             else
             {
-                storageS3Request(
+                storageAzureRequest(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, true, false);
             }
 
@@ -228,10 +228,10 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageWrite *
-storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
+storageWriteAzureNew(StorageAzure *storage, const String *name, size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_S3, storage);
+        FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
     FUNCTION_LOG_END();
 
@@ -240,11 +240,11 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     StorageWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteS3")
+    MEM_CONTEXT_NEW_BEGIN("StorageWriteAzure")
     {
-        StorageWriteS3 *driver = memNew(sizeof(StorageWriteS3));
+        StorageWriteAzure *driver = memNew(sizeof(StorageWriteAzure));
 
-        *driver = (StorageWriteS3)
+        *driver = (StorageWriteAzure)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
@@ -252,7 +252,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE_STR,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,
@@ -261,9 +261,9 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
                 .ioInterface = (IoWriteInterface)
                 {
-                    .close = storageWriteS3Close,
-                    .open = storageWriteS3Open,
-                    .write = storageWriteS3,
+                    .close = storageWriteAzureClose,
+                    .open = storageWriteAzureOpen,
+                    .write = storageWriteAzure,
                 },
             },
         };

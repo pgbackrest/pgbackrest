@@ -141,6 +141,9 @@ SRCS = \
 	protocol/parallel.c \
 	protocol/parallelJob.c \
 	protocol/server.c \
+	storage/azure/read.c \
+	storage/azure/storage.c \
+	storage/azure/write.c \
 	storage/cifs/storage.c \
 	storage/posix/read.c \
 	storage/posix/storage.c \
