@@ -1,5 +1,5 @@
-run 003 - bkp 0, sby 1, dst db-standby, cmp none, s3 0, enc 0
-=============================================================
+run 003 - bkp 0, sby 1, dst db-standby, cmp none, storage posix, enc 0
+======================================================================
 
 stanza-create db - main create stanza info files (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db stanza-create

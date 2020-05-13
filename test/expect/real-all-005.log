@@ -1,5 +1,5 @@
-run 005 - bkp 1, sby 1, dst backup, cmp none, s3 0, enc 0
-=========================================================
+run 005 - bkp 1, sby 1, dst backup, cmp none, storage posix, enc 0
+==================================================================
 
 stanza-create db - main create stanza info files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create

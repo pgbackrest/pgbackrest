@@ -1,5 +1,5 @@
-run 002 - rmt 1, s3 1, enc 0, cmp zst
-=====================================
+run 002 - rmt 1, storage s3, enc 0, cmp zst
+===========================================
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------

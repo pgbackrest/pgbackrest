@@ -45,30 +45,30 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, s3 =>  true, encrypt => false},
-        {vm => VM2, s3 => false, encrypt =>  true},
-        {vm => VM3, s3 => false, encrypt => false},
-        {vm => VM4, s3 =>  true, encrypt =>  true},
+        {vm => VM1, storage => POSIX, encrypt => false},
+        {vm => VM2, storage =>    S3, encrypt =>  true},
+        {vm => VM3, storage => POSIX, encrypt => false},
+        {vm => VM4, storage =>    S3, encrypt =>  true},
     )
     {
         # Only run tests for this vm
         next if ($rhRun->{vm} ne vmTest($self->vm()));
 
         # Increment the run, log, and decide whether this unit test should be run
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
 
-        if ($bS3 && ($self->vm() eq VM3))
+        if ($strStorage ne POSIX && ($self->vm() eq VM3))
         {
-            confess &log("cannot configure s3 for expect log tests");
+            confess &log("cannot configure non-posix storage for expect log tests");
         }
 
         ############################################################################################################################
-        if ($self->begin("simple, enc ${bEncrypt}, s3 ${bS3}"))
+        if ($self->begin("simple, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
@@ -156,11 +156,11 @@ sub run
         }
 
         ############################################################################################################################
-        if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, s3 ${bS3}"))
+        if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(

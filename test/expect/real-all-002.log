@@ -1,5 +1,5 @@
-run 002 - bkp 0, sby 1, dst db-master, cmp none, s3 0, enc 0
-============================================================
+run 002 - bkp 0, sby 1, dst db-master, cmp none, storage posix, enc 0
+=====================================================================
 
 stanza-create db - main create stanza info files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stanza-create

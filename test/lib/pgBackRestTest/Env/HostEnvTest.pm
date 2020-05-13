@@ -53,13 +53,13 @@ sub setup
     my $oLogTest = shift;
     my $oConfigParam = shift;
 
-    # Start S3 server first since it takes the longest
+    # Start object server first since it takes the longest
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oHostS3;
+    my $oHostObject;
 
-    if ($oConfigParam->{bS3})
+    if ($oConfigParam->{strStorage} eq S3)
     {
-        $oHostS3 = new pgBackRestTest::Env::Host::HostS3Test();
+        $oHostObject = new pgBackRestTest::Env::Host::HostS3Test();
     }
 
     # Get host group
@@ -78,7 +78,7 @@ sub setup
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
-                bRepoLocal => !$oConfigParam->{bS3}, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
@@ -93,14 +93,14 @@ sub setup
     if ($bSynthetic)
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
-                bRepoEncrypt => $bRepoEncrypt});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
     else
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
-                bRepoEncrypt => $bRepoEncrypt});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
+                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
@@ -112,16 +112,16 @@ sub setup
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
-                bRepoLocal => !$oConfigParam->{bS3}});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
     # Finalize S3 server
     #-------------------------------------------------------------------------------------------------------------------------------
-    if (defined($oHostS3))
+    if ($oConfigParam->{strStorage} eq S3)
     {
-        $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
+        $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
 
     # Create db master config
@@ -130,7 +130,7 @@ sub setup
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
-        bS3 => $$oConfigParam{bS3}});
+        strStorage => $oConfigParam->{strStorage}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -138,7 +138,7 @@ sub setup
         $oHostBackup->configCreate({
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
-            bS3 => $$oConfigParam{bS3}});
+            strStorage => $oConfigParam->{strStorage}});
     }
     # If backup host is not defined set it to db-master
     else
@@ -150,8 +150,9 @@ sub setup
         $self->backrestExeHelper() .
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
-            ($oConfigParam->{bS3} ? ' --no-repo1-s3-verify-tls --repo1-s3-host=' . $oHostS3->ipGet() : ''),
-        $oConfigParam->{bS3} ? STORAGE_OBJECT : STORAGE_POSIX);
+            ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
+                " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
+        $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config
     if (defined($oHostDbStandby))
@@ -160,16 +161,17 @@ sub setup
             strBackupSource => $$oConfigParam{strBackupSource},
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
-            bArchiveAsync => $$oConfigParam{bArchiveAsync}});
+            bArchiveAsync => $$oConfigParam{bArchiveAsync},
+            strStorage => $oConfigParam->{strStorage}});
     }
 
-    # Create S3 bucket
-    if (defined($oHostS3))
+    # Create object storage
+    if (defined($oHostObject))
     {
         storageRepo()->create();
     }
 
-    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
+    return $oHostDbMaster, $oHostDbStandby, $oHostBackup;
 }
 
 ####################################################################################################################################

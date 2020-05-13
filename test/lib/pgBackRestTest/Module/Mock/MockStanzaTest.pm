@@ -41,14 +41,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt =>  true, compress => LZ4},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt => false, compress => BZ2},
-        {vm => VM2, remote => false, s3 =>  true, encrypt =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, s3 => false, encrypt => false, compress =>  GZ},
-        {vm => VM3, remote => false, s3 => false, encrypt => false, compress => ZST},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, compress => LZ4},
-        {vm => VM4, remote => false, s3 =>  true, encrypt => false, compress =>  GZ},
-        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true, compress => ZST},
+        {vm => VM1, remote => false, storage => POSIX, encrypt =>  true, compress => LZ4},
+        {vm => VM1, remote =>  true, storage =>    S3, encrypt => false, compress => BZ2},
+        {vm => VM2, remote => false, storage =>    S3, encrypt =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
+        {vm => VM3, remote => false, storage => POSIX, encrypt => false, compress => ZST},
+        {vm => VM3, remote =>  true, storage =>    S3, encrypt =>  true, compress => LZ4},
+        {vm => VM4, remote => false, storage =>    S3, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, storage => POSIX, encrypt =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm
@@ -56,16 +56,16 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
+        if (!$self->begin("remote ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt,
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
             strCompressType => $strCompressType});
 
         # Archive and backup info file names
