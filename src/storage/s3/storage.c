@@ -27,8 +27,6 @@ STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_T
 /***********************************************************************************************************************************
 S3 http headers
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_HEADER_AUTHORIZATION_STR,                          "authorization");
-STRING_STATIC(S3_HEADER_HOST_STR,                                   "host");
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
@@ -165,7 +163,7 @@ storageS3Auth(
         // Set required headers
         httpHeaderPut(httpHeader, S3_HEADER_CONTENT_SHA256_STR, payloadHash);
         httpHeaderPut(httpHeader, S3_HEADER_DATE_STR, dateTime);
-        httpHeaderPut(httpHeader, S3_HEADER_HOST_STR, this->bucketEndpoint);
+        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->bucketEndpoint);
 
         if (this->securityToken != NULL)
             httpHeaderPut(httpHeader, S3_HEADER_TOKEN_STR, this->securityToken);
@@ -183,7 +181,7 @@ storageS3Auth(
             const String *headerKeyLower = strLower(strDup(headerKey));
 
             // Skip the authorization header -- if it exists this is a retry
-            if (strEq(headerKeyLower, S3_HEADER_AUTHORIZATION_STR))
+            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
                 continue;
 
             strCatFmt(canonicalRequest, "%s:%s\n", strPtr(headerKeyLower), strPtr(httpHeaderGet(httpHeader, headerKey)));
@@ -226,7 +224,7 @@ storageS3Auth(
             strPtr(this->accessKey), strPtr(date), strPtr(this->region), strPtr(signedHeaders),
             strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
 
-        httpHeaderPut(httpHeader, S3_HEADER_AUTHORIZATION_STR, authorization);
+        httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -912,7 +910,7 @@ storageS3New(
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
-        strLstAdd(driver->headerRedactList, S3_HEADER_AUTHORIZATION_STR);
+        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
 
         this = storageNew(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);

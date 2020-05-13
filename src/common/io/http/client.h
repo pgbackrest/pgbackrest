@@ -39,12 +39,16 @@ HTTP Constants
 #define HTTP_VERB_PUT                                               "PUT"
     STRING_DECLARE(HTTP_VERB_PUT_STR);
 
+#define HTTP_HEADER_AUTHORIZATION                                   "authorization"
+    STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
 #define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
     STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
     STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
 #define HTTP_HEADER_ETAG                                            "etag"
     STRING_DECLARE(HTTP_HEADER_ETAG_STR);
+#define HTTP_HEADER_HOST                                            "host"
+    STRING_DECLARE(HTTP_HEADER_HOST_STR);
 #define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
     STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 
