@@ -27,7 +27,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         {
             case storageTypeFile:
             {
-                    strCat(data->content, "file");
+                strCat(data->content, "file");
 
                 if (info->level >= storageInfoLevelBasic && !data->sizeOmit)
                 {

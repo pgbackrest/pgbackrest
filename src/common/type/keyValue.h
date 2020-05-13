@@ -35,7 +35,7 @@ KeyValue *kvMove(KeyValue *this, MemContext *parentNew);
 KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
 
 // Put key/value store. If this is called on an existing key it will replace the key with an empty kev/value store, even if the key
-//already contains a key/value store.
+// already contains a key/value store.
 KeyValue *kvPutKv(KeyValue *this, const Variant *key);
 
 // Get a value using the key
