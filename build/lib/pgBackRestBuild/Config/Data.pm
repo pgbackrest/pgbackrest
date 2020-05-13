@@ -96,6 +96,7 @@ use constant CFGCMD_STANZA_DELETE                                   => 'stanza-d
 use constant CFGCMD_STANZA_UPGRADE                                  => 'stanza-upgrade';
 use constant CFGCMD_START                                           => 'start';
 use constant CFGCMD_STOP                                            => 'stop';
+use constant CFGCMD_VERIFY                                          => 'verify';
 use constant CFGCMD_VERSION                                         => 'version';
 
 ####################################################################################################################################
@@ -580,6 +581,10 @@ my $rhCommandDefine =
     {
     },
 
+    &CFGCMD_VERIFY =>
+    {
+    },
+
     &CFGCMD_VERSION =>
     {
         &CFGDEF_LOG_FILE => false,
@@ -618,6 +623,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -719,6 +725,10 @@ my %hConfigDefine =
             {
                 &CFGDEF_DEFAULT => 'latest',
             },
+            &CFGCMD_VERIFY =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
         }
     },
 
@@ -767,7 +777,8 @@ my %hConfigDefine =
             &CFGCMD_STOP =>
             {
                 &CFGDEF_REQUIRED => false
-            }
+            },
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -943,6 +954,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -968,6 +980,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -997,6 +1010,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1125,6 +1139,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -1272,6 +1287,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -1298,6 +1314,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -1325,6 +1342,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1382,6 +1400,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1407,6 +1426,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -1513,6 +1533,7 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1541,6 +1562,7 @@ my %hConfigDefine =
             &CFGCMD_RESTORE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
         &CFGDEF_DEPEND =>
         {
@@ -1801,6 +1823,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1933,6 +1956,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1974,6 +1998,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -2013,6 +2038,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -2041,6 +2067,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -2069,6 +2096,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
@@ -2096,6 +2124,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_VERIFY => {},
         }
     },
 
