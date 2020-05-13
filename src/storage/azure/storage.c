@@ -27,11 +27,10 @@ STRING_EXTERN(STORAGE_AZURE_TYPE_STR,                               STORAGE_AZUR
 /***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
-STRING_STATIC(AZURE_HEADER_AUTHORIZATION_STR,                       "authorization");
-// STRING_STATIC(AZURE_HEADER_HOST_STR,                                "host");
-// STRING_STATIC(AZURE_HEADER_CONTENT_SHA256_STR,                      "x-amz-content-sha256");
-// STRING_STATIC(AZURE_HEADER_DATE_STR,                                "x-amz-date");
-// STRING_STATIC(AZURE_HEADER_TOKEN_STR,                               "x-amz-security-token");
+#define AZURE_HEADER_VERSION                                        "x-ms-version"
+    STRING_STATIC(AZURE_HEADER_VERSION_STR,                         AZURE_HEADER_VERSION);
+#define AZURE_HEADER_VERSION_VALUE                                  "2019-02-02"
+    STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                   AZURE_HEADER_VERSION_VALUE);
 
 /***********************************************************************************************************************************
 Azure query tokens
@@ -94,6 +93,7 @@ struct StorageAzure
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
     const String *key;                                              // Shared Secret Key
+    const String *host;                                             // Host name
     size_t partSize;                                                // Part size for multi-part upload
     bool pathStyle;                                                 // Add container to the path (only for emulation)
 
@@ -110,124 +110,98 @@ Expected ISO-8601 data/time size
 /***********************************************************************************************************************************
 Format ISO-8601 date/time for authentication
 ***********************************************************************************************************************************/
-// static String *
-// storageAzureDateTime(time_t authTime)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(TIME, authTime);
-//     FUNCTION_TEST_END();
-//
-//     char buffer[ISO_8601_DATE_TIME_SIZE + 1];
-//
-//     THROW_ON_SYS_ERROR(
-//         strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
-//         "unable to format date");
-//
-//     FUNCTION_TEST_RETURN(strNew(buffer));
-// }
+static String *
+storageAzureDateTime(time_t authTime)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, authTime);
+    FUNCTION_TEST_END();
+
+    char buffer[ISO_8601_DATE_TIME_SIZE + 1];
+
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
+        "unable to format date");
+
+    FUNCTION_TEST_RETURN(strNew(buffer));
+}
 
 /***********************************************************************************************************************************
 Generate authorization header and add it to the supplied header list
 
 Based on the excellent documentation at !!!
 ***********************************************************************************************************************************/
-// static void
-// storageAzureAuth(
-//     StorageAzure *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime,
-//     HttpHeader *httpHeader, const String *payloadHash)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
-//         FUNCTION_TEST_PARAM(STRING, verb);
-//         FUNCTION_TEST_PARAM(STRING, uri);
-//         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
-//         FUNCTION_TEST_PARAM(STRING, dateTime);
-//         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
-//         FUNCTION_TEST_PARAM(STRING, payloadHash);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(verb != NULL);
-//     ASSERT(uri != NULL);
-//     ASSERT(dateTime != NULL);
-//     ASSERT(httpHeader != NULL);
-//     ASSERT(payloadHash != NULL);
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Get date from datetime
-//         const String *date = strSubN(dateTime, 0, 8);
-//
-//         // Set required headers
-//         httpHeaderPut(httpHeader, AZURE_HEADER_CONTENT_SHA256_STR, payloadHash);
-//         httpHeaderPut(httpHeader, AZURE_HEADER_DATE_STR, dateTime);
-//         httpHeaderPut(httpHeader, AZURE_HEADER_HOST_STR, this->bucketEndpoint);
-//
-//         if (this->securityToken != NULL)
-//             httpHeaderPut(httpHeader, AZURE_HEADER_TOKEN_STR, this->securityToken);
-//
-//         // Generate canonical request and signed headers
-//         const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
-//         String *signedHeaders = NULL;
-//
-//         String *canonicalRequest = strNewFmt(
-//             "%s\n%s\n%s\n", strPtr(verb), strPtr(uri), query == NULL ? "" : strPtr(httpQueryRender(query)));
-//
-//         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
-//         {
-//             const String *headerKey = strLstGet(headerList, headerIdx);
-//             const String *headerKeyLower = strLower(strDup(headerKey));
-//
-//             // Skip the authorization header -- if it exists this is a retry
-//             if (strEq(headerKeyLower, AZURE_HEADER_AUTHORIZATION_STR))
-//                 continue;
-//
-//             strCatFmt(canonicalRequest, "%s:%s\n", strPtr(headerKeyLower), strPtr(httpHeaderGet(httpHeader, headerKey)));
-//
-//             if (signedHeaders == NULL)
-//                 signedHeaders = strDup(headerKeyLower);
-//             else
-//                 strCatFmt(signedHeaders, ";%s", strPtr(headerKeyLower));
-//         }
-//
-//         strCatFmt(canonicalRequest, "\n%s\n%s", strPtr(signedHeaders), strPtr(payloadHash));
-//
-//         // Generate string to sign
-//         const String *stringToSign = strNewFmt(
-//             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" AZURE "/" AWS4_REQUEST "\n%s", strPtr(dateTime), strPtr(date), strPtr(this->region),
-//             strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
-//
-//         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
-//         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
-//         // If the cached signing key has expired (or has none been generated) then regenerate it
-//         if (!strEq(date, this->signingKeyDate))
-//         {
-//             const Buffer *dateKey = cryptoHmacOne(
-//                 HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strPtr(this->secretAccessKey))), BUFSTR(date));
-//             const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
-//             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, AZURE_BUF);
-//
-//             // Switch to the object context so signing key and date are not lost
-//             MEM_CONTEXT_BEGIN(this->memContext)
-//             {
-//                 this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
-//                 this->signingKeyDate = strDup(date);
-//             }
-//             MEM_CONTEXT_END();
-//         }
-//
-//         // Generate authorization header
-//         const String *authorization = strNewFmt(
-//             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" AZURE "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
-//             strPtr(this->accessKey), strPtr(date), strPtr(this->region), strPtr(signedHeaders),
-//             strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
-//
-//         httpHeaderPut(httpHeader, AZURE_HEADER_AUTHORIZATION_STR, authorization);
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
+static void
+storageAzureAuth(
+    StorageAzure *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime,
+    HttpHeader *httpHeader)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
+        FUNCTION_TEST_PARAM(STRING, verb);
+        FUNCTION_TEST_PARAM(STRING, uri);
+        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+        FUNCTION_TEST_PARAM(STRING, dateTime);
+        FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(verb != NULL);
+    ASSERT(uri != NULL);
+    ASSERT(dateTime != NULL);
+    ASSERT(httpHeader != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Set required headers
+        httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
+        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
+        httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
+
+        // Generate string to sign
+        const String *stringToSign = strNewFmt(
+            "%s\n"                                                  // verb
+            "\n"                                                    // content-encoding
+            "\n"                                                    // content-language
+            "%s\n"                                                  // content-length
+            "%s\n"                                                  // content-md5
+            "\n"                                                    // content-type
+            "%s\n"                                                  // date
+            "\n"                                                    // If-Modified-Since
+            "\n"                                                    // If-Match
+            "\n"                                                    // If-None-Match
+            "\n"                                                    // If-Unmodified-Since
+            "\n"                                                    // range
+            AZURE_HEADER_VERSION ":" AZURE_HEADER_VERSION_VALUE "\n"// Canonicalized headers
+            "/%s%s\n"                                               // Canonicalized account/uri
+            "restype:container",                                    // Canonicalized query
+            strPtr(verb),
+            strEq(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR), ZERO_STR) ?
+                "" : strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)),
+            httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR) == NULL ?
+                "" : strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR)),
+            strPtr(dateTime), strPtr(this->account), strPtr(uri));
+
+        // !!! Need to actually process above
+        (void)query;
+
+        // Generate authorization header
+        Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strPtr(this->key)));
+        decodeToBin(encodeBase64, strPtr(this->key), bufPtr(keyBin));
+        bufUsedSet(keyBin, bufSize(keyBin));
+
+        char authHmacBase64[45];
+        encodeToStr(
+            encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
+            HASH_TYPE_SHA256_SIZE, authHmacBase64);
+
+        httpHeaderPut(
+            httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strPtr(this->account), authHmacBase64));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Process Azure request
@@ -253,138 +227,137 @@ storageAzureRequest(
 
     StorageAzureRequestResult result = {0};
     // unsigned int retryRemaining = 2;
-    // bool done;
-    //
-    // do
-    // {
-    //     done = true;
-    //
-    //     MEM_CONTEXT_TEMP_BEGIN()
-    //     {
-    //         // Create header list and add content length
-    //         HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
-    //
-    //         // Set content length
-    //         httpHeaderAdd(
-    //             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-    //             body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
-    //
-    //         // Calculate content-md5 header if there is content
-    //         if (body != NULL)
-    //         {
-    //             char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-    //             encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
-    //             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-    //         }
-    //
-    //         // Generate authorization header
-    //         storageAzureAuth(
-    //             this, verb, httpUriEncode(uri, true), query, storageAzureDateTime(time(NULL)), requestHeader,
-    //             body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
-    //
-    //         // Get an http client
-    //         HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
-    //
-    //         // Process request
-    //         Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
-    //
-    //         // Error if the request was not successful
-    //         if (!httpClientResponseCodeOk(httpClient) &&
-    //             (!allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
-    //         {
-    //             // If there are retries remaining and a response parse it as XML to extract the Azure error code
-    //             if (response != NULL && retryRemaining > 0)
-    //             {
-    //                 // Attempt to parse the XML and extract the Azure error code
-    //                 TRY_BEGIN()
-    //                 {
-    //                     XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(response));
-    //                     const String *errorCode = xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_CODE_STR, true));
-    //
-    //                     if (strEq(errorCode, AZURE_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
-    //                     {
-    //                         LOG_DEBUG_FMT(
-    //                             "retry %s: %s", strPtr(errorCode),
-    //                             strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_MESSAGE_STR, true))));
-    //
-    //                         retryRemaining--;
-    //                         done = false;
-    //                     }
-    //                 }
-    //                 // On failure just drop through and report the error as usual
-    //                 CATCH_ANY()
-    //                 {
-    //                 }
-    //                 TRY_END();
-    //             }
-    //
-    //             // If not done then retry instead of reporting the error
-    //             if (done)
-    //             {
-    //                 // General error message
-    //                 String *error = strNewFmt(
-    //                     "Azure request failed with %u: %s", httpClientResponseCode(httpClient),
-    //                     strPtr(httpClientResponseMessage(httpClient)));
-    //
-    //                 // Output uri/query
-    //                 strCat(error, "\n*** URI/Query ***:");
-    //
-    //                 strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
-    //
-    //                 if (query != NULL)
-    //                     strCatFmt(error, "?%s", strPtr(httpQueryRender(query)));
-    //
-    //                 // Output request headers
-    //                 const StringList *requestHeaderList = httpHeaderList(requestHeader);
-    //
-    //                 strCat(error, "\n*** Request Headers ***:");
-    //
-    //                 for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
-    //                 {
-    //                     const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
-    //
-    //                     strCatFmt(
-    //                         error, "\n%s: %s", strPtr(key),
-    //                         httpHeaderRedact(requestHeader, key) || strEq(key, AZURE_HEADER_DATE_STR) ?
-    //                             "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
-    //                 }
-    //
-    //                 // Output response headers
-    //                 const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
-    //                 const StringList *responseHeaderList = httpHeaderList(responseHeader);
-    //
-    //                 if (strLstSize(responseHeaderList) > 0)
-    //                 {
-    //                     strCat(error, "\n*** Response Headers ***:");
-    //
-    //                     for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
-    //                             responseHeaderIdx++)
-    //                     {
-    //                         const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-    //                         strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
-    //                     }
-    //                 }
-    //
-    //                 // If there was content then output it
-    //                 if (response!= NULL)
-    //                     strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
-    //
-    //                 THROW(ProtocolError, strPtr(error));
-    //             }
-    //         }
-    //         else
-    //         {
-    //             // On success move the buffer to the prior context
-    //             result.httpClient = httpClient;
-    //             result.responseHeader = httpHeaderMove(
-    //                 httpHeaderDup(httpClientResponseHeader(httpClient), NULL), memContextPrior());
-    //             result.response = bufMove(response, memContextPrior());
-    //         }
-    //
-    //     }
-    //     MEM_CONTEXT_TEMP_END();
-    // }
-    // while (!done);
+    bool done;
+
+    do
+    {
+        done = true;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Create header list and add content length
+            HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
+
+            // Set content length
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+                body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
+
+            // Calculate content-md5 header if there is content
+            if (body != NULL)
+            {
+                char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+                encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
+                httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            }
+
+            // Generate authorization header
+            storageAzureAuth(
+                this, verb, httpUriEncode(uri, true), query, storageAzureDateTime(time(NULL)), requestHeader);
+
+            // Get an http client
+            HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
+
+            // Process request
+            Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
+
+            // Error if the request was not successful
+            if (!httpClientResponseCodeOk(httpClient) &&
+                (!allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            {
+                // // If there are retries remaining and a response parse it as XML to extract the Azure error code
+                // if (response != NULL && retryRemaining > 0)
+                // {
+                //     // Attempt to parse the XML and extract the Azure error code
+                //     TRY_BEGIN()
+                //     {
+                //         XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(response));
+                //         const String *errorCode = xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_CODE_STR, true));
+                //
+                //         if (strEq(errorCode, AZURE_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
+                //         {
+                //             LOG_DEBUG_FMT(
+                //                 "retry %s: %s", strPtr(errorCode),
+                //                 strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_MESSAGE_STR, true))));
+                //
+                //             retryRemaining--;
+                //             done = false;
+                //         }
+                //     }
+                //     // On failure just drop through and report the error as usual
+                //     CATCH_ANY()
+                //     {
+                //     }
+                //     TRY_END();
+                // }
+
+                // If not done then retry instead of reporting the error
+                if (done)
+                {
+                    // General error message
+                    String *error = strNewFmt(
+                        "Azure request failed with %u: %s", httpClientResponseCode(httpClient),
+                        strPtr(httpClientResponseMessage(httpClient)));
+
+                    // Output uri/query
+                    strCat(error, "\n*** URI/Query ***:");
+
+                    strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
+
+                    if (query != NULL)
+                        strCatFmt(error, "?%s", strPtr(httpQueryRender(query)));
+
+                    // Output request headers
+                    const StringList *requestHeaderList = httpHeaderList(requestHeader);
+
+                    strCat(error, "\n*** Request Headers ***:");
+
+                    for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
+                    {
+                        const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
+
+                        strCatFmt(
+                            error, "\n%s: %s", strPtr(key),
+                            httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
+                                "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
+                    }
+
+                    // Output response headers
+                    const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
+                    const StringList *responseHeaderList = httpHeaderList(responseHeader);
+
+                    if (strLstSize(responseHeaderList) > 0)
+                    {
+                        strCat(error, "\n*** Response Headers ***:");
+
+                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
+                                responseHeaderIdx++)
+                        {
+                            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
+                            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+                        }
+                    }
+
+                    // If there was content then output it
+                    if (response!= NULL)
+                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
+
+                    THROW(ProtocolError, strPtr(error));
+                }
+            }
+            else
+            {
+                // On success move the buffer to the prior context
+                result.httpClient = httpClient;
+                result.responseHeader = httpHeaderMove(
+                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), memContextPrior());
+                result.response = bufMove(response, memContextPrior());
+            }
+
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    while (!done);
 
     FUNCTION_LOG_RETURN(STORAGE_AZURE_REQUEST_RESULT, result);
 }
@@ -877,19 +850,16 @@ storageAzureNew(
             .account = strDup(account),
             .key = strDup(key),
             .partSize = partSize,
+            .host = host == NULL ? STRDEF("BOGUS") : host,
             .pathStyle = host != NULL,
-
-            // Force the signing key to be generated on the first run
-            // !!! .signingKeyDate = YYYYMMDD_STR,
         };
 
         // Create the http client cache used to service requests
-        driver->httpClientCache = httpClientCacheNew(
-            host == NULL ? STRDEF("BOGUS") : host, port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClientCache = httpClientCacheNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
-        strLstAdd(driver->headerRedactList, AZURE_HEADER_AUTHORIZATION_STR);
+        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
 
         this = storageNew(
             STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);

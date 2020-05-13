@@ -26,6 +26,7 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
@@ -60,6 +61,10 @@ sub setup
     if ($oConfigParam->{strStorage} eq S3)
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostS3Test();
+    }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostAzureTest();
     }
 
     # Get host group
@@ -123,6 +128,10 @@ sub setup
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostGroup->hostAdd($oHostObject);
+    }
 
     # Create db master config
     $oHostDbMaster->configCreate({
@@ -148,7 +157,7 @@ sub setup
 
     storageRepoCommandSet(
         $self->backrestExeHelper() .
-            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
+            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=trace' .
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
                 " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),

@@ -8,6 +8,7 @@ Repository Create Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "storage/helper.h"
+#include "storage/azure/storage.intern.h"
 #include "storage/s3/storage.intern.h"
 
 /**********************************************************************************************************************************/
@@ -22,6 +23,14 @@ cmdRepoCreate(void)
         {
             storageS3Request(
                 (StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR, NULL, NULL, true, false);
+        }
+        else if (strEq(storageType(storageRepo()), STORAGE_AZURE_TYPE_STR))
+        {
+            HttpQuery *query = httpQueryNew();
+            httpQueryAdd(query, STRDEF("restype"), STRDEF("container"));
+
+            storageAzureRequest(
+                (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, STRDEF("/azAccount/azContainer"), query, NULL, true, false);
         }
     }
     MEM_CONTEXT_TEMP_END();
