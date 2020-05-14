@@ -653,9 +653,10 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 typedef struct StorageAzurePathRemoveData
 {
-    MemContext *memContext;                                         // Mem context to create xml document in
-    unsigned int size;                                              // Size of delete request
-    XmlDocument *xml;                                               // Delete request
+    const String *path;
+    // MemContext *memContext;                                         // Mem context to create xml document in
+    // unsigned int size;                                              // Size of delete request
+    // XmlDocument *xml;                                               // Delete request
 } StorageAzurePathRemoveData;
 
 // static void
@@ -693,57 +694,58 @@ typedef struct StorageAzurePathRemoveData
 //     FUNCTION_TEST_RETURN_VOID();
 // }
 
-// static void
-// storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
-//         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(ENUM, type);
-//         FUNCTION_TEST_PARAM(XML_NODE, xml);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(callbackData != NULL);
-//     (void)name;
-//     ASSERT(xml != NULL);
-//
-//     // Only delete files since paths don't really exist
-//     if (type == storageTypeFile)
-//     {
-//         StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
-//
-//         // If there is something to delete then create the request
-//         if (data->xml == NULL)
-//         {
-//             MEM_CONTEXT_BEGIN(data->memContext)
-//             {
-//                 data->xml = xmlDocumentNew(AZURE_XML_TAG_DELETE_STR);
-//                 xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_QUIET_STR), TRUE_STR);
-//             }
-//             MEM_CONTEXT_END();
-//         }
-//
-//         // Add to delete list
-//         xmlNodeContentSet(
-//             xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_OBJECT_STR), AZURE_XML_TAG_KEY_STR),
-//             xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_KEY_STR, true)));
-//         data->size++;
-//
-//         // Delete list when it is full
-//         if (data->size == this->deleteMax)
-//         {
-//             storageAzurePathRemoveInternal(this, data->xml);
-//
-//             xmlDocumentFree(data->xml);
-//             data->xml = NULL;
-//             data->size = 0;
-//         }
-//     }
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
+static void
+storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(XML_NODE, xml);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callbackData != NULL);
+    (void)name;
+    ASSERT(xml != NULL);
+
+    // Only delete files since paths don't really exist
+    if (type == storageTypeFile)
+    {
+        StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
+        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strPtr(data->path), strPtr(name)));
+        //
+        // // If there is something to delete then create the request
+        // if (data->xml == NULL)
+        // {
+        //     MEM_CONTEXT_BEGIN(data->memContext)
+        //     {
+        //         data->xml = xmlDocumentNew(AZURE_XML_TAG_DELETE_STR);
+        //         xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_QUIET_STR), TRUE_STR);
+        //     }
+        //     MEM_CONTEXT_END();
+        // }
+        //
+        // // Add to delete list
+        // xmlNodeContentSet(
+        //     xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_OBJECT_STR), AZURE_XML_TAG_KEY_STR),
+        //     xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_KEY_STR, true)));
+        // data->size++;
+        //
+        // // Delete list when it is full
+        // if (data->size == this->deleteMax)
+        // {
+        //     storageAzurePathRemoveInternal(this, data->xml);
+        //
+        //     xmlDocumentFree(data->xml);
+        //     data->xml = NULL;
+        //     data->size = 0;
+        // }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static bool
 storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
@@ -760,17 +762,15 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     StorageAzurePathRemoveData data = {.memContext = memContextCurrent()};
-    //     storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
-    //
-    //     if (data.xml != NULL)
-    //         storageAzurePathRemoveInternal(this, data.xml);
-    // }
-    // MEM_CONTEXT_TEMP_END();
-
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StorageAzurePathRemoveData data = {.path = path};
+        storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
+        //
+        // if (data.xml != NULL)
+        //     storageAzurePathRemoveInternal(this, data.xml);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -791,9 +791,7 @@ storageAzureRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    // storageAzureRequest(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, NULL, true, false);
-
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .returnContent = true, .allowMissing = true);
 
     FUNCTION_LOG_RETURN_VOID();
 }

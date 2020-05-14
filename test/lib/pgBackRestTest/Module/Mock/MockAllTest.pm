@@ -583,7 +583,7 @@ sub run
         # Create a temp file in backup temp root to be sure it's deleted correctly
         my $strTempFile = "${strResumePath}/file.tmp";
 
-        if ($strStorage eq S3)
+        if ($strStorage ne POSIX)
         {
             storageRepo()->put($strTempFile, "TEMP");
         }
