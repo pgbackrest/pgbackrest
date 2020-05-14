@@ -708,7 +708,7 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
     (void)name;
-    ASSERT(xml != NULL);
+    (void)xml;
 
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
