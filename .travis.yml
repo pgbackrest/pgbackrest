@@ -48,7 +48,7 @@ jobs:
     - env: PGB_CI=" doc --vm=co6"
 
     # All integration tests
-    - env: PGB_CI="test --vm=co7 --param=build-package --param=module=mock --param=module=real"
+    - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
 
     # RHEL/CentOS 7 documentation
     - env: PGB_CI=" doc --vm=co7"
