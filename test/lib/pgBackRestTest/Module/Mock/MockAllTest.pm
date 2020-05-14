@@ -493,7 +493,7 @@ sub run
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
                     ($bRemote ? ' --pg1-socket-path=/test_socket_path' : '') .
                     ' --buffer-size=16384 --checksum-page --process-max=1',
-                strRepoType => $strStorage eq S3 ? undef : CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                strRepoType => $strStorage eq POSIX ? CIFS : undef, strTest => $strTestPoint, fTestDelay => 0});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 65536;
