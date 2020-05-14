@@ -135,6 +135,8 @@ sub exec
     $strCommand = "$self->{strCommand} ${strCommand}";
     my $oBuffer = new pgBackRestTest::Common::Io::Buffered(
         new pgBackRestTest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
+
+    &log(DETAIL, $strCommand);
     my $oProcess = new pgBackRestTest::Common::Io::Process($oBuffer, $strCommand);
 
     my $tResult;

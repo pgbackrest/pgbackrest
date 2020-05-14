@@ -157,7 +157,7 @@ sub setup
 
     storageRepoCommandSet(
         $self->backrestExeHelper() .
-            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=trace' .
+            ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
                 " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
