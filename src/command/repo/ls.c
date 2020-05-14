@@ -151,7 +151,8 @@ storageListRender(IoWrite *write)
         ioWrite(data.write, BRACEL_BUF);
 
     // Check if this is a file
-    StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
+    StorageInfo info = storageFeature(storageRepo(), storageFeaturePath) || (path != NULL && !strEq(path, FSLASH_STR)) ?
+        storageInfoP(storageRepo(), path, .ignoreMissing = true) : (StorageInfo){.exists = false};
 
     if (info.exists && info.type == storageTypeFile)
     {

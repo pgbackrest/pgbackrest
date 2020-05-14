@@ -554,7 +554,7 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
     (void)this;
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
-    ASSERT(type == storageTypePath && xml == NULL || type == storageTypeFile && xml != NULL);
+    ASSERT((type == storageTypePath && xml == NULL) || (type == storageTypeFile && xml != NULL));
 
     StorageAzureInfoListData *data = (StorageAzureInfoListData *)callbackData;
 
