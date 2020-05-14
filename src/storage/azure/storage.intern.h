@@ -27,9 +27,21 @@ typedef struct StorageAzureRequestResult
     Buffer *response;
 } StorageAzureRequestResult;
 
-StorageAzureRequestResult storageAzureRequest(
-    StorageAzure *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
-    bool allowMissing);
+typedef struct StorageAzureRequestParam
+{
+    VAR_PARAM_HEADER;
+    const String *uri;
+    const HttpHeader *header;
+    const HttpQuery *query;
+    const Buffer *body;
+    bool returnContent;
+    bool allowMissing;
+} StorageAzureRequestParam;
+
+#define storageAzureRequestP(this, verb, ...)                                                                                      \
+    storageAzureRequest(this, verb, (StorageAzureRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+StorageAzureRequestResult storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging

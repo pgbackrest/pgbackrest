@@ -13,6 +13,12 @@ Azure Storage File write
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
+Azure http headers
+***********************************************************************************************************************************/
+STRING_STATIC(AZURE_HEADER_BLOB_TYPE_STR,                           "x-ms-blob-type");
+STRING_STATIC(AZURE_HEADER_VALUE_BLOCK_BLOB_STR,                    "BlockBlob");
+
+/***********************************************************************************************************************************
 Azure query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_QUERY_PART_NUMBER_STR,                          "partNumber");
@@ -95,12 +101,15 @@ storageWriteAzurePart(StorageWriteAzure *this)
         // Get the upload id if we have not already
         if (this->uploadId == NULL)
         {
+            THROW(AssertError, "NOT YET IMPLEMENTED");
+
             // Initiate mult-part upload
             XmlNode *xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
-                    storageAzureRequest(
-                        this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                        httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false).response));
+                    storageAzureRequestP(
+                        this->storage, HTTP_VERB_POST_STR, .uri = this->interface.name,
+                        .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOADS_STR, EMPTY_STR),
+                        .returnContent = true).response));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -119,8 +128,9 @@ storageWriteAzurePart(StorageWriteAzure *this)
         strLstAdd(
             this->uploadPartList,
             httpHeaderGet(
-                storageAzureRequest(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, true, false).responseHeader,
+                storageAzureRequestP(
+                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->partBuffer,
+                    .returnContent = true).responseHeader,
                 HTTP_HEADER_ETAG_STR));
 
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
@@ -191,6 +201,8 @@ storageWriteAzureClose(THIS_VOID)
             // If a multi-part upload was started we need to finish that way
             if (this->uploadId != NULL)
             {
+                THROW(AssertError, "NOT YET IMPLEMENTED");
+
                 // If there is anything left in the part buffer then write it
                 if (bufUsed(this->partBuffer) > 0)
                     storageWriteAzurePart(this);
@@ -206,15 +218,18 @@ storageWriteAzureClose(THIS_VOID)
                 }
 
                 // Finalize the multi-part upload
-                storageAzureRequest(
-                    this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
+                storageAzureRequestP(
+                    this->storage, HTTP_VERB_POST_STR, .uri = this->interface.name,
+                    .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOAD_ID_STR, this->uploadId),
+                    .body = xmlDocumentBuf(partList), .returnContent = true);
             }
             // Else upload all the data in a single put
             else
             {
-                storageAzureRequest(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, true, false);
+                storageAzureRequestP(
+                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
+                    .body = this->partBuffer, .returnContent = true);
             }
 
             bufFree(this->partBuffer);

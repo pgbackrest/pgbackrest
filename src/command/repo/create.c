@@ -29,8 +29,8 @@ cmdRepoCreate(void)
             HttpQuery *query = httpQueryNew();
             httpQueryAdd(query, STRDEF("restype"), STRDEF("container"));
 
-            storageAzureRequest(
-                (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, STRDEF("/azAccount/azContainer"), query, NULL, true, false);
+            storageAzureRequestP(
+                (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, .query = query, .returnContent = true);
         }
     }
     MEM_CONTEXT_TEMP_END();
