@@ -48,11 +48,11 @@ XML tags
 STRING_STATIC(AZURE_XML_TAG_BLOB_PREFIX_STR,                        "BlobPrefix");
 STRING_STATIC(AZURE_XML_TAG_BLOB_STR,                               "Blob");
 STRING_STATIC(AZURE_XML_TAG_BLOBS_STR,                              "Blobs");
-STRING_STATIC(AZURE_XML_TAG_LAST_MODIFIED_STR,                      "LastModified");
+STRING_STATIC(AZURE_XML_TAG_CONTENT_LENGTH_STR,                     "Content-Length");
+STRING_STATIC(AZURE_XML_TAG_LAST_MODIFIED_STR,                      "Last-Modified");
 STRING_STATIC(AZURE_XML_TAG_NEXT_MARKER_STR,                        "NextMarker");
 STRING_STATIC(AZURE_XML_TAG_NAME_STR,                               "Name");
 STRING_STATIC(AZURE_XML_TAG_PROPERTIES_STR,                         "Properties");
-STRING_STATIC(AZURE_XML_TAG_SIZE_STR,                               "Size");
 
 /***********************************************************************************************************************************
 Object type
@@ -440,11 +440,9 @@ storageAzureListInternal(
                 if (!strEmpty(queryPrefix))
                     httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
-                Buffer *response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query, .returnContent = true).response;
-
-                // THROW_FMT(AssertError, "XML:\n%s", strPtr(strNewBuf(response)));
-
-                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(response));
+                XmlNode *xmlRoot = xmlDocumentRoot(
+                    xmlDocumentNewBuf(
+                        storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query, .returnContent = true).response));
 
                 // Get subpath list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
@@ -452,17 +450,16 @@ storageAzureListInternal(
 
                 for (unsigned int blobPrefixIdx = 0; blobPrefixIdx < xmlNodeLstSize(blobPrefixList); blobPrefixIdx++)
                 {
-                    THROW(AssertError, "NOT YET IMPLEMENTED");
-                    // const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, subPathIdx);
-                    //
-                    // // Get subpath name
-                    // const String *subPath = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
-                    //
-                    // // Strip off base prefix and final /
-                    // subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
-                    //
-                    // // Add to list
-                    // callback(this, callbackData, subPath, storageTypePath, subPathNode);
+                    const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
+
+                    // Get subpath name
+                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, AZURE_XML_TAG_NAME_STR, true));
+
+                    // Strip off base prefix and final /
+                    subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
+
+                    // Add to list
+                    callback(this, callbackData, subPath, storageTypePath, NULL);
                 }
 
                 // Get file list
@@ -470,18 +467,17 @@ storageAzureListInternal(
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
-                    THROW(AssertError, "NOT YET IMPLEMENTED");
-                    // const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
-                    //
-                    // // Get file name
-                    // const String *file = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
-                    //
-                    // // Strip off the base prefix when present
-                    // file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
-                    //
-                    // // Add to list
-                    // callback(
-                    //     this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
+                    const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
+
+                    // Get file name
+                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
+
+                    // Strip off the base prefix when present
+                    file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
+
+                    // Add to list
+                    callback(
+                        this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
                 }
 
                 // Get the continuation token and store it in the outer temp context
@@ -544,22 +540,6 @@ typedef struct StorageAzureInfoListData
     void *callbackData;                                             // User-supplied callback data
 } StorageAzureInfoListData;
 
-// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
-// milliseconds which are discarded here.
-static time_t
-storageAzureCvtTime(const String *time)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, time);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(
-        epochFromParts(
-            cvtZToInt(strPtr(strSubN(time, 0, 4))), cvtZToInt(strPtr(strSubN(time, 5, 2))),
-            cvtZToInt(strPtr(strSubN(time, 8, 2))), cvtZToInt(strPtr(strSubN(time, 11, 2))),
-            cvtZToInt(strPtr(strSubN(time, 14, 2))), cvtZToInt(strPtr(strSubN(time, 17, 2))), 0));
-}
-
 static void
 storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
 {
@@ -574,7 +554,7 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
     (void)this;
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
-    ASSERT(xml != NULL);
+    ASSERT(type == storageTypePath && xml == NULL || type == storageTypeFile && xml != NULL);
 
     StorageAzureInfoListData *data = (StorageAzureInfoListData *)callbackData;
 
@@ -589,9 +569,9 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
     {
         info.type = type;
         info.size = type == storageTypeFile ?
-            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_SIZE_STR, true)))) : 0;
+            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true)))) : 0;
         info.timeModified = type == storageTypeFile ?
-            storageAzureCvtTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+            httpLastModifiedToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
     }
 
     data->callback(data->callbackData, &info);
@@ -644,8 +624,6 @@ storageAzureNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-
-    THROW(AssertError, "NOT YET IMPLEMENTED");
 
     FUNCTION_LOG_RETURN(STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing));
 }
