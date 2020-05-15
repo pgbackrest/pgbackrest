@@ -34,7 +34,7 @@ STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-02-02"
 Azure query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_QUERY_MARKER_STR,                               "marker");
-STRING_STATIC(AZURE_QUERY_COMP_STR,                                 "comp");
+STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_COMP);
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
 STRING_STATIC(AZURE_QUERY_PREFIX_STR,                               "prefix");
 STRING_STATIC(AZURE_QUERY_RESTYPE_STR,                              "restype");

@@ -26,11 +26,9 @@ cmdRepoCreate(void)
         }
         else if (strEq(storageType(storageRepo()), STORAGE_AZURE_TYPE_STR))
         {
-            HttpQuery *query = httpQueryNew();
-            httpQueryAdd(query, STRDEF("restype"), STRDEF("container"));
-
             storageAzureRequestP(
-                (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, .query = query, .returnContent = true);
+                (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
+                .query = httpQueryAdd(httpQueryNew(), STRDEF("restype"), STRDEF("container")), .returnContent = true);
         }
     }
     MEM_CONTEXT_TEMP_END();

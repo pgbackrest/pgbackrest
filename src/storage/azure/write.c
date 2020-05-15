@@ -3,7 +3,10 @@ Azure Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
+
 #include "common/debug.h"
+#include "common/encode.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -21,18 +24,16 @@ STRING_STATIC(AZURE_HEADER_VALUE_BLOCK_BLOB_STR,                    "BlockBlob")
 /***********************************************************************************************************************************
 Azure query tokens
 ***********************************************************************************************************************************/
-STRING_STATIC(AZURE_QUERY_PART_NUMBER_STR,                          "partNumber");
-STRING_STATIC(AZURE_QUERY_UPLOADS_STR,                              "uploads");
-STRING_STATIC(AZURE_QUERY_UPLOAD_ID_STR,                            "uploadId");
+STRING_STATIC(AZURE_QUERY_BLOCK_ID_STR,                             "blockid");
+
+STRING_STATIC(AZURE_QUERY_VALUE_BLOCK_STR,                          "block");
+STRING_STATIC(AZURE_QUERY_VALUE_BLOCK_LIST_STR,                     "blocklist");
 
 /***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
-STRING_STATIC(AZURE_XML_TAG_ETAG_STR,                               "ETag");
-STRING_STATIC(AZURE_XML_TAG_UPLOAD_ID_STR,                          "UploadId");
-STRING_STATIC(AZURE_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR,          "CompleteMultipartUpload");
-STRING_STATIC(AZURE_XML_TAG_PART_STR,                               "Part");
-STRING_STATIC(AZURE_XML_TAG_PART_NUMBER_STR,                        "PartNumber");
+STRING_STATIC(AZURE_XML_TAG_BLOCK_LIST_STR,                         "BlockList");
+STRING_STATIC(AZURE_XML_TAG_UNCOMMITTED_STR,                        "Uncommitted");
 
 /***********************************************************************************************************************************
 Object type
@@ -41,12 +42,11 @@ typedef struct StorageWriteAzure
 {
     MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
-    StorageAzure *storage;                                             // Storage that created this object
+    StorageAzure *storage;                                          // Storage that created this object
 
-    size_t partSize;
-    Buffer *partBuffer;
-    const String *uploadId;
-    StringList *uploadPartList;
+    size_t partSize;                                                // Size of parts during multi-part upload
+    Buffer *partBuffer;                                             // Current part buffer
+    StringList *blockIdList;                                        // List of uploaded part ids
 } StorageWriteAzure;
 
 /***********************************************************************************************************************************
@@ -98,42 +98,32 @@ storageWriteAzurePart(StorageWriteAzure *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the upload id if we have not already
-        if (this->uploadId == NULL)
+        // Create the block id list
+        if (this->blockIdList == NULL)
         {
-            THROW(AssertError, "NOT YET IMPLEMENTED");
-
-            // Initiate mult-part upload
-            XmlNode *xmlRoot = xmlDocumentRoot(
-                xmlDocumentNewBuf(
-                    storageAzureRequestP(
-                        this->storage, HTTP_VERB_POST_STR, .uri = this->interface.name,
-                        .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOADS_STR, EMPTY_STR),
-                        .returnContent = true).response));
-
-            // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_UPLOAD_ID_STR, true));
-                this->uploadPartList = strLstNew();
+                this->blockIdList = strLstNew();
             }
             MEM_CONTEXT_END();
         }
 
-        // Upload the part and add etag to part list
+        // Generate block id
+        char blockId[9];
+        ASSERT(sizeof(blockId) == encodeToStrSize(encodeBase64, 6) + 1);
+
+        encodeToStr(encodeBase64, strPtr(strNewFmt("%06u", strLstSize(this->blockIdList))), 6, blockId);
+
+        // Upload the part and add to part list
         HttpQuery *query = httpQueryNew();
-        httpQueryAdd(query, AZURE_QUERY_UPLOAD_ID_STR, this->uploadId);
-        httpQueryAdd(query, AZURE_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
+        httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
+        httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, STR(blockId));
 
-        strLstAdd(
-            this->uploadPartList,
-            httpHeaderGet(
-                storageAzureRequestP(
-                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->partBuffer,
-                    .returnContent = true).responseHeader,
-                HTTP_HEADER_ETAG_STR));
+        storageAzureRequestP(
+            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->partBuffer,
+            .returnContent = true);
 
-        ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
+        strLstAddZ(this->blockIdList, blockId);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -198,32 +188,30 @@ storageWriteAzureClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // If a multi-part upload was started we need to finish that way
-            if (this->uploadId != NULL)
+            // If a multi-block upload was started we need to finish that way
+            if (this->blockIdList != NULL)
             {
-                THROW(AssertError, "NOT YET IMPLEMENTED");
-
-                // If there is anything left in the part buffer then write it
+                // If there is anything left in the block buffer then write it
                 if (bufUsed(this->partBuffer) > 0)
                     storageWriteAzurePart(this);
 
-                // Generate the xml part list
-                XmlDocument *partList = xmlDocumentNew(AZURE_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
+                // Generate the xml block list
+                XmlDocument *blockXml = xmlDocumentNew(AZURE_XML_TAG_BLOCK_LIST_STR);
 
-                for (unsigned int partIdx = 0; partIdx < strLstSize(this->uploadPartList); partIdx++)
+                for (unsigned int blockIdx = 0; blockIdx < strLstSize(this->blockIdList); blockIdx++)
                 {
-                    XmlNode *partNode = xmlNodeAdd(xmlDocumentRoot(partList), AZURE_XML_TAG_PART_STR);
-                    xmlNodeContentSet(xmlNodeAdd(partNode, AZURE_XML_TAG_PART_NUMBER_STR), strNewFmt("%u", partIdx + 1));
-                    xmlNodeContentSet(xmlNodeAdd(partNode, AZURE_XML_TAG_ETAG_STR), strLstGet(this->uploadPartList, partIdx));
+                    xmlNodeContentSet(
+                        xmlNodeAdd(xmlDocumentRoot(blockXml), AZURE_XML_TAG_UNCOMMITTED_STR),
+                        strLstGet(this->blockIdList, blockIdx));
                 }
 
-                // Finalize the multi-part upload
+                // Finalize the multi-block upload
                 storageAzureRequestP(
-                    this->storage, HTTP_VERB_POST_STR, .uri = this->interface.name,
-                    .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_UPLOAD_ID_STR, this->uploadId),
-                    .body = xmlDocumentBuf(partList), .returnContent = true);
+                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
+                    .body = xmlDocumentBuf(blockXml), .returnContent = true);
             }
-            // Else upload all the data in a single put
+            // Else upload all the data in a single block
             else
             {
                 storageAzureRequestP(
