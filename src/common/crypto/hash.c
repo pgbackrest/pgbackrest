@@ -237,6 +237,9 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     ASSERT(key != NULL);
     ASSERT(message != NULL);
 
+    // Init crypto subsystem
+    cryptoInit();
+
     const EVP_MD *hashType = EVP_get_digestbyname(strPtr(type));
     ASSERT(hashType != NULL);
 
