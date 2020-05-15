@@ -627,6 +627,7 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
+            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'});
 
             if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
             {
