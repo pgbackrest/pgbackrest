@@ -44,8 +44,8 @@ typedef struct StorageWriteAzure
     StorageWriteInterface interface;                                // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
-    size_t partSize;                                                // Size of parts during multi-part upload
-    Buffer *partBuffer;                                             // Current part buffer
+    size_t blockSize;                                               // Size of blocks during multi-block upload
+    Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
     StringList *blockIdList;                                        // List of uploaded part ids
 } StorageWriteAzure;
 
@@ -70,12 +70,12 @@ storageWriteAzureOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->partBuffer == NULL);
+    ASSERT(this->blockBuffer == NULL);
 
     // Allocate the part buffer
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        this->partBuffer = bufNew(this->partSize);
+        this->blockBuffer = bufNew(this->blockSize);
     }
     MEM_CONTEXT_END();
 
@@ -93,8 +93,8 @@ storageWriteAzurePart(StorageWriteAzure *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->partBuffer != NULL);
-    ASSERT(bufSize(this->partBuffer) > 0);
+    ASSERT(this->blockBuffer != NULL);
+    ASSERT(bufSize(this->blockBuffer) > 0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -112,7 +112,7 @@ storageWriteAzurePart(StorageWriteAzure *this)
         char blockId[9];
         ASSERT(sizeof(blockId) == encodeToStrSize(encodeBase64, 6) + 1);
 
-        encodeToStr(encodeBase64, strPtr(strNewFmt("%06u", strLstSize(this->blockIdList))), 6, blockId);
+        encodeToStr(encodeBase64, (unsigned char *)strPtr(strNewFmt("%06u", strLstSize(this->blockIdList))), 6, blockId);
 
         // Upload the part and add to part list
         HttpQuery *query = httpQueryNew();
@@ -120,8 +120,7 @@ storageWriteAzurePart(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, STR(blockId));
 
         storageAzureRequestP(
-            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->partBuffer,
-            .returnContent = true);
+            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->blockBuffer);
 
         strLstAddZ(this->blockIdList, blockId);
     }
@@ -144,7 +143,7 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->partBuffer != NULL);
+    ASSERT(this->blockBuffer != NULL);
 
     size_t bytesTotal = 0;
 
@@ -152,16 +151,16 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
-        bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
+        size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
+            bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+        bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
         // If the part buffer is full then write it
-        if (bufRemains(this->partBuffer) == 0)
+        if (bufRemains(this->blockBuffer) == 0)
         {
             storageWriteAzurePart(this);
-            bufUsedZero(this->partBuffer);
+            bufUsedZero(this->blockBuffer);
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -184,7 +183,7 @@ storageWriteAzureClose(THIS_VOID)
     ASSERT(this != NULL);
 
     // Close if the file has not already been closed
-    if (this->partBuffer != NULL)
+    if (this->blockBuffer != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -192,7 +191,7 @@ storageWriteAzureClose(THIS_VOID)
             if (this->blockIdList != NULL)
             {
                 // If there is anything left in the block buffer then write it
-                if (bufUsed(this->partBuffer) > 0)
+                if (bufUsed(this->blockBuffer) > 0)
                     storageWriteAzurePart(this);
 
                 // Generate the xml block list
@@ -209,7 +208,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
                     .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
-                    .body = xmlDocumentBuf(blockXml), .returnContent = true);
+                    .body = xmlDocumentBuf(blockXml));
             }
             // Else upload all the data in a single block
             else
@@ -217,11 +216,11 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
                     httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
-                    .body = this->partBuffer, .returnContent = true);
+                    .body = this->blockBuffer);
             }
 
-            bufFree(this->partBuffer);
-            this->partBuffer = NULL;
+            bufFree(this->blockBuffer);
+            this->blockBuffer = NULL;
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -231,7 +230,7 @@ storageWriteAzureClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageWrite *
-storageWriteAzureNew(StorageAzure *storage, const String *name, size_t partSize)
+storageWriteAzureNew(StorageAzure *storage, const String *name, size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
@@ -251,7 +250,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, size_t partSize)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
-            .partSize = partSize,
+            .blockSize = blockSize,
 
             .interface = (StorageWriteInterface)
             {

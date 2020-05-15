@@ -36,12 +36,13 @@ typedef struct StorageAzureRequestResult
 typedef struct StorageAzureRequestParam
 {
     VAR_PARAM_HEADER;
-    const String *uri;
-    const HttpHeader *header;
-    const HttpQuery *query;
-    const Buffer *body;
-    bool returnContent;
-    bool allowMissing;
+    const String *uri;                                              // Request URI
+    const HttpHeader *header;                                       // Request headers
+    const HttpQuery *query;                                         // Query parameters
+    const Buffer *body;                                             // Request body
+    bool content;                                                   // Will the response have content?
+    bool contentBuffer;                                             // Return response content in a single buffer
+    bool allowMissing;                                              // Allow missing files (caller can check response code)
 } StorageAzureRequestParam;
 
 #define storageAzureRequestP(this, verb, ...)                                                                                      \

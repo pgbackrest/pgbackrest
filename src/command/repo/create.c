@@ -28,7 +28,7 @@ cmdRepoCreate(void)
         {
             storageAzureRequestP(
                 (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
-                .query = httpQueryAdd(httpQueryNew(), STRDEF("restype"), STRDEF("container")), .returnContent = true);
+                .query = httpQueryAdd(httpQueryNew(), STRDEF("restype"), STRDEF("container")));
         }
     }
     MEM_CONTEXT_TEMP_END();

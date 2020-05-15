@@ -66,7 +66,7 @@ storageReadAzureOpen(THIS_VOID)
 
     // Request the file
     this->httpClient = storageAzureRequestP(
-        this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true).httpClient;
+        this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .content = true, .allowMissing = true).httpClient;
 
     if (httpClientResponseCodeOk(this->httpClient))
     {

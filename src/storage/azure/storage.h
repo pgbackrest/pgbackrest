@@ -15,14 +15,14 @@ Storage type
 /***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
-#define STORAGE_AZURE_PARTSIZE_MIN                                  ((size_t)4 * 1024 * 1024)
+#define STORAGE_AZURE_BLOCKSIZE_MIN                                 ((size_t)4 * 1024 * 1024)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, const String *key, size_t partSize, const String *host, unsigned int port, TimeMSec timeout,
+    const String *account, const String *key, size_t blockSize, const String *host, unsigned int port, TimeMSec timeout,
     bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

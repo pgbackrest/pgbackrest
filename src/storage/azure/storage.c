@@ -68,7 +68,7 @@ struct StorageAzure
     const String *account;                                          // Account
     const String *key;                                              // Shared Secret Key
     const String *host;                                             // Host name
-    size_t partSize;                                                // Part size for multi-part upload
+    size_t blockSize;                                               // Block size for multi-block upload
     const String *uriPrefix;                                        // Account/container prefix
 };
 
@@ -215,12 +215,14 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.body);
-        FUNCTION_LOG_PARAM(BOOL, param.returnContent);
+        FUNCTION_LOG_PARAM(BOOL, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.contentBuffer);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
+    ASSERT((!param.content && !param.contentBuffer) || param.content);
 
     StorageAzureRequestResult result = {0};
     // unsigned int retryRemaining = 2;
@@ -261,7 +263,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
 
             // Process request
             Buffer *response = httpClientRequest(
-                httpClient, verb, param.uri, param.query, requestHeader, param.body, param.returnContent);
+                httpClient, verb, param.uri, param.query, requestHeader, param.body, !param.content || param.contentBuffer);
 
             // Error if the request was not successful
             if (!httpClientResponseCodeOk(httpClient) &&
@@ -442,7 +444,8 @@ storageAzureListInternal(
 
                 XmlNode *xmlRoot = xmlDocumentRoot(
                     xmlDocumentNewBuf(
-                        storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query, .returnContent = true).response));
+                        storageAzureRequestP(
+                            this, HTTP_VERB_GET_STR, .query = query, .content = true, .contentBuffer = true).response));
 
                 // Get subpath list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
@@ -515,8 +518,7 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    StorageAzureRequestResult httpResult = storageAzureRequestP(
-        this, HTTP_VERB_HEAD_STR, .uri = file, .returnContent = true, .allowMissing = true);
+    StorageAzureRequestResult httpResult = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpClientResponseCodeOk(httpResult.httpClient)};
@@ -647,7 +649,7 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteAzureNew(this, file, this->partSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteAzureNew(this, file, this->blockSize));
 }
 
 /**********************************************************************************************************************************/
@@ -791,7 +793,7 @@ storageAzureRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .returnContent = true, .allowMissing = true);
+    storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -810,7 +812,7 @@ static const StorageInterface storageInterfaceAzure =
 Storage *
 storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, const String *key, size_t partSize, const String *host, unsigned int port, TimeMSec timeout,
+    const String *account, const String *key, size_t blockSize, const String *host, unsigned int port, TimeMSec timeout,
     bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -820,7 +822,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_LOG_PARAM(STRING, account);
         FUNCTION_LOG_PARAM(STRING, key);
-        FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -844,7 +846,7 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .key = strDup(key),
-            .partSize = partSize,
+            .blockSize = blockSize,
             .host = host == NULL ? STRDEF("BOGUS") : host,
             .uriPrefix = host == NULL ?
                 strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),

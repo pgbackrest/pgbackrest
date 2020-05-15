@@ -356,7 +356,7 @@ storageRepoGet(const String *type, bool write)
     {
         result = storageAzureNew(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoAzureContainer),
-            cfgOptionStr(cfgOptRepoAzureAccount), cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_PARTSIZE_MIN,
+            cfgOptionStr(cfgOptRepoAzureAccount), cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_BLOCKSIZE_MIN,
             cfgOptionStrNull(cfgOptRepoAzureHost), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
             cfgOptionBool(cfgOptRepoAzureVerifyTls), cfgOptionStrNull(cfgOptRepoAzureCaFile),
             cfgOptionStrNull(cfgOptRepoAzureCaPath));
