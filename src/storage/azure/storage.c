@@ -847,7 +847,7 @@ storageAzureNew(
             .account = strDup(account),
             .key = strDup(key),
             .blockSize = blockSize,
-            .host = host == NULL ? STRDEF("BOGUS") : host,
+            .host = host == NULL ? strNewFmt("%s.blob.core.windows.net", strPtr(account)) : host,
             .uriPrefix = host == NULL ?
                 strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),
         };
