@@ -11,32 +11,39 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    const String *account = STRDEF("act");
+    const String *container = STRDEF("cnt");
+    const String *key = STRDEF("YXpLZXk=");
+
     // *****************************************************************************************************************************
-    if (testBegin("storageAzureNew() and storageRepoGet()"))
+    if (testBegin("storageAzure*()"))
     {
-        // Only required options
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with required options");
+
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_TYPE_AZURE);
         strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=test");
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, "account", true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, "key", true);
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_CONTAINER "=%s", strPtr(container)));
+        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, strPtr(account), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, strPtr(key), true);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), false), "getaAzure repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        // TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        // TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        // TEST_RESULT_STR(
-        //     ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)), "    check host");
-        // TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        // TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        // TEST_RESULT_PTR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
-        // TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        // TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, container, "    check container");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, account, "    check account");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->key, key, "    check key");
+        TEST_RESULT_STR(
+            ((StorageAzure *)storage->driver)->host, strNewFmt("%s.blob.core.windows.net", strPtr(account)), "    check host");
+        TEST_RESULT_STR(
+            ((StorageAzure *)storage->driver)->uriPrefix, strNewFmt("/%s", strPtr(container)), "    check uri prefix");
+        TEST_RESULT_UINT(
+            ((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
