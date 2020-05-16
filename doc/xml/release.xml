@@ -40,6 +40,14 @@
 
                         <p>The <cmd>expire</cmd> command now checks if a stop file is present.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                             <release-item-ideator id="eric.radman"/>
+                        </release-item-contributor-list>
+
+                        <p>Increase buffer size for <proper>lz4</proper> compression flush.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
