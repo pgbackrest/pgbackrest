@@ -1199,11 +1199,11 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.auto.c:
+src/postgres/interface/pageChecksum.vendor.c:
   class: core/auto
   type: c
 
-src/postgres/interface/static.auto.h:
+src/postgres/interface/static.vendor.h:
   class: core/auto
   type: c/h
 
@@ -1255,7 +1255,7 @@ src/postgres/interface/v120.c:
   class: core
   type: c
 
-src/postgres/interface/version.auto.h:
+src/postgres/interface/version.vendor.h:
   class: core/auto
   type: c/h
 
