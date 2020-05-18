@@ -328,9 +328,23 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
+        // The MD5 tests are a bit more extensive to provide coverage for our vendorized version
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("md5 hash");
+
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
         TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), HASH_TYPE_MD5_ZERO, "    check empty hash");
+
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
+        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "c4ca4238a0b923820dcc509a6f75849b", "    check hash");
+
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_RESULT_VOID(
+            ioFilterProcessIn(hash, BUFSTRZ("1234567890123456789012345678901234567890123456789012345678901234567890")),
+            "    add 70 bytes");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("2")), "    add 2");
+        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "e293c059bbea4cd0aa02c75b04230d4b", "    check hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");
