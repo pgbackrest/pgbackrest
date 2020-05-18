@@ -308,6 +308,7 @@ testRun(void)
 
         // Start totals to 1ms just in case something takes 0ms to run
         uint64_t copyTotal = 1;
+        uint64_t md5Total = 1;
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
@@ -322,6 +323,17 @@ testRun(void)
             {
                 BENCHMARK_BEGIN();
                 BENCHMARK_END(copyTotal);
+            }
+            MEM_CONTEXT_TEMP_END();
+
+            // -------------------------------------------------------------------------------------------------------------------------
+            TEST_LOG_FMT("md5 iteration %u", idx + 1);
+
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                BENCHMARK_BEGIN();
+                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_MD5_STR));
+                BENCHMARK_END(md5Total);
             }
             MEM_CONTEXT_TEMP_END();
 
@@ -374,6 +386,7 @@ testRun(void)
         TEST_TITLE("results");
 
         TEST_LOG_FMT("copy average: %" PRIu64 "MiB/s", blockTotal * 1000 / copyTotal / iteration);
+        TEST_LOG_FMT("md5 average: %" PRIu64 "MiB/s", blockTotal * 1000 / md5Total / iteration);
         TEST_LOG_FMT("sha1 average: %" PRIu64 "MiB/s", blockTotal * 1000 / sha1Total / iteration);
         TEST_LOG_FMT("sha256 average: %" PRIu64 "MiB/s", blockTotal * 1000 / sha256Total / iteration);
         TEST_LOG_FMT("gzip -6 average: %" PRIu64 "MiB/s", blockTotal * 1000 / gzip6Total / iteration);
