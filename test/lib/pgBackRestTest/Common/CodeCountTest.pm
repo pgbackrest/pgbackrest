@@ -98,6 +98,12 @@ sub codeCountScan
             $strClass .= '/auto';
         }
 
+        # Append vendor if a vendorized file
+        if ($strFile =~ '\.vendor\..$')
+        {
+            $strClass .= '/vendor';
+        }
+
         # Force unrecognized file types
         my $strForceLang = undef;
         my $strType = undef;
