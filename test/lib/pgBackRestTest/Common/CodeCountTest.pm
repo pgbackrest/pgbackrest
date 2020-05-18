@@ -64,7 +64,7 @@ sub codeCountScan
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
                  $strFile eq 'test/scratch.txt' ||
-                 $strFile eq 'test/src/valgrind.suppress' ||
+                 $strFile =~ '^test/src/valgrind\.suppress\.' ||
                  $strFile eq 'test/src/lcov.conf');
 
         # Classify the source file
