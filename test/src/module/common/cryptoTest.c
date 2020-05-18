@@ -328,23 +328,45 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
-        // The MD5 tests are a bit more extensive to provide coverage for our vendorized version
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("md5 hash");
+        TEST_TITLE("md5 hash - zero bytes");
+
+        TEST_RESULT_INT(FIPS_mode(), 0, "FIPS mode not enabled");
+        cryptoError(FIPS_mode_set(0 /*on*/) == 0, "unable to enable FIPS mode");
 
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
         TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), HASH_TYPE_MD5_ZERO, "    check empty hash");
 
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
-        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "c4ca4238a0b923820dcc509a6f75849b", "    check hash");
+        // Exercise most of the conditions in the local MD5 code
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("md5 hash - mixed bytes");
 
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("123456789012345678901234567890123")), "    add 32 bytes");
         TEST_RESULT_VOID(
-            ioFilterProcessIn(hash, BUFSTRZ("1234567890123456789012345678901234567890123456789012345678901234567890")),
-            "    add 70 bytes");
-        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("2")), "    add 2");
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "e293c059bbea4cd0aa02c75b04230d4b", "    check hash");
+            ioFilterProcessIn(
+                hash,
+                BUFSTRZ(
+                    "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+                    "12345678901234567890123456789012345678901234567890")),
+                "    add 160 bytes");
+        TEST_RESULT_VOID(
+            ioFilterProcessIn(hash, BUFSTRZ("12345678901234567890123456789001234567890012345678901234")), "    add 58 bytes");
+
+        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "3318600bc9c1d379e91e4bae90721243", "    check hash");
+
+        // Full coverage of local MD5 requires processing > 511MB of data but that makes the test run too long. Instead we'll cheat
+        // a bit and initialize the context at 511MB to start. This does not produce a valid MD5 hash but does provide coverage of
+        // that one condition cheaply.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("md5 hash - > 0x1fffffff bytes");
+
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        ((CryptoHash*)ioFilterDriver(hash))->md5Context.lo = 0x1fffffff;
+
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
+        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "5c99876f9cafa7f485eac9c7a8a2764c", "    check hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");

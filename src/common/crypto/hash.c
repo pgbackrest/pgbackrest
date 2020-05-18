@@ -84,12 +84,14 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     ASSERT(this != NULL);
     ASSERT(message != NULL);
 
+    // Standard OpenSSL implementation
     if (this->hashContext != NULL)
     {
         ASSERT(this->hash == NULL);
 
         cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtrConst(message), bufUsed(message)), "unable to process message hash");
     }
+    // Else local MD5 implementation
     else
         MD5_Update(&this->md5Context, bufPtrConst(message), bufUsed(message));
 
@@ -112,11 +114,13 @@ cryptoHash(CryptoHash *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
+            // Standard OpenSSL implementation
             if (this->hashContext != NULL)
             {
                 this->hash = bufNew((size_t)EVP_MD_size(this->hashType));
                 cryptoError(!EVP_DigestFinal_ex(this->hashContext, bufPtr(this->hash), NULL), "unable to finalize message hash");
             }
+            // Else local MD5 implementation
             else
             {
                 this->hash = bufNew(HASH_TYPE_M5_SIZE);
