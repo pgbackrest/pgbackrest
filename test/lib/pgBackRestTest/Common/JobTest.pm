@@ -311,6 +311,9 @@ sub run
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
+                    # Skip all files except .c files (including .vendor.c)
+                    next if $strFile !~ /(?<!\.vendor)\.c$/;
+
                     # ??? Skip main for now until the function can be renamed to allow unit testing
                     next if $strFile =~ /main\.c$/;
 
@@ -335,8 +338,11 @@ sub run
                     # Don't include the test file as it is already included below
                     next if $strFile =~ /Test$/;
 
-                    # Don't any auto files as they are included in their companion C files
+                    # Don't include auto files as they are included in their companion C files
                     next if $strFile =~ /auto$/;
+
+                    # Don't include vendor files as they are included in regular C files
+                    next if $strFile =~ /vendor$/;
 
                     # Include the C file if it exists
                     my $strCIncludeFile = "${strFile}.c";

@@ -10,7 +10,7 @@ Page Checksum Filter
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "postgres/interface.h"
-#include "postgres/interface/static.auto.h"
+#include "postgres/interface/static.vendor.h"
 
 /***********************************************************************************************************************************
 Filter type constant

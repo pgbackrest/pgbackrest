@@ -4,9 +4,6 @@ PostgreSQL Types That Vary By Version
 Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
-Despite the .auto.h suffix this file is not automatically generated, though it could be.  We use this suffix to emphasize that the
-types have been copied from PostgreSQL and to exclude this file from project code counts.
-
 For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
 copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
@@ -24,7 +21,7 @@ If a comment has syntax only changes, then the new version of the comment can be
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
 should be created.  See the CheckPoint type difference between 9.5 and 9.6 as an example.
 ***********************************************************************************************************************************/
-#include "postgres/interface/static.auto.h"
+#include "postgres/interface/static.vendor.h"
 
 /***********************************************************************************************************************************
 Types from src/include/c.h

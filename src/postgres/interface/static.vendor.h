@@ -4,9 +4,6 @@ PostgreSQL Types That Do Not Vary By Version
 Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
-Despite the .auto.h suffix this file is not automatically generated, though it could be.  We use this suffix to emphasize that the
-types have been copied from PostgreSQL and to exclude this file from project code counts.
-
 For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
 copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
@@ -20,8 +17,8 @@ which could have a large impact on dependencies.  Hopefully that won't happen of
 Note when adding new types it is safer to add them to version.auto.c unless they are needed for code that must be compatible across
 all versions of PostgreSQL supported by pgBackRest.
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_INTERFACE_STATICAUTO_H
-#define POSTGRES_INTERFACE_STATICAUTO_H
+#ifndef POSTGRES_INTERFACE_STATICVENDOR_H
+#define POSTGRES_INTERFACE_STATICVENDOR_H
 
 #include "common/assert.h"
 #include "postgres/interface.h"
