@@ -10,7 +10,6 @@ Cryptographic Hash
 #include <openssl/hmac.h>
 
 #include "common/crypto/hash.h"
-#include "common/crypto/md5.vendor.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
@@ -35,6 +34,11 @@ Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
 STRING_EXTERN(HASH_TYPE_SHA1_ZERO_STR,                              HASH_TYPE_SHA1_ZERO);
 STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
+
+/***********************************************************************************************************************************
+Include local MD5 code
+***********************************************************************************************************************************/
+#include "common/crypto/md5.vendor.c"
 
 /***********************************************************************************************************************************
 Object type

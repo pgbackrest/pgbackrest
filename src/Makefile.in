@@ -57,7 +57,6 @@ SRCS = \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
-	common/crypto/md5.vendor.c \
 	common/debug.c \
 	common/encode.c \
 	common/encode/base64.c \

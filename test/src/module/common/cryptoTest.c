@@ -331,9 +331,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - zero bytes");
 
-        TEST_RESULT_INT(FIPS_mode(), 0, "FIPS mode not enabled");
-        cryptoError(FIPS_mode_set(0 /*on*/) == 0, "unable to enable FIPS mode");
-
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
         TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), HASH_TYPE_MD5_ZERO, "    check empty hash");
 
