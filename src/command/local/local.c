@@ -35,6 +35,7 @@ cmdLocal(int handleRead, int handleWrite)
         protocolServerHandlerAdd(server, archivePushProtocol);
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
+// CSHANG I am guessing verify will need to go here? What are the rules for adding to this? Could probably use some guidance in the local.h file
         protocolServerProcess(server);
     }
     MEM_CONTEXT_TEMP_END();
