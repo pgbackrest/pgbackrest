@@ -43,6 +43,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-ideator id="ctenuun"/>
+                        </release-item-contributor-list>
+
+                        <p>Handle missing reason phrase in HTTP response.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-ideator id="eric.radman"/>
                         </release-item-contributor-list>
 
@@ -8147,6 +8155,11 @@
         <contributor id="craig.a.james">
             <contributor-name-display>Craig A. James</contributor-name-display>
             <contributor-id type="github">cjames53</contributor-id>
+        </contributor>
+
+        <contributor id="ctenuun">
+            <contributor-name-display>Tenuun</contributor-name-display>
+            <contributor-id type="github">ctenuun</contributor-id>
         </contributor>
 
         <contributor id="cynthia.shang">

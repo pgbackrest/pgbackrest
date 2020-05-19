@@ -230,7 +230,7 @@ testHttpServer(void)
         "\r\n");
 
     harnessTlsServerReply(
-        "HTTP/1.1 403 Auth Error\r\n"
+        "HTTP/1.1 403 \r\n"
         "content-length:7\r\n"
         "\r\n"
         "CONTENT");
@@ -576,7 +576,7 @@ testRun(void)
                     buffer, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false),
                     "error with content length");
                 TEST_RESULT_UINT(httpClientResponseCode(client), 403, "    check response code");
-                TEST_RESULT_STR_Z(httpClientResponseMessage(client), "Auth Error", "    check response message");
+                TEST_RESULT_STR_Z(httpClientResponseMessage(client), "", "    check empty response message");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpClientResponseHeader(client)),  "{content-length: '7'}", "    check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(buffer),  "CONTENT", "    check response");

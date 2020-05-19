@@ -320,13 +320,13 @@ httpClientRequest(
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
                 // Read status and make sure it starts with the correct http version
-                String *status = strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)));
+                String *status = ioReadLine(tlsSessionIoRead(this->tlsSession));
 
                 if (!strBeginsWith(status, HTTP_VERSION_STR))
-                    THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
+                    THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(strTrim(status)));
 
-                // Now read the response code and message
-                status = strSub(status, sizeof(HTTP_VERSION));
+                // Now read the response code and message (and strip the trailing CR)
+                status = strSubN(status, sizeof(HTTP_VERSION), strSize(status) - sizeof(HTTP_VERSION) - 1);
 
                 int spacePos = strChr(status, ' ');
 
