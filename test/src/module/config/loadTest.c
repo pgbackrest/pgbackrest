@@ -445,7 +445,7 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-retention-full=2"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
         // Command takes lock and opens log file and uses custom tcp settings
         // -------------------------------------------------------------------------------------------------------------------------
