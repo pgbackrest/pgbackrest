@@ -124,6 +124,18 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                             <release-item-ideator id="brian.almeida"/>
+                             <release-item-ideator id="john.kelly"/>
+                             <release-item-contributor id="david.steele"/>
+                             <release-item-reviewer id="cynthia.shang"/>
+                             <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add local <proper>MD5</proper> implementation so <proper>S3</proper> works when <proper>FIPS</proper> is enabled.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
@@ -8078,6 +8090,11 @@
             <contributor-id type="github">bradnicholson</contributor-id>
         </contributor>
 
+        <contributor id="brian.almeida">
+            <contributor-name-display>Brian Almeida</contributor-name-display>
+            <contributor-id type="github">thunderkeys</contributor-id>
+        </contributor>
+
         <contributor id="brian.faherty">
             <contributor-name-display>Brian Faherty</contributor-name-display>
             <contributor-id type="github">scrummyin</contributor-id>
@@ -8332,6 +8349,10 @@
         <contributor id="john.harvey">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="john.kelly">
+            <contributor-name-display>John Kelley</contributor-name-display>
         </contributor>
 
         <contributor id="julian.zhang">

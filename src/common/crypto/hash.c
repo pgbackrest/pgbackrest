@@ -51,7 +51,7 @@ typedef struct CryptoHash
     MemContext *memContext;                                         // Context to store data
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
-    MD5_CTX md5Context;                                             // MD5 context (used to bypass FIPS restrictions)
+    MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
     Buffer *hash;                                                   // Hash in binary form
 } CryptoHash;
 
@@ -97,7 +97,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     }
     // Else local MD5 implementation
     else
-        MD5_Update(&this->md5Context, bufPtrConst(message), bufUsed(message));
+        MD5_Update(this->md5Context, bufPtrConst(message), bufUsed(message));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -128,7 +128,7 @@ cryptoHash(CryptoHash *this)
             else
             {
                 this->hash = bufNew(HASH_TYPE_M5_SIZE);
-                MD5_Final(bufPtr(this->hash), &this->md5Context);
+                MD5_Final(bufPtr(this->hash), this->md5Context);
             }
 
             bufUsedSet(this->hash, bufSize(this->hash));
@@ -186,7 +186,9 @@ cryptoHashNew(const String *type)
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
         if (strEq(type, HASH_TYPE_MD5_STR))
         {
-            MD5_Init(&driver->md5Context);
+            driver->md5Context = memNew(sizeof(MD5_CTX));
+
+            MD5_Init(driver->md5Context);
         }
         // Else use the standard OpenSSL implementation
         else

@@ -214,13 +214,13 @@ static const void *body(MD5_CTX *ctx, const void *data, unsigned long size)
 
 static void MD5_Init(MD5_CTX *ctx)
 {
-	ctx->a = 0x67452301;
-	ctx->b = 0xefcdab89;
-	ctx->c = 0x98badcfe;
-	ctx->d = 0x10325476;
-
-	ctx->lo = 0;
-	ctx->hi = 0;
+	*ctx = (MD5_CTX)
+	{
+		.a = 0x67452301,
+		.b = 0xefcdab89,
+		.c = 0x98badcfe,
+		.d = 0x10325476,
+	};
 }
 
 static void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
