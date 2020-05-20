@@ -147,7 +147,7 @@ testRun(void)
             "General Options:\n"
             "\n"
             "  --buffer-size                    buffer size for file operations\n"
-            "                                   [current=32768, default=4194304]\n"
+            "                                   [current=32768, default=1048576]\n"
             "  --cmd-ssh                        path to ssh client executable [default=ssh]\n"
             "  --compress-level-network         network compression level [default=3]\n"
             "  --config                         pgBackRest configuration file\n"
@@ -281,12 +281,12 @@ testRun(void)
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 4194304\n", optionHelp), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 1048576\n", optionHelp), "    check text");
 
         strLstAddZ(argList, "--buffer-size=32768");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 4194304\n", optionHelp), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(

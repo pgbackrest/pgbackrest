@@ -607,7 +607,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "16777216"
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("4194304")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1048576")
         )
     )
 

@@ -1171,7 +1171,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 1048576, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
