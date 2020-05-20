@@ -60,6 +60,8 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
         FUNCTION_LOG_PARAM(STRING, archiveFile);
     FUNCTION_LOG_END();
 
+    ASSERT(archiveFile != NULL);
+
     storageRemoveP(
         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strPtr(archiveFile)));
     storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
@@ -76,6 +78,8 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, throwOnError);
     FUNCTION_LOG_END();
+
+    ASSERT(walSegment != NULL);
 
     bool result = false;
 
