@@ -50,11 +50,8 @@ typedef struct CryptoHash
 {
     MemContext *memContext;                                         // Context to store data
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
-    union
-    {
-        EVP_MD_CTX *hashContext;                                    // Message hash context
-        MD5_CTX *md5Context;                                        // MD5 hash context (used to bypass FIPS restrictions)
-    };
+    EVP_MD_CTX *hashContext;                                        // Message hash context
+    MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
     Buffer *hash;                                                   // Hash in binary form
 } CryptoHash;
 
@@ -89,13 +86,12 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->hash == NULL);
     ASSERT(message != NULL);
 
     // Standard OpenSSL implementation
-    if (this->hashType != NULL)
+    if (this->hashContext != NULL)
     {
-        ASSERT(this->hash == NULL);
-
         cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtrConst(message), bufUsed(message)), "unable to process message hash");
     }
     // Else local MD5 implementation
@@ -122,7 +118,7 @@ cryptoHash(CryptoHash *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Standard OpenSSL implementation
-            if (this->hashType != NULL)
+            if (this->hashContext != NULL)
             {
                 this->hash = bufNew((size_t)EVP_MD_size(this->hashType));
                 cryptoError(!EVP_DigestFinal_ex(this->hashContext, bufPtr(this->hash), NULL), "unable to finalize message hash");
