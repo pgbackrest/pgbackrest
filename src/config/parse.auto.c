@@ -1920,6 +1920,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoHostUser,
     },
 
+    // repo-local option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoLocal,
+    },
+    {
+        .name = "no-" CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoLocal,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoLocal,
+    },
+
     // repo-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2592,13 +2607,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
-    cfgOptRepoHost,
-    cfgOptRepoHostCmd,
-    cfgOptRepoHostConfig,
-    cfgOptRepoHostConfigIncludePath,
-    cfgOptRepoHostConfigPath,
-    cfgOptRepoHostPort,
-    cfgOptRepoHostUser,
+    cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
     cfgOptRepoRetentionArchiveType,
@@ -2625,6 +2634,13 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptForce,
     cfgOptRecoveryOption,
     cfgOptRepoCipherPass,
+    cfgOptRepoHost,
+    cfgOptRepoHostCmd,
+    cfgOptRepoHostConfig,
+    cfgOptRepoHostConfigIncludePath,
+    cfgOptRepoHostConfigPath,
+    cfgOptRepoHostPort,
+    cfgOptRepoHostUser,
     cfgOptRepoS3Bucket,
     cfgOptRepoS3CaFile,
     cfgOptRepoS3CaPath,

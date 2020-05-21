@@ -429,6 +429,7 @@ STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_INCLUDE_PATH_STR,            CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_PATH_STR,                    CFGOPT_REPO1_HOST_CONFIG_PATH);
 STRING_EXTERN(CFGOPT_REPO1_HOST_PORT_STR,                           CFGOPT_REPO1_HOST_PORT);
 STRING_EXTERN(CFGOPT_REPO1_HOST_USER_STR,                           CFGOPT_REPO1_HOST_USER);
+STRING_EXTERN(CFGOPT_REPO1_LOCAL_STR,                               CFGOPT_REPO1_LOCAL);
 STRING_EXTERN(CFGOPT_REPO1_PATH_STR,                                CFGOPT_REPO1_PATH);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_STR,                   CFGOPT_REPO1_RETENTION_ARCHIVE);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE_STR,              CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE);
@@ -1639,6 +1640,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_USER)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_LOCAL)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoLocal)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -277,6 +277,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
+    // Set repo local so host settings on the remote won't accidentally be picked up
+    kvPut(optionReplace, VARSTR(CFGOPT_REPO1_LOCAL_STR), BOOL_TRUE_VAR);
+
     // Update/remove repo/pg options that are sent to the remote
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);

@@ -200,6 +200,8 @@ use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_FULL_TYPE                        => CFGDEF_PREFIX_REPO . '-retention-full-type';
 
 # Repository Host
+use constant CFGOPT_REPO_LOCAL                                      => CFGDEF_PREFIX_REPO . '-local';
+
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
 use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_REPO_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
@@ -1468,17 +1470,30 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_REPO_HOST =>
+    &CFGOPT_REPO_HARDLINK =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'hardlink' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        },
+    },
+
+    &CFGOPT_REPO_LOCAL =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1513,6 +1528,25 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_REPO_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_LOCAL,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_LOCAL,
+            &CFGDEF_DEPEND_LIST => [false],
         },
     },
 

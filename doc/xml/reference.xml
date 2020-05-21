@@ -309,6 +309,15 @@
                 The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the count of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
+                    <!-- CONFIG - REPO SECTION - REPO-LOCAL KEY -->
+                    <config-key id="repo-local" name="Repository Is Local">
+                        <summary>Repository is local despite host settings.</summary>
+
+                        <text>!!!</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>

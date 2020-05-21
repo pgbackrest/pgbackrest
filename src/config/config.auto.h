@@ -345,6 +345,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_HOST_PORT_STR);
 #define CFGOPT_REPO1_HOST_USER                                      "repo1-host-user"
     STRING_DECLARE(CFGOPT_REPO1_HOST_USER_STR);
+#define CFGOPT_REPO1_LOCAL                                          "repo1-local"
+    STRING_DECLARE(CFGOPT_REPO1_LOCAL_STR);
 #define CFGOPT_REPO1_PATH                                           "repo1-path"
     STRING_DECLARE(CFGOPT_REPO1_PATH_STR);
 #define CFGOPT_REPO1_RETENTION_ARCHIVE                              "repo1-retention-archive"
@@ -422,7 +424,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            184
+#define CFG_OPTION_TOTAL                                            185
 
 /***********************************************************************************************************************************
 Command enum
@@ -602,6 +604,7 @@ typedef enum
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
+    cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
     cfgOptRepoRetentionArchiveType,

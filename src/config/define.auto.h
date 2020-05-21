@@ -121,6 +121,7 @@ typedef enum
     cfgDefOptRepoHostConfigPath,
     cfgDefOptRepoHostPort,
     cfgDefOptRepoHostUser,
+    cfgDefOptRepoLocal,
     cfgDefOptRepoPath,
     cfgDefOptRepoRetentionArchive,
     cfgDefOptRepoRetentionArchiveType,
