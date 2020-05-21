@@ -210,7 +210,7 @@ typedef PageHeaderData *PageHeader;
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
  * PageIsNew
- *		returns true if page has not been initialized (by PageInit)
+ *		returns true iff page has not been initialized (by PageInit)
  */
 #define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
