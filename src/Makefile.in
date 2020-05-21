@@ -135,6 +135,7 @@ SRCS = \
 	postgres/interface/v100.c \
 	postgres/interface/v110.c \
 	postgres/interface/v120.c \
+	postgres/interface/v130.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
