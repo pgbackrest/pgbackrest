@@ -180,6 +180,18 @@ Types from src/include/catalog/catversion.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_13
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202005171
+
 #elif PG_VERSION >= PG_VERSION_12
 /*
  * We could use anything we wanted for version numbers, but I recommend
@@ -366,6 +378,11 @@ Types from src/include/catalog/pg_control.h
 // PG_CONTROL_VERSION define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_13
+
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	1300
 
 #elif PG_VERSION >= PG_VERSION_12
 
@@ -737,6 +754,144 @@ typedef enum DBState
 // ControlFileData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_13
+
+/*
+ * Contents of pg_control.
+ */
+typedef struct ControlFileData
+{
+	/*
+	 * Unique system identifier --- to ensure we match up xlog files with the
+	 * installation that produced them.
+	 */
+	uint64		system_identifier;
+
+	/*
+	 * Version identifier information.  Keep these fields at the same offset,
+	 * especially pg_control_version; they won't be real useful if they move
+	 * around.  (For historical reasons they must be 8 bytes into the file
+	 * rather than immediately at the front.)
+	 *
+	 * pg_control_version identifies the format of pg_control itself.
+	 * catalog_version_no identifies the format of the system catalogs.
+	 *
+	 * There are additional version identifiers in individual files; for
+	 * example, WAL logs contain per-page magic numbers that can serve as
+	 * version cues for the WAL log.
+	 */
+	uint32		pg_control_version; /* PG_CONTROL_VERSION */
+	uint32		catalog_version_no; /* see catversion.h */
+
+	/*
+	 * System status data
+	 */
+	DBState		state;			/* see enum above */
+	pg_time_t	time;			/* time stamp of last pg_control update */
+	XLogRecPtr	checkPoint;		/* last check point record ptr */
+
+	CheckPoint	checkPointCopy; /* copy of last check point record */
+
+	XLogRecPtr	unloggedLSN;	/* current fake LSN value, for unlogged rels */
+
+	/*
+	 * These two values determine the minimum point we must recover up to
+	 * before starting up:
+	 *
+	 * minRecoveryPoint is updated to the latest replayed LSN whenever we
+	 * flush a data change during archive recovery. That guards against
+	 * starting archive recovery, aborting it, and restarting with an earlier
+	 * stop location. If we've already flushed data changes from WAL record X
+	 * to disk, we mustn't start up until we reach X again. Zero when not
+	 * doing archive recovery.
+	 *
+	 * backupStartPoint is the redo pointer of the backup start checkpoint, if
+	 * we are recovering from an online backup and haven't reached the end of
+	 * backup yet. It is reset to zero when the end of backup is reached, and
+	 * we mustn't start up before that. A boolean would suffice otherwise, but
+	 * we use the redo pointer as a cross-check when we see an end-of-backup
+	 * record, to make sure the end-of-backup record corresponds the base
+	 * backup we're recovering from.
+	 *
+	 * backupEndPoint is the backup end location, if we are recovering from an
+	 * online backup which was taken from the standby and haven't reached the
+	 * end of backup yet. It is initialized to the minimum recovery point in
+	 * pg_control which was backed up last. It is reset to zero when the end
+	 * of backup is reached, and we mustn't start up before that.
+	 *
+	 * If backupEndRequired is true, we know for sure that we're restoring
+	 * from a backup, and must see a backup-end record before we can safely
+	 * start up. If it's false, but backupStartPoint is set, a backup_label
+	 * file was found at startup but it may have been a leftover from a stray
+	 * pg_start_backup() call, not accompanied by pg_stop_backup().
+	 */
+	XLogRecPtr	minRecoveryPoint;
+	TimeLineID	minRecoveryPointTLI;
+	XLogRecPtr	backupStartPoint;
+	XLogRecPtr	backupEndPoint;
+	bool		backupEndRequired;
+
+	/*
+	 * Parameter settings that determine if the WAL can be used for archival
+	 * or hot standby.
+	 */
+	int			wal_level;
+	bool		wal_log_hints;
+	int			MaxConnections;
+	int			max_worker_processes;
+	int			max_wal_senders;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
+	bool		track_commit_timestamp;
+
+	/*
+	 * This data is used to check for hardware-architecture compatibility of
+	 * the database and the backend executable.  We need not check endianness
+	 * explicitly, since the pg_control version will surely look wrong to a
+	 * machine of different endianness, but we do need to worry about MAXALIGN
+	 * and floating-point format.  (Note: storage layout nominally also
+	 * depends on SHORTALIGN and INTALIGN, but in practice these are the same
+	 * on all architectures of interest.)
+	 *
+	 * Testing just one double value is not a very bulletproof test for
+	 * floating-point compatibility, but it will catch most cases.
+	 */
+	uint32		maxAlign;		/* alignment requirement for tuples */
+	double		floatFormat;	/* constant 1234567.0 */
+#define FLOATFORMAT_VALUE	1234567.0
+
+	/*
+	 * This data is used to make sure that configuration of this database is
+	 * compatible with the backend executable.
+	 */
+	uint32		blcksz;			/* data block size for this DB */
+	uint32		relseg_size;	/* blocks per segment of large relation */
+
+	uint32		xlog_blcksz;	/* block size within WAL files */
+	uint32		xlog_seg_size;	/* size of each WAL segment */
+
+	uint32		nameDataLen;	/* catalog name field width */
+	uint32		indexMaxKeys;	/* max number of columns in an index */
+
+	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
+	uint32		loblksize;		/* chunk size in pg_largeobject */
+
+	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
+
+	/* Are data pages protected by checksums? Zero if no checksum version */
+	uint32		data_checksum_version;
+
+	/*
+	 * Random nonce, used in authentication requests that need to proceed
+	 * based on values that are cluster-unique, like a SASL exchange that
+	 * failed at an early stage.
+	 */
+	char		mock_authentication_nonce[MOCK_AUTH_NONCE_LEN];
+
+	/* CRC of all above ... MUST BE LAST! */
+	pg_crc32c	crc;
+} ControlFileData;
 
 #elif PG_VERSION >= PG_VERSION_12
 
@@ -2005,6 +2160,10 @@ Types from src/include/access/xlog_internal.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_13
+
+#define XLOG_PAGE_MAGIC 0xD106	/* can be used as WAL version indicator */
+
 #elif PG_VERSION >= PG_VERSION_12
 
 #define XLOG_PAGE_MAGIC 0xD101	/* can be used as WAL version indicator */
@@ -2076,7 +2235,7 @@ typedef struct XLogPageHeaderData
 	 * continue on the next page.  xlp_rem_len is the number of bytes
 	 * remaining from a previous page.
 	 *
-	 * Note that xl_rem_len includes backup-block data; that is, it tracks
+	 * Note that xlp_rem_len includes backup-block data; that is, it tracks
 	 * xl_tot_len not xl_len in the initial header.  Also note that the
 	 * continuation data isn't necessarily aligned.
 	 */
