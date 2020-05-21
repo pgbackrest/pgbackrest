@@ -100,6 +100,7 @@ typedef enum
     cfgDefOptPgHostConfigPath,
     cfgDefOptPgHostPort,
     cfgDefOptPgHostUser,
+    cfgDefOptPgLocal,
     cfgDefOptPgPath,
     cfgDefOptPgPort,
     cfgDefOptPgSocketPath,

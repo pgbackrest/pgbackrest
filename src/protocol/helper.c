@@ -277,8 +277,11 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
-    // Set repo local so host settings on the remote won't accidentally be picked up
-    kvPut(optionReplace, VARSTR(CFGOPT_REPO1_LOCAL_STR), BOOL_TRUE_VAR);
+    // Set local so host settings configured on the remote will not accidentally be picked up
+    kvPut(
+        optionReplace,
+        protocolStorageType == protocolStorageTypeRepo ? VARSTR(CFGOPT_REPO1_LOCAL_STR) : VARSTR(CFGOPT_PG1_LOCAL_STR),
+        BOOL_TRUE_VAR);
 
     // Update/remove repo/pg options that are sent to the remote
     ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
