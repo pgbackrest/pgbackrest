@@ -3346,17 +3346,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
+        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Repository is local despite host settings.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "!!!"
-        )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
