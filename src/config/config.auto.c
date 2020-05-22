@@ -380,6 +380,14 @@ STRING_EXTERN(CFGOPT_PG5_HOST_USER_STR,                             CFGOPT_PG5_H
 STRING_EXTERN(CFGOPT_PG6_HOST_USER_STR,                             CFGOPT_PG6_HOST_USER);
 STRING_EXTERN(CFGOPT_PG7_HOST_USER_STR,                             CFGOPT_PG7_HOST_USER);
 STRING_EXTERN(CFGOPT_PG8_HOST_USER_STR,                             CFGOPT_PG8_HOST_USER);
+STRING_EXTERN(CFGOPT_PG1_LOCAL_STR,                                 CFGOPT_PG1_LOCAL);
+STRING_EXTERN(CFGOPT_PG2_LOCAL_STR,                                 CFGOPT_PG2_LOCAL);
+STRING_EXTERN(CFGOPT_PG3_LOCAL_STR,                                 CFGOPT_PG3_LOCAL);
+STRING_EXTERN(CFGOPT_PG4_LOCAL_STR,                                 CFGOPT_PG4_LOCAL);
+STRING_EXTERN(CFGOPT_PG5_LOCAL_STR,                                 CFGOPT_PG5_LOCAL);
+STRING_EXTERN(CFGOPT_PG6_LOCAL_STR,                                 CFGOPT_PG6_LOCAL);
+STRING_EXTERN(CFGOPT_PG7_LOCAL_STR,                                 CFGOPT_PG7_LOCAL);
+STRING_EXTERN(CFGOPT_PG8_LOCAL_STR,                                 CFGOPT_PG8_LOCAL);
 STRING_EXTERN(CFGOPT_PG1_PATH_STR,                                  CFGOPT_PG1_PATH);
 STRING_EXTERN(CFGOPT_PG2_PATH_STR,                                  CFGOPT_PG2_PATH);
 STRING_EXTERN(CFGOPT_PG3_PATH_STR,                                  CFGOPT_PG3_PATH);
@@ -429,6 +437,7 @@ STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_INCLUDE_PATH_STR,            CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_PATH_STR,                    CFGOPT_REPO1_HOST_CONFIG_PATH);
 STRING_EXTERN(CFGOPT_REPO1_HOST_PORT_STR,                           CFGOPT_REPO1_HOST_PORT);
 STRING_EXTERN(CFGOPT_REPO1_HOST_USER_STR,                           CFGOPT_REPO1_HOST_USER);
+STRING_EXTERN(CFGOPT_REPO1_LOCAL_STR,                               CFGOPT_REPO1_LOCAL);
 STRING_EXTERN(CFGOPT_REPO1_PATH_STR,                                CFGOPT_REPO1_PATH);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_STR,                   CFGOPT_REPO1_RETENTION_ARCHIVE);
 STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE_STR,              CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE);
@@ -1252,6 +1261,70 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_PG1_LOCAL)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG2_LOCAL)
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG3_LOCAL)
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG4_LOCAL)
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG5_LOCAL)
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG6_LOCAL)
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG7_LOCAL)
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG8_LOCAL)
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_PG1_PATH)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
@@ -1639,6 +1712,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_USER)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_LOCAL)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoLocal)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
