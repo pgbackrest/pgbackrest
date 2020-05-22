@@ -59,6 +59,15 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="pavel.suderevsky"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Ignore <br-option>pg-host*</br-option> and <br-option>repo-host*</br-option> options for the <cmd>remote</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                              <release-item-ideator id="andrew.lecuyer"/>
                              <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
