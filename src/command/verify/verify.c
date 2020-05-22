@@ -1,3 +1,10 @@
+/***********************************************************************************************************************************
+Verify Command
+***********************************************************************************************************************************/
+#include "build.auto.h"
+
+#include "info/infoBackup.h"
+
 /* https://github.com/pgbackrest/pgbackrest/issues/1032
 Add a command to verify the contents of the repository. By the default the command will:
 
@@ -204,19 +211,29 @@ verifyJobResult(...)
         THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 }
 
-verifyFileCompare(String *fileName ==> or INFO_BACKUP_PATH_FILE_STR)
+IoRead *
+verifyFileLoad(const String *fileName)
 {
-            // Verify that backup/archive.info and their copies are valid
-            StorageRead *read = storageNewReadP(storageRepo(), backupInfoFile);
-            IoRead *backupInfoRead = storageReadIo(read);
-            cipherBlockFilterGroupAdd(ioReadFilterGroup(backupInfoRead), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cfgOptionStrNull(cfgOptRepoCipherPass));
-            ioFilterGroupAdd(ioReadFilterGroup(backupInfoRead), cryptoHashNew(HASH_TYPE_SHA1_STR));
-            // CSHANG This needs to be inside a TRY block - might not get to the sha1sum if we can't load the file
-            InfoBackup *infoBackup = infoBackupNewLoad(backupInfoRead);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, fileName);
+    FUNCTION_TEST_END();
 
-            // This checksum is what we should use to check the main file against the copy to make sure the 2 files are identical
-            String *sha1sum = varStr(ioFilterGroupResult(backupInfoRead, CRYPTO_HASH_FILTER_TYPE_STR));
+    IoRead *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StorageRead *read = storageNewReadP(storageRepo(), fileName);
+        result = storageReadIo(read);
+        cipherBlockFilterGroupAdd(
+            ioReadFilterGroup(result), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+            cfgOptionStrNull(cfgOptRepoCipherPass));
+        ioFilterGroupAdd(ioReadFilterGroup(result), cryptoHashNew(HASH_TYPE_SHA1_STR));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
+
 
 void
 cmdVerify(void)
@@ -228,19 +245,75 @@ cmdVerify(void)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
-        String *backupInfoFile = strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE);
-// CSHANG START This will be in a function verifyFileCompare
+// CSHANG But how does this help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
         // Verify that backup/archive.info and their copies are valid
-        StorageRead *read = storageNewReadP(storageRepo(), backupInfoFile);
-        IoRead *backupInfoRead = storageReadIo(read);
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(backupInfoRead), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cfgOptionStrNull(cfgOptRepoCipherPass));
-        ioFilterGroupAdd(ioReadFilterGroup(backupInfoRead), cryptoHashNew(HASH_TYPE_SHA1_STR));
-        // CSHANG This needs to be inside a TRY block - might not get to the sha1sum if we can't load the file
-        InfoBackup *infoBackup = infoBackupNewLoad(backupInfoRead);
+        bool backupInfoValid = true;
+        TRY_BEGIN()
+        {
+            IoRead *backupInfoRead = verifyFileLoad(INFO_BACKUP_PATH_FILE_STR);
+            InfoBackup *backupInfo = infoBackupNewLoad(backupInfoRead);
+        }
+        CATCH_ANY()
+        {
+            LOG_ERROR(errorCode(), errorMessage());
+            backupInfoValid = false;
+        }
+        TRY_END();
 
-        // This checksum is what we should use to check the main file against the copy to make sure the 2 files are identical
-        String *sha1sum = varStr(ioFilterGroupResult(backupInfoRead, CRYPTO_HASH_FILTER_TYPE_STR));
-// CSHANG END
+        bool backupInfoCopyValid = true;
+        TRY_BEGIN()
+        {
+            IoRead *backupInfoReadCopy = verifyFileLoad(INFO_BACKUP_PATH_FILE_COPY_STR);
+            InfoBackup *backupInfoCopy = infoBackupNewLoad(backupInfoReadCopy);
+        CATCH_ANY()
+        {
+            LOG_ERROR(errorCode(), errorMessage());
+            backupInfoCopyValid = false;
+        }
+        TRY_END();
+
+typedef enum
+{
+    checkMain,
+    checkCopy,
+    checkBoth,
+    checkNone,
+} CheckFile;
+
+        // Assume the main file is valid unless otherwise determined
+        CheckFile checkFile = checkMain;
+
+        // If both files were readable without error, then see if their checksums match
+        if (backupInfoValid && backupInfoCopyValid)
+        {
+            // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt
+            if (!strEq(
+                    varStr(ioFilterGroupResult(backupInfoRead, CRYPTO_HASH_FILTER_TYPE_STR)),
+                    varStr(ioFilterGroupResult(backupInfoReadCopy, CRYPTO_HASH_FILTER_TYPE_STR))))
+            {
+                // CSHANG Do something here - like check them both against the archive? Not sure how to determine which one is the correct one (if any) other than maybe checking against the archive file. WHat does the infoBackupLoadFile do?
+                checkFile = checkBoth;
+            }
+        }
+        // Else if neither file was readable then bypass any checks
+        else if (!backupInfoValid && !backupInfoCopyValid)
+        {
+            checkFile = checkNone;
+        }
+        else if (!backupInfoValid)
+        {
+            checkFile = checkCopy;
+        }
+
+// CSHANG Now we need to determine if either of the archive files are readable
+        // switch (checkFile)
+        // {
+        //     case checkMain:
+        //     {
+        //         // CSHANG
+        //         break;
+        //     }
+        // }
 
 // CSHANG jobData should be preprapared list of things to check - e.g. list of backups, list of archive ids
         // Create the parallel executor
