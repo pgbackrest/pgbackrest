@@ -17,8 +17,8 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="christophe.cavallie"/>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-ideator id="christophe.cavallie"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix issue checking if file links are contained in path links.</p>
@@ -26,8 +26,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="jerome.peng"/>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-ideator id="jerome.peng"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Allow <br-option>pg-path1</br-option> to be optional for synchronous <cmd>archive-push</cmd>.</p>
@@ -35,7 +35,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>The <cmd>expire</cmd> command now checks if a stop file is present.</p>
@@ -43,7 +43,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="ctenuun"/>
+                            <release-item-ideator id="ctenuun"/>
                         </release-item-contributor-list>
 
                         <p>Handle missing reason phrase in HTTP response.</p>
@@ -51,7 +51,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="eric.radman"/>
+                            <release-item-ideator id="eric.radman"/>
                         </release-item-contributor-list>
 
                         <p>Increase buffer size for <proper>lz4</proper> compression flush.</p>
@@ -59,8 +59,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="andrew.lecuyer"/>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-ideator id="andrew.lecuyer"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix possibly missing <br-option>pg1-*</br-option> options for the <cmd>remote</cmd> command.</p>
@@ -91,7 +91,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <proper>Zstandard</proper> compression support.</p>
@@ -101,9 +101,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="stephen.frost"/>
-                             <release-item-reviewer id="david.steele"/>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-contributor id="stephen.frost"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <proper>bzip2</proper> compression support.</p>
@@ -113,7 +113,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="stefan.fercot"/>
+                            <release-item-contributor id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Add <cmd>backup</cmd>/<cmd>expire</cmd> running status to the <cmd>info</cmd> command.</p>
@@ -123,7 +123,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Expire WAL archive only when <br-option>repo-retention-archive</br-option> threshold is met.</p>
@@ -133,11 +133,11 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="brian.almeida"/>
-                             <release-item-ideator id="john.kelly"/>
-                             <release-item-contributor id="david.steele"/>
-                             <release-item-reviewer id="cynthia.shang"/>
-                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-ideator id="brian.almeida"/>
+                            <release-item-ideator id="john.kelly"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Add local <proper>MD5</proper> implementation so <proper>S3</proper> works when <proper>FIPS</proper> is enabled.</p>
@@ -145,7 +145,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p><postgres/> 13 beta1 support.</p>
@@ -155,7 +155,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Reduce <br-option>buffer-size</br-option> default to <id>1MiB</id>.</p>
@@ -163,7 +163,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Throw user-friendly error if <cmd>expire</cmd> is not run on repository host.</p>
@@ -173,7 +173,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Enforce non-null for most string options.</p>
@@ -187,7 +187,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="david.raftis"/>
+                            <release-item-contributor id="david.raftis"/>
                         </release-item-contributor-list>
 
                         <p>Remove empty subexpression from manifest regular expression.</p>
@@ -199,10 +199,10 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <!-- Actually tester, but we don't have a tag for that yet -->
-                             <release-item-reviewer id="slava.moudry"/>
-                             <release-item-reviewer id="cynthia.shang"/>
-                             <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="slava.moudry"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Non-blocking TLS implementation.</p>
@@ -210,7 +210,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Only limit backup copy size for WAL-logged files.</p>
@@ -220,8 +220,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="marc.cousin"/>
-                             <release-item-contributor id="david.steele"/>
+                            <release-item-ideator id="marc.cousin"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p><proper>TCP</proper> keep-alive options are configurable.</p>
@@ -229,7 +229,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>io-timeout</br-option> option.</p>
@@ -239,7 +239,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Simplify storage driver info and list functions.</p>
@@ -247,7 +247,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Split session functionality of <code>SocketClient</code> out into <code>SocketSession</code>.</p>
@@ -255,7 +255,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Split session functionality of <code>TlsClient</code> out into <code>TlsSession</code>.</p>
@@ -263,8 +263,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
-                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Use <code>poll()</code> instead of <code>select()</code> for monitoring socket read/write ready.</p>
@@ -272,7 +272,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Use <code>SocketSession</code>/<code>TlsSession</code> for test servers.</p>
@@ -280,7 +280,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Always throw error when <proper>OpenSSL</proper> returns <code>SSL_ERROR_SYSCALL</code>.</p>
@@ -288,7 +288,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Use <code>__noreturn_</code> on error functions when coverage testing.</p>
@@ -302,7 +302,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <proper>lz4</proper> compression support.</p>
@@ -328,8 +328,8 @@
                         <commit subject="Free temp mem context periodically in storageRemoteInfoList()."/>
 
                         <release-item-contributor-list>
-                             <release-item-ideator id="jens.wilke"/>
-                             <release-item-contributor id="david.steele"/>
+                            <release-item-ideator id="jens.wilke"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Improve performance of remote manifest build.</p>
@@ -337,8 +337,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="marc.cousin"/>
-                             <release-item-reviewer id="david.steele"/>
+                            <release-item-contributor id="marc.cousin"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fix detection of keepalive options on <proper>Linux</proper>.</p>
@@ -346,8 +346,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-contributor id="marc.cousin"/>
-                             <release-item-reviewer id="david.steele"/>
+                            <release-item-contributor id="marc.cousin"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Add configure host detection to set standards flags correctly.</p>
@@ -355,7 +355,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Remove <br-option>compress</br-option>/<br-option>compress-level</br-option> options from commands where unused.</p>
@@ -365,7 +365,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Limit backup file copy size to size reported at backup start.</p>
@@ -377,7 +377,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add infrastructure for multiple compression type support.</p>
@@ -385,7 +385,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Improve performance of <code>MEM_CONTEXT*()</code> macros.</p>
@@ -393,7 +393,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Allow storage reads to be limited by bytes.</p>
@@ -407,9 +407,9 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                             <release-item-ideator id="adam.brusselback"/>
-                             <release-item-ideator id="ejberdecia"/>
-                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-ideator id="adam.brusselback"/>
+                            <release-item-ideator id="ejberdecia"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Prevent defunct processes in asynchronous archive commands.</p>
@@ -4036,19 +4036,19 @@
                     </release-item>
                 </release-feature-list>
 
-                 <release-improvement-list>
-                     <release-item>
-                         <p>List deprecated option names in documentation and command-line help.</p>
-                     </release-item>
+                <release-improvement-list>
+                    <release-item>
+                        <p>List deprecated option names in documentation and command-line help.</p>
+                    </release-item>
 
-                     <release-item>
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="david.youatt"/>
                         </release-item-contributor-list>
 
-                         <p>Clarify that S3 buckets must be created by the user.</p>
-                     </release-item>
-                 </release-improvement-list>
+                        <p>Clarify that S3 buckets must be created by the user.</p>
+                    </release-item>
+                </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
@@ -4133,29 +4133,29 @@
                         <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
                     </release-item>
 
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-contributor id="andrew.schwartz"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrew.schwartz"/>
+                        </release-item-contributor-list>
 
-                         <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
-                     </release-item>
+                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+                    </release-item>
 
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="craig.a.james"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="craig.a.james"/>
+                        </release-item-contributor-list>
 
-                         <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
-                     </release-item>
+                        <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
+                    </release-item>
 
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="brad.nicholson"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brad.nicholson"/>
+                        </release-item-contributor-list>
 
-                         <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
-                     </release-item>
+                        <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
+                    </release-item>
 
                     <release-item>
                         <release-item-contributor-list>
@@ -4174,50 +4174,50 @@
                         <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
                     </release-item>
 
-                     <release-item>
-                         <p>Fix delta restore failing when a linked file was missing.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Fix delta restore failing when a linked file was missing.</p>
+                    </release-item>
 
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="nj.baliyan"/>
-                             <release-item-contributor id="cynthia.shang"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="nj.baliyan"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
 
-                         <p>Fix error in selective restore when only one user database exists in the cluster.</p>
-                     </release-item>
+                        <p>Fix error in selective restore when only one user database exists in the cluster.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="adam.k.sumner"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.k.sumner"/>
+                        </release-item-contributor-list>
 
-                         <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
-                     </release-item>
+                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+                    </release-item>
 
                     <release-item>
                         <p>Improve performance of HTTPS client.  Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>.  In some instances the final bytes would not be flushed until the connection was closed.</p>
                     </release-item>
 
-                     <release-item>
-                         <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+                    </release-item>
 
-                     <release-item>
-                         <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.  Remove recursive path sync functionality since it is no longer used.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.  Remove recursive path sync functionality since it is no longer used.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
-                     <release-item>
-                         <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+                    </release-item>
 
-                     <release-item>
-                         <p>Add log-level-stderr option for stanza-* commands.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Add log-level-stderr option for stanza-* commands.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
@@ -4247,21 +4247,21 @@
                 </release-improvement-list>
 
                 <release-development-list>
-                     <release-item>
-                         <p>Remove call to <file>lscpu</file> which can vary widely by build host.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Remove call to <file>lscpu</file> which can vary widely by build host.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
             <release-test-list>
                 <release-development-list>
-                     <release-item>
-                         <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
+                    </release-item>
 
-                     <release-item>
-                         <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
-                     </release-item>
+                    <release-item>
+                        <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
+                    </release-item>
 
                     <release-item>
                         <p>Disable package build tests since <id>v1</id> will no longer be packaged.  Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
@@ -4393,13 +4393,13 @@
                         <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
                     </release-item>
 
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="adam.brusselback"/>
-                         </release-item-contributor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.brusselback"/>
+                        </release-item-contributor-list>
 
-                         <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
-                     </release-item>
+                        <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
+                    </release-item>
 
                     <release-item>
                         <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes.  This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
@@ -5934,7 +5934,7 @@
 
         <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
             <release-core-list>
-                 <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+                <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
 
                 <release-bug-list>
                     <release-item>
@@ -6513,7 +6513,7 @@
         </release>
 
         <release date="2016-08-25" version="1.06" title="Backup from Standby and Bug Fixes">
-             <release-core-list>
+            <release-core-list>
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -6587,16 +6587,16 @@
                 </release-development-list>
             </release-core-list>
 
-             <release-doc-list>
-                 <release-development-list>
+            <release-doc-list>
+                <release-development-list>
                     <release-item>
                         <p>Improve host tag rendering.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
 
-             <release-test-list>
-                 <release-development-list>
+            <release-test-list>
+                <release-development-list>
                     <release-item>
                         <p>Refactor db version constants into a separate module.</p>
                     </release-item>
@@ -6609,8 +6609,8 @@
         </release>
 
         <release date="2016-08-09" version="1.05" title="Bug Fix for Tablespace Link Checking">
-             <release-core-list>
-                 <release-bug-list>
+            <release-core-list>
+                <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="chris.fort"/>
@@ -6646,13 +6646,13 @@
                     <release-item>
                         <p>Improved rendering of spaces in code blocks.</p>
                     </release-item>
-                 </release-development-list>
+                </release-development-list>
             </release-doc-list>
         </release>
 
-         <release date="2016-07-30" version="1.04" title="Various Bug Fixes">
-             <release-core-list>
-                 <release-bug-list>
+        <release date="2016-07-30" version="1.04" title="Various Bug Fixes">
+            <release-core-list>
+                <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="michael.vitale"/>
@@ -6739,8 +6739,8 @@
                 </release-development-list>
             </release-core-list>
 
-             <release-doc-list>
-                 <release-feature-list>
+            <release-doc-list>
+                <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="michael.vitale"/>
@@ -6758,7 +6758,7 @@
                     </release-item>
                 </release-feature-list>
 
-                 <release-development-list>
+                <release-development-list>
                     <release-item>
                         <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
                     </release-item>
@@ -6771,11 +6771,11 @@
 
                         <p>HTML footer dates are statically created in English in order to be reproducible.</p>
                     </release-item>
-                 </release-development-list>
+                </release-development-list>
             </release-doc-list>
 
-             <release-test-list>
-                 <release-development-list>
+            <release-test-list>
+                <release-development-list>
                     <release-item>
                         <p>Fixed a version checking issue in <file>test.pl</file>.</p>
                     </release-item>
@@ -6793,10 +6793,10 @@
                     </release-item>
                 </release-development-list>
             </release-test-list>
-         </release>
+        </release>
 
-         <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
-             <release-core-list>
+        <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
+            <release-core-list>
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -6863,10 +6863,10 @@
                         <p>Changed version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
                     </release-item>
                 </release-development-list>
-             </release-core-list>
+            </release-core-list>
 
-             <release-doc-list>
-                 <release-improvement-list>
+            <release-doc-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="adrian.vondendriesch"/>
@@ -6892,9 +6892,9 @@
                     <release-item>
                         <p>Added instructions for removing prior versions of <backrest/>.</p>
                     </release-item>
-                 </release-improvement-list>
+                </release-improvement-list>
 
-                 <release-development-list>
+                <release-development-list>
                     <release-item>
                         <p>Fixed DTD search path that did not work properly when <setting>--doc-path</setting> was used.</p>
                     </release-item>
@@ -6933,8 +6933,8 @@
                 </release-development-list>
             </release-doc-list>
 
-             <release-test-list>
-                 <release-development-list>
+            <release-test-list>
+                <release-development-list>
                     <release-item>
                         <p>Obsolete containers are removed by the <br-option>--vm-force</br-option> option.</p>
                     </release-item>
@@ -6946,13 +6946,13 @@
                     <release-item>
                         <p>Greatly reduced the quantity of Docker containers built by default.  Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
                     </release-item>
-                 </release-development-list>
-             </release-test-list>
-         </release>
+                </release-development-list>
+            </release-test-list>
+        </release>
 
-         <release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">
-             <release-core-list>
-                 <release-bug-list>
+        <release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">
+            <release-core-list>
+                <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="adrian.vondendriesch"/>
@@ -6963,15 +6963,15 @@
                     </release-item>
                 </release-bug-list>
 
-                 <release-development-list>
+                <release-development-list>
                     <release-item>
                         <p>Log directory create and file open now using FileCommon functions which produce more detailed error messages on failure.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
 
-             <release-doc-list>
-                 <release-bug-list>
+            <release-doc-list>
+                <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="christoph.berg"/>
@@ -6991,7 +6991,7 @@
                     </release-item>
                 </release-bug-list>
 
-                 <release-feature-list>
+                <release-feature-list>
                     <release-item>
                         <p>Release notes are now broken into sections so that bugs, features, and refactors are clearly delineated.  An <quote>Additional Notes</quote> section has been added for changes to documentation and the test suite that do not affect the core code.</p>
                     </release-item>
@@ -7016,7 +7016,7 @@
                     </release-item>
                 </release-feature-list>
 
-                 <release-development-list>
+                <release-development-list>
                     <release-item>
                         <p>Added an execution cache so that documentation can be generated without setting up the full container environment.  This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
                     </release-item>
@@ -7029,10 +7029,10 @@
                         <p>Lists can now be used outside of <id>p</id> and <id>text</id> tags for more flexible document structuring.</p>
                     </release-item>
                 </release-development-list>
-             </release-doc-list>
+            </release-doc-list>
 
-             <release-test-list>
-                 <release-development-list>
+            <release-test-list>
+                <release-development-list>
                     <release-item>
                         <p>Replaced overzealous <code>perl -cW</code> check which failed on Perl 5.22 with <code>perl -cw</code>.</p>
                     </release-item>
@@ -7049,12 +7049,12 @@
                         <p>Test release version against the executable using <file>change-log.xml</file> instead of <file>CHANGELOG.md</file>.</p>
                     </release-item>
                 </release-development-list>
-             </release-test-list>
-         </release>
+            </release-test-list>
+        </release>
 
-         <release date="2016-05-17" version="1.01" title="Enhanced Info, Selective Restore, and 9.6 Support">
-             <release-core-list>
-                 <release-feature-list>
+        <release date="2016-05-17" version="1.01" title="Enhanced Info, Selective Restore, and 9.6 Support">
+            <release-core-list>
+                <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="david.steele"/>
@@ -7085,15 +7085,15 @@
 
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
-                 </release-feature-list>
-             </release-core-list>
-         </release>
+                </release-feature-list>
+            </release-core-list>
+        </release>
 
-         <release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
-             <release-core-list>
-                 <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</p>
+        <release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
+            <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</p>
 
-                 <release-feature-list>
+                <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="michael.renner"/>
@@ -7165,9 +7165,9 @@
                     <release-item>
                         <p>Added <id>detail</id> log level which will output more information than <id>info</id> without being as verbose as <id>debug</id>.</p>
                     </release-item>
-                 </release-feature-list>
+                </release-feature-list>
             </release-core-list>
-         </release>
+        </release>
 
         <release date="2016-04-06" version="0.92" title="Command-line Repository Path Fix">
             <release-core-list>
