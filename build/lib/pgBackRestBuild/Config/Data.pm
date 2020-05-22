@@ -1472,23 +1472,6 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_REPO_HARDLINK =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_NAME_ALT =>
-        {
-            'hardlink' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-        },
-    },
-
     &CFGOPT_REPO_LOCAL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
