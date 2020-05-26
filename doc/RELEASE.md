@@ -152,7 +152,7 @@ git push origin integration
 
 These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
 
-Check the latest version of `automake` and see if it is > `1.16.1`:
+Check the latest version of `automake` and see if it is > `1.16.2`:
 ```
 https://git.savannah.gnu.org/gitweb/?p=automake.git
 ```
