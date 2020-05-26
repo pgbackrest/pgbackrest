@@ -1,5 +1,10 @@
 [
     {
+        "commit": "d8214e0d78ca8922eecb4da03008034c6a258b3b",
+        "date": "2020-05-26 08:11:50 -0400",
+        "subject": "v2.27: Expiration Improvements and Compression Drivers"
+    },
+    {
         "commit": "20d8c76b6cbf4d803b155680802e8dd245f3d107",
         "date": "2020-05-22 13:51:26 -0400",
         "subject": "Ignore pg-host* and repo-host* options for the remote command.",
