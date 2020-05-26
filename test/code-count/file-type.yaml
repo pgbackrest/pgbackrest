@@ -175,10 +175,6 @@ doc/xml/release.xml:
   class: doc/source
   type: xml
 
-doc/xml/test.xml:
-  class: doc/source
-  type: xml
-
 doc/xml/user-guide-index.xml:
   class: doc/source
   type: xml
@@ -519,6 +515,30 @@ src/common/assert.h:
   class: core
   type: c/h
 
+src/common/compress/bz2/common.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/bz2/compress.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/bz2/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/decompress.h:
+  class: core
+  type: c/h
+
 src/common/compress/gz/common.c:
   class: core
   type: c
@@ -579,6 +599,30 @@ src/common/compress/lz4/decompress.h:
   class: core
   type: c/h
 
+src/common/compress/zst/common.c:
+  class: core
+  type: c
+
+src/common/compress/zst/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/zst/compress.c:
+  class: core
+  type: c
+
+src/common/compress/zst/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/zst/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/zst/decompress.h:
+  class: core
+  type: c/h
+
 src/common/crypto/cipherBlock.c:
   class: core
   type: c
@@ -602,6 +646,10 @@ src/common/crypto/hash.c:
 src/common/crypto/hash.h:
   class: core
   type: c/h
+
+src/common/crypto/md5.vendor.c:
+  class: core/vendor
+  type: c
 
 src/common/debug.c:
   class: core
@@ -1200,11 +1248,11 @@ src/postgres/interface/page.c:
   type: c
 
 src/postgres/interface/pageChecksum.vendor.c:
-  class: core/auto
+  class: core/vendor
   type: c
 
 src/postgres/interface/static.vendor.h:
-  class: core/auto
+  class: core/vendor
   type: c/h
 
 src/postgres/interface/v083.c:
@@ -1255,9 +1303,9 @@ src/postgres/interface/v120.c:
   class: core
   type: c
 
-src/postgres/interface/version.vendor.h:
-  class: core/auto
-  type: c/h
+src/postgres/interface/v130.c:
+  class: core
+  type: c
 
 src/postgres/interface/version.h:
   class: core
@@ -1265,6 +1313,10 @@ src/postgres/interface/version.h:
 
 src/postgres/interface/version.intern.h:
   class: core
+  type: c/h
+
+src/postgres/interface/version.vendor.h:
+  class: core/vendor
   type: c/h
 
 src/postgres/version.h:
