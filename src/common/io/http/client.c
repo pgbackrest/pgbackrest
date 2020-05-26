@@ -319,21 +319,32 @@ httpClientRequest(
                 // Flush all writes
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
-                // Read status and make sure it starts with the correct http version
+                // Read status
                 String *status = ioReadLine(tlsSessionIoRead(this->tlsSession));
 
-                if (!strBeginsWith(status, HTTP_VERSION_STR))
-                    THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(strTrim(status)));
+                // Make sure the status ends with a CR and remove it to make error formatting easier and more accurate
+                if (!strEndsWith(status, CR_STR))
+                    THROW_FMT(FormatError, "http response status '%s' should be CR-terminated", strPtr(status));
 
-                // Now read the response code and message (and strip the trailing CR)
-                status = strSubN(status, sizeof(HTTP_VERSION), strSize(status) - sizeof(HTTP_VERSION) - 1);
+                status = strSubN(status, 0, strSize(status) - 1);
+
+                // Make sure the status is at least the minimum required length to avoid harder to interpret errors later on
+                if (strSize(status) < sizeof(HTTP_VERSION) + 4)
+                    THROW_FMT(FormatError, "http response '%s' has invalid length", strPtr(strTrim(status)));
+
+                // Make sure the status starts with the correct http version
+                 if (!strBeginsWith(status, HTTP_VERSION_STR))
+                    THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
+
+                // Now read the response code and message
+                status = strSub(status, sizeof(HTTP_VERSION));
 
                 int spacePos = strChr(status, ' ');
 
-                if (spacePos < 0)
-                    THROW_FMT(FormatError, "response status '%s' must have a space", strPtr(status));
+                if (spacePos != 3)
+                    THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strPtr(status));
 
-                this->responseCode = cvtZToUInt(strPtr(strTrim(strSubN(status, 0, (size_t)spacePos))));
+                this->responseCode = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
 
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {

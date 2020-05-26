@@ -183,6 +183,34 @@ testRun(void)
                     "unexpected eof while reading line");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("no CR at end of status");
+
+                hrnTlsServerAccept();
+
+                hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
+                hrnTlsServerReplyZ("HTTP/1.0 200 OK\n");
+
+                hrnTlsServerClose();
+
+                TEST_ERROR(
+                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    "http response status 'HTTP/1.0 200 OK' should be CR-terminated");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("status too short");
+
+                hrnTlsServerAccept();
+
+                hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
+                hrnTlsServerReplyZ("HTTP/1.0 200\r\n");
+
+                hrnTlsServerClose();
+
+                TEST_ERROR(
+                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    "http response 'HTTP/1.0 200' has invalid length");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid http version");
 
                 hrnTlsServerAccept();
@@ -208,7 +236,7 @@ testRun(void)
 
                 TEST_ERROR(
                     httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
-                    "response status '200OK' must have a space");
+                    "response status '200OK' must have a space after the status code");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("unexpected end of headers");
