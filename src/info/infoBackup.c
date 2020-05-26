@@ -182,7 +182,8 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static InfoBackup *
+/**********************************************************************************************************************************/
+InfoBackup *
 infoBackupNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
