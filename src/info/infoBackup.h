@@ -72,6 +72,9 @@ void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 // Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
+// Move to a new parent mem context
+InfoBackup *infoBackupMove(InfoBackup *this, MemContext *parentNew);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/

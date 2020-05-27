@@ -36,6 +36,7 @@ struct InfoArchive
 };
 
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
+OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
 Internal constructor
@@ -85,7 +86,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 /***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
-static InfoArchive *
+InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

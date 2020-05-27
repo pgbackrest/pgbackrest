@@ -55,6 +55,18 @@ testRun(void)
 
     const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
 
+// CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
+//
+// 1) Backup.info:
+//     - only backup.info exists (WARN) and is OK
+//     - only backup.info exists (WARN) and is NOT OK (ERROR):
+//         - checksum in file (corrupt it) does not match generated checksum
+//     - only backup.info.copy exists (WARN) and is OK
+//     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
+// 2) Local and remote tests
+// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success?
+
+
     // *****************************************************************************************************************************
     if (testBegin("cmdVerify()"))
     {
@@ -62,32 +74,22 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdVerify, argList);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write valid backup.info");
-        TEST_RESULT_VOID(cmdVerify(), "valid backup.info but missing copy");
+        const Buffer *contentLoad = BUFSTRDEF(
+            "[backrest]\n"
+            "backrest-checksum=\"BOGUS\"\n"
+            "backrest-format=5\n"
+            "backrest-version=\"2.28\"\n");
+
+        // bufCat(contentLoad, BUF(BUFSTR(backupInfoContent))); // CSHANG this does not work
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), contentLoad), "write invalid backup.info");
+
+        TEST_RESULT_VOID(cmdVerify(), "invalid backup.info checksum and missing copy");
         harnessLogResult(
+            "P00  ERROR: [026]: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'\n"
             "P00  ERROR: [055]: unable to open missing file '/home/vagrant/test/test-0/repo/backup/db/backup.info.copy' for read");
 
-        // Buffer *contentLoad = BUFSTRDEF(
-        //             "[backrest]\n"
-        //             "backrest-checksum=\"BOGUS\"\n"
-        //             "backrest-format=5\n"
-        //             "backrest-version=\"2.28\"\n");
-        //
-        // bufCat(contentLoad, BUF(BUFSTR(backupInfoContent))); // CSHANG this does not work
-        // TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write invalid backup.info");
-        //
-        // TEST_ERROR_FMT(
-        //     cmdVerify(), HostInvalidError, "expire command must be run on the repository host");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write valid backup.info");
 
-        // CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
-        //
-        // 1) Backup.info:
-        //     - only backup.info exists (WARN) and is OK
-        //     - only backup.info exists (WARN) and is NOT OK (ERROR):
-        //         - checksum in file (corrupt it) does not match generated checksum
-        //     - only backup.info.copy exists (WARN) and is OK
-        //     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
-        // 2) Local and remote tests
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

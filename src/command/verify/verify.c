@@ -290,6 +290,25 @@ cmdVerify(void)
         }
         TRY_END();
 
+        switch validateFiles(backupIo, backupcopy)
+        {
+            case validMain:
+            {
+                return the backupInfo object by moving to the previous memory context
+                break;
+            }
+            case validCopy:
+            {
+                return the backupInfoCopy object by moving to the previous memory context
+                break;
+            }
+            default:
+            {
+                return a NULL object? this is an error case but we don't want to abort until we check the archive.info
+            }
+        }
+
+
 typedef enum
 {
     checkMain,
@@ -297,6 +316,10 @@ typedef enum
     checkBoth,
     checkNone,
 } CheckFile;
+// cshang if don't have resolution, let's do hard error for now.
+// 1) if both missing - start with this being an abort
+// 2) backup info and archive info don't match - start with this being an abort. Maybe then we can still do the WAL and Backup phases anyway? Then do the wal verify and the reconciliation but tell them it's a problem.
+// 3) if backup.info is missing but have archive, at least check the archive? or just stop for now and see if we can reconcile
 
         // Assume the main file is valid unless otherwise determined
         CheckFile checkBackupInfo = checkMain;
@@ -312,21 +335,24 @@ if (backupInfo != NULL && backupInfoCopy != NULL)
                     varStr(ioFilterGroupResult(ioReadFilterGroup(backupInfoRead), CRYPTO_HASH_FILTER_TYPE_STR)),
                     varStr(ioFilterGroupResult(ioReadFilterGroup(backupInfoReadCopy), CRYPTO_HASH_FILTER_TYPE_STR))))
             {
+                LOG_WARN copy doesn't match backup.info
+                Have to trust backup.info (not copy)
 // CSHANG If they don't match each other, then one of them should have blown up but if not it means each individual file has a valid checksum so then how will I know which is valid? So I think this should be an error I must assume neither is valid if they are files that have valid checksums. But maybe can check them both against the archive? Not sure how to determine which one is the correct one (if any) other than maybe checking against the archive file.
                 checkBackupInfo = checkBoth;
             }
             else
             {
+                // CSHANG NO we want this all in a function and then we would move to the prior mem context the thing(s) we want to hkeep for the result.
                 // Free the copy as it is the same as the main so do not need it in memory
                 infoBackupFree(backupInfoReadCopy);
-                // CSHANG But what about IoRead? I don't see and IoReadFree so how to remove this?
+
             }
 
         }
         // Else if neither file was readable then bypass any checks
         else if (backupInfoInvalid != 0 && backupInfoCopyInvalid != 0)
         {
-// CSHANG But since we're trapping the error do we need to free it with infoBackupFree(InfoBackup *this);?
+// CSHANG But since we're trapping the error do we need to free it with infoBackupFree(InfoBackup *this);? NO if we call this within a memcontext then can move it (need new functions: infoBackupMove, infoArchiveMove
             checkBackupInfo = checkNone;
         }
         else if (backupInfoInvalid != 0)

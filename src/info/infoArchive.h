@@ -32,6 +32,7 @@ Archive info filename
 Constructors
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
+InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Functions
@@ -39,6 +40,9 @@ Functions
 // Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
+
+// Move to a new parent mem context
+InfoArchive *infoArchiveMove(InfoArchive *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
