@@ -2911,10 +2911,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository account.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Azure account used to store the repository."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2963,10 +2963,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure TLS CA File.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Use a CA file other than the system default."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3015,10 +3015,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure TLS CA Path.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Use a CA path other than the system default."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3067,10 +3067,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository container.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Azure container used to store the repository.\n"
+            "\n"
+            "pgBackRest repositories can be stored in the container root by setting repo-path=/ but it is usually best to specify "
+                "a prefix, such as /repo, so logs and other Azure-generated content can also be stored in the container."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3119,10 +3122,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository host.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Connect to a host other than the default. This is typically used for testing."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3171,10 +3174,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository shared key.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Azure shared key used to access the container."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3223,10 +3226,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server port.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Port to use when connecting to the default server (or host if specified). This is typically used for testing."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3277,10 +3280,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("!!!.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Verify Azure repository server certificate.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Disables verification of the Azure server certificate. This should only be used for testing or other scenarios where "
+                "a certificate has been self-signed."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
