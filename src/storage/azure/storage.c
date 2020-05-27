@@ -25,6 +25,12 @@ Storage type
 STRING_EXTERN(STORAGE_AZURE_TYPE_STR,                               STORAGE_AZURE_TYPE);
 
 /***********************************************************************************************************************************
+Azure default hosts
+***********************************************************************************************************************************/
+#define AZURE_HOST                                                  "core.windows.net"
+#define AZURE_BLOB_HOST                                             "blob." AZURE_HOST
+
+/***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
@@ -269,85 +275,55 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
             if (!httpClientResponseCodeOk(httpClient) &&
                 (!param.allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
             {
-                // // If there are retries remaining and a response parse it as XML to extract the Azure error code
-                // if (response != NULL && retryRemaining > 0)
-                // {
-                //     // Attempt to parse the XML and extract the Azure error code
-                //     TRY_BEGIN()
-                //     {
-                //         XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(response));
-                //         const String *errorCode = xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_CODE_STR, true));
-                //
-                //         if (strEq(errorCode, AZURE_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
-                //         {
-                //             LOG_DEBUG_FMT(
-                //                 "retry %s: %s", strPtr(errorCode),
-                //                 strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_MESSAGE_STR, true))));
-                //
-                //             retryRemaining--;
-                //             done = false;
-                //         }
-                //     }
-                //     // On failure just drop through and report the error as usual
-                //     CATCH_ANY()
-                //     {
-                //     }
-                //     TRY_END();
-                // }
+                // General error message
+                String *error = strNewFmt(
+                    "Azure request failed with %u: %s", httpClientResponseCode(httpClient),
+                    strPtr(httpClientResponseMessage(httpClient)));
 
-                // If not done then retry instead of reporting the error
-                if (done)
+                // Output uri/query
+                strCat(error, "\n*** URI/Query ***:");
+
+                strCatFmt(error, "\n%s %s", strPtr(verb), strPtr(httpUriEncode(param.uri, true)));
+
+                if (param.query != NULL)
+                    strCatFmt(error, "?%s", strPtr(httpQueryRender(param.query)));
+
+                // Output request headers
+                const StringList *requestHeaderList = httpHeaderList(requestHeader);
+
+                strCat(error, "\n*** Request Headers ***:");
+
+                for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
                 {
-                    // General error message
-                    String *error = strNewFmt(
-                        "Azure request failed with %u: %s", httpClientResponseCode(httpClient),
-                        strPtr(httpClientResponseMessage(httpClient)));
+                    const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
 
-                    // Output uri/query
-                    strCat(error, "\n*** URI/Query ***:");
-
-                    strCatFmt(error, "\n%s %s", strPtr(verb), strPtr(httpUriEncode(param.uri, true)));
-
-                    if (param.query != NULL)
-                        strCatFmt(error, "?%s", strPtr(httpQueryRender(param.query)));
-
-                    // Output request headers
-                    const StringList *requestHeaderList = httpHeaderList(requestHeader);
-
-                    strCat(error, "\n*** Request Headers ***:");
-
-                    for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
-                    {
-                        const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
-
-                        strCatFmt(
-                            error, "\n%s: %s", strPtr(key),
-                            httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
-                                "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
-                    }
-
-                    // Output response headers
-                    const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
-                    const StringList *responseHeaderList = httpHeaderList(responseHeader);
-
-                    if (strLstSize(responseHeaderList) > 0)
-                    {
-                        strCat(error, "\n*** Response Headers ***:");
-
-                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
-                                responseHeaderIdx++)
-                        {
-                            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-                            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
-                        }
-                    }
-
-                    // If there was content then output it
-                    if (response!= NULL)
-                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
-
-                    THROW(ProtocolError, strPtr(error));
+                    strCatFmt(
+                        error, "\n%s: %s", strPtr(key),
+                        httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
+                            "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
                 }
+
+                // Output response headers
+                const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
+                const StringList *responseHeaderList = httpHeaderList(responseHeader);
+
+                if (strLstSize(responseHeaderList) > 0)
+                {
+                    strCat(error, "\n*** Response Headers ***:");
+
+                    for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
+                            responseHeaderIdx++)
+                    {
+                        const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
+                        strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+                    }
+                }
+
+                // If there was content then output it
+                if (response!= NULL)
+                    strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
+
+                THROW(ProtocolError, strPtr(error));
             }
             else
             {
@@ -656,45 +632,7 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 typedef struct StorageAzurePathRemoveData
 {
     const String *path;
-    // MemContext *memContext;                                         // Mem context to create xml document in
-    // unsigned int size;                                              // Size of delete request
-    // XmlDocument *xml;                                               // Delete request
 } StorageAzurePathRemoveData;
-
-// static void
-// storageAzurePathRemoveInternal(StorageAzure *this, XmlDocument *request)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
-//         FUNCTION_TEST_PARAM(XML_DOCUMENT, request);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(request != NULL);
-//
-//     Buffer *response = storageAzureRequest(
-//         this, HTTP_VERB_POST_STR, FSLASH_STR, NULL, httpQueryAdd(httpQueryNew(), AZURE_QUERY_DELETE_STR, EMPTY_STR),
-//         xmlDocumentBuf(request), true, false).response;
-//
-//     // Nothing is returned when there are no errors
-//     if (response != NULL)
-//     {
-//         XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), AZURE_XML_TAG_ERROR_STR);
-//
-//         if (xmlNodeLstSize(errorList) > 0)
-//         {
-//             XmlNode *error = xmlNodeLstGet(errorList, 0);
-//
-//             THROW_FMT(
-//                 FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-//                 strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_KEY_STR, true))),
-//                 strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_CODE_STR, true))),
-//                 strPtr(xmlNodeContent(xmlNodeChild(error, AZURE_XML_TAG_MESSAGE_STR, true))));
-//         }
-//     }
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
 
 static void
 storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
@@ -717,33 +655,6 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     {
         StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
         storageInterfaceRemoveP(this, strNewFmt("%s/%s", strPtr(data->path), strPtr(name)));
-        //
-        // // If there is something to delete then create the request
-        // if (data->xml == NULL)
-        // {
-        //     MEM_CONTEXT_BEGIN(data->memContext)
-        //     {
-        //         data->xml = xmlDocumentNew(AZURE_XML_TAG_DELETE_STR);
-        //         xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_QUIET_STR), TRUE_STR);
-        //     }
-        //     MEM_CONTEXT_END();
-        // }
-        //
-        // // Add to delete list
-        // xmlNodeContentSet(
-        //     xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), AZURE_XML_TAG_OBJECT_STR), AZURE_XML_TAG_KEY_STR),
-        //     xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_KEY_STR, true)));
-        // data->size++;
-        //
-        // // Delete list when it is full
-        // if (data->size == this->deleteMax)
-        // {
-        //     storageAzurePathRemoveInternal(this, data->xml);
-        //
-        //     xmlDocumentFree(data->xml);
-        //     data->xml = NULL;
-        //     data->size = 0;
-        // }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -768,9 +679,6 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
     {
         StorageAzurePathRemoveData data = {.path = path};
         storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
-        //
-        // if (data.xml != NULL)
-        //     storageAzurePathRemoveInternal(this, data.xml);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -847,7 +755,7 @@ storageAzureNew(
             .account = strDup(account),
             .key = strDup(key),
             .blockSize = blockSize,
-            .host = host == NULL ? strNewFmt("%s.blob.core.windows.net", strPtr(account)) : host,
+            .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strPtr(account)) : host,
             .uriPrefix = host == NULL ?
                 strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),
         };
