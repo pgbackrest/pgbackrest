@@ -322,21 +322,21 @@ httpClientRequest(
                 // Read status
                 String *status = ioReadLine(tlsSessionIoRead(this->tlsSession));
 
-                // Make sure the status ends with a CR and remove it to make error formatting easier and more accurate
+                // Check status ends with a CR and remove it to make error formatting easier and more accurate
                 if (!strEndsWith(status, CR_STR))
                     THROW_FMT(FormatError, "http response status '%s' should be CR-terminated", strPtr(status));
 
                 status = strSubN(status, 0, strSize(status) - 1);
 
-                // Make sure the status is at least the minimum required length to avoid harder to interpret errors later on
+                // Check status is at least the minimum required length to avoid harder to interpret errors later on
                 if (strSize(status) < sizeof(HTTP_VERSION) + 4)
                     THROW_FMT(FormatError, "http response '%s' has invalid length", strPtr(strTrim(status)));
 
-                // Make sure the status starts with the correct http version
+                // Check status starts with the correct http version
                  if (!strBeginsWith(status, HTTP_VERSION_STR))
                     THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
 
-                // Now read the response code and message
+                // Read status code
                 status = strSub(status, sizeof(HTTP_VERSION));
 
                 int spacePos = strChr(status, ' ');
@@ -346,6 +346,7 @@ httpClientRequest(
 
                 this->responseCode = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
 
+                // Read reason phrase. A missing reason phrase will be represented as an empty string.
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {
                     this->responseMessage = strSub(status, (size_t)spacePos + 1);
