@@ -2963,7 +2963,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure TLS CA File.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA file.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use a CA file other than the system default."
@@ -3015,7 +3015,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure TLS CA Path.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA path.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use a CA path other than the system default."
@@ -3280,7 +3280,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Verify Azure repository server certificate.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server certificate verify.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Disables verification of the Azure server certificate. This should only be used for testing or other scenarios where "
