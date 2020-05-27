@@ -12,7 +12,7 @@ Add a command to verify the contents of the repository. By the default the comma
     * Verify that backup/archive.info and their copies are valid
         - May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
         - want to WARN if only one exists
-        - If backup.info/copy AND/OR archive.info/copy is missing then do not error. ONLY error if encrypted since we can't read the archive dir or backup dirs
+        - If backup.info/copy AND/OR archive.info/copy is missing then do not abort. ONLY error and abort if encrypted since we can't read the archive dir or backup dirs
         - checkStanzaInfoPg() makes sure the archive and backup info files (not copies just that one or the other) exist and are valid for the database version - BUT the db being available is not allowed because restore doesn't require it - so maybe just check archive and backup info DB sections match each other. BUT this throws an error if can't open one or the other - so would need to catch this and do LOG_ERROR() - maybe prefix with VERIFY-ERROR - or just take out the conditions and check for what we need OR maybe call checkStanzaInfo
         - We should probably check archive and backup history lists match (expire checks that the backup.info history contains at least the same history as archive.info (it can have more)) since we need to get backup db-id needs to be able to translate exactly to the archiveId (i.e. db-id=2, db-version=9.6 in backu.info must translate to archiveId 9.6-2.
         - If archive-copy set the WAL can be in the backup dirs so just because archive.info is missing, don't want to error
@@ -222,6 +222,8 @@ verifyFileLoad(const String *fileName)
         FUNCTION_TEST_PARAM(STRING, fileName);
     FUNCTION_TEST_END();
 
+// CSHANG But how does this type of reading help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
+
     // Read the file and error if missing
     StorageRead *read = storageNewReadP(storageRepo(), fileName);
     IoRead *result = storageReadIo(read);
@@ -244,34 +246,34 @@ cmdVerify(void)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
-// CSHANG But how does this help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
+
         // Verify that backup/archive.info and their copies are valid
-        bool backupInfoValid = true;
-        bool backupInfoCopyValid = true;
+        int backupInfoInvalid = 0;
+        int backupInfoCopyInvalid = 0;
         InfoBackup *backupInfo = NULL;
         InfoBackup *backupInfoCopy = NULL;
         IoRead *backupInfoRead = NULL;
         IoRead *backupInfoReadCopy = NULL;
 
-        TRY_BEGIN()
-        {
 /* CSHANG So here we are checking
     1) the file has a valid checksum (i.e. it contains a checksum within the file and that matches the checksum generated through infoBackupNewLoad)
     2) If the file is encrypted and can read it (else CryptoError)
     3) Does the file have a history list? And if so, does it include a db-id from the [db] (current) section?
 
-    What we are not checking, is that the [db] section matches the current PG - but we really can't do that since we can't require a pgControl anywhere.
-
-    If we need to
+    What we are not checking, is that the [db] section matches the current PG - but we really can't do that since we can't require a pgControl anywhere. But we can check it with the archive.info if there is such a file
 */
+        TRY_BEGIN()
+        {
             backupInfoRead = verifyFileLoad(INFO_BACKUP_PATH_FILE_STR);
             backupInfo = infoBackupNewLoad(backupInfoRead);
         }
         CATCH_ANY()
         {
-            LOG_ERROR(errorCode(), errorMessage());
-            backupInfoValid = false;
-            // CSHANG May need to save the error code since if it is a CryptoError then we can't really continue - but maybe can continue with archive? Maybe check archive too and if crypto error for both then we really do error and stop processing the verify command...
+            // CSHANG Saving the error code since if it is a CryptoError then we can't really continue - but maybe can continue with
+            // archive? Maybe check archive too and if crypto error for both then we really do error and stop processing the verify
+            // command...Also if only one file is missing and the other is valid, then we should probably change to be a WARN not error
+            backupInfoInvalid = errorCode();
+            LOG_ERROR(backupInfoInvalid, errorMessage());
         }
         TRY_END();
 
@@ -282,8 +284,9 @@ cmdVerify(void)
         }
         CATCH_ANY()
         {
-            LOG_ERROR(errorCode(), errorMessage());
-            backupInfoCopyValid = false;
+            backupInfoCopyInvalid = errorCode();
+            // CSHANG May want to trap "missing file" and report as WARN if the backupInfoValid is true?
+            LOG_ERROR(backupInfoCopyInvalid, errorMessage());
         }
         TRY_END();
 
@@ -296,43 +299,77 @@ typedef enum
 } CheckFile;
 
         // Assume the main file is valid unless otherwise determined
-        CheckFile checkFile = checkMain;
+        CheckFile checkBackupInfo = checkMain;
 // CSHANG this check is just to get the tests to not complain about not using the infoBackup object initially and will be removed
 if (backupInfo != NULL && backupInfoCopy != NULL)
 {
 
         // If both files were readable without error, then see if their checksums match
-        if (backupInfoValid && backupInfoCopyValid)
+        if (backupInfoInvalid == 0 && backupInfoCopyInvalid == 0)
         {
             // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt
             if (!strEq(
                     varStr(ioFilterGroupResult(ioReadFilterGroup(backupInfoRead), CRYPTO_HASH_FILTER_TYPE_STR)),
                     varStr(ioFilterGroupResult(ioReadFilterGroup(backupInfoReadCopy), CRYPTO_HASH_FILTER_TYPE_STR))))
             {
-// CSHANG If they don't match each other, then one of them should have blown up but if not it means each individual file has a valid checksum so then how will I know which is valid? So I think this should be an error I must assume neither is valid if they are files that have valid checksums.
-                // CSHANG Do something here - like check them both against the archive? Not sure how to determine which one is the correct one (if any) other than maybe checking against the archive file. WHat does the infoBackupLoadFile do? If it loads just the main one in this instance, then we should log the issue and use the main to compare with archive.info
-                checkFile = checkBoth;
+// CSHANG If they don't match each other, then one of them should have blown up but if not it means each individual file has a valid checksum so then how will I know which is valid? So I think this should be an error I must assume neither is valid if they are files that have valid checksums. But maybe can check them both against the archive? Not sure how to determine which one is the correct one (if any) other than maybe checking against the archive file.
+                checkBackupInfo = checkBoth;
             }
+            else
+            {
+                // Free the copy as it is the same as the main so do not need it in memory
+                infoBackupFree(backupInfoReadCopy);
+                // CSHANG But what about IoRead? I don't see and IoReadFree so how to remove this?
+            }
+
         }
         // Else if neither file was readable then bypass any checks
-        else if (!backupInfoValid && !backupInfoCopyValid)
+        else if (backupInfoInvalid != 0 && backupInfoCopyInvalid != 0)
         {
-            checkFile = checkNone;
+// CSHANG But since we're trapping the error do we need to free it with infoBackupFree(InfoBackup *this);?
+            checkBackupInfo = checkNone;
         }
-        else if (!backupInfoValid)
+        else if (backupInfoInvalid != 0)
         {
-            checkFile = checkCopy;
+            checkBackupInfo = checkCopy;
         }
-if (checkFile != checkNone) LOG_WARN("TEMP LOGGING"); // CSHANG remove
+if (checkBackupInfo != checkNone) LOG_WARN("TEMP LOGGING"); // CSHANG remove
+
 // CSHANG Now we need to determine if either of the archive files are readable
-        // switch (checkFile)
-        // {
-        //     case checkMain:
-        //     {
-        //         // CSHANG
-        //         break;
-        //     }
-        // }
+        int archiveInfoInvalid = 0;
+        int archiveInfoCopyInvalid = 0;
+        InfoBackup *archiveInfo = NULL;
+        InfoBackup *archiveInfoCopy = NULL;
+        IoRead *archiveInfoRead = NULL;
+        IoRead *archiveInfoReadCopy = NULL;
+
+        TRY_BEGIN()
+        {
+            archiveInfoRead = verifyFileLoad(INFO_BACKUP_PATH_FILE_STR);
+            archiveInfo = infoArchiveNewLoad(archiveInfoRead);
+        }
+        CATCH_ANY()
+        {
+            // CSHANG Saving the error code since if it is a CryptoError then we can't really continue - but maybe can continue with
+            // archive? Maybe check archive too and if crypto error for both then we really do error and stop processing the verify
+            // command...Also if only one file is missing and the other is valid, then we should probably change to be a WARN not error
+            archiveInfoInvalid = errorCode();
+            LOG_ERROR(archiveInfoInvalid, errorMessage());
+        }
+        TRY_END();
+
+        TRY_BEGIN()
+        {
+            archiveInfoReadCopy = verifyFileLoad(INFO_BACKUP_PATH_FILE_COPY_STR);
+            archiveInfoCopy = infoBackupNewLoad(archiveInfoReadCopy);
+        }
+        CATCH_ANY()
+        {
+            archiveInfoCopyInvalid = errorCode();
+            // CSHANG May want to trap "missing file" and report as WARN if the archiveInfoValid is true?
+            LOG_ERROR(archiveInfoCopyInvalid, errorMessage());
+        }
+        TRY_END();
 
 // CSHANG jobData should be preprapared list of things to check - e.g. list of backups, list of archive ids
         // // Create the parallel executor
