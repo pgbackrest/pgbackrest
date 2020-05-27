@@ -286,6 +286,7 @@ unit:
           common/crypto/cipherBlock: full
           common/crypto/common: full
           common/crypto/hash: full
+          common/crypto/md5.vendor: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec

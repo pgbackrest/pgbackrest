@@ -200,6 +200,8 @@ use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_FULL_TYPE                        => CFGDEF_PREFIX_REPO . '-retention-full-type';
 
 # Repository Host
+use constant CFGOPT_REPO_LOCAL                                      => CFGDEF_PREFIX_REPO . '-local';
+
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
 use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_REPO_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
@@ -271,6 +273,8 @@ use constant CFGDEF_INDEX_PG                                        => 8;
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
+
+use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
 use constant CFGOPT_PG_HOST                                         => CFGDEF_PREFIX_PG . '-host';
 use constant CFGOPT_PG_HOST_CMD                                     => CFGOPT_PG_HOST . '-cmd';
@@ -1105,7 +1109,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
-        &CFGDEF_DEFAULT => 4194304,
+        &CFGDEF_DEFAULT => 1048576,
         &CFGDEF_ALLOW_LIST =>
         [
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN,
@@ -1480,17 +1484,14 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_REPO_HOST =>
+    &CFGOPT_REPO_LOCAL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_NAME_ALT =>
-        {
-            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1525,6 +1526,25 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_REPO_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_LOCAL,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_LOCAL,
+            &CFGDEF_DEPEND_LIST => [false],
         },
     },
 
@@ -2441,18 +2461,14 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_PG_HOST =>
+    &CFGOPT_PG_LOCAL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_NAME_ALT =>
-        {
-            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-            'db?-host' => {&CFGDEF_RESET => false},
-        },
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>
@@ -2475,6 +2491,26 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_PG_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-host' => {&CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_PG_LOCAL,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_LOCAL,
+            &CFGDEF_DEPEND_LIST => [false],
         },
     },
 

@@ -5,7 +5,7 @@ Test Common Functions and Definitions for Backup and Expire Commands
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "postgres/interface.h"
-#include "postgres/interface/static.auto.h"
+#include "postgres/interface/static.vendor.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************

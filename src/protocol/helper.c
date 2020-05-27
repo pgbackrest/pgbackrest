@@ -277,7 +277,14 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
+    // Set local so host settings configured on the remote will not accidentally be picked up
+    kvPut(
+        optionReplace,
+        protocolStorageType == protocolStorageTypeRepo ? VARSTR(CFGOPT_REPO1_LOCAL_STR) : VARSTR(CFGOPT_PG1_LOCAL_STR),
+        BOOL_TRUE_VAR);
+
     // Update/remove repo/pg options that are sent to the remote
+    ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
@@ -285,7 +292,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        const String *optionDefName = STR(cfgDefOptionName(cfgOptionDefIdFromId(optionId)));
+        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+        const String *optionDefName = STR(cfgDefOptionName(optionDefId));
         bool remove = false;
 
         // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
@@ -308,10 +316,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         }
         else if (strBeginsWith(optionDefName, pgPrefix))
         {
-            // Remove pg options when the remote type is repo since they won't be used
+            // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = true;
+                remove = !cfgDefOptionRequired(commandDefId, optionDefId) || cfgDefOptionDefault(commandDefId, optionDefId) != NULL;
             }
             // Else move/remove pg options with index > 0 since they won't be used
             else if (cfgOptionIndex(optionId) > 0)

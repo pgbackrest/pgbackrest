@@ -465,7 +465,7 @@ testRun(void)
             "option-archive-check=true\n"
             "option-archive-copy=false\n"
             "option-backup-standby=false\n"
-            "option-buffer-size=4194304\n"
+            "option-buffer-size=1048576\n"
             "option-checksum-page=false\n"
             "option-compress=true\n"
             "option-compress-level=6\n"

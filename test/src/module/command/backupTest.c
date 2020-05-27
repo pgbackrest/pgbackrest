@@ -9,7 +9,7 @@ Test Backup Command
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
-#include "postgres/interface/static.auto.h"
+#include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 

@@ -149,6 +149,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG1_HOST_PORT_STR);
 #define CFGOPT_PG1_HOST_USER                                        "pg1-host-user"
     STRING_DECLARE(CFGOPT_PG1_HOST_USER_STR);
+#define CFGOPT_PG1_LOCAL                                            "pg1-local"
+    STRING_DECLARE(CFGOPT_PG1_LOCAL_STR);
 #define CFGOPT_PG1_PATH                                             "pg1-path"
     STRING_DECLARE(CFGOPT_PG1_PATH_STR);
 #define CFGOPT_PG1_PORT                                             "pg1-port"
@@ -171,6 +173,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG2_HOST_PORT_STR);
 #define CFGOPT_PG2_HOST_USER                                        "pg2-host-user"
     STRING_DECLARE(CFGOPT_PG2_HOST_USER_STR);
+#define CFGOPT_PG2_LOCAL                                            "pg2-local"
+    STRING_DECLARE(CFGOPT_PG2_LOCAL_STR);
 #define CFGOPT_PG2_PATH                                             "pg2-path"
     STRING_DECLARE(CFGOPT_PG2_PATH_STR);
 #define CFGOPT_PG2_PORT                                             "pg2-port"
@@ -193,6 +197,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG3_HOST_PORT_STR);
 #define CFGOPT_PG3_HOST_USER                                        "pg3-host-user"
     STRING_DECLARE(CFGOPT_PG3_HOST_USER_STR);
+#define CFGOPT_PG3_LOCAL                                            "pg3-local"
+    STRING_DECLARE(CFGOPT_PG3_LOCAL_STR);
 #define CFGOPT_PG3_PATH                                             "pg3-path"
     STRING_DECLARE(CFGOPT_PG3_PATH_STR);
 #define CFGOPT_PG3_PORT                                             "pg3-port"
@@ -215,6 +221,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG4_HOST_PORT_STR);
 #define CFGOPT_PG4_HOST_USER                                        "pg4-host-user"
     STRING_DECLARE(CFGOPT_PG4_HOST_USER_STR);
+#define CFGOPT_PG4_LOCAL                                            "pg4-local"
+    STRING_DECLARE(CFGOPT_PG4_LOCAL_STR);
 #define CFGOPT_PG4_PATH                                             "pg4-path"
     STRING_DECLARE(CFGOPT_PG4_PATH_STR);
 #define CFGOPT_PG4_PORT                                             "pg4-port"
@@ -237,6 +245,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG5_HOST_PORT_STR);
 #define CFGOPT_PG5_HOST_USER                                        "pg5-host-user"
     STRING_DECLARE(CFGOPT_PG5_HOST_USER_STR);
+#define CFGOPT_PG5_LOCAL                                            "pg5-local"
+    STRING_DECLARE(CFGOPT_PG5_LOCAL_STR);
 #define CFGOPT_PG5_PATH                                             "pg5-path"
     STRING_DECLARE(CFGOPT_PG5_PATH_STR);
 #define CFGOPT_PG5_PORT                                             "pg5-port"
@@ -259,6 +269,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG6_HOST_PORT_STR);
 #define CFGOPT_PG6_HOST_USER                                        "pg6-host-user"
     STRING_DECLARE(CFGOPT_PG6_HOST_USER_STR);
+#define CFGOPT_PG6_LOCAL                                            "pg6-local"
+    STRING_DECLARE(CFGOPT_PG6_LOCAL_STR);
 #define CFGOPT_PG6_PATH                                             "pg6-path"
     STRING_DECLARE(CFGOPT_PG6_PATH_STR);
 #define CFGOPT_PG6_PORT                                             "pg6-port"
@@ -281,6 +293,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG7_HOST_PORT_STR);
 #define CFGOPT_PG7_HOST_USER                                        "pg7-host-user"
     STRING_DECLARE(CFGOPT_PG7_HOST_USER_STR);
+#define CFGOPT_PG7_LOCAL                                            "pg7-local"
+    STRING_DECLARE(CFGOPT_PG7_LOCAL_STR);
 #define CFGOPT_PG7_PATH                                             "pg7-path"
     STRING_DECLARE(CFGOPT_PG7_PATH_STR);
 #define CFGOPT_PG7_PORT                                             "pg7-port"
@@ -303,6 +317,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG8_HOST_PORT_STR);
 #define CFGOPT_PG8_HOST_USER                                        "pg8-host-user"
     STRING_DECLARE(CFGOPT_PG8_HOST_USER_STR);
+#define CFGOPT_PG8_LOCAL                                            "pg8-local"
+    STRING_DECLARE(CFGOPT_PG8_LOCAL_STR);
 #define CFGOPT_PG8_PATH                                             "pg8-path"
     STRING_DECLARE(CFGOPT_PG8_PATH_STR);
 #define CFGOPT_PG8_PORT                                             "pg8-port"
@@ -361,6 +377,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_HOST_PORT_STR);
 #define CFGOPT_REPO1_HOST_USER                                      "repo1-host-user"
     STRING_DECLARE(CFGOPT_REPO1_HOST_USER_STR);
+#define CFGOPT_REPO1_LOCAL                                          "repo1-local"
+    STRING_DECLARE(CFGOPT_REPO1_LOCAL_STR);
 #define CFGOPT_REPO1_PATH                                           "repo1-path"
     STRING_DECLARE(CFGOPT_REPO1_PATH_STR);
 #define CFGOPT_REPO1_RETENTION_ARCHIVE                              "repo1-retention-archive"
@@ -438,7 +456,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            192
+#define CFG_OPTION_TOTAL                                            201
 
 /***********************************************************************************************************************************
 Command enum
@@ -569,6 +587,14 @@ typedef enum
     cfgOptPgHostUser6,
     cfgOptPgHostUser7,
     cfgOptPgHostUser8,
+    cfgOptPgLocal,
+    cfgOptPgLocal2,
+    cfgOptPgLocal3,
+    cfgOptPgLocal4,
+    cfgOptPgLocal5,
+    cfgOptPgLocal6,
+    cfgOptPgLocal7,
+    cfgOptPgLocal8,
     cfgOptPgPath,
     cfgOptPgPath2,
     cfgOptPgPath3,
@@ -626,6 +652,7 @@ typedef enum
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
+    cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
     cfgOptRepoRetentionArchiveType,
