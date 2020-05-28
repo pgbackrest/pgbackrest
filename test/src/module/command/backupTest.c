@@ -569,7 +569,7 @@ testRun(void)
 
         // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
         // where a file grows while a backup is running.
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile!!!"));
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile###"));
 
         TEST_ASSIGN(
             result,
@@ -611,7 +611,7 @@ testRun(void)
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
-            "{\"out\":[1,12,12,\"719e82b52966b075c1ee276547e924179628fe69\",{\"align\":false,\"valid\":false}]}\n",
+            "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
             "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -639,7 +639,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
         varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("719e82b52966b075c1ee276547e924179628fe69"));   // pgFileChecksum
+        varLstAdd(paramList, varNewStrZ("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
@@ -653,7 +653,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"719e82b52966b075c1ee276547e924179628fe69\",null]}\n", "    check result");
+            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -681,9 +681,9 @@ testRun(void)
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69", "TEST");
+        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69") &&
+            (strEqZ(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
