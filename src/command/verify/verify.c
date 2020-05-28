@@ -4,6 +4,9 @@ Verify Command
 #include "build.auto.h"
 
 #include "common/crypto/cipherBlock.h"
+#include "common/debug.h"
+#include "common/log.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 
 /* https://github.com/pgbackrest/pgbackrest/issues/1032
@@ -238,18 +241,18 @@ verifyFileLoad(const String *fileName)
 /***********************************************************************************************************************************
 Get status of info file in repository
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
+#define FUNCTION_LOG_VERIFY_INFO_FILE_RESULT_TYPE                                                                                  \
     VerifyInfoFile
-#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
+#define FUNCTION_LOG_VERIFY_INFO_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                     \
     objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
 
 typedef struct VerifyInfoFile
 {
     InfoBackup *backup;                                             // Backup.info file contents
     InfoArchive *archive;                                           // Archive.info file contents
-    String *checksum;                                               // File checksum
-    int errorCode;
-    String *errorMessage;
+    const String *checksum;                                         // File checksum
+    int errorCode;                                                  // Error code else 0 for no error
+    const char *errorMessage;                                       // Error message else NULL for no error
 } VerifyInfoFile;
 
 static VerifyInfoFile
@@ -261,16 +264,20 @@ verifyInfoFile(const String *infoPathFile)
 
     ASSERT(infoPathFile != NULL);
 
-    VerifyInfoFile result = NULL;
+    VerifyInfoFile result = {.errorCode = 0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *checksum = NULL;
+
         TRY_BEGIN()
         {
             IoRead *infoRead = verifyFileLoad(infoPathFile);
-            result.checksum = varStr(ioFilterGroupResult(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE_STR));
+// CSHANG getting the checksum continually causes an error, so omit until can figure it out.
+            // if (infoRead != NULL)
+            //     checksum = varStr(ioFilterGroupResult(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE_STR));
 
-            if (strEq(infoFileName, INFO_BACKUP_PATH_FILE_STR)
+            if (strEq(infoPathFile, INFO_BACKUP_PATH_FILE_STR))
             {
                 result.backup = infoBackupNewLoad(infoRead);
                 infoBackupMove(result.backup, memContextPrior());
@@ -287,44 +294,87 @@ verifyInfoFile(const String *infoPathFile)
             result.errorMessage = errorMessage();
         }
         TRY_END();
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.checksum = strDup(checksum);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE, result);
+    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE_RESULT, result);
 }
+
+// typedef enum
+// {
+//     main,
+//     copy,
+//     none,
+// } UsableFile;
+//
+// static UsableFile
+// verifyUsableFile(const String *fileName, InfoFile *infoFile, InfoFile *infoFileCopy)
+// {
+//
+// }
+
 
 static InfoBackup *
 verifyBackupInfoFile(void)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     InfoBackup *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        InfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR);
-        InfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR);
+// CSHANG Maybe can do something like:  verifyUsableFile(STRDEF(INFO_BACKUP_FILE), verifyInfoFile(INFO_BACKUP_PATH_FILE_STR), verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR));
+        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR);
+        VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR);
 
+// CSHANG is the errorCode == 0 meaning no error a bad assumption?
         if (verifyBackupInfo.errorCode == 0 && verifyBackupInfoCopy.errorCode == 0)
         {
             result = verifyBackupInfo.backup;
             infoBackupMove(result, memContextPrior());
+// CSHANG Commenting out checking the checksum b/c retrieving it in verifyInfoFile causes an error
+            // // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
+            // // but must trust main.
+            // if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
+            //     LOG_WARN("copy doesn't match info file");
 
-            // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
-            // but must trust main.
-            if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-                LOG_WARN copy doesn't match backup.info
+        }
+        else if (verifyBackupInfo.errorCode == 0)
+        {
+            // Log a WARNING if the copy info file was missing otherwise log the error as an error
+            if (errorTypeFromCode(verifyBackupInfoCopy.errorCode) == &FileMissingError)
+                LOG_WARN(verifyBackupInfoCopy.errorMessage);
+            else
+                LOG_ERROR(verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
 
+            // Return the info file copy as usable
+            result = verifyBackupInfo.backup;
+            infoBackupMove(result, memContextPrior());
         }
         else if (verifyBackupInfoCopy.errorCode == 0)
         {
-            // CSHANG - if we get here, the main backup info had a problem so need to log errors and/or warnings somehow
+            // Log a WARNING if the main info file was missing otherwise log the error as an error
+            if (errorTypeFromCode(verifyBackupInfo.errorCode) == &FileMissingError)
+                LOG_WARN(verifyBackupInfo.errorMessage);
+            else
+                LOG_ERROR(verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
+
+            // Return the info file main as usable
             result = verifyBackupInfoCopy.backup;
             infoBackupMove(result, memContextPrior());
         }
         else
         {
-            // CSHANG - need to log errors and/or warnings here: e.g. WARN instead of error if copy missing but main is OK
+            // Both files encountered an error
+            LOG_ERROR(verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
+            LOG_ERROR(verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -332,13 +382,6 @@ verifyBackupInfoFile(void)
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
-typedef enum
-{
-    checkMain,
-    checkCopy,
-    checkBoth,
-    checkNone,
-} CheckFile;
 
 void
 cmdVerify(void)
@@ -353,7 +396,9 @@ cmdVerify(void)
 // CSHANG But this still doesn't get rid of one of these, so probably need another function, say verifyBackupInfoFile, and it returns the valid info file or NULL if neither are valid
         InfoBackup *backupInfo = verifyBackupInfoFile();
 
-        if (backupInfo == NULL) then there is NO usable backup.info file
+// CSHANG Need to figure out what to do when can't get valid a backup.info file
+        if (backupInfo == NULL)
+            LOG_WARN("NO USABLE INFO FILE");
 
 
 /* CSHANG So here we are checking
@@ -405,7 +450,7 @@ cmdVerify(void)
         // while (!protocolParallelDone(parallelExec));
 
         // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
-} // CSHANG backupInfo != NULL check
+
     }
     MEM_CONTEXT_TEMP_END();
 
