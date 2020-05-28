@@ -187,9 +187,6 @@ storageAzureAuth(
             strPtr(verb), strEq(contentLength, ZERO_STR) ? "" : strPtr(contentLength), contentMd5 == NULL ? "" : strPtr(contentMd5),
             strPtr(dateTime), strPtr(headerCanonical), strPtr(this->account), strPtr(uri), strPtr(queryCanonical));
 
-        // !!! Need to actually process above
-        (void)query;
-
         // Generate authorization header
         Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strPtr(this->key)));
         decodeToBin(encodeBase64, strPtr(this->key), bufPtr(keyBin));
