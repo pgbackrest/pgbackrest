@@ -24,6 +24,18 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="huseyin.sonmez"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect example for <br-option>repo-retention-full-type</br-option> option.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-doc-list>
         </release>
 
         <release date="2020-05-26" version="2.27" title="Expiration Improvements and Compression Drivers">
@@ -8428,6 +8440,11 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
+        </contributor>
+
+        <contributor id="huseyin.sonmez">
+            <contributor-name-display>H&amp;ouml;seyin S&amp;ouml;nmez</contributor-name-display>
+            <contributor-id type="github">huseynsnmz</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
