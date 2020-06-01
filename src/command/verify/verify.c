@@ -268,14 +268,9 @@ verifyInfoFile(const String *infoPathFile)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *checksum = NULL;
-
         TRY_BEGIN()
         {
             IoRead *infoRead = verifyFileLoad(infoPathFile);
-// CSHANG getting the checksum continually causes an error, so omit until can figure it out.
-            // if (infoRead != NULL)
-            //     checksum = varStr(ioFilterGroupResult(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE_STR));
 
             if (strEq(infoPathFile, INFO_BACKUP_PATH_FILE_STR))
             {
@@ -287,6 +282,12 @@ verifyInfoFile(const String *infoPathFile)
                 result.archive = infoArchiveNewLoad(infoRead);
                 infoArchiveMove(result.archive, memContextPrior());
             }
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.checksum = strDup(varStr(ioFilterGroupResult(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE_STR)));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
         CATCH_ANY()
         {
@@ -294,13 +295,6 @@ verifyInfoFile(const String *infoPathFile)
             result.errorMessage = errorMessage();
         }
         TRY_END();
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result.checksum = strDup(checksum);
-        }
-        MEM_CONTEXT_PRIOR_END();
-
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -339,11 +333,11 @@ verifyBackupInfoFile(void)
         {
             result = verifyBackupInfo.backup;
             infoBackupMove(result, memContextPrior());
-// CSHANG Commenting out checking the checksum b/c retrieving it in verifyInfoFile causes an error
-            // // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
-            // // but must trust main.
-            // if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-            //     LOG_WARN("copy doesn't match info file");
+
+            // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
+            // but must trust main.
+            if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
+                LOG_WARN("copy doesn't match info file");
 
         }
         else if (verifyBackupInfo.errorCode == 0)
@@ -352,7 +346,9 @@ verifyBackupInfoFile(void)
             if (errorTypeFromCode(verifyBackupInfoCopy.errorCode) == &FileMissingError)
                 LOG_WARN(verifyBackupInfoCopy.errorMessage);
             else
-                LOG_ERROR(verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
+                LOG(
+                    verifyBackupInfoCopy.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
+                    verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
 
             // Return the info file copy as usable
             result = verifyBackupInfo.backup;
@@ -364,7 +360,9 @@ verifyBackupInfoFile(void)
             if (errorTypeFromCode(verifyBackupInfo.errorCode) == &FileMissingError)
                 LOG_WARN(verifyBackupInfo.errorMessage);
             else
-                LOG_ERROR(verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
+                LOG(
+                    verifyBackupInfo.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
+                    verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
 
             // Return the info file main as usable
             result = verifyBackupInfoCopy.backup;
@@ -373,8 +371,12 @@ verifyBackupInfoFile(void)
         else
         {
             // Both files encountered an error
-            LOG_ERROR(verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
-            LOG_ERROR(verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
+            LOG(
+                verifyBackupInfo.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
+                verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
+            LOG(
+                verifyBackupInfoCopy.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
+                verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
         }
     }
     MEM_CONTEXT_TEMP_END();
