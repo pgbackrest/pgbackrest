@@ -30,30 +30,30 @@ testRun(void)
     // strLstAddZ(argListBase, "--no-online");  // CSHANG not a valid verify options - is that ok?
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
-
-    String *backupInfoContent = strNewFmt(
-        "[backup:current]\n"
-        "20181119-152138F={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.28dev\","
-        "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,\"backup-type\":\"full\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-        "\n"
-        "[db]\n"
-        "db-catalog-version=201409291\n"
-        "db-control-version=942\n"
-        "db-id=1\n"
-        "db-system-id=6625592122879095702\n"
-        "db-version=\"9.4\"\n"
-        "\n"
-        "[db:history]\n"
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}");
-
-    const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
+    //
+    // String *backupInfoContent = strNewFmt(
+    //     "[backup:current]\n"
+    //     "20181119-152138F={"
+    //     "\"backrest-format\":5,\"backrest-version\":\"2.28dev\","
+    //     "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+    //     "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+    //     "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+    //     "\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,\"backup-type\":\"full\","
+    //     "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+    //     "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+    //     "\n"
+    //     "[db]\n"
+    //     "db-catalog-version=201409291\n"
+    //     "db-control-version=942\n"
+    //     "db-id=1\n"
+    //     "db-system-id=6625592122879095702\n"
+    //     "db-version=\"9.4\"\n"
+    //     "\n"
+    //     "[db:history]\n"
+    //     "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+    //         "\"db-version\":\"9.4\"}");
+    //
+    // const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
 
 // CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
 //
@@ -83,12 +83,13 @@ testRun(void)
         // bufCat(contentLoad, BUF(BUFSTR(backupInfoContent))); // CSHANG this does not work
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), contentLoad), "write invalid backup.info");
 
-        TEST_RESULT_VOID(cmdVerify(), "invalid backup.info checksum and missing copy");
+        TEST_ERROR(cmdVerify(), RuntimeError, "fatal errors encountered, see log for details");
         harnessLogResult(
-            "P00  ERROR: [026]: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'\n"
-            "P00  ERROR: [055]: unable to open missing file '/home/vagrant/test/test-0/repo/backup/db/backup.info.copy' for read");
+            "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'\n"
+            "P00   WARN: unable to open missing file '/home/vagrant/test/test-0/repo/backup/db/backup.info.copy' for read\n"
+            "P00  ERROR: [029]: NO USABLE INFO FILE");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write valid backup.info");
+        // TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoBase), "write valid backup.info");
 
     }
 

@@ -252,11 +252,10 @@ typedef struct VerifyInfoFile
     InfoArchive *archive;                                           // Archive.info file contents
     const String *checksum;                                         // File checksum
     int errorCode;                                                  // Error code else 0 for no error
-    const char *errorMessage;                                       // Error message else NULL for no error
 } VerifyInfoFile;
 
 static VerifyInfoFile
-verifyInfoFile(const String *infoPathFile)
+verifyInfoFile(const String *infoPathFile, bool loadFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, infoPathFile);
@@ -272,16 +271,19 @@ verifyInfoFile(const String *infoPathFile)
         {
             IoRead *infoRead = verifyFileLoad(infoPathFile);
 
-            if (strEq(infoPathFile, INFO_BACKUP_PATH_FILE_STR))
+            if (loadFile)
             {
-                result.backup = infoBackupNewLoad(infoRead);
-                infoBackupMove(result.backup, memContextPrior());
+                if (strEq(infoPathFile, INFO_BACKUP_PATH_FILE_STR))
+                {
+                    result.backup = infoBackupMove(infoBackupNewLoad(infoRead), memContextPrior());
+                }
+                else
+                {
+                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
+                }
             }
             else
-            {
-                result.archive = infoArchiveNewLoad(infoRead);
-                infoArchiveMove(result.archive, memContextPrior());
-            }
+                ioReadDrain(infoRead);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -292,7 +294,7 @@ verifyInfoFile(const String *infoPathFile)
         CATCH_ANY()
         {
             result.errorCode = errorCode();
-            result.errorMessage = errorMessage();
+            LOG_WARN(errorMessage());
         }
         TRY_END();
     }
@@ -314,6 +316,54 @@ verifyInfoFile(const String *infoPathFile)
 //
 // }
 
+// static InfoArchive *
+// verifyArchiveInfoFile(void)
+// {
+//     FUNCTION_LOG_VOID(logLevelDebug);
+//
+//     InfoArchive *result = NULL;
+//
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+// // CSHANG Maybe can do something like:  verifyUsableFile(STRDEF(INFO_BACKUP_FILE), verifyInfoFile(INFO_BACKUP_PATH_FILE_STR), verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR));
+//         VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true);
+//
+//         // If the main file did not error, then just check checksums and report on existence of the copy
+//         if (verifyArchiveInfo.errorCode == 0)
+//         {
+//             result = verifyArchiveInfo.archive;
+//             infoArchiveMove(result, memContextPrior());
+//
+//             // Attempt to load the copy but don't keep it in memory
+//             VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, false);
+//
+//             // If the copy loaded successfuly, then check the checksums
+//             if (verifyArchiveInfoCopy.errorCode == 0)
+//             {
+//                 // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
+//                 // but must trust main
+//                 if (!strEq(verifyArchiveInfo.checksum, verifyArchiveInfoCopy.checksum))
+//                     LOG_WARN("archive.info copy doesn't match info file");
+//             }
+//         }
+//         else
+//         {
+//             // Attempt to load the copy
+//             VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, true);
+//
+//             if (verifyArchiveInfoCopy.errorCode == 0)
+//             {
+//                 // Return the copy as usable
+//                 result = verifyArchiveInfoCopy.archive;
+//                 infoArchiveMove(result, memContextPrior());
+//             }
+//         }
+//     }
+//     MEM_CONTEXT_TEMP_END();
+//
+//     FUNCTION_LOG_RETURN(INFO_ARCHIVE, result);
+// }
+
 
 static InfoBackup *
 verifyBackupInfoFile(void)
@@ -325,58 +375,37 @@ verifyBackupInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
 // CSHANG Maybe can do something like:  verifyUsableFile(STRDEF(INFO_BACKUP_FILE), verifyInfoFile(INFO_BACKUP_PATH_FILE_STR), verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR));
-        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR);
-        VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR);
+        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true);
 
-// CSHANG is the errorCode == 0 meaning no error a bad assumption?
-        if (verifyBackupInfo.errorCode == 0 && verifyBackupInfoCopy.errorCode == 0)
+        // If the main file did not error, then just check checksums and report on existence of the copy
+        if (verifyBackupInfo.errorCode == 0)
         {
             result = verifyBackupInfo.backup;
             infoBackupMove(result, memContextPrior());
 
-            // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
-            // but must trust main.
-            if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-                LOG_WARN("copy doesn't match info file");
+            // Attempt to load the copy but don't keep it in memory
+            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, false);
 
-        }
-        else if (verifyBackupInfo.errorCode == 0)
-        {
-            // Log a WARNING if the copy info file was missing otherwise log the error as an error
-            if (errorTypeFromCode(verifyBackupInfoCopy.errorCode) == &FileMissingError)
-                LOG_WARN(verifyBackupInfoCopy.errorMessage);
-            else
-                LOG(
-                    verifyBackupInfoCopy.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
-                    verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
-
-            // Return the info file copy as usable
-            result = verifyBackupInfo.backup;
-            infoBackupMove(result, memContextPrior());
-        }
-        else if (verifyBackupInfoCopy.errorCode == 0)
-        {
-            // Log a WARNING if the main info file was missing otherwise log the error as an error
-            if (errorTypeFromCode(verifyBackupInfo.errorCode) == &FileMissingError)
-                LOG_WARN(verifyBackupInfo.errorMessage);
-            else
-                LOG(
-                    verifyBackupInfo.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
-                    verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
-
-            // Return the info file main as usable
-            result = verifyBackupInfoCopy.backup;
-            infoBackupMove(result, memContextPrior());
+            // If the copy loaded successfuly, then check the checksums
+            if (verifyBackupInfoCopy.errorCode == 0)
+            {
+                // If the info and info.copy checksums don't match than one (or both) of the files could be corrupt so log a warning
+                // but must trust main
+                if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
+                    LOG_WARN("backup.info copy doesn't match info file");
+            }
         }
         else
         {
-            // Both files encountered an error
-            LOG(
-                verifyBackupInfo.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
-                verifyBackupInfo.errorCode, verifyBackupInfo.errorMessage);
-            LOG(
-                verifyBackupInfoCopy.errorCode == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError,
-                verifyBackupInfoCopy.errorCode, verifyBackupInfoCopy.errorMessage);
+            // Attempt to load the copy
+            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, true);
+
+            if (verifyBackupInfoCopy.errorCode == 0)
+            {
+                // Return the copy as usable
+                result = verifyBackupInfoCopy.backup;
+                infoBackupMove(result, memContextPrior());
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -392,6 +421,8 @@ cmdVerify(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        unsigned int errorTotal = 0;
+
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
@@ -400,8 +431,12 @@ cmdVerify(void)
 
 // CSHANG Need to figure out what to do when can't get valid a backup.info file
         if (backupInfo == NULL)
-            LOG_WARN("NO USABLE INFO FILE");
+        {
+            LOG_ERROR(errorTypeCode(&FormatError), "NO USABLE INFO FILE");
+            errorTotal++;
+        }
 
+// CSHANG We could probably throw RuntimeError when can't proceed or create a new error VerifyError
 
 /* CSHANG So here we are checking
     1) the file has a valid checksum (i.e. it contains a checksum within the file and that matches the checksum generated through infoBackupNewLoad)
@@ -452,6 +487,14 @@ cmdVerify(void)
         // while (!protocolParallelDone(parallelExec));
 
         // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
+
+        if (archiveInfo != NULL && backupInfo != NULL)
+        {
+            // CONTINUE VERIFY
+        }
+
+        if (errorTotal > 0)
+            THROW(RuntimeError, "fatal errors encountered, see log for details");
 
     }
     MEM_CONTEXT_TEMP_END();
