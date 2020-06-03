@@ -13,23 +13,11 @@ typedef struct StorageS3 StorageS3;
 #include "storage/s3/storage.h"
 
 /***********************************************************************************************************************************
-Perform an S3 Request
+Functions
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_S3_REQUEST_RESULT_TYPE                                                                                \
-    StorageS3RequestResult
-#define FUNCTION_LOG_STORAGE_S3_REQUEST_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
-    objToLog(&value, "StorageS3RequestResult", buffer, bufferSize)
-
-typedef struct StorageS3RequestResult
-{
-    HttpClient *httpClient;
-    HttpHeader *responseHeader;
-    Buffer *response;
-} StorageS3RequestResult;
-
-StorageS3RequestResult storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
-    bool allowMissing);
+// Perform an S3 request
+HttpResponse storageS3Request(
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool allowMissing);
 
 /***********************************************************************************************************************************
 Macros for function logging

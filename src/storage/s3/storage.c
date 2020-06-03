@@ -253,7 +253,7 @@ storageS3Request(
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
 
-    StorageS3RequestResult result = {0};
+    HttpResponse *result = NULL;
     unsigned int retryRemaining = 2;
     bool done;
 
@@ -288,23 +288,22 @@ storageS3Request(
                 this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
                 body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
-            // Get an http client
-            HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
-
             // Process request
-            Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
+            result = httpClientRequest(
+                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body, returnContent);
 
             // Error if the request was not successful
-            if (!httpClientResponseCodeOk(httpClient) &&
-                (!allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
             {
+                const Buffer *content = httpResponseContent(result);
+
                 // If there are retries remaining and a response parse it as XML to extract the S3 error code
-                if (response != NULL && retryRemaining > 0)
+                if (bufUsed(content) > 0 && retryRemaining > 0)
                 {
                     // Attempt to parse the XML and extract the S3 error code
                     TRY_BEGIN()
                     {
-                        XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(response));
+                        XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(content));
                         const String *errorCode = xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true));
 
                         if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
@@ -329,8 +328,7 @@ storageS3Request(
                 {
                     // General error message
                     String *error = strNewFmt(
-                        "S3 request failed with %u: %s", httpClientResponseCode(httpClient),
-                        strPtr(httpClientResponseMessage(httpClient)));
+                        "S3 request failed with %u: %s", httpResponseCode(result), strPtr(httpResponseMessage(result)));
 
                     // Output uri/query
                     strCat(error, "\n*** URI/Query ***:");
@@ -356,7 +354,7 @@ storageS3Request(
                     }
 
                     // Output response headers
-                    const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
+                    const HttpHeader *responseHeader = httpResponseHeader(result);
                     const StringList *responseHeaderList = httpHeaderList(responseHeader);
 
                     if (strLstSize(responseHeaderList) > 0)
@@ -372,21 +370,14 @@ storageS3Request(
                     }
 
                     // If there was content then output it
-                    if (response!= NULL)
-                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
+                    if (bufUsed(content) > 0)
+                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(content)));
 
                     THROW(ProtocolError, strPtr(error));
                 }
+                else
+                    httpResponseMove(result, memContextPrior);
             }
-            else
-            {
-                // On success move the buffer to the prior context
-                result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(
-                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), memContextPrior());
-                result.response = bufMove(response, memContextPrior());
-            }
-
         }
         MEM_CONTEXT_TEMP_END();
     }

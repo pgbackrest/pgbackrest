@@ -21,6 +21,7 @@ typedef struct HttpClient HttpClient;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
+#include "common/io/http/response.h"
 #include "common/io/read.h"
 #include "common/time.h"
 #include "common/type/stringList.h"
@@ -28,6 +29,9 @@ typedef struct HttpClient HttpClient;
 /***********************************************************************************************************************************
 HTTP Constants
 ***********************************************************************************************************************************/
+#define HTTP_VERSION                                                "HTTP/1.1"
+    STRING_DECLARE(HTTP_VERSION_STR);
+
 #define HTTP_VERB_DELETE                                            "DELETE"
     STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
@@ -80,33 +84,15 @@ Functions
 bool httpClientBusy(const HttpClient *this);
 
 // Mark the client as done if read is complete
-void httpClientDone(HttpClient *this);
+void httpClientDone(HttpClient *this, bool close, bool closeRequired);
 
 // Perform a request
-Buffer *httpClientRequest(
+HttpResponse *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body, bool returnContent);
-
-// Is this response code OK, i.e. 2XX?
-bool httpClientResponseCodeOk(const HttpClient *this);
+    const Buffer *body);
 
 // Format statistics to a string
 String *httpClientStatStr(void);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *httpClientIoRead(const HttpClient *this);
-
-// Get the response code
-unsigned int httpClientResponseCode(const HttpClient *this);
-
-// Response headers
-const HttpHeader *httpClientResponseHeader(const HttpClient *this);
-
-// Response message
-const String *httpClientResponseMessage(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Destructor
