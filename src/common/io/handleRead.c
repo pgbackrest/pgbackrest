@@ -135,7 +135,9 @@ IoRead *
 ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(handle != -1);

@@ -25,14 +25,16 @@ STRING_EXTERN(HTTP_VERB_HEAD_STR,                                   HTTP_VERB_HE
 STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_POST);
 STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 
+STRING_EXTERN(HTTP_HEADER_AUTHORIZATION_STR,                        HTTP_HEADER_AUTHORIZATION);
 #define HTTP_HEADER_CONNECTION                                      "connection"
     STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                       HTTP_HEADER_CONNECTION);
 STRING_EXTERN(HTTP_HEADER_CONTENT_LENGTH_STR,                       HTTP_HEADER_CONTENT_LENGTH);
 STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_CONTENT_MD5);
+STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
+STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
+STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
 #define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
     STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
-STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
-STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
 
 #define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
     STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
@@ -317,22 +319,34 @@ httpClientRequest(
                 // Flush all writes
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
-                // Read status and make sure it starts with the correct http version
-                String *status = strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)));
+                // Read status
+                String *status = ioReadLine(tlsSessionIoRead(this->tlsSession));
 
-                if (!strBeginsWith(status, HTTP_VERSION_STR))
+                // Check status ends with a CR and remove it to make error formatting easier and more accurate
+                if (!strEndsWith(status, CR_STR))
+                    THROW_FMT(FormatError, "http response status '%s' should be CR-terminated", strPtr(status));
+
+                status = strSubN(status, 0, strSize(status) - 1);
+
+                // Check status is at least the minimum required length to avoid harder to interpret errors later on
+                if (strSize(status) < sizeof(HTTP_VERSION) + 4)
+                    THROW_FMT(FormatError, "http response '%s' has invalid length", strPtr(strTrim(status)));
+
+                // Check status starts with the correct http version
+                 if (!strBeginsWith(status, HTTP_VERSION_STR))
                     THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
 
-                // Now read the response code and message
+                // Read status code
                 status = strSub(status, sizeof(HTTP_VERSION));
 
                 int spacePos = strChr(status, ' ');
 
-                if (spacePos < 0)
-                    THROW_FMT(FormatError, "response status '%s' must have a space", strPtr(status));
+                if (spacePos != 3)
+                    THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strPtr(status));
 
-                this->responseCode = cvtZToUInt(strPtr(strTrim(strSubN(status, 0, (size_t)spacePos))));
+                this->responseCode = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
 
+                // Read reason phrase. A missing reason phrase will be represented as an empty string.
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {
                     this->responseMessage = strSub(status, (size_t)spacePos + 1);

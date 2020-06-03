@@ -93,6 +93,13 @@ uint32_t pgInterfaceControlVersion120(void);
 bool pgInterfaceWalIs120(const unsigned char *walFile);
 PgWal pgInterfaceWal120(const unsigned char *controlFile);
 
+uint32_t pgInterfaceCatalogVersion130(void);
+bool pgInterfaceControlIs130(const unsigned char *controlFile);
+PgControl pgInterfaceControl130(const unsigned char *controlFile);
+uint32_t pgInterfaceControlVersion130(void);
+bool pgInterfaceWalIs130(const unsigned char *walFile);
+PgWal pgInterfaceWal130(const unsigned char *controlFile);
+
 /***********************************************************************************************************************************
 Test Functions
 ***********************************************************************************************************************************/
@@ -132,6 +139,9 @@ Test Functions
 
     void pgInterfaceControlTest120(PgControl pgControl, unsigned char *buffer);
     void pgInterfaceWalTest120(PgWal pgWal, unsigned char *buffer);
+
+    void pgInterfaceControlTest130(PgControl pgControl, unsigned char *buffer);
+    void pgInterfaceWalTest130(PgWal pgWal, unsigned char *buffer);
 #endif
 
 #endif

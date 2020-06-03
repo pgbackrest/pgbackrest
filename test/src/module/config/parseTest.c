@@ -1171,7 +1171,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 1048576, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
@@ -1183,6 +1183,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--no-online"));
+        strLstAddZ(argList, "--" CFGOPT_PG2_LOCAL);
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -1224,6 +1225,8 @@ testRun(void)
                 "[db]\n"
                 "pg1-host=db\n"
                 "pg1-path=/path/to/db\n"
+                CFGOPT_PG2_HOST "=ignore\n"
+                CFGOPT_PG2_PATH "=/path/to/db2\n"
                 "recovery-option=c=d\n"));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
@@ -1242,6 +1245,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptPgLocal + 1), true, "    pg2-local is set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost + 1), false, "    pg2-host is not set (pg2-local override)");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath + 1), "/path/to/db2", "    pg2-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");

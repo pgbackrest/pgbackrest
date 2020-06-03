@@ -64,7 +64,7 @@ sub codeCountScan
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
                  $strFile eq 'test/scratch.txt' ||
-                 $strFile eq 'test/src/valgrind.suppress' ||
+                 $strFile =~ '^test/src/valgrind\.suppress\.' ||
                  $strFile eq 'test/src/lcov.conf');
 
         # Classify the source file
@@ -96,6 +96,12 @@ sub codeCountScan
         if ($strFile =~ '\.auto\..$' | $strFile =~ 'Auto\.pm$')
         {
             $strClass .= '/auto';
+        }
+
+        # Append vendor if a vendorized file
+        if ($strFile =~ '\.vendor\..$')
+        {
+            $strClass .= '/vendor';
         }
 
         # Force unrecognized file types

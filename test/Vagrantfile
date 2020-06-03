@@ -84,7 +84,7 @@ Vagrant.configure(2) do |config|
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Dev Utilities' && date
-            apt-get install -y vim htop
+            apt-get install -y vim htop jq
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo '/tmp/pgbackrest owned by root so tests do not use it' && date

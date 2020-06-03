@@ -962,6 +962,9 @@ eval
                             "wget -q -O /root/package-src/pgbackrest-conf.patch " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
                                 "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest-conf.patch' && " .
+                            "wget -q -O /root/package-src/pgbackrest.logrotate " .
+                                "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest.logrotate' && " .
                             "wget -q -O /root/package-src/pgbackrest.spec " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
                                 "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest.spec'\"");
@@ -990,6 +993,7 @@ eval
                             "ln -s ${strBuildPath} /root/rpmbuild && " .
                             "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
                             "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
+                            "cp /root/package-src/pgbackrest.logrotate ${strBuildPath}/SOURCES && " .
                             "sudo chown -R " . TEST_USER . " ${strBuildPath}'");
 
                         # Patch files in RHEL package builds

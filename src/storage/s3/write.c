@@ -46,9 +46,9 @@ typedef struct StorageWriteS3
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                  \
+#define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
     StorageWriteS3 *
-#define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                     \
+#define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************

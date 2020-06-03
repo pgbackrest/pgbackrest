@@ -1,9 +1,6 @@
 /***********************************************************************************************************************************
 PostgreSQL Page Checksum Algorithm
 
-Despite the .auto.h suffix this file is not automatically generated, though it could be.  We use this suffix to emphasize that the
-code has been copied from PostgreSQL and to exclude this file from project code counts.
-
 For each supported release of PostgreSQL check the code in this file to see if it has changed.  The easiest way to do this is to
 copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.

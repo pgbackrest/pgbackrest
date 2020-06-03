@@ -189,7 +189,10 @@ lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
         // Else flush remaining output
         else
         {
-            output = lz4CompressBuffer(this, lz4Error(LZ4F_compressBound(0, &this->prefs)), compressed);
+            // Pass 1 as src size to help allocate enough space for the final flush. This is required for some versions that don't
+            // allocate enough memory unless autoFlush is enabled. Other versions fail if autoFlush is only enabled before the final
+            // flush. This will hopefully work across all versions even if it does allocate a larger buffer than needed.
+            output = lz4CompressBuffer(this, lz4Error(LZ4F_compressBound(1, &this->prefs)), compressed);
             bufUsedInc(output, lz4Error(LZ4F_compressEnd(this->context, bufRemainsPtr(output), bufRemains(output), NULL)));
 
             this->flushing = true;
