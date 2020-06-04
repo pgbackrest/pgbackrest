@@ -234,9 +234,9 @@ storageS3Auth(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-StorageS3RequestResult
+HttpResponse *
 storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentRequired,
     bool allowMissing)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -245,7 +245,7 @@ storageS3Request(
         FUNCTION_LOG_PARAM(STRING, uri);
         FUNCTION_LOG_PARAM(HTTP_QUERY, query);
         FUNCTION_LOG_PARAM(BUFFER, body);
-        FUNCTION_LOG_PARAM(BOOL, returnContent);
+        FUNCTION_LOG_PARAM(BOOL, contentRequired);
         FUNCTION_LOG_PARAM(BOOL, allowMissing);
     FUNCTION_LOG_END();
 
@@ -290,14 +290,14 @@ storageS3Request(
 
             // Process request
             result = httpClientRequest(
-                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body, returnContent);
+                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body);
 
             // Error if the request was not successful
             if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
             {
+                // If there are retries remaining and a response parse it as XML to extract the S3 error code
                 const Buffer *content = httpResponseContent(result);
 
-                // If there are retries remaining and a response parse it as XML to extract the S3 error code
                 if (bufUsed(content) > 0 && retryRemaining > 0)
                 {
                     // Attempt to parse the XML and extract the S3 error code
@@ -376,14 +376,20 @@ storageS3Request(
                     THROW(ProtocolError, strPtr(error));
                 }
                 else
-                    httpResponseMove(result, memContextPrior);
+                {
+                    // If no content is required then fetch any content so the connection can be reused
+                    if (!contentRequired)
+                        httpResponseContent(result);
+
+                    httpResponseMove(result, memContextPrior());
+                }
             }
         }
         MEM_CONTEXT_TEMP_END();
     }
     while (!done);
 
-    FUNCTION_LOG_RETURN(STORAGE_S3_REQUEST_RESULT, result);
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
 /***********************************************************************************************************************************
@@ -461,7 +467,7 @@ storageS3ListInternal(
 
                 XmlNode *xmlRoot = xmlDocumentRoot(
                     xmlDocumentNewBuf(
-                        storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
+                        httpResponseContent(storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false))));
 
                 // Get subpath list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
@@ -530,17 +536,19 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
+    HttpResponse *httpResponse = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
 
     // Does the file exist?
-    StorageInfo result = {.level = level, .exists = httpClientResponseCodeOk(httpResult.httpClient)};
+    StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
     // Add basic level info if requested and the file exists
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
+        const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
+
         result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -699,12 +707,13 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
     ASSERT(this != NULL);
     ASSERT(request != NULL);
 
-    Buffer *response = storageS3Request(
-        this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
-        xmlDocumentBuf(request), true, false).response;
+    const Buffer *response = httpResponseContent(
+        storageS3Request(
+            this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+            xmlDocumentBuf(request), true, false));
 
     // Nothing is returned when there are no errors
-    if (response != NULL)
+    if (bufSize(response) > 0)
     {
         XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 
@@ -819,7 +828,7 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, true, false);
+    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, false, false);
 
     FUNCTION_LOG_RETURN_VOID();
 }

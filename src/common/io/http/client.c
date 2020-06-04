@@ -25,23 +25,11 @@ STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_PO
 STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 
 STRING_EXTERN(HTTP_HEADER_AUTHORIZATION_STR,                        HTTP_HEADER_AUTHORIZATION);
-#define HTTP_HEADER_CONNECTION                                      "connection"
-    STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                       HTTP_HEADER_CONNECTION);
 STRING_EXTERN(HTTP_HEADER_CONTENT_LENGTH_STR,                       HTTP_HEADER_CONTENT_LENGTH);
 STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_CONTENT_MD5);
 STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
-#define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
-    STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
-
-#define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
-    STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
-#define HTTP_VALUE_TRANSFER_ENCODING_CHUNKED                        "chunked"
-    STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,         HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
-
-// 5xx errors that should always be retried
-#define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
 
 /***********************************************************************************************************************************
 Statistics
@@ -117,6 +105,7 @@ httpClientRequest(
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
+    ASSERT(!this->busy);
 
     // HTTP Response
     HttpResponse *result = NULL;
@@ -130,12 +119,15 @@ httpClientRequest(
         {
             // Assume there will be no retry
             retry = false;
-
-            // Free the read interface
-            httpClientDone(this, false, false);
+            //
+            // // Free the read interface
+            // httpClientDone(this, false, false);
 
             TRY_BEGIN()
             {
+                // Set client busy and load request
+                this->busy = true;
+
                 if (this->tlsSession == NULL)
                 {
                     MEM_CONTEXT_BEGIN(this->memContext)
@@ -178,9 +170,6 @@ httpClientRequest(
 
                 // Flush all writes
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
-
-                // Set client busy and load request
-                this->busy = true;
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
@@ -345,7 +334,7 @@ httpClientRequest(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -408,5 +397,5 @@ httpClientBusy(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->ioRead);
+    FUNCTION_TEST_RETURN(this->busy);
 }

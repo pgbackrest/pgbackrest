@@ -98,9 +98,10 @@ storageWriteS3Part(StorageWriteS3 *this)
             // Initiate mult-part upload
             XmlNode *xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
-                    storageS3Request(
-                        this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                        httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false).response));
+                    httpResponseContent(
+                        storageS3Request(
+                            this->storage, HTTP_VERB_POST_STR, this->interface.name,
+                            httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -119,8 +120,9 @@ storageWriteS3Part(StorageWriteS3 *this)
         strLstAdd(
             this->uploadPartList,
             httpHeaderGet(
-                storageS3Request(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, true, false).responseHeader,
+                httpResponseHeader(
+                    storageS3Request(
+                        this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, false, false)),
                 HTTP_HEADER_ETAG_STR));
 
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
@@ -208,13 +210,13 @@ storageWriteS3Close(THIS_VOID)
                 // Finalize the multi-part upload
                 storageS3Request(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
+                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), false, false);
             }
             // Else upload all the data in a single put
             else
             {
                 storageS3Request(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, true, false);
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, false, false);
             }
 
             bufFree(this->partBuffer);

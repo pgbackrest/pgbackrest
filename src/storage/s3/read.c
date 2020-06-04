@@ -27,7 +27,7 @@ typedef struct StorageReadS3
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
-    HttpClient *httpClient;                                         // Http client for requests
+    HttpResponse *httpResponse;                                     // Http response
 } StorageReadS3;
 
 /***********************************************************************************************************************************
@@ -37,15 +37,6 @@ Macros for function logging
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
     objToLog(value, "StorageReadS3", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Mark http client as done so it can be reused
-***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_S3, LOG, logLevelTrace)
-{
-    httpClientDone(this->httpClient);
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -60,16 +51,15 @@ storageReadS3Open(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpClient == NULL);
+    ASSERT(this->httpResponse == NULL);
 
     bool result = false;
 
     // Request the file
-    this->httpClient = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true).httpClient;
+    this->httpResponse = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, true, true);
 
-    if (httpClientResponseCodeOk(this->httpClient))
+    if (httpResponseCodeOk(this->httpResponse))
     {
-        memContextCallbackSet(this->memContext, storageReadS3FreeResource, this);
         result = true;
     }
     // Else error unless ignore missing
@@ -93,11 +83,11 @@ storageReadS3(THIS_VOID, Buffer *buffer, bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpClient != NULL);
-    ASSERT(httpClientIoRead(this->httpClient) != NULL);
+    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
-    FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
+    FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
 
 /***********************************************************************************************************************************
@@ -113,11 +103,8 @@ storageReadS3Close(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpClient != NULL);
 
-    memContextCallbackClear(this->memContext);
-    storageReadS3FreeResource(this);
-    this->httpClient = NULL;
+    httpResponseDone(this->httpResponse);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -134,10 +121,10 @@ storageReadS3Eof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_S3, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpClient != NULL);
-    ASSERT(httpClientIoRead(this->httpClient) != NULL);
+    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpClientIoRead(this->httpClient)));
+    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/

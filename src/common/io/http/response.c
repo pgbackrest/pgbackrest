@@ -48,11 +48,22 @@ struct HttpResponse
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
     bool closeOnContentEof;                                         // Will server close after content is sent?
+    bool contentExists;                                             // Does content exist?
     bool contentEof;                                                // Has all content been read?
+    Buffer *content;                                                // Caches content once requested
 };
 
-OBJECT_DEFINE_MOVE(HTTP_HEADER);
+OBJECT_DEFINE_MOVE(HTTP_RESPONSE);
 OBJECT_DEFINE_FREE(HTTP_RESPONSE);
+
+/***********************************************************************************************************************************
+Mark http client as done so it can be reused
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(HTTP_RESPONSE, LOG, logLevelTrace)
+{
+    httpClientDone(this->httpClient, true, this->closeOnContentEof);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Read content
@@ -141,9 +152,9 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
             while (!bufFull(buffer) && !this->contentEof);
         }
 
-        // If the server notified that it would close the connection after sending content then close the client side
+        // If all content has been read
         if (this->contentEof)
-            httpClientDone(this->httpClient, true, this->closeOnContentEof);
+            httpResponseDone(this);
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
@@ -168,7 +179,7 @@ httpResponseEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 HttpResponse *
-httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignoreContent)
+httpResponseNew(HttpClient *client, IoRead *read, const String *verb)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, client);
@@ -176,7 +187,9 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignor
         FUNCTION_LOG_PARAM(STRING, verb);
     FUNCTION_LOG_END();
 
-    ASSERT(host != NULL);
+    ASSERT(client != NULL);
+    ASSERT(read != NULL);
+    ASSERT(verb != NULL);
 
     HttpResponse *this = NULL;
 
@@ -276,10 +289,7 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignor
             // If the server notified of a closed connection then close the client connection after reading content.  This
             // prevents doing a retry on the next request when using the closed connection.
             if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
-            {
                 this->closeOnContentEof = true;
-                httpResponseStatLocal.close++;
-            }
         }
         while (1);
 
@@ -292,9 +302,9 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignor
         }
 
         // Was content returned in the response?  HEAD will report content but not actually return any.
-        bool contentExists =
+        this->contentExists =
             (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
-        this->contentEof = !contentExists;
+        this->contentEof = !this->contentExists;
 
         // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
         // rather than also checking if the io object exists.
@@ -306,15 +316,16 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignor
         MEM_CONTEXT_END();
 
         // If the server notified that it would close the connection and there is no content then close the client side
-        if (this->closeOnContentEof && !contentExists)
-            httpClientDone(this->httpClient, true);
+        if (this->closeOnContentEof && !this->contentExists)
+            httpResponseDone(this);
 
         // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
         // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
         // and choose errors in this class to retry.
-        if (httpResponseResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-            THROW_FMT(ServiceError, "[%u] %s", httpResponseResponseCode(this), strPtr(httpResponseResponseMessage(this)));
+        if (httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
+            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(this), strPtr(httpResponseMessage(this)));
 
+        memContextCallbackSet(this->memContext, httpResponseFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -322,8 +333,61 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool ignor
 }
 
 /**********************************************************************************************************************************/
+const Buffer *
+httpResponseContent(HttpResponse *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (this->content == NULL)
+    {
+        this->content = bufNew(0);
+
+        if (this->contentExists)
+        {
+            do
+            {
+                bufResize(this->content, bufSize(this->content) + ioBufferSize());
+                httpResponseRead(this, this->content, true);
+            }
+            while (!httpResponseEof(this));
+
+            bufResize(this->content, bufUsed(this->content));
+        }
+    }
+
+    FUNCTION_TEST_RETURN(this->content);
+}
+
+/**********************************************************************************************************************************/
+void
+httpResponseDone(HttpResponse *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (this->httpClient != NULL)
+    {
+        memContextCallbackClear(this->memContext);
+        httpResponseFreeResource(this);
+
+        // The http client and read should no longer be used because they may get assigned to a different response
+        this->httpClient = NULL;
+        this->rawRead = NULL;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 IoRead *
-httpResponseIoRead(const HttpResponse *this)
+httpResponseIoRead(HttpResponse *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);

@@ -16,8 +16,9 @@ typedef struct StorageS3 StorageS3;
 Functions
 ***********************************************************************************************************************************/
 // Perform an S3 request
-HttpResponse storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool allowMissing);
+HttpResponse *storageS3Request(
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentRequired,
+    bool allowMissing);
 
 /***********************************************************************************************************************************
 Macros for function logging
