@@ -405,6 +405,48 @@ verifyBackupInfoFile(void)
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
+void
+verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);
+        FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check archive.info and backup.info current PG data matches. If there is a mismatch, verify cannot continue since
+        // the database is not considered accessible during the verify command so no way to tell which would be valid.
+        InfoPgData archiveInfoPgData = infoPgData(archiveInfoPg, infoPgDataCurrentId(archiveInfoPg));
+        InfoPgData backupInfoPgData = infoPgData(backupInfoPg, infoPgDataCurrentId(backupInfoPg));
+        checkStanzaInfo(&archiveInfoPgData, &backupInfoPgData);
+
+        unsigned int archiveInfoHistoryTotal = infoPgDataTotal(archiveInfoPg);
+        unsigned int backupInfoHistoryTotal = infoPgDataTotal(backupInfoPg);
+
+        String *errMsg = strNew("archive and backup history lists do not match");
+
+        if (archiveInfoHistoryTotal != backupInfoHistoryTotal)
+            THROW(FormatError, strPtr(errMsg));
+
+        // Confirm the lists are the same
+        for (unsigned int infoPgIdx = 0; infoPgIdx < archiveInfoHistoryTotal; infoPgIdx++)
+        {
+            InfoPgData archiveInfoPgHistory = infoPgData(archiveInfoPg, infoPgIdx);
+            InfoPgData backupInfoPgHistory = infoPgData(backupInfoPg, infoPgIdx);
+
+            if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+                archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+                archiveInfoPgHistory.version != backupInfoPgHistory.version)
+            {
+                THROW(FormatError, strPtr(errMsg));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 void
 cmdVerify(void)
@@ -443,11 +485,8 @@ cmdVerify(void)
         {
             TRY_BEGIN()
             {
-                // Check archive.info and backup.info PG data match. If there is a mismatch, verify cannot continue since the
-                // database is not considered accessible during the verify command so no way to tell which would be valid.
-                InfoPgData backupInfoPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
-                InfoPgData archiveInfoPg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
-                checkStanzaInfo(&archiveInfoPg, &backupInfoPg);
+                // Verify that the archive.info and backup.info current database info and history lists are the same
+                verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo));
             }
             CATCH_ANY()
             {
@@ -456,23 +495,6 @@ cmdVerify(void)
             }
             TRY_END();
         }
-
-/* CSHANG So here we are checking
-    1) the file has a valid checksum (i.e. it contains a checksum within the file and that matches the checksum generated through infoBackupNewLoad)
-    2) If the file is encrypted and can read it (else CryptoError)
-    3) Does the file have a history list? And if so, does it include a db-id from the [db] (current) section?
-
-    What we are not checking, is that the [db] section matches the current PG - but we really can't do that since we can't require a pgControl anywhere. But we can check it with the archive.info if there is such a file
-*/
-
-// cshang if don't have resolution, let's do hard error for now.
-// 1) if both missing - start with this being an abort
-// 2) backup info and archive info don't match - start with this being an abort. Maybe then we can still do the WAL and Backup phases anyway? Then do the wal verify and the reconciliation but tell them it's a problem.
-// 3) if backup.info is missing but have archive, at least check the archive? or just stop for now and see if we can reconcile
-
-
-// CSHANG If they don't match each other, then one of them should have blown up but if not it means each individual file has a valid checksum so then how will I know which is valid? So I think this should be an error I must assume neither is valid if they are files that have valid checksums. But maybe can check them both against the archive? Not sure how to determine which one is the correct one (if any) other than maybe checking against the archive file.
-
 
 // CSHANG jobData should be preprapared list of things to check - e.g. list of backups, list of archive ids
         // // Create the parallel executor

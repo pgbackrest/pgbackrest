@@ -6,6 +6,7 @@ Test Stanza Commands
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
+#include "common/io/bufferRead.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 
@@ -138,8 +139,77 @@ testRun(void)
 //     - only backup.info.copy exists (WARN) and is OK
 //     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
 // 2) Local and remote tests
-// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success?
+// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 
+    // *****************************************************************************************************************************
+    if (testBegin("verifyPgHistory()"))
+    {
+        // Create backup.info
+        InfoBackup *backupInfo = NULL;
+        TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info multi-history");
+
+        // Create archive.info - history mismatch
+        InfoArchive *archiveInfo = NULL;
+        TEST_ASSIGN(
+            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"))), "archive.info missing history");
+
+        TEST_ERROR(
+            verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
+            "archive and backup history lists do not match");
+
+        TEST_ASSIGN(
+            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6625592122879095777,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"))), "archive.info history system id mismatch");
+
+        TEST_ERROR(
+            verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
+            "archive and backup history lists do not match");
+
+        TEST_ASSIGN(
+            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.5\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"))), "archive.info history version mismatch");
+
+        TEST_ERROR(
+            verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
+            "archive and backup history lists do not match");
+
+
+        TEST_ASSIGN(
+            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "3={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"))), "archive.info history id mismatch");
+
+        TEST_ERROR(
+            verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
+            "archive and backup history lists do not match");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdVerify()"))
