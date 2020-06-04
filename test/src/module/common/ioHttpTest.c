@@ -344,21 +344,23 @@ testRun(void)
 
                 TEST_RESULT_VOID(httpResponseFree(response), "free response");
 
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("head request with content-length but no content");
-                //
-                // hrnTlsServerExpectZ("HEAD / HTTP/1.1\r\n\r\n");
-                // hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\ncontent-length:380\r\n\r\n");
-                //
-                // TEST_RESULT_VOID(
-                //     httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true), "request");
-                // TEST_RESULT_UINT(httpClientResponseCode(client), 200, "check response code");
-                // TEST_RESULT_STR_Z(httpClientResponseMessage(client), "OK", "check response message");
-                // TEST_RESULT_BOOL(httpClientEof(client), true, "io is eof");
-                // TEST_RESULT_BOOL(httpClientBusy(client), false, "client is not busy");
-                // TEST_RESULT_STR_Z(
-                //     httpHeaderToLog(httpClientResponseHeader(client)),  "{content-length: '380'}", "check response headers");
-                //
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("head request with content-length but no content");
+
+                hrnTlsServerExpectZ("HEAD / HTTP/1.1\r\n\r\n");
+                hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\ncontent-length:380\r\n\r\n");
+
+                TEST_ASSIGN(
+                    response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL), "request");
+                TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
+                TEST_RESULT_STR_Z(httpResponseMessage(response), "OK", "check response message");
+                TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
+                TEST_RESULT_BOOL(httpClientBusy(client), false, "client is not busy");
+                TEST_RESULT_STR_Z(
+                    httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '380'}", "check response headers");
+
+                TEST_RESULT_VOID(httpResponseFree(response), "free response");
+
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("head request with transfer encoding but no content");
                 //

@@ -176,143 +176,10 @@ httpClientRequest(
                     result = httpResponseNew(this, tlsSessionIoRead(this->tlsSession), verb);
                 }
                 MEM_CONTEXT_PRIOR_END();
-
-                // // Read status
-                // String *status = ioReadLine(tlsSessionIoRead(this->tlsSession));
-                //
-                // // Check status ends with a CR and remove it to make error formatting easier and more accurate
-                // if (!strEndsWith(status, CR_STR))
-                //     THROW_FMT(FormatError, "http response status '%s' should be CR-terminated", strPtr(status));
-                //
-                // status = strSubN(status, 0, strSize(status) - 1);
-                //
-                // // Check status is at least the minimum required length to avoid harder to interpret errors later on
-                // if (strSize(status) < sizeof(HTTP_VERSION) + 4)
-                //     THROW_FMT(FormatError, "http response '%s' has invalid length", strPtr(strTrim(status)));
-                //
-                // // Check status starts with the correct http version
-                //  if (!strBeginsWith(status, HTTP_VERSION_STR))
-                //     THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
-                //
-                // // Read status code
-                // status = strSub(status, sizeof(HTTP_VERSION));
-                //
-                // int spacePos = strChr(status, ' ');
-                //
-                // if (spacePos != 3)
-                //     THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strPtr(status));
-                //
-                // this->responseCode = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
-                //
-                // // Read reason phrase. A missing reason phrase will be represented as an empty string.
-                // MEM_CONTEXT_BEGIN(this->memContext)
-                // {
-                //     this->responseMessage = strSub(status, (size_t)spacePos + 1);
-                // }
-                // MEM_CONTEXT_END();
-                //
-                // // Read headers
-                // MEM_CONTEXT_BEGIN(this->memContext)
-                // {
-                //     this->responseHeader = httpHeaderNew(NULL);
-                // }
-                // MEM_CONTEXT_END();
-                //
-                // do
-                // {
-                //     // Read the next header
-                //     String *header = strTrim(ioReadLine(tlsSessionIoRead(this->tlsSession)));
-                //
-                //     // If the header is empty then we have reached the end of the headers
-                //     if (strSize(header) == 0)
-                //         break;
-                //
-                //     // Split the header and store it
-                //     int colonPos = strChr(header, ':');
-                //
-                //     if (colonPos < 0)
-                //         THROW_FMT(FormatError, "header '%s' missing colon", strPtr(strTrim(header)));
-                //
-                //     String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
-                //     String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
-                //
-                //     httpHeaderAdd(this->responseHeader, headerKey, headerValue);
-                //
-                //     // Read transfer encoding (only chunked is supported)
-                //     if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
-                //     {
-                //         // Error if transfer encoding is not chunked
-                //         if (!strEq(headerValue, HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
-                //         {
-                //             THROW_FMT(
-                //                 FormatError, "only '%s' is supported for '%s' header", HTTP_VALUE_TRANSFER_ENCODING_CHUNKED,
-                //                 HTTP_HEADER_TRANSFER_ENCODING);
-                //         }
-                //
-                //         this->contentChunked = true;
-                //     }
-                //
-                //     // Read content size
-                //     if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
-                //     {
-                //         this->contentSize = cvtZToUInt64(strPtr(headerValue));
-                //         this->contentRemaining = this->contentSize;
-                //     }
-                //
-                //     // If the server notified of a closed connection then close the client connection after reading content.  This
-                //     // prevents doing a retry on the next request when using the closed connection.
-                //     if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
-                //     {
-                //         this->closeOnContentEof = true;
-                //         httpClientStatLocal.close++;
-                //     }
-                // }
-                // while (1);
-                //
-                // // Error if transfer encoding and content length are both set
-                // if (this->contentChunked && this->contentSize > 0)
-                // {
-                //     THROW_FMT(
-                //         FormatError,  "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
-                //         HTTP_HEADER_CONTENT_LENGTH);
-                // }
-                //
-                // // Was content returned in the response?  HEAD will report content but not actually return any.
-                // bool contentExists =
-                //     (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
-                // this->contentEof = !contentExists;
-
-                // // If all content should be returned from this function then read the buffer.  Also read the response if there has
-                // // been an error.
-                // if (returnContent || !httpClientResponseCodeOk(this))
-                // {
-                //     if (contentExists)
-                //     {
-                //         result = bufNew(0);
-                //
-                //         do
-                //         {
-                //             bufResize(result, bufSize(result) + ioBufferSize());
-                //             httpClientRead(this, result, true);
-                //         }
-                //         while (!httpClientEof(this));
-                //     }
-                // }
-                // // Else create an io object, even if there is no content.  This makes the logic for readers easier -- they can just
-                // // check eof rather than also checking if the io object exists.
-                // else
-                // {
-                //     MEM_CONTEXT_BEGIN(this->memContext)
-                //     {
-                //         this->ioRead = ioReadNewP(this, .eof = httpClientEof, .read = httpClientRead);
-                //         ioReadOpen(this->ioRead);
-                //     }
-                //     MEM_CONTEXT_END();
-                // }
             }
             CATCH_ANY()
             {
-                // Close the client
+                // Close the client since we don't want to reuse the same client on error
                 httpClientDone(this, true, false);
 
                 // Retry if wait time has not expired
@@ -368,7 +235,6 @@ httpClientDone(HttpClient *this, bool close, bool closeRequired)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->busy);
     ASSERT(close || !closeRequired);
 
     // If it looks like we were in the middle of a response then close the TLS session so we can start clean next time

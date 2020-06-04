@@ -61,7 +61,7 @@ Mark http client as done so it can be reused
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(HTTP_RESPONSE, LOG, logLevelTrace)
 {
-    httpClientDone(this->httpClient, true, this->closeOnContentEof);
+    httpClientDone(this->httpClient, this->closeOnContentEof, this->closeOnContentEof);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -315,17 +315,20 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb)
         }
         MEM_CONTEXT_END();
 
-        // If the server notified that it would close the connection and there is no content then close the client side
-        if (this->closeOnContentEof && !this->contentExists)
-            httpResponseDone(this);
-
         // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
         // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
         // and choose errors in this class to retry.
         if (httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(this), strPtr(httpResponseMessage(this)));
 
-        memContextCallbackSet(this->memContext, httpResponseFreeResource, this);
+        // If the server notified that it would close the connection and there is no content then close the client side
+        if (!this->contentExists)
+        {
+            httpResponseDone(this);
+        }
+        // Else set callback to ensure the http client is marked done
+        else
+            memContextCallbackSet(this->memContext, httpResponseFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
