@@ -123,13 +123,10 @@ httpClientRequest(
         {
             // Assume there will be no retry
             retry = false;
-            //
-            // // Free the read interface
-            // httpClientDone(this, false, false);
 
             TRY_BEGIN()
             {
-                // Set client busy and load request
+                // Set client busy get TLS session
                 this->busy = true;
 
                 if (this->tlsSession == NULL)
@@ -183,9 +180,6 @@ httpClientRequest(
                 // and choose errors in this class to retry.
                 if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
                     THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
-
-                // Move response to prior context
-                httpResponseMove(result, memContextPrior());
             }
             CATCH_ANY()
             {
@@ -206,6 +200,9 @@ httpClientRequest(
             TRY_END();
         }
         while (retry);
+
+        // Move response to prior context
+        httpResponseMove(result, memContextPrior());
 
         httpClientStatLocal.request++;
     }

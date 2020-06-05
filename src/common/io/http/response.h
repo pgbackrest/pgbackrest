@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
 Http Response
 
-???
+Response created after a successful request. Once the content is read the underlying connection may be recycled but the headers,
+cached content, etc. will still be available for the lifetime of the object.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_RESPONSE_H
 #define COMMON_IO_HTTP_RESPONSE_H
