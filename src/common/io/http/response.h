@@ -26,7 +26,7 @@ HTTP Response Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpResponse *httpResponseNew(HttpClient *client, IoRead *read, const String *verb);
+HttpResponse *httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
 Functions
@@ -66,9 +66,11 @@ void httpResponseFree(HttpResponse *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *httpResponseToLog(const HttpResponse *this);
+
 #define FUNCTION_LOG_HTTP_RESPONSE_TYPE                                                                                            \
     HttpResponse *
 #define FUNCTION_LOG_HTTP_RESPONSE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "HttpResponse", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpResponseToLog, buffer, bufferSize)
 
 #endif

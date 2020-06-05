@@ -17,7 +17,7 @@ Functions
 ***********************************************************************************************************************************/
 // Perform an S3 request
 HttpResponse *storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentRequired,
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentIo,
     bool allowMissing);
 
 /***********************************************************************************************************************************

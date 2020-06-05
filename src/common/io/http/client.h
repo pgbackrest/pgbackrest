@@ -89,7 +89,7 @@ void httpClientDone(HttpClient *this, bool close, bool closeRequired);
 // Perform a request
 HttpResponse *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body);
+    const Buffer *body, bool contentCache);
 
 // Format statistics to a string
 String *httpClientStatStr(void);

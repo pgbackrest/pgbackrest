@@ -31,6 +31,9 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
 
+// 5xx errors that should always be retried
+#define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
+
 /***********************************************************************************************************************************
 Statistics
 ***********************************************************************************************************************************/
@@ -91,7 +94,7 @@ httpClientNew(
 HttpResponse *
 httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body)
+    const Buffer *body, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
@@ -100,6 +103,7 @@ httpClientRequest(
         FUNCTION_LOG_PARAM(HTTP_QUERY, query);
         FUNCTION_LOG_PARAM(HTTP_HEADER, requestHeader);
         FUNCTION_LOG_PARAM(BUFFER, body);
+        FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -171,11 +175,17 @@ httpClientRequest(
                 // Flush all writes
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result = httpResponseNew(this, tlsSessionIoRead(this->tlsSession), verb);
-                }
-                MEM_CONTEXT_PRIOR_END();
+                // Wait for response
+                result = httpResponseNew(this, tlsSessionIoRead(this->tlsSession), verb, contentCache);
+
+                // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
+                // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
+                // and choose errors in this class to retry.
+                if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
+                    THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseMessage(result)));
+
+                // Move response to prior context
+                httpResponseMove(result, memContextPrior());
             }
             CATCH_ANY()
             {

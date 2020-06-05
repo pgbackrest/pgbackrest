@@ -236,7 +236,7 @@ Process S3 request
 ***********************************************************************************************************************************/
 HttpResponse *
 storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentRequired,
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentIo,
     bool allowMissing)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -245,7 +245,7 @@ storageS3Request(
         FUNCTION_LOG_PARAM(STRING, uri);
         FUNCTION_LOG_PARAM(HTTP_QUERY, query);
         FUNCTION_LOG_PARAM(BUFFER, body);
-        FUNCTION_LOG_PARAM(BOOL, contentRequired);
+        FUNCTION_LOG_PARAM(BOOL, contentIo);
         FUNCTION_LOG_PARAM(BOOL, allowMissing);
     FUNCTION_LOG_END();
 
@@ -290,7 +290,7 @@ storageS3Request(
 
             // Process request
             result = httpClientRequest(
-                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body);
+                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body, !contentIo);
 
             // Error if the request was not successful
             if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
@@ -375,15 +375,9 @@ storageS3Request(
 
                     THROW(ProtocolError, strPtr(error));
                 }
-                else
-                {
-                    // If no content is required then fetch any content so the connection can be reused
-                    if (!contentRequired)
-                        httpResponseContent(result);
-
-                    httpResponseMove(result, memContextPrior());
-                }
             }
+            else
+                httpResponseMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
     }

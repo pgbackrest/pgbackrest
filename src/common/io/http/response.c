@@ -26,9 +26,6 @@ Http constants
 #define HTTP_VALUE_TRANSFER_ENCODING_CHUNKED                        "chunked"
     STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,         HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
 
-// 5xx errors that should always be retried
-#define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
-
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -61,7 +58,7 @@ Mark http client as done so it can be reused
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(HTTP_RESPONSE, LOG, logLevelTrace)
 {
-    httpClientDone(this->httpClient, this->closeOnContentEof, this->closeOnContentEof);
+    httpClientDone(this->httpClient, this->closeOnContentEof || !this->contentEof, this->closeOnContentEof);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -105,8 +102,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     // Read length of next chunk
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
-                        this->contentRemaining = cvtZToUInt64Base(
-                            strPtr(strTrim(ioReadLine(this->rawRead))), 16);
+                        this->contentRemaining = cvtZToUInt64Base(strPtr(strTrim(ioReadLine(this->rawRead))), 16);
                     }
                     MEM_CONTEXT_TEMP_END();
 
@@ -129,7 +125,12 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
 
                     // Error if EOF but content read is not complete
                     if (ioReadEof(this->rawRead))
+                    {
+                        // Make sure the session gets closed
+                        httpResponseDone(this);
+
                         THROW(FileReadError, "unexpected EOF reading HTTP content");
+                    }
 
                     // Clear limit (this works even if the limit was not set and it is easier than checking)
                     bufLimitClear(buffer);
@@ -179,12 +180,13 @@ httpResponseEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 HttpResponse *
-httpResponseNew(HttpClient *client, IoRead *read, const String *verb)
+httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, client);
         FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
 
     ASSERT(client != NULL);
@@ -290,6 +292,7 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb)
             // prevents doing a retry on the next request when using the closed connection.
             if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
                 this->closeOnContentEof = true;
+
         }
         while (1);
 
@@ -315,16 +318,15 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb)
         }
         MEM_CONTEXT_END();
 
-        // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
-        // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
-        // and choose errors in this class to retry.
-        if (httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(this), strPtr(httpResponseMessage(this)));
-
         // If the server notified that it would close the connection and there is no content then close the client side
         if (!this->contentExists)
         {
             httpResponseDone(this);
+        }
+        // Else cache content when requested or on error
+        else if (contentCache || !httpResponseCodeOk(this))
+        {
+            httpResponseContent(this);
         }
         // Else set callback to ensure the http client is marked done
         else
@@ -451,4 +453,16 @@ httpResponseMessage(const HttpResponse *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->responseMessage);
+}
+
+/**********************************************************************************************************************************/
+String *
+httpResponseToLog(const HttpResponse *this)
+{
+    return strNewFmt(
+        "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
+            ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s",
+        this->responseCode, strPtr(this->responseMessage), strPtr(httpHeaderToLog(this->responseHeader)),
+        cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
+        cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
 }
