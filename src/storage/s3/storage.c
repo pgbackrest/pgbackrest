@@ -328,7 +328,7 @@ storageS3Request(
                 {
                     // General error message
                     String *error = strNewFmt(
-                        "S3 request failed with %u: %s", httpResponseCode(result), strPtr(httpResponseMessage(result)));
+                        "S3 request failed with %u: %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
 
                     // Output uri/query
                     strCat(error, "\n*** URI/Query ***:");

@@ -55,8 +55,8 @@ unsigned int httpResponseCode(const HttpResponse *this);
 // Response headers
 const HttpHeader *httpResponseHeader(const HttpResponse *this);
 
-// Response message
-const String *httpResponseMessage(const HttpResponse *this);
+// Response reason
+const String *httpResponseReason(const HttpResponse *this);
 
 /***********************************************************************************************************************************
 Destructor

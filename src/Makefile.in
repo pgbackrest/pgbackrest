@@ -78,6 +78,7 @@ SRCS = \
 	common/io/http/common.c \
 	common/io/http/header.c \
 	common/io/http/query.c \
+	common/io/http/response.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/socket/client.c \

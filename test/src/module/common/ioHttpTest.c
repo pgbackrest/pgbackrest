@@ -344,7 +344,7 @@ testRun(void)
 
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), true, "check response code ok");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "OK", "check response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_UINT(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'ack', key1: '0', key2: 'value2'}",
@@ -363,7 +363,7 @@ testRun(void)
                     response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
                     "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "OK", "check response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_BOOL(httpClientBusy(client), false, "client is not busy");
                 TEST_RESULT_STR_Z(
@@ -379,7 +379,7 @@ testRun(void)
                     response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
                     "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "OK", "check response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_BOOL(httpClientBusy(client), false, "client is not busy");
                 TEST_RESULT_STR_Z(
@@ -397,7 +397,7 @@ testRun(void)
                     response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
                     "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "OK", "check response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_BOOL(httpClientBusy(client), false, "client is not busy");
                 TEST_RESULT_STR_Z(
@@ -426,7 +426,7 @@ testRun(void)
                 TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 404, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "Not Found", "check response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "Not Found", "check response message");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '0'}", "check response headers");
 
@@ -438,7 +438,7 @@ testRun(void)
 
                 TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
-                TEST_RESULT_STR_Z(httpResponseMessage(response), "", "check empty response message");
+                TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '7'}", "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "CONTENT", "check response content");

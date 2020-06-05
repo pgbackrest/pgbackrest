@@ -182,7 +182,7 @@ httpClientRequest(
                 // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
                 // and choose errors in this class to retry.
                 if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-                    THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseMessage(result)));
+                    THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
 
                 // Move response to prior context
                 httpResponseMove(result, memContextPrior());

@@ -37,9 +37,9 @@ struct HttpResponse
     IoRead *rawRead;                                                // Raw read interface passed from client
     IoRead *contentRead;                                            // Read interface for response content
 
-    unsigned int responseCode;                                      // Response code (e.g. 200, 404)
-    String *responseMessage;                                        // Response message e.g. (OK, Not Found)
-    HttpHeader *responseHeader;                                     // Response headers
+    unsigned int code;                                              // Response code (e.g. 200, 404)
+    String *reason;                                                 // Response reason e.g. (OK, Not Found)
+    HttpHeader *header;                                             // Response headers
 
     bool contentChunked;                                            // Is the response content chunked?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
@@ -52,6 +52,11 @@ struct HttpResponse
 
 OBJECT_DEFINE_MOVE(HTTP_RESPONSE);
 OBJECT_DEFINE_FREE(HTTP_RESPONSE);
+
+OBJECT_DEFINE_GET(IoRead, , HTTP_RESPONSE, IoRead *, contentRead);
+OBJECT_DEFINE_GET(Code, const, HTTP_RESPONSE, unsigned int, code);
+OBJECT_DEFINE_GET(Header, const, HTTP_RESPONSE, const HttpHeader *, header);
+OBJECT_DEFINE_GET(Reason, const, HTTP_RESPONSE, const String *, reason);
 
 /***********************************************************************************************************************************
 Mark http client as done so it can be reused
@@ -231,19 +236,19 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool conte
         if (spacePos != 3)
             THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strPtr(status));
 
-        this->responseCode = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
+        this->code = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
 
         // Read reason phrase. A missing reason phrase will be represented as an empty string.
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->responseMessage = strSub(status, (size_t)spacePos + 1);
+            this->reason = strSub(status, (size_t)spacePos + 1);
         }
         MEM_CONTEXT_END();
 
         // Read headers
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->responseHeader = httpHeaderNew(NULL);
+            this->header = httpHeaderNew(NULL);
         }
         MEM_CONTEXT_END();
 
@@ -265,7 +270,7 @@ httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool conte
             String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
             String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
 
-            httpHeaderAdd(this->responseHeader, headerKey, headerValue);
+            httpHeaderAdd(this->header, headerKey, headerValue);
 
             // Read transfer encoding (only chunked is supported)
             if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
@@ -391,32 +396,6 @@ httpResponseDone(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
-httpResponseIoRead(HttpResponse *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->contentRead);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-httpResponseCode(const HttpResponse *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->responseCode);
-}
-
-/**********************************************************************************************************************************/
 bool
 httpResponseCodeOk(const HttpResponse *this)
 {
@@ -426,33 +405,7 @@ httpResponseCodeOk(const HttpResponse *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->responseCode / 100 == 2);
-}
-
-/**********************************************************************************************************************************/
-const HttpHeader *
-httpResponseHeader(const HttpResponse *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->responseHeader);
-}
-
-/**********************************************************************************************************************************/
-const String *
-httpResponseMessage(const HttpResponse *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->responseMessage);
+    FUNCTION_TEST_RETURN(this->code / 100 == 2);
 }
 
 /**********************************************************************************************************************************/
@@ -462,7 +415,7 @@ httpResponseToLog(const HttpResponse *this)
     return strNewFmt(
         "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
             ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s",
-        this->responseCode, strPtr(this->responseMessage), strPtr(httpHeaderToLog(this->responseHeader)),
+        this->code, strPtr(this->reason), strPtr(httpHeaderToLog(this->header)),
         cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
         cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
 }
