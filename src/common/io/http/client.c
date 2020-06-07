@@ -49,10 +49,19 @@ struct HttpClient
     TlsClient *tlsClient;                                           // TLS client
 
     TlsSession *tlsSession;                                         // Current TLS session
-    bool busy;                                                      // Is the HTTP client currently busy?
+    HttpResponse *response;                                         // Current response object
 };
 
 OBJECT_DEFINE_FREE(HTTP_CLIENT);
+
+/***********************************************************************************************************************************
+Mark response object done
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(HTTP_CLIENT, LOG, logLevelTrace)
+{
+    httpResponseDone(this->response);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 HttpClient *
@@ -109,7 +118,7 @@ httpClientRequest(
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
-    ASSERT(!this->busy);
+    ASSERT(!this->response);
 
     // HTTP Response
     HttpResponse *result = NULL;
@@ -126,9 +135,7 @@ httpClientRequest(
 
             TRY_BEGIN()
             {
-                // Set client busy get TLS session
-                this->busy = true;
-
+                // Get TLS session
                 if (this->tlsSession == NULL)
                 {
                     MEM_CONTEXT_BEGIN(this->memContext)
@@ -204,6 +211,13 @@ httpClientRequest(
         // Move response to prior context
         httpResponseMove(result, memContextPrior());
 
+        // If the response is still busy make sure it gets marked done
+        if (httpResponseBusy(result))
+        {
+            this->response = result;
+            memContextCallbackSet(this->memContext, httpClientFreeResource, this);
+        }
+
         httpClientStatLocal.request++;
     }
     MEM_CONTEXT_TEMP_END();
@@ -255,7 +269,8 @@ httpClientDone(HttpClient *this, bool close, bool closeRequired)
             httpClientStatLocal.close++;
     }
 
-    this->busy = false;
+    memContextCallbackClear(this->memContext);
+    this->response = NULL;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -270,5 +285,5 @@ httpClientBusy(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->busy);
+    FUNCTION_TEST_RETURN(this->response != NULL);
 }

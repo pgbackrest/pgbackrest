@@ -555,14 +555,14 @@ testRun(void)
         TEST_RESULT_PTR(httpClientCacheGet(cache), *(HttpClient **)lstGet(cache->clientList, 0), "    get same http client");
 
         // Make client 1 look like it is busy
-        client1->busy = true;
+        client1->response = (HttpResponse *)1;
 
         TEST_ASSIGN(client2, httpClientCacheGet(cache), "get http client");
         TEST_RESULT_PTR(client2, *(HttpClient **)lstGet(cache->clientList, 1), "    check http client");
         TEST_RESULT_BOOL(client1 != client2, true, "clients are not the same");
 
         // Set back to NULL so bad things don't happen during free
-        client1->busy = false;
+        client1->response = NULL;
 
         TEST_RESULT_VOID(httpClientCacheFree(cache), "free http client cache");
     }

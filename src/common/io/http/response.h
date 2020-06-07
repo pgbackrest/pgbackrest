@@ -47,6 +47,9 @@ HttpResponse *httpResponseMove(HttpResponse *this, MemContext *parentNew);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Is the response still being read?
+bool httpResponseBusy(const HttpResponse *this);
+
 // Read interface
 IoRead *httpResponseIoRead(HttpResponse *this);
 

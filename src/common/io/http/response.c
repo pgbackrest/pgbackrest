@@ -373,6 +373,19 @@ httpResponseContent(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
+bool
+httpResponseBusy(const HttpResponse *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->httpClient != NULL);
+}
+
+/**********************************************************************************************************************************/
 void
 httpResponseDone(HttpResponse *this)
 {
