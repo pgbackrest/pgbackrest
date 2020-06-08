@@ -56,7 +56,11 @@ storageReadS3Open(THIS_VOID)
     bool result = false;
 
     // Request the file
-    this->httpResponse = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, true, true);
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->httpResponse = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, true, true);
+    }
+    MEM_CONTEXT_END();
 
     if (httpResponseCodeOk(this->httpResponse))
     {
