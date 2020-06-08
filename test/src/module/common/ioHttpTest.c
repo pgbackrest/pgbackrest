@@ -522,13 +522,31 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901012", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("close connection");
+                TEST_TITLE("partially read response and client is freed first");
 
-                hrnTlsServerClose();
+                hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
+                hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n");
 
+                TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
+
+                // Make sure that freeing the client marks the response done -- otherwise the response will segfault when it tries
+                // to notify the client that is is done
                 TEST_RESULT_VOID(httpClientFree(client), "free client");
 
+                // The response is still valid but an attempt to continue reading will assert. This interaction between the client
+                // and response is important enough to explicitly test the assert.
+                TEST_RESULT_STR_Z(
+                    httpHeaderToLog(httpResponseHeader(response)),  "{transfer-encoding: 'chunked'}", "check response headers");
+                TEST_RESULT_BOOL(httpResponseEof(response), false, "check response eof");
+                TEST_ERROR(
+                    httpResponseRead(response, bufNew(1), true), AssertError,
+                    "assertion 'this->contentEof || this->rawRead != NULL' failed");
+                TEST_RESULT_VOID(httpResponseFree(response), "free response");
+
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("close connection and end server process");
+
+                hrnTlsServerClose();
                 hrnTlsClientEnd();
             }
             HARNESS_FORK_PARENT_END();

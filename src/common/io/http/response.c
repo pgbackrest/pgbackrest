@@ -84,6 +84,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
     ASSERT(!bufFull(buffer));
+    ASSERT(this->contentEof || this->rawRead != NULL);
 
     // Read if EOF has not been reached
     size_t actualBytes = 0;

@@ -59,6 +59,9 @@ Mark response object done
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(HTTP_CLIENT, LOG, logLevelTrace)
 {
+    // When the response is marked done it is going to call back into httpClientDone(). Set the TLS session NULL so it will not be
+    // freed again.
+    this->tlsSession = NULL;
     httpResponseDone(this->response);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);

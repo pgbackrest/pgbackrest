@@ -254,14 +254,11 @@ unit:
 
         coverage:
           common/io/http/cache: full
-          # common/io/http/client: full
+          common/io/http/client: full
           common/io/http/common: full
           common/io/http/header: full
           common/io/http/query: full
           common/io/http/response: full
-
-        include:
-          - common/io/http/client
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
