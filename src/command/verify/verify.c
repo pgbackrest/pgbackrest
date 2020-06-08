@@ -21,9 +21,10 @@ Add a command to verify the contents of the repository. By the default the comma
         - We should probably check archive and backup history lists match (expire checks that the backup.info history contains at least the same history as archive.info (it can have more)) since we need to get backup db-id needs to be able to translate exactly to the archiveId (i.e. db-id=2, db-version=9.6 in backu.info must translate to archiveId 9.6-2.
         - If archive-copy set the WAL can be in the backup dirs so just because archive.info is missing, don't want to error
 
-    * Reconstruct backup.info and WARN on mismatches
-        - then load the backup.info via infoBackupLoadFileReconstruct (which also errors if backup.info and info.copy are missing and WARNs on additions/deletions) so need to catch again or not bother to even call it, then 3) call checkStanzaInfo() to check that the archive and backup info files pg data match each other. This will WARN on additions/deletions, so calling that function should cover it.
-        - Maybe can remove this line in Reconstruct: InfoBackup *infoBackup = infoBackupLoadFile(storage, fileName, cipherType, cipherPass); -- and then just pass in the infoBackup object? But then we need to have 2 calls. Other option means pull out the guts of the reconstruct into a function and call it from here.
+    * Reconstruct backup.info and WARN on mismatches - NO because this doesn't really help us since we do not want to take a lock which means things can be added/removed as we're verifying. So instead:
+        - Get a list of backup on disk and a list of archive ids and pass that to job data
+        - When checking backups, if the label is missing then skip (probably expired from underneath us) and then if it is there but only the manifest.copy exists, then skip (could be aborted or in progress so can't really check anything)
+        - It is possible to have a backup without all the WAL if archive-check is not set but in this is not on then all bets are off
 
     * Check for missing WAL and backup files
         - This would be where we'd need to start the parallel executor, right? YES
@@ -142,7 +143,7 @@ Questions/Concerns
 // // } VerifyData;
 
 // static ProtocolParallelJob *
-// verifyCallback(void *data, unsigned int clientIdx)
+// verifyJobCallback(void *data, unsigned int clientIdx)
 // {
 //     FUNCTION_TEST_BEGIN();
 //         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -448,6 +449,96 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+
+typedef struct VerifyJobData
+{
+    StringList *archiveIdList;                                      // List of archive ids to verify
+    StringList *walPathList;                                        // WAL path list for a single archive id
+    StringList *walFileList;                                        // WAL file list for a single WAL path
+    StringList *backupList;                                         // List of backups to verify
+    StringList *backupFileList;                                     // List of files in a single backup directory
+    CipherType cipherType;                                          // Repository cipher type
+    const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
+    const String *walCipherPass;                                    // Cipher pass for reading WAL files
+} VerifyJobData;
+
+static ProtocolParallelJob *
+verifyJobCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+
+    // No special logic based on the client, since only operating against the repo, so just get the next job
+    (void)clientIdx;
+
+    // Initialize the result
+    ProtocolParallelJob *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a new job if there are any left
+        VerifyJobData *jobData = data;
+
+        // If there are archive directories to process
+        if (strLstSize(data.archiveIdList) > 0)
+        {
+            String *archiveId = strLstGet(data.archiveIdList, 0);
+
+            if (strLstSize(data.walPathList) == 0)
+            {
+                // Get the WAL paths for the first item in the archive Id list
+                archiveId =
+                data.walPathList =
+                    strLstSort(
+                        storageListP(
+                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
+                            .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
+                        sortOrderAsc);
+            }
+
+            // If there are WAL paths then get the files
+            if (strLstSize(data.walPathList) > 0)
+            {
+                String *walPath = strLstGet(data.walPathList, 0);
+
+                // Get the WAL files for the first item in the WAL paths list
+                if (strLstSize(data.walFileList) == 0)
+                {
+                    data.walFileList =
+                        strLstSort(
+                            storageListP(
+                                storageRepo(),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                .expression = STRDEF("^[0-F]{24}.*$")),
+                            sortOrderAsc);
+                }
+                else
+                {
+                    // CSHANG: LOG SOMETHING THAT SAYS THE ARCHIVE ID/WAL PATH DIR IS EMPTY AND REMOVE IT FROM THE QUEUE
+                    LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
+                    lstRemoveIdx(data.walPathList, 0);
+                }
+            }
+            else
+            {
+                // CSHANG: LOG SOMETHING THAT SAYS THE ARCHIVE ID DIR IS EMPTY AND REMOVE IT FROM THE QUEUE
+                LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
+                lstRemoveIdx(data.archiveIdList, 0);
+            }
+        }
+
+        // CSHANG Here we know the archive Id list is empty so we can move on??
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+
 void
 cmdVerify(void)
 {
@@ -496,38 +587,74 @@ cmdVerify(void)
             TRY_END();
         }
 
-// CSHANG jobData should be preprapared list of things to check - e.g. list of backups, list of archive ids
-        // // Create the parallel executor
-        // ProtocolParallel *parallelExec = protocolParallelNew(
-        //     (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
-        //
-        // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
-        // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
-        //
-        // for (unsigned int processIdx = 1; processIdx <= numProcesses; processIdx++)
-        //     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
-        //
-        // do
-        // {
-        //     unsigned int completed = protocolParallelProcess(parallelExec);
-        //
-        //     for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
-        //     {
-        //
-        //             // Get the job and job key
-        //             // CSHANG Here the processId would be used for logging
-        //             ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-        //             unsigned int processId = protocolParallelJobProcessId(job);
-        //             const String *walSegment = varStr(protocolParallelJobKey(job));
-        //
-        //             // The job was successful
-        //             if (protocolParallelJobErrorCode(job) == 0)
-        //             {
-        //     }
-        // }
-        // while (!protocolParallelDone(parallelExec));
+        // If valid info files, then begin process of checking backups and archives in the repo
+        if (errorTotal == 0)
+        {
+            // Initialize the job data
+            VerifyJobData jobData =
+            {
+                .walPathList = strLstNew();
+                .walFileList = strLstNew();
+                .backupFileList = strLstNew();
+                .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                .manifestCipherPass = infoPgCipherPass(backupInfo->infoPg),
+                .walCipherPass = infoPgCipherPass(archiveInfo->infoPg),
+            };
+
+            // Get a list of backups in the repo
+            jobData.backupList = strLstSort(
+                storageListP(
+                    storage, STORAGE_REPO_BACKUP_STR,
+                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                sortOrderAsc);
+
+            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash)
+            jobData.archiveIdList = strLstSort(
+                strLstComparatorSet(
+                    storageListP(storageRepo(), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                    archiveIdComparator),
+                sortOrderAsc);
+
+            // Create the parallel executor
+            ProtocolParallel *parallelExec = protocolParallelNew(
+                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
+
+            // CSHANG Add this option
+            // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
+            // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
+
+            for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
+                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
+
+            // Process jobs
+            do
+            {
+                unsigned int completed = protocolParallelProcess(parallelExec);
+
+                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                {
+/* CSHANG
+Here we know that one or more jobs were completed but we need to find out which one.
+*/
+                        // Get the job and job key
+                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                        unsigned int processId = protocolParallelJobProcessId(job);
+
+                        // CSHANG The key will tell us what we just processed
+                        // ENUM type
+                        // String filename
+                        const ENUM type = VARuint(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
+                        const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
+                        //
+                        // // The job was successful
+                        // if (protocolParallelJobErrorCode(job) == 0)
+                        // {
+                }
+            }
+            while (!protocolParallelDone(parallelExec));
 
         // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
+        }
 
         // Throw an error is cannot proceed
         if (errorTotal > 0)
