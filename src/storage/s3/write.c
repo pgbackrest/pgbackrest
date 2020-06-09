@@ -101,7 +101,7 @@ storageWriteS3Part(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3Request(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false))));
+                            httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, false, false))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
