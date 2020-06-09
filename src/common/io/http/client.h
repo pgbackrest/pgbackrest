@@ -21,6 +21,7 @@ typedef struct HttpClient HttpClient;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
+#include "common/io/http/request.h"
 #include "common/io/http/response.h"
 #include "common/io/read.h"
 #include "common/time.h"
@@ -87,9 +88,7 @@ bool httpClientBusy(const HttpClient *this);
 void httpClientDone(HttpClient *this, bool close, bool closeRequired);
 
 // Perform a request
-HttpResponse *httpClientRequest(
-    HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body, bool contentCache);
+HttpResponse *httpClientRequest(HttpClient *this, HttpRequest *request, bool contentCache);
 
 // Format statistics to a string
 String *httpClientStatStr(void);

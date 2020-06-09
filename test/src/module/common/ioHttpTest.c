@@ -139,7 +139,7 @@ testRun(void)
             "new client");
 
         TEST_ERROR_FMT(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), HostConnectError,
+            httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), HostConnectError,
             "unable to connect to 'localhost:%u': [111] Connection refused", hrnTlsServerPort());
 
         HARNESS_FORK_BEGIN()
@@ -179,7 +179,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FileReadError,
                     "unexpected eof while reading line");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "http response status 'HTTP/1.0 200 OK' should be CR-terminated");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "http response 'HTTP/1.0 200' has invalid length");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -221,7 +221,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "http version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "response status '200OK' must have a space after the status code");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -249,7 +249,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FileReadError,
                     "unexpected eof while reading line");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "header 'header-value' missing colon");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "only 'chunked' is supported for 'transfer-encoding' header");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), FormatError,
                     "'transfer-encoding' and 'content-length' headers are both set");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -305,7 +305,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), ServiceError,
+                    httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), ServiceError,
                     "[503] Slow Down");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -336,7 +336,9 @@ testRun(void)
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     TEST_ASSIGN(
-                        response, httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false),
+                        response,
+                        httpClientRequest(
+                            client, httpRequestNewP(strNew("GET"), strNew("/"), .query = query, .header = headerRequest), false),
                         "request");
                     TEST_RESULT_VOID(httpResponseMove(response, memContextPrior()), "move response");
                 }
@@ -359,9 +361,7 @@ testRun(void)
                 hrnTlsServerExpectZ("HEAD / HTTP/1.1\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\ncontent-length:380\r\n\r\n");
 
-                TEST_ASSIGN(
-                    response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
-                    "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -375,9 +375,7 @@ testRun(void)
                 hrnTlsServerExpectZ("HEAD / HTTP/1.1\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
 
-                TEST_ASSIGN(
-                    response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
-                    "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -393,9 +391,7 @@ testRun(void)
 
                 hrnTlsServerClose();
 
-                TEST_ASSIGN(
-                    response, httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
-                    "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -423,7 +419,7 @@ testRun(void)
                 hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 404 Not Found\r\ncontent-length:0\r\n\r\n");
 
-                TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 404, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "Not Found", "check response message");
@@ -436,7 +432,7 @@ testRun(void)
                 hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 403 \r\ncontent-length:7\r\n\r\nCONTENT");
 
-                TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
                 TEST_RESULT_STR_Z(
@@ -456,9 +452,11 @@ testRun(void)
                 TEST_ASSIGN(
                     response,
                     httpClientRequest(
-                        client, strNew("GET"), strNew("/path/file 1.txt"), NULL,
-                        httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
-                        BUFSTRDEF("012345678901234567890123456789"), true),
+                        client,
+                        httpRequestNewP(
+                            strNew("GET"), strNew("/path/file 1.txt"),
+                            .header = httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
+                            .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'close'}", "check response headers");
@@ -480,7 +478,7 @@ testRun(void)
                 hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\ncontent-length:32\r\n\r\n01234567890123456789012345678901");
 
                 TEST_ASSIGN(
-                    response, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, true),
+                    response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/path/file 1.txt")), true),
                     "request");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
@@ -494,7 +492,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ASSIGN(
-                    response, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, false),
+                    response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/path/file 1.txt")), false),
                     "request");
                 TEST_RESULT_BOOL(httpClientBusy(client), true, "client is busy");
                 TEST_ERROR(ioRead(httpResponseIoRead(response), bufNew(32)), FileReadError, "unexpected EOF reading HTTP content");
@@ -512,7 +510,7 @@ testRun(void)
                     "10\r\n0123456789012345\r\n"
                     "0\r\n\r\n");
 
-                TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), "request");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{transfer-encoding: 'chunked'}", "check response headers");
 
@@ -527,7 +525,7 @@ testRun(void)
                 hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n");
 
-                TEST_ASSIGN(response, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request");
+                TEST_ASSIGN(response, httpClientRequest(client, httpRequestNewP(strNew("GET"), strNew("/")), false), "request");
 
                 // Make sure that freeing the client marks the response done -- otherwise the response will segfault when it tries
                 // to notify the client that is is done

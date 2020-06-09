@@ -48,6 +48,35 @@ httpQueryNew(void)
 
 /**********************************************************************************************************************************/
 HttpQuery *
+httpQueryDup(const HttpQuery *query)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+    FUNCTION_TEST_END();
+
+    HttpQuery *this = NULL;
+
+    if (query != NULL)
+    {
+        MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+        {
+            // Allocate state and set context
+            this = memNew(sizeof(HttpQuery));
+
+            *this = (HttpQuery)
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .kv = kvDup(query->kv),
+            };
+        }
+        MEM_CONTEXT_NEW_END();
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+HttpQuery *
 httpQueryAdd(HttpQuery *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();

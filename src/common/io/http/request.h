@@ -20,41 +20,41 @@ typedef struct HttpRequest HttpRequest;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpRequest *httpRequestNew(
-    const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *header, const Buffer *body);
+typedef struct HttpRequestNewParam
+{
+    VAR_PARAM_HEADER;
+    const HttpQuery *query;
+    const HttpHeader *header;
+    const Buffer *content;
+} HttpRequestNewParam;
+
+#define httpRequestNewP(verb, uri, ...)                                                                                      \
+    httpRequestNew(verb, uri, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpRequest *httpRequestNew(const String *verb, const String *uri, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// // Is this response code OK, i.e. 2XX?
-// bool httpRequestCodeOk(const HttpRequest *this);
-//
-// // Get response content. Content will be cached so it can be retrieved again without additional cost.
-// const Buffer *httpRequestContent(HttpRequest *this);
-//
-// // No longer need to load new content. Cached content, headers, etc. will still be available.
-// void httpRequestDone(HttpRequest *this);
-
-// Move to a new parent mem context
 HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// // Is the response still being read?
-// bool httpRequestBusy(const HttpRequest *this);
-//
-// // Read interface
-// IoRead *httpRequestIoRead(HttpRequest *this);
-//
-// // Get the response code
-// unsigned int httpRequestCode(const HttpRequest *this);
-//
-// // Response headers
-// const HttpHeader *httpRequestHeader(const HttpRequest *this);
-//
-// // Response reason
-// const String *httpRequestReason(const HttpRequest *this);
+// Request verb
+const String *httpRequestVerb(const HttpRequest *this);
+
+// Request URI
+const String *httpRequestUri(const HttpRequest *this);
+
+// Request query
+const HttpQuery *httpRequestQuery(const HttpRequest *this);
+
+// Request headers
+const HttpHeader *httpRequestHeader(const HttpRequest *this);
+
+// Request content
+const Buffer *httpRequestContent(const HttpRequest *this);
 
 /***********************************************************************************************************************************
 Destructor

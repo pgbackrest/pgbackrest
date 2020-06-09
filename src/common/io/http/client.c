@@ -104,23 +104,15 @@ httpClientNew(
 
 /**********************************************************************************************************************************/
 HttpResponse *
-httpClientRequest(
-    HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body, bool contentCache)
+httpClientRequest(HttpClient *this, HttpRequest *request, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
-        FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
-        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
-        FUNCTION_LOG_PARAM(HTTP_HEADER, requestHeader);
-        FUNCTION_LOG_PARAM(BUFFER, body);
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
     ASSERT(!this->response);
 
     // HTTP Response
@@ -150,40 +142,41 @@ httpClientRequest(
                 }
 
                 // Write the request
-                String *queryStr = httpQueryRender(query);
+                String *queryStr = httpQueryRender(httpRequestQuery(request));
 
                 ioWriteStrLine(
                     tlsSessionIoWrite(this->tlsSession),
                     strNewFmt(
-                        "%s %s%s%s " HTTP_VERSION "\r", strPtr(verb), strPtr(httpUriEncode(uri, true)), queryStr == NULL ? "" : "?",
+                        "%s %s%s%s " HTTP_VERSION "\r", strPtr(httpRequestVerb(request)),
+                        strPtr(httpUriEncode(httpRequestUri(request), true)), queryStr == NULL ? "" : "?",
                         queryStr == NULL ? "" : strPtr(queryStr)));
 
                 // Write headers
-                if (requestHeader != NULL)
+                if (httpRequestHeader(request) != NULL)
                 {
-                    const StringList *headerList = httpHeaderList(requestHeader);
+                    const StringList *headerList = httpHeaderList(httpRequestHeader(request));
 
                     for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                     {
                         const String *headerKey = strLstGet(headerList, headerIdx);
                         ioWriteStrLine(
                             tlsSessionIoWrite(this->tlsSession),
-                            strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(requestHeader, headerKey))));
+                            strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(httpRequestHeader(request), headerKey))));
                     }
                 }
 
                 // Write out blank line to end the headers
                 ioWriteLine(tlsSessionIoWrite(this->tlsSession), CR_BUF);
 
-                // Write out body if any
-                if (body != NULL)
-                    ioWrite(tlsSessionIoWrite(this->tlsSession), body);
+                // Write out content if any
+                if (httpRequestContent(request) != NULL)
+                    ioWrite(tlsSessionIoWrite(this->tlsSession), httpRequestContent(request));
 
                 // Flush all writes
                 ioWriteFlush(tlsSessionIoWrite(this->tlsSession));
 
                 // Wait for response
-                result = httpResponseNew(this, tlsSessionIoRead(this->tlsSession), verb, contentCache);
+                result = httpResponseNew(this, tlsSessionIoRead(this->tlsSession), httpRequestVerb(request), contentCache);
 
                 // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
                 // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick

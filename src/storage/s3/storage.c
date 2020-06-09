@@ -290,7 +290,8 @@ storageS3Request(
 
             // Process request
             result = httpClientRequest(
-                httpClientCacheGet(this->httpClientCache), verb, uri, query, requestHeader, body, !contentIo);
+                httpClientCacheGet(this->httpClientCache),
+                httpRequestNewP(verb, uri, .query = query, .header = requestHeader, .content = body), !contentIo);
 
             // Error if the request was not successful
             if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
