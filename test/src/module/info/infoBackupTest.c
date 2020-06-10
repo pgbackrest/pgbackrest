@@ -437,6 +437,7 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 

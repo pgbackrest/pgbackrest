@@ -2519,10 +2519,7 @@ my %hConfigDefine =
         },
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH =>
             {
                 &CFGDEF_REQUIRED => false

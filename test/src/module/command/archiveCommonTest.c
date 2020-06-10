@@ -125,6 +125,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
@@ -225,6 +226,7 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(cfgCmdArchiveGet, argList);

@@ -249,6 +249,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--archive-async");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/unused");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
@@ -509,6 +510,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--log-level-file=debug"));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s/db", testPath()));
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -548,7 +550,6 @@ testRun(void)
 
         String *walFile = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
         strLstAdd(argListTemp, walFile);
-        strLstAdd(argListTemp, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
         // Test this in a fork so we can use different Perl options in later tests
@@ -576,7 +577,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
-        strLstAdd(argListTemp, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAddZ(argListTemp, "00000001.history");
         strLstAdd(argListTemp, walFile);
         strLstAddZ(argListTemp, "--archive-async");
@@ -611,7 +611,6 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, walSegment);
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");

@@ -168,6 +168,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
@@ -194,6 +195,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
@@ -221,6 +223,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
@@ -247,6 +250,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
@@ -274,6 +278,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
