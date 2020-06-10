@@ -40,6 +40,14 @@
 
                         <p>Fix filters when recursion enabled in <code>storageInfoListP()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve behavior of the <cmd>repo-ls</cmd> command.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
