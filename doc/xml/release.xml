@@ -31,6 +31,16 @@
                         <p>Improve error when <br-option>pg1-path</br-option> option missing for <cmd>archive-get</cmd> command.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix filters when recursion enabled in <code>storageInfoListP()</code>.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
