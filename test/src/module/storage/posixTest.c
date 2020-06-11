@@ -424,10 +424,7 @@ testRun(void)
                 storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
                 .expression = STRDEF("\\/file$")),
             "filter");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "path/file {file, s=8}\n",
-            "    check content");
+        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
     }
 
     // *****************************************************************************************************************************
