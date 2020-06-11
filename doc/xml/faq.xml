@@ -32,11 +32,7 @@
     <section id="manual-expire">
         <title>How do I manually purge a backup set?</title>
 
-        <p>Backup sets in the middle cannot be expired, but it is possible to expire the oldest backup sets by running the <cmd>expire</cmd> command with retention. For example, the following command will keep only the last two full backups, purging any prior full backups including their associated incremental/differential backups and archive:</p>
-
-        <code-block>pgbackrest --stanza=xxx --repo1-retention-full=2 expire</code-block>
-
-        <p>Using the <br-setting>{[dash]}-repo1-retention-full</br-setting> option on the command-  line simply overrides the setting in the configuration file for that one execution of the command. See the <link url='https://pgbackrest.org/user-guide.html#retention'>Retention</link> section in the User Guide for more information on retention.</p>
+        <p>A full backup set can be expired using the <br-setting>{[dash]}-set</br-setting> option as explained in <link url="https://pgbackrest.org/command.html#command-expire">Command Reference: Expire</link>.</p>
     </section>
 
     <section id="optimize-config">
