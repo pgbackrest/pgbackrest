@@ -54,7 +54,7 @@ testRun(void)
             strNewBuf(output),
                 "{"
                     "\".\":{\"type\":\"path\"}"
-                "}",
+                "}\n",
             "    check output");
 
         // Empty directory
@@ -73,8 +73,25 @@ testRun(void)
             strNewBuf(output),
                 "{"
                     "\".\":{\"type\":\"path\"}"
-                "}",
+                "}\n",
             "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("\\."));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory with filter match (json)");
+        TEST_RESULT_STR_Z(
+            strNewBuf(output),
+                "{"
+                    "\".\":{\"type\":\"path\"}"
+                "}\n",
+            "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("2$"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory with no filter match (json)");
+        TEST_RESULT_STR_Z(strNewBuf(output), "{}\n", "    check output");
+
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, NULL);
 
         // Add path and file
         // -------------------------------------------------------------------------------------------------------------------------
@@ -90,7 +107,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
-        TEST_RESULT_STR_Z(strNewBuf(output), "aaa\nbbb\nlink\npipe", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "aaa\nbbb\nlink\npipe\n", "    check output");
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
@@ -103,7 +120,7 @@ testRun(void)
                     "\"bbb\":{\"type\":\"path\"},"
                     "\"link\":{\"type\":\"link\",\"destination\":\"../bbb\"},"
                     "\"pipe\":{\"type\":\"special\"}"
-                "}",
+                "}\n",
             "    check output");
 
         // Reverse sort
@@ -113,7 +130,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
-        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb\naaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb\naaa\n", "    check output");
 
         // Recurse
         // -------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +140,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
-        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb/ccc\nbbb\naaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb/ccc\nbbb\naaa\n", "    check output");
 
         // Filter
         // -------------------------------------------------------------------------------------------------------------------------
@@ -133,7 +150,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
-        TEST_RESULT_STR_Z(strNewBuf(output), "aaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "aaa\n", "    check output");
 
         // Subdirectory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -144,7 +161,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
-        TEST_RESULT_STR_Z(strNewBuf(output), "ccc", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "    check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Redirect stdout to a file
@@ -166,7 +183,6 @@ testRun(void)
         strLstAddZ(argListTmp, "ccc");
         harnessCfgLoad(cfgCmdRepoLs, argListTmp);
 
-        output = bufNew(0);
         TEST_ERROR(storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "only one path may be specified");
 
         // File
@@ -176,13 +192,29 @@ testRun(void)
         strLstAddZ(argList, "--output=json");
         harnessCfgLoad(cfgCmdRepoLs, argList);
 
+        output = bufNew(0);
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
                 "{"
                     "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
-                "}",
+                "}\n",
             "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("\\/aaa$"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
+        TEST_RESULT_STR_Z(
+            strNewBuf(output),
+                "{"
+                    "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
+                "}\n",
+            "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("bbb$"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
+        TEST_RESULT_STR_Z(strNewBuf(output), "{}\n", "    check output");
     }
 
     // *****************************************************************************************************************************
