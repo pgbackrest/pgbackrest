@@ -39,7 +39,7 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Fix filters when recursion enabled in <code>storageInfoListP()</code>.</p>
+                        <p>Fix expression when recursion enabled in <code>storageInfoListP()</code>.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
