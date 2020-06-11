@@ -413,6 +413,18 @@ testRun(void)
             callbackData.content,
             "path {path, m=0700}\n",
             "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("filter in subpath during recursion");
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
+                .expression = STRDEF("\\/file$")),
+            "filter");
+        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
     }
 
     // *****************************************************************************************************************************
