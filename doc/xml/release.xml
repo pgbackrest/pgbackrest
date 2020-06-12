@@ -72,6 +72,14 @@
 
                         <p>Update the FAQ page to clarify how a backup set can be expired.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update the PITR FAQ to clarify the default behavior.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
