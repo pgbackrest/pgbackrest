@@ -95,9 +95,9 @@ process-max=1
     <section id="time-based-pitr">
         <title>Time-based Point-in-Time Recovery does not appear to work, why?</title>
 
-        <p>The most common mistake when using time-based Point-in-Time Recovery is forgetting to choose a backup set that is before the target time. <backrest/> defaults to the latest backup and if it is after the target time, then <setting>--target=</setting> is not considered valid by <postgres/> and is therefore ignored, resulting in WAL recovery to the latest time available.</p>
+        <p>The most common mistake when using time-based Point-in-Time Recovery is forgetting to choose a backup set that is before the target time. <backrest/> will attempt to discover a backup to play forward from the time specified by the <setting>--target=</setting> if the <setting>--set</setting> option is not specified. If a backup set cannot be found, then restore will default to the latest backup. However, if the latest backup is after the target time, then <setting>--target=</setting> is not considered valid by <postgres/> and is therefore ignored, resulting in WAL recovery to the latest time available.</p>
 
-        <p>To choose the correct backup set, run the <cmd>info</cmd> command and find the backup with a timestamp stop that is before the target time. When running the restore, specify the option <setting>--set=BACKUP_LABEL</setting> where <id>BACKUP_LABEL</id> is the backup that was found with a <b>stop</b> timestamp before the target time.</p>
+        <p>To use the <setting>--set</setting> option, choose a backup set by running the <cmd>info</cmd> command and finding the backup with a timestamp stop that is before the target time. Then when running the restore, specify the option <setting>--set=BACKUP_LABEL</setting> where <id>BACKUP_LABEL</id> is the chosen backup set.</p>
 
         <p>See the <link url="user-guide.html#pitr">Point-in-Time Recovery</link> section of the <proper>User Guide</proper> for more information.</p>
     </section>
