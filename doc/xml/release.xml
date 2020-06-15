@@ -8558,11 +8558,6 @@
             <contributor-id type="github">mhagander</contributor-id>
         </contributor>
 
-        <contributor id="matt.bunter">
-            <contributor-name-display>Matt Bunter</contributor-name-display>
-            <contributor-id type="github">mattbunter</contributor-id>
-        </contributor>
-
         <contributor id="marc.cousin">
             <contributor-name-display>Marc Cousin</contributor-name-display>
             <contributor-id type="github">marco44</contributor-id>
@@ -8571,6 +8566,11 @@
         <contributor id="markus.nullmeier">
             <contributor-name-display>Markus Nullmeier</contributor-name-display>
             <contributor-id type="github">mnullmei</contributor-id>
+        </contributor>
+
+        <contributor id="matt.bunter">
+            <contributor-name-display>Matt Bunter</contributor-name-display>
+            <contributor-id type="github">mattbunter</contributor-id>
         </contributor>
 
         <contributor id="matt.kunkel">
