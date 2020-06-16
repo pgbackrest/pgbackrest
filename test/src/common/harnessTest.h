@@ -237,13 +237,13 @@ Macros to compare results of common data types
     TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), strPtrNull(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strPtr(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), resultExpected, __VA_ARGS__);
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strPtr(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(statement, strPtrNull(resultExpected), __VA_ARGS__);
 
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \

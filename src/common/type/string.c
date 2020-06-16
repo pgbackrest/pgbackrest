@@ -701,6 +701,16 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
+    FUNCTION_TEST_RETURN(this->buffer);
+}
+
+const char *
+strPtrNull(const String *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
     FUNCTION_TEST_RETURN(this == NULL ? NULL : this->buffer);
 }
 

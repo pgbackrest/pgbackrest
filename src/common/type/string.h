@@ -116,8 +116,9 @@ String *strPath(const String *this);
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
 
-// String pointer
+// Pointer to zero-terminated string. strPtrNull() returns NULL when the String is NULL.
 const char *strPtr(const String *this);
+const char *strPtrNull(const String *this);
 
 // Quote a string
 String *strQuote(const String *this, const String *quote);

@@ -294,7 +294,7 @@ testRun(void)
         TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 24 : 12, "check VariantString size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(strPtr(varStr(varNewStr(NULL))), NULL, "new null str");
+        TEST_RESULT_PTR(strPtrNull(varStr(varNewStr(NULL))), NULL, "new null str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *string = varNewStr(strNew("test-str"));
@@ -338,8 +338,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStr(VARSTRDEF("test-z-str")), "test-z-str", "new zero-terminated string");
-        TEST_RESULT_PTR(strPtr(varStr(VARSTR(NULL))), NULL, "new null strz");
-        TEST_RESULT_PTR(strPtr(varStr(varNewStrZ(NULL))), NULL, "new null strz");
+        TEST_RESULT_PTR(strPtrNull(varStr(VARSTR(NULL))), NULL, "new null strz");
+        TEST_RESULT_PTR(strPtrNull(varStr(varNewStrZ(NULL))), NULL, "new null strz");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStr(varDup(VARSTRDEF("yabba-dabba-doo"))), "yabba-dabba-doo", "dup string");
