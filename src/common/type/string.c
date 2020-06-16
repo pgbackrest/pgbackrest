@@ -701,6 +701,8 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
+    ASSERT(this != NULL);
+
     FUNCTION_TEST_RETURN(this->buffer);
 }
 
@@ -921,7 +923,8 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
+        // !!! strPtrNull here seems dubious
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtrNull(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 

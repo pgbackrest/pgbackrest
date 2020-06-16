@@ -307,7 +307,7 @@ testRun(void)
         TEST_RESULT_PTR(backupData.backupArchiveStart, NULL, "archive start NULL");
         TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "archive stop NULL");
         TEST_RESULT_STR_Z(backupData.backupType, "full", "backup type set");
-        TEST_RESULT_PTR(strPtr(backupData.backupPrior), NULL, "no backup prior");
+        TEST_RESULT_STR(backupData.backupPrior, NULL, "no backup prior");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "no backup reference");
         TEST_RESULT_INT(backupData.backupTimestampStart, 1565282140, "timestamp start");
         TEST_RESULT_INT(backupData.backupTimestampStop, 1565282142, "timestamp stop");
