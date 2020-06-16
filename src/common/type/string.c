@@ -923,8 +923,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! strPtrNull here seems dubious
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtrNull(formatFunc(object)));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 
