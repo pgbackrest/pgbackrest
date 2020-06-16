@@ -222,7 +222,8 @@ strBeginsWith(const String *this, const String *beginsWith)
     ASSERT(this != NULL);
     ASSERT(beginsWith != NULL);
 
-    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtr(beginsWith)));
+    // !!! strPtrNull() is only here to make CO6 happy.
+    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtrNull(beginsWith)));
 }
 
 bool
@@ -701,7 +702,7 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    // ASSERT(this != NULL); !!! UNCOMMENT
+    ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->buffer);
 }
