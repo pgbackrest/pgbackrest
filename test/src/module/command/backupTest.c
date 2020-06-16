@@ -1435,7 +1435,7 @@ testRun(void)
         cmdStanzaCreate();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when postmaster.pid exists");
+        TEST_TITLE("error when pg appears to be running");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1448,8 +1448,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR), BUFSTRDEF("PID"));
 
         TEST_ERROR(
-            cmdBackup(), PostmasterRunningError,
-            "--no-online passed but postmaster.pid exists - looks like the postmaster is running. Shutdown the postmaster and try"
+            cmdBackup(), PgRunningError,
+            "--no-online passed but postmaster.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
                 " again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
@@ -1474,14 +1474,14 @@ testRun(void)
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
-                " looks like the postmaster is running and the backup will probably not be consistent\n"
+                " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
             TEST_64BIT() ? "21e2ddc99cdf4cfca272eee4f38891146092e358" : "8bb70506d988a8698d9e8cf90736ada23634571b");
 
-        // Remove postmaster.pid
+        // Make pg no longer appear to be running
         storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------

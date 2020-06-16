@@ -22,7 +22,7 @@ ERROR_DECLARE(OptionInvalidPairError);
 ERROR_DECLARE(OptionDuplicateKeyError);
 ERROR_DECLARE(OptionNegateError);
 ERROR_DECLARE(OptionRequiredError);
-ERROR_DECLARE(PostmasterRunningError);
+ERROR_DECLARE(PgRunningError);
 ERROR_DECLARE(ProtocolError);
 ERROR_DECLARE(PathNotEmptyError);
 ERROR_DECLARE(FileOpenError);

@@ -853,15 +853,15 @@ backupStart(BackupData *backupData)
                 {
                     LOG_WARN(
                         "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so"
-                        " backup will continue though it looks like the postmaster is running and the backup will probably not be"
+                        " backup will continue though it looks like " PG_NAME " is running and the backup will probably not be"
                         " consistent");
                 }
                 else
                 {
                     THROW(
-                        PostmasterRunningError,
-                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running."
-                        " Shutdown the postmaster and try again, or use --force.");
+                        PgRunningError,
+                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running."
+                        " Shut down " PG_NAME " and try again, or use --force.");
                 }
             }
         }

@@ -720,8 +720,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal)
         {
-            # Expect failure because postmaster.pid exists
-            $oHostDbPrimary->restore('postmaster running', 'latest', {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING});
+            # Expect failure because pg (appears to be) running
+            $oHostDbPrimary->restore('pg running', 'latest', {iExpectedExitStatus => ERROR_PG_RUNNING});
         }
 
         $oHostDbPrimary->clusterStop();
@@ -1013,7 +1013,7 @@ sub run
             #-----------------------------------------------------------------------------------------------------------------------
             $oHostBackup->backup(
                 CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-online',
-                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-online'});
+                {iExpectedExitStatus => ERROR_PG_RUNNING, strOptionalParam => '--no-online'});
 
             # Incr backup - allow --no-online backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------

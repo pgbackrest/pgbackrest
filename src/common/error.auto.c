@@ -20,7 +20,7 @@ ERROR_DEFINE( 34, OptionInvalidPairError, RuntimeError);
 ERROR_DEFINE( 35, OptionDuplicateKeyError, RuntimeError);
 ERROR_DEFINE( 36, OptionNegateError, RuntimeError);
 ERROR_DEFINE( 37, OptionRequiredError, RuntimeError);
-ERROR_DEFINE( 38, PostmasterRunningError, RuntimeError);
+ERROR_DEFINE( 38, PgRunningError, RuntimeError);
 ERROR_DEFINE( 39, ProtocolError, RuntimeError);
 ERROR_DEFINE( 40, PathNotEmptyError, RuntimeError);
 ERROR_DEFINE( 41, FileOpenError, RuntimeError);
@@ -106,7 +106,7 @@ static const ErrorType *errorTypeList[] =
     &OptionDuplicateKeyError,
     &OptionNegateError,
     &OptionRequiredError,
-    &PostmasterRunningError,
+    &PgRunningError,
     &ProtocolError,
     &PathNotEmptyError,
     &FileOpenError,
