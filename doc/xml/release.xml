@@ -30,6 +30,16 @@
 
                         <p>Improve error when <br-option>pg1-path</br-option> option missing for <cmd>archive-get</cmd> command.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="matt.bunter"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint when checksum delta is enabled after a timeline switch.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -8556,6 +8566,11 @@
         <contributor id="markus.nullmeier">
             <contributor-name-display>Markus Nullmeier</contributor-name-display>
             <contributor-id type="github">mnullmei</contributor-id>
+        </contributor>
+
+        <contributor id="matt.bunter">
+            <contributor-name-display>Matt Bunter</contributor-name-display>
+            <contributor-id type="github">mattbunter</contributor-id>
         </contributor>
 
         <contributor id="matt.kunkel">

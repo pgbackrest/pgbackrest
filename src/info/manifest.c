@@ -1120,7 +1120,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             !strEq(strSubN(archiveStart, 0, 8), strSubN(manifestData(manifestPrior)->archiveStop, 0, 8)))
         {
             LOG_WARN_FMT(
-                "a timeline switch has occurred since the %s backup, enabling delta checksum",
+                "a timeline switch has occurred since the %s backup, enabling delta checksum\n"
+                "HINT: this is normal after restoring from backup or promoting a standby.",
                 strPtr(manifestData(manifestPrior)->backupLabel));
 
             this->data.backupOptionDelta = BOOL_TRUE_VAR;
