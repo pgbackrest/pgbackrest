@@ -92,6 +92,18 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename most instances of master to primary in tests.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2020-05-26" version="2.27" title="Expiration Improvements and Compression Drivers">

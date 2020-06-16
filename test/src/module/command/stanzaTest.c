@@ -458,7 +458,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
-        // Create pg_control for master
+        // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
@@ -476,7 +476,7 @@ testRun(void)
         });
 
         PgControl pgControl = {0};
-        TEST_ASSIGN(pgControl, pgValidate(), "validate master on pg2");
+        TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
         TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
         TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
     }

@@ -71,7 +71,7 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_MASTER,
+            strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_PRIMARY,
             strImage => $$oParam{strImage},
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
