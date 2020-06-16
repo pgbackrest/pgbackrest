@@ -3,12 +3,19 @@ Verify Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/archive/common.h"
 #include "command/check/common.h"
+#include "command/verify/protocol.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/log.h"
+#include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "protocol/helper.h"
+#include "protocol/parallel.h"
+#include "storage/helper.h"
 
 /* https://github.com/pgbackrest/pgbackrest/issues/1032
 Add a command to verify the contents of the repository. By the default the command will:
@@ -38,30 +45,6 @@ Add a command to verify the contents of the repository. By the default the comma
 
             BUT what does "missing WAL" mean - there can be gaps so "missing" is only if it is expected to be there for a backup to be consistent
         - The filename always include the WAL segment (timeline?) so all I need is the filename. BUT if I have to verify the checksums, so should I do it in the verifyFile function
-        - Is there a better way to get the list of WAL files than in 3 steps below?
-                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
-                StringList *listArchiveDisk = strLstSort(
-                    strLstComparatorSet(
-                        storageListP(storageRepo(), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
-                        archiveIdComparator),
-                    sortOrderAsc);
-
-                // Get all major archive paths (timeline and first 32 bits of LSN)
-                StringList *walPathList =
-                    strLstSort(
-                        storageListP(
-                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
-                            .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
-                        sortOrderAsc);
-
-                // Look for files in the archive directory CSHANG -- MAKE USE THE EXPRESSION BELOW IS FOR THE FILE NAME
-                StringList *walFileList =
-                    strLstSort(
-                        storageListP(
-                            storageRepo(),
-                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
-                            .expression = STRDEF("^[0-F]{24}.*$")),
-                        sortOrderAsc);
 
     * Verify all manifests/copies are valid
         - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false
@@ -483,16 +466,14 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         // Get a new job if there are any left
         VerifyJobData *jobData = data;
 
-        // If there are archive directories to process
-        if (strLstSize(data.archiveIdList) > 0)
+        while (strLstSize(jobData->archiveIdList) > 0)
         {
-            String *archiveId = strLstGet(data.archiveIdList, 0);
+            String *archiveId = strLstGet(jobData->archiveIdList, 0);
 
-            if (strLstSize(data.walPathList) == 0)
+            if (strLstSize(jobData->walPathList) == 0)
             {
                 // Get the WAL paths for the first item in the archive Id list
-                archiveId =
-                data.walPathList =
+                jobData->walPathList =
                     strLstSort(
                         storageListP(
                             storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
@@ -500,34 +481,61 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                         sortOrderAsc);
             }
 
-            // If there are WAL paths then get the files
-            if (strLstSize(data.walPathList) > 0)
+            // If there are WAL paths then get the file lists
+            if (strLstSize(jobData->walPathList) > 0)
             {
-                String *walPath = strLstGet(data.walPathList, 0);
+                do
+                {
+                    String *walPath = strLstGet(jobData->walPathList, 0);
 
-                // Get the WAL files for the first item in the WAL paths list
-                if (strLstSize(data.walFileList) == 0)
-                {
-                    data.walFileList =
-                        strLstSort(
-                            storageListP(
-                                storageRepo(),
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
-                                .expression = STRDEF("^[0-F]{24}.*$")),
-                            sortOrderAsc);
+                    // Get the WAL files for the first item in the WAL paths list
+                    if (strLstSize(jobData->walFileList) == 0)
+                    {
+                        jobData->walFileList =
+                            strLstSort(
+                                storageListP(
+                                    storageRepo(),
+                                    strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                    .expression = STRDEF("^[0-F]{24}.*$")),
+                                sortOrderAsc);
+                    }
+
+                    if (strLstSize(jobData->walFileList) > 0)
+                    {
+                        do
+                        {
+                            // Get the fully qualified file name
+                            const String *fileName = strLstGet(jobData->walFileList, 0);
+                            const String *fileNameFull = strNewFmt(
+                                STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
+
+                            // Get the checksum
+                            String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
+// CSHANG Might make 3 commands that all return same thing but get passed different stuff and all call an internal verifyFile function.
+// For example: PROTOCOL_COMMAND_VERIFY_FILE_ARCHIVE_STR, PROTOCOL_COMMAND_VERIFY_FILE_BACKUP_STR -- but the backup.manifest might have
+// to be something in this function? Read and verify first like the archive/backup info?
+                            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                            protocolCommandParamAdd(command, VARSTR(fileNameFull));
+                            protocolCommandParamAdd(command, VARSTR(checksum));
+
+                            FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(fileName), command));
+                        }
+                        while (strLstSize(jobData->walFileList) > 0);
+                    }
+                    else
+                    {
+                        // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
+                        LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
+                        strLstRemoveIdx(jobData->walPathList, 0);
+                    }
                 }
-                else
-                {
-                    // CSHANG: LOG SOMETHING THAT SAYS THE ARCHIVE ID/WAL PATH DIR IS EMPTY AND REMOVE IT FROM THE QUEUE
-                    LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
-                    lstRemoveIdx(data.walPathList, 0);
-                }
+                while (strLstSize(jobData->walPathList) > 0);
             }
             else
             {
-                // CSHANG: LOG SOMETHING THAT SAYS THE ARCHIVE ID DIR IS EMPTY AND REMOVE IT FROM THE QUEUE
+                // Log that no WAL paths exist in the archive Id dir - remove the archive Id from the list (nothing to process)
                 LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
-                lstRemoveIdx(data.archiveIdList, 0);
+                strLstRemoveIdx(jobData->archiveIdList, 0);
             }
         }
 
@@ -549,7 +557,7 @@ cmdVerify(void)
         unsigned int errorTotal = 0;
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
+        const Storage *storage = storageRepo();
 
         // Get a usable backup info file
         InfoBackup *backupInfo = verifyBackupInfoFile();
@@ -593,12 +601,12 @@ cmdVerify(void)
             // Initialize the job data
             VerifyJobData jobData =
             {
-                .walPathList = strLstNew();
-                .walFileList = strLstNew();
-                .backupFileList = strLstNew();
+                .walPathList = strLstNew(),
+                .walFileList = strLstNew(),
+                .backupFileList = strLstNew(),
                 .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                .manifestCipherPass = infoPgCipherPass(backupInfo->infoPg),
-                .walCipherPass = infoPgCipherPass(archiveInfo->infoPg),
+                .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
+                .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
             };
 
             // Get a list of backups in the repo
@@ -611,49 +619,55 @@ cmdVerify(void)
             // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash)
             jobData.archiveIdList = strLstSort(
                 strLstComparatorSet(
-                    storageListP(storageRepo(), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                    storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                     archiveIdComparator),
                 sortOrderAsc);
 
-            // Create the parallel executor
-            ProtocolParallel *parallelExec = protocolParallelNew(
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
-
-            // CSHANG Add this option
-            // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
-            // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
-
-            for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
-
-            // Process jobs
-            do
+            // Only begin processing if there are some archives or backups in the repo
+            if (strLstSize(jobData.archiveIdList) > 0 || strLstSize(jobData.backupList) > 0)
             {
-                unsigned int completed = protocolParallelProcess(parallelExec);
+                // Create the parallel executor
+                ProtocolParallel *parallelExec = protocolParallelNew(
+                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
 
-                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
-                {
-/* CSHANG
-Here we know that one or more jobs were completed but we need to find out which one.
-*/
-                        // Get the job and job key
-                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                        unsigned int processId = protocolParallelJobProcessId(job);
+                // CSHANG Add this option
+                // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
+                // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
 
-                        // CSHANG The key will tell us what we just processed
-                        // ENUM type
-                        // String filename
-                        const ENUM type = VARuint(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
-                        const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
-                        //
-                        // // The job was successful
-                        // if (protocolParallelJobErrorCode(job) == 0)
-                        // {
-                }
+                for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
+                    protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
+    //
+    //             // Process jobs
+    //             do
+    //             {
+    //                 unsigned int completed = protocolParallelProcess(parallelExec);
+    //
+    //                 for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+    //                 {
+    // /* CSHANG
+    // Here we know that one or more jobs were completed but we need to find out which one.
+    // */
+    //                         // Get the job and job key
+    //                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+    //                         unsigned int processId = protocolParallelJobProcessId(job);
+    //
+    //                         // CSHANG The key will tell us what we just processed
+    //                         // ENUM type
+    //                         // String filename
+    //                         const ENUM type = varUInt(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
+    //                         const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
+    //                         //
+    //                         // // The job was successful
+    //                         // if (protocolParallelJobErrorCode(job) == 0)
+    //                         // {
+    //                 }
+    //             }
+    //             while (!protocolParallelDone(parallelExec));
+
+                // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
             }
-            while (!protocolParallelDone(parallelExec));
-
-        // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
+            else
+                LOG_WARN("there are no archives or backups in the repo");
         }
 
         // Throw an error is cannot proceed
