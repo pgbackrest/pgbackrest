@@ -701,7 +701,7 @@ strPtr(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
+    // ASSERT(this != NULL); !!! UNCOMMENT
 
     FUNCTION_TEST_RETURN(this->buffer);
 }
