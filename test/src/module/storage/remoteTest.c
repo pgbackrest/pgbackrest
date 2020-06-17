@@ -112,13 +112,13 @@ testRun(void)
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0750, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
@@ -130,13 +130,13 @@ testRun(void)
         storagePutP(storageNewWriteP(storageRemote, strNew("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("test")), "valid file");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 6, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1555160001, "    check mod time");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
@@ -148,12 +148,12 @@ testRun(void)
         TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePathP(storageTest, strNew("repo/fifo"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("fifo")), "valid fifo");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0666, "    check mode");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
@@ -165,7 +165,7 @@ testRun(void)
         TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePathP(storageTest, strNew("repo/link"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link")), "valid link");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
@@ -180,12 +180,12 @@ testRun(void)
         TEST_TITLE("link info follow");
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link"), .followLink = true), "valid link follow");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 6, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");

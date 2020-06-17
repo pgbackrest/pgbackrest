@@ -20,7 +20,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("httpUriEncode"))
     {
-        TEST_RESULT_PTR(httpUriEncode(NULL, false), NULL, "null encodes to null");
+        TEST_RESULT_STR(httpUriEncode(NULL, false), NULL, "null encodes to null");
         TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), false), "0-9_~%2FA%20Z.az", "non-path encoding");
         TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), true), "0-9_~/A%20Z.az", "path encoding");
     }
@@ -58,7 +58,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key1")), "value1", "get value");
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key2")), "value2a, value2b", "get value");
-        TEST_RESULT_PTR(httpHeaderGet(header, strNew(BOGUS_STR)), NULL, "get missing value");
+        TEST_RESULT_STR(httpHeaderGet(header, strNew(BOGUS_STR)), NULL, "get missing value");
 
         TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
 
@@ -103,8 +103,8 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_PTR(httpQueryRender(NULL), NULL, "null query renders null");
-        TEST_RESULT_PTR(httpQueryRender(query), NULL, "empty query renders null");
+        TEST_RESULT_STR(httpQueryRender(NULL), NULL, "null query renders null");
+        TEST_RESULT_STR(httpQueryRender(query), NULL, "empty query renders null");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key2"), strNew("value2")), query, "add query");
         TEST_ERROR(httpQueryAdd(query, strNew("key2"), strNew("value2")), AssertError, "key 'key2' already exists");
@@ -117,7 +117,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key1")), "value 1?", "get value");
         TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key2")), "value2a", "get value");
-        TEST_RESULT_PTR(httpQueryGet(query, strNew(BOGUS_STR)), NULL, "get missing value");
+        TEST_RESULT_STR(httpQueryGet(query, strNew(BOGUS_STR)), NULL, "get missing value");
 
         TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: 'value2a'}", "log output");
 
@@ -132,7 +132,7 @@ testRun(void)
         // Reset statistics
         httpClientStatLocal = (HttpClientStat){0};
 
-        TEST_RESULT_PTR(httpClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
 
         TEST_ASSIGN(
             client, httpClientNew(strNew("localhost"), hrnTlsServerPort(), 500, testContainer(), NULL, NULL),

@@ -122,7 +122,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR_Z(infoPgArchiveId(infoPg, 0), "9.4-1", "    check pg archive id");
-        TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
+        TEST_RESULT_STR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
 
         Buffer *contentSave = bufNew(0);
 
