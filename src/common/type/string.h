@@ -35,7 +35,24 @@ String object
 ***********************************************************************************************************************************/
 typedef struct String String;
 
+#include "common/assert.h"
 #include "common/type/buffer.h"
+
+/***********************************************************************************************************************************
+Fields that are common between dynamically allocated and constant strings
+
+There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
+functions that process dynamically allocated strings.
+***********************************************************************************************************************************/
+#define STRING_COMMON                                                                                                              \
+    uint64_t size:32;                                               /* Actual size of the string */                                \
+    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
+    char *buffer;                                                   /* String buffer */
+
+typedef struct StringConst
+{
+    STRING_COMMON
+} StringConst;
 
 /***********************************************************************************************************************************
 Constructors
@@ -117,7 +134,13 @@ String *strPath(const String *this);
 String *strPathAbsolute(const String *this, const String *base);
 
 // Pointer to zero-terminated string. strPtrNull() returns NULL when the String is NULL.
-const char *strPtr(const String *this);
+__attribute__((always_inline)) static inline const char *
+strPtr(const String *this)
+{
+    ASSERT(this != NULL);
+    return ((const StringConst *)this)->buffer;
+}
+
 const char *strPtrNull(const String *this);
 
 // Quote a string
@@ -149,22 +172,6 @@ String *strTrunc(String *this, int idx);
 Destructor
 ***********************************************************************************************************************************/
 void strFree(String *this);
-
-/***********************************************************************************************************************************
-Fields that are common between dynamically allocated and constant strings
-
-There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
-functions that process dynamically allocated strings.
-***********************************************************************************************************************************/
-#define STRING_COMMON                                                                                                              \
-    uint64_t size:32;                                               /* Actual size of the string */                                \
-    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
-    char *buffer;                                                   /* String buffer */
-
-typedef struct StringConst
-{
-    STRING_COMMON
-} StringConst;
 
 /***********************************************************************************************************************************
 Macros for constant strings

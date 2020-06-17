@@ -222,8 +222,7 @@ strBeginsWith(const String *this, const String *beginsWith)
     ASSERT(this != NULL);
     ASSERT(beginsWith != NULL);
 
-    // !!! strPtrNull() is only here to make CO6 happy.
-    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtrNull(beginsWith)));
+    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtr(beginsWith)));
 }
 
 bool
@@ -695,18 +694,6 @@ strPathAbsolute(const String *this, const String *base)
 }
 
 /**********************************************************************************************************************************/
-const char *
-strPtr(const String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->buffer);
-}
-
 const char *
 strPtrNull(const String *this)
 {
