@@ -283,7 +283,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoBase), "write valid archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "fatal errors encountered, see log for details");
         harnessLogResult(
-            "P00   WARN: backup.info copy doesn't match info file\n"
+            "P00   WARN: backup.info.copy doesn't match backup.info\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
             " <REPO:ARCHIVE>/archive.info\n"
             "P00  ERROR: [029]: backup info file and archive info file do not match\n"
@@ -302,7 +302,8 @@ testRun(void)
             "write valid archive.info");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         harnessLogResult(
-            "P00   WARN: archive.info copy doesn't match info file");
+            "P00   WARN: archive.info.copy doesn't match archive.info\n"
+            "P00   WARN: no archives or backups exist in the repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info valid, copy invalid, archive.info valid, copy invalid");
@@ -313,8 +314,8 @@ testRun(void)
         harnessLogResult(
             strPtr(strNewFmt(
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read", testPath(), testPath())));
-
+            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
+            "P00   WARN: no archives or backups exist in the repo", testPath(), testPath())));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy missing, archive.info and copy valid");

@@ -40,18 +40,21 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         // Process any commands received that are for this handler
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
-            protocolServerResponse(
-                server,
-                VARBOOL(
-                    verifyFile(varStr(varLstGet(paramList, 0)))));
-                        // CSHANG Not sure yet what this will look like
-                        // varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        // (CompressType)varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)),
-                        // varStr(varLstGet(paramList, 4)), varBoolForce(varLstGet(paramList, 5)), varUInt64(varLstGet(paramList, 6)),
-                        // (time_t)varInt64Force(varLstGet(paramList, 7)), cvtZToUIntBase(strPtr(varStr(varLstGet(paramList, 8))), 8),
-                        // varStr(varLstGet(paramList, 9)), varStr(varLstGet(paramList, 10)),
-                        // (time_t)varInt64Force(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
-                        // varBoolForce(varLstGet(paramList, 13)), varStr(varLstGet(paramList, 14)))));
+            VerifyFileResult result = verifyFile(
+                varStr(varLstGet(paramList, 0)),                                                    // filename
+                (VerifyFileType)varUIntForce(varLstGet(paramList, 1)),                              // file type
+                varStr(varLstGet(paramList, 2)),                                                    // checksum
+                varUInt64(varLstGet(paramList, 3)),
+                (CompressType)varUIntForce(varLstGet(paramList, 4)),                                // compression type
+                varStr(varLstGet(paramList, 5)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc,     // cipher type
+                varStr(varLstGet(paramList, 5)));                                                   // cipher pass
+
+            // Return backup result
+            VariantList *resultList = varLstNew();
+            varLstAdd(resultList, varNewUInt(result.fileResult));
+            varLstAdd(resultList, varNewUInt(result.fileType));
+
+            protocolServerResponse(server, varNewVarLst(resultList));
         }
         else
             found = false;

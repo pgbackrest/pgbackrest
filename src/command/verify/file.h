@@ -4,21 +4,49 @@ Verify File
 #ifndef COMMAND_VERIFY_FILE_H
 #define COMMAND_VERIFY_FILE_H
 
-// #include "common/compress/helper.h"
-// #include "common/crypto/common.h"
-#include "common/type/string.h"
-// #include "storage/storage.h"
+#include "common/compress/helper.h"
+#include "common/crypto/common.h"
+
+/***********************************************************************************************************************************
+Verify file types
+***********************************************************************************************************************************/
+typedef enum
+{
+    verifyFileArchive,
+    verifyFileBackup,
+} VerifyFileType;
+
+/***********************************************************************************************************************************
+File result
+***********************************************************************************************************************************/
+typedef enum
+{
+    verifyOk,                                                       // default result - file OK
+    verifyFileMissing,
+    verifyChecksumMismatch,
+    verifySizeInvalid,
+} VerifyResult;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Verify a file in the repo
-bool verifyFile(const String *repoFile);
+// Verify a file in the pgBackRest repository
+typedef struct VerifyFileResult
+{
+    VerifyResult fileResult;
+    VerifyFileType fileType;
+} VerifyFileResult;
 
-// CSHANG Not sure yet what this looks like
-    // const String *repoFile, const String *repoFileReference, CompressType repoFileCompressType, const String *pgFile,
-    // const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified, mode_t pgFileMode,
-    // const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
-    // const String *cipherPass
+VerifyFileResult verifyFile(
+    const String *fileName, VerifyFileType type, const String *fileChecksum, uint64_t fileSize, CompressType fileCompressType,
+    CipherType cipherType, const String *cipherPass);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_VERIFY_FILE_RESULT_TYPE                                                                                       \
+    VerifyFileResult
+#define FUNCTION_LOG_VERIFY_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
+    objToLog(&value, "VerifyFileResult", buffer, bufferSize)
 
 #endif

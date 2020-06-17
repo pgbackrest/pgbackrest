@@ -5,7 +5,9 @@ Verify Command
 
 #include "command/archive/common.h"
 #include "command/check/common.h"
+#include "command/verify/file.h"
 #include "command/verify/protocol.h"
+#include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -47,27 +49,27 @@ Add a command to verify the contents of the repository. By the default the comma
         - The filename always include the WAL segment (timeline?) so all I need is the filename. BUT if I have to verify the checksums, so should I do it in the verifyFile function
 
     * Verify all manifests/copies are valid
-        - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false
+        - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback)
 
     * Verify the checksum of all WAL/backup files
         - Pass the checksum to verifyFie - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
         - Skip checking size for WAL file but should check for size equality with the backup files - if one or the other doesn't match, then corrupt
         - in verifyFile() function be sure to add IoSync filter and then do IoReadDrain and then look at the results of the filters. See restore/file.c lines 85 though 87 (although need more filters e.g. decrypt, decompress, size, sha, sync).
-                IoFilterGroup *filterGroup = ioWriteFilterGroup(storageReadIo(repoRead));
+
+            // Generate checksum for the file if size is not zero
+            IoRead *read = NULL;
+
+                read = storageReadIo(storageNewReadP(storageRepo(), filename));
+                IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
                 // Add decryption filter
                 if (cipherPass != NULL)
-                {
                     ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
-                    compressible = false;
-                }
+
 
                 // Add decompression filter
                 if (repoFileCompressType != compressTypeNone)
-                {
                     ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
-                    compressible = false;
-                }
 
                 // Add sha1 filter
                 ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
@@ -75,7 +77,13 @@ Add a command to verify the contents of the repository. By the default the comma
                 // Add size filter
                 ioFilterGroupAdd(filterGroup, ioSizeNew());
 
-                // Ad IoSync
+                // Add IoSink - this just throws away data so we don't want to move the data from the remote. The data is thrown away after the file is read, checksummed, etc
+                ioFilterGroupAdd(filterGroup, ioSinkNew());
+
+                ioReadDrain(read); // this will throw away if ioSink was not implemented
+
+                // Then filtergroup get result to validate checksum
+                if (!strEq(pgFileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
 
         - For the first pass we only check that all the files in the manifest are on disk. Future we may also WARN if there are files that are on disk but not in the manifest.
         - verifyJobResult() would check the status of the file (bad) and can either add to a corrupt list or add gaps in the WAL (probaby former) - I need to know what result I was coming from so that is the jobKey - maybe we use the filename as the key - does it begin with Archive then it is WAL, else it's a backup (wait, what about manifest) - maybe we can make the key a variant instead of a string. Need list of backups start/stop to be put into jobData and use this for final reconciliation.
@@ -320,7 +328,7 @@ verifyArchiveInfoFile(void)
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
                 // log a warning but must trust main
                 if (!strEq(verifyArchiveInfo.checksum, verifyArchiveInfoCopy.checksum))
-                    LOG_WARN("archive.info copy doesn't match info file");
+                    LOG_WARN("archive.info.copy doesn't match archive.info");
             }
         }
         else
@@ -368,7 +376,7 @@ verifyBackupInfoFile(void)
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
                 // log a warning but must trust main
                 if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-                    LOG_WARN("backup.info copy doesn't match info file");
+                    LOG_WARN("backup.info.copy doesn't match backup.info");
             }
         }
         else
@@ -466,6 +474,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         // Get a new job if there are any left
         VerifyJobData *jobData = data;
 
+        // Process archive files, if any
         while (strLstSize(jobData->archiveIdList) > 0)
         {
             String *archiveId = strLstGet(jobData->archiveIdList, 0);
@@ -511,14 +520,21 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
-// CSHANG Might make 3 commands that all return same thing but get passed different stuff and all call an internal verifyFile function.
-// For example: PROTOCOL_COMMAND_VERIFY_FILE_ARCHIVE_STR, PROTOCOL_COMMAND_VERIFY_FILE_BACKUP_STR -- but the backup.manifest might have
-// to be something in this function? Read and verify first like the archive/backup info?
+
                             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                             protocolCommandParamAdd(command, VARSTR(fileNameFull));
+                            protocolCommandParamAdd(command, VARUINT(verifyFileArchive));
                             protocolCommandParamAdd(command, VARSTR(checksum));
+                            protocolCommandParamAdd(command, VARUINT64(0)); // Don't know what size of WAL file should be so set 0
+                            protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
+                            protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
-                            FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(fileName), command));
+                            // Assign job to result
+                            result = protocolParallelJobMove(
+                                protocolParallelJobNew(VARSTR(fileNameFull), command), memContextPrior());
+
+                            // Return the job found
+                            FUNCTION_TEST_RETURN(result);
                         }
                         while (strLstSize(jobData->walFileList) > 0);
                     }
@@ -539,11 +555,12 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             }
         }
 
-        // CSHANG Here we know the archive Id list is empty so we can move on??
+        // Process backups
+
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 
@@ -626,6 +643,11 @@ cmdVerify(void)
             // Only begin processing if there are some archives or backups in the repo
             if (strLstSize(jobData.archiveIdList) > 0 || strLstSize(jobData.backupList) > 0)
             {
+                // WARN if there are no archives or there are no backups in the repo so that the callback need not try to
+                // distinguish between having processed all of the list or if the list was missing in the first place
+                if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
+                    LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
+
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
                     (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
@@ -667,7 +689,7 @@ cmdVerify(void)
                 // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
             }
             else
-                LOG_WARN("there are no archives or backups in the repo");
+                LOG_WARN("no archives or backups exist in the repo");
         }
 
         // Throw an error is cannot proceed
