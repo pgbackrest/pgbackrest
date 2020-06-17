@@ -82,7 +82,7 @@ testRun(void)
         TEST_RESULT_STR_Z(infoCipherPass(info), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
-        TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is NULL");
+        TEST_RESULT_STR(infoCipherPass(info), NULL, "    cipherPass is NULL");
     }
 
     // *****************************************************************************************************************************
@@ -155,7 +155,7 @@ testRun(void)
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with other cipher");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
-        TEST_RESULT_PTR(infoCipherPass(info), NULL, "    check cipher pass not set");
+        TEST_RESULT_STR(infoCipherPass(info), NULL, "    check cipher pass not set");
 
         // Base file with content
         // --------------------------------------------------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ testRun(void)
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_PTR(infoCipherPass(info), NULL, "    check cipher pass not set");
+        TEST_RESULT_STR(infoCipherPass(info), NULL, "    check cipher pass not set");
 
         Buffer *contentSave = bufNew(0);
 

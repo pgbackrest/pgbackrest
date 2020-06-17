@@ -76,7 +76,7 @@ testRun(void)
                 "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
                 "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
-        TEST_RESULT_PTR(
+        TEST_RESULT_STR(
             archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual, NULL, "no segment found");
 
         // Write segment into an older archive path
@@ -107,7 +107,7 @@ testRun(void)
 
         // Get history file
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(
+        TEST_RESULT_STR(
             archiveGetCheck(strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual, NULL, "history file not found");
 
         storagePutP(storageNewWriteP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);

@@ -121,7 +121,7 @@ testRun(void)
         TEST_RESULT_INT(strLstSize(cfgCommandParam()), 1, "command param list is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(cfgExe(), NULL, "exe defaults to null");
+        TEST_RESULT_STR(cfgExe(), NULL, "exe defaults to null");
         TEST_RESULT_VOID(cfgExeSet(strNew("/path/to/exe")), "set exe");
         TEST_RESULT_Z(strPtr(cfgExe()), "/path/to/exe", "exe is set");
 
@@ -200,7 +200,7 @@ testRun(void)
         TEST_ERROR(cfgOptionStr(cfgOptStanza), AssertError, "option 'stanza' is not valid for the current command");
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptStanza, true), "set stanza valid");
         TEST_ERROR(cfgOptionStr(cfgOptStanza), AssertError, "option 'stanza' is null but non-null was requested");
-        TEST_RESULT_PTR(cfgOptionStrNull(cfgOptStanza), NULL, "stanza defaults to null");
+        TEST_RESULT_STR(cfgOptionStrNull(cfgOptStanza), NULL, "stanza defaults to null");
         TEST_ERROR(
             cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'stanza' must be set with String variant");

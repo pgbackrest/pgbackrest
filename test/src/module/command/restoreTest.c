@@ -1200,7 +1200,7 @@ testRun(void)
         }
         MEM_CONTEXT_END();
 
-        TEST_RESULT_PTR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
+        TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: databases found for selective restore (1, 16384)\n"
