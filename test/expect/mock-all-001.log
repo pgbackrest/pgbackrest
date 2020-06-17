@@ -294,7 +294,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
-P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
+P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like PostgreSQL is running and the backup will probably not be consistent
 P00   INFO: exclude '[TEST_PATH]/db-primary/db/base/apipe' from backup using 'apipe' exclusion
 P00   INFO: exclude contents of '[TEST_PATH]/db-primary/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: exclude '[TEST_PATH]/db-primary/db/base/pg_log2' from backup using 'pg_log2' exclusion

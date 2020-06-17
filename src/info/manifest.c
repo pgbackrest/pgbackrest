@@ -607,7 +607,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels
                     strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
-                    // Skip running postmaster options
+                    // Skip running process options
                     strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
                     strEqZ(info->name, PG_FILE_POSTMASTERPID))

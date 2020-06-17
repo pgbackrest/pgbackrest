@@ -13,6 +13,7 @@ Stanza Delete Command
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
 
@@ -85,8 +86,8 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             if (!cfgOptionBool(cfgOptForce) && storageExistsP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
             {
                 THROW_FMT(
-                    PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
-                    "To delete stanza '%s', shutdown the postmaster for stanza '%s' and try again, or use --force.",
+                    PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
+                    "To delete stanza '%s', shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
                     strPtr(cfgOptionStr(cfgOptStanza)), strPtr(cfgOptionStr(cfgOptStanza)));
             }
 

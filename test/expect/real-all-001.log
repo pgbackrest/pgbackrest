@@ -188,7 +188,7 @@ check db - check command with tablespace (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-restore, type 'default', expect exit 38 - postmaster running (db-primary host)
+restore, type 'default', expect exit 38 - pg running (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 

@@ -81,7 +81,7 @@ restorePathValidate(void)
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
         {
             THROW_FMT(
-                PostmasterRunningError,
+                PgRunningError,
                 "unable to restore while PostgreSQL is running\n"
                     "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
                     "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
