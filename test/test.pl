@@ -94,6 +94,7 @@ test.pl [options]
    --expect             --vm=co7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
+   --no-coverage-report run coverage but don't generate coverage report (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
    --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
@@ -160,6 +161,7 @@ my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
 my $bNoCoverage = false;
+my $bNoCoverageReport = false;
 my $bCOnly = false;
 my $bContainerOnly = false;
 my $bNoPerformance = false;
@@ -213,6 +215,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
+            'no-coverage-report' => \$bNoCoverageReport,
             'c-only' => \$bCOnly,
             'container-only' => \$bContainerOnly,
             'no-performance' => \$bNoPerformance,
@@ -1157,7 +1160,7 @@ eval
         if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
-                $oyTestRun, $oStorageBackRest, false, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
+                $oyTestRun, $oStorageBackRest, !$bNoCoverageReport, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
                 "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
         }
 

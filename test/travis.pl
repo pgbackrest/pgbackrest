@@ -219,7 +219,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --vm-host=none --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --no-gen --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
             (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
