@@ -403,7 +403,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on when pg appears to be running");
+        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("postmaster.pid")), NULL);
 
