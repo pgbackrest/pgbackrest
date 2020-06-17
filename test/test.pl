@@ -1157,7 +1157,7 @@ eval
         if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
-                $oyTestRun, $oStorageBackRest, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
+                $oyTestRun, $oStorageBackRest, false, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
                 "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
         }
 
