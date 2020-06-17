@@ -222,7 +222,6 @@ sub coverageValidateAndGenerate
 {
     my $oyTestRun = shift;
     my $oStorage = shift;
-    my $bCoverageReport = shift;
     my $bCoverageSummary = shift;
     my $strWorkPath = shift;
     my $strWorkTmpPath = shift;
@@ -288,10 +287,17 @@ sub coverageValidateAndGenerate
 
     # Generate C coverage report
     #---------------------------------------------------------------------------------------------------------------------------
+    &log(INFO, 'writing C coverage report');
+
     my $strLCovFile = "${strWorkTmpPath}/all.lcov";
 
     if ($oStorage->exists($strLCovFile))
     {
+        executeTest(
+            "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
+                " --prefix=${strWorkPath}/repo" .
+                " --output-directory=${strTestResultCoveragePath}/lcov");
+
         foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
         {
             my $strCoverageFile = $strCodeModule;
@@ -338,23 +344,8 @@ sub coverageValidateAndGenerate
             }
         }
 
-        if ($result == 0)
-        {
-            &log(INFO, "tested modules have full coverage");
-        }
-
-        if ($bCoverageReport)
-        {
-            &log(INFO, 'writing C coverage report');
-
-            executeTest(
-                "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
-                    " --prefix=${strWorkPath}/repo" .
-                    " --output-directory=${strTestResultCoveragePath}/lcov");
-
-            coverageGenerate(
-                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
-        }
+        coverageGenerate(
+            $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
 
         if ($bCoverageSummary)
         {
@@ -364,9 +355,7 @@ sub coverageValidateAndGenerate
                 $oStorage, "${strTestResultCoveragePath}/raw", "${strTestResultSummaryPath}/metric-coverage-report.auto.xml");
         }
     }
-
-    # Remove coverage report when no coverage or no report to avoid confusion from looking at an old report
-    if (!$bCoverageReport || !$oStorage->exists($strLCovFile))
+    else
     {
         executeTest("rm -rf ${strTestResultCoveragePath}/test/tesult/coverage");
     }
