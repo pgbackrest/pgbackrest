@@ -403,12 +403,12 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on postmaster.pid is present");
+        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("postmaster.pid")), NULL);
 
         TEST_ERROR_FMT(
-            restorePathValidate(), PostmasterRunningError,
+            restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
                 "HINT: presence of 'postmaster.pid' in '%s/pg' indicates PostgreSQL is running.\n"
                 "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
