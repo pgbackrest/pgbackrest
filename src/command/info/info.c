@@ -122,7 +122,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM_P(INFO_PG_DATA, pgData);
-        FUNCTION_TEST_PARAM(VARIANT, archiveSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, archiveSection);
         FUNCTION_TEST_PARAM(BOOL, currentDb);
     FUNCTION_TEST_END();
 
@@ -208,7 +208,7 @@ static void
 backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, backupSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();

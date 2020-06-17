@@ -145,7 +145,7 @@ testRun(void)
         TEST_ERROR(iniGet(ini, strNew("section2"), strNew("key2")), FormatError, "section 'section2', key 'key2' does not exist");
 
         TEST_RESULT_STR_Z(iniGetDefault(ini, strNew("section1"), strNew("key1"), NULL), "11", "get section, key, int");
-        TEST_RESULT_PTR(iniGetDefault(ini, strNew("section2"), strNew("key2"), NULL), NULL, "get section, key, NULL");
+        TEST_RESULT_STR(iniGetDefault(ini, strNew("section2"), strNew("key2"), NULL), NULL, "get section, key, NULL");
         TEST_RESULT_STR_Z(iniGetDefault(ini, strNew("section3"), strNew("key3"), strNew("true")), "true", "get section, key, bool");
 
         TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, strNew("bogus"))), 0, "get keys for missing section");

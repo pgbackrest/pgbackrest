@@ -56,6 +56,9 @@ typedef struct ErrorType ErrorType;
 // Declare test error
 #ifndef NDEBUG
     ERROR_DECLARE(TestError);
+#else
+    // Must always be defined since it might be needed to compile (though not used) during profiling
+    #define TestError AssertError
 #endif
 
 /***********************************************************************************************************************************

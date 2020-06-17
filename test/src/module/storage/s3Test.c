@@ -187,7 +187,7 @@ testRun(void)
             ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)), "    check host");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_PTR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
+        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
 
