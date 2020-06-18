@@ -107,7 +107,7 @@ testRun(void)
 
         TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->interface.info, "    check interface");
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
-        TEST_RESULT_PTR(storageType(storageTest), storageTest->type, "    check type");
+        TEST_RESULT_STR(storageType(storageTest), storageTest->type, "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "    check compress feature");
 
@@ -209,13 +209,13 @@ testRun(void)
         THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
         TEST_ASSIGN(info, storageInfoP(storageTest, strNew(testPath())), "get path info");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
@@ -233,13 +233,13 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 8, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1555155555, "    check mod time");
-        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_RESULT_STR(info.user, NULL, "    check user");
         TEST_RESULT_STR(info.group, NULL, "    check group");
@@ -252,7 +252,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("ln -s /tmp %s", strPtr(linkName)))), 0, "create link");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
@@ -262,7 +262,7 @@ testRun(void)
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
@@ -278,7 +278,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(pipeName)))), 0, "create pipe");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
-        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_STR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
         TEST_RESULT_UINT(info.size, 0, "    check size");
@@ -413,6 +413,18 @@ testRun(void)
             callbackData.content,
             "path {path, m=0700}\n",
             "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("filter in subpath during recursion");
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
+                .expression = STRDEF("\\/file$")),
+            "filter");
+        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
     }
 
     // *****************************************************************************************************************************
@@ -1153,6 +1165,7 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
@@ -1196,7 +1209,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
-        TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
+        TEST_RESULT_STR(storageHelper.stanza, NULL, "stanza NULL");
 
         TEST_RESULT_STR(
             storagePathP(storage, STORAGE_REPO_ARCHIVE_STR), strNewFmt("%s/archive", testPath()),

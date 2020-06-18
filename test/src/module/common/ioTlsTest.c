@@ -364,9 +364,9 @@ testRun(void)
 
         // Reset statistics
         sckClientStatLocal = (SocketClientStat){0};
-        TEST_RESULT_PTR(sckClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_STR(sckClientStatStr(), NULL, "no stats yet");
         tlsClientStatLocal = (TlsClientStat){0};
-        TEST_RESULT_PTR(tlsClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_STR(tlsClientStatStr(), NULL, "no stats yet");
 
         HARNESS_FORK_BEGIN()
         {

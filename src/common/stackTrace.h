@@ -44,6 +44,9 @@ Internal Functions
 
     // Set line number for the current function on the stack
     void stackTraceTestFileLineSet(unsigned int fileLine);
+#else
+    // Must always be valid since it might be needed to compile (though not used) during profiling
+    #define stackTraceTestFileLineSet(fileLine)
 #endif
 
 // Push a new function onto the trace stack

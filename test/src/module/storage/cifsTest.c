@@ -17,6 +17,7 @@ testRun(void)
         // Load configuration
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=cifs");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);

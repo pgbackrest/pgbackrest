@@ -403,12 +403,12 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on postmaster.pid is present");
+        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("postmaster.pid")), NULL);
 
         TEST_ERROR_FMT(
-            restorePathValidate(), PostmasterRunningError,
+            restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
                 "HINT: presence of 'postmaster.pid' in '%s/pg' indicates PostgreSQL is running.\n"
                 "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
@@ -1200,7 +1200,7 @@ testRun(void)
         }
         MEM_CONTEXT_END();
 
-        TEST_RESULT_PTR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
+        TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: databases found for selective restore (1, 16384)\n"

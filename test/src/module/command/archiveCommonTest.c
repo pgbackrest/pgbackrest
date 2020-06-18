@@ -125,6 +125,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
@@ -225,14 +226,15 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
+        TEST_RESULT_STR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
 
         storagePathCreateP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
-        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
+        TEST_RESULT_STR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
         TEST_ERROR(
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 100), ArchiveTimeoutError,
             "WAL segment 123456781234567812345678 was not archived before the 100ms timeout\n"
@@ -279,7 +281,7 @@ testRun(void)
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
-        TEST_RESULT_PTR(
+        TEST_RESULT_STR(
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
     }

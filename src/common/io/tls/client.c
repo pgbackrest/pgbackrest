@@ -104,7 +104,7 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
             if (caFile != NULL || caPath != NULL)                                                                   // {vm_covered}
             {
                 cryptoError(                                                                                        // {vm_covered}
-                    SSL_CTX_load_verify_locations(this->context, strPtr(caFile), strPtr(caPath)) != 1,              // {vm_covered}
+                    SSL_CTX_load_verify_locations(this->context, strPtrNull(caFile), strPtrNull(caPath)) != 1,      // {vm_covered}
                     "unable to set user-defined CA certificate location");                                          // {vm_covered}
             }
             // Else use the defaults

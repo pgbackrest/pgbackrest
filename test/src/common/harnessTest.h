@@ -217,6 +217,8 @@ Macros to compare results of common data types
     }                                                                                                                              \
     while (0)
 
+// Compare raw pointers. When checking for NULL use the type-specific macro when available, e.g. TEST_RESULT_STR(). This is more
+// type-safe and makes it clearer what is being tested.
 #define TEST_RESULT_PTR(statement, expected, ...)                                                                                  \
     TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
 #define TEST_RESULT_PTR_NE(statement, expected, ...)                                                                               \
@@ -237,13 +239,13 @@ Macros to compare results of common data types
     TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), strPtrNull(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strPtr(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), resultExpected, __VA_ARGS__);
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strPtr(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strPtrNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(statement, strPtrNull(resultExpected), __VA_ARGS__);
 
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \

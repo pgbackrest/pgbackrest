@@ -707,7 +707,7 @@ sub build
     my
     (
         $strOperation,
-        $oStorageDbMaster,
+        $oStorageDbPrimary,
         $strPath,
         $oLastManifest,
         $bOnline,
@@ -726,7 +726,7 @@ sub build
         logDebugParam
         (
             __PACKAGE__ . '->build', \@_,
-            {name => 'oStorageDbMaster'},
+            {name => 'oStorageDbPrimary'},
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
@@ -769,7 +769,7 @@ sub build
         # If not online then build the tablespace map from pg_tblspc path
         if (!$bOnline && !defined($hTablespaceMap))
         {
-            my $hTablespaceManifest = $oStorageDbMaster->manifest($strPath . '/' . DB_PATH_PGTBLSPC);
+            my $hTablespaceManifest = $oStorageDbPrimary->manifest($strPath . '/' . DB_PATH_PGTBLSPC);
             $hTablespaceMap = {};
 
             foreach my $strOid (sort(CORE::keys(%{$hTablespaceManifest})))
@@ -820,11 +820,11 @@ sub build
             confess &log(ASSERT, "cannot get manifest for '${strPath}' when no parent path is specified");
         }
 
-        $strPath = $oStorageDbMaster->pathAbsolute($strParentPath, $strPath);
+        $strPath = $oStorageDbPrimary->pathAbsolute($strParentPath, $strPath);
     }
 
     # Get the manifest for this level
-    my $hManifest = $oStorageDbMaster->manifest($strPath, {strFilter => $strFilter});
+    my $hManifest = $oStorageDbPrimary->manifest($strPath, {strFilter => $strFilter});
     my $strManifestType = MANIFEST_VALUE_LINK;
 
     # Loop though all paths/files/links in the manifest
@@ -1024,7 +1024,7 @@ sub build
             # Check for tablespaces in PGDATA
             if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
-                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
+                 index($oStorageDbPrimary->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
                        $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
                 confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
@@ -1093,8 +1093,8 @@ sub build
             }
 
             $bDelta = $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude, undef,
-                undef, $strFile, $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
+                $oStorageDbPrimary, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude,
+                undef, undef, $strFile, $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
         }
     }
 

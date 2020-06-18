@@ -1483,7 +1483,9 @@ testRun(void)
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")), "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum\n"
+            "            HINT: this is normal after restoring from backup or promoting a standby.");
 
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta is enabled");
 

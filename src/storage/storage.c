@@ -412,26 +412,27 @@ storageInfoListCallback(void *data, const StorageInfo *info)
     if (listData->subPath != NULL)
         infoUpdate.name = strNewFmt("%s/%s", strPtr(listData->subPath), strPtr(infoUpdate.name));
 
-    // Only continue if there is no expression or the expression matches
-    if (listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name))
+    // Is this file a match?
+    bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
+
+    // Callback before checking path contents when not descending
+    if (match && listData->sortOrder != sortOrderDesc)
+        listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+    // Recurse into paths
+    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
     {
-        if (listData->sortOrder != sortOrderDesc)
-            listData->callbackFunction(listData->callbackData, &infoUpdate);
+        StorageInfoListData data = *listData;
+        data.subPath = infoUpdate.name;
 
-        // Recurse into paths
-        if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
-        {
-            StorageInfoListData data = *listData;
-            data.subPath = infoUpdate.name;
-
-            storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expression,
-                data.sortOrder, storageInfoListCallback, &data);
-        }
-
-        if (listData->sortOrder == sortOrderDesc)
-            listData->callbackFunction(listData->callbackData, &infoUpdate);
+        storageInfoListSort(
+            data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expression,
+            data.sortOrder, storageInfoListCallback, &data);
     }
+
+    // Callback after checking path contents when descending
+    if (match && listData->sortOrder == sortOrderDesc)
+        listData->callbackFunction(listData->callbackData, &infoUpdate);
 
     FUNCTION_TEST_RETURN_VOID();
 }

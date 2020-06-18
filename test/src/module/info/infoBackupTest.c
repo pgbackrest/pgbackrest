@@ -60,7 +60,7 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare)), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
+        TEST_RESULT_STR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
         // Check cipher pass
@@ -150,7 +150,7 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupInfoSize, 26897030, "    backup size");
         TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 26897030, "    backup delta");
         TEST_RESULT_INT(backupData.backupPgId, 1, "    pg id");
-        TEST_RESULT_PTR(backupData.backupPrior, NULL, "    backup prior NULL");
+        TEST_RESULT_STR(backupData.backupPrior, NULL, "    backup prior NULL");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "    backup reference NULL");
         TEST_RESULT_INT(backupData.backupTimestampStart, 1482182846, "    timestamp start");
         TEST_RESULT_INT(backupData.backupTimestampStop, 1482182861, "    timestamp stop");
@@ -170,8 +170,8 @@ testRun(void)
 
         backupData = infoBackupData(infoBackup, 2);
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F_20161219-212918I", "incr backup label");
-        TEST_RESULT_PTR(backupData.backupArchiveStart, NULL, "    archive start NULL");
-        TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "    archive stop NULL");
+        TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "    archive start NULL");
+        TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "    archive stop NULL");
         TEST_RESULT_STR_Z(backupData.backupType, "incr", "    backup type incr");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
@@ -304,10 +304,10 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT, "backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, PROJECT_VERSION, "backuprest version");
         TEST_RESULT_INT(backupData.backupPgId, 1, "pg id");
-        TEST_RESULT_PTR(backupData.backupArchiveStart, NULL, "archive start NULL");
-        TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "archive stop NULL");
+        TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
+        TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "archive stop NULL");
         TEST_RESULT_STR_Z(backupData.backupType, "full", "backup type set");
-        TEST_RESULT_PTR(strPtr(backupData.backupPrior), NULL, "no backup prior");
+        TEST_RESULT_STR(backupData.backupPrior, NULL, "no backup prior");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "no backup reference");
         TEST_RESULT_INT(backupData.backupTimestampStart, 1565282140, "timestamp start");
         TEST_RESULT_INT(backupData.backupTimestampStop, 1565282142, "timestamp stop");
@@ -437,6 +437,7 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
