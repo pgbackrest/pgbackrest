@@ -52,13 +52,13 @@ full backup - create pg_stat link, pg_clog dir (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: invalid page checksums found in file db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 at pages 0, 3-5, 7
-P00   WARN: invalid page checksum found in file db-master:[TEST_PATH]/db-master/db/base/base/16384/17000 at page 1
+P00   WARN: invalid page checksums found in file db-primary:[TEST_PATH]/db-primary/db/base/base/32768/33001 at pages 0, 3-5, 7
+P00   WARN: invalid page checksum found in file db-primary:[TEST_PATH]/db-primary/db/base/base/16384/17000 at page 1
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -66,11 +66,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -79,16 +79,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -156,7 +156,7 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base","type":"path"}
 pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
 pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
@@ -245,13 +245,13 @@ full backup - resume (backup host)
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
-P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
+P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like PostgreSQL is running and the backup will probably not be consistent
 P00   WARN: resumable backup [BACKUP-FULL-2] of same type exists -- remove invalid files and resume
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -259,11 +259,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -272,16 +272,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -353,7 +353,7 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base","type":"path"}
 pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
 pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
@@ -440,26 +440,26 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --cmd-ssh=/usr/bin/ssh  --stanza=db restore
+restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --cmd-ssh=/usr/bin/ssh  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
-----------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
+-----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --compress-level-network=0  --stanza=db restore
+restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --compress-level-network=0  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
-----------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
+-----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, force, backup '[BACKUP-FULL-2]' - restore links as directories (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
+restore delta, force, backup '[BACKUP-FULL-2]' - restore links as directories (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
@@ -467,10 +467,10 @@ P00   WARN: file link 'postgresql.conf' will be restored as a file at the same l
 P00   WARN: unknown user 'bogus' in backup manifest mapped to current user
 P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
 
-+ supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
-----------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
+-----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
@@ -478,12 +478,12 @@ incr backup - add tablespace 1 (backup host)
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -491,11 +491,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -504,16 +504,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -582,8 +582,8 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
-pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base","type":"path"}
+pg_tblspc/1={"path":"[TEST_PATH]/db-primary/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -617,7 +617,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
+pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts1"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -682,13 +682,13 @@ P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: resumable backup [BACKUP-INCR-2] of same type exists -- remove invalid files and resume
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -696,11 +696,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -709,16 +709,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -787,10 +787,10 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
-pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
-pg_tblspc/11={"path":"[TEST_PATH]/db-master/db/tablespace/ts11","tablespace-id":"11","tablespace-name":"ts11","type":"link"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base","type":"path"}
+pg_tblspc/1={"path":"[TEST_PATH]/db-primary/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+pg_tblspc/11={"path":"[TEST_PATH]/db-primary/db/tablespace/ts11","tablespace-id":"11","tablespace-name":"ts11","type":"link"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -825,9 +825,9 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
-pg_data/pg_tblspc/11={"destination":"[TEST_PATH]/db-master/db/tablespace/ts11"}
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
+pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts1"}
+pg_data/pg_tblspc/11={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts11"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -895,13 +895,13 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -909,11 +909,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -922,16 +922,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-primary/db/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1000,9 +1000,9 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
-pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base","type":"path"}
+pg_tblspc/1={"path":"[TEST_PATH]/db-primary/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -1037,8 +1037,8 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
+pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts1"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -1098,23 +1098,23 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-restore, backup '[BACKUP-DIFF-1]', remap - remap all paths (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-1] --stanza=db restore
+restore, backup '[BACKUP-DIFF-1]', remap - remap all paths (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --set=[BACKUP-DIFF-1] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
-------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
+-------------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, backup '[BACKUP-DIFF-1]', remap - ensure file in tblspc root remains after --delta (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-1] --stanza=db restore
+restore delta, backup '[BACKUP-DIFF-1]', remap - ensure file in tblspc root remains after --delta (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-DIFF-1] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
-------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
+-------------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - add files and remove tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
@@ -1122,16 +1122,16 @@ incr backup - add files and remove tablespace 2 (backup host)
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-1]
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1139,11 +1139,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -1152,16 +1152,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1230,8 +1230,8 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -1267,7 +1267,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -1332,16 +1332,16 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1349,11 +1349,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -1362,16 +1362,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1440,8 +1440,8 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -1477,7 +1477,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -1543,18 +1543,18 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1562,11 +1562,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -1575,16 +1575,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1653,8 +1653,8 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -1690,7 +1690,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -1758,17 +1758,17 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
 P00   WARN: diff backup cannot alter compress-type option to 'lz4', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
-P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
+P00   WARN: page misalignment in file db-primary:[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1776,11 +1776,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -1789,16 +1789,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1867,8 +1867,8 @@ option-online=false
 option-process-max=1
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-3]
@@ -1902,7 +1902,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -1969,14 +1969,14 @@ full backup - update file (backup host)
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -1984,11 +1984,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -1997,16 +1997,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -2074,8 +2074,8 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-4]
@@ -2110,7 +2110,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -2182,14 +2182,14 @@ diff backup - add file (backup host)
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -2197,11 +2197,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -2210,16 +2210,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-primary/db/base-2
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -2288,8 +2288,8 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]
 cipher-pass=[CIPHER-PASS-4]
@@ -2325,7 +2325,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-primary/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
@@ -2381,65 +2381,65 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-restore delta, remap - selective restore 16384 (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=16384  --stanza=db restore
+restore delta, remap - selective restore 16384 (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
-------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
+-------------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, remap - selective restore 32768 (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=32768  --stanza=db restore
+restore delta, remap - selective restore 32768 (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
-------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
+-------------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore delta, remap, expect exit 80 - error on invalid id (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
+restore delta, remap, expect exit 80 - error on invalid id (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [080]: database to include '7777' does not exist
 
-restore delta, remap, expect exit 81 - error on system id (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=1  --stanza=db restore
+restore delta, remap, expect exit 81 - error on system id (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --log-level-console=warn --db-include=1  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by default
 
-restore, remap - no tablespace remap (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
+restore, remap - no tablespace remap (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-+ supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf
------------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/db/base-2/base/recovery.conf
+------------------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-diff backup - option backup-standby reset - backup performed from master (backup host)
+diff backup - option backup-standby reset - backup performed from primary (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-primary --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-primary/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01   INFO: backup file db-primary:[TEST_PATH]/db-primary/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-primary --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
 [db]
-pg1-path=[TEST_PATH]/db-master/db/base-2/base
+pg1-path=[TEST_PATH]/db-primary/db/base-2/base
 
 [db:restore]
 
@@ -2449,11 +2449,11 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
+lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=warn
 log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
+log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
@@ -2462,16 +2462,16 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
-spool-path=[TEST_PATH]/db-master/spool
+spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-pg1-host=db-master
+pg1-host=db-primary
 pg1-host-cmd=[BACKREST-BIN]
-pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
 pg1-host-user=[USER-1]
-pg1-path=[TEST_PATH]/db-master/db/base-2/base
+pg1-path=[TEST_PATH]/db-primary/db/base-2/base
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -2540,7 +2540,7 @@ option-online=false
 option-process-max=2
 
 [backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}
+pg_data={"path":"[TEST_PATH]/db-primary/db/base-2/base","type":"path"}
 pg_tblspc/2={"path":"../../tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [cipher]

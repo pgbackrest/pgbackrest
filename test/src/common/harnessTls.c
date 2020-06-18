@@ -311,6 +311,9 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
 
             case hrnTlsCmdClose:
             {
+                if (serverSession == NULL)
+                    THROW(AssertError, "TLS session is already closed");
+
                 tlsSessionClose(serverSession, true);
                 tlsSessionFree(serverSession);
                 serverSession = NULL;

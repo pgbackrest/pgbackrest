@@ -458,7 +458,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
-        // Create pg_control for master
+        // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
@@ -476,7 +476,7 @@ testRun(void)
         });
 
         PgControl pgControl = {0};
-        TEST_ASSIGN(pgControl, pgValidate(), "validate master on pg2");
+        TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
         TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
         TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
     }
@@ -991,8 +991,9 @@ testRun(void)
             storagePathCreateP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - empty directories");
 
-        // Create postmaster.pid
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delete errors when pg appears to be running");
+
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
@@ -1003,12 +1004,14 @@ testRun(void)
                 "create stop file");
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/" PG_FILE_POSTMASTERPID, strPtr(stanza))), BUFSTRDEF("")),
-            "create postmaster file");
+            "create pid file");
         TEST_ERROR_FMT(
-            cmdStanzaDelete(), PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
-            "To delete stanza 'db', shutdown the postmaster for stanza 'db' and try again, or use --force.");
+            cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
+            "To delete stanza 'db', shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
-        // Force deletion
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("force delete when pg appears to be running");
+
         strLstAddZ(argList,"--force");
         harnessCfgLoad(cfgCmdStanzaDelete, argList);
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");

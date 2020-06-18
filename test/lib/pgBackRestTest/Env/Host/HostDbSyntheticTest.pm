@@ -213,7 +213,7 @@ sub manifestFileCreate
     my $strChecksum = shift;
     my $lTime = shift;
     my $strMode = shift;
-    my $bMaster = shift;
+    my $bPrimary = shift;
     my $strChecksumPageError = shift;
 
     # Determine the manifest key
@@ -232,7 +232,7 @@ sub manifestFileCreate
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
-        defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
+        defined($bPrimary) ? ($bPrimary ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
     delete(${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_REFERENCE});
 
     my $bChecksumPage = defined($strChecksumPageError) ? false : (isChecksumPage($strManifestKey) ? true : undef);
@@ -324,7 +324,7 @@ sub manifestLinkCreate
     my $strPath = shift;
     my $strFile = shift;
     my $strDestination = shift;
-    my $bMaster = shift;
+    my $bPrimary = shift;
 
     # Determine the manifest key
     my $strManifestKey = $self->manifestKeyGet($oManifestRef, $strPath, $strFile);
@@ -370,7 +370,7 @@ sub manifestLinkCreate
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
         (${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM}) = storageTest()->hashSize($strDestinationFile);
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
-            defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
+            defined($bPrimary) ? ($bPrimary ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
 
         ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strManifestKey}{&MANIFEST_SUBKEY_FILE} =
             basename(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strManifestKey}{&MANIFEST_SUBKEY_PATH});

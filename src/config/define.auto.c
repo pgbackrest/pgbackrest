@@ -2515,13 +2515,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
-
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)

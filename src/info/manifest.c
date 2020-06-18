@@ -607,7 +607,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels
                     strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
-                    // Skip running postmaster options
+                    // Skip running process options
                     strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
                     strEqZ(info->name, PG_FILE_POSTMASTERPID))
@@ -1120,7 +1120,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             !strEq(strSubN(archiveStart, 0, 8), strSubN(manifestData(manifestPrior)->archiveStop, 0, 8)))
         {
             LOG_WARN_FMT(
-                "a timeline switch has occurred since the %s backup, enabling delta checksum",
+                "a timeline switch has occurred since the %s backup, enabling delta checksum\n"
+                "HINT: this is normal after restoring from backup or promoting a standby.",
                 strPtr(manifestData(manifestPrior)->backupLabel));
 
             this->data.backupOptionDelta = BOOL_TRUE_VAR;
