@@ -42,9 +42,9 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         {
             VerifyFileResult result = verifyFile(
                 varStr(varLstGet(paramList, 0)),                                                    // filename
-                (VerifyFileType)varUIntForce(varLstGet(paramList, 1)),                              // file type
-                varStr(varLstGet(paramList, 2)),                                                    // checksum
-                varUInt64(varLstGet(paramList, 3)),
+                varStr(varLstGet(paramList, 1)),                                                    // checksum
+                varBool(varLstGet(paramList, 2)),                                                   // check file size?
+                varUInt64(varLstGet(paramList, 3)),                                                 // file size
                 (CompressType)varUIntForce(varLstGet(paramList, 4)),                                // compression type
                 varStr(varLstGet(paramList, 5)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc,     // cipher type
                 varStr(varLstGet(paramList, 5)));                                                   // cipher pass
@@ -52,7 +52,8 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
             // Return backup result
             VariantList *resultList = varLstNew();
             varLstAdd(resultList, varNewUInt(result.fileResult));
-            varLstAdd(resultList, varNewUInt(result.fileType));
+            varLstAdd(resultList, varNewStr(result.filePathName));
+            // varLstAdd(resultList, varNewUInt(result.fileType));  // CSHANG Don't think we need
 
             protocolServerResponse(server, varNewVarLst(resultList));
         }

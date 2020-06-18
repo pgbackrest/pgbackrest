@@ -28,6 +28,7 @@ Main
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
+#include "command/verify/verify.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -256,6 +257,14 @@ main(int argListSize, const char *argList[])
                 {
                     printf(PROJECT_NAME " " PROJECT_VERSION "\n");
                     fflush(stdout);
+                    break;
+                }
+
+                // Display version
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdVerify:
+                {
+                    cmdVerify();
                     break;
                 }
             }

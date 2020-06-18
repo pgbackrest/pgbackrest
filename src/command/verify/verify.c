@@ -451,6 +451,7 @@ typedef struct VerifyJobData
     CipherType cipherType;                                          // Repository cipher type
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
+    unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
 } VerifyJobData;
 
 static ProtocolParallelJob *
@@ -469,8 +470,8 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // Initialize the result
     ProtocolParallelJob *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
+    // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW
+    // {
         // Get a new job if there are any left
         VerifyJobData *jobData = data;
 
@@ -515,26 +516,28 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                         {
                             // Get the fully qualified file name
                             const String *fileName = strLstGet(jobData->walFileList, 0);
-                            const String *fileNameFull = strNewFmt(
+                            const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
 
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
                             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
-                            protocolCommandParamAdd(command, VARSTR(fileNameFull));
-                            protocolCommandParamAdd(command, VARUINT(verifyFileArchive));
+                            protocolCommandParamAdd(command, VARSTR(filePathName));
                             protocolCommandParamAdd(command, VARSTR(checksum));
-                            protocolCommandParamAdd(command, VARUINT64(0)); // Don't know what size of WAL file should be so set 0
+                            protocolCommandParamAdd(command, VARBOOL(false));
+                            protocolCommandParamAdd(command, VARUINT64(0));
                             protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
                             protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
                             // Assign job to result
-                            result = protocolParallelJobMove(
-                                protocolParallelJobNew(VARSTR(fileNameFull), command), memContextPrior());
+                            result = protocolParallelJobNew(VARSTR(fileName), command);
+                            // CSHANG for now, since no temp context then no move
+                            // result = protocolParallelJobMove(
+                            //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
 
                             // Return the job found
-                            FUNCTION_TEST_RETURN(result);
+                            FUNCTION_TEST_RETURN(result); // CSHANG can only do if don't have a temp mem context
                         }
                         while (strLstSize(jobData->walFileList) > 0);
                     }
@@ -555,10 +558,11 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             }
         }
 
-        // Process backups
+        // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
 
-    }
-    MEM_CONTEXT_TEMP_END();
+
+    // }
+    // MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(NULL);
 }
@@ -618,7 +622,7 @@ cmdVerify(void)
             // Initialize the job data
             VerifyJobData jobData =
             {
-                .walPathList = strLstNew(),
+                .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
                 .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
@@ -658,33 +662,52 @@ cmdVerify(void)
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
-    //
-    //             // Process jobs
-    //             do
-    //             {
-    //                 unsigned int completed = protocolParallelProcess(parallelExec);
-    //
-    //                 for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
-    //                 {
-    // /* CSHANG
-    // Here we know that one or more jobs were completed but we need to find out which one.
-    // */
-    //                         // Get the job and job key
-    //                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-    //                         unsigned int processId = protocolParallelJobProcessId(job);
-    //
-    //                         // CSHANG The key will tell us what we just processed
-    //                         // ENUM type
-    //                         // String filename
-    //                         const ENUM type = varUInt(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
-    //                         const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
-    //                         //
-    //                         // // The job was successful
-    //                         // if (protocolParallelJobErrorCode(job) == 0)
-    //                         // {
-    //                 }
-    //             }
-    //             while (!protocolParallelDone(parallelExec));
+
+                // StringList *validWalFileList
+                // Process jobs
+                do
+                {
+                    unsigned int completed = protocolParallelProcess(parallelExec);
+
+                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                    {
+                        // Get the job and job key
+                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                        unsigned int processId = protocolParallelJobProcessId(job);
+                        const String *fileName = varStr(protocolParallelJobKey(job));
+
+                        // CSHANG The key will tell us what we just processed
+                        // ENUM type
+                        // String filename
+                        // const ENUM type = varUInt(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
+                        // const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
+                        //
+                        // The job was successful
+                        if (protocolParallelJobErrorCode(job) == 0)
+                        {
+                            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
+                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(varLstGet(jobResult, 0));
+                            const String *const filePathName = varStr(varLstGet(jobResult, 1));
+
+                            if (verifyResult != verifyOk)
+                            {
+                                LOG_WARN_PID_FMT(processId, "SOME ERROR %s, %s", strPtr(filePathName), strPtr(fileName));
+                                // Log the result, increment the errorTotal count and if it is a WAL file, the remove it from the WAL list
+                                // //
+                                // if (strBeginsWithZ(fileName, STORAGE_REPO_ARCHIVE))
+                                //     strLstRemove(StringList *this, const String *item);
+
+                            }
+                            // Free the job
+                            protocolParallelJobFree(job);
+                        }
+                        // CSHANG I am assuming that there will only be an error if something went horribly wrong and the program needs to exit...
+                        // Else the job errored
+                        else
+                            THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+                    }
+                }
+                while (!protocolParallelDone(parallelExec));
 
                 // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
             }

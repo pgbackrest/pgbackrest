@@ -10,11 +10,11 @@ Verify File
 /***********************************************************************************************************************************
 Verify file types
 ***********************************************************************************************************************************/
-typedef enum
-{
-    verifyFileArchive,
-    verifyFileBackup,
-} VerifyFileType;
+// typedef enum  // CSHANG don't think we need
+// {
+//     verifyFileArchive,
+//     verifyFileBackup,
+// } VerifyFileType;
 
 /***********************************************************************************************************************************
 File result
@@ -34,11 +34,12 @@ Functions
 typedef struct VerifyFileResult
 {
     VerifyResult fileResult;
-    VerifyFileType fileType;
+    String *filePathName;
+    // VerifyFileType fileType;  // CSHANG Don't think we need
 } VerifyFileResult;
 
 VerifyFileResult verifyFile(
-    const String *fileName, VerifyFileType type, const String *fileChecksum, uint64_t fileSize, CompressType fileCompressType,
+    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, CompressType fileCompressType,
     CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************

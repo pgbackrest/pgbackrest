@@ -16,28 +16,29 @@ Verify File
 
 VerifyFileResult
 verifyFile(
-    const String *fileName, VerifyFileType type, const String *fileChecksum, uint64_t fileSize, CompressType fileCompressType,
+    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, CompressType fileCompressType,
     CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, type);                             // Is this a WAL, backup or manifest file?
+        FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
         FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum that the file should be
+        FUNCTION_LOG_PARAM(BOOL, sizeCheck);                        // Can the size be verified?
+        FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file (if checkable, else 0)
         FUNCTION_LOG_PARAM(ENUM, fileCompressType);                 // Compress type for file
         FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
     FUNCTION_LOG_END();
 
-    ASSERT(fileName != NULL);
+    ASSERT(filePathName != NULL);
     ASSERT(fileChecksum != NULL);
 
     // Is the file valid?
-    VerifyFileResult result = {.fileType = type};
+    VerifyFileResult result = {.filePathName = strDup(filePathName)};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepare the file for reading
-        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), fileName));
+        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), filePathName));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
@@ -66,8 +67,8 @@ verifyFile(
                 result.fileResult = verifyChecksumMismatch;
             }
             // CSHANG does size filter return 0 if file size is 0? Assume it does...but just in case...
-            else if (type != verifyFileArchive &&
-                fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
+            // If the size can be checked, do so
+            else if (sizeCheck && fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
             {
                 result.fileResult = verifySizeInvalid;
             }

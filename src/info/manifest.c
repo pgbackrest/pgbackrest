@@ -1527,7 +1527,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR))
     {
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        MEM_CONTEXT_BEGIN(loadData->memContext)  // cshang
         {
             if (strEq(key, MANIFEST_KEY_GROUP_STR))
                 loadData->fileGroupDefault = manifestOwnerDefaultGet(value);
@@ -1705,20 +1705,20 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    MEM_CONTEXT_NEW_BEGIN("Manifest")  // object context
     {
         this = manifestNewInternal();
 
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNew("load"),
+            .memContext = memContextNew("load"),   // cshang
             .manifest = this,
         };
 
         MEM_CONTEXT_BEGIN(loadData.memContext)
         {
-            loadData.fileFoundList = lstNew(sizeof(ManifestLoadFound));
+            loadData.fileFoundList = lstNew(sizeof(ManifestLoadFound));  // cshang don't want the lists in the object context
             loadData.linkFoundList = lstNew(sizeof(ManifestLoadFound));
             loadData.pathFoundList = lstNew(sizeof(ManifestLoadFound));
         }
