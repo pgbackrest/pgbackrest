@@ -695,7 +695,7 @@ strPathAbsolute(const String *this, const String *base)
 
 /**********************************************************************************************************************************/
 const char *
-strPtr(const String *this)
+strPtrNull(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);

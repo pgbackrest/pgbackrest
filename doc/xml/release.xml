@@ -68,6 +68,14 @@
 
                         <p>Improve behavior of the <cmd>repo-ls</cmd> command.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Inline <code>strPtr()</code> to increase profiling accuracy.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
