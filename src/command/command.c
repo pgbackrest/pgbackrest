@@ -73,7 +73,7 @@ cmdBegin(bool logOption)
                         if (strchr(strPtr(commandParam), ' ') != NULL)
                             commandParam = strNewFmt("\"%s\"", strPtr(commandParam));
 
-                        strCat(info, strPtr(commandParam));
+                        strCat(info, commandParam);
                     }
 
                     strCatFmt(info, "]");
@@ -203,13 +203,13 @@ cmdEnd(int code, const String *errorMessage)
 
             if (errorMessage == NULL)
             {
-                strCat(info, "completed successfully");
+                strCatZ(info, "completed successfully");
 
                 if (cfgOptionValid(cfgOptLogTimestamp) && cfgOptionBool(cfgOptLogTimestamp))
                     strCatFmt(info, " (%" PRIu64 "ms)", timeMSec() - timeBegin);
             }
             else
-                strCat(info, strPtr(errorMessage));
+                strCat(info, errorMessage);
 
             LOG(cfgLogLevelDefault(), 0, strPtr(info));
         }

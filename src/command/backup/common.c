@@ -44,21 +44,21 @@ backupRegExp(BackupRegExpParam param)
         // If full requested then diff/incr is optional
         if (param.full)
         {
-            strCat(result, "(\\_");
+            strCatZ(result, "(\\_");
         }
         // Else diff/incr is required
         else
         {
-            strCat(result, "\\_");
+            strCatZ(result, "\\_");
         }
 
         // Append date/time regexp for diff/incr
-        strCat(result, DATE_TIME_REGEX);
+        strCatZ(result, DATE_TIME_REGEX);
 
         // Filter on both diff/incr
         if (param.differential && param.incremental)
         {
-            strCat(result, "(D|I)");
+            strCatZ(result, "(D|I)");
         }
         // Else just diff
         else if (param.differential)
@@ -74,13 +74,13 @@ backupRegExp(BackupRegExpParam param)
         // If full requested then diff/incr is optional
         if (param.full)
         {
-            strCat(result, "){0,1}");
+            strCatZ(result, "){0,1}");
         }
     }
 
     // Append the end anchor
     if (!param.noAnchorEnd)
-        strCat(result, "$");
+        strCatZ(result, "$");
 
     FUNCTION_LOG_RETURN(STRING, result);
 }

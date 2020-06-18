@@ -84,8 +84,9 @@ String *strBase(const String *this);
 bool strBeginsWith(const String *this, const String *beginsWith);
 bool strBeginsWithZ(const String *this, const char *beginsWith);
 
-// Append a string
-String *strCat(String *this, const char *cat);
+// Append a string or zero-terminated string
+String *strCat(String *this, const String *cat);
+String *strCatZ(String *this, const char *cat);
 
 // Append a character
 String *strCatChr(String *this, char cat);

@@ -466,7 +466,7 @@ bufToLog(const Buffer *this)
     if (this->limitSet)
         strCatFmt(result, "%zu}", this->limit);
     else
-        strCat(result, "<off>}");
+        strCatZ(result, "<off>}");
 
     return result;
 }

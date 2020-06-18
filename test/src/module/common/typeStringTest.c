@@ -99,7 +99,7 @@ testRun(void)
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
 
-        TEST_RESULT_STR_Z(strCat(string, "YYYY"), "XXXXYYYY", "cat string");
+        TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
         TEST_RESULT_UINT(string->extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
         TEST_RESULT_UINT(string->extra, 55, "check extra");
@@ -239,7 +239,7 @@ testRun(void)
         TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
 
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'd')), "abc", "simple string truncated");
-        strCat(val, "\r\n to end");
+        strCatZ(val, "\r\n to end");
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'n')), "abc\r\n to e", "complex string truncated");
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'a')), "", "complete string truncated - empty string");
 

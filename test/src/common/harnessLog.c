@@ -321,7 +321,7 @@ hrnLogReplace(void)
                         strCatFmt(replace, "-%u", index + 1);
                     }
 
-                    strCat(replace, "]");
+                    strCatZ(replace, "]");
 
                     // Find end of match and calculate size difference from replacement
                     char *end = begin + strSize(match);

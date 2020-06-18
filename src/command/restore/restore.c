@@ -1249,7 +1249,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     if (expression == NULL)
                         expression = strNew("");
                     else
-                        strCat(expression, "|");
+                        strCatZ(expression, "|");
 
                     // Filter files in base directory
                     strCatFmt(expression, "(^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/%s/)", strPtr(db));
@@ -1535,21 +1535,21 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             for (unsigned int contentIdx = 0; contentIdx < strLstSize(contentList); contentIdx++)
             {
                 if (contentIdx != 0)
-                    strCat(content, "\n");
+                    strCat(content, LF_STR);
 
                 const String *line = strLstGet(contentList, contentIdx);
 
                 if (regExpMatch(recoveryExp, line))
                     strCatFmt(content, "# Removed by " PROJECT_NAME " restore on %s # ", strPtr(restoreLabel));
 
-                strCat(content, strPtr(line));
+                strCat(content, line);
             }
 
             // If settings will be appended then format the file so a blank line will be between old and new settings
             if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
             {
                 strTrim(content);
-                strCat(content, "\n\n");
+                strCatZ(content, "\n\n");
             }
         }
 
@@ -1837,7 +1837,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
 
             // Note if file was zeroed (i.e. selective restore)
             if (zeroed)
-                strCat(log, " zeroed");
+                strCatZ(log, " zeroed");
 
             // Add filename
             strCatFmt(log, " file %s", strPtr(restoreFilePgPath(manifest, file->name)));
@@ -1845,7 +1845,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             // If not copied and not zeroed add details to explain why it was not copied
             if (!copy && !zeroed)
             {
-                strCat(log, " - ");
+                strCatZ(log, " - ");
 
                 // On force we match on size and modification time
                 if (cfgOptionBool(cfgOptForce))
@@ -1857,16 +1857,16 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 // Else a checksum delta or file is zero-length
                 else
                 {
-                    strCat(log, "exists and ");
+                    strCatZ(log, "exists and ");
 
                     // No need to copy zero-length files
                     if (file->size == 0)
                     {
-                        strCat(log, "is zero size");
+                        strCatZ(log, "is zero size");
                     }
                     // The file matched the manifest checksum so did not need to be copied
                     else
-                        strCat(log, "matches backup");
+                        strCatZ(log, "matches backup");
                 }
             }
 

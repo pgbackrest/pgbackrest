@@ -665,7 +665,7 @@ jsonFromStrInternal(String *json, const String *string)
     // If string is null
     if (string == NULL)
     {
-        strCat(json, NULL_Z);
+        strCat(json, NULL_STR);
     }
     // Else escape and output string
     else
@@ -701,43 +701,43 @@ jsonFromStrInternal(String *json, const String *string)
                     {
                         case '"':
                         {
-                            strCat(json, "\\\"");
+                            strCatZ(json, "\\\"");
                             break;
                         }
 
                         case '\\':
                         {
-                            strCat(json, "\\\\");
+                            strCatZ(json, "\\\\");
                             break;
                         }
 
                         case '\n':
                         {
-                            strCat(json, "\\n");
+                            strCatZ(json, "\\n");
                             break;
                         }
 
                         case '\r':
                         {
-                            strCat(json, "\\r");
+                            strCatZ(json, "\\r");
                             break;
                         }
 
                         case '\t':
                         {
-                            strCat(json, "\\t");
+                            strCatZ(json, "\\t");
                             break;
                         }
 
                         case '\b':
                         {
-                            strCat(json, "\\b");
+                            strCatZ(json, "\\b");
                             break;
                         }
 
                         case '\f':
                         {
-                            strCat(json, "\\f");
+                            strCatZ(json, "\\f");
                             break;
                         }
                     }
@@ -805,21 +805,21 @@ jsonFromKvInternal(const KeyValue *kv)
 
             // If going to add another key, prepend a comma
             if (keyIdx > 0)
-                strCat(result, ",");
+                strCatZ(result, ",");
 
             // Keys are always strings in the output, so add starting quote and colon.
             strCatFmt(result, "\"%s\":", strPtr(key));
 
             // NULL value
             if (value == NULL)
-                strCat(result, NULL_Z);
+                strCat(result, NULL_STR);
             else
             {
                 switch (varType(value))
                 {
                     case varTypeKeyValue:
                     {
-                        strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)))));
+                        strCat(result, jsonFromKvInternal(kvDup(varKv(value))));
                         break;
                     }
 
@@ -827,12 +827,12 @@ jsonFromKvInternal(const KeyValue *kv)
                     {
                         // If the array is empty, then do not add formatting, else process the array.
                         if (varVarLst(value) == NULL)
-                            strCat(result, NULL_Z);
+                            strCat(result, NULL_STR);
                         else if (varLstSize(varVarLst(value)) == 0)
-                            strCat(result, "[]");
+                            strCatZ(result, "[]");
                         else
                         {
-                            strCat(result, "[");
+                            strCatZ(result, "[");
 
                             for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
                             {
@@ -840,12 +840,12 @@ jsonFromKvInternal(const KeyValue *kv)
 
                                 // If going to add another element, add a comma
                                 if (arrayIdx > 0)
-                                    strCat(result, ",");
+                                    strCatZ(result, ",");
 
                                 // If array value is null
                                 if (arrayValue == NULL)
                                 {
-                                    strCat(result, NULL_Z);
+                                    strCat(result, NULL_STR);
                                 }
                                 // If the type is a string, add leading and trailing double quotes
                                 else if (varType(arrayValue) == varTypeString)
@@ -854,18 +854,18 @@ jsonFromKvInternal(const KeyValue *kv)
                                 }
                                 else if (varType(arrayValue) == varTypeKeyValue)
                                 {
-                                    strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)))));
+                                    strCat(result, jsonFromKvInternal(kvDup(varKv(arrayValue))));
                                 }
                                 else if (varType(arrayValue) == varTypeVariantList)
                                 {
-                                    strCat(result, strPtr(jsonFromVar(arrayValue)));
+                                    strCat(result, jsonFromVar(arrayValue));
                                 }
                                 // Numeric, Boolean or other type
                                 else
-                                    strCat(result, strPtr(varStrForce(arrayValue)));
+                                    strCat(result, varStrForce(arrayValue));
                             }
 
-                            strCat(result, "]");
+                            strCatZ(result, "]");
                         }
 
                         break;
@@ -880,14 +880,14 @@ jsonFromKvInternal(const KeyValue *kv)
 
                     default:
                     {
-                        strCat(result, strPtr(varStrForce(value)));
+                        strCat(result, varStrForce(value));
                         break;
                     }
                 }
             }
         }
 
-        result = strCat(result, "}");
+        result = strCatZ(result, "}");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -946,19 +946,19 @@ jsonFromVar(const Variant *var)
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (var == NULL)
         {
-            strCat(jsonStr, strPtr(NULL_STR));
+            strCat(jsonStr, NULL_STR);
         }
         else if (varType(var) == varTypeBool)
         {
-            strCat(jsonStr, strPtr(jsonFromBool(varBool(var))));
+            strCat(jsonStr, jsonFromBool(varBool(var)));
         }
         else if (varType(var) == varTypeUInt)
         {
-            strCat(jsonStr, strPtr(jsonFromUInt(varUInt(var))));
+            strCat(jsonStr, jsonFromUInt(varUInt(var)));
         }
         else if (varType(var) == varTypeUInt64)
         {
-            strCat(jsonStr, strPtr(jsonFromUInt64(varUInt64(var))));
+            strCat(jsonStr, jsonFromUInt64(varUInt64(var)));
         }
         else if (varType(var) == varTypeString)
         {
@@ -971,63 +971,63 @@ jsonFromVar(const Variant *var)
             // If not an empty array
             if (varLstSize(vl) > 0)
             {
-                strCat(jsonStr, "[");
+                strCatZ(jsonStr, "[");
 
                 // Currently only KeyValue and String lists are supported
                 for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
                 {
                     // If going to add another key, append a comma
                     if (vlIdx > 0)
-                        strCat(jsonStr, ",");
+                        strCatZ(jsonStr, ",");
 
                     Variant *varSub = varLstGet(vl, vlIdx);
 
                     if (varSub == NULL)
                     {
-                        strCat(jsonStr, NULL_Z);
+                        strCat(jsonStr, NULL_STR);
                     }
                     else if (varType(varSub) == varTypeBool)
                     {
-                        strCat(jsonStr, strPtr(jsonFromBool(varBool(varSub))));
+                        strCat(jsonStr, jsonFromBool(varBool(varSub)));
                     }
                     else if (varType(varSub) == varTypeKeyValue)
                     {
-                        strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub))));
+                        strCat(jsonStr, jsonFromKvInternal(varKv(varSub)));
                     }
                     else if (varType(varSub) == varTypeVariantList)
                     {
-                        strCat(jsonStr, strPtr(jsonFromVar(varSub)));
+                        strCat(jsonStr, jsonFromVar(varSub));
                     }
                     else if (varType(varSub) == varTypeInt)
                     {
-                        strCat(jsonStr, strPtr(jsonFromInt(varInt(varSub))));
+                        strCat(jsonStr, jsonFromInt(varInt(varSub)));
                     }
                     else if (varType(varSub) == varTypeInt64)
                     {
-                        strCat(jsonStr, strPtr(jsonFromInt64(varInt64(varSub))));
+                        strCat(jsonStr, jsonFromInt64(varInt64(varSub)));
                     }
                     else if (varType(varSub) == varTypeUInt)
                     {
-                        strCat(jsonStr, strPtr(jsonFromUInt(varUInt(varSub))));
+                        strCat(jsonStr, jsonFromUInt(varUInt(varSub)));
                     }
                     else if (varType(varSub) == varTypeUInt64)
                     {
-                        strCat(jsonStr, strPtr(jsonFromUInt64(varUInt64(varSub))));
+                        strCat(jsonStr, jsonFromUInt64(varUInt64(varSub)));
                     }
                     else
                         jsonFromStrInternal(jsonStr, varStr(varSub));
                 }
 
                 // Close the array
-                strCat(jsonStr, "]");
+                strCatZ(jsonStr, "]");
             }
             // Else empty array
             else
-                strCat(jsonStr, "[]");
+                strCatZ(jsonStr, "[]");
         }
         else if (varType(var) == varTypeKeyValue)
         {
-            strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var))));
+            strCat(jsonStr, jsonFromKvInternal(varKv(var)));
         }
         else
             THROW(JsonFormatError, "variant type is invalid");

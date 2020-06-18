@@ -440,10 +440,10 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {
         if (listIdx != 0)
-            strCat(join, separator);
+            strCatZ(join, separator);
 
         if (strLstGet(this, listIdx) == NULL)
-            strCat(join, "[NULL]");
+            strCatZ(join, "[NULL]");
         else
             strCatFmt(join, "%s%s%s", quote, strPtr(strLstGet(this, listIdx)), quote);
     }
