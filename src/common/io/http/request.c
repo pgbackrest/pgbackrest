@@ -48,16 +48,141 @@ struct HttpRequest
     const HttpQuery *query;                                         // HTTP query
     const HttpHeader *header;                                       // HTTP headers
     const Buffer *content;                                          // HTTP content
+
+    HttpSession *session;                                           // Session for async requests
 };
 
-// OBJECT_DEFINE_MOVE(HTTP_REQUEST);
-// OBJECT_DEFINE_FREE(HTTP_REQUEST);
-//
-// OBJECT_DEFINE_GET(Verb, const, HTTP_REQUEST, const String *, verb);
-// OBJECT_DEFINE_GET(Uri, const, HTTP_REQUEST, const String *, uri);
-// OBJECT_DEFINE_GET(Query, const, HTTP_REQUEST, const HttpQuery *, query);
-// OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
-// OBJECT_DEFINE_GET(Content, const, HTTP_REQUEST, const Buffer *, content);
+OBJECT_DEFINE_MOVE(HTTP_REQUEST);
+OBJECT_DEFINE_FREE(HTTP_REQUEST);
+
+OBJECT_DEFINE_GET(Verb, const, HTTP_REQUEST, const String *, verb);
+OBJECT_DEFINE_GET(Uri, const, HTTP_REQUEST, const String *, uri);
+OBJECT_DEFINE_GET(Query, const, HTTP_REQUEST, const HttpQuery *, query);
+OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
+
+/***********************************************************************************************************************************
+Process the request
+***********************************************************************************************************************************/
+static HttpResponse *
+httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
+        FUNCTION_LOG_PARAM(BOOL, requestOnly);
+        FUNCTION_LOG_PARAM(BOOL, contentCache);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // HTTP Response
+    HttpResponse *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        bool retry;
+        Wait *wait = waitNew(httpClientTimeout(this->client));
+
+        do
+        {
+            // Assume there will be no retry
+            retry = false;
+
+            TRY_BEGIN()
+            {
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    HttpSession *session = NULL;
+
+                    // If a session is saved then the request was already sent
+                    if (this->session != NULL)
+                    {
+                        session = httpSessionMove(this->session, memContextCurrent());
+                        this->session = NULL;
+                    }
+                    // Else the request has not been sent yet or this is a retry
+                    else
+                    {
+                        session = httpClientOpen(this->client);
+
+                        // Write the request
+                        String *queryStr = httpQueryRender(this->query);
+
+                        ioWriteStrLine(
+                            httpSessionIoWrite(session),
+                            strNewFmt(
+                                "%s %s%s%s " HTTP_VERSION "\r", strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
+                                queryStr == NULL ? "" : "?", queryStr == NULL ? "" : strPtr(queryStr)));
+
+                        // Write headers
+                        if (this->header != NULL)
+                        {
+                            const StringList *headerList = httpHeaderList(this->header);
+
+                            for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
+                            {
+                                const String *headerKey = strLstGet(headerList, headerIdx);
+                                ioWriteStrLine(
+                                    httpSessionIoWrite(session),
+                                    strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
+                            }
+                        }
+
+                        // Write out blank line to end the headers
+                        ioWriteLine(httpSessionIoWrite(session), CR_BUF);
+
+                        // Write out content if any
+                        if (this->content != NULL)
+                            ioWrite(httpSessionIoWrite(session), this->content);
+
+                        // Flush all writes
+                        ioWriteFlush(httpSessionIoWrite(session));
+
+                        // If only performing the request then move the session to the object context
+                        if (requestOnly)
+                            this->session = httpSessionMove(session, this->memContext);
+                    }
+
+                    // Wait for response
+                    if (!requestOnly)
+                    {
+                        result = httpResponseNew(session, this->verb, contentCache);
+
+                        // Retry when response code is 5xx.  These errors generally represent a server error for a request that
+                        // looks valid. There are a few errors that might be permanently fatal but they are rare and it seems best
+                        // not to try and pick and choose errors in this class to retry.
+                        if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
+                            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
+
+                        // Move response to prior context
+                        httpResponseMove(result, memContextPrior());
+                    }
+                }
+                MEM_CONTEXT_END();
+            }
+            CATCH_ANY()
+            {
+                // Retry if wait time has not expired
+                if (waitMore(wait))
+                {
+                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                    retry = true;
+
+                    httpClientStat.retry++;
+                }
+                else
+                    RETHROW();
+            }
+            TRY_END();
+        }
+        while (retry);
+
+        // Move response to prior context
+        httpResponseMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+}
 
 /**********************************************************************************************************************************/
 HttpRequest *
@@ -91,6 +216,10 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
             .header = httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
+
+        // Send the request
+        httpRequestProcess(this, true, false);
+        httpClientStat.request++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -108,98 +237,7 @@ httpRequest(HttpRequest *this, bool contentCache)
 
     ASSERT(this != NULL);
 
-    // HTTP Response
-    HttpResponse *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        bool retry;
-        Wait *wait = waitNew(httpClientTimeout(this->client));
-
-        do
-        {
-            // Assume there will be no retry
-            retry = false;
-
-            TRY_BEGIN()
-            {
-                MEM_CONTEXT_TEMP_BEGIN()
-                {
-                    // Get HTTP session
-                    HttpSession *session = httpClientOpen(this->client);
-
-                    // Write the request
-                    String *queryStr = httpQueryRender(this->query);
-
-                    ioWriteStrLine(
-                        httpSessionIoWrite(session),
-                        strNewFmt(
-                            "%s %s%s%s " HTTP_VERSION "\r", strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
-                            queryStr == NULL ? "" : "?", queryStr == NULL ? "" : strPtr(queryStr)));
-
-                    // Write headers
-                    if (this->header != NULL)
-                    {
-                        const StringList *headerList = httpHeaderList(this->header);
-
-                        for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
-                        {
-                            const String *headerKey = strLstGet(headerList, headerIdx);
-                            ioWriteStrLine(
-                                httpSessionIoWrite(session),
-                                strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
-                        }
-                    }
-
-                    // Write out blank line to end the headers
-                    ioWriteLine(httpSessionIoWrite(session), CR_BUF);
-
-                    // Write out content if any
-                    if (this->content != NULL)
-                        ioWrite(httpSessionIoWrite(session), this->content);
-
-                    // Flush all writes
-                    ioWriteFlush(httpSessionIoWrite(session));
-
-                    // Wait for response
-                    result = httpResponseNew(session, this->verb, contentCache);
-
-                    // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
-                    // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
-                    // and choose errors in this class to retry.
-                    if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-                        THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
-
-                    // Move response to prior context
-                    httpResponseMove(result, memContextPrior());
-                }
-                MEM_CONTEXT_END();
-            }
-            CATCH_ANY()
-            {
-                // Retry if wait time has not expired
-                if (waitMore(wait))
-                {
-                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
-                    retry = true;
-
-                    httpClientStat.retry++;
-                }
-                else
-                    RETHROW();
-            }
-            TRY_END();
-        }
-        while (retry);
-
-        // Move response to prior context
-        httpResponseMove(result, memContextPrior());
-
-        httpClientStat.request++;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, httpRequestProcess(this, false, contentCache));
 }
 
 /**********************************************************************************************************************************/

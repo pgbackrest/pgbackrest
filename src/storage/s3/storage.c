@@ -234,32 +234,75 @@ storageS3Auth(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-HttpResponse *
-storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool contentIo,
-    bool allowMissing)
+HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(STRING, uri);
-        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
-        FUNCTION_LOG_PARAM(BUFFER, body);
-        FUNCTION_LOG_PARAM(BOOL, contentIo);
-        FUNCTION_LOG_PARAM(BOOL, allowMissing);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
 
+    HttpRequest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
+
+        // Set content length
+        httpHeaderAdd(
+            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+
+        // Calculate content-md5 header if there is content
+        if (param.content != NULL)
+        {
+            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
+            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+        }
+
+        // When using path-style URIs the bucket name needs to be prepended
+        if (this->uriStyle == storageS3UriStylePath)
+            uri = strNewFmt("/%s%s", strPtr(this->bucket), strPtr(uri));
+
+        // Generate authorization header
+        storageS3Auth(
+            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
+            param.content == NULL || bufUsed(param.content) == 0 ?
+                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
+
+        // Send request
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = httpRequestNewP(
+                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+        }
+        MEM_CONTEXT_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
+}
+
+HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+    FUNCTION_LOG_END();
+
+    ASSERT(request != NULL);
+
     HttpResponse *result = NULL;
     unsigned int retryRemaining = 2;
     bool done;
-
-    // When using path-style URIs the bucket name needs to be prepended
-    if (this->uriStyle == storageS3UriStylePath)
-        uri = strNewFmt("/%s%s", strPtr(this->bucket), strPtr(uri));
 
     do
     {
@@ -267,34 +310,11 @@ storageS3Request(
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Create header list and add content length
-            HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
-
-            // Set content length
-            httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-                body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
-
-            // Calculate content-md5 header if there is content
-            if (body != NULL)
-            {
-                char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-                encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
-                httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-            }
-
-            // Generate authorization header
-            storageS3Auth(
-                this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
-                body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
-
             // Process request
-            result = httpRequest(
-                httpRequestNewP(this->httpClient, verb, uri, .query = query, .header = requestHeader, .content = body),
-                !contentIo);
+            result = httpRequest(request, !param.contentIo);
 
             // Error if the request was not successful
-            if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
             {
                 // If there are retries remaining and a response parse it as XML to extract the S3 error code
                 const Buffer *content = httpResponseContent(result);
@@ -334,13 +354,13 @@ storageS3Request(
                     // Output uri/query
                     strCat(error, "\n*** URI/Query ***:");
 
-                    strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
+                    strCatFmt(error, "\n%s", strPtr(httpUriEncode(httpRequestUri(request), true)));
 
-                    if (query != NULL)
-                        strCatFmt(error, "?%s", strPtr(httpQueryRender(query)));
+                    if (httpRequestQuery(request) != NULL)
+                        strCatFmt(error, "?%s", strPtr(httpQueryRender(httpRequestQuery(request))));
 
                     // Output request headers
-                    const StringList *requestHeaderList = httpHeaderList(requestHeader);
+                    const StringList *requestHeaderList = httpHeaderList(httpRequestHeader(request));
 
                     strCat(error, "\n*** Request Headers ***:");
 
@@ -350,8 +370,8 @@ storageS3Request(
 
                         strCatFmt(
                             error, "\n%s: %s", strPtr(key),
-                            httpHeaderRedact(requestHeader, key) || strEq(key, S3_HEADER_DATE_STR) ?
-                                "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
+                            httpHeaderRedact(httpRequestHeader(request), key) || strEq(key, S3_HEADER_DATE_STR) ?
+                                "<redacted>" : strPtr(httpHeaderGet(httpRequestHeader(request), key)));
                     }
 
                     // Output response headers
@@ -385,6 +405,28 @@ storageS3Request(
     while (!done);
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+}
+
+HttpResponse *
+storageS3Request(
+    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *content, bool contentIo,
+    bool allowMissing)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
+        FUNCTION_LOG_PARAM(BUFFER, content);
+        FUNCTION_LOG_PARAM(BOOL, allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, contentIo);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        HTTP_RESPONSE,
+        storageS3ResponseP(
+            storageS3RequestAsyncP(this, verb, uri, .query = query, .content = content), .allowMissing = allowMissing,
+            .contentIo = contentIo));
 }
 
 /***********************************************************************************************************************************

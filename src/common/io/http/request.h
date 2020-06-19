@@ -71,30 +71,27 @@ Functions
 HttpResponse *httpRequest(HttpRequest *this, bool contentCache);
 
 // Move to a new parent mem context
-// HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
+HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// // Request verb
-// const String *httpRequestVerb(const HttpRequest *this);
-//
-// // Request URI
-// const String *httpRequestUri(const HttpRequest *this);
-//
-// // Request query
-// const HttpQuery *httpRequestQuery(const HttpRequest *this);
-//
-// // Request headers
-// const HttpHeader *httpRequestHeader(const HttpRequest *this);
-//
-// // Request content
-// const Buffer *httpRequestContent(const HttpRequest *this);
+// Request verb
+const String *httpRequestVerb(const HttpRequest *this);
+
+// Request URI
+const String *httpRequestUri(const HttpRequest *this);
+
+// Request query
+const HttpQuery *httpRequestQuery(const HttpRequest *this);
+
+// Request headers
+const HttpHeader *httpRequestHeader(const HttpRequest *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-// void httpRequestFree(HttpRequest *this);
+void httpRequestFree(HttpRequest *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -331,18 +331,26 @@ testRun(void)
 
                 client->timeout = 5000;
 
+                HttpRequest *request = NULL;
                 HttpResponse *response = NULL;
 
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     TEST_ASSIGN(
-                        response,
-                        httpRequest(
-                            httpRequestNewP(client, strNew("GET"), strNew("/"), .query = query, .header = headerRequest), false),
+                        request, httpRequestNewP(client, strNew("GET"), strNew("/"), .query = query, .header = headerRequest),
                         "request");
+                    TEST_ASSIGN(response, httpRequest(request, false), "request");
+
+                    TEST_RESULT_VOID(httpRequestMove(request, memContextPrior()), "move request");
                     TEST_RESULT_VOID(httpResponseMove(response, memContextPrior()), "move response");
                 }
                 MEM_CONTEXT_TEMP_END();
+
+                TEST_RESULT_STR_Z(httpRequestVerb(request), "GET", "check request verb");
+                TEST_RESULT_STR_Z(httpRequestUri(request), "/", "check request uri");
+                TEST_RESULT_STR_Z(
+                    httpQueryRender(httpRequestQuery(request)), "name=%2Fpath%2FA%20Z.txt&type=test", "check request query");
+                TEST_RESULT_PTR_NE(httpRequestHeader(request), NULL, "check request headers");
 
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), true, "check response code ok");
@@ -352,7 +360,9 @@ testRun(void)
                     httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'ack', key1: '0', key2: 'value2'}",
                     "check response headers");
                 TEST_RESULT_UINT(bufSize(httpResponseContent(response)), 0, "content is empty");
-                TEST_RESULT_VOID(httpResponseFree(response), "free");
+
+                TEST_RESULT_VOID(httpResponseFree(response), "free response");
+                TEST_RESULT_VOID(httpRequestFree(request), "free request");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with content-length but no content");
