@@ -5,13 +5,9 @@ Http Client
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
-#include "common/io/http/common.h"
-#include "common/io/io.h"
-#include "common/io/read.intern.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Statistics
@@ -26,7 +22,11 @@ struct HttpClient
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Request timeout
     TlsClient *tlsClient;                                           // TLS client
+
+    List *sessionReuseList;                                         // List of http sessions that can be reused
 };
+
+OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);
 
 /**********************************************************************************************************************************/
 HttpClient *
@@ -55,6 +55,7 @@ httpClientNew(
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
             .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
+            .sessionReuseList = lstNew(sizeof(HttpSession *)),
         };
 
         httpClientStatLocal.object++;
@@ -74,21 +75,24 @@ httpClientOpen(HttpClient *this)
 
     ASSERT(this != NULL);
 
-    HttpSession result = NULL;
+    HttpSession *result = NULL;
 
     // Check is there is a resuable session
-    if (lstSize(this->sessionList) > 0)
+    if (lstSize(this->sessionReuseList) > 0)
     {
         // Remove session from reusable list
-        result = *(HttpSession **)lstGet(this->sessionList, 0);
-        lstRemove(this->sessionList, 0);
+        result = *(HttpSession **)lstGet(this->sessionReuseList, 0);
+        lstRemoveIdx(this->sessionReuseList, 0);
 
         // Move session to the calling context
-        httpSessionMove(result, memContextCurrent);
+        httpSessionMove(result, memContextCurrent());
     }
     // Else create a new session
     else
+    {
         result = httpSessionNew(this, tlsClientOpen(this->tlsClient));
+        httpClientStatLocal.session++;
+    }
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, result);
 }
@@ -105,8 +109,8 @@ httpClientReuse(HttpClient *this, HttpSession *session)
     ASSERT(this != NULL);
     ASSERT(session != NULL);
 
-    httpSessionMove(session, lstMemContext(this->sessionList));
-    lstAdd(this->sessionList, &session);
+    httpSessionMove(session, lstMemContext(this->sessionReuseList));
+    lstAdd(this->sessionReuseList, &session);
 
     FUNCTION_LOG_RETURN_VOID();
 }

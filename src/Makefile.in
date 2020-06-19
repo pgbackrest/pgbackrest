@@ -73,13 +73,13 @@ SRCS = \
 	common/io/filter/size.c \
 	common/io/handleRead.c \
 	common/io/handleWrite.c \
-	common/io/http/cache.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
 	common/io/http/header.c \
 	common/io/http/query.c \
 	common/io/http/request.c \
 	common/io/http/response.c \
+	common/io/http/session.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/socket/client.c \

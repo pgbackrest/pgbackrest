@@ -16,6 +16,7 @@ typedef struct HttpRequest HttpRequest;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
+#include "common/io/http/response.h"
 
 /***********************************************************************************************************************************
 HTTP Constants
@@ -47,9 +48,6 @@ HTTP Constants
 #define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
     STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 
-#define HTTP_RESPONSE_CODE_FORBIDDEN                                403
-#define HTTP_RESPONSE_CODE_NOT_FOUND                                404
-
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
@@ -69,30 +67,34 @@ HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
+// Send a request to the server
+HttpResponse *httpRequest(HttpRequest *this, bool contentCache);
+
+// Move to a new parent mem context
+// HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Request verb
-const String *httpRequestVerb(const HttpRequest *this);
-
-// Request URI
-const String *httpRequestUri(const HttpRequest *this);
-
-// Request query
-const HttpQuery *httpRequestQuery(const HttpRequest *this);
-
-// Request headers
-const HttpHeader *httpRequestHeader(const HttpRequest *this);
-
-// Request content
-const Buffer *httpRequestContent(const HttpRequest *this);
+// // Request verb
+// const String *httpRequestVerb(const HttpRequest *this);
+//
+// // Request URI
+// const String *httpRequestUri(const HttpRequest *this);
+//
+// // Request query
+// const HttpQuery *httpRequestQuery(const HttpRequest *this);
+//
+// // Request headers
+// const HttpHeader *httpRequestHeader(const HttpRequest *this);
+//
+// // Request content
+// const Buffer *httpRequestContent(const HttpRequest *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpRequestFree(HttpRequest *this);
+// void httpRequestFree(HttpRequest *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

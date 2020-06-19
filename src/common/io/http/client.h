@@ -20,6 +20,7 @@ Object type
 typedef struct HttpClient HttpClient;
 
 #include "common/io/http/session.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Statistics
@@ -50,6 +51,11 @@ void httpClientReuse(HttpClient *this, HttpSession *session);
 
 // Format statistics to a string
 String *httpClientStatStr(void);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+TimeMSec httpClientTimeout(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

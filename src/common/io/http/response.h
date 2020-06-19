@@ -16,6 +16,7 @@ Object type
 typedef struct HttpResponse HttpResponse;
 
 #include "common/io/http/header.h"
+#include "common/io/http/session.h"
 #include "common/io/read.h"
 
 /***********************************************************************************************************************************
@@ -27,7 +28,7 @@ HTTP Response Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpResponse *httpResponseNew(HttpClient *client, IoRead *read, const String *verb, bool contentCache);
+HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
 Functions
@@ -37,9 +38,6 @@ bool httpResponseCodeOk(const HttpResponse *this);
 
 // Get response content. Content will be cached so it can be retrieved again without additional cost.
 const Buffer *httpResponseContent(HttpResponse *this);
-
-// No longer need to load new content. Cached content, headers, etc. will still be available.
-void httpResponseDone(HttpResponse *this);
 
 // Move to a new parent mem context
 HttpResponse *httpResponseMove(HttpResponse *this, MemContext *parentNew);

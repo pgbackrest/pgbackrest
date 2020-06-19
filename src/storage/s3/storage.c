@@ -8,7 +8,7 @@ S3 Storage
 #include "common/crypto/hash.h"
 #include "common/encode.h"
 #include "common/debug.h"
-#include "common/io/http/cache.h"
+#include "common/io/http/client.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -86,7 +86,7 @@ struct StorageS3
 {
     STORAGE_COMMON_MEMBER;
     MemContext *memContext;
-    HttpClientCache *httpClientCache;                               // Http client cache to service requests
+    HttpClient *httpClient;                                         // HTTP client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
 
     const String *bucket;                                           // Bucket to store data in
@@ -289,9 +289,9 @@ storageS3Request(
                 body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
             // Process request
-            result = httpClientRequest(
-                httpClientCacheGet(this->httpClientCache),
-                httpRequestNewP(verb, uri, .query = query, .header = requestHeader, .content = body), !contentIo);
+            result = httpRequest(
+                httpRequestNewP(this->httpClient, verb, uri, .query = query, .header = requestHeader, .content = body),
+                !contentIo);
 
             // Error if the request was not successful
             if (!httpResponseCodeOk(result) && (!allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
@@ -899,8 +899,8 @@ storageS3New(
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Create the http client cache used to service requests
-        driver->httpClientCache = httpClientCacheNew(
+        // Create the http client used to service requests
+        driver->httpClient = httpClientNew(
             host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers

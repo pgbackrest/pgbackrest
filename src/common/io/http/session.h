@@ -27,11 +27,11 @@ HttpSession *httpSessionNew(HttpClient *client, TlsSession *session);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// // Move to a new parent mem context
-// HttpSession *httpSessionMove(HttpSession *this, MemContext *parentNew);
+// Move to a new parent mem context
+HttpSession *httpSessionMove(HttpSession *this, MemContext *parentNew);
 
 // Work with the session has finished cleanly and it can be reused
-void httpSessionDone(void);
+void httpSessionDone(HttpSession *this);
 
 /***********************************************************************************************************************************
 Getters/Setters

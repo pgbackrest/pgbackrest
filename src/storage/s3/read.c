@@ -95,25 +95,6 @@ storageReadS3(THIS_VOID, Buffer *buffer, bool block)
 }
 
 /***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
-static void
-storageReadS3Close(THIS_VOID)
-{
-    THIS(StorageReadS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    httpResponseDone(this->httpResponse);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Has file reached EOF?
 ***********************************************************************************************************************************/
 static bool
@@ -163,7 +144,6 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
                 .ioInterface = (IoReadInterface)
                 {
-                    .close = storageReadS3Close,
                     .eof = storageReadS3Eof,
                     .open = storageReadS3Open,
                     .read = storageReadS3,
