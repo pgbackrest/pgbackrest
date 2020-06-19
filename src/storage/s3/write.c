@@ -37,6 +37,7 @@ typedef struct StorageWriteS3
     StorageWriteInterface interface;                                // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
+    HttpRequest *request;                                           // Async request
     size_t partSize;
     Buffer *partBuffer;
     const String *uploadId;
@@ -87,11 +88,37 @@ storageWriteS3Part(StorageWriteS3 *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    // If there is an outstanding async request then wait for the response and store the part id
+    if (this->request != NULL)
+    {
+        strLstAdd(
+            this->uploadPartList, httpHeaderGet(httpResponseHeader(storageS3ResponseP(this->request)), HTTP_HEADER_ETAG_STR));
+        ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
+
+        httpRequestFree(this->request);
+        this->request = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+static void
+storageWriteS3PartAsync(StorageWriteS3 *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
     ASSERT(this->partBuffer != NULL);
     ASSERT(bufSize(this->partBuffer) > 0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Complete prior async request, if any
+        storageWriteS3Part(this);
+
         // Get the upload id if we have not already
         if (this->uploadId == NULL)
         {
@@ -112,20 +139,17 @@ storageWriteS3Part(StorageWriteS3 *this)
             MEM_CONTEXT_END();
         }
 
-        // Upload the part and add etag to part list
+        // Upload the part async
         HttpQuery *query = httpQueryNew();
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
-        strLstAdd(
-            this->uploadPartList,
-            httpHeaderGet(
-                httpResponseHeader(
-                    storageS3Request(
-                        this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, false, false)),
-                HTTP_HEADER_ETAG_STR));
-
-        ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->request = storageS3RequestAsyncP(
+                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
+        }
+        MEM_CONTEXT_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -162,7 +186,7 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
         // If the part buffer is full then write it
         if (bufRemains(this->partBuffer) == 0)
         {
-            storageWriteS3Part(this);
+            storageWriteS3PartAsync(this);
             bufUsedZero(this->partBuffer);
         }
     }
@@ -195,7 +219,10 @@ storageWriteS3Close(THIS_VOID)
             {
                 // If there is anything left in the part buffer then write it
                 if (bufUsed(this->partBuffer) > 0)
-                    storageWriteS3Part(this);
+                    storageWriteS3PartAsync(this);
+
+                // Complete prior async request, if any
+                storageWriteS3Part(this);
 
                 // Generate the xml part list
                 XmlDocument *partList = xmlDocumentNew(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
