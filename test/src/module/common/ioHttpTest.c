@@ -130,7 +130,7 @@ testRun(void)
         HttpClient *client = NULL;
 
         // Reset statistics
-        httpClientStatLocal = (HttpClientStat){0};
+        httpClientStat = (HttpClientStat){0};
 
         TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
 
