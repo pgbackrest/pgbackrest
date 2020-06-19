@@ -6,6 +6,9 @@ stanza-create db - fail on missing control file (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-primary --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00  ERROR: [055]: raised from remote-0 protocol on 'db-primary': unable to open missing file '[TEST_PATH]/db-primary/db/base/global/pg_control' for read
+P00 DETAIL: socket statistics:[SOCKET-STATISTICS]
+P00 DETAIL: tls statistics:[TLS-STATISTICS]
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 stanza-upgrade db - fail on stanza not initialized since archive.info is missing (backup host)

@@ -202,8 +202,10 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s", strPtr(host)));
+#ifdef TEST_CONTAINER_REQUIRED
         strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
         strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
+#endif
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -229,8 +231,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -257,8 +257,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -286,8 +284,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
         strLstAddZ(argList, "--repo1-s3-port=9001");
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
