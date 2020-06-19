@@ -32,6 +32,11 @@ STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_
 #define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
 
 /***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+extern HttpClientStat httpClientStat;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpRequest
@@ -178,7 +183,7 @@ httpRequest(HttpRequest *this, bool contentCache)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    // httpClientStatLocal.retry++;  // !!! UPDATE
+                    httpClientStat.retry++;
                 }
                 else
                     RETHROW();
@@ -190,7 +195,7 @@ httpRequest(HttpRequest *this, bool contentCache)
         // Move response to prior context
         httpResponseMove(result, memContextPrior());
 
-        // httpClientStatLocal.request++; // !!! UPDATE
+        httpClientStat.request++;
     }
     MEM_CONTEXT_TEMP_END();
 

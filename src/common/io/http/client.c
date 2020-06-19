@@ -12,7 +12,7 @@ Http Client
 /***********************************************************************************************************************************
 Statistics
 ***********************************************************************************************************************************/
-static HttpClientStat httpClientStatLocal;
+HttpClientStat httpClientStat;
 
 /***********************************************************************************************************************************
 Object type
@@ -58,7 +58,7 @@ httpClientNew(
             .sessionReuseList = lstNew(sizeof(HttpSession *)),
         };
 
-        httpClientStatLocal.object++;
+        httpClientStat.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -91,7 +91,7 @@ httpClientOpen(HttpClient *this)
     else
     {
         result = httpSessionNew(this, tlsClientOpen(this->tlsClient));
-        httpClientStatLocal.session++;
+        httpClientStat.session++;
     }
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, result);
@@ -123,13 +123,12 @@ httpClientStatStr(void)
 
     String *result = NULL;
 
-    if (httpClientStatLocal.object > 0)
+    if (httpClientStat.object > 0)
     {
         result = strNewFmt(
             "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
                 ", closes %" PRIu64,
-            httpClientStatLocal.object, httpClientStatLocal.session, httpClientStatLocal.request, httpClientStatLocal.retry,
-            httpClientStatLocal.close);
+            httpClientStat.object, httpClientStat.session, httpClientStat.request, httpClientStat.retry, httpClientStat.close);
     }
 
     FUNCTION_TEST_RETURN(result);

@@ -4,6 +4,7 @@ Http Response
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/http/client.h"
 #include "common/io/http/common.h"
 #include "common/io/http/request.h"
 #include "common/io/http/response.h"
@@ -26,6 +27,11 @@ Http constants
     STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
 #define HTTP_VALUE_TRANSFER_ENCODING_CHUNKED                        "chunked"
     STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,         HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+extern HttpClientStat httpClientStat;
 
 /***********************************************************************************************************************************
 Object type
@@ -77,7 +83,7 @@ httpResponseDone(HttpResponse *this)
         httpSessionFree(this->session);
 
         // Only update the close stats after a successful response so it is not counted if there was an error/retry
-        // !!! INCREMENT SERVER CLOSE REQUEST HERE
+        httpClientStat.close++;
     }
     // Else return it to the client do it can be reused
     else
