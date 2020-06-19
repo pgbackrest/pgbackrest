@@ -18,6 +18,39 @@ typedef struct HttpRequest HttpRequest;
 #include "common/io/http/query.h"
 
 /***********************************************************************************************************************************
+HTTP Constants
+***********************************************************************************************************************************/
+#define HTTP_VERSION                                                "HTTP/1.1"
+    STRING_DECLARE(HTTP_VERSION_STR);
+
+#define HTTP_VERB_DELETE                                            "DELETE"
+    STRING_DECLARE(HTTP_VERB_DELETE_STR);
+#define HTTP_VERB_GET                                               "GET"
+    STRING_DECLARE(HTTP_VERB_GET_STR);
+#define HTTP_VERB_HEAD                                              "HEAD"
+    STRING_DECLARE(HTTP_VERB_HEAD_STR);
+#define HTTP_VERB_POST                                              "POST"
+    STRING_DECLARE(HTTP_VERB_POST_STR);
+#define HTTP_VERB_PUT                                               "PUT"
+    STRING_DECLARE(HTTP_VERB_PUT_STR);
+
+#define HTTP_HEADER_AUTHORIZATION                                   "authorization"
+    STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
+#define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
+#define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
+#define HTTP_HEADER_ETAG                                            "etag"
+    STRING_DECLARE(HTTP_HEADER_ETAG_STR);
+#define HTTP_HEADER_HOST                                            "host"
+    STRING_DECLARE(HTTP_HEADER_HOST_STR);
+#define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
+    STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
+
+#define HTTP_RESPONSE_CODE_FORBIDDEN                                403
+#define HTTP_RESPONSE_CODE_NOT_FOUND                                404
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct HttpRequestNewParam
@@ -28,10 +61,10 @@ typedef struct HttpRequestNewParam
     const Buffer *content;
 } HttpRequestNewParam;
 
-#define httpRequestNewP(verb, uri, ...)                                                                                      \
-    httpRequestNew(verb, uri, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define httpRequestNewP(client, verb, uri, ...)                                                                                    \
+    httpRequestNew(client, verb, uri, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *httpRequestNew(const String *verb, const String *uri, HttpRequestNewParam param);
+HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Functions

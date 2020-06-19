@@ -19,46 +19,7 @@ Object type
 
 typedef struct HttpClient HttpClient;
 
-#include "common/io/http/header.h"
-#include "common/io/http/query.h"
-#include "common/io/http/request.h"
-#include "common/io/http/response.h"
-#include "common/io/read.h"
-#include "common/time.h"
-#include "common/type/stringList.h"
-
-/***********************************************************************************************************************************
-HTTP Constants
-***********************************************************************************************************************************/
-#define HTTP_VERSION                                                "HTTP/1.1"
-    STRING_DECLARE(HTTP_VERSION_STR);
-
-#define HTTP_VERB_DELETE                                            "DELETE"
-    STRING_DECLARE(HTTP_VERB_DELETE_STR);
-#define HTTP_VERB_GET                                               "GET"
-    STRING_DECLARE(HTTP_VERB_GET_STR);
-#define HTTP_VERB_HEAD                                              "HEAD"
-    STRING_DECLARE(HTTP_VERB_HEAD_STR);
-#define HTTP_VERB_POST                                              "POST"
-    STRING_DECLARE(HTTP_VERB_POST_STR);
-#define HTTP_VERB_PUT                                               "PUT"
-    STRING_DECLARE(HTTP_VERB_PUT_STR);
-
-#define HTTP_HEADER_AUTHORIZATION                                   "authorization"
-    STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
-#define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
-#define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
-#define HTTP_HEADER_ETAG                                            "etag"
-    STRING_DECLARE(HTTP_HEADER_ETAG_STR);
-#define HTTP_HEADER_HOST                                            "host"
-    STRING_DECLARE(HTTP_HEADER_HOST_STR);
-#define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
-    STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
-
-#define HTTP_RESPONSE_CODE_FORBIDDEN                                403
-#define HTTP_RESPONSE_CODE_NOT_FOUND                                404
+#include "common/io/http/session.h"
 
 /***********************************************************************************************************************************
 Statistics
@@ -81,22 +42,14 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Is the http object busy?
-bool httpClientBusy(const HttpClient *this);
+// Open a new session
+HttpSession *httpClientOpen(HttpClient *this);
 
-// Mark the client as done if read is complete
-void httpClientDone(HttpClient *this, bool close, bool closeRequired);
-
-// Perform a request
-HttpResponse *httpClientRequest(HttpClient *this, HttpRequest *request, bool contentCache);
+// Request/response finished cleanly so session can be reused
+void httpClientReuse(HttpClient *this, HttpSession *session);
 
 // Format statistics to a string
 String *httpClientStatStr(void);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void httpClientFree(HttpClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
