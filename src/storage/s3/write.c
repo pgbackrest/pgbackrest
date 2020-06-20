@@ -182,7 +182,7 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
 
         // Initiate mult-part upload once the part buffer is more than 50% full and all buffers received have been full. It's
         // possible that we'll still ignore this !!!
-        if (this->uploadId == NULL &&
+        if (this->uploadId == NULL && this->request == NULL &&
             (bufFull(this->partBuffer) || (bufFull(buffer) && (bufUsed(this->partBuffer) >= bufSize(this->partBuffer) / 2))))
         {
             MEM_CONTEXT_BEGIN(this->memContext)
