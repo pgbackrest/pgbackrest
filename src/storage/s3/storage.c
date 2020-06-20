@@ -242,6 +242,7 @@ HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const St
         FUNCTION_LOG_PARAM(STRING, uri);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM_P(TIME_MSEC, param.timeMs);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -280,8 +281,13 @@ HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const St
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
+            TimeMSec timeBegin = param.timeMs != NULL ? timeMSec() : 0;
+
             result = httpRequestNewP(
                 this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+
+            if (param.timeMs != NULL)
+                *param.timeMs += timeMSec() - timeBegin;
         }
         MEM_CONTEXT_END();
     }
@@ -296,6 +302,7 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+        FUNCTION_LOG_PARAM_P(TIME_MSEC, param.timeMs);
     FUNCTION_LOG_END();
 
     ASSERT(request != NULL);
@@ -311,7 +318,12 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Process request
+            TimeMSec timeBegin = param.timeMs != NULL ? timeMSec() : 0;
+
             result = httpRequest(request, !param.contentIo);
+
+            if (param.timeMs != NULL)
+                *param.timeMs += timeMSec() - timeBegin;
 
             // Error if the request was not successful
             if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
@@ -418,13 +430,15 @@ storageS3Request(StorageS3 *this, const String *verb, const String *uri, Storage
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+        FUNCTION_LOG_PARAM_P(TIME_MSEC, param.requestMs);
+        FUNCTION_LOG_PARAM_P(TIME_MSEC, param.responseMs);
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, uri, .query = param.query, .content = param.content),
-            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
+            storageS3RequestAsyncP(this, verb, uri, .query = param.query, .content = param.content, .timeMs = param.requestMs),
+            .allowMissing = param.allowMissing, .contentIo = param.contentIo, .timeMs = param.responseMs));
 }
 
 /***********************************************************************************************************************************

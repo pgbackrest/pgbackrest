@@ -127,8 +127,9 @@ httpClientStatStr(void)
     {
         result = strNewFmt(
             "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
-                ", closes %" PRIu64,
-            httpClientStat.object, httpClientStat.session, httpClientStat.request, httpClientStat.retry, httpClientStat.close);
+                ", closes %" PRIu64 ", writeRequestMs %" PRIu64", writeResponseMs %" PRIu64", writeResponseAsynctMs %" PRIu64,
+            httpClientStat.object, httpClientStat.session, httpClientStat.request, httpClientStat.retry, httpClientStat.close,
+            httpClientStat.writeRequestMs, httpClientStat.writeResponseMs, httpClientStat.writeResponseAsyncMs);
     }
 
     FUNCTION_TEST_RETURN(result);
