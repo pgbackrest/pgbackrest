@@ -32,10 +32,6 @@ typedef struct HttpClientStat
     uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
     uint64_t retry;                                                 // Request retries
     uint64_t close;                                                 // Closes forced by server
-
-    TimeMSec writeRequestMs;                                        // Total time spent sending write requests
-    TimeMSec writeResponseMs;                                       // Total time spent waiting for write sync responses
-    TimeMSec writeResponseAsyncMs;                                  // Total time spent waiting for write async responses
 } HttpClientStat;
 
 extern HttpClientStat httpClientStat;

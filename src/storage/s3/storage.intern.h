@@ -21,7 +21,6 @@ typedef struct StorageS3RequestAsyncParam
     VAR_PARAM_HEADER;
     const HttpQuery *query;
     const Buffer *content;
-    TimeMSec *timeMs;
 } StorageS3RequestAsyncParam;
 
 #define storageS3RequestAsyncP(this, verb, uri, ...)                                                                               \
@@ -35,7 +34,6 @@ typedef struct StorageS3ResponseParam
     VAR_PARAM_HEADER;
     bool allowMissing;
     bool contentIo;
-    TimeMSec *timeMs;
 } StorageS3ResponseParam;
 
 #define storageS3ResponseP(request, ...)                                                                                           \
@@ -51,8 +49,6 @@ typedef struct StorageS3RequestParam
     const Buffer *content;
     bool allowMissing;
     bool contentIo;
-    TimeMSec *requestMs;
-    TimeMSec *responseMs;
 } StorageS3RequestParam;
 
 #define storageS3RequestP(this, verb, uri, ...)                                                                                    \

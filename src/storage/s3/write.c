@@ -93,10 +93,7 @@ storageWriteS3Part(StorageWriteS3 *this)
     if (this->request != NULL)
     {
         strLstAdd(
-            this->uploadPartList,
-            httpHeaderGet(
-                httpResponseHeader(storageS3ResponseP(this->request, .timeMs = &httpClientStat.writeResponseAsyncMs)),
-                HTTP_HEADER_ETAG_STR));
+            this->uploadPartList, httpHeaderGet(httpResponseHeader(storageS3ResponseP(this->request)), HTTP_HEADER_ETAG_STR));
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
 
         httpRequestFree(this->request);
@@ -131,8 +128,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR),
-                            .requestMs = &httpClientStat.writeRequestMs, .responseMs = &httpClientStat.writeResponseMs))));
+                            .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -151,13 +147,9 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->request = storageS3RequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer,
-                .timeMs = &httpClientStat.writeRequestMs);
+                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
         }
         MEM_CONTEXT_END();
-
-        // !!! TEMPORARY TO MAKE SYNC FOR TESTING
-        // storageWriteS3Part(this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -246,16 +238,11 @@ storageWriteS3Close(THIS_VOID)
                 storageS3RequestP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
                     .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
-                    .content = xmlDocumentBuf(partList),
-                    .requestMs = &httpClientStat.writeRequestMs, .responseMs = &httpClientStat.writeResponseMs);
+                    .content = xmlDocumentBuf(partList));
             }
             // Else upload all the data in a single put
             else
-            {
-                storageS3RequestP(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer,
-                    .requestMs = &httpClientStat.writeRequestMs, .responseMs = &httpClientStat.writeResponseMs);
-            }
+                storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
