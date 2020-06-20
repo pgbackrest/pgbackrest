@@ -253,7 +253,17 @@ storageWriteS3Close(THIS_VOID)
             }
             // Else upload all the data in a single put
             else
+            {
+                // !!!
+                if (this->request != NULL)
+                {
+                    storageS3ResponseP(this->request);
+                    httpRequestFree(this->request);
+                    this->request = NULL;
+                }
+
                 storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
+            }
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
