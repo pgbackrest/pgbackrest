@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
-Http Request
+HTTP Request
 
-???
+Send a request to an HTTP server and get a response. The interface is natively asynchronous, i.e. httpRequestNew() sends a request
+and httpRequest() waits for a response. These can be called together for synchronous behavior or separately for asynchronous
+behavior.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_REQUEST_H
 #define COMMON_IO_HTTP_REQUEST_H

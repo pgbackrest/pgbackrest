@@ -116,13 +116,19 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Complete prior async request, if any
+        storageWriteS3Part(this);
+
         // Get the upload id if we have not already
         if (this->uploadId == NULL)
         {
             // Initiate mult-part upload
-            XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(storageS3ResponseP(this->request))));
-            httpRequestFree(this->request);
-            this->request = NULL;
+            XmlNode *xmlRoot = xmlDocumentRoot(
+                xmlDocumentNewBuf(
+                    httpResponseContent(
+                        storageS3RequestP(
+                            this->storage, HTTP_VERB_POST_STR, this->interface.name,
+                            .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -132,9 +138,6 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
             }
             MEM_CONTEXT_END();
         }
-
-        // Complete prior async request, if any
-        storageWriteS3Part(this);
 
         // Upload the part async
         HttpQuery *query = httpQueryNew();
@@ -169,9 +172,9 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(this->partBuffer != NULL);
 
-    // Continue until the write buffer has been exhausted
     size_t bytesTotal = 0;
 
+    // Continue until the write buffer has been exhausted
     do
     {
         // Copy as many bytes as possible into the part buffer
@@ -179,20 +182,6 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
             bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
-
-        // Initiate mult-part upload once the part buffer is more than 50% full and all buffers received have been full. It's
-        // possible that we'll still ignore this !!!
-        if (this->uploadId == NULL && this->request == NULL &&
-            (bufFull(this->partBuffer) || (bufFull(buffer) && (bufUsed(this->partBuffer) >= bufSize(this->partBuffer) / 2))))
-        {
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                this->request = storageS3RequestAsyncP(
-                    this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR));
-            }
-            MEM_CONTEXT_END();
-        }
 
         // If the part buffer is full then write it
         if (bufRemains(this->partBuffer) == 0)
@@ -253,17 +242,7 @@ storageWriteS3Close(THIS_VOID)
             }
             // Else upload all the data in a single put
             else
-            {
-                // !!!
-                if (this->request != NULL)
-                {
-                    storageS3ResponseP(this->request);
-                    httpRequestFree(this->request);
-                    this->request = NULL;
-                }
-
                 storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
-            }
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;

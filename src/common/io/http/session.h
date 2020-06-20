@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 HTTP Session
 
-HTTP sessions are created by calling httpClientOpen().
+HTTP sessions are created by calling httpClientOpen(), which is currently done exclusively by the HttpRequest object.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_SESSION_H
 #define COMMON_IO_HTTP_SESSION_H

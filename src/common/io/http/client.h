@@ -7,6 +7,11 @@ Using a single object to make multiple requests is more efficient because connec
 automatically retried when the connection has been closed by the server.  Any 5xx response is also retried.
 
 Only the HTTPS protocol is currently supported.
+
+IMPORTANT NOTE: HttpClient should have a longer lifetime than any active HttpSession objects. This does not apply to HttpSession
+objects that are freed, i.e. if an error occurs it does not matter in what order HttpClient and HttpSession objects are destroyed,
+or HttpSession objects that have been returned to the client with httpClientReuse(). The danger is when an active HttpResponse
+completes and tries to call httpClientReuse() on an HttpClient that has been freed thus causing a segfault.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_CLIENT_H
 #define COMMON_IO_HTTP_CLIENT_H
