@@ -126,9 +126,9 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
             XmlNode *xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
                     httpResponseContent(
-                        storageS3Request(
+                        storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, false, false))));
+                            .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -235,16 +235,14 @@ storageWriteS3Close(THIS_VOID)
                 }
 
                 // Finalize the multi-part upload
-                storageS3Request(
+                storageS3RequestP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), false, false);
+                    .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
+                    .content = xmlDocumentBuf(partList));
             }
             // Else upload all the data in a single put
             else
-            {
-                storageS3Request(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, false, false);
-            }
+                storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;

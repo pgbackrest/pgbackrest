@@ -408,25 +408,23 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
 }
 
 HttpResponse *
-storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *content, bool contentIo,
-    bool allowMissing)
+storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(STRING, uri);
-        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
-        FUNCTION_LOG_PARAM(BUFFER, content);
-        FUNCTION_LOG_PARAM(BOOL, allowMissing);
-        FUNCTION_LOG_PARAM(BOOL, contentIo);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, uri, .query = query, .content = content), .allowMissing = allowMissing,
-            .contentIo = contentIo));
+            storageS3RequestAsyncP(this, verb, uri, .query = param.query, .content = param.content),
+            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
 /***********************************************************************************************************************************
@@ -503,8 +501,7 @@ storageS3ListInternal(
                     httpQueryAdd(query, S3_QUERY_PREFIX_STR, queryPrefix);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(
-                        httpResponseContent(storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false))));
+                    xmlDocumentNewBuf(httpResponseContent(storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query))));
 
                 // Get subpath list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
@@ -573,7 +570,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *httpResponse = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
+    HttpResponse *httpResponse = storageS3RequestP(this, HTTP_VERB_HEAD_STR, file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -745,9 +742,9 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
     ASSERT(request != NULL);
 
     const Buffer *response = httpResponseContent(
-        storageS3Request(
-            this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
-            xmlDocumentBuf(request), true, false));
+        storageS3RequestP(
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+            .content = xmlDocumentBuf(request)));
 
     // Nothing is returned when there are no errors
     if (bufSize(response) > 0)
@@ -865,7 +862,7 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, false, false);
+    storageS3RequestP(this, HTTP_VERB_DELETE_STR, file);
 
     FUNCTION_LOG_RETURN_VOID();
 }

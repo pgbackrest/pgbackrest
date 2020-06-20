@@ -58,7 +58,8 @@ storageReadS3Open(THIS_VOID)
     // Request the file
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        this->httpResponse = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, true, true);
+        this->httpResponse = storageS3RequestP(
+            this->storage, HTTP_VERB_GET_STR, this->interface.name, .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 

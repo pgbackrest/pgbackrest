@@ -19,10 +19,7 @@ cmdRepoCreate(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         if (strEq(storageType(storageRepo()), STORAGE_S3_TYPE_STR))
-        {
-            storageS3Request(
-                (StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR, NULL, NULL, false, false);
-        }
+            storageS3RequestP((StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -15,7 +15,7 @@ typedef struct StorageS3 StorageS3;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Perform async S3 request and get response
+// Perform async request
 typedef struct StorageS3RequestAsyncParam
 {
     VAR_PARAM_HEADER;
@@ -28,7 +28,7 @@ typedef struct StorageS3RequestAsyncParam
 
 HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param);
 
-// Get async S3 response
+// Get async response
 typedef struct StorageS3ResponseParam
 {
     VAR_PARAM_HEADER;
@@ -36,15 +36,25 @@ typedef struct StorageS3ResponseParam
     bool contentIo;
 } StorageS3ResponseParam;
 
-#define storageS3ResponseP(request, ...)                                                                                            \
+#define storageS3ResponseP(request, ...)                                                                                           \
     storageS3Response(request, (StorageS3ResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
 
-// Perform sync S3 request
-HttpResponse *storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *content,
-    bool contentIo, bool allowMissing);
+// Perform sync request
+typedef struct StorageS3RequestParam
+{
+    VAR_PARAM_HEADER;
+    const HttpQuery *query;
+    const Buffer *content;
+    bool allowMissing;
+    bool contentIo;
+} StorageS3RequestParam;
+
+#define storageS3RequestP(this, verb, uri, ...)                                                                                    \
+    storageS3Request(this, verb, uri, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging
