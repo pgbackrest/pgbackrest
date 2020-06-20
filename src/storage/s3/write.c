@@ -157,7 +157,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         MEM_CONTEXT_END();
 
         // !!! TEMPORARY TO MAKE SYNC FOR TESTING
-        storageWriteS3Part(this);
+        // storageWriteS3Part(this);
     }
     MEM_CONTEXT_TEMP_END();
 
