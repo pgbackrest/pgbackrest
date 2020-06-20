@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Client
+HTTP Client
 
 A robust HTTP client with connection reuse and automatic retries.
 
