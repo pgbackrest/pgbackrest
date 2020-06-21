@@ -79,30 +79,6 @@ struct StorageAzure
 };
 
 /***********************************************************************************************************************************
-Expected ISO-8601 data/time size
-***********************************************************************************************************************************/
-#define ISO_8601_DATE_TIME_SIZE                                     16
-
-/***********************************************************************************************************************************
-Format ISO-8601 date/time for authentication
-***********************************************************************************************************************************/
-static String *
-storageAzureDateTime(time_t authTime)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TIME, authTime);
-    FUNCTION_TEST_END();
-
-    char buffer[ISO_8601_DATE_TIME_SIZE + 1];
-
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
-        "unable to format date");
-
-    FUNCTION_TEST_RETURN(strNew(buffer));
-}
-
-/***********************************************************************************************************************************
 Generate authorization header and add it to the supplied header list
 
 Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key
@@ -259,7 +235,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
 
             // Generate authorization header
             storageAzureAuth(
-                this, verb, httpUriEncode(param.uri, true), param.query, storageAzureDateTime(time(NULL)), requestHeader);
+                this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
 
             // Get an http client
             HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
@@ -296,8 +272,9 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
 
                     strCatFmt(
                         error, "\n%s: %s", strPtr(key),
-                        httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
-                            "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
+//                        httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
+//                            "<redacted>" :
+                            strPtr(httpHeaderGet(requestHeader, key)));
                 }
 
                 // Output response headers
@@ -501,7 +478,7 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     {
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.timeModified = httpDateToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -546,7 +523,7 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
         info.size = type == storageTypeFile ?
             cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true)))) : 0;
         info.timeModified = type == storageTypeFile ?
-            httpLastModifiedToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+            httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
     }
 
     data->callback(data->callbackData, &info);

@@ -13,8 +13,11 @@ Http Common
 Convert the time using the format specified in https://tools.ietf.org/html/rfc7231#section-7.1.1.1 which is used by HTTP 1.1 (the
 only version we support).
 ***********************************************************************************************************************************/
+static const char *httpCommonMonthList[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 time_t
-httpLastModifiedToTime(const String *lastModified)
+httpDateToTime(const String *lastModified)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, lastModified);
@@ -25,18 +28,16 @@ httpLastModifiedToTime(const String *lastModified)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Find the month
-        static const char *monthList[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
         const char *month = strPtr(strSubN(lastModified, 8, 3));
         unsigned int monthIdx = 0;
 
-        for (; monthIdx < sizeof(monthList) / sizeof(char *); monthIdx++)
+        for (; monthIdx < sizeof(httpCommonMonthList) / sizeof(char *); monthIdx++)
         {
-            if (strcmp(month, monthList[monthIdx]) == 0)
+            if (strcmp(month, httpCommonMonthList[monthIdx]) == 0)
                 break;
         }
 
-        if (monthIdx == sizeof(monthList) / sizeof(char *))
+        if (monthIdx == sizeof(httpCommonMonthList) / sizeof(char *))
             THROW_FMT(FormatError, "invalid month '%s'", month);
 
         // Convert to time_t
@@ -48,6 +49,23 @@ httpLastModifiedToTime(const String *lastModified)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
+}
+
+String *
+httpDateFromTime(time_t time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, time);
+    FUNCTION_TEST_END();
+
+    struct tm *timePart = gmtime(&time);
+
+// !!! date: Sun, 21 Jun 2020 12:19:20 GMT
+    FUNCTION_TEST_RETURN(
+        strNewFmt(
+            "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart->tm_wday], timePart->tm_mday,
+            httpCommonMonthList[timePart->tm_mon], timePart->tm_year + 1900, timePart->tm_hour, timePart->tm_min,
+            timePart->tm_sec));
 }
 
 /**********************************************************************************************************************************/

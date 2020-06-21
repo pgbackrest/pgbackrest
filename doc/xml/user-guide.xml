@@ -628,7 +628,7 @@
             <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-host">{[host-azure]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">{[host-azure]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-verify-tls">n</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
