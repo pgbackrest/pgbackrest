@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Client Cache
+HTTP Client Cache
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -23,7 +23,7 @@ struct HttpClientCache
     const String *caFile;
     const String *caPath;
 
-    List *clientList;                                               // List of http clients
+    List *clientList;                                               // List of HTTP clients
 };
 
 OBJECT_DEFINE_FREE(HTTP_CLIENT_CACHE);

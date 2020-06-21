@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Client
+HTTP Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -325,17 +325,17 @@ httpClientRequest(
 
                 // Check status ends with a CR and remove it to make error formatting easier and more accurate
                 if (!strEndsWith(status, CR_STR))
-                    THROW_FMT(FormatError, "http response status '%s' should be CR-terminated", strPtr(status));
+                    THROW_FMT(FormatError, "HTTP response status '%s' should be CR-terminated", strPtr(status));
 
                 status = strSubN(status, 0, strSize(status) - 1);
 
                 // Check status is at least the minimum required length to avoid harder to interpret errors later on
                 if (strSize(status) < sizeof(HTTP_VERSION) + 4)
-                    THROW_FMT(FormatError, "http response '%s' has invalid length", strPtr(strTrim(status)));
+                    THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strPtr(strTrim(status)));
 
                 // Check status starts with the correct http version
                  if (!strBeginsWith(status, HTTP_VERSION_STR))
-                    THROW_FMT(FormatError, "http version of response '%s' must be " HTTP_VERSION, strPtr(status));
+                    THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION, strPtr(status));
 
                 // Read status code
                 status = strSub(status, sizeof(HTTP_VERSION));
