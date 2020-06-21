@@ -25,7 +25,7 @@ Storage type
 STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
 
 /***********************************************************************************************************************************
-S3 http headers
+S3 HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
@@ -938,7 +938,7 @@ storageS3New(
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Create the http client used to service requests
+        // Create the HTTP client used to service requests
         driver->httpClient = httpClientNew(
             host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
 

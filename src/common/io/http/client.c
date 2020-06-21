@@ -23,7 +23,7 @@ struct HttpClient
     TimeMSec timeout;                                               // Request timeout
     TlsClient *tlsClient;                                           // TLS client
 
-    List *sessionReuseList;                                         // List of http sessions that can be reused
+    List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
 
 OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);

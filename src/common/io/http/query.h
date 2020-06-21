@@ -40,7 +40,7 @@ HttpQuery *httpQueryMove(HttpQuery *this, MemContext *parentNew);
 //Put a query item
 HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
 
-// Render the query for inclusion in an http request
+// Render the query for inclusion in an HTTP request
 String *httpQueryRender(const HttpQuery *this);
 
 /***********************************************************************************************************************************

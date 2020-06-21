@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Http
+Test HTTP
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
@@ -26,13 +26,14 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("httpLastModifiedToTime()"))
+    if (testBegin("httpDateToTime() and httpDateFromTime()"))
     {
-        TEST_ERROR(httpLastModifiedToTime(STRDEF("Wed, 21 Bog 2015 07:28:00 GMT")), FormatError, "invalid month 'Bog'");
+        TEST_ERROR(httpDateToTime(STRDEF("Wed, 21 Bog 2015 07:28:00 GMT")), FormatError, "invalid month 'Bog'");
         TEST_ERROR(
-            httpLastModifiedToTime(STRDEF("Wed,  1 Oct 2015 07:28:00 GMT")), FormatError,
-            "unable to convert base 10 string ' 1' to int");
-        TEST_RESULT_INT(httpLastModifiedToTime(STRDEF("Wed, 21 Oct 2015 07:28:00 GMT")), 1445412480, "convert gmt datetime");
+            httpDateToTime(STRDEF("Wed,  1 Oct 2015 07:28:00 GMT")), FormatError, "unable to convert base 10 string ' 1' to int");
+        TEST_RESULT_INT(httpDateToTime(STRDEF("Wed, 21 Oct 2015 07:28:00 GMT")), 1445412480, "convert HTTP date to time_t");
+
+        TEST_RESULT_STR_Z(httpDateFromTime(1592743579), "Sun, 21 Jun 2020 12:46:19 GMT", "convert time_t to HTTP date")
     }
 
     // *****************************************************************************************************************************
@@ -86,7 +87,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             httpHeaderToLog(httpHeaderDup(header, redact)), "{public: <redacted>, secret: 'secret-value'}",
             "dup and change redactions");
-        TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null http header");
+        TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null header");
     }
 
     // *****************************************************************************************************************************
@@ -146,10 +147,10 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                // Start http test server
+                // Start HTTP test server
                 TEST_RESULT_VOID(
                     hrnTlsServerRun(ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
-                    "http server begin");
+                    "HTTP server begin");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -193,8 +194,8 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
-                    "http response status 'HTTP/1.0 200 OK' should be CR-terminated");
+                    httpClientRequest(client, strNew("GET"), strNew("/")), FormatError,
+                    "HTTP response status 'HTTP/1.0 200 OK' should be CR-terminated");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("status too short");
@@ -208,10 +209,10 @@ testRun(void)
 
                 TEST_ERROR(
                     httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
-                    "http response 'HTTP/1.0 200' has invalid length");
+                    "HTTP response 'HTTP/1.0 200' has invalid length");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("invalid http version");
+                TEST_TITLE("invalid HTTP version");
 
                 hrnTlsServerAccept();
 
@@ -222,7 +223,7 @@ testRun(void)
 
                 TEST_ERROR(
                     httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
-                    "http version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
+                    "HTTP version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no space in status");

@@ -27,7 +27,7 @@ typedef struct StorageReadS3
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
-    HttpResponse *httpResponse;                                     // Http response
+    HttpResponse *httpResponse;                                     // HTTP response
 } StorageReadS3;
 
 /***********************************************************************************************************************************
