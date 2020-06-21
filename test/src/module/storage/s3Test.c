@@ -444,7 +444,7 @@ testRun(void)
 
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
-                    "S3 request failed with 303: \n"
+                    "HTTP request failed with 303:\n"
                     "*** URI/Query ***:\n"
                     "/file.txt\n"
                     "*** Request Headers ***:\n"
@@ -623,7 +623,7 @@ testRun(void)
                 testResponseP(.code = 344);
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -646,7 +646,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -694,7 +694,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 403: Forbidden\n"
+                    "HTTP request failed with 403 (Forbidden):\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"

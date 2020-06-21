@@ -427,27 +427,59 @@ testRun(void)
                 hrnTlsServerAccept();
 
                 hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
-                hrnTlsServerReplyZ("HTTP/1.1 404 Not Found\r\ncontent-length:0\r\n\r\n");
+                hrnTlsServerReplyZ("HTTP/1.1 404 Not Found\r\n\r\n");
 
-                TEST_ASSIGN(response, httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), "request");
+                TEST_ASSIGN(request, httpRequestNewP(client, strNew("GET"), strNew("/")), "request");
+                TEST_ASSIGN(response, httpRequest(request, false), "response");
                 TEST_RESULT_UINT(httpResponseCode(response), 404, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "Not Found", "check response message");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '0'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)),  "{}", "check response headers");
+
+                TEST_ERROR(
+                    httpRequestError(request, response), ProtocolError,
+                    "HTTP request failed with 404 (Not Found):\n"
+                    "*** URI/Query ***:\n"
+                    "/");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with content");
 
-                hrnTlsServerExpectZ("GET / HTTP/1.1\r\n\r\n");
+                hrnTlsServerExpectZ("GET /?a=b HTTP/1.1\r\nhdr1:1\r\nhdr2:2\r\n\r\n");
                 hrnTlsServerReplyZ("HTTP/1.1 403 \r\ncontent-length:7\r\n\r\nCONTENT");
 
-                TEST_ASSIGN(response, httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), "request");
+                StringList *headerRedact = strLstNew();
+                strLstAdd(headerRedact, STRDEF("hdr2"));
+                headerRequest = httpHeaderNew(headerRedact);
+                httpHeaderAdd(headerRequest, strNew("hdr1"), strNew("1"));
+                httpHeaderAdd(headerRequest, strNew("hdr2"), strNew("2"));
+
+                TEST_ASSIGN(
+                    request,
+                    httpRequestNewP(
+                        client, strNew("GET"), strNew("/"), .query = httpQueryAdd(httpQueryNew(), STRDEF("a"), STRDEF("b")),
+                        .header = headerRequest),
+                    "request");
+                TEST_ASSIGN(response, httpRequest(request, false), "response");
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '7'}", "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "CONTENT", "check response content");
+
+                TEST_ERROR(
+                    httpRequestError(request, response), ProtocolError,
+                    "HTTP request failed with 403:\n"
+                    "*** URI/Query ***:\n"
+                    "/?a=b\n"
+                    "*** Request Headers ***:\n"
+                    "hdr1: 1\n"
+                    "hdr2: <redacted>\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 7\n"
+                    "*** Response Content ***:\n"
+                    "CONTENT");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with content using content-length");

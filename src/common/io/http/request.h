@@ -72,6 +72,9 @@ Functions
 // Send a request to the server
 HttpResponse *httpRequest(HttpRequest *this, bool contentCache);
 
+// Throw an error if the request failed
+void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribute__((__noreturn__));
+
 // Move to a new parent mem context
 HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
 

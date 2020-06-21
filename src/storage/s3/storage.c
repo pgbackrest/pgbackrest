@@ -344,58 +344,9 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
                     TRY_END();
                 }
 
-                // If not done then retry instead of reporting the error
+                // If done throw the error
                 if (done)
-                {
-                    // General error message
-                    String *error = strNewFmt(
-                        "S3 request failed with %u: %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
-
-                    // Output uri/query
-                    strCat(error, "\n*** URI/Query ***:");
-
-                    strCatFmt(error, "\n%s", strPtr(httpUriEncode(httpRequestUri(request), true)));
-
-                    if (httpRequestQuery(request) != NULL)
-                        strCatFmt(error, "?%s", strPtr(httpQueryRender(httpRequestQuery(request))));
-
-                    // Output request headers
-                    const StringList *requestHeaderList = httpHeaderList(httpRequestHeader(request));
-
-                    strCat(error, "\n*** Request Headers ***:");
-
-                    for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
-                    {
-                        const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
-
-                        strCatFmt(
-                            error, "\n%s: %s", strPtr(key),
-                            httpHeaderRedact(httpRequestHeader(request), key) || strEq(key, S3_HEADER_DATE_STR) ?
-                                "<redacted>" : strPtr(httpHeaderGet(httpRequestHeader(request), key)));
-                    }
-
-                    // Output response headers
-                    const HttpHeader *responseHeader = httpResponseHeader(result);
-                    const StringList *responseHeaderList = httpHeaderList(responseHeader);
-
-                    if (strLstSize(responseHeaderList) > 0)
-                    {
-                        strCat(error, "\n*** Response Headers ***:");
-
-                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
-                                responseHeaderIdx++)
-                        {
-                            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-                            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
-                        }
-                    }
-
-                    // If there was content then output it
-                    if (bufUsed(content) > 0)
-                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(content)));
-
-                    THROW(ProtocolError, strPtr(error));
-                }
+                    httpRequestError(request, result);
             }
             else
                 httpResponseMove(result, memContextPrior());
@@ -945,6 +896,7 @@ storageS3New(
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
 
         this = storageNew(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);

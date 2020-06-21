@@ -109,17 +109,14 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                                 queryStr == NULL ? "" : "?", queryStr == NULL ? "" : strPtr(queryStr)));
 
                         // Write headers
-                        if (this->header != NULL)
-                        {
-                            const StringList *headerList = httpHeaderList(this->header);
+                        const StringList *headerList = httpHeaderList(this->header);
 
-                            for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
-                            {
-                                const String *headerKey = strLstGet(headerList, headerIdx);
-                                ioWriteStrLine(
-                                    httpSessionIoWrite(session),
-                                    strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
-                            }
+                        for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
+                        {
+                            const String *headerKey = strLstGet(headerList, headerIdx);
+                            ioWriteStrLine(
+                                httpSessionIoWrite(session),
+                                strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
                         }
 
                         // Write out blank line to end the headers
@@ -208,7 +205,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
             .verb = strDup(verb),
             .uri = strDup(uri),
             .query = httpQueryDup(param.query),
-            .header = httpHeaderDup(param.header, NULL),
+            .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
 
@@ -236,11 +233,79 @@ httpRequest(HttpRequest *this, bool contentCache)
 }
 
 /**********************************************************************************************************************************/
+void
+httpRequestError(const HttpRequest *this, HttpResponse *response)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
+        FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(response != NULL);
+
+    // General error message
+    String *error = strNewFmt("HTTP request failed with %u", httpResponseCode(response));
+
+    // Add reason when present
+    if (strSize(httpResponseReason(response)) > 0)
+        strCatFmt(error, " (%s)", strPtr(httpResponseReason(response)));
+
+    // Output uri/query
+    strCat(error, ":\n*** URI/Query ***:");
+
+    strCatFmt(error, "\n%s", strPtr(httpUriEncode(this->uri, true)));
+
+    if (this->query != NULL)
+        strCatFmt(error, "?%s", strPtr(httpQueryRender(this->query)));
+
+    // Output request headers
+    const StringList *requestHeaderList = httpHeaderList(this->header);
+
+    if (strLstSize(requestHeaderList) > 0)
+    {
+        strCat(error, "\n*** Request Headers ***:");
+
+        for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
+        {
+            const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
+
+            strCatFmt(
+                error, "\n%s: %s", strPtr(key),
+                httpHeaderRedact(this->header, key) ? "<redacted>" : strPtr(httpHeaderGet(this->header, key)));
+        }
+    }
+
+    // Output response headers
+    const HttpHeader *responseHeader = httpResponseHeader(response);
+    const StringList *responseHeaderList = httpHeaderList(responseHeader);
+
+    if (strLstSize(responseHeaderList) > 0)
+    {
+        strCat(error, "\n*** Response Headers ***:");
+
+        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+        {
+            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
+            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+        }
+    }
+
+    // If there was content then output it
+    if (bufUsed(httpResponseContent(response)) > 0)
+        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(httpResponseContent(response))));
+
+    THROW(ProtocolError, strPtr(error));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
         "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu",
         strPtr(this->verb), strPtr(this->uri), this->query == NULL ? "null" : strPtr(httpQueryToLog(this->query)),
-        this->header == NULL ? "null" : strPtr(httpHeaderToLog(this->header)), this->content == NULL ? 0 : bufUsed(this->content));
+        strPtr(httpHeaderToLog(this->header)), this->content == NULL ? 0 : bufUsed(this->content));
 }
