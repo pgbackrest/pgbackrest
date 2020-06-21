@@ -582,7 +582,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
 
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
