@@ -194,7 +194,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    httpClientRequest(client, strNew("GET"), strNew("/")), FormatError,
+                    httpRequest(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
                     "HTTP response status 'HTTP/1.0 200 OK' should be CR-terminated");
 
                 // -----------------------------------------------------------------------------------------------------------------
