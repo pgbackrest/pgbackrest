@@ -27,7 +27,7 @@ typedef struct StorageReadS3
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
-    HttpClient *httpClient;                                         // Http client for requests
+    HttpClient *httpClient;                                         // HTTP client for requests
 } StorageReadS3;
 
 /***********************************************************************************************************************************
@@ -39,7 +39,7 @@ Macros for function logging
     objToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Mark http client as done so it can be reused
+Mark HTTP client as done so it can be reused
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_S3, LOG, logLevelTrace)
 {
