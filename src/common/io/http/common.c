@@ -60,7 +60,6 @@ httpDateFromTime(time_t time)
 
     struct tm *timePart = gmtime(&time);
 
-// !!! date: Sun, 21 Jun 2020 12:19:20 GMT
     FUNCTION_TEST_RETURN(
         strNewFmt(
             "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart->tm_wday], timePart->tm_mday,
