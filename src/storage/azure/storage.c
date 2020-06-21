@@ -234,8 +234,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
             }
 
             // Generate authorization header
-            storageAzureAuth(
-                this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
+            storageAzureAuth(this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
 
             // Get an http client
             HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
@@ -272,9 +271,8 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
 
                     strCatFmt(
                         error, "\n%s: %s", strPtr(key),
-//                        httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
-//                            "<redacted>" :
-                            strPtr(httpHeaderGet(requestHeader, key)));
+                       httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
+                            "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
                 }
 
                 // Output response headers
@@ -294,7 +292,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
                 }
 
                 // If there was content then output it
-                if (response!= NULL)
+                if (response != NULL)
                     strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
 
                 THROW(ProtocolError, strPtr(error));
