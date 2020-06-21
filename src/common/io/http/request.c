@@ -114,6 +114,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                         {
                             const String *headerKey = strLstGet(headerList, headerIdx);
+
                             ioWriteStrLine(
                                 httpSessionIoWrite(session),
                                 strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
@@ -236,7 +237,7 @@ httpRequest(HttpRequest *this, bool contentCache)
 void
 httpRequestError(const HttpRequest *this, HttpResponse *response)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
@@ -244,7 +245,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     ASSERT(this != NULL);
     ASSERT(response != NULL);
 
-    // General error message
+    // Error code
     String *error = strNewFmt("HTTP request failed with %u", httpResponseCode(response));
 
     // Add reason when present
@@ -291,13 +292,11 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         }
     }
 
-    // If there was content then output it
+    // Add response content, if any
     if (bufUsed(httpResponseContent(response)) > 0)
         strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(httpResponseContent(response))));
 
     THROW(ProtocolError, strPtr(error));
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
