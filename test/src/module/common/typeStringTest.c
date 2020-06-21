@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strSize(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strPtrNull(), strSize(), and strFree()"))
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
@@ -30,7 +30,7 @@ testRun(void)
         TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
         TEST_RESULT_UINT(strlen(strPtr(string)), 13, "check size with strlen()");
-        TEST_RESULT_INT(strPtr(string)[2], 'a', "check character");
+        TEST_RESULT_INT(strPtrNull(string)[2], 'a', "check character");
 
         TEST_RESULT_VOID(strFree(string), "free string");
 
@@ -47,7 +47,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
         TEST_RESULT_STR_Z(string, "formatted string 0001", "new with formatted string");
-        TEST_RESULT_PTR(strPtr(NULL), NULL, "null string pointer");
+        TEST_RESULT_Z(strPtrNull(NULL), NULL, "null string pointer");
 
         TEST_RESULT_VOID(strFree(string), "free string");
         TEST_RESULT_VOID(strFree(NULL), "free null string");
@@ -120,7 +120,7 @@ testRun(void)
         String *stringDup = strDup(string);
         TEST_RESULT_STR(stringDup, string, "duplicated strings match");
 
-        TEST_RESULT_PTR(strDup(NULL), NULL, "duplicate null string");
+        TEST_RESULT_STR(strDup(NULL), NULL, "duplicate null string");
     }
 
     // *****************************************************************************************************************************
@@ -290,7 +290,7 @@ testRun(void)
             {
                 if (listIdx == 0)
                 {
-                    TEST_RESULT_PTR(strLstAdd(list, NULL), NULL, "add null item");
+                    TEST_RESULT_STR(strLstAdd(list, NULL), NULL, "add null item");
                 }
                 else
                 {
@@ -311,7 +311,7 @@ testRun(void)
         {
             if (listIdx == 0)
             {
-                TEST_RESULT_PTR(strLstGet(list, listIdx), NULL, "check null item");
+                TEST_RESULT_STR(strLstGet(list, listIdx), NULL, "check null item");
             }
             else
             {

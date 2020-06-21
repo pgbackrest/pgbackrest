@@ -484,7 +484,7 @@
 
                         <text>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or count of full backups to keep. If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</text>
 
-                        <example>30</example>
+                        <example>time</example>
                     </config-key>
 
                     <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->

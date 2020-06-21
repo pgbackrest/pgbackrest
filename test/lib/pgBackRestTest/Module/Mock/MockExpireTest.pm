@@ -67,12 +67,12 @@ sub run
         if ($self->begin("simple, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+            my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
                 true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -159,12 +159,12 @@ sub run
         if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+            my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
                 true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 

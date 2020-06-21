@@ -569,7 +569,7 @@ testRun(void)
 
         // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
         // where a file grows while a backup is running.
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile!!!"));
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile###"));
 
         TEST_ASSIGN(
             result,
@@ -611,7 +611,7 @@ testRun(void)
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
-            "{\"out\":[1,12,12,\"719e82b52966b075c1ee276547e924179628fe69\",{\"align\":false,\"valid\":false}]}\n",
+            "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
             "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -639,7 +639,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
         varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("719e82b52966b075c1ee276547e924179628fe69"));   // pgFileChecksum
+        varLstAdd(paramList, varNewStrZ("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
         varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
@@ -653,7 +653,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"719e82b52966b075c1ee276547e924179628fe69\",null]}\n", "    check result");
+            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -681,9 +681,9 @@ testRun(void)
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69", "TEST");
+        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "TEST");
         TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "719e82b52966b075c1ee276547e924179628fe69") &&
+            (strEqZ(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
@@ -1435,7 +1435,7 @@ testRun(void)
         cmdStanzaCreate();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when postmaster.pid exists");
+        TEST_TITLE("error when pg appears to be running");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1448,8 +1448,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR), BUFSTRDEF("PID"));
 
         TEST_ERROR(
-            cmdBackup(), PostmasterRunningError,
-            "--no-online passed but postmaster.pid exists - looks like the postmaster is running. Shutdown the postmaster and try"
+            cmdBackup(), PgRunningError,
+            "--no-online passed but postmaster.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
                 " again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
@@ -1474,14 +1474,14 @@ testRun(void)
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
-                " looks like the postmaster is running and the backup will probably not be consistent\n"
+                " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
             TEST_64BIT() ? "21e2ddc99cdf4cfca272eee4f38891146092e358" : "8bb70506d988a8698d9e8cf90736ada23634571b");
 
-        // Remove postmaster.pid
+        // Make pg no longer appear to be running
         storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2457,6 +2457,7 @@ testRun(void)
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
+                "            HINT: this is normal after restoring from backup or promoting a standby.\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"

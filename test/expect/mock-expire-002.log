@@ -6,8 +6,8 @@ run 002 - stanzaUpgrade, enc 0, storage posix
 * full backup: label = [BACKUP-FULL-2], start = 00000001000000000000000C, stop = 00000001000000000000000E
 ====================================================================================================================================
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -30,19 +30,19 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
 [BACKUP-FULL-2]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -63,17 +63,17 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
 Create backups in current db version
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff expire
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=diff --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=diff --stanza=db
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option 'repo1-retention-archive' nor option 'repo1-retention-diff' is set
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -96,19 +96,19 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
 [BACKUP-FULL-2]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -134,8 +134,8 @@ backrest-checksum="[CHECKSUM]"
 * diff backup: label = [BACKUP-DIFF-1], prior = [BACKUP-FULL-4], start = 000000010000000100000005, stop = 000000010000000100000007
 ====================================================================================================================================
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -163,7 +163,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
@@ -173,13 +173,13 @@ backrest-checksum="[CHECKSUM]"
 [BACKUP-FULL-4]
 [BACKUP-DIFF-1]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -199,9 +199,9 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000010-0000000000000000000000000000000000000000
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -459,7 +459,7 @@ backrest-checksum="[CHECKSUM]"
 0000000100000000000000FE-0000000000000000000000000000000000000000.gz
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -473,9 +473,9 @@ backrest-checksum="[CHECKSUM]"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 Upgrade stanza and expire only earliest db backup and archive
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-archive-type=full expire
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=3 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-FULL-1]
@@ -485,8 +485,8 @@ P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.3-2, star
 P00 DETAIL: no archive to remove, archiveId = 9.3-2
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -512,7 +512,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 [BACKUP-FULL-3]
@@ -520,13 +520,13 @@ backrest-checksum="[CHECKSUM]"
 [BACKUP-FULL-4]
 [BACKUP-DIFF-1]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1/0000000100000000:
 00000001000000000000000C-0000000000000000000000000000000000000000.gz
 00000001000000000000000D-0000000000000000000000000000000000000000
 00000001000000000000000E-0000000000000000000000000000000000000000.gz
@@ -534,9 +534,9 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000010-0000000000000000000000000000000000000000
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -794,7 +794,7 @@ backrest-checksum="[CHECKSUM]"
 0000000100000000000000FE-0000000000000000000000000000000000000000.gz
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -810,8 +810,8 @@ backrest-checksum="[CHECKSUM]"
 * full backup: label = [BACKUP-FULL-5], start = 000000010000000000000000, stop = 000000010000000000000002
 ====================================================================================================================================
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -839,7 +839,7 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 [BACKUP-FULL-3]
@@ -848,13 +848,13 @@ backrest-checksum="[CHECKSUM]"
 [BACKUP-DIFF-1]
 [BACKUP-FULL-5]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -862,9 +862,9 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000004-0000000000000000000000000000000000000000
 000000010000000000000005-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1:
 
-[TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.2-1/0000000100000000:
 00000001000000000000000C-0000000000000000000000000000000000000000.gz
 00000001000000000000000D-0000000000000000000000000000000000000000
 00000001000000000000000E-0000000000000000000000000000000000000000.gz
@@ -872,9 +872,9 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000010-0000000000000000000000000000000000000000
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -1132,7 +1132,7 @@ backrest-checksum="[CHECKSUM]"
 0000000100000000000000FE-0000000000000000000000000000000000000000.gz
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -1146,23 +1146,23 @@ backrest-checksum="[CHECKSUM]"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup and archive in previous db version removed
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-2]
 P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-FULL-3]
 P00   INFO: remove expired backup [BACKUP-FULL-2]
-P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.2-1
+P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.2-1
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
 P00 DETAIL: remove archive: archiveId = 9.3-2, start = 000000010000000000000000, stop = 0000000100000000000000FE
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
 P00 DETAIL: no archive to remove, archiveId = 10-3
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -1187,19 +1187,19 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-4]
 [BACKUP-DIFF-1]
 [BACKUP-FULL-5]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -1207,12 +1207,12 @@ backrest-checksum="[CHECKSUM]"
 000000010000000000000004-0000000000000000000000000000000000000000
 000000010000000000000005-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -1228,8 +1228,8 @@ backrest-checksum="[CHECKSUM]"
 * full backup: label = [BACKUP-FULL-6], start = 000000010000000000000006, stop = 000000010000000000000008
 ====================================================================================================================================
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -1255,20 +1255,20 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-4]
 [BACKUP-DIFF-1]
 [BACKUP-FULL-5]
 [BACKUP-FULL-6]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -1282,12 +1282,12 @@ backrest-checksum="[CHECKSUM]"
 00000001000000000000000A-0000000000000000000000000000000000000000
 00000001000000000000000B-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -1301,9 +1301,9 @@ backrest-checksum="[CHECKSUM]"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 Expire all archive last full backup through pitr
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=3 --stanza=db
 P00   INFO: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
@@ -1313,8 +1313,8 @@ P00 DETAIL: archive retention on backup [BACKUP-FULL-6], archiveId = 10-3, start
 P00 DETAIL: remove archive: archiveId = 10-3, start = 000000010000000000000003, stop = 000000010000000000000005
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -1339,19 +1339,19 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-4]
 [BACKUP-FULL-5]
 [BACKUP-FULL-6]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -1362,12 +1362,12 @@ backrest-checksum="[CHECKSUM]"
 00000001000000000000000A-0000000000000000000000000000000000000000
 00000001000000000000000B-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -1380,8 +1380,8 @@ backrest-checksum="[CHECKSUM]"
 000000010000000100000009-0000000000000000000000000000000000000000
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -1406,19 +1406,19 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-4]
 [BACKUP-FULL-5]
 [BACKUP-FULL-6]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz
@@ -1429,12 +1429,12 @@ backrest-checksum="[CHECKSUM]"
 00000001000000000000000A-0000000000000000000000000000000000000000
 00000001000000000000000B-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2:
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
 
-[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+[TEST_PATH]/db-primary/repo/archive/db/9.3-2/0000000100000001:
 000000010000000100000000-0000000000000000000000000000000000000000
 000000010000000100000001-0000000000000000000000000000000000000000.gz
 000000010000000100000002-0000000000000000000000000000000000000000.gz
@@ -1448,18 +1448,18 @@ backrest-checksum="[CHECKSUM]"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 Expire all archive except for the current database
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-4]
 P00   INFO: remove expired backup [BACKUP-FULL-4]
-P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.3-2
+P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.3-2
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
 P00 DETAIL: no archive to remove, archiveId = 10-3
 P00   INFO: expire command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -1483,18 +1483,18 @@ db-version="10"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+> ls [TEST_PATH]/db-primary/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-5]
 [BACKUP-FULL-6]
 
-> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+> ls -R [TEST_PATH]/db-primary/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db:
+[TEST_PATH]/db-primary/repo/archive/db:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3:
+[TEST_PATH]/db-primary/repo/archive/db/10-3:
 
-[TEST_PATH]/db-master/repo/archive/db/10-3/0000000100000000:
+[TEST_PATH]/db-primary/repo/archive/db/10-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
 000000010000000000000001-0000000000000000000000000000000000000000
 000000010000000000000002-0000000000000000000000000000000000000000.gz

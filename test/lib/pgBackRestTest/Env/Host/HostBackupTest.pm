@@ -493,9 +493,9 @@ sub backupEnd
     {
         my $oHostGroup = hostGroupGet();
 
-        if (defined($oHostGroup->hostGet(HOST_DB_MASTER, true)))
+        if (defined($oHostGroup->hostGet(HOST_DB_PRIMARY, true)))
         {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_MASTER)->testPath() . '/' . PROJECT_CONF);
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_PRIMARY)->testPath() . '/' . PROJECT_CONF);
         }
 
         if (defined($oHostGroup->hostGet(HOST_DB_STANDBY, true)))
@@ -1140,7 +1140,7 @@ sub configCreate
     my $strStanza = $self->stanza();
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = $oHostGroup->hostGet($self->backupDestination());
-    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER);
+    my $oHostDbPrimary = $oHostGroup->hostGet(HOST_DB_PRIMARY);
     my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY, true);
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
@@ -1165,7 +1165,7 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level'} = 3;
 
     # Only set network compress level if there is more than one host
-    if ($oHostBackup != $oHostDbMaster)
+    if ($oHostBackup != $oHostDbPrimary)
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level-network'} = 1;
     }
@@ -1222,13 +1222,13 @@ sub configCreate
     # If this is the backup host
     if ($self->isHostBackup())
     {
-        my $oHostDb1 = $oHostDbMaster;
+        my $oHostDb1 = $oHostDbPrimary;
         my $oHostDb2 = $oHostDbStandby;
 
         if ($self->nameTest(HOST_DB_STANDBY))
         {
             $oHostDb1 = $oHostDbStandby;
-            $oHostDb2 = $oHostDbMaster;
+            $oHostDb2 = $oHostDbPrimary;
         }
 
         if ($self->nameTest(HOST_BACKUP))
@@ -2183,9 +2183,9 @@ sub hardLink {return shift->{bHardLink}}
 sub hasLink {storageRepo()->capability(STORAGE_CAPABILITY_LINK)}
 sub isFS {storageRepo()->type() ne STORAGE_OBJECT}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
-sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
+sub isHostDbPrimary {return shift->nameGet() eq HOST_DB_PRIMARY}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}
-sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby()}
+sub isHostDb {my $self = shift; return $self->isHostDbPrimary() || $self->isHostDbStandby()}
 sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoArchivePath {return shift->repoSubPath('archive', shift)}

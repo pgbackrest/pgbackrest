@@ -69,7 +69,7 @@ sub run
                     ", storage ${strStorage}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+        my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, strCompressType => $strCompressType, bArchiveAsync => true,
             strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
@@ -77,19 +77,19 @@ sub run
         my $strCompressExt = $strCompressType ne NONE ? ".${strCompressType}" : '';
 
         # Create the wal path
-        my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        my $strWalPath = $oHostDbPrimary->dbBasePath() . '/pg_xlog';
         storageTest()->pathCreate($strWalPath, {bCreateParent => true});
 
         # Create the test path for pg_control and generate pg_control for stanza-create
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
+        storageTest()->pathCreate($oHostDbPrimary->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
 
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-online'});
 
         # Push a WAL segment
         &log(INFO, '    push first WAL');
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 1);
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 1);
 
         # Break the database version of the archive info file
         if ($iError == 0)
@@ -103,18 +103,18 @@ sub run
         # Push two more segments with errors to exceed archive-push-queue-max
         &log(INFO, '    push second WAL');
 
-        $oHostDbMaster->archivePush(
+        $oHostDbPrimary->archivePush(
             $strWalPath, $strWalTestFile, 2, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
 
         &log(INFO, '    push third WAL');
 
-        $oHostDbMaster->archivePush(
+        $oHostDbPrimary->archivePush(
             $strWalPath, $strWalTestFile, 3, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
         &log(INFO, '    push fourth WAL');
 
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
 
         # Fix the database version
         if ($iError == 0)
@@ -129,7 +129,7 @@ sub run
             'segment 2-4 not pushed', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
             sub {storageRepo()->list($oHostBackup->repoArchivePath(PG_VERSION_94 . '-1/0000000100000001'))},

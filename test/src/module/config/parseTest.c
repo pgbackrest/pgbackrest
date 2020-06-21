@@ -1132,6 +1132,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));

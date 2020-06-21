@@ -474,7 +474,7 @@ sub clusterStop
             {iExpectedExitStatus => 1});
     }
 
-    # If postmaster process is running then stop the cluster
+    # If pg process is running then stop the cluster
     if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
     {
         $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');

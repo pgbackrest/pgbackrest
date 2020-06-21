@@ -229,7 +229,7 @@ sub run
         if (!$self->begin("rmt ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+        my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
             strCompressType => NONE});
 
@@ -238,11 +238,11 @@ sub run
         if ($strStorage eq S3)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
+            $oHostDbPrimary->configUpdate({&CFGDEF_SECTION_GLOBAL => {'process-max' => 2}});
 
             # Reduce log level to warn because parallel tests do not create deterministic logs
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(WARN)}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(WARN)}});
+            $oHostDbPrimary->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(WARN)}});
         }
 
         # Get base time
@@ -279,12 +279,12 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} =
-            $oHostDbMaster->dbBasePath();
+            $oHostDbPrimary->dbBasePath();
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_TYPE} = MANIFEST_VALUE_PATH;
 
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA);
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA);
 
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_94,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_94,
                                               '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
         # Load sample page
@@ -292,41 +292,41 @@ sub run
         my $iBasePageChecksum = 0x1B99;
 
         # Create base path
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1');
 
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', $tBasePage,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', $tBasePage,
                                               '22c98d248ff548311eda88559e4a8405ed77c003', $lTime);
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
                                               PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, '660');
 
         if (!$bRemote)
         {
-            $oHostDbMaster->executeSimple(
-                'chown 7777 ' . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
+            $oHostDbPrimary->executeSimple(
+                'chown 7777 ' . $oHostDbPrimary->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
                       {&MANIFEST_SUBKEY_USER} = INI_FALSE;
         }
 
         my $tPageInvalid17000 = $tBasePage . $tBasePage;
 
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', $tPageInvalid17000,
             'e0101dd8ffb910c9c202ca35b5f828bcb9697bed', $lTime, undef, undef, '1');
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
                                               PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
         if (!$bRemote)
         {
-            $oHostDbMaster->executeSimple(
-                'chown :7777 ' . $oHostDbMaster->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION, undef, 'root');
+            $oHostDbPrimary->executeSimple(
+                'chown :7777 ' . $oHostDbPrimary->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION, undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
                       {&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
         }
 
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
         my $tPageValid =
             pageBuild($tBasePage, 0, 0x1b99) .
@@ -334,7 +334,7 @@ sub run
             pageBuild($tBasePage, 2, 0x1b97) .
             pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '7a16d165e4775f7c92e8cdf60c0af57313f0bf90',
             $lTime);
 
@@ -346,7 +346,7 @@ sub run
             ("\0" x 8192) .
             pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
             '6e99b589e550e68e934fd235ccba59fe5b592a9e', $lTime);
 
@@ -360,87 +360,87 @@ sub run
             pageBuild($tBasePage, 6, 0x1b9b) .
             pageBuild($tBasePage, 0, 0x1b99);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33001', $tPageInvalid33001,
             '6bf316f11d28c28914ea9be92c00de9bea6d9a6b', $lTime, undef, undef, '0, [3, 5], 7');
 
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/' . DB_FILE_PGVERSION,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/' . DB_FILE_PGVERSION,
                                               PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
         # Create global path
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
             $self->archBits() == 32 ? '8107e546c59c72a8c1818fc3610d7cc1e5623660' : '4c77c900f7af0d9ab13fa9982051a42e0b637f6c',
             $lTime - 100, undef, true);
 
         # Copy pg_control
-        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
-        utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
+        utime($lTime - 100, $lTime - 100, $oHostDbPrimary->dbBasePath() . '/' . DB_FILE_PGCONTROL)
             or confess &log(ERROR, "unable to set time");
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
                   {&MANIFEST_SUBKEY_SIZE} = 8192;
 
         # Create tablespace path
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
 
         # Create paths/files to ignore
         if (!$bRemote)
         {
             # Create temp dir and file that will be ignored
-            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP);
-            $oHostDbMaster->dbFileCreate(
+            $oHostDbPrimary->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP);
+            $oHostDbPrimary->dbFileCreate(
                 \%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP . '/' . DB_FILE_PREFIX_TMP . '.1', 'IGNORE');
 
             # Create pg_dynshmem dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGDYNSHMEM);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGDYNSHMEM . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGDYNSHMEM);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGDYNSHMEM . '/anything.tmp', 'IGNORE');
 
             # Create pg_notify dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGNOTIFY);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGNOTIFY . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGNOTIFY);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGNOTIFY . '/anything.tmp', 'IGNORE');
 
             # Create pg_replslot dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGREPLSLOT);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGREPLSLOT . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGREPLSLOT);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGREPLSLOT . '/anything.tmp', 'IGNORE');
 
             # Create pg_serial dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
 
             # Create pg_snapshots dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
 
             # Create pg_stat_tmp dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP . '/anything.tmp', 'IGNORE');
 
             # Create pg_subtrans dir and file - only file will be ignored
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSUBTRANS);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSUBTRANS . '/anything.tmp', 'IGNORE');
+            $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSUBTRANS);
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSUBTRANS . '/anything.tmp', 'IGNORE');
 
             # More files to ignore
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTGRESQLAUTOCONFTMP, 'IGNORE');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTMASTEROPTS, 'IGNORE');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYCONF, 'IGNORE');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYDONE, 'IGNORE');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTGRESQLAUTOCONFTMP, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTMASTEROPTS, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYCONF, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYDONE, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
 
             # Unlog and temp files to ignore (unlog _init will NOT be ignored)
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000_init', $tPageValid,
+            $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000_init', $tPageValid,
                 '7a16d165e4775f7c92e8cdf60c0af57313f0bf90', $lTime);
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
         #---------------------------------------------------------------------------------------------------------------------------
         if ($self->runCurrent() == 1)
         {
-            $oHostDbMaster->executeSimple($self->backrestExe() . " version", {oLogTest => $self->expect()});
-            $oHostDbMaster->executeSimple($self->backrestExe() . " help version", {oLogTest => $self->expect()});
+            $oHostDbPrimary->executeSimple($self->backrestExe() . " version", {oLogTest => $self->expect()});
+            $oHostDbPrimary->executeSimple($self->backrestExe() . " help version", {oLogTest => $self->expect()});
         }
 
         # Full backup
@@ -453,31 +453,31 @@ sub run
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-online'});
 
         # Create a link to postgresql.conf
-        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
+        storageTest()->pathCreate($oHostDbPrimary->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
         testFileCreate(
-            $oHostDbMaster->dbPath() . '/pg_config/postgresql.conf', "listen_addresses = *\n", $lTime - 100);
-        testLinkCreate($oHostDbMaster->dbPath() . '/pg_config/postgresql.conf.link', './postgresql.conf');
+            $oHostDbPrimary->dbPath() . '/pg_config/postgresql.conf', "listen_addresses = *\n", $lTime - 100);
+        testLinkCreate($oHostDbPrimary->dbPath() . '/pg_config/postgresql.conf.link', './postgresql.conf');
 
-        $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf',
+        $oHostDbPrimary->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf',
                                               '../pg_config/postgresql.conf', true);
 
         # Create a link to pg_hba.conf
         testFileCreate(
-            $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS\n", $lTime - 100);
-        testLinkCreate($oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf.link', './pg_hba.conf');
+            $oHostDbPrimary->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS\n", $lTime - 100);
+        testLinkCreate($oHostDbPrimary->dbPath() . '/pg_config/pg_hba.conf.link', './pg_hba.conf');
 
-        $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf',
+        $oHostDbPrimary->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf',
                                               '../pg_config/pg_hba.conf', true);
 
         # Create stat directory link and file
-        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_stat', {strMode => '0700', bCreateParent => true});
-        $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../pg_stat');
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat', 'global.stat', 'stats',
+        storageTest()->pathCreate($oHostDbPrimary->dbPath() . '/pg_stat', {strMode => '0700', bCreateParent => true});
+        $oHostDbPrimary->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../pg_stat');
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat', 'global.stat', 'stats',
                                               'e350d5ce0153f3e22d5db21cf2a4eff00f3ee877', $lTime - 100, undef, true);
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
         # Create file with special characters
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'special-!_.*\'()&!@;:+,?', undef, undef, $lTime, undef, true);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
@@ -503,27 +503,27 @@ sub run
         if ($strStorage eq POSIX)
         {
             # Test global stop
-            $oHostDbMaster->stop({bForce => true});
+            $oHostDbPrimary->stop({bForce => true});
 
             $oHostBackup->backup(
                 $strType, 'global stop',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
 
             # Test stanza stop
-            $oHostDbMaster->stop({strStanza => $oHostDbMaster->stanza()});
+            $oHostDbPrimary->stop({strStanza => $oHostDbPrimary->stanza()});
 
             # This time a warning should be generated
-            $oHostDbMaster->stop({strStanza => $oHostDbMaster->stanza()});
+            $oHostDbPrimary->stop({strStanza => $oHostDbPrimary->stanza()});
 
             $oHostBackup->backup(
                 $strType, 'stanza stop',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
 
-            $oHostDbMaster->start({strStanza => $self->stanza()});
-            $oHostDbMaster->start();
+            $oHostDbPrimary->start({strStanza => $self->stanza()});
+            $oHostDbPrimary->start();
 
             # This time a warning should be generated
-            $oHostDbMaster->start();
+            $oHostDbPrimary->start();
         }
 
         # Resume Full Backup
@@ -531,24 +531,24 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
         # These files should never be backed up (this requires the next backup to do --force)
-        testFileCreate($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID, 'JUNK');
-        testFileCreate($oHostDbMaster->dbBasePath() . '/' . DB_FILE_BACKUPLABELOLD, 'JUNK');
-        testFileCreate($oHostDbMaster->dbBasePath() . '/' . DB_FILE_RECOVERYCONF, 'JUNK');
-        testFileCreate($oHostDbMaster->dbBasePath() . '/' . DB_FILE_RECOVERYDONE, 'JUNK');
+        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMASTERPID, 'JUNK');
+        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_BACKUPLABELOLD, 'JUNK');
+        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_RECOVERYCONF, 'JUNK');
+        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_RECOVERYDONE, 'JUNK');
 
         # Create files in root tblspc paths that should not be copied or deleted.
         # This will be checked later after a --force restore.
-        my $strDoNotDeleteFile = $oHostDbMaster->tablespacePath(1, 2) . '/donotdelete.txt';
+        my $strDoNotDeleteFile = $oHostDbPrimary->tablespacePath(1, 2) . '/donotdelete.txt';
         storageTest()->pathCreate(dirname($strDoNotDeleteFile), {strMode => '0700', bCreateParent => true});
         testFileCreate($strDoNotDeleteFile, 'DONOTDELETE-1-2');
 
-        storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700', bCreateParent => true});
-        testFileCreate($oHostDbMaster->tablespacePath(1) . '/donotdelete.txt', 'DONOTDELETE-1');
-        storageTest()->pathCreate($oHostDbMaster->tablespacePath(2), {strMode => '0700', bCreateParent => true});
-        testFileCreate($oHostDbMaster->tablespacePath(2) . '/donotdelete.txt', 'DONOTDELETE-2');
-        storageTest()->pathCreate($oHostDbMaster->tablespacePath(2, 2), {strMode => '0700', bCreateParent => true});
-        testFileCreate($oHostDbMaster->tablespacePath(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
-        storageTest()->pathCreate($oHostDbMaster->tablespacePath(11), {strMode => '0700', bCreateParent => true});
+        storageTest()->pathCreate($oHostDbPrimary->tablespacePath(1), {strMode => '0700', bCreateParent => true});
+        testFileCreate($oHostDbPrimary->tablespacePath(1) . '/donotdelete.txt', 'DONOTDELETE-1');
+        storageTest()->pathCreate($oHostDbPrimary->tablespacePath(2), {strMode => '0700', bCreateParent => true});
+        testFileCreate($oHostDbPrimary->tablespacePath(2) . '/donotdelete.txt', 'DONOTDELETE-2');
+        storageTest()->pathCreate($oHostDbPrimary->tablespacePath(2, 2), {strMode => '0700', bCreateParent => true});
+        testFileCreate($oHostDbPrimary->tablespacePath(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
+        storageTest()->pathCreate($oHostDbPrimary->tablespacePath(11), {strMode => '0700', bCreateParent => true});
 
         # Resume by copying the valid full backup over the last aborted full backup if it exists, or by creating a new path
         my $strResumeBackup = (storageRepo()->list(
@@ -563,8 +563,8 @@ sub run
         # Set ownership on base directory to bogus values
         if (!$bRemote)
         {
-            $oHostDbMaster->executeSimple('chown 7777:7777 ' . $oHostDbMaster->dbBasePath(), undef, 'root');
-            $oHostDbMaster->executeSimple('chmod 777 ' . $oHostDbMaster->dbBasePath(), undef, 'root');
+            $oHostDbPrimary->executeSimple('chown 7777:7777 ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
+            $oHostDbPrimary->executeSimple('chmod 777 ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = INI_FALSE;
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
@@ -593,14 +593,14 @@ sub run
         }
 
         # Add zero-sized file
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'zero_from_start', undef,
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'zero_from_start', undef,
                                               undef, $lTime, undef, true);
 
         # Add files for testing backups when time changes but content doesn't, and when content changes but time and size don't
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changetime.txt', 'SIZE', '88087292ed82e26f3eb824d0bffc05ccf7a30f8d', $lTime,
             undef, true);
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changecontent.txt', 'CONTENT', '238a131a3e8eb98d1fc5b27d882ca40b7618fd2a', $lTime,
             undef, true);
 
@@ -608,13 +608,13 @@ sub run
         $oHostBackup->configUpdate(
             {(CFGDEF_SECTION_GLOBAL . ':backup') =>
                 {'exclude' => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
-        $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
+        $oHostDbPrimary->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
                                           '../pg_config/postgresql.conf', true);
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
-        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log/logfile', 'IGNORE');
-        $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
-        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
-        executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
+        $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log/logfile', 'IGNORE');
+        $oHostDbPrimary->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
+        $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
+        executeTest('mkfifo ' . $oHostDbPrimary->dbBasePath() . '/apipe');
 
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
@@ -622,31 +622,31 @@ sub run
                 strOptionalParam => '--force --checksum-page' . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
-        storageTest->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        storageTest->remove($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
         # Munge permissions/modes on files that will be fixed by the restore
         if (!$bRemote)
         {
-            $oHostDbMaster->executeSimple(
-                "chown :7777 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
-            $oHostDbMaster->executeSimple(
-                "chmod 600 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
+            $oHostDbPrimary->executeSimple(
+                "chown :7777 " . $oHostDbPrimary->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
+            $oHostDbPrimary->executeSimple(
+                "chmod 600 " . $oHostDbPrimary->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
         }
 
         # Create a path and file that are not in the manifest
-        $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme');
-        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme/deleteme.txt', 'DELETEME');
+        $oHostDbPrimary->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme');
+        $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme/deleteme.txt', 'DELETEME');
 
         # Change path mode
-        $oHostDbMaster->dbPathMode(\%oManifest, MANIFEST_TARGET_PGDATA, 'base', '0777');
+        $oHostDbPrimary->dbPathMode(\%oManifest, MANIFEST_TARGET_PGDATA, 'base', '0777');
 
         # Remove a path
-        $oHostDbMaster->dbPathRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
+        $oHostDbPrimary->dbPathRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
         # Remove a file
-        $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
+        $oHostDbPrimary->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
         # Restore will set invalid user and group to root since the base path user/group are also invalid
         if (!$bRemote)
@@ -660,7 +660,7 @@ sub run
                 {&MANIFEST_SUBKEY_GROUP} = 'root';
         }
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'add and delete files', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true, strUser => !$bRemote ? 'root' : undef,
                 strOptionalParam => ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '')});
@@ -672,8 +672,8 @@ sub run
         if (!$bRemote)
         {
             # Reset the base path user and group for the next restore so files will be reset to the base path user/group
-            $oHostDbMaster->executeSimple(
-                'chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbMaster->dbBasePath(), undef, 'root');
+            $oHostDbPrimary->executeSimple(
+                'chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
 
             $oHostBackup->manifestMunge(
                 $strFullBackup,
@@ -692,21 +692,21 @@ sub run
                 $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
                 {&MANIFEST_SUBKEY_GROUP});
 
-            $oHostDbMaster->restore(
+            $oHostDbPrimary->restore(
                 'fix permissions', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true, strUser => 'root',
                     strOptionalParam => ' --link-all --log-level-console=detail'});
 
             # Fix and remove files that are now owned by root
             $oHostBackup->executeSimple('chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath(), undef, 'root');
-            $oHostDbMaster->executeSimple('rm -rf ' . $oHostDbMaster->lockPath() . '/*', undef, 'root');
+            $oHostDbPrimary->executeSimple('rm -rf ' . $oHostDbPrimary->lockPath() . '/*', undef, 'root');
         }
 
         # Change an existing link to the wrong directory
-        $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat');
-        $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../wrong');
+        $oHostDbPrimary->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat');
+        $oHostDbPrimary->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../wrong');
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'fix broken symlink', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true,
                 strOptionalParam => ' --link-all' . ($bRemote ? ' --compress-level-network=0' : '')});
@@ -721,42 +721,42 @@ sub run
             false);
 
         # Restore succeeds
-        $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat');
-        $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/postgresql.conf');
-        $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_hba.conf');
+        $oHostDbPrimary->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat');
+        $oHostDbPrimary->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/postgresql.conf');
+        $oHostDbPrimary->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_hba.conf');
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'restore links as directories', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true});
 
         # No longer need pg_hba.conf since it is no longer a link and doesn't provide additional coverage
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf');
+        $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf');
 
         # Incr backup
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-        $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strFullBackup);
 
         # Add tablespace 1
-        $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 1);
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
+        $oHostDbPrimary->manifestTablespaceCreate(\%oManifest, 1);
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPCB',
             '14c44cef6287269b08d41de489fd492bb9fc795d', $lTime - 100, undef, undef, false);
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
+        $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                               'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime, undef, true);
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt', 'SIZE', '88087292ed82e26f3eb824d0bffc05ccf7a30f8d', $lTime,
             undef, true);
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'zerosize.txt', '', undef, $lTime - 100, undef, true);
 
         # Create temp dir and file that will be ignored
         if (!$bRemote)
         {
-            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', DB_FILE_PREFIX_TMP);
-            $oHostDbMaster->dbFileCreate(
+            $oHostDbPrimary->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', DB_FILE_PREFIX_TMP);
+            $oHostDbPrimary->dbFileCreate(
                 \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', DB_FILE_PREFIX_TMP . '/' . DB_FILE_PREFIX_TMP . '.1', 'IGNORE');
         }
 
@@ -793,12 +793,12 @@ sub run
             basename($strResumePath), {&MANIFEST_SECTION_BACKUP => {&MANIFEST_KEY_LABEL => $strResumeLabel}},false);
 
         # Change contents/size of a db file to make sure it recopies (and does not resume)
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt', 'SIZE+MORE', '3905d5be2ec8d67f41435dab5e0dcda3ae47455d', $lTime,
             undef, true);
 
         # Change contents/time of a db file to make sure it recopies (and does not resume)
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
             'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime, undef, undef, false);
 
@@ -806,28 +806,28 @@ sub run
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # Add tablespace 2
-        $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 2);
-        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768');
+        $oHostDbPrimary->manifestTablespaceCreate(\%oManifest, 2);
+        $oHostDbPrimary->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768');
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
             'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime, undef, undef, false);
 
         # Make sure pg_internal.init is ignored in tablespaces
-        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
+        $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
 
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
-        $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
+        $oHostDbPrimary->manifestTablespaceCreate(\%oManifest, 11);
 
         # Change only the time to be in the past on a valid file and update the timestamp in the expected manifest
-        utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/changetime.txt')
-            or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changetime.txt');
+        utime($lTime - 100, $lTime - 100, $oHostDbPrimary->dbBasePath() . '/changetime.txt')
+            or confess &log(ERROR, "unable to set time for file ".$oHostDbPrimary->dbBasePath() . '/changetime.txt');
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
         # Change the content of the changecontent file to be the same size but leave the timestamp the same on the file
-        storageTest()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
-        utime($lTime, $lTime, $oHostDbMaster->dbBasePath() . '/changecontent.txt')
-            or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changecontent.txt');
+        storageTest()->put($oHostDbPrimary->dbBasePath() . '/changecontent.txt', 'CHGCONT');
+        utime($lTime, $lTime, $oHostDbPrimary->dbBasePath() . '/changecontent.txt')
+            or confess &log(ERROR, "unable to set time for file ".$oHostDbPrimary->dbBasePath() . '/changecontent.txt');
 
         # The changecontent & changetime files have conditions that will force the delta option to be turned on which should result
         # in the reference of changecontent to be removed but the reference to changetime to stay since the checksum wouldn't change
@@ -848,7 +848,7 @@ sub run
         if (!$bRemote)
         {
             # Remove the size-changed test file to avoid expect log churn
-            $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
+            $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
         }
 
         # Drop tablespace 11
@@ -856,7 +856,7 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         # Drop tablespace 11
-        $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
+        $oHostDbPrimary->manifestTablespaceDrop(\%oManifest, 11);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
@@ -870,10 +870,10 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Remap the base and tablespace paths
         my %oRemapHash;
-        $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbMaster->dbBasePath(2);
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2), {strMode => '0700', bCreateParent => true});
-        $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
-        $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
+        $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbPrimary->dbBasePath(2);
+        storageTest()->pathCreate($oHostDbPrimary->dbBasePath(2), {strMode => '0700', bCreateParent => true});
+        $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbPrimary->tablespacePath(1, 2);
+        $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbPrimary->tablespacePath(2, 2);
 
         # At this point the $PG_DATA permissions have been reset to 0700
         if (!$bRemote)
@@ -882,12 +882,12 @@ sub run
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC}{&MANIFEST_SUBKEY_MODE} = '0777';
         }
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'remap all paths', $strBackup, {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash});
 
         # Restore (make sure file in root tablespace path is not deleted by --delta)
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'ensure file in tblspc root remains after --delta', $strBackup,
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true});
 
@@ -899,14 +899,14 @@ sub run
         # Incr Backup
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-        $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strBackup);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92', $lTime);
 
-        $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 1, 2);
+        $oHostDbPrimary->manifestTablespaceDrop(\%oManifest, 1, 2);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', 'TBLSPC2B',
             'e324463005236d83e6e54795dbddd20a74533bf3', $lTime, undef, undef, false);
 
@@ -924,9 +924,9 @@ sub run
         # Incr Backup
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-        $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strBackup);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
             $lTime, undef, undef, false);
 
@@ -936,7 +936,7 @@ sub run
         # Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
-        $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strFullBackup, true);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
@@ -948,7 +948,7 @@ sub run
 
         # Diff Backup with files removed
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strFullBackup, true);
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
@@ -970,11 +970,11 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
+        $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
+        $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
+        $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
             'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime, undef, undef, false);
 
@@ -999,9 +999,9 @@ sub run
             $oHostBackup->{bHardLink} = true;
         }
 
-        $oHostDbMaster->manifestReference(\%oManifest);
+        $oHostDbPrimary->manifestReference(\%oManifest);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2', '7579ada0808d7f98087a0a586d0df9de009cdc33',
             $lTime, undef, undef, false);
 
@@ -1018,9 +1018,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
-        $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
+        $oHostDbPrimary->manifestReference(\%oManifest, $strFullBackup);
 
-        $oHostDbMaster->manifestFileCreate(
+        $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2UPDT', 'cafac3c59553f2cfde41ce2e62e7662295f108c0',
             $lTime, undef, undef, false);
 
@@ -1045,7 +1045,7 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'selective restore 16384', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 strOptionalParam => '--db-include=16384'});
@@ -1063,7 +1063,7 @@ sub run
         # Remove checksum to match zeroed file
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'selective restore 32768', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 strOptionalParam => '--db-include=32768'});
@@ -1071,27 +1071,27 @@ sub run
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'error on invalid id', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 iExpectedExitStatus => ERROR_DB_MISSING, strOptionalParam => '--log-level-console=warn --db-include=7777'});
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'error on system id', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
                 iExpectedExitStatus => ERROR_DB_INVALID, strOptionalParam => '--log-level-console=warn --db-include=1'});
 
         # Compact Restore
         #---------------------------------------------------------------------------------------------------------------------------
-        executeTest('rm -rf ' . $oHostDbMaster->dbBasePath(2) . "/*");
+        executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath(2) . "/*");
 
-        my $strDbPath = $oHostDbMaster->dbBasePath(2) . '/base';
+        my $strDbPath = $oHostDbPrimary->dbBasePath(2) . '/base';
         storageTest()->pathCreate($strDbPath, {strMode => '0700'});
 
         $oRemapHash{&MANIFEST_TARGET_PGDATA} = $strDbPath;
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
-        $oHostDbMaster->restore(
+        $oHostDbPrimary->restore(
             'no tablespace remap', 'latest',
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bTablespace => false,
                 strOptionalParam => '--tablespace-map-all=../../tablespace'});
@@ -1115,7 +1115,7 @@ sub run
         if (!defined($oHostDbStandby))
         {
             $strBackup = $oHostBackup->backup(
-                $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
+                $strType, 'option backup-standby reset - backup performed from primary', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=info --backup-standby'});
         }
     }

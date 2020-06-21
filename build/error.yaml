@@ -18,7 +18,7 @@ option-invalid-pair: 34
 option-duplicate-key: 35
 option-negate: 36
 option-required: 37
-postmaster-running: 38
+pg-running: 38
 protocol: 39
 path-not-empty: 40
 file-open: 41

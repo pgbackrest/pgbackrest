@@ -89,26 +89,26 @@ sub setup
     else
     {
         $strBackupDestination =
-            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_MASTER;
+            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_PRIMARY;
     }
 
-    # Create the db-master host
-    my $oHostDbMaster = undef;
+    # Create the db-primary host
+    my $oHostDbPrimary = undef;
 
     if ($bSynthetic)
     {
-        $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
+        $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
                 bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
     else
     {
-        $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbTest(
+        $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
                 $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
 
-    $oHostGroup->hostAdd($oHostDbMaster);
+    $oHostGroup->hostAdd($oHostDbPrimary);
 
     # Create the db-standby host
     my $oHostDbStandby = undef;
@@ -133,8 +133,8 @@ sub setup
         $oHostGroup->hostAdd($oHostObject);
     }
 
-    # Create db master config
-    $oHostDbMaster->configCreate({
+    # Create db-primary config
+    $oHostDbPrimary->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
@@ -149,10 +149,10 @@ sub setup
             bHardlink => $$oConfigParam{bHardLink},
             strStorage => $oConfigParam->{strStorage}});
     }
-    # If backup host is not defined set it to db-master
+    # If backup host is not defined set it to db-primary
     else
     {
-        $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
+        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY ? $oHostDbPrimary : $oHostDbStandby;
     }
 
     storageRepoCommandSet(
@@ -180,7 +180,7 @@ sub setup
         storageRepo()->create();
     }
 
-    return $oHostDbMaster, $oHostDbStandby, $oHostBackup;
+    return $oHostDbPrimary, $oHostDbStandby, $oHostBackup;
 }
 
 ####################################################################################################################################

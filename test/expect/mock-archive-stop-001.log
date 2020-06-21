@@ -1,14 +1,14 @@
 run 001 - rmt 0, cmp none, error version, storage posix, enc 1
 ==============================================================
 
-stanza-create db - create required data for stanza (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-create
+stanza-create db - create required data for stanza (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
+----------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -29,8 +29,8 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-+ supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
------------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-primary/repo/archive/db/archive.info
+------------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
@@ -49,22 +49,22 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
-            HINT: are you archiving to the correct stanza?
-
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
             HINT: are you archiving to the correct stanza?
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004 --repo1-host=bogus
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000003
+------------------------------------------------------------------------------------------------------------------------------------
+P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
+            HINT: are you archiving to the correct stanza?
+
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000004 --repo1-host=bogus
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: dropped WAL file '000000010000000100000004' because archive queue exceeded 32MB
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------

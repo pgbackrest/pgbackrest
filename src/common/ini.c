@@ -403,6 +403,8 @@ iniLoad(
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
             while (!ioReadEof(read));
+
+            ioReadClose(read);
         }
         MEM_CONTEXT_TEMP_END();
     }
