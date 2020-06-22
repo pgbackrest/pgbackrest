@@ -487,7 +487,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                     strLstSort(
                         storageListP(
                             storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
-                            .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
+                            .expression = WAL_SEGMENT_DIR_REGEXP_STR),
                         sortOrderAsc);
             }
 
@@ -506,7 +506,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                                 storageListP(
                                     storageRepo(),
                                     strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
-                                    .expression = STRDEF("^[0-F]{24}.*$")),
+                                    .expression = WAL_SEGMENT_FILE_REGEXP_STR),
                                 sortOrderAsc);
                     }
 
@@ -674,7 +674,7 @@ cmdVerify(void)
                         // Get the job and job key
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
-                        const String *fileName = varStr(protocolParallelJobKey(job));
+                        const String *fileName = varStr(protocolParallelJobKey(job)); // CSHANG Actually, can probably make this the full filename again bcause we can just split the string on the forward slashes
 
                         // CSHANG The key will tell us what we just processed
                         // ENUM type
@@ -696,6 +696,8 @@ cmdVerify(void)
                                 // //
                                 // if (strBeginsWithZ(fileName, STORAGE_REPO_ARCHIVE))
                                 //     strLstRemove(StringList *this, const String *item);
+                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup.info - so initially when we load the backup.info file, we really should reconstruct?
+                                // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
 
                             }
                             // Free the job
