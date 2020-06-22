@@ -4,7 +4,7 @@ HTTP Client
 A robust HTTP client with connection reuse and automatic retries.
 
 Using a single object to make multiple requests is more efficient because connections are reused whenever possible.  Requests are
-automatically retried when the connection has been closed by the server.  Any 5xx response is also retried.
+automatically retried when the connection has been closed by the server. Any 5xx response is also retried.
 
 Only the HTTPS protocol is currently supported.
 
@@ -34,7 +34,7 @@ typedef struct HttpClientStat
 {
     uint64_t object;                                                // Objects created
     uint64_t session;                                               // TLS sessions created
-    uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
+    uint64_t request;                                               // Requests (i.e. calls to httpRequestNew())
     uint64_t retry;                                                 // Request retries
     uint64_t close;                                                 // Closes forced by server
 } HttpClientStat;

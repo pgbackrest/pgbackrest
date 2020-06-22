@@ -36,7 +36,7 @@ Functions
 // Is this response code OK, i.e. 2XX?
 bool httpResponseCodeOk(const HttpResponse *this);
 
-// Get response content. Content will be cached so it can be retrieved again without additional cost.
+// Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
 const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
@@ -48,10 +48,11 @@ Getters/Setters
 // Is the response still being read?
 bool httpResponseBusy(const HttpResponse *this);
 
-// Read interface
+// Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
+// in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
 IoRead *httpResponseIoRead(HttpResponse *this);
 
-// Get the response code
+// Response code
 unsigned int httpResponseCode(const HttpResponse *this);
 
 // Response headers
