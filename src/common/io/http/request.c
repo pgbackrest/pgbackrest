@@ -146,11 +146,11 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
                             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
 
-                        // Move response to prior context
+                        // Move response to outer temp context
                         httpResponseMove(result, memContextPrior());
                     }
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_TEMP_END();
             }
             CATCH_ANY()
             {
@@ -169,7 +169,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
         }
         while (retry);
 
-        // Move response to prior context
+        // Move response to calling context
         httpResponseMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
