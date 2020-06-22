@@ -358,8 +358,8 @@ testRun(void)
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_UINT(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'ack', key1: '0', key2: 'value2'}",
-                    "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)),
+                    "{connection: 'ack', content-length: '0', key1: '0', key2: 'value2'}", "check response headers");
                 TEST_RESULT_UINT(bufSize(httpResponseContent(response)), 0, "content is empty");
 
                 TEST_RESULT_VOID(httpResponseFree(response), "free response");
