@@ -1,28 +1,36 @@
-run 001 - bkp 0, sby 0, dst db-primary, cmp none, storage posix, enc 0
-======================================================================
+run 001 - bkp 1, sby 1, dst backup, cmp none, storage posix, enc 0
+==================================================================
 
-stanza-create db - main create stanza info files (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-create
+stanza-create db - main create stanza info files (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on missing archive.info file (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - fail on archive_mode=off (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --type=full --stanza=db backup
+full backup - fail on archive_mode=off (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive_mode=off (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - fail on invalid archive_command (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --type=full --stanza=db backup
+check db - fail on archive_mode=off (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1  --reset-pg2-host --reset-pg2-path --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
+full backup - fail on invalid archive_command (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on invalid archive_command (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
+check db - fail on invalid archive_command (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1  --reset-pg2-host --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive timeout when archive-check=n (db-primary host)
@@ -33,44 +41,64 @@ check db - verify success (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
+check db - verify success (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-path --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 check db - fail on archive mismatch after upgrade (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
+check db - fail on archive mismatch after upgrade (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1  --reset-pg2-host --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive timeout (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
+check db - fail on archive timeout (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1  --reset-pg2-host --reset-pg2-path --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 check db - fail on backup info mismatch (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=5 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
+check db - fail on backup info mismatch (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify success after backup (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - fail on backup info file missing from non-empty dir (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-create
+check db - verify success after backup (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - fail on database mismatch with directory (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-primary/db/testbase/ stanza-create
+stanza-create db - fail on backup info file missing from non-empty dir (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - successfully create stanza files to be upgraded (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-primary/db/testbase/ --no-online --force stanza-create
+stanza-create db - fail on database mismatch with directory (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-primary/db/testbase/ stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-upgrade db - upgrade stanza files online (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-upgrade
+stanza-create db - successfully create stanza files to be upgraded (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-primary/db/testbase/ --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - fail on backup lock exists (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --type=full --stanza=db backup
+stanza-upgrade db - upgrade stanza files online (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - update during backup (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --type=full --stanza=db backup
+full backup - fail on backup lock exists (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
+full backup - update during backup (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -83,6 +111,7 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 [global]
 buffer-size=[BUFFER-SIZE]
 compress-level=3
+compress-level-network=1
 compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-primary/lock
@@ -93,15 +122,97 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
-repo1-path=[TEST_PATH]/db-primary/repo
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
-diff backup - backup for adhoc expire (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --type=diff --stanza=db backup
+restore, type 'standby', remap - restore backup on replica (db-standby host)
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option="primary_conninfo=host=db-primary port=6543 user=replicator"  --type=standby --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+
++ supplemental file: [TEST_PATH]/db-standby/db/base/recovery.conf
+-----------------------------------------------------------------
+# Recovery settings generated by pgBackRest restore on [TIMESTAMP]
+primary_conninfo = 'host=db-primary port=6543 user=replicator'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
+standby_mode = 'on'
+
+full backup - backup from standby, failure to access at least one standby (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg8-host=bogus --backup-standby --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
+full backup - backup from standby (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1 --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -112,9 +223,9 @@ pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
-archive-async=y
 buffer-size=[BUFFER-SIZE]
 compress-level=3
+compress-level-network=1
 compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-primary/lock
@@ -125,8 +236,184 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
-repo1-path=[TEST_PATH]/db-primary/repo
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[db:restore]
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+archive-async=y
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
+
+[global:backup]
+archive-copy=y
+start-fast=y
+
+check db - verify check command on standby (db-standby host)
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --reset-pg2-host --reset-pg2-path --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
+diff backup - backup for adhoc expire (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-primary/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-primary/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-primary/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[db:restore]
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+archive-async=y
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
@@ -136,24 +423,24 @@ stop all stanzas (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - attempt backup when stopped (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db backup
+incr backup - attempt backup when stopped (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 start all stanzas (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - fail on archive_mode=always (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db backup
+incr backup - fail on archive_mode=always (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
-expire --set=[BACKUP-DIFF-1] (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --set=[BACKUP-DIFF-1]  --stanza=db expire
+expire --set=[BACKUP-DIFF-1] (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-DIFF-1]  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - update during backup (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stop-auto --buffer-size=[BUFFER-SIZE] --delta --stanza=db backup
+incr backup - update during backup (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=[BUFFER-SIZE] --delta --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -164,9 +451,9 @@ pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
-archive-async=y
 buffer-size=[BUFFER-SIZE]
 compress-level=3
+compress-level-network=1
 compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-primary/lock
@@ -177,15 +464,85 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
-repo1-path=[TEST_PATH]/db-primary/repo
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[db:restore]
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+archive-async=y
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
-check db - check command with tablespace (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --archive-timeout=5 --stanza=db check
+check db - check command with tablespace (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default', expect exit 38 - pg running (db-primary host)
@@ -283,12 +640,12 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.con
 standby_mode = 'on'
 recovery_target_timeline = '4'
 
-incr backup - fail on --no-online (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --no-online --stanza=db backup
+incr backup - fail on --no-online (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --reset-pg2-host --reset-pg2-path --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - succeed on --no-online with --force (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --no-online --force --stanza=db backup
+incr backup - succeed on --no-online with --force (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --reset-pg2-host --reset-pg2-path --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -299,9 +656,9 @@ pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
-archive-async=y
 buffer-size=[BUFFER-SIZE]
 compress-level=3
+compress-level-network=1
 compress-type=none
 db-timeout=45
 lock-path=[TEST_PATH]/db-primary/lock
@@ -312,9 +669,99 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
-repo1-path=[TEST_PATH]/db-primary/repo
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[db:restore]
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+archive-async=y
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
 start-fast=y
+
+stop all stanzas (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf stop
+------------------------------------------------------------------------------------------------------------------------------------
+
+stop db stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stop
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-delete db - delete stanza with --force when pgbackrest on pg host not accessible (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-delete
+------------------------------------------------------------------------------------------------------------------------------------
+
+start all stanzas (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf start
+------------------------------------------------------------------------------------------------------------------------------------
+
+start all stanzas (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf start
+------------------------------------------------------------------------------------------------------------------------------------
