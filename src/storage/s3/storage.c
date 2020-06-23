@@ -234,7 +234,8 @@ storageS3Auth(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
+HttpRequest *
+storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -290,7 +291,8 @@ HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const St
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
+HttpResponse *
+storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);

@@ -171,6 +171,7 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
 
     ASSERT(this != NULL);
     ASSERT(this->partBuffer != NULL);
+    ASSERT(buffer != NULL);
 
     size_t bytesTotal = 0;
 

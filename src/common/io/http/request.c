@@ -88,7 +88,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                 {
                     HttpSession *session = NULL;
 
-                    // If a session is saved then the request was already sent
+                    // If a session is saved then the request was already successfully sent
                     if (this->session != NULL)
                     {
                         session = httpSessionMove(this->session, memContextCurrent());
