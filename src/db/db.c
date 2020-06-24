@@ -233,6 +233,7 @@ dbOpen(Db *this)
         }
         MEM_CONTEXT_END();
 
+        // Set application name to help identify the backup session
         if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
             dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
     }
