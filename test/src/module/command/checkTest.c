@@ -65,7 +65,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), true, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -86,8 +86,8 @@ testRun(void)
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -108,7 +108,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -130,7 +130,7 @@ testRun(void)
         // Primary database connection ok
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -161,8 +161,8 @@ testRun(void)
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", strPtr(pg8Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, testPath(), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strPtr(pg8Path), false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -181,8 +181,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", strPtr(pg8Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strPtr(pg8Path), false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -239,8 +239,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", strPtr(pg8Path), false, "off", NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strPtr(pg8Path), false, "off", NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -264,7 +264,7 @@ testRun(void)
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
@@ -285,7 +285,7 @@ testRun(void)
         // WAL segment is found
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
@@ -362,8 +362,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/badpath", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/badpath", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -427,7 +427,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, "always", NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, "always", NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });

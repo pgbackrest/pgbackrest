@@ -391,7 +391,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -401,7 +401,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -417,7 +417,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -437,7 +437,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(
+                1, "dbname='postgres' port=5432", PG_VERSION_92, strPtr(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -470,8 +471,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, testPath(), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5434", PG_VERSION_92, strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
