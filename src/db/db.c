@@ -360,7 +360,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
     if (pgVersion >= PG_VERSION_96)
     {
-        strCat(
+        strCatZ(
             result,
             ",\n"
             "       labelfile::text as backuplabel_file,\n"
@@ -368,7 +368,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     }
 
     // Build stop backup function
-    strCat(
+    strCatZ(
         result,
         "\n"
         "  from pg_catalog.pg_stop_backup(");

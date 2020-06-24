@@ -333,7 +333,7 @@ storageS3Request(
                         strPtr(httpClientResponseMessage(httpClient)));
 
                     // Output uri/query
-                    strCat(error, "\n*** URI/Query ***:");
+                    strCatZ(error, "\n*** URI/Query ***:");
 
                     strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
 
@@ -343,7 +343,7 @@ storageS3Request(
                     // Output request headers
                     const StringList *requestHeaderList = httpHeaderList(requestHeader);
 
-                    strCat(error, "\n*** Request Headers ***:");
+                    strCatZ(error, "\n*** Request Headers ***:");
 
                     for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
                     {
@@ -361,7 +361,7 @@ storageS3Request(
 
                     if (strLstSize(responseHeaderList) > 0)
                     {
-                        strCat(error, "\n*** Response Headers ***:");
+                        strCatZ(error, "\n*** Response Headers ***:");
 
                         for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
                                 responseHeaderIdx++)
