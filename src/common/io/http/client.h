@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Client
+HTTP Client
 
 A robust HTTP client with connection reuse and automatic retries.
 
@@ -76,7 +76,7 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Is the http object busy?
+// Is the HTTP object busy?
 bool httpClientBusy(const HttpClient *this);
 
 // Mark the client as done if read is complete

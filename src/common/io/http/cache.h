@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
-Http Client Cache
+HTTP Client Cache
 
-Cache http clients and return one that is not busy on request.
+Cache HTTP clients and return one that is not busy on request.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_CLIENT_CACHE_H
 #define COMMON_IO_HTTP_CLIENT_CACHE_H
@@ -25,7 +25,7 @@ HttpClientCache *httpClientCacheNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get an http client from the cache
+// Get an HTTP client from the cache
 HttpClient *httpClientCacheGet(HttpClientCache *this);
 
 /***********************************************************************************************************************************

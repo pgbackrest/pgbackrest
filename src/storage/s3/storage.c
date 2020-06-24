@@ -25,7 +25,7 @@ Storage type
 STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
 
 /***********************************************************************************************************************************
-S3 http headers
+S3 HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
@@ -86,7 +86,7 @@ struct StorageS3
 {
     STORAGE_COMMON_MEMBER;
     MemContext *memContext;
-    HttpClientCache *httpClientCache;                               // Http client cache to service requests
+    HttpClientCache *httpClientCache;                               // HTTP client cache to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
 
     const String *bucket;                                           // Bucket to store data in
@@ -288,7 +288,7 @@ storageS3Request(
                 this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
                 body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
-            // Get an http client
+            // Get an HTTP client
             HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
 
             // Process request
@@ -549,7 +549,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     {
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.timeModified = httpDateToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -904,7 +904,7 @@ storageS3New(
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Create the http client cache used to service requests
+        // Create the HTTP client cache used to service requests
         driver->httpClientCache = httpClientCacheNew(
             host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
 
