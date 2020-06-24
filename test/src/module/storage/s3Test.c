@@ -39,7 +39,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
         verb, uri);
 
     if (param.content != NULL)
-        strCat(request, "content-md5;");
+        strCatZ(request, "content-md5;");
 
     strCatFmt(
         request,
@@ -72,7 +72,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
 
     // Add content
     if (param.content != NULL)
-        strCat(request, param.content);
+        strCatZ(request, param.content);
 
     hrnTlsServerExpect(request);
 }
@@ -105,19 +105,19 @@ testResponse(TestResponseParam param)
     {
         case 200:
         {
-            strCat(response, "OK");
+            strCatZ(response, "OK");
             break;
         }
 
         case 403:
         {
-            strCat(response, "Forbidden");
+            strCatZ(response, "Forbidden");
             break;
         }
     }
 
     // End header
-    strCat(response, "\r\n");
+    strCatZ(response, "\r\n");
 
     // Headers
     if (param.header != NULL)
@@ -134,7 +134,7 @@ testResponse(TestResponseParam param)
             strlen(param.content), param.content);
     }
     else
-        strCat(response, "\r\n");
+        strCatZ(response, "\r\n");
 
     hrnTlsServerReply(response);
 }

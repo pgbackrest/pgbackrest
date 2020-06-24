@@ -280,7 +280,21 @@ strResize(String *this, size_t requested)
 
 /**********************************************************************************************************************************/
 String *
-strCat(String *this, const char *cat)
+strCat(String *this, const String *cat)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, cat);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != NULL);
+
+    FUNCTION_TEST_RETURN(strCatZN(this, strPtr(cat), strSize(cat)));
+}
+
+String *
+strCatZ(String *this, const char *cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);

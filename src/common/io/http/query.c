@@ -172,7 +172,7 @@ httpQueryRender(const HttpQuery *this)
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                 {
                     if (strSize(result) != 0)
-                        strCat(result, "&");
+                        strCatZ(result, "&");
 
                     strCatFmt(
                         result, "%s=%s", strPtr(strLstGet(keyList, keyIdx)),
@@ -196,14 +196,14 @@ httpQueryToLog(const HttpQuery *this)
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
     {
         if (strSize(result) != 1)
-            strCat(result, ", ");
+            strCatZ(result, ", ");
 
         strCatFmt(
             result, "%s: '%s'", strPtr(strLstGet(keyList, keyIdx)),
             strPtr(httpQueryGet(this, strLstGet(keyList, keyIdx))));
     }
 
-    strCat(result, "}");
+    strCatZ(result, "}");
 
     return result;
 }

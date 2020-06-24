@@ -273,8 +273,8 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
             else
 
             // Add the config part to the result config file
-            strCat(*config, "\n");
-            strCat(*config, strPtr(configPartStr));
+            strCat(*config, LF_STR);
+            strCat(*config, configPartStr);
         }
     }
 

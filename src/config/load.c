@@ -302,7 +302,7 @@ cfgLoadLogFile(void)
                 strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
 
             // Add extension
-            strCat(logFile, ".log");
+            strCatZ(logFile, ".log");
 
             // Attempt to open log file
             if (!logFileSet(strPtr(logFile)))

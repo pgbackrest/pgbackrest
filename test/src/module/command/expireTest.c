@@ -55,7 +55,7 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
             wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         if (strSize(result) == 0)
-            strCat(result, strPtr(wal));
+            strCat(result, wal);
         else
             strCatFmt(result, ", %s", strPtr(wal));
     }

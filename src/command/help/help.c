@@ -45,7 +45,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
     {
         // Add LF if there is already content
         if (strSize(result) != 0)
-            strCat(result, "\n");
+            strCat(result, LF_STR);
 
         // Split the paragraph into lines that don't exceed the line length
         StringList *partList = strLstNewSplitSizeZ(strLstGet(lineList, lineIdx), " ", length - indent);
@@ -56,14 +56,14 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
             if (partIdx != 0 || indentFirst)
             {
                 if (partIdx != 0)
-                    strCat(result, "\n");
+                    strCat(result, LF_STR);
 
                 if (strSize(strLstGet(partList, partIdx)))
                     strCatFmt(result, "%*s", (int)indent, "");
             }
 
             // Add the line
-            strCat(result, strPtr(strLstGet(partList, partIdx)));
+            strCat(result, strLstGet(partList, partIdx));
         }
     }
 
@@ -101,7 +101,7 @@ helpRenderValue(const Variant *value)
             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
             {
                 if (keyIdx != 0)
-                    strCat(resultTemp, ", ");
+                    strCatZ(resultTemp, ", ");
 
                 strCatFmt(
                     resultTemp, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
@@ -119,7 +119,7 @@ helpRenderValue(const Variant *value)
             for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
             {
                 if (listIdx != 0)
-                    strCat(resultTemp, ", ");
+                    strCatZ(resultTemp, ", ");
 
                 strCatFmt(resultTemp, "%s", strPtr(varStr(varLstGet(list, listIdx))));
             }
@@ -151,7 +151,7 @@ helpRender(void)
         // Display general help
         if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
         {
-            strCat(
+            strCatZ(
                 result,
                 " - General help\n"
                 "\n"
@@ -271,7 +271,7 @@ helpRender(void)
 
                         if (value != NULL || defaultValue != NULL)
                         {
-                            strCat(summary, " [");
+                            strCatZ(summary, " [");
 
                             if (value != NULL)
                                 strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strPtr(value));
@@ -279,12 +279,12 @@ helpRender(void)
                             if (defaultValue != NULL)
                             {
                                 if (value != NULL)
-                                    strCat(summary, ", ");
+                                    strCatZ(summary, ", ");
 
                                 strCatFmt(summary, "default=%s", strPtr(defaultValue));
                             }
 
-                            strCat(summary, "]");
+                            strCatZ(summary, "]");
                         }
 
                         // Output option help
@@ -341,7 +341,7 @@ helpRender(void)
 
                 if (value != NULL || defaultValue != NULL)
                 {
-                    strCat(result, "\n");
+                    strCat(result, LF_STR);
 
                     if (value != NULL)
                         strCatFmt(result, "current: %s\n", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strPtr(value));

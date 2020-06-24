@@ -1176,7 +1176,7 @@ backupJobResult(
 
                                 // Add a comma if this is not the first item
                                 if (errorIdx != 0)
-                                    strCat(error, ", ");
+                                    strCatZ(error, ", ");
 
                                 // If an error range
                                 if (varType(errorItem) == varTypeVariantList)

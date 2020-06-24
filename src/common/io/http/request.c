@@ -253,7 +253,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         strCatFmt(error, " (%s)", strPtr(httpResponseReason(response)));
 
     // Output uri/query
-    strCat(error, ":\n*** URI/Query ***:");
+    strCatZ(error, ":\n*** URI/Query ***:");
 
     strCatFmt(error, "\n%s", strPtr(httpUriEncode(this->uri, true)));
 
@@ -265,7 +265,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
     if (strLstSize(requestHeaderList) > 0)
     {
-        strCat(error, "\n*** Request Headers ***:");
+        strCatZ(error, "\n*** Request Headers ***:");
 
         for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
         {
@@ -283,7 +283,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
     if (strLstSize(responseHeaderList) > 0)
     {
-        strCat(error, "\n*** Response Headers ***:");
+        strCatZ(error, "\n*** Response Headers ***:");
 
         for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
         {
@@ -294,7 +294,10 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
     // Add response content, if any
     if (bufUsed(httpResponseContent(response)) > 0)
-        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(httpResponseContent(response))));
+    {
+        strCatZ(error, "\n*** Response Content ***:\n");
+        strCat(error, strNewBuf(httpResponseContent(response)));
+    }
 
     THROW(ProtocolError, strPtr(error));
 }

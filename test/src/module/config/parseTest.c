@@ -513,76 +513,76 @@ testRun(void)
         TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
         strTrunc(value, strChr(value, '.'));
-        strCat(value, "K2");
+        strCatZ(value, "K2");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10K2' is not valid");
         strTrunc(value, strChr(value, '1'));
-        strCat(value, "ab");
+        strCatZ(value, "ab");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value 'ab' is not valid");
 
         strTrunc(value, strChr(value, 'a'));
-        strCat(value, "10");
+        strCatZ(value, "10");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
         TEST_RESULT_STR_Z(value, "10", "value no character identifier - straight to bytes");
 
-        strCat(value, "B");
+        strCatZ(value, "B");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
         TEST_RESULT_STR_Z(value, "10", "value B to bytes");
 
-        strCat(value, "Kb");
+        strCatZ(value, "Kb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
         TEST_RESULT_STR_Z(value, "10240", "value KB to bytes");
 
         strTrunc(value, strChr(value, '2'));
-        strCat(value, "k");
+        strCatZ(value, "k");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
         TEST_RESULT_STR_Z(value, "10240", "value k to bytes");
 
-        strCat(value, "pB");
+        strCatZ(value, "pB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
         TEST_RESULT_STR_Z(value, "11529215046068469760", "value Pb to bytes");
 
         strTrunc(value, strChr(value, '5'));
-        strCat(value, "GB");
+        strCatZ(value, "GB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
         TEST_RESULT_STR_Z(value, "11811160064", "value GB to bytes");
 
         strTrunc(value, strChr(value, '8'));
-        strCat(value, "g");
+        strCatZ(value, "g");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
         TEST_RESULT_STR_Z(value, "11811160064", "value g to bytes");
 
         strTrunc(value, strChr(value, '8'));
-        strCat(value, "T");
+        strCatZ(value, "T");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
         TEST_RESULT_STR_Z(value, "12094627905536", "value T to bytes");
 
         strTrunc(value, strChr(value, '0'));
-        strCat(value, "tb");
+        strCatZ(value, "tb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
         TEST_RESULT_STR_Z(value, "13194139533312", "value tb to bytes");
 
         strTrunc(value, strChr(value, '3'));
-        strCat(value, "0m");
+        strCatZ(value, "0m");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
         TEST_RESULT_STR_Z(value, "10485760", "value m to bytes");
 
-        strCat(value, "mb");
+        strCatZ(value, "mb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
         TEST_RESULT_STR_Z(value, "10995116277760", "value mb to bytes");
 
         strTrunc(value, strChr(value, '0'));
-        strCat(value, "99999999999999999999p");
+        strCatZ(value, "99999999999999999999p");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_STR_Z(value, "225179981368524800000000000000000000", "value really large  to bytes");
     }
