@@ -161,7 +161,7 @@ testRun(void)
         for (unsigned int linkIdx = 0; linkIdx < 1; linkIdx++)
             strCatFmt(manifestStr, "pg_data/pg_stat%u={\"path\":\"../pg_stat\",\"type\":\"link\"}\n", linkIdx);
 
-        strCat(
+        strCatZ(
             manifestStr,
             "\n"
             "[target:file]\n");
@@ -180,7 +180,7 @@ testRun(void)
                 16384 + fileIdx);
         }
 
-        strCat(
+        strCatZ(
             manifestStr,
             "\n"
             "[target:file:default]\n"

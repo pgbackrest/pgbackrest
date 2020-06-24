@@ -21,8 +21,7 @@ cmdRepoCreate(void)
     {
         if (strEq(storageType(storageRepo()), STORAGE_S3_TYPE_STR))
         {
-            storageS3Request(
-                (StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR, NULL, NULL, true, false);
+            storageS3RequestP((StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR);
         }
         else if (strEq(storageType(storageRepo()), STORAGE_AZURE_TYPE_STR))
         {

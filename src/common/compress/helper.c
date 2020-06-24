@@ -281,7 +281,7 @@ compressExtCat(String *file, CompressType type)
 
     ASSERT(file != NULL);
 
-    strCat(file, strPtr(compressExtStr(type)));
+    strCat(file, compressExtStr(type));
 
     FUNCTION_TEST_RETURN_VOID();
 }

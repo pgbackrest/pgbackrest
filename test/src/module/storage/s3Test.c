@@ -39,7 +39,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
         verb, uri);
 
     if (param.content != NULL)
-        strCat(request, "content-md5;");
+        strCatZ(request, "content-md5;");
 
     strCatFmt(
         request,
@@ -72,7 +72,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
 
     // Add content
     if (param.content != NULL)
-        strCat(request, param.content);
+        strCatZ(request, param.content);
 
     hrnTlsServerExpect(request);
 }
@@ -105,19 +105,19 @@ testResponse(TestResponseParam param)
     {
         case 200:
         {
-            strCat(response, "OK");
+            strCatZ(response, "OK");
             break;
         }
 
         case 403:
         {
-            strCat(response, "Forbidden");
+            strCatZ(response, "Forbidden");
             break;
         }
     }
 
     // End header
-    strCat(response, "\r\n");
+    strCatZ(response, "\r\n");
 
     // Headers
     if (param.header != NULL)
@@ -134,7 +134,7 @@ testResponse(TestResponseParam param)
             strlen(param.content), param.content);
     }
     else
-        strCat(response, "\r\n");
+        strCatZ(response, "\r\n");
 
     hrnTlsServerReply(response);
 }
@@ -202,8 +202,10 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s", strPtr(host)));
+#ifdef TEST_CONTAINER_REQUIRED
         strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
         strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
+#endif
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -229,8 +231,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -257,8 +257,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -286,8 +284,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
         strLstAddZ(argList, "--repo1-s3-port=9001");
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
@@ -448,7 +444,7 @@ testRun(void)
 
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
-                    "S3 request failed with 303: \n"
+                    "HTTP request failed with 303:\n"
                     "*** URI/Query ***:\n"
                     "/file.txt\n"
                     "*** Request Headers ***:\n"
@@ -627,7 +623,7 @@ testRun(void)
                 testResponseP(.code = 344);
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -650,7 +646,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -698,7 +694,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 403: Forbidden\n"
+                    "HTTP request failed with 403 (Forbidden):\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"

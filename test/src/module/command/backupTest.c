@@ -51,7 +51,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
     {
         case storageTypeFile:
         {
-            strCat(data->content, "file");
+            strCatZ(data->content, "file");
 
             // Calculate checksum/size and decompress if needed
             // ---------------------------------------------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
         case storageTypePath:
         {
-            strCat(data->content, "path");
+            strCatZ(data->content, "path");
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         }
     }
 
-    strCat(data->content, "}\n");
+    strCatZ(data->content, "}\n");
 }
 
 static String *

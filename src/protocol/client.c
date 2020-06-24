@@ -168,8 +168,8 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
             {
                 const String *stack = varStr(kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 
-                strCat(throwMessage, "\n");
-                strCat(throwMessage, stack == NULL ? "no stack trace available" : strPtr(stack));
+                strCat(throwMessage, LF_STR);
+                strCat(throwMessage, stack == NULL ? STRDEF("no stack trace available") : stack);
             }
 
             THROWP(type, strPtr(throwMessage));

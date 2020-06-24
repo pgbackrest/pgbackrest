@@ -142,7 +142,7 @@ exitSafe(int result, bool error, SignalType signalType)
 
                 // Terminate from a child
                 if (signalType == signalTypeNone)
-                    strCat(errorMessage, "from child process");
+                    strCatZ(errorMessage, "from child process");
                 // Else terminated directly
                 else
                     strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
