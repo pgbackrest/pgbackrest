@@ -4,9 +4,14 @@ HTTP Client
 A robust HTTP client with connection reuse and automatic retries.
 
 Using a single object to make multiple requests is more efficient because connections are reused whenever possible.  Requests are
-automatically retried when the connection has been closed by the server.  Any 5xx response is also retried.
+automatically retried when the connection has been closed by the server. Any 5xx response is also retried.
 
 Only the HTTPS protocol is currently supported.
+
+IMPORTANT NOTE: HttpClient should have a longer lifetime than any active HttpSession objects. This does not apply to HttpSession
+objects that are freed, i.e. if an error occurs it does not matter in what order HttpClient and HttpSession objects are destroyed,
+or HttpSession objects that have been returned to the client with httpClientReuse(). The danger is when an active HttpResponse
+completes and tries to call httpClientReuse() on an HttpClient that has been freed thus causing a segfault.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_CLIENT_H
 #define COMMON_IO_HTTP_CLIENT_H
@@ -19,41 +24,8 @@ Object type
 
 typedef struct HttpClient HttpClient;
 
-#include "common/io/http/header.h"
-#include "common/io/http/query.h"
-#include "common/io/read.h"
+#include "common/io/http/session.h"
 #include "common/time.h"
-#include "common/type/stringList.h"
-
-/***********************************************************************************************************************************
-HTTP Constants
-***********************************************************************************************************************************/
-#define HTTP_VERB_DELETE                                            "DELETE"
-    STRING_DECLARE(HTTP_VERB_DELETE_STR);
-#define HTTP_VERB_GET                                               "GET"
-    STRING_DECLARE(HTTP_VERB_GET_STR);
-#define HTTP_VERB_HEAD                                              "HEAD"
-    STRING_DECLARE(HTTP_VERB_HEAD_STR);
-#define HTTP_VERB_POST                                              "POST"
-    STRING_DECLARE(HTTP_VERB_POST_STR);
-#define HTTP_VERB_PUT                                               "PUT"
-    STRING_DECLARE(HTTP_VERB_PUT_STR);
-
-#define HTTP_HEADER_AUTHORIZATION                                   "authorization"
-    STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
-#define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
-#define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
-#define HTTP_HEADER_ETAG                                            "etag"
-    STRING_DECLARE(HTTP_HEADER_ETAG_STR);
-#define HTTP_HEADER_HOST                                            "host"
-    STRING_DECLARE(HTTP_HEADER_HOST_STR);
-#define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
-    STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
-
-#define HTTP_RESPONSE_CODE_FORBIDDEN                                403
-#define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 
 /***********************************************************************************************************************************
 Statistics
@@ -62,10 +34,12 @@ typedef struct HttpClientStat
 {
     uint64_t object;                                                // Objects created
     uint64_t session;                                               // TLS sessions created
-    uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
+    uint64_t request;                                               // Requests (i.e. calls to httpRequestNew())
     uint64_t retry;                                                 // Request retries
     uint64_t close;                                                 // Closes forced by server
 } HttpClientStat;
+
+extern HttpClientStat httpClientStat;
 
 /***********************************************************************************************************************************
 Constructors
@@ -76,19 +50,11 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Is the HTTP object busy?
-bool httpClientBusy(const HttpClient *this);
+// Open a new session
+HttpSession *httpClientOpen(HttpClient *this);
 
-// Mark the client as done if read is complete
-void httpClientDone(HttpClient *this);
-
-// Perform a request
-Buffer *httpClientRequest(
-    HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    const Buffer *body, bool returnContent);
-
-// Is this response code OK, i.e. 2XX?
-bool httpClientResponseCodeOk(const HttpClient *this);
+// Request/response finished cleanly so session can be reused
+void httpClientReuse(HttpClient *this, HttpSession *session);
 
 // Format statistics to a string
 String *httpClientStatStr(void);
@@ -96,22 +62,7 @@ String *httpClientStatStr(void);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Read interface
-IoRead *httpClientIoRead(const HttpClient *this);
-
-// Get the response code
-unsigned int httpClientResponseCode(const HttpClient *this);
-
-// Response headers
-const HttpHeader *httpClientResponseHeader(const HttpClient *this);
-
-// Response message
-const String *httpClientResponseMessage(const HttpClient *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void httpClientFree(HttpClient *this);
+TimeMSec httpClientTimeout(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

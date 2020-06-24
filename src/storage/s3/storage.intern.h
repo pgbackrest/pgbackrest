@@ -9,27 +9,52 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageS3 StorageS3;
 
-#include "common/io/http/client.h"
+#include "common/io/http/request.h"
 #include "storage/s3/storage.h"
 
 /***********************************************************************************************************************************
-Perform an S3 Request
+Functions
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_S3_REQUEST_RESULT_TYPE                                                                                \
-    StorageS3RequestResult
-#define FUNCTION_LOG_STORAGE_S3_REQUEST_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
-    objToLog(&value, "StorageS3RequestResult", buffer, bufferSize)
-
-typedef struct StorageS3RequestResult
+// Perform async request
+typedef struct StorageS3RequestAsyncParam
 {
-    HttpClient *httpClient;
-    HttpHeader *responseHeader;
-    Buffer *response;
-} StorageS3RequestResult;
+    VAR_PARAM_HEADER;
+    const HttpQuery *query;
+    const Buffer *content;
+} StorageS3RequestAsyncParam;
 
-StorageS3RequestResult storageS3Request(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
-    bool allowMissing);
+#define storageS3RequestAsyncP(this, verb, uri, ...)                                                                               \
+    storageS3RequestAsync(this, verb, uri, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param);
+
+// Get async response
+typedef struct StorageS3ResponseParam
+{
+    VAR_PARAM_HEADER;
+    bool allowMissing;
+    bool contentIo;
+} StorageS3ResponseParam;
+
+#define storageS3ResponseP(request, ...)                                                                                           \
+    storageS3Response(request, (StorageS3ResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
+
+// Perform sync request
+typedef struct StorageS3RequestParam
+{
+    VAR_PARAM_HEADER;
+    const HttpQuery *query;
+    const Buffer *content;
+    bool allowMissing;
+    bool contentIo;
+} StorageS3RequestParam;
+
+#define storageS3RequestP(this, verb, uri, ...)                                                                                    \
+    storageS3Request(this, verb, uri, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging
