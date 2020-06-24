@@ -8,7 +8,7 @@ Azure Storage
 #include "common/crypto/hash.h"
 #include "common/encode.h"
 #include "common/debug.h"
-#include "common/io/http/cache.h"
+#include "common/io/http/client.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -67,7 +67,7 @@ struct StorageAzure
 {
     STORAGE_COMMON_MEMBER;
     MemContext *memContext;
-    HttpClientCache *httpClientCache;                               // Http client cache to service requests
+    HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
 
     const String *container;                                        // Container to store data in
@@ -184,7 +184,7 @@ storageAzureAuth(
 /***********************************************************************************************************************************
 Process Azure request
 ***********************************************************************************************************************************/
-StorageAzureRequestResult
+HttpResponse *
 storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -193,125 +193,58 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(STRING, param.uri);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
-        FUNCTION_LOG_PARAM(BUFFER, param.body);
-        FUNCTION_LOG_PARAM(BOOL, param.content);
-        FUNCTION_LOG_PARAM(BOOL, param.contentBuffer);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
-    ASSERT((!param.content && !param.contentBuffer) || param.content);
 
-    StorageAzureRequestResult result = {0};
-    // unsigned int retryRemaining = 2;
-    bool done;
+    HttpResponse *result = NULL;
 
-    do
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        done = true;
+        // Prepend uri prefix
+        param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strPtr(this->uriPrefix), strPtr(param.uri));
 
-        MEM_CONTEXT_TEMP_BEGIN()
+        // Create header list and add content length
+        HttpHeader *requestHeader = param.header == NULL ?
+            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Set content length
+        httpHeaderAdd(
+            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+
+        // Calculate content-md5 header if there is content
+        if (param.content != NULL)
         {
-            // Prepend uri prefix
-            param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strPtr(this->uriPrefix), strPtr(param.uri));
-
-            // Create header list and add content length
-            HttpHeader *requestHeader = param.header == NULL ?
-                httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
-
-            // Set content length
-            httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-                param.body == NULL || bufUsed(param.body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.body)));
-
-            // Calculate content-md5 header if there is content
-            if (param.body != NULL)
-            {
-                char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-                encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.body)), HASH_TYPE_M5_SIZE, md5Hash);
-                httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-            }
-
-            // Generate authorization header
-            storageAzureAuth(this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
-
-            // Get an http client
-            HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
-
-            // Process request
-            Buffer *response = httpClientRequest(
-                httpClient, verb, param.uri, param.query, requestHeader, param.body, !param.content || param.contentBuffer);
-
-            // Error if the request was not successful
-            if (!httpClientResponseCodeOk(httpClient) &&
-                (!param.allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
-            {
-                // General error message
-                String *error = strNewFmt(
-                    "Azure request failed with %u: %s", httpClientResponseCode(httpClient),
-                    strPtr(httpClientResponseMessage(httpClient)));
-
-                // Output uri/query
-                strCat(error, "\n*** URI/Query ***:");
-
-                strCatFmt(error, "\n%s %s", strPtr(verb), strPtr(httpUriEncode(param.uri, true)));
-
-                if (param.query != NULL)
-                    strCatFmt(error, "?%s", strPtr(httpQueryRender(param.query)));
-
-                // Output request headers
-                const StringList *requestHeaderList = httpHeaderList(requestHeader);
-
-                strCat(error, "\n*** Request Headers ***:");
-
-                for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
-                {
-                    const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
-
-                    strCatFmt(
-                        error, "\n%s: %s", strPtr(key),
-                       httpHeaderRedact(requestHeader, key) || strEq(key, HTTP_HEADER_DATE_STR) ?
-                            "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
-                }
-
-                // Output response headers
-                const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
-                const StringList *responseHeaderList = httpHeaderList(responseHeader);
-
-                if (strLstSize(responseHeaderList) > 0)
-                {
-                    strCat(error, "\n*** Response Headers ***:");
-
-                    for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
-                            responseHeaderIdx++)
-                    {
-                        const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-                        strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
-                    }
-                }
-
-                // If there was content then output it
-                if (response != NULL)
-                    strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
-
-                THROW(ProtocolError, strPtr(error));
-            }
-            else
-            {
-                // On success move the buffer to the prior context
-                result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(
-                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), memContextPrior());
-                result.response = bufMove(response, memContextPrior());
-            }
-
+            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
+            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
         }
-        MEM_CONTEXT_TEMP_END();
-    }
-    while (!done);
 
-    FUNCTION_LOG_RETURN(STORAGE_AZURE_REQUEST_RESULT, result);
+        // Generate authorization header
+        storageAzureAuth(this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
+
+        // Send the request
+        HttpRequest *request = httpRequestNewP(
+            this->httpClient, verb, param.uri, .query = param.query, .header = requestHeader, .content = param.content);
+
+        // Get response
+        result = httpRequest(request, !param.contentIo);
+
+        // Error if the request was not successful
+        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            httpRequestError(request, result);
+
+        // Move response to the prior context
+        httpResponseMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
 /***********************************************************************************************************************************
@@ -391,9 +324,7 @@ storageAzureListInternal(
                     httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(
-                        storageAzureRequestP(
-                            this, HTTP_VERB_GET_STR, .query = query, .content = true, .contentBuffer = true).response));
+                    xmlDocumentNewBuf(httpResponseContent(storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query))));
 
                 // Get subpath list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
@@ -466,17 +397,17 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    StorageAzureRequestResult httpResult = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
+    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
 
     // Does the file exist?
-    StorageInfo result = {.level = level, .exists = httpClientResponseCodeOk(httpResult.httpClient)};
+    StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
     // Add basic level info if requested and the file exists
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpDateToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -733,7 +664,7 @@ storageAzureNew(
         };
 
         // Create the http client cache used to service requests
-        driver->httpClientCache = httpClientCacheNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

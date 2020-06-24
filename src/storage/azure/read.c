@@ -27,7 +27,7 @@ typedef struct StorageReadAzure
     StorageReadInterface interface;                                 // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
-    HttpClient *httpClient;                                         // Http client for requests
+    HttpResponse *httpResponse;                                     // HTTP response
 } StorageReadAzure;
 
 /***********************************************************************************************************************************
@@ -37,15 +37,6 @@ Macros for function logging
     StorageReadAzure *
 #define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
     objToLog(value, "StorageReadAzure", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Mark http client as done so it can be reused
-***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_AZURE, LOG, logLevelTrace)
-{
-    httpClientDone(this->httpClient);
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -60,17 +51,20 @@ storageReadAzureOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpClient == NULL);
+    ASSERT(this->httpResponse == NULL);
 
     bool result = false;
 
     // Request the file
-    this->httpClient = storageAzureRequestP(
-        this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .content = true, .allowMissing = true).httpClient;
-
-    if (httpClientResponseCodeOk(this->httpClient))
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
-        memContextCallbackSet(this->memContext, storageReadAzureFreeResource, this);
+        this->httpResponse = storageAzureRequestP(
+            this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
+    }
+    MEM_CONTEXT_END();
+
+    if (httpResponseCodeOk(this->httpResponse))
+    {
         result = true;
     }
     // Else error unless ignore missing
@@ -94,33 +88,11 @@ storageReadAzure(THIS_VOID, Buffer *buffer, bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpClient != NULL);
-    ASSERT(httpClientIoRead(this->httpClient) != NULL);
+    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
-    FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
-}
-
-/***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
-static void
-storageReadAzureClose(THIS_VOID)
-{
-    THIS(StorageReadAzure);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->httpClient != NULL);
-
-    memContextCallbackClear(this->memContext);
-    storageReadAzureFreeResource(this);
-    this->httpClient = NULL;
-
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
 
 /***********************************************************************************************************************************
@@ -135,10 +107,10 @@ storageReadAzureEof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_AZURE, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpClient != NULL);
-    ASSERT(httpClientIoRead(this->httpClient) != NULL);
+    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpClientIoRead(this->httpClient)));
+    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/
@@ -173,7 +145,6 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
 
                 .ioInterface = (IoReadInterface)
                 {
-                    .close = storageReadAzureClose,
                     .eof = storageReadAzureEof,
                     .open = storageReadAzureOpen,
                     .read = storageReadAzure,

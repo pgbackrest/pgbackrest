@@ -120,7 +120,7 @@ storageWriteAzurePart(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, STR(blockId));
 
         storageAzureRequestP(
-            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .body = this->blockBuffer);
+            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
 
         strLstAddZ(this->blockIdList, blockId);
     }
@@ -208,7 +208,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
                     .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
-                    .body = xmlDocumentBuf(blockXml));
+                    .content = xmlDocumentBuf(blockXml));
             }
             // Else upload all the data in a single block
             else
@@ -216,7 +216,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
                     httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
-                    .body = this->blockBuffer);
+                    .content = this->blockBuffer);
             }
 
             bufFree(this->blockBuffer);
