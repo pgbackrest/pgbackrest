@@ -236,6 +236,11 @@ dbOpen(Db *this)
         // Set application name to help identify the backup session
         if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
             dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
+
+        // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
+        // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
+        if (this->pgVersion >= PG_VERSION_PARALLEL_QUERY)
+            dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
     }
     MEM_CONTEXT_TEMP_END();
 
