@@ -506,10 +506,6 @@ Macros to simplify dbOpen() for specific database versions
     HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam),                                                                                \
     HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
 
-// ??? This is really just a special case of the above and should be replaced by it
-#define HRNPQ_MACRO_OPEN_92(sessionParam, connectParam, pgPathParam, standbyParam, archiveMode, archiveCommand)                    \
-    HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, PG_VERSION_92, pgPathParam, standbyParam, archiveMode, archiveCommand)
-
 /***********************************************************************************************************************************
 Data type constants
 ***********************************************************************************************************************************/
