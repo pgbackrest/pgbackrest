@@ -35,19 +35,9 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
 {
     // Add authorization string
     String *request = strNewFmt(
-        "%s %s HTTP/1.1\r\n"
-            "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length;",
+        "%s /" TEST_ACCOUNT "/" TEST_CONTAINER "%s HTTP/1.1\r\n"
+            "authorization:SharedKey account:????????????????????????????????????????????\r\n",
         verb, uri);
-
-    if (param.content != NULL)
-        strCatZ(request, "content-md5;");
-
-    strCatFmt(
-        request,
-        "host;x-amz-content-sha256;x-amz-date,Signature=????????????????????????????????????????????????????????????????\r\n"
-        "content-length:%zu\r\n",
-        param.content == NULL ? 0 : strlen(param.content));
 
     // Add md5
     if (param.content != NULL)
@@ -57,17 +47,20 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
-    // Add host
-    strCatFmt(request, "host:%s", strPtr(hrnTlsServerHost()));
+    // Add content-length
+    strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
 
-    // Add content sha256 and date
-    strCatFmt(
-        request,
-        "x-amz-content-sha256:%s\r\n"
-        "x-amz-date:????????T??????Z" "\r\n"
-        "\r\n",
-        param.content == NULL ? HASH_TYPE_SHA256_ZERO : strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
-        BUFSTRZ(param.content)))));
+    // Add date
+    strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
+
+    // Add host
+    strCatFmt(request, "host:%s\r\n", strPtr(hrnTlsServerHost()));
+
+    // Add version
+    strCatZ(request, "x-ms-version:2019-02-02\r\n");
+
+    // Complete headers
+    strCatZ(request, "\r\n");
 
     // Add content
     if (param.content != NULL)
@@ -242,10 +235,11 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_TYPE_AZURE);
-                strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+                strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strPtr(hrnTlsServerHost())));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort()));
+                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY, true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -256,25 +250,15 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     ((StorageAzure *)storage->driver)->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
 
-                (void)testRequest;
-                (void)testResponse;
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ignore missing file");
 
-                // Storage *s3 = storageS3New(
-                //     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,
-                //     host, port, 5000, testContainer(), NULL, NULL);
-                //
-                // // Coverage for noop functions
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_RESULT_VOID(storagePathSyncP(s3, strNew("path")), "path sync is a noop");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("ignore missing file");
-                //
-                // hrnTlsServerAccept();
-                // testRequestP(s3, HTTP_VERB_GET, "/fi%26le.txt");
-                // testResponseP(.code = 404);
-                //
-                // TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+                hrnTlsServerAccept();
+                testRequestP(HTTP_VERB_GET, "/fi%26le.txt");
+                testResponseP(.code = 404);
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("error on missing file");
