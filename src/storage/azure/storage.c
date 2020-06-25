@@ -561,7 +561,7 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     if (type == storageTypeFile)
     {
         StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
-        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strPtr(data->path), strPtr(name)));
+        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strPtr(data->path), strPtr(name)));
     }
 
     FUNCTION_TEST_RETURN_VOID();

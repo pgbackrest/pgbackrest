@@ -328,12 +328,31 @@ testRun(void)
                     strPtr(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write error");
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP(.code = 403);
+
+                TEST_ERROR_FMT(
+                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** URI/Query ***:\n"
+                    "/account/container/file.txt\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 4\n"
+                    "content-md5: ywjKSnu1+Wg8GRM6hIcspw==\n"
+                    "date: <redacted>\n"
+                    "host: %s\n"
+                    "x-ms-blob-type: BlockBlob\n"
+                    "x-ms-version: 2019-02-02",
+                    strPtr(hrnTlsServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
 
                 testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
                 testResponseP(.code = 503);
-                hrnTlsServerClose();
-                hrnTlsServerAccept();
                 testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
                 testResponseP();
 
@@ -458,7 +477,7 @@ testRun(void)
                         "                <Content-Length>787</Content-Length>"
                         "            </Properties>"
                         "        </Blob>"
-                        "       <BlobPrefix>"
+                        "        <BlobPrefix>"
                         "           <Name>path/to/test_path/</Name>"
                         "       </BlobPrefix>"
                         "    </Blobs>"
@@ -495,9 +514,9 @@ testRun(void)
                         "            <Name>test1.txt</Name>"
                         "            <Properties/>"
                         "        </Blob>"
-                        "       <BlobPrefix>"
-                        "           <Name>path1/</Name>"
-                        "       </BlobPrefix>"
+                        "        <BlobPrefix>"
+                        "            <Name>path1/</Name>"
+                        "        </BlobPrefix>"
                         "    </Blobs>"
                         "    <NextMarker/>"
                         "</EnumerationResults>");
@@ -514,272 +533,243 @@ testRun(void)
                     "test1.txt {}\n",
                     "check");
 
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list a file in root with expression");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>test1.txt</Key>"
-                //         "    </Contents>"
-                //         "</ListBucketResult>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
-                //         .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test1.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list files with continuation");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test1.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test2.txt</Key>"
-                //         "    </Contents>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/path1/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "</ListBucketResult>");
-                //
-                // testRequestP(
-                //     HTTP_VERB_GET,
-                //     "/?continuation-token=1ueGcxLPRx1Tr%2FXYExHnhbYLgveDs2J%2Fwm36Hy4vbOwM%3D&delimiter=%2F&list-type=2"
-                //         "&prefix=path%2Fto%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test3.txt</Key>"
-                //         "    </Contents>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/path2/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "</ListBucketResult>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "path1 {}\n"
-                //     "test1.txt {}\n"
-                //     "test2.txt {}\n"
-                //     "path2 {}\n"
-                //     "test3.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list files with expression");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test1.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test2.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test3.txt</Key>"
-                //         "    </Contents>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/test1.path/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/test2.path/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "</ListBucketResult>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
-                //         .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test1.path {}\n"
-                //     "test1.txt {}\n"
-                //     "test3.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("switch to path-style URIs");
-                //
-                // hrnTlsServerClose();
-                //
-                // s3 = storageS3New(
-                //     path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, accessKey, secretAccessKey, NULL, 16, 2,
-                //     host, port, 5000, testContainer(), NULL, NULL);
-                //
-                // hrnTlsServerAccept();
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("error when no recurse because there are no paths");
-                //
-                // TEST_ERROR(
-                //     storagePathRemoveP(storage, strNew("/")), AssertError,
-                //     "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files from root");
-                //
-                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>test1.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path1/xxx.zzz</Key>"
-                //         "    </Contents>"
-                //         "</ListBucketResult>");
-                //
-                // testRequestP(
-                //     HTTP_VERB_POST, "/bucket/?delete=",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<Delete><Quiet>true</Quiet>"
-                //         "<Object><Key>test1.txt</Key></Object>"
-                //         "<Object><Key>path1/xxx.zzz</Key></Object>"
-                //         "</Delete>\n");
-                // testResponseP(.content = "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>");
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files in empty subpath (nothing to do)");
-                //
-                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "</ListBucketResult>");
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files with continuation");
-                //
-                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <NextContinuationToken>continue</NextContinuationToken>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/test3/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test1.txt</Key>"
-                //         "    </Contents>"
-                //         "</ListBucketResult>");
-                //
-                // testRequestP(HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test3.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test2.txt</Key>"
-                //         "    </Contents>"
-                //         "</ListBucketResult>");
-                //
-                // testRequestP(
-                //     HTTP_VERB_POST, "/bucket/?delete=",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<Delete><Quiet>true</Quiet>"
-                //         "<Object><Key>path/to/test1.txt</Key></Object>"
-                //         "<Object><Key>path/to/test3.txt</Key></Object>"
-                //         "</Delete>\n");
-                // testResponseP();
-                //
-                // testRequestP(
-                //     HTTP_VERB_POST, "/bucket/?delete=",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<Delete><Quiet>true</Quiet>"
-                //         "<Object><Key>path/to/test2.txt</Key></Object>"
-                //         "</Delete>\n");
-                // testResponseP();
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path/to"), .recurse = true), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove error");
-                //
-                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>path/sample.txt</Key>"
-                //         "    </Contents>"
-                //         "    <Contents>"
-                //         "        <Key>path/sample2.txt</Key>"
-                //         "    </Contents>"
-                //         "</ListBucketResult>");
-                //
-                // testRequestP(
-                //     HTTP_VERB_POST, "/bucket/?delete=",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<Delete><Quiet>true</Quiet>"
-                //         "<Object><Key>path/sample.txt</Key></Object>"
-                //         "<Object><Key>path/sample2.txt</Key></Object>"
-                //         "</Delete>\n");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //             "<Error><Key>sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
-                //             "</DeleteResult>");
-                //
-                // TEST_ERROR(
-                //     storagePathRemoveP(storage, strNew("/path"), .recurse = true), FileRemoveError,
-                //     "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove file");
-                //
-                // testRequestP(HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
-                // testResponseP(.code = 204);
-                //
-                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list a file in root with expression");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                        .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test1.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list files with continuation");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/to/test2.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/to/path1/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
+                        "</EnumerationResults>");
+
+                        // "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        // "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
+                        // "    <Contents>"
+                        // "        <Key>path/to/test1.txt</Key>"
+                        // "    </Contents>"
+                        // "    <Contents>"
+                        // "        <Key>path/to/test2.txt</Key>"
+                        // "    </Contents>"
+                        // "   <CommonPrefixes>"
+                        // "       <Prefix>path/to/path1/</Prefix>"
+                        // "   </CommonPrefixes>"
+                        // "</ListBucketResult>");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test3.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/to/path2/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "path1 {}\n"
+                    "test1.txt {}\n"
+                    "test2.txt {}\n"
+                    "path2 {}\n"
+                    "test3.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list files with expression");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/to/test2.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/to/test3.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/to/test1.path/</Name>"
+                        "        </BlobPrefix>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/to/test2.path/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                        .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test1.path {}\n"
+                    "test1.txt {}\n"
+                    "test3.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(HTTP_VERB_DELETE, "/path/to/test.txt");
+                testResponseP();
+
+                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove missing file");
+
+                testRequestP(HTTP_VERB_DELETE, "/path/to/missing.txt");
+                testResponseP(.code = 404);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files from root");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path1/xxx.zzz</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>not-deleted/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                testRequestP(HTTP_VERB_DELETE, "/test1.txt");
+                testResponseP();
+
+                testRequestP(HTTP_VERB_DELETE, "/path1/xxx.zzz");
+                testResponseP();
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files from path");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/path1/xxx.zzz</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/not-deleted/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                testRequestP(HTTP_VERB_DELETE, "/path/test1.txt");
+                testResponseP();
+
+                testRequestP(HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
+                testResponseP();
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files in empty subpath (nothing to do)");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnTlsClientEnd();

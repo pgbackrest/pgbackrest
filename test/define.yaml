@@ -409,9 +409,6 @@ unit:
           storage/helper: full
 
         include:
-          # - storage/azure/read
-          # - storage/azure/storage
-          # - storage/azure/write
           - storage/storage
           - storage/write
 
