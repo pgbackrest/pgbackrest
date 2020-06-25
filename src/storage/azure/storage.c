@@ -5,6 +5,7 @@ Azure Storage
 
 #include <string.h>
 
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/encode.h"
 #include "common/debug.h"
@@ -76,6 +77,8 @@ struct StorageAzure
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
     const String *uriPrefix;                                        // Account/container prefix
+
+    uint64_t fileId;                                                // Id to used to make file block identifiers unique
 };
 
 /***********************************************************************************************************************************
@@ -529,7 +532,7 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteAzureNew(this, file, this->blockSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteAzureNew(this, file, this->fileId++, this->blockSize));
 }
 
 /**********************************************************************************************************************************/
@@ -671,6 +674,9 @@ storageAzureNew(
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
+
+        // Generate starting file id
+        cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
 
         this = storageNew(
             STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);

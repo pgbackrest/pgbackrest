@@ -6,6 +6,7 @@ Test Azure Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 #include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
@@ -251,12 +252,14 @@ testRun(void)
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), true), "get repo storage");
-                TEST_RESULT_STR(((StorageAzure *)storage->driver)->host, hrnTlsServerHost(), "    check host");
-                TEST_RESULT_STR_Z(
-                    ((StorageAzure *)storage->driver)->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
+
+                StorageAzure *driver = (StorageAzure *)storage->driver;
+                TEST_RESULT_STR(driver->host, hrnTlsServerHost(), "    check host");
+                TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
+                TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
 
                 // Tests need the block size to be 16
-                ((StorageAzure *)storage->driver)->blockSize = 16;
+                driver->blockSize = 16;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
@@ -360,10 +363,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=MDAwMDAw&comp=block", .content = "1234567890123456");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
                 testResponseP();
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=MDAwMDAx&comp=block", .content = "7890123456789012");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
                 testResponseP();
 
                 testRequestP(
@@ -371,250 +374,146 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<BlockList>"
-                        "<Uncommitted>MDAwMDAw</Uncommitted>"
-                        "<Uncommitted>MDAwMDAx</Uncommitted>"
+                        "<Uncommitted>AAAAAAAACCCCCCCCx0000000</Uncommitted>"
+                        "<Uncommitted>AAAAAAAACCCCCCCCx0000001</Uncommitted>"
                         "</BlockList>\n");
                 testResponseP();
+
+                // Test needs a predictable file id
+                driver->fileId = 0xAAAAAAAACCCCCCCC;
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in chunks with something left over on close");
-                //
-                // testRequestP(HTTP_VERB_POST, "/file.txt?uploads=");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "<Bucket>bucket</Bucket>"
-                //         "<Key>file.txt</Key>"
-                //         "<UploadId>RR55</UploadId>"
-                //         "</InitiateMultipartUploadResult>");
-                //
-                // testRequestP(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
-                // testResponseP(.header = "etag:RR551");
-                //
-                // testRequestP(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
-                // testResponseP(.header = "eTag:RR552");
-                //
-                // testRequestP(
-                //     HTTP_VERB_POST, "/file.txt?uploadId=RR55",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<CompleteMultipartUpload>"
-                //         "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
-                //         "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
-                //         "</CompleteMultipartUpload>\n");
-                // testResponseP();
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("file missing");
-                //
-                // testRequestP(HTTP_VERB_HEAD, "/BOGUS");
-                // testResponseP(.code = 404);
-                //
-                // TEST_RESULT_BOOL(storageExistsP(storage, strNew("BOGUS")), false, "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info for missing file");
-                //
-                // // File missing
-                // testRequestP(HTTP_VERB_HEAD, "/BOGUS");
-                // testResponseP(.code = 404);
-                //
-                // TEST_RESULT_BOOL(storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info for file");
-                //
-                // testRequestP(HTTP_VERB_HEAD, "/subdir/file1.txt");
-                // testResponseP(.header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
-                //
-                // StorageInfo info;
-                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
-                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                // TEST_RESULT_UINT(info.size, 9999, "    check exists");
-                // TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info check existence only");
-                //
-                // testRequestP(HTTP_VERB_HEAD, "/subdir/file2.txt");
-                // testResponseP(.header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
-                //
-                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                // TEST_RESULT_UINT(info.size, 0, "    check exists");
-                // TEST_RESULT_INT(info.timeModified, 0, "    check time");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("errorOnMissing invalid because there are no paths");
-                //
-                // TEST_ERROR(
-                //     storageListP(storage, strNew("/"), .errorOnMissing = true), AssertError,
-                //     "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("error without xml");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(.code = 344);
-                //
-                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
-                //     "HTTP request failed with 344:\n"
-                //     "*** URI/Query ***:\n"
-                //     "/?delimiter=%2F&list-type=2\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 0\n"
-                //     "host: bucket." S3_TEST_HOST "\n"
-                //     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
-                //     "x-amz-date: <redacted>");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("error with xml");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(
-                //     .code = 344,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<Error>"
-                //         "<Code>SomeOtherCode</Code>"
-                //         "</Error>");
-                //
-                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
-                //     "HTTP request failed with 344:\n"
-                //     "*** URI/Query ***:\n"
-                //     "/?delimiter=%2F&list-type=2\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 0\n"
-                //     "host: bucket." S3_TEST_HOST "\n"
-                //     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
-                //     "x-amz-date: <redacted>\n"
-                //     "*** Response Headers ***:\n"
-                //     "content-length: 79\n"
-                //     "*** Response Content ***:\n"
-                //     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SomeOtherCode</Code></Error>");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("time skewed error after retries");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(
-                //     .code = 403,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<Error>"
-                //         "<Code>RequestTimeTooSkewed</Code>"
-                //         "<Message>The difference between the request time and the current time is too large.</Message>"
-                //         "</Error>");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(
-                //     .code = 403,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<Error>"
-                //         "<Code>RequestTimeTooSkewed</Code>"
-                //         "<Message>The difference between the request time and the current time is too large.</Message>"
-                //         "</Error>");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(
-                //     .code = 403,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<Error>"
-                //         "<Code>RequestTimeTooSkewed</Code>"
-                //         "<Message>The difference between the request time and the current time is too large.</Message>"
-                //         "</Error>");
-                //
-                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
-                //     "HTTP request failed with 403 (Forbidden):\n"
-                //     "*** URI/Query ***:\n"
-                //     "/?delimiter=%2F&list-type=2\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 0\n"
-                //     "host: bucket." S3_TEST_HOST "\n"
-                //     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
-                //     "x-amz-date: <redacted>\n"
-                //     "*** Response Headers ***:\n"
-                //     "content-length: 179\n"
-                //     "*** Response Content ***:\n"
-                //     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>RequestTimeTooSkewed</Code>"
-                //         "<Message>The difference between the request time and the current time is too large.</Message></Error>");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list basic level");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>path/to/test_file</Key>"
-                //         "        <LastModified>2009-10-12T17:50:30.000Z</LastModified>"
-                //         "        <Size>787</Size>"
-                //         "    </Contents>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path/to/test_path/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "</ListBucketResult>");
-                //
-                // HarnessStorageInfoListCallbackData callbackData =
-                // {
-                //     .content = strNew(""),
-                // };
-                //
-                // TEST_ERROR(
-                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
-                //     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test_path {path}\n"
-                //     "test_file {file, s=787, t=1255369830}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list exists level");
-                //
-                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "    <Contents>"
-                //         "        <Key>test1.txt</Key>"
-                //         "    </Contents>"
-                //         "   <CommonPrefixes>"
-                //         "       <Prefix>path1/</Prefix>"
-                //         "   </CommonPrefixes>"
-                //         "</ListBucketResult>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "path1 {}\n"
-                //     "test1.txt {}\n",
-                //     "check");
-                //
+                TEST_TITLE("write file in chunks with something left over on close");
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
+                testResponseP();
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+                testResponseP();
+
+                testRequestP(
+                    HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<BlockList>"
+                        "<Uncommitted>AAAAAAAACCCCCCCDx0000000</Uncommitted>"
+                        "<Uncommitted>AAAAAAAACCCCCCCDx0000001</Uncommitted>"
+                        "</BlockList>\n");
+                testResponseP();
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(HTTP_VERB_HEAD, "/BOGUS");
+                testResponseP(.code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for file");
+
+                testRequestP(HTTP_VERB_HEAD, "/subdir/file1.txt");
+                testResponseP(.header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
+
+                StorageInfo info;
+                TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
+                TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                TEST_RESULT_UINT(info.size, 9999, "    check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info check existence only");
+
+                testRequestP(HTTP_VERB_HEAD, "/subdir/file2.txt");
+                testResponseP(.header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
+
+                TEST_ASSIGN(
+                    info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                TEST_RESULT_UINT(info.size, 0, "    check exists");
+                TEST_RESULT_INT(info.timeModified, 0, "    check time");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list basic level");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test_file</Name>"
+                        "            <Properties>"
+                        "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
+                        "                <Content-Length>787</Content-Length>"
+                        "            </Properties>"
+                        "        </Blob>"
+                        "       <BlobPrefix>"
+                        "           <Name>path/to/test_path/</Name>"
+                        "       </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                HarnessStorageInfoListCallbackData callbackData =
+                {
+                    .content = strNew(""),
+                };
+
+                TEST_ERROR(
+                    storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test_path {path}\n"
+                    "test_file {file, s=787, t=1255369830}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list exists level");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
+                testResponseP(
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "       <BlobPrefix>"
+                        "           <Name>path1/</Name>"
+                        "       </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "path1 {}\n"
+                    "test1.txt {}\n",
+                    "check");
+
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list a file in root with expression");
                 //

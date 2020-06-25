@@ -10,6 +10,6 @@ Azure Storage File write
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageWrite *storageWriteAzureNew(StorageAzure *storage, const String *name, size_t blockSize);
+StorageWrite *storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize);
 
 #endif

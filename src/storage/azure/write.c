@@ -44,6 +44,7 @@ typedef struct StorageWriteAzure
     StorageWriteInterface interface;                                // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
+    uint64_t fileId;                                                // Id to used to make file block identifiers unique
     size_t blockSize;                                               // Size of blocks during multi-block upload
     Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
     StringList *blockIdList;                                        // List of uploaded part ids
@@ -109,20 +110,17 @@ storageWriteAzurePart(StorageWriteAzure *this)
         }
 
         // Generate block id
-        char blockId[9];
-        ASSERT(sizeof(blockId) == encodeToStrSize(encodeBase64, 6) + 1);
-
-        encodeToStr(encodeBase64, (unsigned char *)strPtr(strNewFmt("%06u", strLstSize(this->blockIdList))), 6, blockId);
+        const String *blockId = strNewFmt("%08" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
         // Upload the part and add to part list
         HttpQuery *query = httpQueryNew();
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
-        httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, STR(blockId));
+        httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
         storageAzureRequestP(
             this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
 
-        strLstAddZ(this->blockIdList, blockId);
+        strLstAdd(this->blockIdList, blockId);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -230,11 +228,13 @@ storageWriteAzureClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageWrite *
-storageWriteAzureNew(StorageAzure *storage, const String *name, size_t blockSize)
+storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(UINT64, fileId);
+        FUNCTION_LOG_PARAM(UINT64, blockSize);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -250,6 +250,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, size_t blockSize
         {
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
+            .fileId = fileId,
             .blockSize = blockSize,
 
             .interface = (StorageWriteInterface)
