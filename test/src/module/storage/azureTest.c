@@ -25,9 +25,10 @@ typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
     const char *content;
+    const char *blobType;
 } TestRequestParam;
 
-#define testRequestP(verb, uri, ...)                                                                                           \
+#define testRequestP(verb, uri, ...)                                                                                               \
     testRequest(verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
@@ -39,6 +40,9 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
             "authorization:SharedKey account:????????????????????????????????????????????\r\n",
         verb, uri);
 
+    // Add content-length
+    strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
+
     // Add md5
     if (param.content != NULL)
     {
@@ -47,14 +51,15 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
-    // Add content-length
-    strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
-
     // Add date
     strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strPtr(hrnTlsServerHost()));
+
+    // Add blob type
+    if (param.blobType != NULL)
+        strCatFmt(request, "x-ms-blob-type:%s\r\n", param.blobType);
 
     // Add version
     strCatZ(request, "x-ms-version:2019-02-02\r\n");
@@ -140,6 +145,35 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
+    if (testBegin("storageRepoGet()"))
+    {
+        // Test without the host option since that can't be run in a unit test without updating dns or /etc/hosts
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with default options");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_TYPE_AZURE);
+        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
+        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY, true);
+        harnessCfgLoad(cfgCmdArchivePush, argList);
+
+        Storage *storage = NULL;
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), false), "get repo storage");
+        TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->key, TEST_KEY_STR, "    check key");
+        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
+        TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageAzureAuth()"))
     {
         StorageAzure *storage = NULL;
@@ -184,35 +218,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageRepoGet()"))
-    {
-        // Test without the host option since that can't be run in a unit test without updating dns or /etc/hosts
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storage with default options");
-
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_TYPE_AZURE);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY, true);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
-
-        Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), false), "get repo storage");
-        TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->key, TEST_KEY_STR, "    check key");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure"))
     {
         HARNESS_FORK_BEGIN()
@@ -245,10 +250,13 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
-                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), false), "get repo storage");
+                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_AZURE), true), "get repo storage");
                 TEST_RESULT_STR(((StorageAzure *)storage->driver)->host, hrnTlsServerHost(), "    check host");
                 TEST_RESULT_STR_Z(
                     ((StorageAzure *)storage->driver)->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
+
+                // Tests need the block size to be 16
+                ((StorageAzure *)storage->driver)->blockSize = 16;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
@@ -259,142 +267,122 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("error on missing file");
-                //
-                // testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(.code = 404);
-                //
-                // TEST_ERROR(
-                //     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
-                //     "unable to open '/file.txt': No such file or directory");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("get file");
-                //
-                // testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(.content = "this is a sample file");
-                //
-                // TEST_RESULT_STR_Z(
-                //     strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt")))), "this is a sample file", "get file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("get zero-length file");
-                //
-                // testRequestP(s3, HTTP_VERB_GET, "/file0.txt");
-                // testResponseP();
-                //
-                // TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("non-404 error");
-                //
-                // testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(.code = 303, .content = "CONTENT");
-                //
-                // StorageRead *read = NULL;
-                // TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
-                // TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-                // TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
-                //
-                // TEST_ERROR(
-                //     ioReadOpen(storageReadIo(read)), ProtocolError,
-                //     "HTTP request failed with 303:\n"
-                //     "*** URI/Query ***:\n"
-                //     "/file.txt\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 0\n"
-                //     "host: bucket." S3_TEST_HOST "\n"
-                //     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
-                //     "x-amz-date: <redacted>\n"
-                //     "*** Response Headers ***:\n"
-                //     "content-length: 7\n"
-                //     "*** Response Content ***:\n"
-                //     "CONTENT")
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in one part");
-                //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
-                // testResponseP(
-                //     .code = 403,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<Error>"
-                //         "<Code>RequestTimeTooSkewed</Code>"
-                //         "<Message>The difference between the request time and the current time is too large.</Message>"
-                //         "<RequestTime>20190726T221748Z</RequestTime>"
-                //         "<ServerTime>2019-07-26T22:33:27Z</ServerTime>"
-                //         "<MaxAllowedSkewMilliseconds>900000</MaxAllowedSkewMilliseconds>"
-                //         "<RequestId>601AA1A7F7E37AE9</RequestId>"
-                //         "<HostId>KYMys77PoloZrGCkiQRyOIl0biqdHsk4T2EdTkhzkH1l8x00D4lvv/py5uUuHwQXG9qz6NRuldQ=</HostId>"
-                //         "</Error>");
-                // hrnTlsServerClose();
-                // hrnTlsServerAccept();
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
-                // testResponseP();
-                //
-                // StorageWrite *write = NULL;
-                // TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
-                //
-                // TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
-                // TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
-                // TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
-                // TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
-                // TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
-                // TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
-                // TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
-                //
-                // TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write zero-length file");
-                //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt", .content = "");
-                // testResponseP();
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, NULL), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in chunks with nothing left over on close");
-                //
-                // testRequestP(s3, HTTP_VERB_POST, "/file.txt?uploads=");
-                // testResponseP(
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                //         "<Bucket>bucket</Bucket>"
-                //         "<Key>file.txt</Key>"
-                //         "<UploadId>WxRt</UploadId>"
-                //         "</InitiateMultipartUploadResult>");
-                //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
-                // testResponseP(.header = "etag:WxRt1");
-                //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
-                // testResponseP(.header = "eTag:WxRt2");
-                //
-                // testRequestP(
-                //     s3, HTTP_VERB_POST, "/file.txt?uploadId=WxRt",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<CompleteMultipartUpload>"
-                //         "<Part><PartNumber>1</PartNumber><ETag>WxRt1</ETag></Part>"
-                //         "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
-                //         "</CompleteMultipartUpload>\n");
-                // testResponseP();
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(HTTP_VERB_GET, "/file.txt");
+                testResponseP(.code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
+                    "unable to open '/file.txt': No such file or directory");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file");
+
+                testRequestP(HTTP_VERB_GET, "/file.txt");
+                testResponseP(.content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get zero-length file");
+
+                testRequestP(HTTP_VERB_GET, "/file0.txt");
+                testResponseP();
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("non-404 error");
+
+                testRequestP(HTTP_VERB_GET, "/file.txt");
+                testResponseP(.code = 303, .content = "CONTENT");
+
+                StorageRead *read = NULL;
+                TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
+                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+
+                TEST_ERROR_FMT(
+                    ioReadOpen(storageReadIo(read)), ProtocolError,
+                    "HTTP request failed with 303:\n"
+                    "*** URI/Query ***:\n"
+                    "/account/container/file.txt\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "date: <redacted>\n"
+                    "host: %s\n"
+                    "x-ms-version: 2019-02-02\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 7\n"
+                    "*** Response Content ***:\n"
+                    "CONTENT",
+                    strPtr(hrnTlsServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in one part (with retry)");
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP(.code = 503);
+                hrnTlsServerClose();
+                hrnTlsServerAccept();
+                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP();
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
+
+                TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
+                TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
+                TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
+                TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
+                TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
+                TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
+                TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+
+                TEST_RESULT_VOID(storageWriteAzureClose(write->driver), "close file again");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write zero-length file");
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
+                testResponseP();
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with nothing left over on close");
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=MDAwMDAw&comp=block", .content = "1234567890123456");
+                testResponseP();
+
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=MDAwMDAx&comp=block", .content = "7890123456789012");
+                testResponseP();
+
+                testRequestP(
+                    HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<BlockList>"
+                        "<Uncommitted>MDAwMDAw</Uncommitted>"
+                        "<Uncommitted>MDAwMDAx</Uncommitted>"
+                        "</BlockList>\n");
+                testResponseP();
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("write file in chunks with something left over on close");
                 //
-                // testRequestP(s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                // testRequestP(HTTP_VERB_POST, "/file.txt?uploads=");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -404,14 +392,14 @@ testRun(void)
                 //         "<UploadId>RR55</UploadId>"
                 //         "</InitiateMultipartUploadResult>");
                 //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
+                // testRequestP(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
                 // testResponseP(.header = "etag:RR551");
                 //
-                // testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
+                // testRequestP(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
                 // testResponseP(.header = "eTag:RR552");
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_POST, "/file.txt?uploadId=RR55",
+                //     HTTP_VERB_POST, "/file.txt?uploadId=RR55",
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 //         "<CompleteMultipartUpload>"
@@ -420,34 +408,34 @@ testRun(void)
                 //         "</CompleteMultipartUpload>\n");
                 // testResponseP();
                 //
-                // TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
+                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("file missing");
                 //
-                // testRequestP(s3, HTTP_VERB_HEAD, "/BOGUS");
+                // testRequestP(HTTP_VERB_HEAD, "/BOGUS");
                 // testResponseP(.code = 404);
                 //
-                // TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
+                // TEST_RESULT_BOOL(storageExistsP(storage, strNew("BOGUS")), false, "check");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("info for missing file");
                 //
                 // // File missing
-                // testRequestP(s3, HTTP_VERB_HEAD, "/BOGUS");
+                // testRequestP(HTTP_VERB_HEAD, "/BOGUS");
                 // testResponseP(.code = 404);
                 //
-                // TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+                // TEST_RESULT_BOOL(storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("info for file");
                 //
-                // testRequestP(s3, HTTP_VERB_HEAD, "/subdir/file1.txt");
+                // testRequestP(HTTP_VERB_HEAD, "/subdir/file1.txt");
                 // testResponseP(.header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
                 //
                 // StorageInfo info;
-                // TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file1.txt")), "file exists");
+                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
                 // TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 // TEST_RESULT_UINT(info.size, 9999, "    check exists");
@@ -456,10 +444,10 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("info check existence only");
                 //
-                // testRequestP(s3, HTTP_VERB_HEAD, "/subdir/file2.txt");
+                // testRequestP(HTTP_VERB_HEAD, "/subdir/file2.txt");
                 // testResponseP(.header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
                 //
-                // TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
                 // TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 // TEST_RESULT_UINT(info.size, 0, "    check exists");
@@ -469,16 +457,16 @@ testRun(void)
                 // TEST_TITLE("errorOnMissing invalid because there are no paths");
                 //
                 // TEST_ERROR(
-                //     storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
+                //     storageListP(storage, strNew("/"), .errorOnMissing = true), AssertError,
                 //     "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("error without xml");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(.code = 344);
                 //
-                // TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
+                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
                 //     "HTTP request failed with 344:\n"
                 //     "*** URI/Query ***:\n"
                 //     "/?delimiter=%2F&list-type=2\n"
@@ -492,7 +480,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("error with xml");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(
                 //     .code = 344,
                 //     .content =
@@ -501,7 +489,7 @@ testRun(void)
                 //         "<Code>SomeOtherCode</Code>"
                 //         "</Error>");
                 //
-                // TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
+                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
                 //     "HTTP request failed with 344:\n"
                 //     "*** URI/Query ***:\n"
                 //     "/?delimiter=%2F&list-type=2\n"
@@ -519,7 +507,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("time skewed error after retries");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(
                 //     .code = 403,
                 //     .content =
@@ -529,7 +517,7 @@ testRun(void)
                 //         "<Message>The difference between the request time and the current time is too large.</Message>"
                 //         "</Error>");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(
                 //     .code = 403,
                 //     .content =
@@ -539,7 +527,7 @@ testRun(void)
                 //         "<Message>The difference between the request time and the current time is too large.</Message>"
                 //         "</Error>");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(
                 //     .code = 403,
                 //     .content =
@@ -549,7 +537,7 @@ testRun(void)
                 //         "<Message>The difference between the request time and the current time is too large.</Message>"
                 //         "</Error>");
                 //
-                // TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
+                // TEST_ERROR(storageListP(storage, strNew("/")), ProtocolError,
                 //     "HTTP request failed with 403 (Forbidden):\n"
                 //     "*** URI/Query ***:\n"
                 //     "/?delimiter=%2F&list-type=2\n"
@@ -568,7 +556,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list basic level");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -589,11 +577,11 @@ testRun(void)
                 // };
                 //
                 // TEST_ERROR(
-                //     storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                 //     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
                 //
                 // TEST_RESULT_VOID(
-                //     storageInfoListP(s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                //     storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 // TEST_RESULT_STR_Z(
                 //     callbackData.content,
                 //     "test_path {path}\n"
@@ -603,7 +591,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list exists level");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -619,7 +607,7 @@ testRun(void)
                 // callbackData.content = strNew("");
                 //
                 // TEST_RESULT_VOID(
-                //     storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                 //     "list");
                 // TEST_RESULT_STR_Z(
                 //     callbackData.content,
@@ -630,7 +618,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list a file in root with expression");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -644,7 +632,7 @@ testRun(void)
                 //
                 // TEST_RESULT_VOID(
                 //     storageInfoListP(
-                //         s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
                 //         .level = storageInfoLevelExists),
                 //     "list");
                 // TEST_RESULT_STR_Z(
@@ -655,7 +643,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list files with continuation");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -673,7 +661,7 @@ testRun(void)
                 //         "</ListBucketResult>");
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_GET,
+                //     HTTP_VERB_GET,
                 //     "/?continuation-token=1ueGcxLPRx1Tr%2FXYExHnhbYLgveDs2J%2Fwm36Hy4vbOwM%3D&delimiter=%2F&list-type=2"
                 //         "&prefix=path%2Fto%2F");
                 // testResponseP(
@@ -692,7 +680,7 @@ testRun(void)
                 //
                 // TEST_RESULT_VOID(
                 //     storageInfoListP(
-                //         s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                 //     "list");
                 // TEST_RESULT_STR_Z(
                 //     callbackData.content,
@@ -706,7 +694,7 @@ testRun(void)
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("list files with expression");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest");
+                // testRequestP(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -732,7 +720,7 @@ testRun(void)
                 //
                 // TEST_RESULT_VOID(
                 //     storageInfoListP(
-                //         s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
                 //         .level = storageInfoLevelExists),
                 //     "list");
                 // TEST_RESULT_STR_Z(
@@ -757,13 +745,13 @@ testRun(void)
                 // TEST_TITLE("error when no recurse because there are no paths");
                 //
                 // TEST_ERROR(
-                //     storagePathRemoveP(s3, strNew("/")), AssertError,
+                //     storagePathRemoveP(storage, strNew("/")), AssertError,
                 //     "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("remove files from root");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2");
+                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -777,7 +765,7 @@ testRun(void)
                 //         "</ListBucketResult>");
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_POST, "/bucket/?delete=",
+                //     HTTP_VERB_POST, "/bucket/?delete=",
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 //         "<Delete><Quiet>true</Quiet>"
@@ -786,24 +774,24 @@ testRun(void)
                 //         "</Delete>\n");
                 // testResponseP(.content = "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>");
                 //
-                // TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove");
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("remove files in empty subpath (nothing to do)");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
+                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 //         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                 //         "</ListBucketResult>");
                 //
-                // TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path"), .recurse = true), "remove");
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("remove files with continuation");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F");
+                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -817,7 +805,7 @@ testRun(void)
                 //         "    </Contents>"
                 //         "</ListBucketResult>");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F");
+                // testRequestP(HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -831,7 +819,7 @@ testRun(void)
                 //         "</ListBucketResult>");
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_POST, "/bucket/?delete=",
+                //     HTTP_VERB_POST, "/bucket/?delete=",
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 //         "<Delete><Quiet>true</Quiet>"
@@ -841,7 +829,7 @@ testRun(void)
                 // testResponseP();
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_POST, "/bucket/?delete=",
+                //     HTTP_VERB_POST, "/bucket/?delete=",
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 //         "<Delete><Quiet>true</Quiet>"
@@ -849,12 +837,12 @@ testRun(void)
                 //         "</Delete>\n");
                 // testResponseP();
                 //
-                // TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path/to"), .recurse = true), "remove");
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path/to"), .recurse = true), "remove");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("remove error");
                 //
-                // testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
+                // testRequestP(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 // testResponseP(
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -868,7 +856,7 @@ testRun(void)
                 //         "</ListBucketResult>");
                 //
                 // testRequestP(
-                //     s3, HTTP_VERB_POST, "/bucket/?delete=",
+                //     HTTP_VERB_POST, "/bucket/?delete=",
                 //     .content =
                 //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 //         "<Delete><Quiet>true</Quiet>"
@@ -883,16 +871,16 @@ testRun(void)
                 //             "</DeleteResult>");
                 //
                 // TEST_ERROR(
-                //     storagePathRemoveP(s3, strNew("/path"), .recurse = true), FileRemoveError,
+                //     storagePathRemoveP(storage, strNew("/path"), .recurse = true), FileRemoveError,
                 //     "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
                 //
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("remove file");
                 //
-                // testRequestP(s3, HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
+                // testRequestP(HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
                 // testResponseP(.code = 204);
                 //
-                // TEST_RESULT_VOID(storageRemoveP(s3, strNew("/path/to/test.txt")), "remove");
+                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnTlsClientEnd();

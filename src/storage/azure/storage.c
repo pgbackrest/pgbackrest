@@ -670,6 +670,7 @@ storageAzureNew(
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
 
         this = storageNew(
             STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
