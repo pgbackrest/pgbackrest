@@ -28,7 +28,7 @@ typedef struct TestRequestParam
 #define testRequestP(s3, verb, uri, ...)                                                                                           \
     testRequest(s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void
+static void
 testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
     // Add authorization string
@@ -91,7 +91,7 @@ typedef struct TestResponseParam
 #define testResponseP(...)                                                                                                         \
     testResponse((TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void
+static void
 testResponse(TestResponseParam param)
 {
     // Set code to 200 if not specified
@@ -378,14 +378,14 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
+                    hrnTlsServerRun(ioHandleReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)),
                     "s3 server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioHandleWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
 
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,

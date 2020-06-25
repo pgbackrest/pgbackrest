@@ -102,6 +102,7 @@ storageAzureAuth(
     ASSERT(uri != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
+    ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

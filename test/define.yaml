@@ -400,17 +400,17 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure
-        total: 1
+        total: 3
 
         coverage:
           # !!! storage/azure/read: full
-          # !!! storage/azure/storage: full
+          storage/azure/storage: full
           # !!! storage/azure/write: full
           storage/helper: full
 
         include:
           - storage/azure/read
-          - storage/azure/storage
+          # - storage/azure/storage
           - storage/azure/write
           - storage/storage
 
