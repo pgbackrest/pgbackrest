@@ -433,6 +433,13 @@ sub clusterStart
         $strCommand .= ' -c wal_level=hot_standby -c hot_standby=' . ($bHotStandby ? 'on' : 'off');
     }
 
+    # Force parallel mode on to make sure we are disabling it and there are no issues. This is important for testing that 9.6
+    # works since pg_stop_backup() is marked parallel safe and will error if run in a worker.
+    if ($self->pgVersion() >= PG_VERSION_96)
+    {
+         $strCommand .= " -c force_parallel_mode='on' -c max_parallel_workers_per_gather=2";
+    }
+
     $strCommand .=
         ($self->pgVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
         ' -c listen_addresses=\'*\'' .

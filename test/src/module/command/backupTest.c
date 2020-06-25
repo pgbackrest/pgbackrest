@@ -353,10 +353,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
 
             // Connect to standby
-            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
@@ -393,7 +393,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             harnessPqScriptSet((HarnessPq [])
             {
                 // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
 
                 // Get start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
@@ -416,7 +416,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             harnessPqScriptSet((HarnessPq [])
             {
                 // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
 
                 // Get start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
