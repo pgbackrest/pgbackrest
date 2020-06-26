@@ -351,19 +351,19 @@ storageRepoGet(const String *type, bool write)
             protocolRemoteGet(protocolStorageTypeRepo, 1), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use CIFS storage
-    else if (strEqZ(type, STORAGE_TYPE_CIFS))
+    else if (strEqZ(type, STORAGE_CIFS_TYPE))
     {
         result = storageCifsNew(
             cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression);
     }
     // Use Posix storage
-    else if (strEqZ(type, STORAGE_TYPE_POSIX))
+    else if (strEqZ(type, STORAGE_POSIX_TYPE))
     {
         result = storagePosixNewP(
             cfgOptionStr(cfgOptRepoPath), .write = write, .pathExpressionFunction = storageRepoPathExpression);
     }
     // Use S3 storage
-    else if (strEqZ(type, STORAGE_TYPE_S3))
+    else if (strEqZ(type, STORAGE_S3_TYPE))
     {
         // Set the default port
         unsigned int port = cfgOptionUInt(cfgOptRepoS3Port);

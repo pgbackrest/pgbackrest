@@ -179,7 +179,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage");
         TEST_RESULT_STR(storage->path, path, "    check path");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
@@ -211,7 +211,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -236,7 +236,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -262,7 +262,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -289,7 +289,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
