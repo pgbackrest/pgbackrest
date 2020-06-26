@@ -28,6 +28,12 @@
                     </release-item>
 
                     <release-item>
+                        <p><postgres/> 13 beta2 support.</p>
+
+                        <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
