@@ -408,7 +408,7 @@ httpResponseToLog(const HttpResponse *this)
 {
     return strNewFmt(
         "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
-            ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s",
+            ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s}",
         this->code, strPtr(this->reason), strPtr(httpHeaderToLog(this->header)),
         cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
         cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
