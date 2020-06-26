@@ -307,7 +307,7 @@ String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
-        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu",
+        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}",
         strPtr(this->verb), strPtr(this->uri), this->query == NULL ? "null" : strPtr(httpQueryToLog(this->query)),
         strPtr(httpHeaderToLog(this->header)), this->content == NULL ? 0 : bufUsed(this->content));
 }
