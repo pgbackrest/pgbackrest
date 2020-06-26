@@ -20,6 +20,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
                         <p>Disable query parallelism in <postgres/> sessions used for backup control.</p>
                     </release-item>
 
