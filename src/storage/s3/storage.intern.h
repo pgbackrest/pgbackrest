@@ -19,8 +19,8 @@ Functions
 typedef struct StorageS3RequestAsyncParam
 {
     VAR_PARAM_HEADER;
-    const HttpQuery *query;
-    const Buffer *content;
+    const HttpQuery *query;                                         // Query parameters
+    const Buffer *content;                                          // Request content
 } StorageS3RequestAsyncParam;
 
 #define storageS3RequestAsyncP(this, verb, uri, ...)                                                                               \
@@ -32,8 +32,8 @@ HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const St
 typedef struct StorageS3ResponseParam
 {
     VAR_PARAM_HEADER;
-    bool allowMissing;
-    bool contentIo;
+    bool allowMissing;                                              // Allow missing files (caller can check response code)
+    bool contentIo;                                                 // Is IoRead interface required to read content?
 } StorageS3ResponseParam;
 
 #define storageS3ResponseP(request, ...)                                                                                           \
@@ -45,10 +45,10 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
 typedef struct StorageS3RequestParam
 {
     VAR_PARAM_HEADER;
-    const HttpQuery *query;
-    const Buffer *content;
-    bool allowMissing;
-    bool contentIo;
+    const HttpQuery *query;                                         // Query parameters
+    const Buffer *content;                                          // Request content
+    bool allowMissing;                                              // Allow missing files (caller can check response code)
+    bool contentIo;                                                 // Is IoRead interface required to read content?
 } StorageS3RequestParam;
 
 #define storageS3RequestP(this, verb, uri, ...)                                                                                    \
