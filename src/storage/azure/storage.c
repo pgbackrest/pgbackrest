@@ -289,7 +289,8 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageAzureResponseP(
-            storageAzureRequestAsyncP(this, verb, .uri = param.uri, .query = param.query, .content = param.content),
+            storageAzureRequestAsyncP(
+                this, verb, .uri = param.uri, .header = param.header, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 

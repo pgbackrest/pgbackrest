@@ -144,8 +144,13 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
-        storageAzureRequestAsyncP(
-            this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->request = storageAzureRequestAsyncP(
+                this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
+        }
+        MEM_CONTEXT_END();
 
         strLstAdd(this->blockIdList, blockId);
     }
