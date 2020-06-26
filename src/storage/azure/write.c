@@ -46,7 +46,7 @@ typedef struct StorageWriteAzure
 
     HttpRequest *request;                                           // Async block upload request
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
-    size_t blockSize;                                               // Size of blocks during multi-block upload
+    size_t blockSize;                                               // Size of blocks for multi-block upload
     Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
     StringList *blockIdList;                                        // List of uploaded block ids
 } StorageWriteAzure;

@@ -710,7 +710,7 @@ storageAzureNew(
                 strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),
         };
 
-        // Create the http client cache used to service requests
+        // Create the http client used to service requests
         driver->httpClient = httpClientNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers
@@ -721,8 +721,7 @@ storageAzureNew(
         // Generate starting file id
         cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
 
-        this = storageNew(
-            STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 
