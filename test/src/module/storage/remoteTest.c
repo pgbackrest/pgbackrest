@@ -60,7 +60,7 @@ testRun(void)
     if (testBegin("storageNew()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), false), "get remote repo storage");
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
@@ -86,7 +86,7 @@ testRun(void)
     if (testBegin("storageInfo()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storage types that are not tested elsewhere");
@@ -274,7 +274,7 @@ testRun(void)
     if (testBegin("storageInfoList()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path not found");
@@ -335,7 +335,7 @@ testRun(void)
     if (testBegin("storageNewRead()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), false), "get remote repo storage");
         storagePathCreateP(storageTest, strNew("repo"));
 
         Buffer *contentBuf = bufNew(32768);
@@ -484,7 +484,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
 
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // Create buffer with plenty of data
         Buffer *contentBuf = bufNew(32768);
@@ -624,7 +624,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
 
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // Create a path via the remote. Check the repo via the local test storage to ensure the remote created it.
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
@@ -682,7 +682,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
 
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
 
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
@@ -722,7 +722,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
 
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
         String *file = strNew("file.txt");
 
         // Write the file to the repo via the remote so owner is pgbackrest
@@ -770,7 +770,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
 
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         String *path = strNew("testpath");
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
