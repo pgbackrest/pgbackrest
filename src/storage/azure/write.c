@@ -44,10 +44,11 @@ typedef struct StorageWriteAzure
     StorageWriteInterface interface;                                // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
+    HttpRequest *request;                                           // Async block upload request
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
     size_t blockSize;                                               // Size of blocks during multi-block upload
     Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
-    StringList *blockIdList;                                        // List of uploaded part ids
+    StringList *blockIdList;                                        // List of uploaded block ids
 } StorageWriteAzure;
 
 /***********************************************************************************************************************************
@@ -73,7 +74,7 @@ storageWriteAzureOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->blockBuffer == NULL);
 
-    // Allocate the part buffer
+    // Allocate the block buffer
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         this->blockBuffer = bufNew(this->blockSize);
@@ -84,10 +85,31 @@ storageWriteAzureOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Flush bytes to upload part
+Flush bytes to upload block
 ***********************************************************************************************************************************/
 static void
-storageWriteAzurePart(StorageWriteAzure *this)
+storageWriteAzureBlock(StorageWriteAzure *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // If there is an outstanding async request then wait for the response. Since the part id has already been stored there is
+    // nothing to do except make sure the request did not error.
+    if (this->request != NULL)
+    {
+        storageAzureResponseP(this->request);
+        httpRequestFree(this->request);
+        this->request = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+static void
+storageWriteAzureBlockAsync(StorageWriteAzure *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
@@ -99,6 +121,9 @@ storageWriteAzurePart(StorageWriteAzure *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Complete prior async request, if any
+        storageWriteAzureBlock(this);
+
         // Create the block id list
         if (this->blockIdList == NULL)
         {
@@ -109,15 +134,17 @@ storageWriteAzurePart(StorageWriteAzure *this)
             MEM_CONTEXT_END();
         }
 
-        // Generate block id
+        // Generate block id. Combine the block number with the provided file id to create a (hopefully) unique block id that won't
+        // overlap with any other process. This is to prevent another process from overwriting our blocks. If two processes are
+        // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent.
         const String *blockId = strNewFmt("%08" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
-        // Upload the part and add to part list
+        // Upload the block and add to block list
         HttpQuery *query = httpQueryNew();
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
-        storageAzureRequestP(
+        storageAzureRequestAsyncP(
             this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
 
         strLstAdd(this->blockIdList, blockId);
@@ -148,16 +175,16 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     // Continue until the write buffer has been exhausted
     do
     {
-        // Copy as many bytes as possible into the part buffer
+        // Copy as many bytes as possible into the block buffer
         size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
             bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
         bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
-        // If the part buffer is full then write it
+        // If the block buffer is full then write it
         if (bufRemains(this->blockBuffer) == 0)
         {
-            storageWriteAzurePart(this);
+            storageWriteAzureBlockAsync(this);
             bufUsedZero(this->blockBuffer);
         }
     }
@@ -190,7 +217,10 @@ storageWriteAzureClose(THIS_VOID)
             {
                 // If there is anything left in the block buffer then write it
                 if (bufUsed(this->blockBuffer) > 0)
-                    storageWriteAzurePart(this);
+                    storageWriteAzureBlockAsync(this);
+
+                // Complete prior async request, if any
+                storageWriteAzureBlock(this);
 
                 // Generate the xml block list
                 XmlDocument *blockXml = xmlDocumentNew(AZURE_XML_TAG_BLOCK_LIST_STR);
