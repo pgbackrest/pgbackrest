@@ -21,6 +21,34 @@ Azure query tokens
 /***********************************************************************************************************************************
 Perform an Azure Request
 ***********************************************************************************************************************************/
+// Perform async request
+typedef struct StorageAzureRequestAsyncParam
+{
+    VAR_PARAM_HEADER;
+    const String *uri;                                              // Request URI
+    const HttpHeader *header;                                       // Request headers
+    const HttpQuery *query;                                         // Query parameters
+    const Buffer *content;                                          // Request content
+} StorageAzureRequestAsyncParam;
+
+#define storageAzureRequestAsyncP(this, verb, ...)                                                                            \
+    storageAzureRequestAsync(this, verb, (StorageAzureRequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpRequest *storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param);
+
+// Get async response
+typedef struct StorageAzureResponseParam
+{
+    VAR_PARAM_HEADER;
+    bool allowMissing;                                              // Allow missing files (caller can check response code)
+    bool contentIo;                                                 // Is IoRead interface required to read content?
+} StorageAzureResponseParam;
+
+#define storageAzureResponseP(request, ...)                                                                                        \
+    storageAzureResponse(request, (StorageAzureResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param);
+
 typedef struct StorageAzureRequestParam
 {
     VAR_PARAM_HEADER;

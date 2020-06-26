@@ -188,8 +188,8 @@ storageAzureAuth(
 /***********************************************************************************************************************************
 Process Azure request
 ***********************************************************************************************************************************/
-HttpResponse *
-storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
+HttpRequest *
+storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -198,14 +198,12 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
-        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
-        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
 
-    HttpResponse *result = NULL;
+    HttpRequest *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -232,10 +230,33 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         // Generate authorization header
         storageAzureAuth(this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
 
-        // Send the request
-        HttpRequest *request = httpRequestNewP(
-            this->httpClient, verb, param.uri, .query = param.query, .header = requestHeader, .content = param.content);
+        // Send request
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = httpRequestNewP(
+                this->httpClient, verb, param.uri, .query = param.query, .header = requestHeader, .content = param.content);
+        }
+        MEM_CONTEXT_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
+    FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
+}
+
+HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+    FUNCTION_LOG_END();
+
+    ASSERT(request != NULL);
+
+    HttpResponse *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
         // Get response
         result = httpRequest(request, !param.contentIo);
 
@@ -249,6 +270,27 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+}
+
+HttpResponse *
+storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(STRING, param.uri);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        HTTP_RESPONSE,
+        storageAzureResponseP(
+            storageAzureRequestAsyncP(this, verb, .uri = param.uri, .query = param.query, .content = param.content),
+            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
 /***********************************************************************************************************************************
