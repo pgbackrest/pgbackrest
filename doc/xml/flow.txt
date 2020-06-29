@@ -1,22 +1,52 @@
 graph TB
-    IO_READ(("ioRead()")) --> DRIVER_EOF
+    IO_READ_INTERNAL(("ioReadInternal()")) --> DRIVER_EOF
 
-    DRIVER_EOF["driverEof()"]
+    DRIVER_EOF{"driverEof()"}
     DRIVER_EOF -->|Yes| IO_FILTER_GROUP_DONE
-    DRIVER_EOF -->|No| OUT_BUFFER_FULL
+    DRIVER_EOF -->|No| IO_FILTER_GROUP_INPUT_SAME
 
     IO_FILTER_GROUP_DONE{"ioFilterGroupDone()"}
     IO_FILTER_GROUP_DONE --> |Yes| RETURN
-    IO_FILTER_GROUP_DONE --> |No| OUT_BUFFER_FULL
+    IO_FILTER_GROUP_DONE --> |No| IO_FILTER_GROUP_INPUT_SAME
 
-    OUT_BUFFER_FULL{"Out Buffer<br/>Full?"}
-    OUT_BUFFER_FULL -->|Yes| RETURN
-    OUT_BUFFER_FULL -->|No| DRIVER_READ
+    IO_FILTER_GROUP_INPUT_SAME{"ioFilterGroupInputSame()"}
+    IO_FILTER_GROUP_INPUT_SAME --> |Yes| IO_FILTER_GROUP_PROCESS
+    IO_FILTER_GROUP_INPUT_SAME --> |No| IN_BUFFER_NULL
 
-    DRIVER_READ["driverRead()"] --> IN_BUFFER_FULL
-    IN_BUFFER_FULL{"In Buffer<br/>Full?"}
-    IN_BUFFER_FULL --> |Yes| IO_FILTER_GROUP_PROCESS
-    IO_FILTER_GROUP_PROCESS["ioFilterGroupProcess"]
-    IN_BUFFER_FULL --> |No| DRIVER_EOF
+    IO_FILTER_GROUP_PROCESS["ioFilterGroupProcess()"] --> DRIVER_EOF
+
+    IN_BUFFER_NULL{"In Buffer NULL?"}
+    IN_BUFFER_NULL -->|Yes| IO_FILTER_GROUP_PROCESS2
+    IN_BUFFER_NULL -->|No| DRIVER_EOF2
+
+    DRIVER_EOF2{"driverEof()"}
+    DRIVER_EOF2 -->|Yes| IN_BUFFER_SET_NULL
+    DRIVER_EOF2 -->|No| IS_BLOCKING
+
+    IS_BLOCKING{"Is Blocking?"}
+    IS_BLOCKING -->|Yes| IN_BUFFER_REMAINS
+    IS_BLOCKING -->|No| DRIVER_READ
+
+    IN_BUFFER_REMAINS{"In Buffer Remaining ><br/>Out Buffer Remaining"}
+    IN_BUFFER_REMAINS -->|Yes| LIMIT_IN_BUFFER
+    IN_BUFFER_REMAINS -->|No| DRIVER_READ
+
+    LIMIT_IN_BUFFER["Limit In Buffer"] --> DRIVER_READ
+
+    IN_BUFFER_SET_NULL["Set In Buffer<br/>to NULL"] --> IO_FILTER_GROUP_PROCESS2
+
+    DRIVER_READ["driverRead()<br/>to In Buffer"] --> CLEAR_IN_BUFFER_LIMIT
+
+    CLEAR_IN_BUFFER_LIMIT["Clear In Buffer Limit"] --> IO_FILTER_GROUP_PROCESS2
+
+    IO_FILTER_GROUP_PROCESS2["ioFilterGroupProcess()"] --> IS_BLOCKING2
+
+    IS_BLOCKING2{"Is Blocking?"}
+    IS_BLOCKING2 -->|Yes| DRIVER_EOF
+    IS_BLOCKING2 -->|No| BUFFER_USED
+
+    BUFFER_USED{"Some Out<br/>Buffer Used?"}
+    BUFFER_USED -->|Yes| RETURN
+    BUFFER_USED -->|No| DRIVER_EOF
 
     RETURN[Return]
