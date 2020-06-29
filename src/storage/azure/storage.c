@@ -44,10 +44,10 @@ STRING_STATIC(AZURE_QUERY_MARKER_STR,                               "marker");
 STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_COMP);
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
 STRING_STATIC(AZURE_QUERY_PREFIX_STR,                               "prefix");
-STRING_STATIC(AZURE_QUERY_RESTYPE_STR,                              "restype");
+STRING_EXTERN(AZURE_QUERY_RESTYPE_STR,                              AZURE_QUERY_RESTYPE);
 
 STRING_STATIC(AZURE_QUERY_VALUE_LIST_STR,                           "list");
-STRING_STATIC(AZURE_QUERY_VALUE_CONTAINER_STR,                      "container");
+STRING_EXTERN(AZURE_QUERY_VALUE_CONTAINER_STR,                      AZURE_QUERY_VALUE_CONTAINER);
 
 /***********************************************************************************************************************************
 XML tags

@@ -16,7 +16,7 @@ Azure Storage File Write
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
-Azure http headers
+Azure HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_BLOB_TYPE_STR,                           "x-ms-blob-type");
 STRING_STATIC(AZURE_HEADER_VALUE_BLOCK_BLOB_STR,                    "BlockBlob");
@@ -136,14 +136,14 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
 
         // Generate block id. Combine the block number with the provided file id to create a (hopefully) unique block id that won't
         // overlap with any other process. This is to prevent another process from overwriting our blocks. If two processes are
-        // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent.
+        // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent,
+        // i.e. we get all of one file or all of the other depending on who writes last.
         const String *blockId = strNewFmt("%08" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
         // Upload the block and add to block list
         HttpQuery *query = httpQueryNew();
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
-
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {

@@ -627,6 +627,9 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
+
+            # Don't show repo1-azure-host option. Since Azure behaves differently with Azurite (which we use for local testing) and
+            # the actual service we can't just fake /etc/hosts like we do for S3.
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'});
 
             if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
