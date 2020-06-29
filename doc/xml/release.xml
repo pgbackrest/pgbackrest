@@ -106,6 +106,14 @@
 
                         <p>Fix incorrect example for <br-option>repo-retention-full-type</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove internal commands from <proper>HTML</proper> and <proper>man</proper> command references.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
