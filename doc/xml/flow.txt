@@ -1,0 +1,22 @@
+graph TB
+    IO_READ(("ioRead()")) --> DRIVER_EOF
+
+    DRIVER_EOF["driverEof()"]
+    DRIVER_EOF -->|Yes| IO_FILTER_GROUP_DONE
+    DRIVER_EOF -->|No| OUT_BUFFER_FULL
+
+    IO_FILTER_GROUP_DONE{"ioFilterGroupDone()"}
+    IO_FILTER_GROUP_DONE --> |Yes| RETURN
+    IO_FILTER_GROUP_DONE --> |No| OUT_BUFFER_FULL
+
+    OUT_BUFFER_FULL{"Out Buffer<br/>Full?"}
+    OUT_BUFFER_FULL -->|Yes| RETURN
+    OUT_BUFFER_FULL -->|No| DRIVER_READ
+
+    DRIVER_READ["driverRead()"] --> IN_BUFFER_FULL
+    IN_BUFFER_FULL{"In Buffer<br/>Full?"}
+    IN_BUFFER_FULL --> |Yes| IO_FILTER_GROUP_PROCESS
+    IO_FILTER_GROUP_PROCESS["ioFilterGroupProcess"]
+    IN_BUFFER_FULL --> |No| DRIVER_EOF
+
+    RETURN[Return]
