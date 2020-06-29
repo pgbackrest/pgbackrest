@@ -678,8 +678,8 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
-        FUNCTION_LOG_PARAM(STRING, account);
-        FUNCTION_LOG_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, account);
+        FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
