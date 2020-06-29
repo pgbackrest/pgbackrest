@@ -138,7 +138,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         // overlap with any other process. This is to prevent another process from overwriting our blocks. If two processes are
         // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent,
         // i.e. we get all of one file or all of the other depending on who writes last.
-        const String *blockId = strNewFmt("%08" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
+        const String *blockId = strNewFmt("%016" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
         // Upload the block and add to block list
         HttpQuery *query = httpQueryNew();

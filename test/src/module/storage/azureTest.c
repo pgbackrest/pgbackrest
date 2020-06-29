@@ -382,10 +382,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
                 testResponseP();
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
                 testResponseP();
 
                 testRequestP(
@@ -393,13 +393,13 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<BlockList>"
-                        "<Uncommitted>AAAAAAAACCCCCCCCx0000000</Uncommitted>"
-                        "<Uncommitted>AAAAAAAACCCCCCCCx0000001</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
                         "</BlockList>\n");
                 testResponseP();
 
                 // Test needs a predictable file id
-                driver->fileId = 0xAAAAAAAACCCCCCCC;
+                driver->fileId = 0x0AAAAAAACCCCCCCC;
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
@@ -407,10 +407,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
                 testResponseP();
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=AAAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
                 testResponseP();
 
                 testRequestP(
@@ -418,8 +418,8 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<BlockList>"
-                        "<Uncommitted>AAAAAAAACCCCCCCDx0000000</Uncommitted>"
-                        "<Uncommitted>AAAAAAAACCCCCCCDx0000001</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
                         "</BlockList>\n");
                 testResponseP();
 
