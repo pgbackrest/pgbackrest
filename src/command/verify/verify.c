@@ -518,7 +518,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             const String *fileName = strLstGet(jobData->walFileList, 0);
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
-
+// CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function.
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
@@ -535,6 +535,8 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             // CSHANG for now, since no temp context then no move
                             // result = protocolParallelJobMove(
                             //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
+
+                            strLstRemoveIdx(jobData->walFileList, 0);
 
                             // Return the job found
                             FUNCTION_TEST_RETURN(result); // CSHANG can only do if don't have a temp mem context
@@ -696,7 +698,7 @@ cmdVerify(void)
                                 // //
                                 // if (strBeginsWithZ(fileName, STORAGE_REPO_ARCHIVE))
                                 //     strLstRemove(StringList *this, const String *item);
-                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup.info - so initially when we load the backup.info file, we really should reconstruct?
+                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup.info - so initially when we load the backup.info file, we really should reconstruct? A: David says no - we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
                                 // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
 
                             }
