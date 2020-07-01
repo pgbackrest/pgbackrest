@@ -473,7 +473,10 @@ unit:
           protocol/helper: full
           protocol/parallel: full
           protocol/parallelJob: full
-          protocol/server: full
+          # protocol/server: full
+
+        include:
+          - protocol/server
 
   # ********************************************************************************************************************************
   - name: info

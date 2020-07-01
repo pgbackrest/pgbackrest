@@ -157,7 +157,32 @@ protocolServerProcess(ProtocolServer *this)
                     // needs to be stored by the handler.
                     MEM_CONTEXT_BEGIN(this->memContext)
                     {
-                        found = handler(command, paramList, this);
+                        bool retry = false;
+                        unsigned int retryRemaining = 0;
+
+                        do
+                        {
+                            retry = false;
+
+                            TRY_BEGIN()
+                            {
+                                found = handler(command, paramList, this);
+                            }
+                            CATCH_ANY()
+                            {
+                                if (retryRemaining > 0)
+                                {
+                                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
+
+                                    retryRemaining--;
+                                    retry = true;
+                                }
+                                else
+                                    RETHROW();
+                            }
+                            TRY_END();
+                        }
+                        while (retry);
                     }
                     MEM_CONTEXT_END();
 
