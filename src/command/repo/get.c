@@ -14,6 +14,9 @@ Repository Get Command
 #include "config/config.h"
 #include "storage/helper.h"
 
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
+
 /***********************************************************************************************************************************
 Write source file to destination IO
 ***********************************************************************************************************************************/
@@ -49,9 +52,55 @@ storageGetProcess(IoWrite *destination)
                 // Check for a passphrase parameter
                 const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
 
-                // If not passed as a parameter use the repo passphrase
+                // If not passed as a parameter, find the passphrase
                 if (cipherPass == NULL)
-                    cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+                {
+                    // If backup.info or archive.info, use the config repo passphrase
+                    if (strEndsWithZ(file, INFO_BACKUP_FILE) ||
+                        strEndsWithZ(file, INFO_BACKUP_FILE".copy") ||
+                        strEndsWithZ(file, INFO_ARCHIVE_FILE) ||
+                        strEndsWithZ(file, INFO_ARCHIVE_FILE".copy"))
+                    {
+                        cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+                    }
+                    else
+                    {                  
+                        // Find out if we look for a file in archive or in backup repo
+                        const String *storagePathArchive = storagePathP(storageRepo(), STORAGE_PATH_ARCHIVE_STR);
+                        if (strBeginsWith(file, storagePathArchive) || strBeginsWith(file, STORAGE_PATH_ARCHIVE_STR))
+                        {
+                            // Guess the stanza name
+                            StringList *tmpSplitLst;
+                            if (strBeginsWith(file, FSLASH_STR))
+                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(storagePathArchive) + 1), FSLASH_STR);
+                            else
+                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(STORAGE_PATH_ARCHIVE_STR) + 1), FSLASH_STR);
+
+                            const String *stanza = strLstGet(tmpSplitLst, 0);
+                            InfoArchive *info = infoArchiveLoadFile(
+                                storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
+                                repoCipherType, cfgOptionStr(cfgOptRepoCipherPass));
+                            cipherPass = strDup(infoArchiveCipherPass(info));
+                        }
+                        
+                        const String *storagePathBackup = storagePathP(storageRepo(), STORAGE_PATH_BACKUP_STR);
+                        if (strBeginsWith(file, storagePathBackup) || strBeginsWith(file, STORAGE_PATH_BACKUP_STR))
+                        {
+                            // Guess the stanza name
+                            StringList *tmpSplitLst;
+                            if (strBeginsWith(file, FSLASH_STR))
+                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(storagePathBackup) + 1), FSLASH_STR);
+                            else
+                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(STORAGE_PATH_BACKUP_STR) + 1), FSLASH_STR);
+
+                            const String *stanza = strLstGet(tmpSplitLst, 0);
+                            InfoBackup *info = infoBackupLoadFile(
+                                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
+                                repoCipherType, cfgOptionStr(cfgOptRepoCipherPass));
+                            cipherPass = strDup(infoBackupCipherPass(info));
+                        }
+                    }
+                }
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, cipherPass);
