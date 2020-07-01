@@ -243,7 +243,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
+HttpResponse *
+storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
@@ -366,7 +367,7 @@ storageAzureListInternal(
                 // Add list comp
                 httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_LIST_STR);
 
-                // Don't specified empty prefix because it is the default
+                // Don't specify empty prefix because it is the default
                 if (!strEmpty(queryPrefix))
                     httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
@@ -690,6 +691,9 @@ storageAzureNew(
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
+    ASSERT(container != NULL);
+    ASSERT(account != NULL);
+    ASSERT(key != NULL);
 
     Storage *this = NULL;
 

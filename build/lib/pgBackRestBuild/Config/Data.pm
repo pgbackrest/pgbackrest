@@ -214,11 +214,11 @@ use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_RE
 # Repository Azure
 use constant CFGDEF_REPO_AZURE                                      => CFGDEF_PREFIX_REPO . '-azure';
 use constant CFGOPT_REPO_AZURE_ACCOUNT                              => CFGDEF_REPO_AZURE . '-account';
-use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
 use constant CFGOPT_REPO_AZURE_CA_FILE                              => CFGDEF_REPO_AZURE . '-ca-file';
 use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_REPO_AZURE . '-ca-path';
-use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
+use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
 use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
+use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
 use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
 use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
