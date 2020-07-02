@@ -1801,7 +1801,7 @@ testRun(void)
             "16384 {path}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("full restore with force");
+        TEST_TITLE("full restore with delta force");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -1809,6 +1809,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--set=20161219-212741F");
+        strLstAddZ(argList, "--" CFGOPT_DELTA);
         strLstAddZ(argList, "--force");
         harnessCfgLoad(cfgCmdRestore, argList);
 
@@ -1820,6 +1821,11 @@ testRun(void)
 
         // Add a special file that will be removed
         TEST_SYSTEM_FMT("mkfifo %s/pipe", strPtr(pgPath));
+
+        // Overwrite PG_VERSION with bogus content that will not be detected by delta force because the time and size are the same
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .modeFile = 0600, .timeModified = 1482182860),
+            BUFSTRDEF("BOG\n"));
 
         // Change destination of tablespace link
         storageRemoveP(storagePgWrite(), STRDEF("pg_tblspc/1"), .errorOnMissing = true);
@@ -1907,6 +1913,64 @@ testRun(void)
             ". {link, d={[path]}/ts/1}\n"
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
+
+        // PG_VERSION was not restored because delta force relies on time and size which were the same in the manifest and on disk
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_FILE_PGVERSION)))), "BOG\n",
+            "check PG_VERSION was not restored");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full restore with force");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" RECOVERY_TYPE_PRESERVE);
+        strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
+        strLstAddZ(argList, "--" CFGOPT_FORCE);
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        cmdRestore();
+
+        TEST_RESULT_LOG(
+            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
+            "P01   INFO: restore file /home/vagrant/test/test-0/pg/PG_VERSION (4B, 50%)"
+                " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 50%)\n"
+            "P01   INFO: restore file {[path]}/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+                " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
+            "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+            "P00 DETAIL: sync path '{[path]}/pg/global'");
+
+        testRestoreCompare(
+            storagePg(), NULL, manifest,
+            ". {path}\n"
+            "PG_VERSION {file, s=4, t=1482182860}\n"
+            "global {path}\n"
+            "pg_tblspc {path}\n"
+            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "tablespace_map {file, s=0, t=1482182860}\n");
+
+        testRestoreCompare(
+            storagePg(), STRDEF("pg_tblspc/1"), manifest,
+            ". {link, d={[path]}/ts/1}\n"
+            "16384 {path}\n"
+            "16384/PG_VERSION {file, s=4, t=1482182860}\n");
+
+        // PG_VERSION was restored by the force option
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_FILE_PGVERSION)))), PG_VERSION_84_STR "\n",
+            "check PG_VERSION was restored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental delta selective restore");

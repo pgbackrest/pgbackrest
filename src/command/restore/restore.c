@@ -1971,8 +1971,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 protocolCommandParamAdd(command, VARSTR(file->user));
                 protocolCommandParamAdd(command, VARSTR(file->group));
                 protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptForce)));
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta)));
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce)));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
