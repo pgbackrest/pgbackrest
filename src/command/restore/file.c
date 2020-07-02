@@ -23,8 +23,7 @@ bool
 restoreFile(
     const String *repoFile, const String *repoFileReference, CompressType repoFileCompressType, const String *pgFile,
     const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified, mode_t pgFileMode,
-    const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
-    const String *cipherPass)
+    const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool force, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
@@ -40,7 +39,7 @@ restoreFile(
         FUNCTION_LOG_PARAM(STRING, pgFileGroup);
         FUNCTION_LOG_PARAM(TIME, copyTimeBegin);
         FUNCTION_LOG_PARAM(BOOL, delta);
-        FUNCTION_LOG_PARAM(BOOL, deltaForce);
+        FUNCTION_LOG_PARAM(BOOL, force);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
@@ -65,7 +64,7 @@ restoreFile(
             if (info.exists)
             {
                 // If force then use size/timestamp delta
-                if (deltaForce)
+                if (force)
                 {
                     // Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
                     if (info.size == pgFileSize && info.timeModified == pgFileModified && info.timeModified < copyTimeBegin)
