@@ -61,8 +61,8 @@ sub run
         {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4},
         {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2},
         {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_10, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>   GZ},
-        {pg => PG_VERSION_11, repoDest => HOST_DB_STANDBY, storage => AZURE, encrypt => false, compress =>  ZST},
+        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ},
+        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST},
         {pg => PG_VERSION_12, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>  LZ4},
         {pg => PG_VERSION_13, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST},
     )
