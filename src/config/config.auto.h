@@ -341,6 +341,22 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
+#define CFGOPT_REPO1_AZURE_ACCOUNT                                  "repo1-azure-account"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_ACCOUNT_STR);
+#define CFGOPT_REPO1_AZURE_CA_FILE                                  "repo1-azure-ca-file"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_CA_FILE_STR);
+#define CFGOPT_REPO1_AZURE_CA_PATH                                  "repo1-azure-ca-path"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_CA_PATH_STR);
+#define CFGOPT_REPO1_AZURE_CONTAINER                                "repo1-azure-container"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_CONTAINER_STR);
+#define CFGOPT_REPO1_AZURE_HOST                                     "repo1-azure-host"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_HOST_STR);
+#define CFGOPT_REPO1_AZURE_KEY                                      "repo1-azure-key"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_KEY_STR);
+#define CFGOPT_REPO1_AZURE_PORT                                     "repo1-azure-port"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_PORT_STR);
+#define CFGOPT_REPO1_AZURE_VERIFY_TLS                               "repo1-azure-verify-tls"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_VERIFY_TLS_STR);
 #define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
     STRING_DECLARE(CFGOPT_REPO1_CIPHER_PASS_STR);
 #define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
@@ -440,7 +456,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            193
+#define CFG_OPTION_TOTAL                                            201
 
 /***********************************************************************************************************************************
 Command enum
@@ -618,6 +634,14 @@ typedef enum
     cfgOptRecoveryOption,
     cfgOptRecurse,
     cfgOptRemoteType,
+    cfgOptRepoAzureAccount,
+    cfgOptRepoAzureCaFile,
+    cfgOptRepoAzureCaPath,
+    cfgOptRepoAzureContainer,
+    cfgOptRepoAzureHost,
+    cfgOptRepoAzureKey,
+    cfgOptRepoAzurePort,
+    cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,

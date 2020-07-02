@@ -1,0 +1,23 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+req_extensions = v3_req
+distinguished_name = dn
+
+[ dn ]
+C=US
+ST=All
+L=All
+O=pgBackRest
+OU=Unit Testing Domain
+CN = core.windows.net
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = blob.core.windows.net
+DNS.2 = *.blob.core.windows.net

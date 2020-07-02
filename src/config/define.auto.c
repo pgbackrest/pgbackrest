@@ -2894,6 +2894,429 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("repo-azure-account")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(true)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository account.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Azure account used to store the repository."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-ca-file")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA file.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Use a CA file other than the system default."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-ca-path")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Use a CA path other than the system default."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-container")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository container.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Azure container used to store the repository.\n"
+            "\n"
+            "pgBackRest repositories can be stored in the container root by setting repo-path=/ but it is usually best to specify "
+                "a prefix, such as /repo, so logs and other Azure-generated content can also be stored in the container."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-host")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository host.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Connect to a host other than the default. This is typically used for testing."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-key")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(true)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository shared key.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Azure shared key used to access the container."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-port")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server port.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Port to use when connecting to the default server (or host if specified). This is typically used for testing."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("443")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-verify-tls")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server certificate verify.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Disables verification of the Azure server certificate. This should only be used for testing or other scenarios where "
+                "a certificate has been self-signed."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("repo-cipher-pass")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -4415,6 +4838,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
             (
+                "azure",
                 "cifs",
                 "posix",
                 "s3"

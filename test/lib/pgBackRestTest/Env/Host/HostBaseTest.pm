@@ -37,6 +37,8 @@ use constant HOST_DB_STANDBY                                        => 'db-stand
     push @EXPORT, qw(HOST_DB_STANDBY);
 use constant HOST_BACKUP                                            => 'backup';
     push @EXPORT, qw(HOST_BACKUP);
+use constant HOST_AZURE                                             => 'azure';
+    push @EXPORT, qw(HOST_AZURE);
 use constant HOST_S3                                                => 's3-server';
     push @EXPORT, qw(HOST_S3);
 
