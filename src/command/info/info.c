@@ -549,7 +549,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
         // List is ordered so 0 is always the current DB index
         if (dbIdx == varLstSize(dbSection) - 1)
-            strCat(resultStr, "\n    db (current)");
+            strCatZ(resultStr, "\n    db (current)");
 
         // Get the min/max archive information for the database
         String *archiveResult = strNew("");
@@ -574,7 +574,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                         strPtr(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))));
                 }
                 else
-                    strCat(archiveResult, "none present\n");
+                    strCatZ(archiveResult, "none present\n");
             }
         }
 
@@ -610,7 +610,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
                 strCatFmt(
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
-                strCat(backupResult, "            wal start/stop: ");
+                strCatZ(backupResult, "            wal start/stop: ");
 
                 KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
@@ -621,7 +621,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                         strPtr(varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR))));
                 }
                 else
-                    strCat(backupResult, "n/a\n");
+                    strCatZ(backupResult, "n/a\n");
 
                 KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
 
@@ -646,10 +646,10 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 if (kvGet(backupInfo, BACKUP_KEY_DATABASE_REF_VAR) != NULL)
                 {
                     VariantList *dbSection = kvGetList(backupInfo, BACKUP_KEY_DATABASE_REF_VAR);
-                    strCat(backupResult, "            database list:");
+                    strCatZ(backupResult, "            database list:");
 
                     if (varLstSize(dbSection) == 0)
-                        strCat(backupResult, " none\n");
+                        strCatZ(backupResult, " none\n");
                     else
                     {
                         for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
@@ -660,16 +660,17 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                                 strPtr(varStrForce(kvGet(db, KEY_OID_VAR))));
 
                             if (dbIdx != varLstSize(dbSection) - 1)
-                                strCat(backupResult, ",");
+                                strCatZ(backupResult, ",");
                         }
-                        strCat(backupResult, "\n");
+
+                        strCat(backupResult, LF_STR);
                     }
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
                 {
                     VariantList *linkSection = kvGetList(backupInfo, BACKUP_KEY_LINK_VAR);
-                    strCat(backupResult, "            symlinks:\n");
+                    strCatZ(backupResult, "            symlinks:\n");
 
                     for (unsigned int linkIdx = 0; linkIdx < varLstSize(linkSection); linkIdx++)
                     {
@@ -680,16 +681,16 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                             strPtr(varStr(kvGet(link, KEY_DESTINATION_VAR))));
 
                         if (linkIdx != varLstSize(linkSection) - 1)
-                            strCat(backupResult, "\n");
+                            strCat(backupResult, LF_STR);
                     }
 
-                    strCat(backupResult, "\n");
+                    strCat(backupResult, LF_STR);
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR) != NULL)
                 {
                     VariantList *tablespaceSection = kvGetList(backupInfo, BACKUP_KEY_TABLESPACE_VAR);
-                    strCat(backupResult, "            tablespaces:\n");
+                    strCatZ(backupResult, "            tablespaces:\n");
 
                     for (unsigned int tblIdx = 0; tblIdx < varLstSize(tablespaceSection); tblIdx++)
                     {
@@ -701,10 +702,10 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                             strPtr(varStr(kvGet(tablespace, KEY_DESTINATION_VAR))));
 
                         if (tblIdx != varLstSize(tablespaceSection) - 1)
-                            strCat(backupResult, "\n");
+                            strCat(backupResult, LF_STR);
                     }
 
-                    strCat(backupResult, "\n");
+                    strCat(backupResult, LF_STR);
                 }
             }
         }
@@ -713,13 +714,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
         if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
         {
             if (dbIdx != varLstSize(dbSection) - 1)
-                strCat(resultStr, "\n    db (prior)");
+                strCatZ(resultStr, "\n    db (prior)");
 
             if (strSize(archiveResult) > 0)
-                strCat(resultStr, strPtr(archiveResult));
+                strCat(resultStr, archiveResult);
 
             if (strSize(backupResult) > 0)
-                strCat(resultStr, strPtr(backupResult));
+                strCat(resultStr, backupResult);
         }
     }
     FUNCTION_TEST_RETURN_VOID();

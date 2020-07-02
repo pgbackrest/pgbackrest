@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Query
+HTTP Query
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -42,6 +42,35 @@ httpQueryNew(void)
         };
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+HttpQuery *
+httpQueryDup(const HttpQuery *query)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+    FUNCTION_TEST_END();
+
+    HttpQuery *this = NULL;
+
+    if (query != NULL)
+    {
+        MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+        {
+            // Allocate state and set context
+            this = memNew(sizeof(HttpQuery));
+
+            *this = (HttpQuery)
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .kv = kvDup(query->kv),
+            };
+        }
+        MEM_CONTEXT_NEW_END();
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -143,7 +172,7 @@ httpQueryRender(const HttpQuery *this)
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                 {
                     if (strSize(result) != 0)
-                        strCat(result, "&");
+                        strCatZ(result, "&");
 
                     strCatFmt(
                         result, "%s=%s", strPtr(strLstGet(keyList, keyIdx)),
@@ -167,14 +196,14 @@ httpQueryToLog(const HttpQuery *this)
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
     {
         if (strSize(result) != 1)
-            strCat(result, ", ");
+            strCatZ(result, ", ");
 
         strCatFmt(
             result, "%s: '%s'", strPtr(strLstGet(keyList, keyIdx)),
             strPtr(httpQueryGet(this, strLstGet(keyList, keyIdx))));
     }
 
-    strCat(result, "}");
+    strCatZ(result, "}");
 
     return result;
 }

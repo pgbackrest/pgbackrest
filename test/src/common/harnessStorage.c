@@ -27,7 +27,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         {
             case storageTypeFile:
             {
-                strCat(data->content, "file");
+                strCatZ(data->content, "file");
 
                 if (info->level >= storageInfoLevelBasic && !data->sizeOmit)
                 {
@@ -60,13 +60,13 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
             case storageTypePath:
             {
-                strCat(data->content, "path");
+                strCatZ(data->content, "path");
                 break;
             }
 
             case storageTypeSpecial:
             {
-                strCat(data->content, "special");
+                strCatZ(data->content, "special");
                 break;
             }
         }
@@ -115,5 +115,5 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         }
     }
 
-    strCat(data->content, "}\n");
+    strCatZ(data->content, "}\n");
 }

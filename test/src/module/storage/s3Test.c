@@ -28,7 +28,7 @@ typedef struct TestRequestParam
 #define testRequestP(s3, verb, uri, ...)                                                                                           \
     testRequest(s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void
+static void
 testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
     // Add authorization string
@@ -39,7 +39,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
         verb, uri);
 
     if (param.content != NULL)
-        strCat(request, "content-md5;");
+        strCatZ(request, "content-md5;");
 
     strCatFmt(
         request,
@@ -72,7 +72,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
 
     // Add content
     if (param.content != NULL)
-        strCat(request, param.content);
+        strCatZ(request, param.content);
 
     hrnTlsServerExpect(request);
 }
@@ -91,7 +91,7 @@ typedef struct TestResponseParam
 #define testResponseP(...)                                                                                                         \
     testResponse((TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void
+static void
 testResponse(TestResponseParam param)
 {
     // Set code to 200 if not specified
@@ -105,19 +105,19 @@ testResponse(TestResponseParam param)
     {
         case 200:
         {
-            strCat(response, "OK");
+            strCatZ(response, "OK");
             break;
         }
 
         case 403:
         {
-            strCat(response, "Forbidden");
+            strCatZ(response, "Forbidden");
             break;
         }
     }
 
     // End header
-    strCat(response, "\r\n");
+    strCatZ(response, "\r\n");
 
     // Headers
     if (param.header != NULL)
@@ -134,7 +134,7 @@ testResponse(TestResponseParam param)
             strlen(param.content), param.content);
     }
     else
-        strCat(response, "\r\n");
+        strCatZ(response, "\r\n");
 
     hrnTlsServerReply(response);
 }
@@ -179,7 +179,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage");
         TEST_RESULT_STR(storage->path, path, "    check path");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
@@ -202,14 +202,16 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s", strPtr(host)));
+#ifdef TEST_CONTAINER_REQUIRED
         strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
         strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
+#endif
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -229,14 +231,12 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -257,14 +257,12 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -286,14 +284,12 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
         strLstAddZ(argList, "--repo1-s3-port=9001");
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
@@ -382,14 +378,14 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
+                    hrnTlsServerRun(ioHandleReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)),
                     "s3 server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioHandleWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
 
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,
@@ -448,7 +444,7 @@ testRun(void)
 
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
-                    "S3 request failed with 303: \n"
+                    "HTTP request failed with 303:\n"
                     "*** URI/Query ***:\n"
                     "/file.txt\n"
                     "*** Request Headers ***:\n"
@@ -627,7 +623,7 @@ testRun(void)
                 testResponseP(.code = 344);
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -650,7 +646,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 344: \n"
+                    "HTTP request failed with 344:\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
@@ -698,7 +694,7 @@ testRun(void)
                         "</Error>");
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
-                    "S3 request failed with 403: Forbidden\n"
+                    "HTTP request failed with 403 (Forbidden):\n"
                     "*** URI/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"

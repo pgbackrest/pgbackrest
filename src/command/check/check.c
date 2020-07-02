@@ -22,7 +22,7 @@ Helper functions (to assist with testing)
 static unsigned int
 checkManifest(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     // Return the actual number of pg* defined
     unsigned int result = 0;

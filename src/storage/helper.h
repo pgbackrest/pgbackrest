@@ -25,13 +25,6 @@ Storage path constants
     STRING_DECLARE(STORAGE_PATH_BACKUP_STR);
 
 /***********************************************************************************************************************************
-Repository storage types
-***********************************************************************************************************************************/
-#define STORAGE_TYPE_CIFS                                           "cifs"
-#define STORAGE_TYPE_POSIX                                          "posix"
-#define STORAGE_TYPE_S3                                             "s3"
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Initialize dry-run for the current command. No writes are allowed until dry-run has been intitialized and no writes are allowed

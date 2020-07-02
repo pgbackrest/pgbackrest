@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Http Header
+HTTP Header
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -104,8 +104,8 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             String *valueAppend = strDup(varStr(valueVar));
-            strCat(valueAppend, ", ");
-            strCat(valueAppend, strPtr(value));
+            strCatZ(valueAppend, ", ");
+            strCatZ(valueAppend, strPtr(value));
 
             kvPut(this->kv, keyVar, VARSTR(valueAppend));
         }
@@ -193,7 +193,7 @@ httpHeaderToLog(const HttpHeader *this)
         const String *key = strLstGet(keyList, keyIdx);
 
         if (strSize(result) != 1)
-            strCat(result, ", ");
+            strCatZ(result, ", ");
 
         if (httpHeaderRedact(this, key))
             strCatFmt(result, "%s: <redacted>", strPtr(key));
@@ -201,7 +201,7 @@ httpHeaderToLog(const HttpHeader *this)
             strCatFmt(result, "%s: '%s'", strPtr(key), strPtr(httpHeaderGet(this, key)));
     }
 
-    strCat(result, "}");
+    strCatZ(result, "}");
 
     return result;
 }

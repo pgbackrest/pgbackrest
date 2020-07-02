@@ -233,8 +233,14 @@ dbOpen(Db *this)
         }
         MEM_CONTEXT_END();
 
+        // Set application name to help identify the backup session
         if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
             dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
+
+        // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
+        // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
+        if (this->pgVersion >= PG_VERSION_PARALLEL_QUERY)
+            dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -360,7 +366,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
     if (pgVersion >= PG_VERSION_96)
     {
-        strCat(
+        strCatZ(
             result,
             ",\n"
             "       labelfile::text as backuplabel_file,\n"
@@ -368,7 +374,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     }
 
     // Build stop backup function
-    strCat(
+    strCatZ(
         result,
         "\n"
         "  from pg_catalog.pg_stop_backup(");

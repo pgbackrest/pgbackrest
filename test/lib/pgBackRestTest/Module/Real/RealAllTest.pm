@@ -50,63 +50,40 @@ sub run
 {
     my $self = shift;
 
-    # Should the test use lz4 compression?
-    my $bLz4Compress = true;
+    foreach my $rhRun
+    (
+        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE},
+        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>   GZ},
+        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt =>  true, compress =>  BZ2},
+        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt => false, compress => NONE},
+        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE},
+        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>   GZ},
+        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4},
+        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2},
+        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE},
+        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ},
+        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress =>  ZST},
+        {pg => PG_VERSION_12, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>  LZ4},
+        {pg => PG_VERSION_13, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress =>  ZST},
+    )
+    {
+        # Only run tests for this pg version
+        next if ($rhRun->{pg} ne $self->pgVersion());
 
-    foreach my $strStorage (POSIX, S3)
-    {
-    foreach my $bHostBackup ($strStorage eq S3 ? (true) : (false, true))
-    {
-    # Standby should only be tested for pg versions that support it
-    foreach my $bHostStandby ($strStorage eq S3 ? (false) : (false, true))
-    {
-    # Primary and standby backup destinations only need to be tested on one db version since it is not version specific
-    foreach my $strBackupDestination (
-        $strStorage eq S3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_PRIMARY, HOST_DB_STANDBY) : (HOST_DB_PRIMARY))
-    {
-        my $strCompressType =
-            $bHostBackup && !$bHostStandby ?
-                (vmWithLz4($self->vm()) && $bLz4Compress ? LZ4 : vmWithZst($self->vm()) ?
-                    ZST : ($strStorage eq S3 ? BZ2 : GZ)) : NONE;
-        my $bRepoEncrypt = ($strCompressType ne NONE && $strStorage eq POSIX) ? true : false;
-
-        # If compression was used then switch it for the next test that uses compression
-        if ($strCompressType ne NONE)
-        {
-            $bLz4Compress = !$bLz4Compress;
-        }
+        # Get run parameters
+        my $bHostBackup = $rhRun->{repoDest} eq HOST_BACKUP ? true : false;
+        my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
+        my $strBackupDestination = $rhRun->{repoDest};
+        my $strStorage = $rhRun->{storage};
+        my $bRepoEncrypt = $rhRun->{encrypt};
+        my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        my $hyVm = vmGet();
-        my $strDbVersionMostRecent = ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1];
-
         next if (!$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}" .
                 ", storage ${strStorage}, enc ${bRepoEncrypt}",
             # Use the most recent db version on the expect vm for expect testing
-            $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
-
-        # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
-        if (($strStorage eq S3 || $bHostBackup) &&
-            (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))
-        {
-            &log(INFO, "skipped - this test is run this OS using PG ${strDbVersionMostRecent}");
-            next;
-        }
-
-        # Skip hot standby tests if the system does not support hot standby
-        if ($bHostStandby && $self->pgVersion() < PG_VERSION_HOT_STANDBY)
-        {
-            &log(INFO, 'skipped - this version of PostgreSQL does not support hot standby');
-            next;
-        }
-
-        # Skip backup destinations other than backup host when standby except for one arbitrary db version
-        if ($bHostStandby && $strBackupDestination ne HOST_BACKUP && $self->pgVersion() ne PG_VERSION_96)
-        {
-            &log(INFO, 'skipped - standby with backup destination other than backup host is tested on PG ' . PG_VERSION_96);
-            next;
-        }
+            $self->vm() eq VM_EXPECT && $self->pgVersion() eq PG_VERSION_96));
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
@@ -115,10 +92,9 @@ sub run
              strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
              bRepoEncrypt => $bRepoEncrypt});
 
-        # Only perform extra tests on certain runs to save time
-        my $bTestLocal = $self->runCurrent() == 1;
-        my $bTestExtra =
-            $bTestLocal || $self->runCurrent() == 4 || ($self->runCurrent() == 6 && $self->pgVersion() eq PG_VERSION_96);
+        # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
+        # so it won't interfere with commands that won't tolerate a connection failure.
+        my $strBogusReset = $oHostBackup->bogusHost() ? ' --reset-pg2-host --reset-pg2-path' : '';
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -156,237 +132,258 @@ sub run
         my $strTimelineMessage = 'timeline';
 
         # Create two new databases
-        if ($bTestLocal)
-        {
-            $oHostDbPrimary->sqlExecute('create database test1', {bAutoCommit => true});
-            $oHostDbPrimary->sqlExecute('create database test2', {bAutoCommit => true});
-        }
+        $oHostDbPrimary->sqlExecute('create database test1', {bAutoCommit => true});
+        $oHostDbPrimary->sqlExecute('create database test2', {bAutoCommit => true});
 
         # Test check command and stanza create
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
+        # In this section the same comment can be used multiple times so make it a variable that can be set once and reused
+        my $strComment = undef;
+
+        # Archive and backup info file names
+        my $strArchiveInfoFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE);
+        my $strArchiveInfoCopyFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
+        my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
+
+        my $strBackupInfoFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO);
+        my $strBackupInfoCopyFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO . INI_COPY_EXT);
+        my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+        my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
+        # Move the archive.info files to simulate missing file
+        forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+
+        $oHostDbPrimary->check(
+            'fail on missing archive.info file',
+            {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
+
+        # Backup.info was created earlier so restore archive info files
+        forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
+
+        # Check ERROR_ARCHIVE_DISABLED error
+        $strComment = 'fail on archive_mode=off';
+        $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
+
+        $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+        $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+
+        # Also run check on the backup host when present
+        if ($bHostBackup)
         {
-            # In this section the same comment can be used multiple times so make it a variable that can be set once and reused
-            my $strComment = undef;
-
-            # Archive and backup info file names
-            my $strArchiveInfoFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE);
-            my $strArchiveInfoCopyFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE . INI_COPY_EXT);
-            my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
-            my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
-
-            my $strBackupInfoFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO);
-            my $strBackupInfoCopyFile = $oHostBackup->repoBackupPath(FILE_BACKUP_INFO . INI_COPY_EXT);
-            my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
-            my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
-
-            # Move the archive.info files to simulate missing file
-            forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
-
-            $oHostDbPrimary->check(
-                'fail on missing archive.info file',
-                {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
-
-            # Backup.info was created earlier so restore archive info files
-            forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
-
-            # Check ERROR_ARCHIVE_DISABLED error
-            $strComment = 'fail on archive_mode=off';
-            $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
-
-            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
-            $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
-
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
-            }
-
-            # Check ERROR_ARCHIVE_COMMAND_INVALID error
-            $strComment = 'fail on invalid archive_command';
-            $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchive => false});
-
-            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-            $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-            }
-
-            # When archive-check=n then ERROR_ARCHIVE_TIMEOUT will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
-            # ??? But maybe we should error with the fact that that option is not valid
-            $strComment = 'fail on archive timeout when archive-check=n';
-            $oHostDbPrimary->check(
+            $oHostBackup->check(
                 $strComment,
-                {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED, strOptionalParam => $strBogusReset});
+        }
 
-            # Stop the cluster ignoring any errors in the postgresql log
-            $oHostDbPrimary->clusterStop({bIgnoreLogError => true});
+        # Check ERROR_ARCHIVE_COMMAND_INVALID error
+        $strComment = 'fail on invalid archive_command';
+        $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchive => false});
 
-            # Providing a sufficient archive-timeout, verify that the check command runs successfully.
-            $strComment = 'verify success';
+        $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+        $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
-            $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check(
+                $strComment,
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID, strOptionalParam => $strBogusReset});
+        }
 
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 5});
-            }
+        # When archive-check=n then ERROR_ARCHIVE_TIMEOUT will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
+        # ??? But maybe we should error with the fact that that option is not valid
+        $strComment = 'fail on archive timeout when archive-check=n';
+        $oHostDbPrimary->check(
+            $strComment,
+            {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
 
-            # Check archive mismatch due to upgrade error
-            $strComment = 'fail on archive mismatch after upgrade';
+        # Stop the cluster ignoring any errors in the postgresql log
+        $oHostDbPrimary->clusterStop({bIgnoreLogError => true});
 
-            # load the archive info file and munge it for testing by breaking the database version
-            $oHostBackup->infoMunge(
-                $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
-                 &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
+        # Providing a sufficient archive-timeout, verify that the check command runs successfully.
+        $strComment = 'verify success';
 
-            $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID});
+        $oHostDbPrimary->clusterStart();
+        $oHostDbPrimary->check($strComment, {iTimeout => 5});
 
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID});
-            }
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check($strComment, {iTimeout => 5, strOptionalParam => $strBogusReset});
+        }
 
-            # Restore the file to its original condition
-            $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
+        # Check archive mismatch due to upgrade error
+        $strComment = 'fail on archive mismatch after upgrade';
 
-            # Check archive_timeout error when WAL segment is not found
-            $strComment = 'fail on archive timeout';
+        # load the archive info file and munge it for testing by breaking the database version
+        $oHostBackup->infoMunge(
+            $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE),
+            {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
+             &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
 
-            $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
-            $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
+        $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID});
 
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
-            }
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check(
+                $strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => $strBogusReset});
+        }
 
-            # Restart the cluster ignoring any errors in the postgresql log
-            $oHostDbPrimary->clusterRestart({bIgnoreLogError => true});
+        # Restore the file to its original condition
+        $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
 
-            # With a valid archive info, create the backup.info file by running a backup then munge the backup.info file.
-            # Check backup mismatch error
-            $strComment = 'fail on backup info mismatch';
+        # Check archive_timeout error when WAL segment is not found
+        $strComment = 'fail on archive timeout';
 
-            # Load the backup.info file and munge it for testing by breaking the database version and system id
-            $oHostBackup->infoMunge(
-                $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
-                {&INFO_BACKUP_SECTION_DB =>
-                    {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
-                &INFO_BACKUP_SECTION_DB_HISTORY =>
-                    {1 => {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
+        $oHostDbPrimary->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
+        $oHostDbPrimary->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
 
-            # Run the test
-            $oHostDbPrimary->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID});
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check(
+                $strComment,
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => $strBogusReset});
+        }
 
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID});
-            }
+        # Restart the cluster ignoring any errors in the postgresql log
+        $oHostDbPrimary->clusterRestart({bIgnoreLogError => true});
 
-            # Restore the file to its original condition
-            $oHostBackup->infoRestore($oHostBackup->repoBackupPath(FILE_BACKUP_INFO));
+        # With a valid archive info, create the backup.info file by running a backup then munge the backup.info file.
+        # Check backup mismatch error
+        $strComment = 'fail on backup info mismatch';
 
-            # ??? Removed temporarily until manifest build can be brought back into the check command
-            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            # my $strDir = $oHostDbPrimary->dbBasePath() . '/rootreaddir';
-            # executeTest('sudo mkdir ' . $strDir);
-            # executeTest("sudo chown root:root ${strDir}");
-            # executeTest("sudo chmod 400 ${strDir}");
-            #
-            # $strComment = 'confirm primary manifest->build executed';
-            # $oHostDbPrimary->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            # executeTest("sudo rmdir ${strDir}");
+        # Load the backup.info file and munge it for testing by breaking the database version and system id
+        $oHostBackup->infoMunge(
+            $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
+            {&INFO_BACKUP_SECTION_DB =>
+                {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
+            &INFO_BACKUP_SECTION_DB_HISTORY =>
+                {1 => {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
 
-            # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
-            # archive.info and backup.info files
-            $strComment = 'verify success after backup';
+        # Run the test
+        $oHostDbPrimary->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID});
 
-            $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check(
+                $strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => $strBogusReset});
+        }
 
-            # If running the remote tests then also need to run check locally
-            if ($bHostBackup)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 5});
-            }
+        # Restore the file to its original condition
+        $oHostBackup->infoRestore($oHostBackup->repoBackupPath(FILE_BACKUP_INFO));
 
-            # Restart the cluster ignoring any errors in the postgresql log
-            $oHostDbPrimary->clusterRestart({bIgnoreLogError => true});
+        # ??? Removed temporarily until manifest build can be brought back into the check command
+        # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+        # my $strDir = $oHostDbPrimary->dbBasePath() . '/rootreaddir';
+        # executeTest('sudo mkdir ' . $strDir);
+        # executeTest("sudo chown root:root ${strDir}");
+        # executeTest("sudo chmod 400 ${strDir}");
+        #
+        # $strComment = 'confirm primary manifest->build executed';
+        # $oHostDbPrimary->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+        # executeTest("sudo rmdir ${strDir}");
 
-            # Stanza Create
-            #-----------------------------------------------------------------------------------------------------------------------
-            # With data existing in the archive and backup directory, move info files and confirm failure
-            forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+        # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+        # archive.info and backup.info files
+        $strComment = 'verify success after backup';
 
-            $oHostBackup->stanzaCreate(
-                'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+        $oHostDbPrimary->check($strComment, {iTimeout => 5});
 
-            # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
+        # Also run check on the backup host when present
+        if ($bHostBackup)
+        {
+            $oHostBackup->check($strComment, {iTimeout => 5, strOptionalParam => $strBogusReset});
+        }
+
+        # Restart the cluster ignoring any errors in the postgresql log
+        $oHostDbPrimary->clusterRestart({bIgnoreLogError => true});
+
+        # Stanza Create
+        #-----------------------------------------------------------------------------------------------------------------------
+        # Determine which pg index is the primary. When backing up to the standby the primary and standby indexes are switched
+        # to provide coverage for cases where the primary is not first and because the local pg instance is always intended to
+        # be index 1.
+        my $strPrimaryIdx = $strBackupDestination eq HOST_DB_STANDBY ? '8' : '1';
+
+        # With data existing in the archive and backup directory, move info files and confirm failure
+        forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+
+        $oHostBackup->stanzaCreate(
+            'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+
+        # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
+        storageTest()->pathCreate(
+            $oHostDbPrimary->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
+            {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
+        $self->controlGenerate(
+            $oHostDbPrimary->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
+
+        # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
+        $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+            {strOptionalParam => " --pg${strPrimaryIdx}-path=" . $oHostDbPrimary->dbPath() . '/testbase/',
+                iExpectedExitStatus => ERROR_DB_MISMATCH});
+
+        # Remove the directories to be able to create the stanza
+        forceStorageRemove(storageRepo(), $oHostBackup->repoBackupPath(), {bRecurse => true});
+        forceStorageRemove(storageRepo(), $oHostBackup->repoArchivePath(), {bRecurse => true});
+
+        # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
+        #-----------------------------------------------------------------------------------------------------------------------
+        # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
+        if ($strBackupDestination eq HOST_DB_STANDBY)
+        {
             storageTest()->pathCreate(
-                $oHostDbPrimary->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
+                $oHostDbStandby->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
-                $oHostDbPrimary->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
-
-            # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
-            $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                {strOptionalParam => ' --pg1-path=' . $oHostDbPrimary->dbPath() . '/testbase/',
-                    iExpectedExitStatus => ERROR_DB_MISMATCH});
-
-            # Remove the directories to be able to create the stanza
-            forceStorageRemove(storageRepo(), $oHostBackup->repoBackupPath(), {bRecurse => true});
-            forceStorageRemove(storageRepo(), $oHostBackup->repoArchivePath(), {bRecurse => true});
-
-            # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
-            #-----------------------------------------------------------------------------------------------------------------------
-            # Run stanza-create offline to create files needing to be upgraded (using new pg-path)
-            $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
-                {strOptionalParam => ' --pg1-path=' . $oHostDbPrimary->dbPath() . '/testbase/ --no-online --force'});
-            my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
-            my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
-
-            # Read info files to confirm the files were created with a different database version
-            if ($self->pgVersion() eq PG_VERSION_94)
-            {
-                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                    PG_VERSION_95)}, true, 'archive upgrade forced with pg mismatch');
-                $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
-                    PG_VERSION_95)}, true, 'backup upgrade forced with pg mismatch');
-            }
-            else
-            {
-                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                    PG_VERSION_94)}, true, 'archive create forced with pg mismatch in prep for stanza-upgrade');
-                $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
-                    PG_VERSION_94)}, true, 'backup create forced with pg mismatch in prep for stanza-upgrade');
-            }
-
-            # Run stanza-upgrade online with the default pg-path to correct the info files
-            $oHostBackup->stanzaUpgrade('upgrade stanza files online');
-
-            # Reread the info files and confirm the result
-            $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
-            $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
-            $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                $self->pgVersion())}, true, 'archive upgrade online corrects db');
-            $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
-                $self->pgVersion())}, true, 'backup upgrade online corrects db');
+                $oHostDbStandby->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
         }
+
+        # Run stanza-create offline to create files needing to be upgraded (using new pg-path)
+        $oHostBackup->stanzaCreate(
+            'successfully create stanza files to be upgraded',
+            {strOptionalParam =>
+                " --pg1-path=" .
+                    ($strBackupDestination eq HOST_DB_STANDBY ? $oHostDbStandby->dbPath() : $oHostDbPrimary->dbPath()) .
+                    '/testbase/ --no-online'});
+        my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
+        my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
+
+        # Read info files to confirm the files were created with a different database version
+        if ($self->pgVersion() eq PG_VERSION_94)
+        {
+            $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                PG_VERSION_95)}, true, 'archive upgrade forced with pg mismatch');
+            $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+                PG_VERSION_95)}, true, 'backup upgrade forced with pg mismatch');
+        }
+        else
+        {
+            $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                PG_VERSION_94)}, true, 'archive create forced with pg mismatch in prep for stanza-upgrade');
+            $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+                PG_VERSION_94)}, true, 'backup create forced with pg mismatch in prep for stanza-upgrade');
+        }
+
+        # Run stanza-upgrade online with the default pg-path to correct the info files
+        $oHostBackup->stanzaUpgrade('upgrade stanza files online');
+
+        # Reread the info files and confirm the result
+        $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
+        $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
+        $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+            $self->pgVersion())}, true, 'archive upgrade online corrects db');
+        $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+            $self->pgVersion())}, true, 'backup upgrade online corrects db');
 
         # Full backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -395,22 +392,19 @@ sub run
         $oHostDbPrimary->sqlWalRotate();
         $oHostDbPrimary->sqlExecute("insert into test values ('$strDefaultMessage')");
 
-        if ($bTestLocal)
+        # Acquire the backup advisory lock so it looks like a backup is running
+        if (!$oHostDbPrimary->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
         {
-            # Acquire the backup advisory lock so it looks like a backup is running
-            if (!$oHostDbPrimary->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
-            {
-                confess 'unable to acquire advisory lock for testing';
-            }
+            confess 'unable to acquire advisory lock for testing';
+        }
 
-            $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_FULL, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
+        $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
 
-            # Release the backup advisory lock so the next backup will succeed
-            if (!$oHostDbPrimary->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
-            {
-                confess 'unable to release advisory lock';
-            }
+        # Release the backup advisory lock so the next backup will succeed
+        if (!$oHostDbPrimary->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+        {
+            confess 'unable to release advisory lock';
         }
 
         $oHostDbPrimary->sqlExecute("update test set message = '$strFullMessage'");
@@ -427,7 +421,7 @@ sub run
 
         # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
-        if ($bTestExtra && $strCompressType ne NONE && $strBackupDestination eq HOST_BACKUP)
+        if ($strCompressType ne NONE && $strBackupDestination eq HOST_BACKUP)
         {
             &log(INFO, '    multiple wal switches to exercise async archiving');
             $oHostDbPrimary->sqlExecute("create table wal_activity (id int)");
@@ -526,10 +520,7 @@ sub run
             # executeTest("sudo rmdir ${strDir}");
 
             # Confirm the check command runs without error on a standby (when a bogus host is not configured)
-            if (!$oHostDbStandby->bogusHost())
-            {
-                $oHostDbStandby->check('verify check command on standby');
-            }
+            $oHostDbStandby->check('verify check command on standby', {strOptionalParam => $strBogusReset});
 
             # Shutdown the standby before creating tablespaces (this will error since paths are different)
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
@@ -541,7 +532,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
         # the logs will to be deleted to avoid causing issues further down the line.
-        if ($bTestExtra && $strStorage eq POSIX)
+        if ($strStorage eq POSIX)
         {
             $oHostDbPrimary->clusterRestart();
 
@@ -571,7 +562,7 @@ sub run
 
         # Incr backup - fail on archive_mode=always when version >= 9.5
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal && $oHostDbPrimary->pgVersion() >= PG_VERSION_95)
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_95)
         {
             # Set archive_mode=always
             $oHostDbPrimary->clusterRestart({bArchiveAlways => true});
@@ -614,18 +605,15 @@ sub run
             'insert into test3_exists values (1);',
             {strDb => 'test3', bAutoCommit => true});
 
-        if ($bTestLocal)
-        {
-            # Create a table in test1 to check - test1 will not be restored
-            $oHostDbPrimary->sqlExecute(
-                'create table test1_zeroed (id int);' .
-                'insert into test1_zeroed values (1);',
-                {strDb => 'test1', bAutoCommit => true});
-        }
+        # Create a table in test1 to check - test1 will not be restored
+        $oHostDbPrimary->sqlExecute(
+            'create table test1_zeroed (id int);' .
+            'insert into test1_zeroed values (1);',
+            {strDb => 'test1', bAutoCommit => true});
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
         # are run in non-exclusive mode.
-        if ($bTestLocal && $oHostDbPrimary->pgVersion() >= PG_VERSION_93 && $oHostDbPrimary->pgVersion() < PG_VERSION_96)
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_93 && $oHostDbPrimary->pgVersion() < PG_VERSION_96)
         {
             $oHostDbPrimary->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 
@@ -655,82 +643,63 @@ sub run
         my $strIncrBackup = $oHostBackup->backup(
             CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup', {strOptionalParam => '--stop-auto --buffer-size=32768 --delta'});
 
-        # Ensure the check command runs properly with a tablespace unless there is a bogus host
-        if (!$oHostBackup->bogusHost())
-        {
-            $oHostBackup->check( 'check command with tablespace', {iTimeout => 5});
-        }
+        # Ensure the check command runs properly with a tablespace
+        $oHostBackup->check( 'check command with tablespace', {iTimeout => 5, strOptionalParam => $strBogusReset});
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
         my $strXidTarget = undef;
 
-        if ($bTestLocal)
-        {
-            $oHostDbPrimary->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
-            $oHostDbPrimary->sqlWalRotate();
-            $strXidTarget = $oHostDbPrimary->sqlSelectOne("select txid_current()");
-            $oHostDbPrimary->sqlCommit();
-            &log(INFO, "        xid target is ${strXidTarget}");
-        }
+        $oHostDbPrimary->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
+        $oHostDbPrimary->sqlWalRotate();
+        $strXidTarget = $oHostDbPrimary->sqlSelectOne("select txid_current()");
+        $oHostDbPrimary->sqlCommit();
+        &log(INFO, "        xid target is ${strXidTarget}");
 
         # Setup the name target
         #---------------------------------------------------------------------------------------------------------------------------
         my $strNameTarget = 'backrest';
 
-        if ($bTestLocal)
+        $oHostDbPrimary->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
+        $oHostDbPrimary->sqlWalRotate();
+
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_91)
         {
-            $oHostDbPrimary->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
-            $oHostDbPrimary->sqlWalRotate();
-
-            if ($oHostDbPrimary->pgVersion() >= PG_VERSION_91)
-            {
-                $oHostDbPrimary->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
-            }
-
-            &log(INFO, "        name target is ${strNameTarget}");
+            $oHostDbPrimary->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
         }
+
+        &log(INFO, "        name target is ${strNameTarget}");
 
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
-
         # Initialize variables for SHA1 and path of the pg_filenode.map for the database that will not be restored
         my $strDb1TablePath;
         my $strDb1TableSha1;
 
-        if ($bTestLocal)
-        {
-            $oHostDbPrimary->sqlExecute(
-                'create table test (id int);' .
-                'insert into test values (1);' .
-                'create table test_ts1 (id int) tablespace ts1;' .
-                'insert into test_ts1 values (2);',
-                {strDb => 'test2', bAutoCommit => true});
+        $oHostDbPrimary->sqlExecute(
+            'create table test (id int);' .
+            'insert into test values (1);' .
+            'create table test_ts1 (id int) tablespace ts1;' .
+            'insert into test_ts1 values (2);',
+            {strDb => 'test2', bAutoCommit => true});
 
-            $oHostDbPrimary->sqlWalRotate();
+        $oHostDbPrimary->sqlWalRotate();
 
-            # Get the SHA1 and path of the table for the database that will not be restored
-            $strDb1TablePath =  $oHostDbPrimary->dbBasePath(). "/base/" .
-                $oHostDbPrimary->sqlSelectOne("select oid from pg_database where datname='test1'") . "/" .
-                $oHostDbPrimary->sqlSelectOne("select relfilenode from pg_class where relname='test1_zeroed'", {strDb => 'test1'});
-            $strDb1TableSha1 = storageTest()->hashSize($strDb1TablePath);
-        }
+        # Get the SHA1 and path of the table for the database that will not be restored
+        $strDb1TablePath =  $oHostDbPrimary->dbBasePath(). "/base/" .
+            $oHostDbPrimary->sqlSelectOne("select oid from pg_database where datname='test1'") . "/" .
+            $oHostDbPrimary->sqlSelectOne("select relfilenode from pg_class where relname='test1_zeroed'", {strDb => 'test1'});
+        $strDb1TableSha1 = storageTest()->hashSize($strDb1TablePath);
 
         # Restore (type = default)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal)
-        {
-            # Expect failure because pg (appears to be) running
-            $oHostDbPrimary->restore('pg running', 'latest', {iExpectedExitStatus => ERROR_PG_RUNNING});
-        }
+        # Expect failure because pg (appears to be) running
+        $oHostDbPrimary->restore('pg running', 'latest', {iExpectedExitStatus => ERROR_PG_RUNNING});
 
         $oHostDbPrimary->clusterStop();
 
-        if ($bTestLocal)
-        {
-            # Expect failure because db path is not empty
-            $oHostDbPrimary->restore('path not empty', 'latest', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
-        }
+        # Expect failure because db path is not empty
+        $oHostDbPrimary->restore('path not empty', 'latest', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
         # Drop and recreate db path
         testPathRemove($oHostDbPrimary->dbBasePath());
@@ -742,47 +711,40 @@ sub run
 
         # Now the restore should work
         $oHostDbPrimary->restore(
-            undef, 'latest',
-            {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
+            undef, 'latest', {strOptionalParam => ' --db-include=test2 --db-include=test3 --buffer-size=16384'});
 
         # Test that the first database has not been restored since --db-include did not include test1
-        if ($bTestLocal)
+        my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
+
+        # Create a zeroed sparse file in the test directory that is the same size as the filenode.map.  We need to use the
+        # posix driver directly to do this because handles cannot be passed back from the C code.
+        my $oStorageTrunc = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix());
+
+        my $strTestTable = $self->testPath() . "/testtable";
+        my $oDestinationFileIo = $oStorageTrunc->openWrite($strTestTable);
+        $oDestinationFileIo->open();
+
+        # Truncate to the original size which will create a sparse file.
+        if (!truncate($oDestinationFileIo->handle(), $lSize))
         {
-            my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
-
-            # Create a zeroed sparse file in the test directory that is the same size as the filenode.map.  We need to use the
-            # posix driver directly to do this because handles cannot be passed back from the C code.
-            my $oStorageTrunc = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix());
-
-            my $strTestTable = $self->testPath() . "/testtable";
-            my $oDestinationFileIo = $oStorageTrunc->openWrite($strTestTable);
-            $oDestinationFileIo->open();
-
-            # Truncate to the original size which will create a sparse file.
-            if (!truncate($oDestinationFileIo->handle(), $lSize))
-            {
-                confess "unable to truncate '$strTestTable' with handle " . $oDestinationFileIo->handle();
-            }
-            $oDestinationFileIo->close();
-
-            # Confirm the test filenode.map and the database test1 filenode.map are zeroed
-            my ($strSHA1Test, $lSizeTest) = storageTest()->hashSize($strTestTable);
-            $self->testResult(sub {($strSHA1Test eq $strSHA1) && ($lSizeTest == $lSize) && ($strSHA1 ne $strDb1TableSha1)},
-                true, 'database test1 not restored');
+            confess "unable to truncate '$strTestTable' with handle " . $oDestinationFileIo->handle();
         }
+        $oDestinationFileIo->close();
+
+        # Confirm the test filenode.map and the database test1 filenode.map are zeroed
+        my ($strSHA1Test, $lSizeTest) = storageTest()->hashSize($strTestTable);
+        $self->testResult(sub {($strSHA1Test eq $strSHA1) && ($lSizeTest == $lSize) && ($strSHA1 ne $strDb1TableSha1)},
+            true, 'database test1 not restored');
 
         $oHostDbPrimary->clusterStart();
-        $oHostDbPrimary->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strNameMessage);
 
         # Once the cluster is back online, make sure the database & table in the tablespace exists properly
-        if ($bTestLocal)
-        {
-            $oHostDbPrimary->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
-            $oHostDbPrimary->sqlDisconnect({strDb => 'test2'});
+        $oHostDbPrimary->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
+        $oHostDbPrimary->sqlDisconnect({strDb => 'test2'});
 
-            $oHostDbPrimary->sqlSelectOneTest('select id from test3_exists', 1, {strDb => 'test3'});
-            $oHostDbPrimary->sqlDisconnect({strDb => 'test3'});
-        }
+        $oHostDbPrimary->sqlSelectOneTest('select id from test3_exists', 1, {strDb => 'test3'});
+        $oHostDbPrimary->sqlDisconnect({strDb => 'test3'});
 
         # The tablespace path should exist and have files in it
         my $strTablespacePath = $oHostDbPrimary->tablespacePath(1);
@@ -826,10 +788,7 @@ sub run
         $oHostDbPrimary->sqlExecute('drop table test_exists');
 
         # Now it should be OK to drop database test2 and test3
-        if ($bTestLocal)
-        {
-            $oHostDbPrimary->sqlExecute('drop database test2', {bAutoCommit => true});
-        }
+        $oHostDbPrimary->sqlExecute('drop database test2', {bAutoCommit => true});
 
         # The test table lives in ts1 so it needs to be moved or dropped
         if ($oHostDbPrimary->pgVersion() >= PG_VERSION_90)
@@ -848,7 +807,7 @@ sub run
 
         # Restore (restore type = immediate, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if (($bTestLocal || $bHostStandby) && $oHostDbPrimary->pgVersion() >= PG_VERSION_94)
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_94)
         {
             &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 
@@ -866,62 +825,56 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $strRecoveryFile = undef;
 
-        if ($bTestLocal)
-        {
-            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
 
-            $oHostDbPrimary->clusterStop();
+        $oHostDbPrimary->clusterStop();
 
-            executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbPrimary->dbPath() . qw{/} . $oManifest->walPath() . '/*');
+        executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath() . "/*");
+        executeTest('rm -rf ' . $oHostDbPrimary->dbPath() . qw{/} . $oManifest->walPath() . '/*');
 
-            $oHostDbPrimary->restore(
-                undef, $strIncrBackup,
-                {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget,
-                    strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
-                    strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
-                    strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
+        $oHostDbPrimary->restore(
+            undef, $strIncrBackup,
+            {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget,
+                strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+                strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
+                strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
 
-            # Save recovery file to test so we can use it in the next test
-            $strRecoveryFile = $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
+        # Save recovery file to test so we can use it in the next test
+        $strRecoveryFile = $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
 
-            storageTest()->copy(
-                $oHostDbPrimary->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
+        storageTest()->copy(
+            $oHostDbPrimary->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
-            $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->sqlSelectOneTest('select message from test', $strXidMessage);
+        $oHostDbPrimary->clusterStart();
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strXidMessage);
 
-            $oHostDbPrimary->sqlExecute("update test set message = '$strTimelineMessage'");
-        }
+        $oHostDbPrimary->sqlExecute("update test set message = '$strTimelineMessage'");
 
         # Restore (restore type = preserve, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal)
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_PRESERVE);
+
+        $oHostDbPrimary->clusterStop();
+
+        executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath() . "/*");
+        executeTest('rm -rf ' . $oHostDbPrimary->dbPath() . qw{/} . $oManifest->walPath() . '/*');
+        executeTest('rm -rf ' . $oHostDbPrimary->tablespacePath(1) . "/*");
+
+        # Restore recovery file that was saved in last test
+        storageTest()->move($self->testPath . "/${strRecoveryFile}", $oHostDbPrimary->dbBasePath() . "/${strRecoveryFile}");
+
+        # Also touch recovery.signal when required
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_12)
         {
-            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_PRESERVE);
-
-            $oHostDbPrimary->clusterStop();
-
-            executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbPrimary->dbPath() . qw{/} . $oManifest->walPath() . '/*');
-            executeTest('rm -rf ' . $oHostDbPrimary->tablespacePath(1) . "/*");
-
-            # Restore recovery file that was saved in last test
-            storageTest()->move($self->testPath . "/${strRecoveryFile}", $oHostDbPrimary->dbBasePath() . "/${strRecoveryFile}");
-
-            # Also touch recovery.signal when required
-            if ($oHostDbPrimary->pgVersion() >= PG_VERSION_12)
-            {
-                storageTest()->put($oHostDbPrimary->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
-            }
-
-            $oHostDbPrimary->restore(undef, 'latest', {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
-
-            $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->sqlSelectOneTest('select message from test', $strXidMessage);
-
-            $oHostDbPrimary->sqlExecute("update test set message = '$strTimelineMessage'");
+            storageTest()->put($oHostDbPrimary->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
         }
+
+        $oHostDbPrimary->restore(undef, 'latest', {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
+
+        $oHostDbPrimary->clusterStart();
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strXidMessage);
+
+        $oHostDbPrimary->sqlExecute("update test set message = '$strTimelineMessage'");
 
         # Restore (restore type = time, inclusive, automatically select backup) - there is no exclusive time test because I can't
         # find a way to find the exact commit time of a transaction.
@@ -942,25 +895,22 @@ sub run
 
         # Restore (restore type = xid, exclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal)
-        {
-            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
 
-            $oHostDbPrimary->clusterStop();
+        $oHostDbPrimary->clusterStop();
 
-            $oHostDbPrimary->restore(
-                undef, $strIncrBackup,
-                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
-                    strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
-                    strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
+        $oHostDbPrimary->restore(
+            undef, $strIncrBackup,
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
+                strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+                strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
 
-            $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->sqlSelectOneTest('select message from test', $strIncrMessage);
-        }
+        $oHostDbPrimary->clusterStart();
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strIncrMessage);
 
         # Restore (restore type = name)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal && $oHostDbPrimary->pgVersion() >= PG_VERSION_91)
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_91)
         {
             &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_NAME);
 
@@ -978,7 +928,7 @@ sub run
 
         # Restore (restore type = default, timeline = created by type = xid, inclusive recovery)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestLocal && $oHostDbPrimary->pgVersion() >= PG_VERSION_84)
+        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_84)
         {
             &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_DEFAULT);
 
@@ -1004,41 +954,35 @@ sub run
 
         # Test no-online backups
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra & $strStorage eq POSIX)
-        {
-            # Create a postmaster.pid file so it appears that the server is running
-            storageTest()->put($oHostDbPrimary->dbBasePath() . '/postmaster.pid', '99999');
+        # Create a postmaster.pid file so it appears that the server is running
+        storageTest()->put(
+            ($strBackupDestination eq HOST_DB_STANDBY ? $oHostDbStandby->dbBasePath() : $oHostDbPrimary->dbBasePath()) .
+                '/postmaster.pid', '99999');
 
-            # Incr backup - make sure a --no-online backup fails
-            #-----------------------------------------------------------------------------------------------------------------------
-            $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-online',
-                {iExpectedExitStatus => ERROR_PG_RUNNING, strOptionalParam => '--no-online'});
+        # Incr backup - make sure a --no-online backup fails
+        #-----------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-online',
+            {iExpectedExitStatus => ERROR_PG_RUNNING, strOptionalParam => '--no-online' . $strBogusReset});
 
-            # Incr backup - allow --no-online backup to succeed with --force
-            #-----------------------------------------------------------------------------------------------------------------------
-            $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_INCR, 'succeed on --no-online with --force', {strOptionalParam => '--no-online --force'});
-        }
+        # Incr backup - allow --no-online backup to succeed with --force
+        #-----------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'succeed on --no-online with --force',
+            {strOptionalParam => '--no-online --force' . $strBogusReset});
 
         # Stanza-delete --force without access to pgbackrest on database host
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra && $strStorage eq POSIX && $bHostBackup)
+        # With stanza-delete --force, allow stanza to be deleted regardless of accessibility of database host
+        if ($bHostBackup)
         {
-            # With stanza-delete --force, allow stanza to be deleted regardless of accessibility of database host
-            if ($bHostBackup)
-            {
-                $oHostDbPrimary->stop();
-                $oHostBackup->stop({strStanza => $self->stanza});
-                $oHostBackup->stanzaDelete(
-                    "delete stanza with --force when pgbackrest on pg host not accessible", {strOptionalParam => ' --force'});
-                $oHostDbPrimary->start();
-                $oHostBackup->start();
-            }
+            $oHostDbPrimary->stop();
+            $oHostBackup->stop({strStanza => $self->stanza});
+            $oHostBackup->stanzaDelete(
+                "delete stanza with --force when pgbackrest on pg host not accessible", {strOptionalParam => ' --force'});
+            $oHostDbPrimary->start();
+            $oHostBackup->start();
         }
-    }
-    }
-    }
     }
 }
 

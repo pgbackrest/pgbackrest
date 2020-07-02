@@ -2866,9 +2866,9 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
         String *pgPath = strPath(manifestPathPg(target->name));
 
         if (strSize(pgPath) != 0)
-            strCat(pgPath, "/");
+            strCatZ(pgPath, "/");
 
-        strCat(pgPath, strPtr(target->path));
+        strCat(pgPath, target->path);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
