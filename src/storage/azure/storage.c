@@ -414,8 +414,6 @@ storageAzureListInternal(
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     marker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
-
-                    // THROW_FMT(AssertError, "MARKER %s", strPtr(marker));
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -480,10 +478,9 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
         FUNCTION_TEST_PARAM(XML_NODE, xml);
     FUNCTION_TEST_END();
 
-    (void)this;
+    (void)this;                                                     // Unused but still logged above for debugging
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
-    ASSERT((type == storageTypePath && xml == NULL) || (type == storageTypeFile && xml != NULL));
 
     StorageAzureInfoListData *data = (StorageAzureInfoListData *)callbackData;
 
@@ -497,10 +494,15 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
     if (data->level >= storageInfoLevelBasic)
     {
         info.type = type;
-        info.size = type == storageTypeFile ?
-            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true)))) : 0;
-        info.timeModified = type == storageTypeFile ?
-            httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+
+        // Add additional info for files
+        if (type == storageTypeFile)
+        {
+            ASSERT(xml != NULL);
+
+            info.size =  cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
+            info.timeModified = httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+        }
     }
 
     data->callback(data->callbackData, &info);
@@ -593,13 +595,12 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
+        (void)xml;                                                  // Unused since no additional data needed for files
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
-    (void)name;
-    (void)xml;
+    ASSERT(name != NULL);
 
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
@@ -694,6 +695,7 @@ storageAzureNew(
     ASSERT(container != NULL);
     ASSERT(account != NULL);
     ASSERT(key != NULL);
+    ASSERT(blockSize != 0);
 
     Storage *this = NULL;
 
