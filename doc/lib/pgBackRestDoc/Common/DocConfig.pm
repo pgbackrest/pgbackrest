@@ -27,6 +27,7 @@ use constant CONFIG_HELP_DEFAULT                                    => 'default'
 use constant CONFIG_HELP_DESCRIPTION                                => 'description';
     push @EXPORT, qw(CONFIG_HELP_DESCRIPTION);
 use constant CONFIG_HELP_EXAMPLE                                    => 'example';
+use constant CONFIG_HELP_INTERNAL                                   => 'internal';
 use constant CONFIG_HELP_NAME                                       => 'name';
 use constant CONFIG_HELP_NAME_ALT                                   => 'name-alt';
     push @EXPORT, qw(CONFIG_HELP_NAME_ALT);
@@ -203,6 +204,7 @@ sub process
 
         $$oCommand{&CONFIG_HELP_SUMMARY} = $oCommandDoc->nodeGet('summary')->textGet();
         $$oCommand{&CONFIG_HELP_DESCRIPTION} = $oCommandDoc->textGet();
+        $oCommand->{&CONFIG_HELP_INTERNAL} = cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL};
     }
 
     # Iterate through all options
@@ -425,6 +427,9 @@ sub manGet
 
     foreach my $strCommand (sort(keys(%{$$hConfig{&CONFIG_HELP_COMMAND}})))
     {
+        # Skip internal commands
+        next if $hConfig->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_INTERNAL};
+
         my $hCommand = $$hConfig{&CONFIG_HELP_COMMAND}{$strCommand};
         $iCommandMaxLen = length($strCommand) > $iCommandMaxLen ? length($strCommand) : $iCommandMaxLen;
 
@@ -676,6 +681,9 @@ sub helpCommandDocGet
 
     foreach my $strCommand (sort(keys(%{$$oConfigHash{&CONFIG_HELP_COMMAND}})))
     {
+        # Skip internal commands
+        next if $oConfigHash->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_INTERNAL};
+
         my $oCommandHash = $$oConfigHash{&CONFIG_HELP_COMMAND}{$strCommand};
         my $oSectionElement = $oDoc->nodeAdd('section', undef, {id => "command-${strCommand}"});
 
