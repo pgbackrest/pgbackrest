@@ -3,6 +3,8 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
+#include <stdio.h> // CSHANG remove
+
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
@@ -141,9 +143,183 @@ testRun(void)
 // 2) Local and remote tests
 // 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 
+
+typedef struct ArchiveRange
+{
+    List *archiveRangePgList;
+} ArchiveRange;
+
+typedef struct ArchiveRangePg
+{
+    unsigned int pgId;
+    List *walRangeList;
+} ArchiveRangePg;
+
+typedef struct WalRange
+{
+    String *stop;
+    String *start;
+} WalRange;
+
+// void
+// walGen(unsigned int pgId, ArchiveRange *testArchiveRange)
+// {
+//     ArchiveRangePg pgArchiveRange =
+//     {
+//         .pgId = pgId,
+//         .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+//     };
+//
+//     if (pgId == 1)
+//     {
+//         WalRange walRange1 =
+//         {
+//             .stop = strNew("00000001000000000000000E-9baedd24b61aa15305732ac678c4e2c102435a09"),
+//             .start = strNew("00000001000000000000000B-99999924b61aa15305732ac678c4e2c102435a09"),
+//         };
+//         lstAdd(pgArchiveRange.walRangeList, &walRange1);
+//
+//         WalRange walRange2 =
+//         {
+//             .stop = strNew("000000010000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09"),
+//             .start = strNew("000000010000000000000001-99999924b61aa15305732ac678c4e2c102435a09"),
+//         };
+//         lstAdd(pgArchiveRange.walRangeList, &walRange2);
+//     }
+//     else
+//     {
+//         WalRange walRange3 =
+//         {
+//             .stop = strNew("000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09"),
+//             .start = strNew("00000002000000000000000E-99999924b61aa15305732ac678c4e2c102435a09"),
+//         };
+//         lstAdd(pgArchiveRange.walRangeList, &walRange3);
+//
+//         WalRange walRange4 =
+//         {
+//             .stop = strNew("00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09"),
+//             .start = strNew("000000020000000000000001-99999924b61aa15305732ac678c4e2c102435a09"),
+//         };
+//         lstAdd(pgArchiveRange.walRangeList, &walRange4);
+//     }
+//
+//     lstSort(pgArchiveRange.walRangeList, sortOrderAsc);
+//
+//     lstAdd(testArchiveRange->archiveRangePgList, &pgArchiveRange);
+// }
+
+
+
     // *****************************************************************************************************************************
     if (testBegin("verifyPgHistory()"))
     {
+
+ArchiveRange myTest =
+{
+    .archiveRangePgList = lstNew(sizeof(ArchiveRangePg)),
+};
+    ArchiveRangePg pgArchiveRange =
+    {
+        .pgId = 1,
+        .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+    };
+
+
+        WalRange walRange1 =
+        {
+            .stop = strNew("00000001000000000000000E-9baedd24b61aa15305732ac678c4e2c102435a09"),
+            .start = strNew("00000001000000000000000B-99999924b61aa15305732ac678c4e2c102435a09"),
+        };
+        lstAdd(pgArchiveRange.walRangeList, &walRange1);
+
+        WalRange walRange2 =
+        {
+            .stop = strNew("000000010000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09"),
+            .start = strNew("000000010000000000000001-99999924b61aa15305732ac678c4e2c102435a09"),
+        };
+        lstAdd(pgArchiveRange.walRangeList, &walRange2);
+        lstSort(pgArchiveRange.walRangeList, sortOrderAsc);
+    lstAdd(myTest.archiveRangePgList, &pgArchiveRange);
+
+    ArchiveRangePg pgArchiveRange2 =
+    {
+        .pgId = 2,
+        .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+    };
+
+        WalRange walRange3 =
+        {
+            .stop = strNew("000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09"),
+            .start = strNew("00000002000000000000000E-99999924b61aa15305732ac678c4e2c102435a09"),
+        };
+        lstAdd(pgArchiveRange2.walRangeList, &walRange3);
+
+        WalRange walRange4 =
+        {
+            .stop = strNew("00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09"),
+            .start = strNew("000000020000000000000001-99999924b61aa15305732ac678c4e2c102435a09"),
+        };
+        lstAdd(pgArchiveRange2.walRangeList, &walRange4);
+        lstSort(pgArchiveRange2.walRangeList, sortOrderAsc);
+    lstAdd(myTest.archiveRangePgList, &pgArchiveRange2);
+
+
+
+    // lstSort(myTest.archiveRangePgList, sortOrderAsc); // CSHANG This causes:
+    /*
+        ==1500== Jump to the invalid address stated on the next line
+    ==1500==    at 0x0: ???
+    ==1500==    by 0x625AFEA: msort_with_tmp.part.0 (msort.c:105)
+    ==1500==    by 0x625B595: msort_with_tmp (msort.c:45)
+    ==1500==    by 0x625B595: qsort_r (msort.c:297)
+    ==1500==    by 0x1627FB: lstSort (list.c:391)
+    ==1500==    by 0x1AA3DF: testRun (verifyTest.c:268)
+    ==1500==    by 0x1AD661: main (test.c:118)
+    ==1500==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+    */
+
+
+
+
+
+// walGen(1, &myTest);
+// walGen(2, &myTest);
+// lstSort(myTest.archiveRangePgList, sortOrderAsc);
+
+String *testFile = strNew("00000001000000000000000D-9baedd24b61aa15305732ac678c4e2c102435a09");
+
+for (unsigned int i = 0; i < lstSize(myTest.archiveRangePgList); i++)
+{
+    ArchiveRangePg *myArchive = lstGet(myTest.archiveRangePgList, i);
+    printf("i: %u, pgId=%u\n", i, myArchive->pgId); fflush(stdout);
+
+    for (unsigned int j = 0; j < lstSize(myArchive->walRangeList); j++)
+    {
+        WalRange *myWal = lstGet(myArchive->walRangeList, j);
+        printf("    stop: %s\n", strPtr(myWal->stop)); fflush(stdout);
+        printf("    start: %s\n", strPtr(myWal->start)); fflush(stdout);
+        // if the file
+        if (myArchive->pgId == 1 && strCmp(testFile, myWal->stop) <= 0)
+        {
+            printf("testfile <= stop %s\n", strPtr(myWal->stop)); fflush(stdout);
+            /*
+            wait - this may not help since the files can come in any order so all we know is that the range is no longer valid
+            maybe we just mark the range as invalid and add the file to the "bad" list?
+            What is we have a list of all the bad files and a list of all the good files and try to do an intersection? No that won't work because it is a range and not a comprehensive list so can't get an intersection.
+            maybe have another list in the WalRange structure so stop, start and list of invalid? Then when looking at the manifest, we see if the start and stop fall within any of the ranges and if the range is marked invalid, we look and see if it is in the list of invalid files?
+Range: 01 -> 09
+invalid lstSize > 0 and has 03 and 06
+backup start/stop 01, 04
+since invalid has something then if invalid >= backup start or <= backup stop then the backup is invalid but if not, then how to determine if PITR is not valid?
+e.g. if the invalid list only contained 06 then the backup would be consistent but then what makes us sure PITR is not?
+
+            */
+        }
+
+    }
+}
+
+
         // Create backup.info
         InfoBackup *backupInfo = NULL;
         TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info multi-history");

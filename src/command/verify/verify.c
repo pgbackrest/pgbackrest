@@ -290,7 +290,7 @@ verifyInfoFile(const String *infoPathFile, bool loadFile)
             String *errorMsg = strNew(errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
-                strCat(errorMsg, strPtr(strNewFmt(" %s", strPtr(infoPathFile))));
+                strCat(errorMsg, strNewFmt(" %s", strPtr(infoPathFile)));
 
             LOG_WARN(strPtr(errorMsg));
         }
@@ -514,8 +514,9 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                     {
                         do
                         {
-                            // Get the fully qualified file name
                             const String *fileName = strLstGet(jobData->walFileList, 0);
+
+                            // Get the fully qualified file name
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
 // CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function.
@@ -525,8 +526,8 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                             protocolCommandParamAdd(command, VARSTR(filePathName));
                             protocolCommandParamAdd(command, VARSTR(checksum));
-                            protocolCommandParamAdd(command, VARBOOL(false));
-                            protocolCommandParamAdd(command, VARUINT64(0));
+                            protocolCommandParamAdd(command, VARBOOL(false));   // Can the size be verified?
+                            protocolCommandParamAdd(command, VARUINT64(0));     // File size to verify
                             protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
                             protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
