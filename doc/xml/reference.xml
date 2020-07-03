@@ -367,7 +367,7 @@
 
                     <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-key-type" name="Azure Repository Key Type">
-                        <summary>Azure repository shared key.</summary>
+                        <summary>Azure repository key type.</summary>
 
                         <text>!!! Azure shared key used to access the container.</text>
 

@@ -3219,7 +3219,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository shared key.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository key type.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "!!! Azure shared key used to access the container."
