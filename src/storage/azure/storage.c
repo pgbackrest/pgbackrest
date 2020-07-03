@@ -73,7 +73,8 @@ struct StorageAzure
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
-    const String *key;                                              // Shared Secret Key
+    StorageAzureKeyType keyType;                                    // Key type (shared or sas)
+    const String *key;                                              // Shared or SAS Key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
     const String *uriPrefix;                                        // Account/container prefix
@@ -672,8 +673,8 @@ static const StorageInterface storageInterfaceAzure =
 Storage *
 storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, const String *key, size_t blockSize, const String *host, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath)
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -681,6 +682,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
+        FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -709,6 +711,7 @@ storageAzureNew(
             .interface = storageInterfaceAzure,
             .container = strDup(container),
             .account = strDup(account),
+            .keyType = keyType,
             .key = strDup(key),
             .blockSize = blockSize,
             .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strPtr(account)) : host,

@@ -357,12 +357,21 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-key" name="Azure Repository Shared Key">
-                        <summary>Azure repository shared key.</summary>
+                    <config-key id="repo-azure-key" name="Azure Repository Key">
+                        <summary>Azure repository key.</summary>
 
-                        <text>Azure shared key used to access the container.</text>
+                        <text>!!! Azure shared key used to access the container.</text>
 
                         <example>T+9+aov82qNhrcXSNGZCzm9mjd4d75/oxxOr6r1JVpgTLA==</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-key-type" name="Azure Repository Key Type">
+                        <summary>Azure repository shared key.</summary>
+
+                        <text>!!! Azure shared key used to access the container.</text>
+
+                        <example>sas</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->

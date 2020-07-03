@@ -118,6 +118,7 @@ typedef enum
     cfgDefOptRepoAzureContainer,
     cfgDefOptRepoAzureHost,
     cfgDefOptRepoAzureKey,
+    cfgDefOptRepoAzureKeyType,
     cfgDefOptRepoAzurePort,
     cfgDefOptRepoAzureVerifyTls,
     cfgDefOptRepoCipherPass,

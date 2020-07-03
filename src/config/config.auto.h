@@ -353,6 +353,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_AZURE_HOST_STR);
 #define CFGOPT_REPO1_AZURE_KEY                                      "repo1-azure-key"
     STRING_DECLARE(CFGOPT_REPO1_AZURE_KEY_STR);
+#define CFGOPT_REPO1_AZURE_KEY_TYPE                                 "repo1-azure-key-type"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_KEY_TYPE_STR);
 #define CFGOPT_REPO1_AZURE_PORT                                     "repo1-azure-port"
     STRING_DECLARE(CFGOPT_REPO1_AZURE_PORT_STR);
 #define CFGOPT_REPO1_AZURE_VERIFY_TLS                               "repo1-azure-verify-tls"
@@ -456,7 +458,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            201
+#define CFG_OPTION_TOTAL                                            202
 
 /***********************************************************************************************************************************
 Command enum
@@ -640,6 +642,7 @@ typedef enum
     cfgOptRepoAzureContainer,
     cfgOptRepoAzureHost,
     cfgOptRepoAzureKey,
+    cfgOptRepoAzureKeyType,
     cfgOptRepoAzurePort,
     cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,
