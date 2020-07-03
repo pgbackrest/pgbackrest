@@ -69,6 +69,46 @@ httpDateFromTime(time_t time)
 
 /**********************************************************************************************************************************/
 String *
+httpUriDecode(const String *uri)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, uri);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    // Encode if the string is not null
+    if (uri != NULL)
+    {
+        result = strNew("");
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Iterate all characters in the string
+            for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
+            {
+                char uriChar = strPtr(uri)[uriIdx];
+
+                if (uriChar == '%')
+                {
+                    if (strSize(uri) - uriIdx - 1 < 2)
+                        THROW_FMT(FormatError, "invalid escape sequence in '%s'", strPtr(uri));
+
+                    uriChar = (char)cvtZToUIntBase(strPtr(strSubN(uri, uriIdx + 1, 2)), 16);
+                    uriIdx += 2;
+                }
+
+                strCatChr(result, uriChar);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+String *
 httpUriEncode(const String *uri, bool path)
 {
     FUNCTION_TEST_BEGIN();

@@ -166,7 +166,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->key, TEST_KEY_STR, "    check key");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->sharedKey, TEST_KEY_STR, "    check key");
         TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
         TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
@@ -185,8 +185,8 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, TEST_KEY_STR, 16, NULL, 443, 1000, true,
-                    NULL, NULL)),
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared, TEST_KEY_STR, 16,
+                    NULL, 443, 1000, true, NULL, NULL)),
             "new azure storage");
 
         // -------------------------------------------------------------------------------------------------------------------------

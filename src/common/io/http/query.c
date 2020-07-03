@@ -48,6 +48,58 @@ httpQueryNew(void)
 
 /**********************************************************************************************************************************/
 HttpQuery *
+httpQueryNewStr(const String *query)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, query);
+    FUNCTION_TEST_END();
+
+    HttpQuery *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+    {
+        // Allocate state and set context
+        this = memNew(sizeof(HttpQuery));
+
+        *this = (HttpQuery)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .kv = kvNew(),
+        };
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Remove initial ? when present
+            if (strBeginsWithZ(query, QUESTION_Z))
+                query = strSub(query, 1);
+
+            // Split query into individual key value pairs
+            StringList *keyValueList = strLstNewSplitZ(query, AMPERSAND_Z);
+
+            for (unsigned int keyValueIdx = 0; keyValueIdx < strLstSize(keyValueList); keyValueIdx++)
+            {
+                // Add each key/value pair
+                StringList *keyValue = strLstNewSplitZ(strLstGet(keyValueList, keyValueIdx), EQ_Z);
+
+                if (strLstSize(keyValue) != 2)
+                {
+                    THROW_FMT(
+                        FormatError, "invalid key/value '%s' in query '%s'", strPtr(strLstGet(keyValueList, keyValueIdx)),
+                        strPtr(query));
+                }
+
+                httpQueryAdd(this, httpUriDecode(strLstGet(keyValue, 0)), httpUriDecode(strLstGet(keyValue, 1)));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+HttpQuery *
 httpQueryDup(const HttpQuery *query)
 {
     FUNCTION_TEST_BEGIN();
@@ -127,6 +179,34 @@ httpQueryList(const HttpQuery *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+}
+
+/**********************************************************************************************************************************/
+HttpQuery *
+httpQueryMerge(HttpQuery *this, const HttpQuery *query)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_QUERY, this);
+        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(query != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const VariantList *keyList = kvKeyList(query->kv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        {
+            const Variant *key = varLstGet(keyList, keyIdx);
+
+            httpQueryAdd(this, varStr(key), varStr(kvGet(query->kv, key)));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/

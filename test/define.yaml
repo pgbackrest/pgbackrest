@@ -254,12 +254,16 @@ unit:
 
         coverage:
           common/io/http/client: full
-          common/io/http/common: full
+          # common/io/http/common: full
           common/io/http/header: full
-          common/io/http/query: full
+          # common/io/http/query: full
           common/io/http/request: full
           common/io/http/response: full
           common/io/http/session: full
+
+        include:
+          - common/io/http/common
+          - common/io/http/query
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
@@ -404,11 +408,12 @@ unit:
 
         coverage:
           storage/azure/read: full
-          storage/azure/storage: full
+          # storage/azure/storage: full
           storage/azure/write: full
           storage/helper: full
 
         include:
+          - storage/azure/storage
           - storage/storage
           - storage/write
 
