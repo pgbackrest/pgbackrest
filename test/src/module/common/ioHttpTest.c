@@ -18,11 +18,19 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("httpUriEncode"))
+    if (testBegin("httpUriEncode() and httpUriDecode()"))
     {
         TEST_RESULT_STR(httpUriEncode(NULL, false), NULL, "null encodes to null");
         TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), false), "0-9_~%2FA%20Z.az", "non-path encoding");
         TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), true), "0-9_~/A%20Z.az", "path encoding");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decode");
+
+        TEST_RESULT_STR(httpUriDecode(NULL), NULL, "null decodes to null");
+        TEST_RESULT_STR_Z(httpUriDecode(strNew("0-9_~%2FA%20Z.az")), "0-9_~/A Z.az", "valid decode");
+        TEST_ERROR(httpUriDecode(strNew("%A")), FormatError, "invalid escape sequence in '%A'");
+        TEST_ERROR(httpUriDecode(strNew("%XX")), FormatError, "unable to convert base 16 string 'XX' to unsigned int");
     }
 
     // *****************************************************************************************************************************
@@ -122,7 +130,25 @@ testRun(void)
 
         TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: 'value2a'}", "log output");
 
-        TEST_RESULT_VOID(httpQueryFree(query), "free query");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new query from string");
+
+        TEST_ERROR(httpQueryNewStr(STRDEF("a=b&c")), FormatError, "invalid key/value 'c' in query 'a=b&c'");
+
+        HttpQuery *query2 = NULL;
+        TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a=%2Bb&c=d%3D")), "query from string");
+        TEST_RESULT_STR_Z(httpQueryRender(query2), "a=%2Bb&c=d%3D", "render query");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("merge queries");
+
+        TEST_RESULT_STR_Z(
+            httpQueryRender(httpQueryMerge(query, query2)), "a=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free query");
+
+        TEST_RESULT_VOID(httpQueryFree(query), "free");
     }
 
     // *****************************************************************************************************************************

@@ -18,7 +18,7 @@ String *httpDateFromTime(time_t time);
 // Encode string to conform with URI specifications. If a path is being encoded then / characters won't be encoded.
 String *httpUriEncode(const String *uri, bool path);
 
-// Decode string that conforms with URI specifications
+// Decode string that conforms to URI specifications
 String *httpUriDecode(const String *uri);
 
 #endif
