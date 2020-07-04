@@ -16,12 +16,16 @@ Constants
     STRING_STATIC(TEST_ACCOUNT_STR,                                 TEST_ACCOUNT);
 #define TEST_CONTAINER                                              "container"
     STRING_STATIC(TEST_CONTAINER_STR,                               TEST_CONTAINER);
-#define TEST_KEY                                                    "YXpLZXk="
-    STRING_STATIC(TEST_KEY_STR,                                     TEST_KEY);
+#define TEST_KEY_SAS                                                "?sig=key"
+    STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
+#define TEST_KEY_SHARED                                             "YXpLZXk="
+    STRING_STATIC(TEST_KEY_SHARED_STR,                              TEST_KEY_SHARED);
 
 /***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
+static StorageAzure *driver;
+
 typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
@@ -35,11 +39,33 @@ typedef struct TestRequestParam
 static void
 testRequest(const char *verb, const char *uri, TestRequestParam param)
 {
+    String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
+
+    // When SAS spit out the query and merge in the SAS key
+    if (driver->sasKey != NULL)
+    {
+        HttpQuery *query = httpQueryNew();
+        StringList *uriQuery = strLstNewSplitZ(STR(uri), "?");
+
+        if (strLstSize(uriQuery) == 2)
+            query = httpQueryNewStr(strLstGet(uriQuery, 1));
+
+        httpQueryMerge(query, driver->sasKey);
+
+        strCat(request, strLstGet(uriQuery, 0));
+        strCatZ(request, "?");
+        strCat(request, httpQueryRender(query));
+    }
+    // Else just output URI as is
+    else
+        strCatZ(request, uri);
+
+    // Add HTTP version
+    strCatZ(request, " HTTP/1.1\r\n");
+
     // Add authorization string
-    String *request = strNewFmt(
-        "%s /" TEST_ACCOUNT "/" TEST_CONTAINER "%s HTTP/1.1\r\n"
-            "authorization:SharedKey account:????????????????????????????????????????????\r\n",
-        verb, uri);
+    if (driver->sharedKey != NULL)
+        strCatZ(request, "authorization:SharedKey account:????????????????????????????????????????????\r\n");
 
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
@@ -53,7 +79,8 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
     }
 
     // Add date
-    strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
+    if (driver->sharedKey != NULL)
+        strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strPtr(hrnTlsServerHost()));
@@ -63,7 +90,8 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
         strCatFmt(request, "x-ms-blob-type:%s\r\n", param.blobType);
 
     // Add version
-    strCatZ(request, "x-ms-version:2019-02-02\r\n");
+    if (driver->sharedKey != NULL)
+        strCatZ(request, "x-ms-version:2019-02-02\r\n");
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -158,7 +186,7 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
         strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
         setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY, true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
@@ -166,7 +194,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->sharedKey, TEST_KEY_STR, "    check key");
+        TEST_RESULT_STR(((StorageAzure *)storage->driver)->sharedKey, TEST_KEY_SHARED_STR, "    check key");
         TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
         TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
@@ -185,9 +213,9 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared, TEST_KEY_STR, 16,
-                    NULL, 443, 1000, true, NULL, NULL)),
-            "new azure storage");
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
+                    TEST_KEY_SHARED_STR, 16, NULL, 443, 1000, true, NULL, NULL)),
+            "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("minimal auth");
@@ -216,6 +244,25 @@ testRun(void)
                 ", content-md5: 'b64f49553d5c441652e95697a2c5949e', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
                 ", host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
             "check headers");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("SAS auth");
+
+        TEST_ASSIGN(
+            storage,
+            (StorageAzure *)storageDriver(
+                storageAzureNew(
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
+                    16, NULL, 443, 1000, true, NULL, NULL)),
+            "new azure storage - sas key");
+
+        query = httpQueryAdd(httpQueryNew(), STRDEF("a"), STRDEF("b"));
+        header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
+
+        TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.windows.net'}", "check headers");
+        TEST_RESULT_STR_Z(httpQueryRender(query), "a=b&sig=key", "check query");
     }
 
     // *****************************************************************************************************************************
@@ -247,13 +294,13 @@ testRun(void)
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort()));
                 strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY, true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
 
-                StorageAzure *driver = (StorageAzure *)storage->driver;
+                driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_STR(driver->host, hrnTlsServerHost(), "    check host");
                 TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
@@ -586,19 +633,6 @@ testRun(void)
                         "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
                         "</EnumerationResults>");
 
-                        // "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                        // "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
-                        // "    <Contents>"
-                        // "        <Key>path/to/test1.txt</Key>"
-                        // "    </Contents>"
-                        // "    <Contents>"
-                        // "        <Key>path/to/test2.txt</Key>"
-                        // "    </Contents>"
-                        // "   <CommonPrefixes>"
-                        // "       <Prefix>path/to/path1/</Prefix>"
-                        // "   </CommonPrefixes>"
-                        // "</ListBucketResult>");
-
                 testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
                 testResponseP(
                     .content =
@@ -675,6 +709,22 @@ testRun(void)
                     "test1.txt {}\n"
                     "test3.txt {}\n",
                     "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to SAS auth");
+
+                hrnTlsServerClose();
+
+                strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_KEY_TYPE "=" STORAGE_AZURE_KEY_TYPE_SAS);
+                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SAS, true);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
+
+                driver = (StorageAzure *)storage->driver;
+                TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
+
+                hrnTlsServerAccept();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");
