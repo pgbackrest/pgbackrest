@@ -26,3 +26,16 @@ openssl req -new -sha256 -nodes -out s3-server.csr -key s3-server.key -config s3
 openssl x509 -req -in s3-server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
     -out s3-server.crt -days 99999 -extensions v3_req -extfile s3.cnf
 ```
+
+## Azure Certificate
+
+Mimic an Azure certificate for the `*.blob.core.windows.net` hosts to generate Azure documentation.
+
+```
+cd [pgbackrest-root]/doc/resource/fake-cert
+
+openssl ecparam -genkey -name prime256v1 | openssl ec -out azure-server.key
+openssl req -new -sha256 -nodes -out azure-server.csr -key azure-server.key -config azure.cnf
+openssl x509 -req -in azure-server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+    -out azure-server.crt -days 99999 -extensions v3_req -extfile azure.cnf
+```

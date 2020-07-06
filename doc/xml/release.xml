@@ -14,6 +14,18 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.28dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="don.seiler"/>
+                        </release-item-contributor-list>
+
+                        <p>Azure support for repository storage.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Asynchronous S3 multipart upload.</p>
@@ -8403,6 +8415,11 @@
 
         <contributor id="dmitry.didovicher">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
+        </contributor>
+
+        <contributor id="don.seiler">
+            <contributor-name-display>Don Seiler</contributor-name-display>
+            <contributor-id type="github">dtseiler</contributor-id>
         </contributor>
 
         <contributor id="donicrosby">
