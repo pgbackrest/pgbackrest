@@ -52,7 +52,7 @@ Add a command to verify the contents of the repository. By the default the comma
         - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback)
 
     * Verify the checksum of all WAL/backup files
-        - Pass the checksum to verifyFie - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
+        - Pass the checksum to verifyFile - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
         - Skip checking size for WAL file but should check for size equality with the backup files - if one or the other doesn't match, then corrupt
         - in verifyFile() function be sure to add IoSync filter and then do IoReadDrain and then look at the results of the filters. See restore/file.c lines 85 though 87 (although need more filters e.g. decrypt, decompress, size, sha, sync).
 
@@ -512,6 +512,82 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
+/* CSHANG pseudo code:
+    VerifyResultData structure should have:
+        typedef struct VerifyResultData
+        {
+            MemContext *memContext;
+            List *archiveIdRangeList;   // lstNew(sizeof(ArchiveIdRange)), .comparator =  archiveIdComparator)
+            ... there will be other things here like backup result data e.g list or missing/invalid files in a backup.
+        } VerifyResultData;
+
+        typedef struct ArchiveIdRange
+        {
+            String *archiveId;
+            List *walRangeList;         // lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr)
+        } ArchiveIdRange;
+
+        typedef struct WalRange
+        {
+            String *stop;
+            String *start;
+            List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
+        } WalRange;
+
+        typedef struct InvalidFile      // this structure can be used for backup file stuff as well
+        {
+            String *fileName;
+            VerifyResult reason;            // this enum is the reason
+        }
+
+
+    Switch memory context to the verifyResultData structure;
+
+    WalRange walRange =
+        {
+            .start = strLstGet(jobData->walFileList, 0),
+            .stop = strLstGet(jobData->walFileList, 0),
+        };
+
+    unsigned int numWalRange = 1;
+    // Here I'd like to be able to calculate if the number of files in the directory has no gaps, such that if I have 10 files in
+    // the directory, then if I can say: if the start is X then the end should be Y and the total should be Z.
+    if (strLstSize(jobData->walFileList) == 1 ||
+        (strLstSize(jobData->walFileList) == expected number of WAL files in this dir based on WAL segment size) &&
+        strLstGet(jobData->walFileList, strLstSize(jobData->walFileList) - 1) == expected last file given first file))
+    then
+        // no gaps so set the stop to the last file in the list and add the range to the structure for the archiveId and we're done
+        walRange.stop = strLstGet(jobData->walFileList, strLstSize(jobData->walFileList) - 1);
+        lstAdd(pgArchiveRange.walRangeList, &walRange);
+    else
+        // there must be a gap so loop through and set up ranges
+        for (walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
+            if (strLstGet(jobData->walFileList, walFileIdx) > walRange.stop + 1) <== need to figure out how can calculate this +1
+                walRange.stop = strLstGet(jobData->walFileList, walFileIdx);
+            else
+                // found a gap
+                add the range to the list
+                start a new range:
+                    walRange =
+                        {
+                            .start = strLstGet(jobData->walFileList, walFileIdx),
+                            .stop = strLstGet(jobData->walFileList, walFileIdx),
+                        };
+                    numWalRange++;
+            FI;
+        ROF;
+
+    if (lstSize(pgArchiveRange.walRangeList) < numWalRange)
+        // add the last wal range
+        lstAdd(pgArchiveRange.walRangeList, &walRange);
+
+    // Now we have our ranges for this archiveId so add them
+    lstAdd(verifyResultData.archiveIdRangeList, &pgArchiveRange);
+
+    Switch memory context back to current;
+
+    Continue with the processing below. SEE JOB COMPLETE code to see what to do with rest of data.
+*/
                         do
                         {
                             const String *fileName = strLstGet(jobData->walFileList, 0);
@@ -519,7 +595,8 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             // Get the fully qualified file name
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
-// CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function.
+// CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function. But I need some clarity - according to pg website "Segment files are given ever-increasing numbers as names, starting at 000000010000000000000000. The numbers do not wrap, but it will take a very, very long time to exhaust the available stock of numbers" so I don't understand - if the first 8 numbers 00000001 are the timeline, then are they saying we normally would not rollover into a new timeline? And why do we organize the directories by timeline and not just put them all in one dir? Is that some limitations of directory names?
+
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
@@ -695,11 +772,26 @@ cmdVerify(void)
                             if (verifyResult != verifyOk)
                             {
                                 LOG_WARN_PID_FMT(processId, "SOME ERROR %s, %s", strPtr(filePathName), strPtr(fileName));
-                                // Log the result, increment the errorTotal count and if it is a WAL file, the remove it from the WAL list
-                                // //
-                                // if (strBeginsWithZ(fileName, STORAGE_REPO_ARCHIVE))
-                                //     strLstRemove(StringList *this, const String *item);
-                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup.info - so initially when we load the backup.info file, we really should reconstruct? A: David says no - we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
+
+                                /* CSHANG pseudo code:
+                                    Get the type of file this is (e.g. backup or archive file - probably just split the string into a stringlist by "/" and check that stringlist[0] = STORAGE_REPO_ARCHIVE or STORAGE_REPO_BACKUP)
+
+                                    If archive file
+                                        Get the archiveId from the filePathName (stringList[1] - is there a better way?)
+                                        Loop through verifyResultData.archiveIdRangeList and find the archiveId
+                                        If found, find the range in which this file falls into and add the file name and the reason to the invalidFileList
+
+                                    If backup file
+                                        Get the backup label from the filePathName (stringList[1] - is there a better way?)
+                                        Loop through verifyResultData.backupList and find the backup label
+                                        If found, add the file name and the reason to the invalidFileList
+
+
+                                    Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this pioint is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
+                                */
+
+
+                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup data (from the manifest file) A: David says we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
                                 // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
 
                             }
