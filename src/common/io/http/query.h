@@ -20,6 +20,10 @@ typedef struct HttpQuery HttpQuery;
 Constructors
 ***********************************************************************************************************************************/
 HttpQuery *httpQueryNew(void);
+
+// New from encoded query string
+HttpQuery *httpQueryNewStr(const String *query);
+
 HttpQuery *httpQueryDup(const HttpQuery *query);
 
 /***********************************************************************************************************************************
@@ -33,6 +37,9 @@ const String *httpQueryGet(const HttpQuery *this, const String *key);
 
 // Get list of keys
 StringList *httpQueryList(const HttpQuery *this);
+
+// Merge the contents of another query into this one
+HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 
 // Move to a new parent mem context
 HttpQuery *httpQueryMove(HttpQuery *this, MemContext *parentNew);
