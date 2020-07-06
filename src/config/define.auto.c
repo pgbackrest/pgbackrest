@@ -3170,7 +3170,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository key.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!! Azure shared key used to access the container."
+            "A shared key or shared access signature depending on the repo-azure-key-type option."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3222,7 +3222,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository key type.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!! Azure shared key used to access the container."
+            "The following types are supported for authorization:\n"
+            "\n"
+            "* shared - Shared key\n"
+            "* sas - Shared access signature"
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

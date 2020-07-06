@@ -647,6 +647,8 @@
                 <exe-cmd>{[project-exe]} repo-create</exe-cmd>
             </execute>
         </execute-list>
+
+        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
     </block-define>
 
     <!-- ======================================================================================================================= -->
