@@ -77,7 +77,7 @@ httpUriDecode(const String *uri)
 
     String *result = NULL;
 
-    // Encode if the string is not null
+    // Decode if the string is not null
     if (uri != NULL)
     {
         result = strNew("");
