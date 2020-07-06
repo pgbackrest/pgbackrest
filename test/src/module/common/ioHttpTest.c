@@ -29,7 +29,7 @@ testRun(void)
 
         TEST_RESULT_STR(httpUriDecode(NULL), NULL, "null decodes to null");
         TEST_RESULT_STR_Z(httpUriDecode(strNew("0-9_~%2FA%20Z.az")), "0-9_~/A Z.az", "valid decode");
-        TEST_ERROR(httpUriDecode(strNew("%A")), FormatError, "invalid escape sequence in '%A'");
+        TEST_ERROR(httpUriDecode(strNew("%A")), FormatError, "invalid escape sequence length in '%A'");
         TEST_ERROR(httpUriDecode(strNew("%XX")), FormatError, "unable to convert base 16 string 'XX' to unsigned int");
     }
 

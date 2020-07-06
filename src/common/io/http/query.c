@@ -54,11 +54,12 @@ httpQueryNewStr(const String *query)
         FUNCTION_TEST_PARAM(STRING, query);
     FUNCTION_TEST_END();
 
+    ASSERT(query != NULL);
+
     HttpQuery *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("HttpQuery")
     {
-        // Allocate state and set context
         this = memNew(sizeof(HttpQuery));
 
         *this = (HttpQuery)

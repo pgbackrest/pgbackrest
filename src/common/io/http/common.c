@@ -89,12 +89,17 @@ httpUriDecode(const String *uri)
             {
                 char uriChar = strPtr(uri)[uriIdx];
 
+                // Convert escaped characters
                 if (uriChar == '%')
                 {
-                    if (strSize(uri) - uriIdx - 1 < 2)
-                        THROW_FMT(FormatError, "invalid escape sequence in '%s'", strPtr(uri));
+                    // Sequence must be exactly three characters (% and two hex digits)
+                    if (strSize(uri) - uriIdx < 3)
+                        THROW_FMT(FormatError, "invalid escape sequence length in '%s'", strPtr(uri));
 
+                    // Convert hex digits
                     uriChar = (char)cvtZToUIntBase(strPtr(strSubN(uri, uriIdx + 1, 2)), 16);
+
+                    // Skip to next character or escape
                     uriIdx += 2;
                 }
 
