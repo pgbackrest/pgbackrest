@@ -586,19 +586,6 @@ testRun(void)
                         "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
                         "</EnumerationResults>");
 
-                        // "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                        // "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
-                        // "    <Contents>"
-                        // "        <Key>path/to/test1.txt</Key>"
-                        // "    </Contents>"
-                        // "    <Contents>"
-                        // "        <Key>path/to/test2.txt</Key>"
-                        // "    </Contents>"
-                        // "   <CommonPrefixes>"
-                        // "       <Prefix>path/to/path1/</Prefix>"
-                        // "   </CommonPrefixes>"
-                        // "</ListBucketResult>");
-
                 testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
                 testResponseP(
                     .content =
