@@ -440,6 +440,30 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+typedef struct VerifyResultData
+{
+    // MemContext *memContext;   there will also be other things here like backup result data
+    List *archiveIdRangeList;
+} VerifyResultData;
+
+typedef struct ArchiveIdRange
+{
+    String *archiveId;
+    List *walRangeList;         // lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr)
+} ArchiveIdRange;
+
+typedef struct WalRange
+{
+    String *stop;
+    String *start;
+    List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
+} WalRange;
+
+typedef struct InvalidFile      // this structure can be used for backup file stuff as well
+{
+    String *fileName;
+    VerifyResult reason;            // this enum is the reason
+} InvalidFile;
 
 typedef struct VerifyJobData
 {
@@ -452,6 +476,7 @@ typedef struct VerifyJobData
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
+    VerifyResultData verifyResultData;
 } VerifyJobData;
 
 static ProtocolParallelJob *
@@ -470,7 +495,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // Initialize the result
     ProtocolParallelJob *result = NULL;
 
-    // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW
+    // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW - will later have a memContext management
     // {
         // Get a new job if there are any left
         VerifyJobData *jobData = data;
@@ -479,6 +504,14 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         while (strLstSize(jobData->archiveIdList) > 0)
         {
             String *archiveId = strLstGet(jobData->archiveIdList, 0);
+
+            // CSHANG Switch memory context?
+
+            ArchiveIdRange archiveIdRange =
+            {
+                .archiveId = strDup(archiveId),
+                .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr);
+            };
 
             if (strLstSize(jobData->walPathList) == 0)
             {
@@ -512,82 +545,51 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
-/* CSHANG pseudo code:
-    VerifyResultData structure should have:
-        typedef struct VerifyResultData
-        {
-            MemContext *memContext;
-            List *archiveIdRangeList;   // lstNew(sizeof(ArchiveIdRange)), .comparator =  archiveIdComparator)
-            ... there will be other things here like backup result data e.g list or missing/invalid files in a backup.
-        } VerifyResultData;
+                        // CSHANG Switch memory context to the verifyResultData structure;
 
-        typedef struct ArchiveIdRange
-        {
-            String *archiveId;
-            List *walRangeList;         // lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr)
-        } ArchiveIdRange;
-
-        typedef struct WalRange
-        {
-            String *stop;
-            String *start;
-            List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
-        } WalRange;
-
-        typedef struct InvalidFile      // this structure can be used for backup file stuff as well
-        {
-            String *fileName;
-            VerifyResult reason;            // this enum is the reason
-        }
-
-
-    Switch memory context to the verifyResultData structure;
-
-    WalRange walRange =
-        {
-            .start = strLstGet(jobData->walFileList, 0),
-            .stop = strLstGet(jobData->walFileList, 0),
-        };
-
-    unsigned int numWalRange = 1;
-    // Here I'd like to be able to calculate if the number of files in the directory has no gaps, such that if I have 10 files in
-    // the directory, then if I can say: if the start is X then the end should be Y and the total should be Z.
-    if (strLstSize(jobData->walFileList) == 1 ||
-        (strLstSize(jobData->walFileList) == expected number of WAL files in this dir based on WAL segment size) &&
-        strLstGet(jobData->walFileList, strLstSize(jobData->walFileList) - 1) == expected last file given first file))
-    then
-        // no gaps so set the stop to the last file in the list and add the range to the structure for the archiveId and we're done
-        walRange.stop = strLstGet(jobData->walFileList, strLstSize(jobData->walFileList) - 1);
-        lstAdd(pgArchiveRange.walRangeList, &walRange);
-    else
-        // there must be a gap so loop through and set up ranges
-        for (walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
-            if (strLstGet(jobData->walFileList, walFileIdx) > walRange.stop + 1) <== need to figure out how can calculate this +1
-                walRange.stop = strLstGet(jobData->walFileList, walFileIdx);
-            else
-                // found a gap
-                add the range to the list
-                start a new range:
-                    walRange =
+                        // Initialize the WAL range
+                        WalRange walRange =
                         {
-                            .start = strLstGet(jobData->walFileList, walFileIdx),
-                            .stop = strLstGet(jobData->walFileList, walFileIdx),
+                            .start = strSubN(strLstGet(jobData->walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
+                            .stop = strSubN(strLstGet(jobData->walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
                         };
-                    numWalRange++;
-            FI;
-        ROF;
 
-    if (lstSize(pgArchiveRange.walRangeList) < numWalRange)
-        // add the last wal range
-        lstAdd(pgArchiveRange.walRangeList, &walRange);
+                        unsigned int numWalRange = 1;
 
-    // Now we have our ranges for this archiveId so add them
-    lstAdd(verifyResultData.archiveIdRangeList, &pgArchiveRange);
+                        // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
+                        // the last WAL
+                        for (walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
+                        {
+                            String *walSegment = strSubN(strLstGet(jobData->walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
+                            if (pgLsnFromWalSegment(walSegment, PG_WAL_SEGMENT_SIZE_DEFAULT) -
+                                pgLsnFromWalSegment(walRange.stop, PG_WAL_SEGMENT_SIZE_DEFAULT) == PG_WAL_SEGMENT_SIZE_DEFAULT)
+                            {
+                                walRange.stop = walSegment;
+                            }
+                            else
+                            {
+                                // A gap was found so add the current range to the list and start a new range
+                                lstAdd(archiveIdRange.walRangeList, &walRange);
+                                walRange =
+                                {
+                                    .start = walSegment,
+                                    .stop = walSegment,
+                                };
+                                numWalRange++;
+                            }
+                        }
 
-    Switch memory context back to current;
+                        // Add the last walRange if not yet added
+                        if (lstSize(archiveIdRange.walRangeList) < numWalRange)
+                            lstAdd(archiveIdRange.walRangeList, &walRange);
 
-    Continue with the processing below. SEE JOB COMPLETE code to see what to do with rest of data.
-*/
+                        // Now we have our ranges for this archiveId so add them
+                        lstAdd(jobData->verifyResultData.archiveIdRangeList, &archiveIdRange);
+
+//    Switch memory context back to current;
+
+//    Continue with the processing below. SEE JOB COMPLETE code to see what to do with rest of data.
+
                         do
                         {
                             const String *fileName = strLstGet(jobData->walFileList, 0);
@@ -596,6 +598,47 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
 // CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function. But I need some clarity - according to pg website "Segment files are given ever-increasing numbers as names, starting at 000000010000000000000000. The numbers do not wrap, but it will take a very, very long time to exhaust the available stock of numbers" so I don't understand - if the first 8 numbers 00000001 are the timeline, then are they saying we normally would not rollover into a new timeline? And why do we organize the directories by timeline and not just put them all in one dir? Is that some limitations of directory names?
+
+/*
+uint64_t
+pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+    ASSERT(walSegmentSize > 0);
+
+    uint64_t result = cvtZToUInt64Base(strPtr(strSubN(walSegment, 8, 8)), 16) << 32;
+    result += cvtZToUInt64Base(strPtr(strSubN(walSegment, 16, 8)), 16) * walSegmentSize;
+
+    // THROW_FMT(AssertError, "%" PRIx64, result);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x1000000), "00000001FFFFFFFF000000AA", "lsn to wal segment");
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFF40000000, 0x40000000), "00000001FFFFFFFF00000001", "lsn to wal segment");
+
+        TEST_RESULT_UINT(
+            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF000000AA"), 0x1000000), 0xFFFFFFFFAA000000, "wal segment to lsn");
+        TEST_RESULT_UINT(
+            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000002"), 0x40000000), 0xFFFFFFFF80000000, "wal segment to lsn");
+
+// So can test that the next file is the distance of one WAL segment size away
+        TEST_RESULT_UINT((pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000) - pgLsnFromWalSegment(STRDEF("0000000100000000000000FE"), 0x1000000)), 0x1000000, "test distance");
+
+// 0000000100000000000000FF
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, (uint64_t)0x00000000FF000000  + (16 * 1024 * 1024), 0x1000000), "000000010000000100000000", "test");
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000) + (16 * 1024 * 1024), 0x1000000), "000000010000000100000000", "test");
+
+
+        // THROW_FMT(AssertError, "%016" PRIX64, pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000));
+*/
 
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -708,6 +751,7 @@ cmdVerify(void)
                 .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
+                .archiveIdRangeList = lstNew(sizeof(ArchiveIdRange)), .comparator =  archiveIdComparator),
             };
 
             // Get a list of backups in the repo
