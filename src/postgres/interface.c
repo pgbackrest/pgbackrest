@@ -627,6 +627,23 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
         strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
 }
 
+uint64_t
+pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+    ASSERT(walSegmentSize > 0);
+
+    FUNCTION_TEST_RETURN(
+        (cvtZToUInt64Base(strPtr(strSubN(walSegment, 8, 8)), 16) << 32) +
+        (cvtZToUInt64Base(strPtr(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
+}
+
 /**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
