@@ -7,6 +7,7 @@ Zero-Terminated String Handler
 /***********************************************************************************************************************************
 Zero-terminated strings that are generally useful
 ***********************************************************************************************************************************/
+#define AMPERSAND_Z                                                 "&"
 #define BRACEL_Z                                                    "{"
 #define BRACER_Z                                                    "}"
 #define BRACKETL_Z                                                  "["
@@ -24,6 +25,7 @@ Zero-terminated strings that are generally useful
 #define LF_Z                                                        "\n"
 #define N_Z                                                         "n"
 #define NULL_Z                                                      "null"
+#define QUESTION_Z                                                  "?"
 #define QUOTED_Z                                                    "\""
 #define TRUE_Z                                                      "true"
 #define Y_Z                                                         "y"

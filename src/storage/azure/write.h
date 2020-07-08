@@ -1,24 +1,15 @@
 /***********************************************************************************************************************************
-HTTP Common
+Azure Storage File Write
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HTTP_COMMON_H
-#define COMMON_IO_HTTP_COMMON_H
+#ifndef STORAGE_AZURE_WRITE_H
+#define STORAGE_AZURE_WRITE_H
 
-#include <time.h>
-
-#include "common/type/string.h"
+#include "storage/azure/storage.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
-// Convert HTTP date to time_t and vice versa
-time_t httpDateToTime(const String *lastModified);
-String *httpDateFromTime(time_t time);
-
-// Encode string to conform with URI specifications. If a path is being encoded then / characters won't be encoded.
-String *httpUriEncode(const String *uri, bool path);
-
-// Decode string that conforms to URI specifications
-String *httpUriDecode(const String *uri);
+StorageWrite *storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize);
 
 #endif

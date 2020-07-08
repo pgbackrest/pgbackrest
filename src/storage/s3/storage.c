@@ -470,7 +470,7 @@ storageS3ListInternal(
                     subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
 
                     // Add to list
-                    callback(this, callbackData, subPath, storageTypePath, subPathNode);
+                    callback(this, callbackData, subPath, storageTypePath, NULL);
                 }
 
                 // Get file list
@@ -576,10 +576,9 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
         FUNCTION_TEST_PARAM(XML_NODE, xml);
     FUNCTION_TEST_END();
 
-    (void)this;
+    (void)this;                                                     // Unused but still logged above for debugging
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
-    ASSERT(xml != NULL);
 
     StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
 
@@ -593,10 +592,15 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
     if (data->level >= storageInfoLevelBasic)
     {
         info.type = type;
-        info.size = type == storageTypeFile ?
-            cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0;
-        info.timeModified = type == storageTypeFile ?
-            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0;
+
+        // Add additional info for files
+        if (type == storageTypeFile)
+        {
+            ASSERT(xml != NULL);
+
+            info.size = cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
+            info.timeModified = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true)));
+        }
     }
 
     data->callback(data->callbackData, &info);
@@ -725,19 +729,19 @@ storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *n
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
+        (void)name;                                                 // Unused since full path from XML needed
         FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(XML_NODE, xml);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
-    (void)name;
-    ASSERT(xml != NULL);
 
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
     {
+        ASSERT(xml != NULL);
+
         StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
 
         // If there is something to delete then create the request
@@ -864,6 +868,7 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(accessKey != NULL);
     ASSERT(secretAccessKey != NULL);
+    ASSERT(partSize != 0);
 
     Storage *this = NULL;
 

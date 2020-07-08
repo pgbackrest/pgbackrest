@@ -74,9 +74,9 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
-### S3-Compatible Object Store Support
+### S3 and Azure Compatible Object Store Support
 
-pgBackRest repositories can be located in S3-compatible object stores to allow for virtually unlimited capacity and retention.
+pgBackRest repositories can be located in S3 and Azure compatible object stores to allow for virtually unlimited capacity and retention.
 
 ### Encryption
 

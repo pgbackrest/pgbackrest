@@ -212,6 +212,17 @@ use constant CFGOPT_REPO_HOST_CONFIG_PATH                           => CFGOPT_RE
 use constant CFGOPT_REPO_HOST_PORT                                  => CFGOPT_REPO_HOST . '-port';
 use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_REPO_HOST . '-user';
 
+# Repository Azure
+use constant CFGDEF_REPO_AZURE                                      => CFGDEF_PREFIX_REPO . '-azure';
+use constant CFGOPT_REPO_AZURE_ACCOUNT                              => CFGDEF_REPO_AZURE . '-account';
+use constant CFGOPT_REPO_AZURE_CA_FILE                              => CFGDEF_REPO_AZURE . '-ca-file';
+use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_REPO_AZURE . '-ca-path';
+use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
+use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
+use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
+use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
+use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
+
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
@@ -297,6 +308,7 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 
 # Repo type
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPTVAL_REPO_TYPE_AZURE                              => 'azure';
 use constant CFGOPTVAL_REPO_TYPE_CIFS                               => 'cifs';
 use constant CFGOPTVAL_REPO_TYPE_POSIX                              => 'posix';
 use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
@@ -1770,6 +1782,82 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_REPO_AZURE_ACCOUNT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_SECURE => true,
+        &CFGDEF_REQUIRED => true,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_AZURE],
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_CA_FILE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
+    },
+
+    &CFGOPT_REPO_AZURE_CA_PATH =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
+    },
+
+    &CFGOPT_REPO_AZURE_CONTAINER =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_KEY =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_ACCOUNT,
+    },
+
+    &CFGOPT_REPO_AZURE_PORT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 443,
+        &CFGDEF_ALLOW_RANGE => [1, 65535],
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_VERIFY_TLS =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
     &CFGOPT_REPO_S3_BUCKET =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
@@ -1949,6 +2037,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
         &CFGDEF_ALLOW_LIST =>
         [
+            &CFGOPTVAL_REPO_TYPE_AZURE,
             &CFGOPTVAL_REPO_TYPE_CIFS,
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
