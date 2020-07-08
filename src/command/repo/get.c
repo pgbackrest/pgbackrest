@@ -49,55 +49,77 @@ storageGetProcess(IoWrite *destination)
 
             if (repoCipherType != cipherTypeNone)
             {
+                /*******************************************************************************************************************
+                Repository encryption design:
+                REPO / (repoCipherPass)
+                     / archive   / (repoCipherPass)
+                     / archive   / stanza / (archiveCipherPass)
+                     / backup    / (repoCipherPass)
+                     / backup    / stanza / (backupCipherPass)
+                     / backup    / stanza / set / (manifestCipherPass)
+                     / backup    / stanza / backup.history / (manifestCipherPass)
+                *******************************************************************************************************************/
+
                 // Check for a passphrase parameter
                 const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
 
                 // If not passed as a parameter, find the passphrase
                 if (cipherPass == NULL)
                 {
-                    // If backup.info or archive.info, use the config repo passphrase
-                    if (strEndsWithZ(file, INFO_BACKUP_FILE) ||
-                        strEndsWithZ(file, INFO_BACKUP_FILE".copy") ||
-                        strEndsWithZ(file, INFO_ARCHIVE_FILE) ||
-                        strEndsWithZ(file, INFO_ARCHIVE_FILE".copy"))
-                    {
-                        cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
-                    }
-                    else
-                    {                  
-                        // Find out if we look for a file in archive or in backup repo
-                        const String *storagePathArchive = storagePathP(storageRepo(), STORAGE_PATH_ARCHIVE_STR);
-                        if (strBeginsWith(file, storagePathArchive) || strBeginsWith(file, STORAGE_PATH_ARCHIVE_STR))
-                        {
-                            // Guess the stanza name
-                            StringList *tmpSplitLst;
-                            if (strBeginsWith(file, FSLASH_STR))
-                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(storagePathArchive) + 1), FSLASH_STR);
-                            else
-                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(STORAGE_PATH_ARCHIVE_STR) + 1), FSLASH_STR);
+                    cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
 
-                            const String *stanza = strLstGet(tmpSplitLst, 0);
-                            InfoArchive *info = infoArchiveLoadFile(
-                                storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
-                                repoCipherType, cfgOptionStr(cfgOptRepoCipherPass));
-                            cipherPass = strDup(infoArchiveCipherPass(info));
+                    const String *relativeFile = strDup(file);
+                    if (strBeginsWith(relativeFile, FSLASH_STR))
+                        relativeFile = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+
+                    // Encrypted files could be stored directly at the root of the repo if needed
+                    // We should then at least be able to determine the archive or backup directory
+                    StringList *filePathSplitLst = strLstNewSplit(relativeFile, FSLASH_STR);
+                    if (strLstSize(filePathSplitLst) > 1)
+                    {
+                        const String *stanza = strLstGet(filePathSplitLst, 1);
+
+                        // If stanza option is specified, it must match the given file path
+                        if (cfgOptionStrNull(cfgOptStanza) != NULL && ! strEq(stanza, cfgOptionStr(cfgOptStanza)))
+                            THROW_FMT(AssertError, "stanza name '%s' given in option doesn't match the given path", 
+                                strPtr(cfgOptionStr(cfgOptStanza)));
+
+                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
+                        {
+                            // Find the archiveCipherPass
+                            if (! strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE) &&
+                                ! strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE".copy"))
+                            {
+                                InfoArchive *info = infoArchiveLoadFile(
+                                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
+                                    repoCipherType, cipherPass);
+                                cipherPass = strDup(infoArchiveCipherPass(info));
+                            }
+                            
                         }
                         
-                        const String *storagePathBackup = storagePathP(storageRepo(), STORAGE_PATH_BACKUP_STR);
-                        if (strBeginsWith(file, storagePathBackup) || strBeginsWith(file, STORAGE_PATH_BACKUP_STR))
+                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            // Guess the stanza name
-                            StringList *tmpSplitLst;
-                            if (strBeginsWith(file, FSLASH_STR))
-                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(storagePathBackup) + 1), FSLASH_STR);
-                            else
-                                tmpSplitLst = strLstNewSplit(strSub(file, strSize(STORAGE_PATH_BACKUP_STR) + 1), FSLASH_STR);
+                            if (! strEndsWithZ(relativeFile, INFO_BACKUP_FILE) &&
+                                ! strEndsWithZ(relativeFile, INFO_BACKUP_FILE".copy"))
+                            {
+                                // Find the backupCipherPass
+                                InfoBackup *info = infoBackupLoadFile(
+                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
+                                    repoCipherType, cipherPass);
+                                cipherPass = strDup(infoBackupCipherPass(info));
 
-                            const String *stanza = strLstGet(tmpSplitLst, 0);
-                            InfoBackup *info = infoBackupLoadFile(
-                                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
-                                repoCipherType, cfgOptionStr(cfgOptRepoCipherPass));
-                            cipherPass = strDup(infoBackupCipherPass(info));
+                                // Find the manifestCipherPass
+                                if (! strEq(strLstGet(filePathSplitLst, 2), STRDEF("backup.history")) &&
+                                    ! strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE) &&
+                                    ! strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE".copy"))
+                                {
+                                   const Manifest *manifest = manifestLoadFile(
+                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza), 
+                                        strPtr(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
+                                    cipherPass = strDup(manifestCipherSubPass(manifest));
+                                }
+                            }
                         }
                     }
                 }
