@@ -309,6 +309,80 @@
                 The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the count of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-account" name="Azure Repository Account">
+                        <summary>Azure repository account.</summary>
+
+                        <text>Azure account used to store the repository.</text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-ca-file" name="Azure Repository TLS CA File">
+                        <summary>Azure repository TLS CA file.</summary>
+
+                        <text>Use a CA file other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-ca-path" name="Azure Respository TLS CA Path">
+                        <summary>Azure repository TLS CA path.</summary>
+
+                        <text>Use a CA path other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-container" name="Azure Repository Container">
+                        <summary>Azure repository container.</summary>
+
+                        <text>Azure container used to store the repository.
+
+                        <backrest/> repositories can be stored in the container root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other Azure-generated content can also be stored in the container.</text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-host" name="Azure Repository Host">
+                        <summary>Azure repository host.</summary>
+
+                        <text>Connect to a host other than the default. This is typically used for testing.</text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-key" name="Azure Repository Shared Key">
+                        <summary>Azure repository shared key.</summary>
+
+                        <text>Azure shared key used to access the container.</text>
+
+                        <example>T+9+aov82qNhrcXSNGZCzm9mjd4d75/oxxOr6r1JVpgTLA==</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-port" name="Azure Repository Server Port">
+                        <summary>Azure repository server port.</summary>
+
+                        <text>Port to use when connecting to the default server (or host if specified). This is typically used for testing.</text>
+
+                        <example>10000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                        <config-key id="repo-azure-verify-tls" name="Azure Repository Server Certificate Verify">
+                        <summary>Azure repository server certificate verify.</summary>
+
+                        <text>Disables verification of the Azure server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
