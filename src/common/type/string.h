@@ -138,11 +138,7 @@ String *strPathAbsolute(const String *this, const String *base);
 __attribute__((always_inline)) static inline const char *
 strPtr(const String *this)
 {
-    // Avoid uncovered branch during coverage testing
-#ifndef DEBUG_COVERAGE
-    ASSERT(this != NULL);
-#endif
-
+    ASSERT_INLINE(this != NULL);
     return ((const StringConst *)this)->buffer;
 }
 
