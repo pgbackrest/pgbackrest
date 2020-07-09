@@ -140,6 +140,7 @@
         <variable key="azure-account">pgbackrest</variable>
         <variable key="azure-container">demo-container</variable>
         <variable key="azure-repo">demo-repo</variable>
+        <variable key="azure-key-type">shared</variable>
         <variable key="azure-key">YXpLZXk=</variable>
 
         <!-- S3 Settings -->
@@ -626,6 +627,7 @@
             <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
             <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
             <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
@@ -645,6 +647,8 @@
                 <exe-cmd>{[project-exe]} repo-create</exe-cmd>
             </execute>
         </execute-list>
+
+        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
     </block-define>
 
     <!-- ======================================================================================================================= -->
