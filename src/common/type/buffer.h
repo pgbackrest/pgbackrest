@@ -93,9 +93,9 @@ There is nothing user-accessible here but this construct allows constant buffers
 functions that process dynamically allocated buffers.
 ***********************************************************************************************************************************/
 #define BUFFER_COMMON                                                                                                              \
-    size_t size;                                                    /* Actual size of buffer */                                    \
-    bool limitSet;                                                  /* Has a limit been set? */                                    \
-    size_t limit;                                                   /* Make the buffer appear smaller */                           \
+    size_t sizeAlloc;                                               /* Allocated size of the buffer */                             \
+    size_t size;                                                    /* Reported size of the buffer */                              \
+    bool sizeLimit;                                                 /* Is the size limited to make the buffer appear smaller? */   \
     size_t used;                                                    /* Amount of buffer used */
 
 typedef struct BufferConst

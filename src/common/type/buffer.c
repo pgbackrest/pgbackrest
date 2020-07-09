@@ -55,12 +55,13 @@ bufNew(size_t size)
         *this = (Buffer)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .sizeAlloc = size,
             .size = size,
         };
 
         // Allocate buffer
         if (size > 0)
-            this->buffer = memNew(this->size);
+            this->buffer = memNew(this->sizeAlloc);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -224,7 +225,7 @@ bufResize(Buffer *this, size_t size)
     ASSERT(this != NULL);
 
     // Only resize if it the new size is different
-    if (this->size != size)
+    if (this->sizeAlloc != size)
     {
         // If new size is zero then free memory if allocated
         if (size == 0)
@@ -239,7 +240,7 @@ bufResize(Buffer *this, size_t size)
             MEM_CONTEXT_END();
 
             this->buffer = NULL;
-            this->size = 0;
+            this->sizeAlloc = 0;
         }
         // Else allocate or resize
         else
@@ -253,14 +254,16 @@ bufResize(Buffer *this, size_t size)
             }
             MEM_CONTEXT_END();
 
-            this->size = size;
+            this->sizeAlloc = size;
         }
 
-        if (this->used > this->size)
-            this->used = this->size;
+        if (this->used > this->sizeAlloc)
+            this->used = this->sizeAlloc;
 
-        if (this->limitSet && this->limit > this->size)
-            this->limit = this->size;
+        if (!this->sizeLimit)
+            this->size = this->sizeAlloc;
+        else if (this->size > this->sizeAlloc)
+            this->size = this->sizeAlloc;
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -289,7 +292,8 @@ bufLimitClear(Buffer *this)
 
     ASSERT(this != NULL);
 
-    this->limitSet = false;
+    this->sizeLimit = false;
+    this->size = this->sizeAlloc;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -303,10 +307,10 @@ bufLimitSet(Buffer *this, size_t limit)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(limit <= this->size);
+    ASSERT(limit <= this->sizeAlloc);
 
-    this->limit = limit;
-    this->limitSet = true;
+    this->size = limit;
+    this->sizeLimit = true;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -372,7 +376,7 @@ bufSize(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->limitSet ? this->limit : this->size);
+    FUNCTION_TEST_RETURN(this->size);
 }
 
 /**********************************************************************************************************************************/
@@ -438,12 +442,9 @@ bufUsedZero(Buffer *this)
 String *
 bufToLog(const Buffer *this)
 {
-    String *result = strNewFmt("{used: %zu, size: %zu, limit: ", this->used, this->size);
-
-    if (this->limitSet)
-        strCatFmt(result, "%zu}", this->limit);
-    else
-        strCatZ(result, "<off>}");
+    String *result = strNewFmt(
+        "{used: %zu, size: %zu%s", this->used, this->size,
+        this->sizeLimit ? strPtr(strNewFmt(", sizeAlloc: %zu}", this->sizeAlloc)) : "}");
 
     return result;
 }

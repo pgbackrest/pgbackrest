@@ -144,10 +144,10 @@ testRun(void)
     if (testBegin("bufToLog()"))
     {
         Buffer *buffer = bufNew(100);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: <off>}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100}", "buf to log");
 
         bufLimitSet(buffer, 50);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: 50}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
