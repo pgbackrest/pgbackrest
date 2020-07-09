@@ -458,9 +458,6 @@ sub walGenerateContent
     # Add the system identifier
     $tWalContent .= pack('Q', $self->dbSysId($strPgVersion));
 
-    # Add segment size
-    $tWalContent .= pack('L', PG_WAL_SEGMENT_SIZE);
-
     # Add the source number to produce WAL segments with different checksums
     $tWalContent .= pack('S', $iSourceNo);
 
