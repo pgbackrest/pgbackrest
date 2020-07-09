@@ -298,6 +298,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // expire-auto option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "no-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "reset-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExpireAuto,
+    },
+
     // filter option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2692,6 +2707,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptHostId,
     cfgOptIgnoreMissing,

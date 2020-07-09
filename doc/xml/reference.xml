@@ -744,6 +744,15 @@
                         <example>5G</example>
                     </config-key>
 
+                    <!-- CONFIG - BACKUP SECTION - EXPIRE-AUTO -->
+                    <config-key id="expire-auto" name="Expire Auto">
+                        <summary>Automatically run the <cmd>expire</cmd> command after a successful backup.</summary>
+
+                        <text>The setting is enabled by default. Don't forget to manually run the <cmd>expire</cmd> command if you disable it.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - RESUME -->
                     <config-key id="resume" name="Resume">
                         <summary>Allow resume of failed backup.</summary>
