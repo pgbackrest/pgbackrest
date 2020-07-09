@@ -28,11 +28,6 @@ testRun(void)
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
 
-
-        TEST_ASSIGN(buffer, bufNewUseC((void *)"FIXED-BUFFER", sizeof("FIXED-BUFFER")), "new fixed buffer from string");
-        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "FIXED-BUFFER", 12) == 0, true, "check buffer");
-        TEST_ERROR(bufResize(buffer, 999), AssertError, "fixed size buffer cannot be resized");
-
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
 
@@ -149,10 +144,10 @@ testRun(void)
     if (testBegin("bufToLog()"))
     {
         Buffer *buffer = bufNew(100);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: <off>}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100}", "buf to log");
 
         bufLimitSet(buffer, 50);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: 50}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
