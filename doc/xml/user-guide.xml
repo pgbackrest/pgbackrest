@@ -627,7 +627,7 @@
             <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
             <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
             <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>

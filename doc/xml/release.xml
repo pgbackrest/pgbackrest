@@ -28,6 +28,9 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Azure support for repository storage."/>
+                        <commit subject="Add shared access signature (SAS) authorization for Azure."/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
