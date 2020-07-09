@@ -138,11 +138,7 @@ String *strPathAbsolute(const String *this, const String *base);
 __attribute__((always_inline)) static inline const char *
 strPtr(const String *this)
 {
-    // Avoid uncovered branch during coverage testing
-#ifndef DEBUG_COVERAGE
-    ASSERT(this != NULL);
-#endif
-
+    ASSERT_INLINE(this != NULL);
     return ((const StringConst *)this)->buffer;
 }
 
@@ -215,6 +211,7 @@ STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
 STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
+STRING_DECLARE(CRLF_STR);
 STRING_DECLARE(DASH_STR);
 STRING_DECLARE(DOT_STR);
 STRING_DECLARE(DOTDOT_STR);

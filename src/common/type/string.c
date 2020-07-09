@@ -23,6 +23,7 @@ STRING_EXTERN(BRACKETL_STR,                                         BRACKETL_Z);
 STRING_EXTERN(BRACKETR_STR,                                         BRACKETR_Z);
 STRING_EXTERN(COLON_STR,                                            COLON_Z);
 STRING_EXTERN(CR_STR,                                               CR_Z);
+STRING_EXTERN(CRLF_STR,                                             CRLF_Z);
 STRING_EXTERN(DASH_STR,                                             DASH_Z);
 STRING_EXTERN(DOT_STR,                                              DOT_Z);
 STRING_EXTERN(DOTDOT_STR,                                           DOTDOT_Z);

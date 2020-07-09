@@ -100,29 +100,26 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                     {
                         session = httpClientOpen(this->client);
 
-                        // Write the request
-                        String *queryStr = httpQueryRender(this->query);
-
-                        ioWriteStrLine(
-                            httpSessionIoWrite(session),
+                        // Format the request
+                        String *requestStr =
                             strNewFmt(
-                                "%s %s%s%s " HTTP_VERSION "\r", strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
-                                queryStr == NULL ? "" : "?", queryStr == NULL ? "" : strPtr(queryStr)));
+                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
+                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strPtr(httpQueryRender(this->query)));
 
-                        // Write headers
+                        // Add headers
                         const StringList *headerList = httpHeaderList(this->header);
 
                         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                         {
                             const String *headerKey = strLstGet(headerList, headerIdx);
 
-                            ioWriteStrLine(
-                                httpSessionIoWrite(session),
-                                strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey))));
+                            strCatFmt(
+                                requestStr, "%s:%s" CRLF_Z, strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey)));
                         }
 
-                        // Write out blank line to end the headers
-                        ioWriteLine(httpSessionIoWrite(session), CR_BUF);
+                        // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs
+                        strCat(requestStr, CRLF_STR);
+                        ioWrite(httpSessionIoWrite(session), BUFSTR(requestStr));
 
                         // Write out content if any
                         if (this->content != NULL)
