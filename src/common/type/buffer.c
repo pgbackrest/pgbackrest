@@ -88,26 +88,6 @@ bufNewC(const void *buffer, size_t size)
 
 /**********************************************************************************************************************************/
 Buffer *
-bufNewUseC(void *buffer, size_t size)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, buffer);
-        FUNCTION_TEST_PARAM(SIZE, size);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    // Create object and copy data
-    Buffer *this = bufNew(0);
-    this->buffer = buffer;
-    this->size = size;
-    this->fixedSize = true;
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-Buffer *
 bufDup(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -246,9 +226,6 @@ bufResize(Buffer *this, size_t size)
     // Only resize if it the new size is different
     if (this->size != size)
     {
-        if (this->fixedSize)
-            THROW(AssertError, "fixed size buffer cannot be resized");
-
         // If new size is zero then free memory if allocated
         if (size == 0)
         {
