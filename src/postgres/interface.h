@@ -87,6 +87,14 @@ Segment size can only be changed at compile time and is not known to be well-tes
 #define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
+Define default wal segment size
+
+Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
+WAL segment size is supported for versions below 11.
+***********************************************************************************************************************************/
+#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
+
+/***********************************************************************************************************************************
 PostgreSQL Control File Info
 ***********************************************************************************************************************************/
 typedef struct PgControl

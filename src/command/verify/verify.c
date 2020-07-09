@@ -15,6 +15,7 @@ Verify Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
@@ -440,16 +441,16 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-typedef struct VerifyResultData
-{
-    // MemContext *memContext;   there will also be other things here like backup result data
-    List *archiveIdRangeList;
-} VerifyResultData;
+// typedef struct VerifyResultData
+// {
+//     // MemContext *memContext;   there will also be other things here like backup result data
+//     List *archiveIdRangeList;
+// } VerifyResultData;
 
 typedef struct ArchiveIdRange
 {
     String *archiveId;
-    List *walRangeList;         // lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr)
+    List *walRangeList;
 } ArchiveIdRange;
 
 typedef struct WalRange
@@ -476,7 +477,7 @@ typedef struct VerifyJobData
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
-    VerifyResultData verifyResultData;
+    List *archiveIdRangeList;
 } VerifyJobData;
 
 static ProtocolParallelJob *
@@ -510,7 +511,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             ArchiveIdRange archiveIdRange =
             {
                 .archiveId = strDup(archiveId),
-                .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr);
+                .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
             };
 
             if (strLstSize(jobData->walPathList) == 0)
@@ -545,7 +546,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
-                        // CSHANG Switch memory context to the verifyResultData structure;
+                        // CSHANG Switch memory context to the verifyResultData structure?
 
                         // Initialize the WAL range
                         WalRange walRange =
@@ -558,7 +559,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                         // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
                         // the last WAL
-                        for (walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
+                        for (unsigned int walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
                         {
                             String *walSegment = strSubN(strLstGet(jobData->walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
                             if (pgLsnFromWalSegment(walSegment, PG_WAL_SEGMENT_SIZE_DEFAULT) -
@@ -570,10 +571,10 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             {
                                 // A gap was found so add the current range to the list and start a new range
                                 lstAdd(archiveIdRange.walRangeList, &walRange);
-                                walRange =
+                                walRange = (WalRange)
                                 {
-                                    .start = walSegment,
-                                    .stop = walSegment,
+                                    .start = strDup(walSegment),
+                                    .stop = strDup(walSegment),
                                 };
                                 numWalRange++;
                             }
@@ -584,7 +585,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             lstAdd(archiveIdRange.walRangeList, &walRange);
 
                         // Now we have our ranges for this archiveId so add them
-                        lstAdd(jobData->verifyResultData.archiveIdRangeList, &archiveIdRange);
+                        lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
 
 //    Switch memory context back to current;
 
@@ -597,48 +598,6 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                             // Get the fully qualified file name
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
-// CSHANG Need to have the WAL size in order to determine consecutive WAL. For now, assum 16MB and we'll have to figure it out. See pgLsnFromStr and ToStr and will need a "From" version of the pgLsnToWalSegment function. But I need some clarity - according to pg website "Segment files are given ever-increasing numbers as names, starting at 000000010000000000000000. The numbers do not wrap, but it will take a very, very long time to exhaust the available stock of numbers" so I don't understand - if the first 8 numbers 00000001 are the timeline, then are they saying we normally would not rollover into a new timeline? And why do we organize the directories by timeline and not just put them all in one dir? Is that some limitations of directory names?
-
-/*
-uint64_t
-pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, walSegment);
-        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(walSegment != NULL);
-    ASSERT(strSize(walSegment) == 24);
-    ASSERT(walSegmentSize > 0);
-
-    uint64_t result = cvtZToUInt64Base(strPtr(strSubN(walSegment, 8, 8)), 16) << 32;
-    result += cvtZToUInt64Base(strPtr(strSubN(walSegment, 16, 8)), 16) * walSegmentSize;
-
-    // THROW_FMT(AssertError, "%" PRIx64, result);
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x1000000), "00000001FFFFFFFF000000AA", "lsn to wal segment");
-        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
-        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFF40000000, 0x40000000), "00000001FFFFFFFF00000001", "lsn to wal segment");
-
-        TEST_RESULT_UINT(
-            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF000000AA"), 0x1000000), 0xFFFFFFFFAA000000, "wal segment to lsn");
-        TEST_RESULT_UINT(
-            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000002"), 0x40000000), 0xFFFFFFFF80000000, "wal segment to lsn");
-
-// So can test that the next file is the distance of one WAL segment size away
-        TEST_RESULT_UINT((pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000) - pgLsnFromWalSegment(STRDEF("0000000100000000000000FE"), 0x1000000)), 0x1000000, "test distance");
-
-// 0000000100000000000000FF
-        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, (uint64_t)0x00000000FF000000  + (16 * 1024 * 1024), 0x1000000), "000000010000000100000000", "test");
-        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000) + (16 * 1024 * 1024), 0x1000000), "000000010000000100000000", "test");
-
-
-        // THROW_FMT(AssertError, "%016" PRIX64, pgLsnFromWalSegment(STRDEF("0000000100000000000000FF"), 0x1000000));
-*/
 
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -751,7 +710,7 @@ cmdVerify(void)
                 .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
-                .archiveIdRangeList = lstNew(sizeof(ArchiveIdRange)), .comparator =  archiveIdComparator),
+                .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
             };
 
             // Get a list of backups in the repo
