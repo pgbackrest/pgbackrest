@@ -270,19 +270,6 @@ bufResize(Buffer *this, size_t size)
 }
 
 /**********************************************************************************************************************************/
-bool
-bufFull(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->used == bufSize(this));
-}
-
-/**********************************************************************************************************************************/
 void
 bufLimitClear(Buffer *this)
 {
@@ -316,82 +303,6 @@ bufLimitSet(Buffer *this, size_t limit)
 }
 
 /**********************************************************************************************************************************/
-unsigned char *
-bufPtr(Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->buffer);
-}
-
-const unsigned char *
-bufPtrConst(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->buffer);
-}
-
-/**********************************************************************************************************************************/
-size_t
-bufRemains(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(bufSize(this) - this->used);
-}
-
-/**********************************************************************************************************************************/
-unsigned char *
-bufRemainsPtr(Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->buffer + this->used);
-}
-
-/**********************************************************************************************************************************/
-size_t
-bufSize(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->size);
-}
-
-/**********************************************************************************************************************************/
-size_t
-bufUsed(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->used);
-}
-
 void
 bufUsedInc(Buffer *this, size_t inc)
 {
