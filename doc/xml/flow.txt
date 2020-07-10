@@ -1,12 +1,12 @@
 graph TB
-    IO_READ_INTERNAL(("ioReadInternal()")) --> DRIVER_EOF
+    IO_READ_INTERNAL(-"ioReadInternal()"-) --> DRIVER_EOF
 
     DRIVER_EOF{"driverEof()"}
     DRIVER_EOF -->|Yes| IO_FILTER_GROUP_DONE
     DRIVER_EOF -->|No| IO_FILTER_GROUP_INPUT_SAME
 
     IO_FILTER_GROUP_DONE{"ioFilterGroupDone()"}
-    IO_FILTER_GROUP_DONE --> |Yes| RETURN
+    IO_FILTER_GROUP_DONE --> |Yes| END
     IO_FILTER_GROUP_DONE --> |No| IO_FILTER_GROUP_INPUT_SAME
 
     IO_FILTER_GROUP_INPUT_SAME{"ioFilterGroupInputSame()"}
@@ -46,7 +46,7 @@ graph TB
     IS_BLOCKING2 -->|No| BUFFER_USED
 
     BUFFER_USED{"Some Out<br/>Buffer Used?"}
-    BUFFER_USED -->|Yes| RETURN
+    BUFFER_USED -->|Yes| END
     BUFFER_USED -->|No| DRIVER_EOF
 
-    RETURN[Return]
+    END(-END-)
