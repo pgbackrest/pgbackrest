@@ -748,7 +748,7 @@
                     <config-key id="expire-auto" name="Expire Auto">
                         <summary>Automatically run the <cmd>expire</cmd> command after a successful backup.</summary>
 
-                        <text>The setting is enabled by default. Don't forget to manually run the <cmd>expire</cmd> command if you disable it.</text>
+                        <text>The setting is enabled by default. Use caution when disabling this option; doing so will result in retaining all backups and archives indefinitely which could cause your repository to run out of space.</text>
 
                         <example>y</example>
                     </config-key>
