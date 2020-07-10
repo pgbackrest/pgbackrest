@@ -106,6 +106,7 @@ PostgreSQL WAL Info
 typedef struct PgWal
 {
     unsigned int version;
+    unsigned int size;
     uint64_t systemId;
 } PgWal;
 

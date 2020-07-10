@@ -219,6 +219,7 @@ use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_RE
 use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
 use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
 use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
+use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
 use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
 use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
@@ -1812,6 +1813,17 @@ my %hConfigDefine =
     &CFGOPT_REPO_AZURE_KEY =>
     {
         &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_ACCOUNT,
+    },
+
+    &CFGOPT_REPO_AZURE_KEY_TYPE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_CONTAINER,
+        &CFGDEF_DEFAULT => 'shared',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'shared',
+            'sas',
+        ],
     },
 
     &CFGOPT_REPO_AZURE_PORT =>
