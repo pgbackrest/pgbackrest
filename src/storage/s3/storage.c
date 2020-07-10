@@ -48,6 +48,49 @@ S3 errors
 STRING_STATIC(S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR,                 "RequestTimeTooSkewed");
 
 /***********************************************************************************************************************************
+Host and URI for automatically fetching the current role and credentials
+***********************************************************************************************************************************/
+STRING_STATIC(S3_CREDENTIAL_HOST,                                   "169.254.169.254");
+STRING_STATIC(S3_CREDENTIAL_URI,                                    "/latest/meta-data/iam/security-credentials");
+
+/*
+First, get the role:
+
+http://169.254.169.254/latest/meta-data/iam/security-credentials
+
+HTTP/1.0 200 OK
+Accept-Ranges: bytes
+Content-Length: 8
+Content-Type: text/plain
+Date: Thu, 09 Jul 2020 21:44:02 GMT
+Last-Modified: Thu, 09 Jul 2020 20:01:03 GMT
+Connection: close
+Server: EC2ws
+testrole
+
+Then get the credentials for the role:
+
+http://169.254.169.254/latest/meta-data/iam/security-credentials/testrole
+
+HTTP/1.0 200 OK
+Accept-Ranges: bytes
+Content-Length: 1298
+Content-Type: text/plain
+Date: Thu, 09 Jul 2020 21:43:32 GMT
+Last-Modified: Thu, 09 Jul 2020 20:01:03 GMT
+Connection: close
+Server: EC2ws
+{
+"Code" : "Success",
+"LastUpdated" : "2020-07-09T19:55:08Z",
+"Type" : "AWS-HMAC",
+"AccessKeyId" : "XXX",
+"SecretAccessKey" : "XXX",
+"Token" : "XXX",
+"Expiration" : "2020-07-10T02:00:50Z"
+}
+
+/***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
