@@ -421,10 +421,9 @@ sub run
         $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         push(my @backupLst1, $oBackupInfo->list());
 
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'expire-auto' => 'n'}});
         $strFullBackup = $oHostBackup->backup(
             CFGOPTVAL_BACKUP_TYPE_FULL, 'with disabled expire-auto',
-            {strOptionalParam => ' --repo1-retention-full='.scalar(@backupLst1)});
+            {strOptionalParam => ' --repo1-retention-full='.scalar(@backupLst1). ' --no-expire-auto'});
 
         $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         push(my @backupLst2, $oBackupInfo->list());
@@ -438,8 +437,6 @@ sub run
         {
             confess "expire-auto option didn't work as expected";
         }
-
-        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'expire-auto' => 'y'}});
 
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'archive-async' => 'y'}});
