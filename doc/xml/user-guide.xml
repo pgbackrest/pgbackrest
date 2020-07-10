@@ -134,6 +134,15 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
+        <!-- Azure Settings -->
+        <variable key="azure-all">n</variable>                      <!-- Build all the documentation with Azure? -->
+        <variable key="azure-local">y</variable>
+        <variable key="azure-account">pgbackrest</variable>
+        <variable key="azure-container">demo-container</variable>
+        <variable key="azure-repo">demo-repo</variable>
+        <variable key="azure-key-type">shared</variable>
+        <variable key="azure-key">YXpLZXk=</variable>
+
         <!-- S3 Settings -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
@@ -152,6 +161,9 @@
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
+
+        <variable key="host-azure-id">azure</variable>
+        <variable key="host-azure">azure-server</variable>
 
         <variable key="host-s3-id">s3</variable>
         <variable key="host-s3">s3-server</variable>
@@ -606,6 +618,40 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
+    <block-define id="azure-setup">
+        <p><backrest/> supports locating repositories in <proper>Azure-compatible</proper> object stores.  The container used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the container root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the container without conflicts.</p>
+
+        <backrest-config host="{[azure-setup-host]}" file="{[backrest-config-demo]}" owner="{[azure-setup-config-owner]}">
+            <title>Configure <proper>Azure</proper></title>
+
+            <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <execute-list if="'{[azure-local]}' eq 'y'" host="{[azure-setup-host]}" show="n">
+            <title>Create the container</title>
+
+            <!-- Set host entries to redirect to local azure server -->
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>echo "{[host-azure-ip]} blob.core.windows.net" | tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
+                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
@@ -642,6 +688,9 @@
     <!-- SECTION => INTRODUCTION -->
     <section id="introduction">
         <title>Introduction</title>
+
+        <!-- Create Azure server first to allow it time to boot before being used -->
+        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio:RELEASE.2020-05-06T23-23-25Z" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
@@ -964,6 +1013,18 @@
 
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="azure-support" if="'{[azure-all]}' eq 'y'">
+            <title>Azure-Compatible Object Store Support</title>
+
+            <block id="azure-setup">
+                <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="azure-setup-create-container">y</block-variable-replace>
+            </block>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -2077,6 +2138,41 @@
         </execute-list>
     </section>
 
+    <!-- ======================================================================================================================= -->
+    <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+        <title>Azure-Compatible Object Store Support</title>
+
+        <block id="azure-setup">
+            <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="azure-setup-create-container">y</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Create the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                    --log-level-console=info backup</exe-cmd>
+                <exe-highlight>no prior backup exists|full backup size</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
     <!-- SECTION => S3-SUPPORT -->
     <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
         <title>S3-Compatible Object Store Support</title>
@@ -2344,6 +2440,15 @@
                 </execute>
             </execute-list> -->
 
+            <p if="'{[azure-all]}' eq 'y'">Configure Azure-compatible object store if required.</p>
+
+            <block id="azure-setup" if="'{[azure-all]}' eq 'y'">
+                <block-variable-replace key="azure-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="azure-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="azure-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="azure-setup-create-container">n</block-variable-replace>
+            </block>
+
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
@@ -2358,6 +2463,20 @@
             <execute-list host="{[host-repo1]}">
                 <title>Create the stanza</title>
 
+                <!-- Delete the azure stanza so the server can be reused -->
+                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
+                </execute>
+
+                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-force stanza-delete</exe-cmd>
+                </execute>
+
+                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
+                </execute>
+
+                <!-- Create the stanza -->
                 <execute user="{[br-user]}" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stanza-create</exe-cmd>
                 </execute>

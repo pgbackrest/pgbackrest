@@ -26,6 +26,7 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
@@ -60,6 +61,10 @@ sub setup
     if ($oConfigParam->{strStorage} eq S3)
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostS3Test();
+    }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostAzureTest();
     }
 
     # Get host group
@@ -122,6 +127,10 @@ sub setup
     if ($oConfigParam->{strStorage} eq S3)
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
+    }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostGroup->hostAdd($oHostObject);
     }
 
     # Create db-primary config
@@ -448,6 +457,9 @@ sub walGenerateContent
 
     # Add the system identifier
     $tWalContent .= pack('Q', $self->dbSysId($strPgVersion));
+
+    # Add segment size
+    $tWalContent .= pack('L', PG_WAL_SEGMENT_SIZE);
 
     # Add the source number to produce WAL segments with different checksums
     $tWalContent .= pack('S', $iSourceNo);

@@ -23,6 +23,7 @@ STRING_EXTERN(BRACKETL_STR,                                         BRACKETL_Z);
 STRING_EXTERN(BRACKETR_STR,                                         BRACKETR_Z);
 STRING_EXTERN(COLON_STR,                                            COLON_Z);
 STRING_EXTERN(CR_STR,                                               CR_Z);
+STRING_EXTERN(CRLF_STR,                                             CRLF_Z);
 STRING_EXTERN(DASH_STR,                                             DASH_Z);
 STRING_EXTERN(DOT_STR,                                              DOT_Z);
 STRING_EXTERN(DOTDOT_STR,                                           DOTDOT_Z);
@@ -798,19 +799,6 @@ strSubN(const String *this, size_t start, size_t size)
     ASSERT(start + size <= this->size);
 
     FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));
-}
-
-/**********************************************************************************************************************************/
-size_t
-strSize(const String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->size);
 }
 
 /**********************************************************************************************************************************/

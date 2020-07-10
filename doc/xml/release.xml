@@ -14,6 +14,33 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.28dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>restore</cmd> <br-option>--force</br-option> acting like <br-option>--force --delta</br-option>.</p>
+
+                        <p>This caused <cmd>restore</cmd> to replace files based on timestamp and size rather than overwriting, which meant some files that should have been updated were left unchanged. Normal <cmd>restore</cmd> and <cmd>restore</cmd> <br-option>--delta</br-option> were not affected by this issue.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Azure support for repository storage."/>
+                        <commit subject="Add shared access signature (SAS) authorization for Azure."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="don.seiler"/>
+                        </release-item-contributor-list>
+
+                        <p>Azure support for repository storage.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Asynchronous S3 multipart upload.</p>
@@ -93,6 +120,14 @@
                         </release-item-contributor-list>
 
                         <p>Inline <code>strPtr()</code> to increase profiling accuracy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>pgLsnFromWalSegment()</code>.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -8403,6 +8438,11 @@
 
         <contributor id="dmitry.didovicher">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
+        </contributor>
+
+        <contributor id="don.seiler">
+            <contributor-name-display>Don Seiler</contributor-name-display>
+            <contributor-id type="github">dtseiler</contributor-id>
         </contributor>
 
         <contributor id="donicrosby">

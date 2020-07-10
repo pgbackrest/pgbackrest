@@ -1853,6 +1853,117 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
 
+    // repo-azure-account option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_ACCOUNT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureAccount,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_ACCOUNT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureAccount,
+    },
+
+    // repo-azure-ca-file option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CA_FILE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureCaFile,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CA_FILE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureCaFile,
+    },
+
+    // repo-azure-ca-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CA_PATH,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureCaPath,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CA_PATH,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureCaPath,
+    },
+
+    // repo-azure-container option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CONTAINER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureContainer,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CONTAINER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureContainer,
+    },
+
+    // repo-azure-host option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_HOST,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureHost,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_HOST,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureHost,
+    },
+
+    // repo-azure-key option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_KEY,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureKey,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_KEY,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKey,
+    },
+
+    // repo-azure-key-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureKeyType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKeyType,
+    },
+
+    // repo-azure-port option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_PORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzurePort,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_PORT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzurePort,
+    },
+
+    // repo-azure-verify-tls option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+    {
+        .name = "no-" CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2740,6 +2851,15 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgHostUser + 6,
     cfgOptPgHostUser + 7,
     cfgOptRecoveryOption,
+    cfgOptRepoAzureAccount,
+    cfgOptRepoAzureCaFile,
+    cfgOptRepoAzureCaPath,
+    cfgOptRepoAzureContainer,
+    cfgOptRepoAzureHost,
+    cfgOptRepoAzureKey,
+    cfgOptRepoAzureKeyType,
+    cfgOptRepoAzurePort,
+    cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,
     cfgOptRepoHost,
     cfgOptRepoHostCmd,

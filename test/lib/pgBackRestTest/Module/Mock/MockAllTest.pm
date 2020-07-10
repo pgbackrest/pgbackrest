@@ -207,11 +207,11 @@ sub run
     (
         {vm => VM1, remote => false, storage =>    S3, encrypt => false, delta =>  true, compress => LZ4},
         {vm => VM1, remote =>  true, storage => POSIX, encrypt =>  true, delta => false, compress => BZ2},
-        {vm => VM2, remote => false, storage => POSIX, encrypt =>  true, delta =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, storage =>    S3, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM2, remote => false, storage => POSIX, encrypt => false, delta =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, storage => AZURE, encrypt =>  true, delta => false, compress =>  GZ},
         {vm => VM3, remote => false, storage => POSIX, encrypt => false, delta =>  true, compress => ZST},
         {vm => VM3, remote =>  true, storage =>    S3, encrypt =>  true, delta => false, compress => LZ4},
-        {vm => VM4, remote => false, storage => POSIX, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM4, remote => false, storage => AZURE, encrypt => false, delta => false, compress =>  GZ},
         {vm => VM4, remote =>  true, storage =>    S3, encrypt =>  true, delta =>  true, compress => ZST},
     )
     {
@@ -493,7 +493,7 @@ sub run
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
                     ($bRemote ? ' --pg1-socket-path=/test_socket_path' : '') .
                     ' --buffer-size=16384 --checksum-page --process-max=1',
-                strRepoType => $strStorage eq S3 ? undef : CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                strRepoType => $strStorage eq POSIX ? CIFS : undef, strTest => $strTestPoint, fTestDelay => 0});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 65536;
@@ -583,7 +583,7 @@ sub run
         # Create a temp file in backup temp root to be sure it's deleted correctly
         my $strTempFile = "${strResumePath}/file.tmp";
 
-        if ($strStorage eq S3)
+        if ($strStorage ne POSIX)
         {
             storageRepo()->put($strTempFile, "TEMP");
         }

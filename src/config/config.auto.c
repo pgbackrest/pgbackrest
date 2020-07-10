@@ -427,6 +427,15 @@ STRING_EXTERN(CFGOPT_RAW_STR,                                       CFGOPT_RAW);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
 STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
 STRING_EXTERN(CFGOPT_REMOTE_TYPE_STR,                               CFGOPT_REMOTE_TYPE);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_ACCOUNT_STR,                       CFGOPT_REPO1_AZURE_ACCOUNT);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_FILE_STR,                       CFGOPT_REPO1_AZURE_CA_FILE);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_PATH_STR,                       CFGOPT_REPO1_AZURE_CA_PATH);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_CONTAINER_STR,                     CFGOPT_REPO1_AZURE_CONTAINER);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_HOST_STR,                          CFGOPT_REPO1_AZURE_HOST);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_STR,                           CFGOPT_REPO1_AZURE_KEY);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_TYPE_STR,                      CFGOPT_REPO1_AZURE_KEY_TYPE);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_PORT_STR,                          CFGOPT_REPO1_AZURE_PORT);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_VERIFY_TLS_STR,                    CFGOPT_REPO1_AZURE_VERIFY_TLS);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_PASS_STR,                         CFGOPT_REPO1_CIPHER_PASS);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_TYPE_STR,                         CFGOPT_REPO1_CIPHER_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_HARDLINK_STR,                            CFGOPT_REPO1_HARDLINK);
@@ -1632,6 +1641,78 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REMOTE_TYPE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRemoteType)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ACCOUNT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureAccount)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CA_FILE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureCaFile)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CA_PATH)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureCaPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CONTAINER)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureContainer)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_HOST)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKey)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKeyType)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_PORT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzurePort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_VERIFY_TLS)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureVerifyTls)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

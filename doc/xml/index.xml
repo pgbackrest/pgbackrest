@@ -125,10 +125,10 @@
             <p>File and directory links are supported for any file or directory in the <postgres/> cluster.  When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
         </section>
 
-        <section id="s3-support">
-            <title>S3-Compatible Object Store Support</title>
+        <section id="object-store-support">
+            <title>S3 and Azure Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3-compatible</proper> object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper> and <proper>Azure</proper> compatible object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
         <section id="encryption">
