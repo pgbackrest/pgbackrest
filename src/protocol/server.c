@@ -158,6 +158,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                     // needs to be stored by the handler.
                     MEM_CONTEXT_BEGIN(this->memContext)
                     {
+                        // Initialize retries in case of command failure
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
 
@@ -171,6 +172,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                             }
                             CATCH_ANY()
                             {
+                                // Are there retries remaining?
                                 if (retryRemaining > 0)
                                 {
                                     // Get the sleep interval for this retry
