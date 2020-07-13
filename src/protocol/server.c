@@ -125,10 +125,11 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
 /**********************************************************************************************************************************/
 void
-protocolServerProcess(ProtocolServer *this)
+protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, retryInterval);
     FUNCTION_LOG_END();
 
     // Loop until exit command is received
@@ -158,7 +159,7 @@ protocolServerProcess(ProtocolServer *this)
                     MEM_CONTEXT_BEGIN(this->memContext)
                     {
                         bool retry = false;
-                        unsigned int retryRemaining = 0;
+                        unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
 
                         do
                         {
@@ -172,8 +173,20 @@ protocolServerProcess(ProtocolServer *this)
                             {
                                 if (retryRemaining > 0)
                                 {
-                                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                                    // Get the sleep interval for this retry
+                                    TimeMSec retrySleepMs = varUInt64(
+                                        varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
 
+                                    // Log the retry
+                                    LOG_DEBUG_FMT(
+                                        "retry %s after %" PRIu64 "ms: %s", errorTypeName(errorType()), retrySleepMs,
+                                        errorMessage());
+
+                                    // Sleep if there is an interval
+                                    if (retrySleepMs > 0)
+                                        sleepMSec(retrySleepMs);
+
+                                    // Decrement retries remaining and retry
                                     retryRemaining--;
                                     retry = true;
                                 }

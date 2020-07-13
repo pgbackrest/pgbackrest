@@ -35,7 +35,7 @@ cmdLocal(int handleRead, int handleWrite)
         protocolServerHandlerAdd(server, archivePushProtocol);
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
-        protocolServerProcess(server);
+        protocolServerProcess(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
