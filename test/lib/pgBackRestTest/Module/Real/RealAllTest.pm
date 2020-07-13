@@ -416,8 +416,8 @@ sub run
             CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
             {strOptionalParam => ' --buffer-size=16384'});
 
-        # Expire-auto option
-        # Take a new backup with expire-auto disabled, then run the expire command and compare backup numbers
+        # Make a new backup with expire-auto disabled then run the expire command and compare backup numbers to ensure that expire
+        # was really disabled
         $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         push(my @backupLst1, $oBackupInfo->list());
 
