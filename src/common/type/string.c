@@ -802,19 +802,6 @@ strSubN(const String *this, size_t start, size_t size)
 }
 
 /**********************************************************************************************************************************/
-size_t
-strSize(const String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->size);
-}
-
-/**********************************************************************************************************************************/
 String *
 strTrim(String *this)
 {
