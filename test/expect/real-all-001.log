@@ -196,6 +196,109 @@ repo1-path=[TEST_PATH]/backup/repo
 archive-copy=y
 start-fast=y
 
+full backup - with disabled expire-auto (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --repo1-retention-full=1 --no-expire-auto --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-primary/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-primary/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-primary/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
+
+[global:backup]
+archive-copy=y
+start-fast=y
+
+expire full=1 (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1  --stanza=db expire
+------------------------------------------------------------------------------------------------------------------------------------
+
 restore, type 'standby', remap - restore backup on replica (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option="primary_conninfo=host=db-primary port=6543 user=replicator"  --type=standby --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
