@@ -293,24 +293,37 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL with absolute path and no pg1-path");
 
+        const char *sha1 = TEST_64BIT() ? "755defa48a0a0872767b6dea49bdd3b64902f147" : "9c2a6ec4491a2118bcdc9b653366581d8821c982";
+
         argListTemp = strLstNew();
         strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
         strLstAdd(argListTemp, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+
+        // Create tmp file to make it look like a prior push failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", sha1)),
+                BUFSTRDEF("PARTIAL")),
+            "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz", sha1)),
+            true, "check repo for WAL file");
+        TEST_RESULT_BOOL(
             storageExistsP(
                 storageTest,
-                strNewFmt(
-                    "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz",
-                    TEST_64BIT() ? "755defa48a0a0872767b6dea49bdd3b64902f147" : "9c2a6ec4491a2118bcdc9b653366581d8821c982")),
-            true, "check repo for WAL file");
+                strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", sha1)),
+            false, "check WAL tmp file is gone");
 
         // Push a history file
         // -------------------------------------------------------------------------------------------------------------------------
