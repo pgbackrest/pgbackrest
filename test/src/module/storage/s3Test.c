@@ -313,7 +313,7 @@ testRun(void)
 
         HttpHeader *header = httpHeaderNew(NULL);
 
-        HttpQuery *query = httpQueryNew();
+        HttpQuery *query = httpQueryNewP();
         httpQueryAdd(query, strNew("list-type"), strNew("2"));
 
         TEST_RESULT_VOID(

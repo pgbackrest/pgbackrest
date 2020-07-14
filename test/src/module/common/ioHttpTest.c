@@ -105,30 +105,44 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(query, httpQueryNew(), "new query");
+            StringList *redactList = strLstNew();
+            strLstAdd(redactList, STRDEF("key2"));
+
+            TEST_ASSIGN(query, httpQueryNewP(.redactList = redactList), "new query");
 
             TEST_RESULT_PTR(httpQueryMove(query, memContextPrior()), query, "move to new context");
             TEST_RESULT_PTR(httpQueryMove(NULL, memContextPrior()), NULL, "move null to new context");
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR(httpQueryRender(NULL), NULL, "null query renders null");
-        TEST_RESULT_STR(httpQueryRender(query), NULL, "empty query renders null");
+        TEST_RESULT_STR(httpQueryRenderP(NULL), NULL, "null query renders null");
+        TEST_RESULT_STR(httpQueryRenderP(query), NULL, "empty query renders null");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key2"), strNew("value2")), query, "add query");
         TEST_ERROR(httpQueryAdd(query, strNew("key2"), strNew("value2")), AssertError, "key 'key2' already exists");
         TEST_RESULT_PTR(httpQueryPut(query, strNew("key2"), strNew("value2a")), query, "put query");
-        TEST_RESULT_STR_Z(httpQueryRender(query), "key2=value2a", "render one query item");
+        TEST_RESULT_STR_Z(httpQueryRenderP(query), "key2=value2a", "render one query item");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key1"), strNew("value 1?")), query, "add query");
         TEST_RESULT_STR_Z(strLstJoin(httpQueryList(query), ", "), "key1, key2", "query list");
-        TEST_RESULT_STR_Z(httpQueryRender(query), "key1=value%201%3F&key2=value2a", "render two query items");
+        TEST_RESULT_STR_Z(httpQueryRenderP(query), "key1=value%201%3F&key2=value2a", "render two query items");
+        TEST_RESULT_STR_Z(
+            httpQueryRenderP(query, .redact = true), "key1=value%201%3F&key2=<redacted>", "render two query items with redaction");
 
         TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key1")), "value 1?", "get value");
         TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key2")), "value2a", "get value");
         TEST_RESULT_STR(httpQueryGet(query, strNew(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: 'value2a'}", "log output");
+        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: <redacted>}", "log output");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dup query with redaction");
+
+        StringList *redactList = strLstNew();
+        strLstAdd(redactList, STRDEF("key1"));
+
+        TEST_ASSIGN(query, httpQueryDupP(query, .redactList = redactList), "dup query");
+        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: <redacted>, key2: 'value2a'}", "log output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new query from string");
@@ -137,13 +151,13 @@ testRun(void)
 
         HttpQuery *query2 = NULL;
         TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a=%2Bb&c=d%3D")), "query from string");
-        TEST_RESULT_STR_Z(httpQueryRender(query2), "a=%2Bb&c=d%3D", "render query");
+        TEST_RESULT_STR_Z(httpQueryRenderP(query2), "a=%2Bb&c=d%3D", "render query");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("merge queries");
 
         TEST_RESULT_STR_Z(
-            httpQueryRender(httpQueryMerge(query, query2)), "a=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
+            httpQueryRenderP(httpQueryMerge(query, query2)), "a=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free query");
@@ -352,7 +366,7 @@ testRun(void)
                 HttpHeader *headerRequest = httpHeaderNew(NULL);
                 httpHeaderAdd(headerRequest, strNew("host"), strNew("myhost.com"));
 
-                HttpQuery *query = httpQueryNew();
+                HttpQuery *query = httpQueryNewP();
                 httpQueryAdd(query, strNew("name"), strNew("/path/A Z.txt"));
                 httpQueryAdd(query, strNew("type"), strNew("test"));
 
@@ -376,7 +390,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(httpRequestVerb(request), "GET", "check request verb");
                 TEST_RESULT_STR_Z(httpRequestUri(request), "/", "check request uri");
                 TEST_RESULT_STR_Z(
-                    httpQueryRender(httpRequestQuery(request)), "name=%2Fpath%2FA%20Z.txt&type=test", "check request query");
+                    httpQueryRenderP(httpRequestQuery(request)), "name=%2Fpath%2FA%20Z.txt&type=test", "check request query");
                 TEST_RESULT_PTR_NE(httpRequestHeader(request), NULL, "check request headers");
 
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
@@ -484,7 +498,7 @@ testRun(void)
                 TEST_ASSIGN(
                     request,
                     httpRequestNewP(
-                        client, strNew("GET"), strNew("/"), .query = httpQueryAdd(httpQueryNew(), STRDEF("a"), STRDEF("b")),
+                        client, strNew("GET"), strNew("/"), .query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b")),
                         .header = headerRequest),
                     "request");
                 TEST_ASSIGN(response, httpRequest(request, false), "response");
