@@ -45,6 +45,7 @@ STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
 STRING_STATIC(AZURE_QUERY_PREFIX_STR,                               "prefix");
 STRING_EXTERN(AZURE_QUERY_RESTYPE_STR,                              AZURE_QUERY_RESTYPE);
+STRING_STATIC(AZURE_QUERY_SIG_STR,                                  "sig");
 
 STRING_STATIC(AZURE_QUERY_VALUE_LIST_STR,                           "list");
 STRING_EXTERN(AZURE_QUERY_VALUE_CONTAINER_STR,                      AZURE_QUERY_VALUE_CONTAINER);
@@ -70,6 +71,7 @@ struct StorageAzure
     MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
+    StringList *queryRedactList;                                    // List of query keys to redact from logging
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
@@ -237,7 +239,10 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         }
 
         // Make a copy of the query so it can be modified
-        HttpQuery *query = this->sasKey != NULL && param.query == NULL ? httpQueryNew() : httpQueryDup(param.query);
+        HttpQuery *query =
+            this->sasKey != NULL && param.query == NULL ?
+                httpQueryNewP(.redactList = this->queryRedactList) :
+                httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
         storageAzureAuth(this, verb, httpUriEncode(param.uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
@@ -363,7 +368,7 @@ storageAzureListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNew();
+                HttpQuery *query = httpQueryNewP();
 
                 // Add continuation token from the prior loop if any
                 if (marker != NULL)
@@ -741,6 +746,10 @@ storageAzureNew(
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
+
+        // Create list of redacted query keys
+        driver->queryRedactList = strLstNew();
+        strLstAdd(driver->queryRedactList, AZURE_QUERY_SIG_STR);
 
         // Generate starting file id
         cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));

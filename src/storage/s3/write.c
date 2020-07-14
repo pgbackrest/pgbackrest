@@ -128,7 +128,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
+                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -140,7 +140,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         }
 
         // Upload the part async
-        HttpQuery *query = httpQueryNew();
+        HttpQuery *query = httpQueryNewP();
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
@@ -238,7 +238,7 @@ storageWriteS3Close(THIS_VOID)
                 // Finalize the multi-part upload
                 storageS3RequestP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    .query = httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
+                    .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
                     .content = xmlDocumentBuf(partList));
             }
             // Else upload all the data in a single put

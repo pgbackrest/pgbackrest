@@ -104,7 +104,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         String *requestStr =
                             strNewFmt(
                                 "%s %s%s%s " HTTP_VERSION CRLF_Z, strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
-                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strPtr(httpQueryRender(this->query)));
+                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strPtr(httpQueryRenderP(this->query)));
 
                         // Add headers
                         const StringList *headerList = httpHeaderList(this->header);
@@ -203,7 +203,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
             .client = client,
             .verb = strDup(verb),
             .uri = strDup(uri),
-            .query = httpQueryDup(param.query),
+            .query = httpQueryDupP(param.query),
             .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
@@ -256,7 +256,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     strCatFmt(error, "\n%s", strPtr(httpUriEncode(this->uri, true)));
 
     if (this->query != NULL)
-        strCatFmt(error, "?%s", strPtr(httpQueryRender(this->query)));
+        strCatFmt(error, "?%s", strPtr(httpQueryRenderP(this->query, .redact = true)));
 
     // Output request headers
     const StringList *requestHeaderList = httpHeaderList(this->header);
