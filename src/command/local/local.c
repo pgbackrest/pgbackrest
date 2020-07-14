@@ -24,7 +24,7 @@ cmdLocal(int handleRead, int handleWrite)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Configure two retries for local jobs
+        // Configure two retries for local commands
         VariantList *retryInterval = varLstNew();
         varLstAdd(retryInterval, varNewUInt64(0));
         varLstAdd(retryInterval, varNewUInt64(15000));

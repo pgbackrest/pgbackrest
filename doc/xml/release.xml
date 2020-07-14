@@ -48,6 +48,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatic retry for <cmd>backup</cmd>, <cmd>restore</cmd>, <cmd>archive-get</cmd>, and <cmd>archive-push</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
