@@ -211,6 +211,12 @@ testRun(void)
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
 
+        // Create normal file to make it look like a prior restore file failed partway through to ensure that retries work. It will
+        // be clear if the file was overwritten when checking the info below since the size and timestamp will be changed.
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("normal"), .modeFile = 0600), BUFSTRDEF("PRT")),
+            "    create normal file");
+
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
