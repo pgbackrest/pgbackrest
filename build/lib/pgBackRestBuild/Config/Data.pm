@@ -251,6 +251,7 @@ use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
 use constant CFGOPT_EXCLUDE                                         => 'exclude';
+use constant CFGOPT_EXPIRE_AUTO                                     => 'expire-auto';
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
 use constant CFGOPT_RESUME                                          => 'resume';
 use constant CFGOPT_START_FAST                                      => 'start-fast';
@@ -2343,6 +2344,17 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
         },
+    },
+
+    &CFGOPT_EXPIRE_AUTO =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        }
     },
 
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>
