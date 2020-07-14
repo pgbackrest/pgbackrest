@@ -191,6 +191,10 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                                     // Decrement retries remaining and retry
                                     retryRemaining--;
                                     retry = true;
+
+                                    // Send keep alives to remotes. A retry means the command is taking longer than usual so make
+                                    // sure the remote does not timeout.
+                                    protocolKeepAlive();
                                 }
                                 else
                                     RETHROW();
