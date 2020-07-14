@@ -55,6 +55,9 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Asynchronous S3 multipart upload."/>
+                        <commit subject="Rename httpRequest() to httpRequestResponse() and fix comment."/>
+
                         <p>Asynchronous S3 multipart upload.</p>
                     </release-item>
 

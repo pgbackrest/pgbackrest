@@ -276,7 +276,7 @@ storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get response
-        result = httpRequest(request, !param.contentIo);
+        result = httpRequestResponse(request, !param.contentIo);
 
         // Error if the request was not successful
         if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))

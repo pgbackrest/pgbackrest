@@ -219,7 +219,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
 
 /**********************************************************************************************************************************/
 HttpResponse *
-httpRequest(HttpRequest *this, bool contentCache)
+httpRequestResponse(HttpRequest *this, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
