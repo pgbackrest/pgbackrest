@@ -39,6 +39,18 @@
 
                         <p>Azure support for repository storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>expire-auto</br-option> option.</p>
+
+                        <p>This allows automatic expiration after a successful backup to be disabled.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
