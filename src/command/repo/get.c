@@ -80,44 +80,46 @@ storageGetProcess(IoWrite *destination)
                         const String *stanza = strLstGet(filePathSplitLst, 1);
 
                         // If stanza option is specified, it must match the given file path
-                        if (cfgOptionStrNull(cfgOptStanza) != NULL && ! strEq(stanza, cfgOptionStr(cfgOptStanza)))
-                            THROW_FMT(AssertError, "stanza name '%s' given in option doesn't match the given path", 
+                        if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
+                        {
+                            THROW_FMT(
+                                AssertError, "stanza name '%s' given in option doesn't match the given path",
                                 strPtr(cfgOptionStr(cfgOptStanza)));
+                        }
 
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
                             // Find the archiveCipherPass
-                            if (! strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE) &&
-                                ! strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE".copy"))
+                            if (!strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE) &&
+                                !strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE".copy"))
                             {
                                 InfoArchive *info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
                                     repoCipherType, cipherPass);
-                                cipherPass = strDup(infoArchiveCipherPass(info));
+                                cipherPass = infoArchiveCipherPass(info);
                             }
-                            
                         }
                         
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            if (! strEndsWithZ(relativeFile, INFO_BACKUP_FILE) &&
-                                ! strEndsWithZ(relativeFile, INFO_BACKUP_FILE".copy"))
+                            if (!strEndsWithZ(relativeFile, INFO_BACKUP_FILE) &&
+                                !strEndsWithZ(relativeFile, INFO_BACKUP_FILE".copy"))
                             {
                                 // Find the backupCipherPass
                                 InfoBackup *info = infoBackupLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
                                     repoCipherType, cipherPass);
-                                cipherPass = strDup(infoBackupCipherPass(info));
+                                cipherPass = infoBackupCipherPass(info);
 
                                 // Find the manifestCipherPass
-                                if (! strEq(strLstGet(filePathSplitLst, 2), STRDEF("backup.history")) &&
-                                    ! strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE) &&
-                                    ! strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE".copy"))
+                                if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF("backup.history")) &&
+                                    !strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE) &&
+                                    !strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE".copy"))
                                 {
-                                   const Manifest *manifest = manifestLoadFile(
+                                    const Manifest *manifest = manifestLoadFile(
                                         storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza), 
                                         strPtr(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
-                                    cipherPass = strDup(manifestCipherSubPass(manifest));
+                                    cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
                         }
