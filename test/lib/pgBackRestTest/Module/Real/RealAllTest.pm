@@ -200,7 +200,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bExpectVersion)
         {
-            $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
+            my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
             push(my @backupLst1, $oBackupInfo->list());
 
             $strFullBackup = $oHostBackup->backup(
