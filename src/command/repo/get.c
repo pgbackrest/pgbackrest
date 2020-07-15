@@ -57,7 +57,7 @@ storageGetProcess(IoWrite *destination)
                      / backup    / (repoCipherPass)
                      / backup    / stanza / (backupCipherPass)
                      / backup    / stanza / set / (manifestCipherPass)
-                     / backup    / stanza / backup.history / (manifestCipherPass)
+                     / backup    / stanza / backup.history / (backupCipherPass)
                 *******************************************************************************************************************/
 
                 // Check for a passphrase parameter
