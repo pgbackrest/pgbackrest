@@ -70,7 +70,16 @@ storageGetProcess(IoWrite *destination)
 
                     const String *relativeFile = strDup(file);
                     if (strBeginsWith(relativeFile, FSLASH_STR))
+                    {
+                        if (!strBeginsWith(relativeFile, cfgOptionStr(cfgOptRepoPath)))
+                        {
+                            THROW_FMT(
+                                FormatError, "absolute path '%s' is not in base path '%s'", strPtr(relativeFile),
+                                strPtr(cfgOptionStr(cfgOptRepoPath)));
+                        }
+
                         relativeFile = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+                    }
 
                     // Encrypted files could be stored directly at the root of the repo if needed
                     // We should then at least be able to determine the archive or backup directory
@@ -98,9 +107,8 @@ storageGetProcess(IoWrite *destination)
                                     repoCipherType, cipherPass);
                                 cipherPass = infoArchiveCipherPass(info);
                             }
-                        }
-                        
-                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
+                        }                      
+                        else if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
                             if (!strEndsWithZ(relativeFile, INFO_BACKUP_FILE) &&
                                 !strEndsWithZ(relativeFile, INFO_BACKUP_FILE".copy"))
@@ -122,6 +130,11 @@ storageGetProcess(IoWrite *destination)
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
+                        }
+                        else
+                        {
+                            // Nothing should be stored at the top level of the repo
+                            THROW_FMT(FormatError, "unable to determine encryption key for '%s'", strPtr(relativeFile));
                         }
                     }
                 }
