@@ -31,7 +31,21 @@ storageGetProcess(IoWrite *destination)
     const String *file = NULL;
 
     if (strLstSize(cfgCommandParam()) == 1)
+    {
         file = strLstGet(cfgCommandParam(), 0);
+
+        if (strBeginsWith(file, FSLASH_STR))
+        {
+            if (!strBeginsWith(file, cfgOptionStr(cfgOptRepoPath)))
+            {
+                THROW_FMT(
+                    OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strPtr(file),
+                    strPtr(cfgOptionStr(cfgOptRepoPath)));
+            }
+
+            file = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+        }
+    }
     else
         THROW(ParamRequiredError, "source file required");
 
@@ -68,22 +82,9 @@ storageGetProcess(IoWrite *destination)
                 {
                     cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
 
-                    const String *relativeFile = strDup(file);
-                    if (strBeginsWith(relativeFile, FSLASH_STR))
-                    {
-                        if (!strBeginsWith(relativeFile, cfgOptionStr(cfgOptRepoPath)))
-                        {
-                            THROW_FMT(
-                                OptionInvalidValueError, "absolute path '%s' is not in base path '%s'",
-                                strPtr(relativeFile), strPtr(cfgOptionStr(cfgOptRepoPath)));
-                        }
-
-                        relativeFile = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
-                    }
-
                     // Encrypted files could be stored directly at the root of the repo if needed
                     // We should then at least be able to determine the archive or backup directory
-                    StringList *filePathSplitLst = strLstNewSplit(relativeFile, FSLASH_STR);
+                    StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
                     if (strLstSize(filePathSplitLst) > 1)
                     {
                         const String *stanza = strLstGet(filePathSplitLst, 1);
@@ -99,8 +100,8 @@ storageGetProcess(IoWrite *destination)
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
                             // Find the archiveCipherPass
-                            if (!strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE) &&
-                                !strEndsWithZ(relativeFile, INFO_ARCHIVE_FILE".copy"))
+                            if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) &&
+                                !strEndsWithZ(file, INFO_ARCHIVE_FILE".copy"))
                             {
                                 InfoArchive *info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
@@ -110,8 +111,8 @@ storageGetProcess(IoWrite *destination)
                         }                      
                         else if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            if (!strEndsWithZ(relativeFile, INFO_BACKUP_FILE) &&
-                                !strEndsWithZ(relativeFile, INFO_BACKUP_FILE".copy"))
+                            if (!strEndsWithZ(file, INFO_BACKUP_FILE) &&
+                                !strEndsWithZ(file, INFO_BACKUP_FILE".copy"))
                             {
                                 // Find the backupCipherPass
                                 InfoBackup *info = infoBackupLoadFile(
@@ -121,8 +122,8 @@ storageGetProcess(IoWrite *destination)
 
                                 // Find the manifestCipherPass
                                 if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF("backup.history")) &&
-                                    !strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE) &&
-                                    !strEndsWithZ(relativeFile, BACKUP_MANIFEST_FILE".copy"))
+                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
+                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE".copy"))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
                                         storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza), 
@@ -133,10 +134,16 @@ storageGetProcess(IoWrite *destination)
                         }
                         else
                         {
-                            // Nothing should be stored at the top level of the repo
+                            // Only archive and backup directories are allowed
                             THROW_FMT(
-                                OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(relativeFile));
+                                OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                         }
+                    }
+                    else
+                    {
+                        // Nothing should be stored at the top level of the repo
+                        THROW_FMT(
+                            OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                     }
                 }
 
