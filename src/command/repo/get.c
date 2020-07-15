@@ -74,8 +74,8 @@ storageGetProcess(IoWrite *destination)
                         if (!strBeginsWith(relativeFile, cfgOptionStr(cfgOptRepoPath)))
                         {
                             THROW_FMT(
-                                FormatError, "absolute path '%s' is not in base path '%s'", strPtr(relativeFile),
-                                strPtr(cfgOptionStr(cfgOptRepoPath)));
+                                OptionInvalidValueError, "absolute path '%s' is not in base path '%s'",
+                                strPtr(relativeFile), strPtr(cfgOptionStr(cfgOptRepoPath)));
                         }
 
                         relativeFile = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
@@ -92,7 +92,7 @@ storageGetProcess(IoWrite *destination)
                         if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
                         {
                             THROW_FMT(
-                                AssertError, "stanza name '%s' given in option doesn't match the given path",
+                                OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
                                 strPtr(cfgOptionStr(cfgOptStanza)));
                         }
 
@@ -134,7 +134,8 @@ storageGetProcess(IoWrite *destination)
                         else
                         {
                             // Nothing should be stored at the top level of the repo
-                            THROW_FMT(FormatError, "unable to determine encryption key for '%s'", strPtr(relativeFile));
+                            THROW_FMT(
+                                OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(relativeFile));
                         }
                     }
                 }
