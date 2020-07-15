@@ -60,11 +60,11 @@ OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
 Process the request
 ***********************************************************************************************************************************/
 static HttpResponse *
-httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
+httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
-        FUNCTION_LOG_PARAM(BOOL, requestOnly);
+        FUNCTION_LOG_PARAM(BOOL, waitForResponse);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
 
@@ -128,13 +128,13 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         // Flush all writes
                         ioWriteFlush(httpSessionIoWrite(session));
 
-                        // If only performing the request then move the session to the object context
-                        if (requestOnly)
+                        // If not waiting for the response then move the session to the object context
+                        if (!waitForResponse)
                             this->session = httpSessionMove(session, this->memContext);
                     }
 
                     // Wait for response
-                    if (!requestOnly)
+                    if (waitForResponse)
                     {
                         result = httpResponseNew(session, this->verb, contentCache);
 
@@ -152,7 +152,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
             }
             CATCH_ANY()
             {
-                // Retry if wait time has not expired
+                // Sleep and then retry unless the total wait time has expired
                 if (waitMore(wait))
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
@@ -209,7 +209,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
         };
 
         // Send the request
-        httpRequestProcess(this, true, false);
+        httpRequestProcess(this, false, false);
         httpClientStat.request++;
     }
     MEM_CONTEXT_NEW_END();
@@ -228,7 +228,7 @@ httpRequestResponse(HttpRequest *this, bool contentCache)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(HTTP_RESPONSE, httpRequestProcess(this, false, contentCache));
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, httpRequestProcess(this, true, contentCache));
 }
 
 /**********************************************************************************************************************************/
