@@ -80,13 +80,13 @@ sub run
 
         # Use a specific VM and version of PostgreSQL for expect testing. This version will also be used to run tests that are not
         # version specific.
-        my $bExpect = $self->vm() eq VM_EXPECT && $self->pgVersion() eq PG_VERSION_96;
+        my $bExpectVersion = $self->vm() eq VM_EXPECT && $self->pgVersion() eq PG_VERSION_96;
 
         # Increment the run, log, and decide whether this unit test should be run
         next if (!$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}" .
                 ", storage ${strStorage}, enc ${bRepoEncrypt}",
-            $bExpect));
+            $bExpectVersion));
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
@@ -196,10 +196,11 @@ sub run
             {strOptionalParam => ' --buffer-size=16384'});
 
         # Make a new backup with expire-auto disabled then run the expire command and compare backup numbers to ensure that expire
-        # was really disabled. This test is not version specific so can be run on one version.
-        if ($bExpect)
+        # was really disabled. This test is not version specific so is run on only the expect version.
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bExpectVersion)
         {
-            my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
+            $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
             push(my @backupLst1, $oBackupInfo->list());
 
             $strFullBackup = $oHostBackup->backup(
@@ -334,10 +335,10 @@ sub run
 
         # Execute stop and make sure the backup fails
         #---------------------------------------------------------------------------------------------------------------------------
-        # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
-        # the logs will to be deleted to avoid causing issues further down the line. This test is not version specific so can be run
-        # on one version.
-        if ($bExpect)
+        # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and the
+        # logs will to be deleted to avoid causing issues further down the line. This test is not version specific so is run on only
+        # the expect version.
+        if ($bExpectVersion)
         {
             confess "test must be performed on posix storage" if $strStorage ne POSIX;
 
@@ -759,11 +760,14 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbPrimary->clusterStop();
 
-        # Stanza-delete --force without access to pgbackrest on database host. This test is not version specific so can be run on
-        # one version.
+        # Stanza-delete --force without access to pgbackrest on database host. This test is not version specific so is run on only
+        # the expect version.
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bHostBackup && $bExpect)
+        if ($bExpectVersion)
         {
+            # Make sure this test has a backup host to work with
+            confess "test must run with backup dst = " . HOST_BACKUP if !$bHostBackup;
+
             $oHostDbPrimary->stop();
             $oHostBackup->stop({strStanza => $self->stanza});
             $oHostBackup->stanzaDelete(

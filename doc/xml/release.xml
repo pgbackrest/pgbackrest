@@ -57,6 +57,11 @@
                     <release-item>
                         <commit subject="Asynchronous S3 multipart upload."/>
                         <commit subject="Rename httpRequest() to httpRequestResponse() and fix comment."/>
+                        <commit subject="Update comment and parameter in HttpRequest."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
 
                         <p>Asynchronous S3 multipart upload.</p>
                     </release-item>
