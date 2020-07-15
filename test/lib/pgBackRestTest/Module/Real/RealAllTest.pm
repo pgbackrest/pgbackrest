@@ -151,7 +151,7 @@ sub run
         # executeTest("sudo rmdir ${strDir}");
 
         # --------------------------------------------------------------------------------------------------------------------------
-        my $strComment = ' verify check command runs successfully';
+        my $strComment = 'verify check command runs successfully';
 
         $oHostDbPrimary->check($strComment, {iTimeout => 5});
 
@@ -335,9 +335,12 @@ sub run
         # Execute stop and make sure the backup fails
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
-        # the logs will to be deleted to avoid causing issues further down the line.
-        if ($strStorage eq POSIX)
+        # the logs will to be deleted to avoid causing issues further down the line. This test is not version specific so can be run
+        # on one version.
+        if ($bExpect)
         {
+            confess "test must be performed on posix storage" if $strStorage ne POSIX;
+
             $oHostDbPrimary->clusterRestart();
 
             # Add backup for adhoc expire
