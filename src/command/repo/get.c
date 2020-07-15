@@ -30,12 +30,20 @@ storageGetProcess(IoWrite *destination)
     // Get source file
     const String *file = NULL;
 
-    if (strLstSize(cfgCommandParam()) == 1)
-    {
-        file = strLstGet(cfgCommandParam(), 0);
+    if (strLstSize(cfgCommandParam()) != 1)
+        THROW(ParamRequiredError, "source file required");
 
+    file = strLstGet(cfgCommandParam(), 0);
+
+    // Assume the file is missing
+    int result = 1;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If the source path is absolute then get the relative part of the file
         if (strBeginsWith(file, FSLASH_STR))
         {
+            // Check that the file path begins with the repo path
             if (!strBeginsWith(file, cfgOptionStr(cfgOptRepoPath)))
             {
                 THROW_FMT(
@@ -43,17 +51,11 @@ storageGetProcess(IoWrite *destination)
                     strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
 
+            // Get the relative part of the file
             file = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
         }
-    }
-    else
-        THROW(ParamRequiredError, "source file required");
 
-    // Assume the file is missing
-    int result = 1;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
+        // Create new file read
         IoRead *source = storageReadIo(storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
 
         // Add decryption if needed
@@ -63,21 +65,19 @@ storageGetProcess(IoWrite *destination)
 
             if (repoCipherType != cipherTypeNone)
             {
-                /*******************************************************************************************************************
-                Repository encryption design:
-                REPO / (repoCipherPass)
-                     / archive   / (repoCipherPass)
-                     / archive   / stanza / (archiveCipherPass)
-                     / backup    / (repoCipherPass)
-                     / backup    / stanza / (backupCipherPass)
-                     / backup    / stanza / set / (manifestCipherPass)
-                     / backup    / stanza / backup.history / (backupCipherPass)
-                *******************************************************************************************************************/
-
                 // Check for a passphrase parameter
                 const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
 
-                // If not passed as a parameter, find the passphrase
+                // If not passed as a parameter then determine the passphrase using the following pattern:
+                //
+                // REPO / (repo passphrase)
+                //      / archive / (repo passphrase)
+                //      / archive / stanza / (archive passphrase)
+                //      / backup  / (repo passphrase)
+                //      / backup  / stanza / (backup passphrase)
+                //      / backup  / stanza / set / (manifest passphrase)
+                //      / backup  / stanza / backup.history / (backup passphrase)
+                // -----------------------------------------------------------------------------------------------------------------
                 if (cipherPass == NULL)
                 {
                     cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
@@ -85,11 +85,12 @@ storageGetProcess(IoWrite *destination)
                     // Encrypted files could be stored directly at the root of the repo if needed
                     // We should then at least be able to determine the archive or backup directory
                     StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
+
                     if (strLstSize(filePathSplitLst) > 1)
                     {
                         const String *stanza = strLstGet(filePathSplitLst, 1);
 
-                        // If stanza option is specified, it must match the given file path
+                        // If stanza option is specified then it must match the given file path
                         if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
                         {
                             THROW_FMT(
@@ -99,52 +100,44 @@ storageGetProcess(IoWrite *destination)
 
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
-                            // Find the archiveCipherPass
-                            if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) &&
-                                !strEndsWithZ(file, INFO_ARCHIVE_FILE".copy"))
+                            // Find the archive passphrase
+                            if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                             {
                                 InfoArchive *info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoArchiveCipherPass(info);
                             }
-                        }                      
+                        }
                         else if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            if (!strEndsWithZ(file, INFO_BACKUP_FILE) &&
-                                !strEndsWithZ(file, INFO_BACKUP_FILE".copy"))
+                            if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                             {
-                                // Find the backupCipherPass
+                                // Find the backup passphrase
                                 InfoBackup *info = infoBackupLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoBackupCipherPass(info);
 
-                                // Find the manifestCipherPass
-                                if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF("backup.history")) &&
+                                // Find the manifest passphrase
+                                if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
-                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE".copy"))
+                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
-                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza), 
+                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza),
                                         strPtr(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
                         }
+                        // Only archive and backup directories are allowed
                         else
-                        {
-                            // Only archive and backup directories are allowed
-                            THROW_FMT(
-                                OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
-                        }
+                            THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                     }
+                    // Nothing should be stored at the top level of the repo
                     else
-                    {
-                        // Nothing should be stored at the top level of the repo
-                        THROW_FMT(
-                            OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
-                    }
+                        THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                 }
 
                 // Add encryption filter
