@@ -17,8 +17,23 @@ Asserts are used in test code to ensure that certain conditions are true.  They 
                 THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                       \
         }                                                                                                                          \
         while (0)
+
+    // Skip inline asserts when coverage testing because they will not have branch coverage. Generally speaking inline assertions
+    // should be of the "this != NULL" variety which is also caught effectively by Valgrind.
+    #ifndef DEBUG_COVERAGE
+        #define ASSERT_INLINE(condition)                                                                                           \
+            do                                                                                                                     \
+            {                                                                                                                      \
+                if (!(condition))                                                                                                  \
+                    THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                   \
+            }                                                                                                                      \
+            while (0)
+    #else
+        #define ASSERT_INLINE(condition)
+    #endif
 #else
     #define ASSERT(condition)
+    #define ASSERT_INLINE(condition)
 #endif
 
 /***********************************************************************************************************************************

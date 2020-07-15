@@ -28,6 +28,9 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Azure support for repository storage."/>
+                        <commit subject="Add shared access signature (SAS) authorization for Azure."/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
@@ -36,11 +39,34 @@
 
                         <p>Azure support for repository storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>expire-auto</br-option> option.</p>
+
+                        <p>This allows automatic expiration after a successful backup to be disabled.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Asynchronous S3 multipart upload."/>
+                        <commit subject="Rename httpRequest() to httpRequestResponse() and fix comment."/>
+
                         <p>Asynchronous S3 multipart upload.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatic retry for <cmd>backup</cmd>, <cmd>restore</cmd>, <cmd>archive-get</cmd>, and <cmd>archive-push</cmd>.</p>
                     </release-item>
 
                     <release-item>
@@ -117,6 +143,14 @@
                         </release-item-contributor-list>
 
                         <p>Inline <code>strPtr()</code> to increase profiling accuracy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>pgLsnFromWalSegment()</code>.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

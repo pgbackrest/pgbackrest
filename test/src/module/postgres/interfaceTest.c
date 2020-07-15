@@ -105,7 +105,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgLsnFromStr(), pgLsnToStr(), pgLsnToWalSegment(), and pgLsnRangeToWalSegmentList()"))
+    if (testBegin("pgLsnFromStr(), pgLsnToStr(), pgLsnToWalSegment(), pgLsnFromWalSegment(), and pgLsnRangeToWalSegmentList()"))
     {
         TEST_RESULT_UINT(pgLsnFromStr(STRDEF("1/1")), 0x0000000100000001, "lsn to string");
         TEST_RESULT_UINT(pgLsnFromStr(STRDEF("ffffffff/ffffffff")), 0xFFFFFFFFFFFFFFFF, "lsn to string");
@@ -118,6 +118,13 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x1000000), "00000001FFFFFFFF000000AA", "lsn to wal segment");
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFF40000000, 0x40000000), "00000001FFFFFFFF00000001", "lsn to wal segment");
+
+        TEST_RESULT_UINT(
+            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF000000AA"), 0x1000000), 0xFFFFFFFFAA000000, "16M wal segment to lsn");
+        TEST_RESULT_UINT(
+            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000002"), 0x40000000), 0xFFFFFFFF80000000, "1G wal segment to lsn");
+        TEST_RESULT_UINT(
+            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000001"), 0x40000000), 0xFFFFFFFF40000000, "1G wal segment to lsn");
 
         TEST_RESULT_STR_Z(
             strLstJoin(
@@ -217,22 +224,32 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF}, result);
+        pgWalTestToBuffer(
+            (PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v11");
         TEST_RESULT_UINT(info.systemId, 0xECAFECAF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
+        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA}, result);
+        pgWalTestToBuffer(
+            (PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
+
+        TEST_ERROR(pgWalFromBuffer(result), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        memset(bufPtr(result), 0, bufSize(result));
+        pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v8.3");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 
     // *****************************************************************************************************************************

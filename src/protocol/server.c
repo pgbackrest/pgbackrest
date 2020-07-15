@@ -125,10 +125,11 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
 /**********************************************************************************************************************************/
 void
-protocolServerProcess(ProtocolServer *this)
+protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, retryInterval);
     FUNCTION_LOG_END();
 
     // Loop until exit command is received
@@ -157,7 +158,50 @@ protocolServerProcess(ProtocolServer *this)
                     // needs to be stored by the handler.
                     MEM_CONTEXT_BEGIN(this->memContext)
                     {
-                        found = handler(command, paramList, this);
+                        // Initialize retries in case of command failure
+                        bool retry = false;
+                        unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
+
+                        do
+                        {
+                            retry = false;
+
+                            TRY_BEGIN()
+                            {
+                                found = handler(command, paramList, this);
+                            }
+                            CATCH_ANY()
+                            {
+                                // Are there retries remaining?
+                                if (retryRemaining > 0)
+                                {
+                                    // Get the sleep interval for this retry
+                                    TimeMSec retrySleepMs = varUInt64(
+                                        varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
+
+                                    // Log the retry
+                                    LOG_DEBUG_FMT(
+                                        "retry %s after %" PRIu64 "ms: %s", errorTypeName(errorType()), retrySleepMs,
+                                        errorMessage());
+
+                                    // Sleep if there is an interval
+                                    if (retrySleepMs > 0)
+                                        sleepMSec(retrySleepMs);
+
+                                    // Decrement retries remaining and retry
+                                    retryRemaining--;
+                                    retry = true;
+
+                                    // Send keep alives to remotes. A retry means the command is taking longer than usual so make
+                                    // sure the remote does not timeout.
+                                    protocolKeepAlive();
+                                }
+                                else
+                                    RETHROW();
+                            }
+                            TRY_END();
+                        }
+                        while (retry);
                     }
                     MEM_CONTEXT_END();
 

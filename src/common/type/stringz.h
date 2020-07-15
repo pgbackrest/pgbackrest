@@ -15,6 +15,7 @@ Zero-terminated strings that are generally useful
 #define COLON_Z                                                     ":"
 #define COMMA_Z                                                     ","
 #define CR_Z                                                        "\r"
+#define CRLF_Z                                                      "\r\n"
 #define DASH_Z                                                      "-"
 #define DOT_Z                                                       "."
 #define DOTDOT_Z                                                    ".."

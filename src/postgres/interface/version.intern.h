@@ -191,6 +191,7 @@ Read the version specific WAL header into a general data structure
         return (PgWal)                                                                                                             \
         {                                                                                                                          \
             .systemId = ((XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                            \
+            .size = ((XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                             \
         };                                                                                                                         \
     }
 
@@ -210,6 +211,7 @@ Create a WAL file file for testing
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
+        ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
 
 #endif

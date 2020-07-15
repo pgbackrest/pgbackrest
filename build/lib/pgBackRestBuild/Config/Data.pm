@@ -219,6 +219,7 @@ use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_RE
 use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
 use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
 use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
+use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
 use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
 use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
@@ -250,6 +251,7 @@ use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
 use constant CFGOPT_EXCLUDE                                         => 'exclude';
+use constant CFGOPT_EXPIRE_AUTO                                     => 'expire-auto';
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
 use constant CFGOPT_RESUME                                          => 'resume';
 use constant CFGOPT_START_FAST                                      => 'start-fast';
@@ -1813,6 +1815,17 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_ACCOUNT,
     },
 
+    &CFGOPT_REPO_AZURE_KEY_TYPE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_CONTAINER,
+        &CFGDEF_DEFAULT => 'shared',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'shared',
+            'sas',
+        ],
+    },
+
     &CFGOPT_REPO_AZURE_PORT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -2331,6 +2344,17 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
         },
+    },
+
+    &CFGOPT_EXPIRE_AUTO =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        }
     },
 
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>

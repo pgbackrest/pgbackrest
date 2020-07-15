@@ -271,7 +271,7 @@ testRun(void)
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/11-1/0000000100000001/000000010000000100000001-%s.gz",
-                    TEST_64BIT() ? "3e5ecd22712f319b2420d5b901fd29f4f6be2336" : "6903dce7e3cd64ba9a6134056405eaeb8dedcd37")),
+                    TEST_64BIT() ? "aae7591a1dbc58f21d0d004886075094f622e6dd" : "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a")),
             true, "check repo for WAL file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment again");
@@ -293,24 +293,37 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL with absolute path and no pg1-path");
 
+        const char *sha1 = TEST_64BIT() ? "755defa48a0a0872767b6dea49bdd3b64902f147" : "9c2a6ec4491a2118bcdc9b653366581d8821c982";
+
         argListTemp = strLstNew();
         strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
         strLstAdd(argListTemp, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+
+        // Create tmp file to make it look like a prior push failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", sha1)),
+                BUFSTRDEF("PARTIAL")),
+            "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz", sha1)),
+            true, "check repo for WAL file");
+        TEST_RESULT_BOOL(
             storageExistsP(
                 storageTest,
-                strNewFmt(
-                    "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz",
-                    TEST_64BIT() ? "edad2f5a9d8a03ee3c09e8ce92c771e0d20232f5" : "e7c81f5513e0c6e3f19b9dbfc450019165994dda")),
-            true, "check repo for WAL file");
+                strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", sha1)),
+            false, "check WAL tmp file is gone");
 
         // Push a history file
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,7 +429,7 @@ testRun(void)
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s",
-                    TEST_64BIT() ? "edad2f5a9d8a03ee3c09e8ce92c771e0d20232f5" : "e7c81f5513e0c6e3f19b9dbfc450019165994dda")),
+                    TEST_64BIT() ? "755defa48a0a0872767b6dea49bdd3b64902f147" : "9c2a6ec4491a2118bcdc9b653366581d8821c982")),
             true, "check repo for WAL file");
     }
 
@@ -585,7 +598,7 @@ testRun(void)
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
-                    TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
+                    TEST_64BIT() ? "ce58ec898a080e59d71dce49051843b03a497d99" : "765ee94e4f65d081f2dc3b8e77556da95bc31cbf")),
             true, "check repo for WAL file");
 
         // Direct tests of the async function
@@ -650,7 +663,7 @@ testRun(void)
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
-                    TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
+                    TEST_64BIT() ? "ce58ec898a080e59d71dce49051843b03a497d99" : "765ee94e4f65d081f2dc3b8e77556da95bc31cbf")),
             true, "check repo for WAL 1 file");
 
         TEST_RESULT_STR_Z(
@@ -679,7 +692,7 @@ testRun(void)
                 storageTest,
                 strNewFmt(
                     "repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s",
-                    TEST_64BIT() ? "0aea6fa5d53500ce548b84a86bc3a29ae77fa048" : "408822a89ef44ef6740e785743bf1b870d8024a2")),
+                    TEST_64BIT() ? "251820f85b31554bbf33061fce7dabf18c16afe0" : "ae8cb1fe45d40bc364df6bc6e8803774f0e3eaeb")),
             true, "check repo for WAL 2 file");
 
         TEST_RESULT_STR_Z(

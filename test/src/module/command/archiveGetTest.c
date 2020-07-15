@@ -378,6 +378,13 @@ testRun(void)
                 NULL),
             "normal WAL segment");
 
+        // Create tmp file to make it look like a prior async get failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")),
+                NULL),
+            "normal WAL segment");
+
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
@@ -386,6 +393,9 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
             "check 000000010000000100000001 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")), false,
+            "check 000000010000000100000001 tmp not in spool");
 
         // Get multiple segments where some are missing or errored
         // -------------------------------------------------------------------------------------------------------------------------
