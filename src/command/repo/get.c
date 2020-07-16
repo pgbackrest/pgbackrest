@@ -77,13 +77,15 @@ storageGetProcess(IoWrite *destination)
                 //      / backup  / stanza / (backup passphrase)
                 //      / backup  / stanza / set / (manifest passphrase)
                 //      / backup  / stanza / backup.history / (backup passphrase)
+                //
+                // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
+                // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
                 if (cipherPass == NULL)
                 {
-                    // Nothing should be stored at the top level of the repo
-                    // We should then at least be able to determine the archive or backup directory
                     StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
+                    // At a minimum the path must contain archive/backup, a stanza, and a file
                     if (strLstSize(filePathSplitLst) > 2)
                     {
                         const String *stanza = strLstGet(filePathSplitLst, 1);
@@ -96,6 +98,7 @@ storageGetProcess(IoWrite *destination)
                                 strPtr(cfgOptionStr(cfgOptStanza)));
                         }
 
+                        // Archive path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
                             cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
@@ -110,6 +113,7 @@ storageGetProcess(IoWrite *destination)
                             }
                         }
 
+                        // Backup path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
                             cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
@@ -137,8 +141,9 @@ storageGetProcess(IoWrite *destination)
                     }
                 }
 
+                // Error when unable to determine cipher passphrase
                 if (cipherPass == NULL)
-                    THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
+                    THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strPtr(file));
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, cipherPass);

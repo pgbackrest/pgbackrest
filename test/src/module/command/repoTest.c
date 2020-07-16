@@ -551,7 +551,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_ERROR(
-            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError, 
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
             strPtr(strNewFmt("absolute path '/somewhere/%s' is not in base path '%s/repo'", INFO_ARCHIVE_FILE, testPath())));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -565,8 +565,8 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_ERROR(
-            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError, 
-            strPtr(strNewFmt("unable to determine encryption key for '%s'", strPtr(fileEncCustomName))));
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            strPtr(strNewFmt("unable to determine cipher passphrase for '%s'", strPtr(fileEncCustomName))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted archive.info - stanza mismatch");
@@ -579,7 +579,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
-        TEST_ERROR(storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError, 
+        TEST_ERROR(storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
             "stanza name 'test2' given in option doesn't match the given path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -644,7 +644,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
         strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
-        strLstAdd(argList, strNewFmt( 
+        strLstAdd(argList, strNewFmt(
             "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",testPath()));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
@@ -703,7 +703,7 @@ testRun(void)
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
         TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "    get matches put");
-        
+
         // -------------------------------------------------------------------------------------------------------------------------
         // Reset env
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
