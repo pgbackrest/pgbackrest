@@ -126,6 +126,15 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically determine cipher passphrase in <cmd>repo-get</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="stefan.fercot"/>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
