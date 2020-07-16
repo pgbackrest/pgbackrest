@@ -12,4 +12,8 @@ Functions
 // Initialize the stats collector
 void statInit(void);
 
+// Begin/end timed stat
+void statTimeBegin(const String *key);
+void statTimeEnd(const String *key);
+
 #endif
