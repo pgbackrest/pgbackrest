@@ -123,7 +123,8 @@
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-centos]}">{[pg-path]}/pg_log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-centos]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-centos]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
 
         <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
