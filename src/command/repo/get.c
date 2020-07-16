@@ -80,9 +80,7 @@ storageGetProcess(IoWrite *destination)
                 // -----------------------------------------------------------------------------------------------------------------
                 if (cipherPass == NULL)
                 {
-                    cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
-
-                    // Encrypted files could be stored directly at the root of the repo if needed
+                    // Nothing should be stored at the top level of the repo
                     // We should then at least be able to determine the archive or backup directory
                     StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
@@ -100,6 +98,8 @@ storageGetProcess(IoWrite *destination)
 
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
+                            cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+
                             // Find the archive passphrase
                             if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                             {
@@ -109,8 +109,11 @@ storageGetProcess(IoWrite *destination)
                                 cipherPass = infoArchiveCipherPass(info);
                             }
                         }
-                        else if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
+
+                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
+                            cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+
                             if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                             {
                                 // Find the backup passphrase
@@ -131,14 +134,11 @@ storageGetProcess(IoWrite *destination)
                                 }
                             }
                         }
-                        // Only archive and backup directories are allowed
-                        else
-                            THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                     }
-                    // Nothing should be stored at the top level of the repo
-                    else
-                        THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
                 }
+
+                if (cipherPass == NULL)
+                    THROW_FMT(OptionInvalidValueError, "unable to determine encryption key for '%s'", strPtr(file));
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, cipherPass);
