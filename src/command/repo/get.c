@@ -52,7 +52,7 @@ storageGetProcess(IoWrite *destination)
             }
 
             // Get the relative part of the file
-            file = strSub(file, strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+            file = strSub(file, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
         }
 
         // Create new file read
@@ -84,7 +84,7 @@ storageGetProcess(IoWrite *destination)
                     // We should then at least be able to determine the archive or backup directory
                     StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
-                    if (strLstSize(filePathSplitLst) > 1)
+                    if (strLstSize(filePathSplitLst) > 2)
                     {
                         const String *stanza = strLstGet(filePathSplitLst, 1);
 

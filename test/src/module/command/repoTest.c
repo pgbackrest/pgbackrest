@@ -322,18 +322,6 @@ testRun(void)
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(fileEncCustomBuffer)), "put");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("put an encrypted file with custom key in subdirectory");
-
-        argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
-        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
-        strLstAdd(argList, strNewFmt("subdir/%s", strPtr(fileEncCustomName)));
-        harnessCfgLoad(cfgCmdRepoPut, argList);
-
-        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(fileEncCustomBuffer)), "put");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put a raw file");
 
         argList = strLstNew();
@@ -488,6 +476,18 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(writeBuffer, fileBuffer), true, "    get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get a file with / repo");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("--" CFGOPT_REPO1_PATH "=/"));
+        strLstAdd(argList, strNewFmt("%s/repo/%s", testPath(), strPtr(fileName)));
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, fileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get an encrypted file with custom key");
 
         argList = strLstNew();
@@ -567,20 +567,6 @@ testRun(void)
         TEST_ERROR(
             storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError, 
             strPtr(strNewFmt("unable to determine encryption key for '%s'", strPtr(fileEncCustomName))));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get file in non archive/backup subdirectory error");
-
-        argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
-        strLstAdd(argList, strNewFmt("subdir/%s", strPtr(fileEncCustomName)));
-        harnessCfgLoad(cfgCmdRepoGet, argList);
-
-        writeBuffer = bufNew(0);
-        TEST_ERROR(
-            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError, 
-            strPtr(strNewFmt("unable to determine encryption key for 'subdir/%s'", strPtr(fileEncCustomName))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted archive.info - stanza mismatch");
