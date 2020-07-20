@@ -771,7 +771,7 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
-                TestParallelJobCallback data = {.jobList = lstNew(sizeof(ProtocolParallelJob *))};
+                TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
                 TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");

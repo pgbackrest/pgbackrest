@@ -223,7 +223,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(harnessLog.memContext)
         {
-            harnessLog.replaceList = lstNew(sizeof(HarnessLogReplace));
+            harnessLog.replaceList = lstNewP(sizeof(HarnessLogReplace));
         }
         MEM_CONTEXT_END();
     }

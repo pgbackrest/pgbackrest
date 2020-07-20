@@ -1709,7 +1709,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create list of process queue
-        *queueList = lstNew(sizeof(List *));
+        *queueList = lstNewP(sizeof(List *));
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();

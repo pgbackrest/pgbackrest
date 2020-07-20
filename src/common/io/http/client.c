@@ -55,7 +55,7 @@ httpClientNew(
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
             .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
-            .sessionReuseList = lstNew(sizeof(HttpSession *)),
+            .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
         httpClientStat.object++;

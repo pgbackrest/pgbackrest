@@ -64,7 +64,7 @@ infoPgNewInternal(InfoPgType type)
     {
         .memContext = memContextCurrent(),
         .type = type,
-        .history = lstNew(sizeof(InfoPgData)),
+        .history = lstNewP(sizeof(InfoPgData)),
     };
 
     FUNCTION_TEST_RETURN(this);
