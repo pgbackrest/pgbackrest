@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-07-20" version="2.28" title="Azure Repository Storage">
             <release-core-list>
                 <release-bug-list>

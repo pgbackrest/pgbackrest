@@ -1,5 +1,10 @@
 [
     {
+        "commit": "5a4b91f90a81019e456a50c0f7311824f7e61475",
+        "date": "2020-07-20 08:57:22 -0400",
+        "subject": "v2.28: Azure Repository Storage"
+    },
+    {
         "commit": "67d9d3350c8a844bd4cf3c2bc5496739b6c8ed8a",
         "date": "2020-07-17 13:27:14 -0400",
         "subject": "Update recovery.conf in user guide for PostgreSQL >= 12.",
