@@ -480,6 +480,47 @@ typedef struct VerifyJobData
     List *archiveIdRangeList;
 } VerifyJobData;
 
+static void
+updateArchiveIdRange(unsigned int walSegmentSize, ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
+{
+    // Initialize the WAL range
+    WalRange walRange =
+    {
+        .start = strSubN(strLstGet(walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
+        .stop = strSubN(strLstGet(walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
+    };
+
+    // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
+    // the last WAL
+    for (unsigned int walFileIdx = 1; walFileIdx < strLstSize(walFileList); walFileIdx++)
+    {
+        String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
+
+        if (pgLsnFromWalSegment(walSegment, walSegmentSize) -
+            pgLsnFromWalSegment(walRange.stop, walSegmentSize) == walSegmentSize)
+        {
+            walRange.stop = walSegment;
+        }
+        else
+        {
+// CSHANG Should we put some debug/detail statements in?
+            // A gap was found so add the current range to the list and start a new range
+            lstAdd(archiveIdRange->walRangeList, &walRange);
+            walRange = (WalRange)
+            {
+                .start = strDup(walSegment),
+                .stop = strDup(walSegment),
+            };
+        }
+    }
+
+    // Add the last walRange
+    lstAdd(archiveIdRange->walRangeList, &walRange);
+
+    // Now we have our ranges for this archiveId so add them
+    lstAdd(archiveIdRangeList, archiveIdRange);
+}
+
 static ProtocolParallelJob *
 verifyJobCallback(void *data, unsigned int clientIdx)
 {
@@ -505,6 +546,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         while (strLstSize(jobData->archiveIdList) > 0)
         {
             String *archiveId = strLstGet(jobData->archiveIdList, 0);
+            unsigned int walSegmentSize = 0;
 
             // CSHANG Switch memory context?
 
@@ -546,46 +588,30 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
-                        // CSHANG Switch memory context to the verifyResultData structure?
-
-                        // Initialize the WAL range
-                        WalRange walRange =
+// CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.
+                        // If the WAL segment size for this archiveId has not been set, get it from the first WAL
+                        if (walSegmentSize == 0)
                         {
-                            .start = strSubN(strLstGet(jobData->walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
-                            .stop = strSubN(strLstGet(jobData->walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
-                        };
-
-                        unsigned int numWalRange = 1;
-
-                        // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
-                        // the last WAL
-                        for (unsigned int walFileIdx = 1; walFileIdx < strLstSize(jobData->walFileList); walFileIdx++)
-                        {
-                            String *walSegment = strSubN(strLstGet(jobData->walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
-                            if (pgLsnFromWalSegment(walSegment, PG_WAL_SEGMENT_SIZE_DEFAULT) -
-                                pgLsnFromWalSegment(walRange.stop, PG_WAL_SEGMENT_SIZE_DEFAULT) == PG_WAL_SEGMENT_SIZE_DEFAULT)
-                            {
-                                walRange.stop = walSegment;
-                            }
-                            else
-                            {
-                                // A gap was found so add the current range to the list and start a new range
-                                lstAdd(archiveIdRange.walRangeList, &walRange);
-                                walRange = (WalRange)
-                                {
-                                    .start = strDup(walSegment),
-                                    .stop = strDup(walSegment),
-                                };
-                                numWalRange++;
-                            }
+                            PgWal pgWalInfo = pgWalFromFile(
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                    strPtr(strLstGet(jobData->walFileList, 0))));
+                            walSegmentSize = pgWalInfo.size;
                         }
 
-                        // Add the last walRange if not yet added
-                        if (lstSize(archiveIdRange.walRangeList) < numWalRange)
-                            lstAdd(archiveIdRange.walRangeList, &walRange);
+                    // CSHANG Switch memory context to the verifyResultData structure?
 
-                        // Now we have our ranges for this archiveId so add them
-                        lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
+/* CSHANG per David:
+16MB is the whole segment.
+The header is like 40 bytes.
+What we need is for pgWalFromFile() to look more like pgControlFromFile().
+i.e. takes a storage object and reads the first few bytes from the file.
+But, if you just want to read the first 512 bytes for now and use pgWalFromBuffer() then that's fine. We can improve that later.
+But people do use pg_resetwal just to change the WAL size. You won't lose data if you do a clean shutdown and then pg_resetwal.
+So, for our purposes the size should never change for a db-id.
+We'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case.
+So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
+*/
+                        updateArchiveIdRange(walSegmentSize, &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
 
 //    Switch memory context back to current;
 
@@ -701,6 +727,7 @@ cmdVerify(void)
         // If valid info files, then begin process of checking backups and archives in the repo
         if (errorTotal == 0)
         {
+// CSHANG TODO: Replace strLstNew() with strLstNewP()
             // Initialize the job data
             VerifyJobData jobData =
             {
@@ -746,7 +773,6 @@ cmdVerify(void)
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
 
-                // StringList *validWalFileList
                 // Process jobs
                 do
                 {

@@ -309,7 +309,90 @@ testRun(void)
 //
 //     }
 // }
+/*
+16 * 1024 * 1024 = PG_WAL_SEGMENT_SIZE_DEFAULT
+1024 * 1024 * 1024 = 1GB wal segment
 
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_92, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/1000000")), 16 * 1024 * 1024),
+                ", "),
+            "0000000200000001000000FD, 0000000200000001000000FE, 000000020000000200000000, 000000020000000200000001",
+            "get range <= 9.2");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_93, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
+                ", "),
+            "0000000200000001000000FD, 0000000200000001000000FE, 0000000200000001000000FF, 000000020000000200000000",
+            "get range > 9.2");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_11, 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
+                ", "),
+            "000000020000000A00000000, 000000020000000A00000001, 000000020000000A00000002, 000000020000000A00000003"
+                ", 000000020000000B00000000, 000000020000000B00000001, 000000020000000B00000002, 000000020000000B00000003",
+            "get range >= 11/1GB");
+*/
+    // *****************************************************************************************************************************
+    if (testBegin("updateArchiveIdRange()"))
+    {
+        ArchiveIdRange archiveIdRange =
+        {
+            .archiveId = strNew("10-1"),
+            .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+        };
+        List *archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator);
+
+        StringList *walFileList = strLstNew();
+        strLstAddZ(walFileList, "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz");
+        strLstAddZ(walFileList, "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz");
+        strLstAddZ(walFileList, "0000000200000001000000FF-daa497dba64008db824607940609ba1cd7c6c501");
+        strLstAddZ(walFileList, "000000020000000200000000");
+
+        TEST_RESULT_VOID(
+            updateArchiveIdRange(PG_WAL_SEGMENT_SIZE_DEFAULT, &archiveIdRange, walFileList, archiveIdRangeList),
+            "update archiveId WAL range");
+
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 1, "single range");
+
+        WalRange *walRangeResult = NULL;
+
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Clear the range lists and create a gap in the WAL list
+        lstClear(archiveIdRangeList);
+        lstClear(archiveIdRange.walRangeList);
+        strLstRemoveIdx(walFileList, 1);
+
+        TEST_RESULT_STR_Z(
+            strLstJoin(walFileList, ", "),
+            "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz, "
+            "0000000200000001000000FF-daa497dba64008db824607940609ba1cd7c6c501, 000000020000000200000000",
+            "gap in WAL list");
+
+        TEST_RESULT_VOID(
+            updateArchiveIdRange(PG_WAL_SEGMENT_SIZE_DEFAULT, &archiveIdRange, walFileList, archiveIdRangeList),
+            "update archiveId WAL range");
+
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0),
+            "get first range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FD", "stop range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            "get second range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FF", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
+    }
 
 
     // *****************************************************************************************************************************
@@ -401,7 +484,6 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
             "P00  ERROR: [029]: No usable archive.info file", testPath(), testPath(), testPath(), testPath())));
-
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
@@ -502,20 +584,44 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file", testPath(), testPath())));
 
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("backup.info and copy valid, archive.info checksum invalid, archive.info copy valid");
-        //
-        //         storagePutP(
-        //             storageNewWriteP(storageTest, archiveInfoFileName),
-        //             harnessInfoChecksumZ(
-        //                 "[db]\n"
-        //                 "db-id=2\n"
-        //                 "db-system-id=6626363367545678089\n"
-        //                 "db-version=\"10\"\n"
-        //                 "\n"
-        //                 "[db:history]\n"
-        //                 "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-        //                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files, WAL files present, no backups");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
+                harnessInfoChecksumZ(
+                    "[db]\n"
+                    "db-catalog-version=201707211\n"
+                    "db-control-version=1002\n"
+                    "db-id=2\n"
+                    "db-system-id=6626363367545678089\n"
+                    "db-version=\"10\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                        "\"db-version\":\"9.4\"}\n"
+                    "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                        "\"db-version\":\"10\"}")),
+            "put backup.info files");
+
+        // Create WAL file with just header info
+        Buffer *result = bufNew((size_t)512);
+        memset(bufPtr(result), 0, bufSize(result));
+        pgWalTestToBuffer(
+            (PgWal){.version = PG_VERSION_10, .systemId = 6626363367545678089, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest,
+                strNewFmt("%s/10-2/0000000100000000/0000000100000001000000FF-daa497dba64008db824607940609ba1cd7c6c501.gz",
+                strPtr(archiveStanzaPath))), result), "write WAL");
+
+/* CSHANG not sure how to test this - when I run cmdVerify, I get
+EXPECTED VOID RESULT FROM STATEMENT: cmdVerify()
+
+    BUT GOT ExecuteError: local-1 process terminated unexpectedly [102]: unable to execute '/home/vagrant/test/bin/u18/pgbackrest': [2] No such file or directory
+*/
+//        TEST_RESULT_VOID(cmdVerify(), "TEST");
+
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

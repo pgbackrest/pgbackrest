@@ -3314,6 +3314,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
