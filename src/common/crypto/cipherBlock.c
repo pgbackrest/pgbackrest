@@ -203,13 +203,13 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
     if (sourceSize > 0)
     {
         // Process the data
-        size_t destinationUpdateSize = 0;
+        int destinationUpdateSize = 0;
 
         cryptoError(
-            !EVP_CipherUpdate(this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize),
+            !EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, (int)sourceSize),
             "unable to process cipher");
 
-        destinationSize += destinationUpdateSize;
+        destinationSize += (size_t)destinationUpdateSize;
 
         // Note that data has been processed so flush is valid
         this->processDone = true;
@@ -234,18 +234,18 @@ cipherBlockFlush(CipherBlock *this, Buffer *destination)
     ASSERT(destination != NULL);
 
     // Actual destination size
-    size_t destinationSize = 0;
+    int destinationSize = 0;
 
     // If no header was processed then error
     if (!this->saltDone)
         THROW(CryptoError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
-    if (!EVP_CipherFinal(this->cipherContext, bufRemainsPtr(destination), (int *)&destinationSize))
+    if (!EVP_CipherFinal(this->cipherContext, bufRemainsPtr(destination), &destinationSize))
         THROW(CryptoError, "unable to flush");
 
     // Return actual destination size
-    FUNCTION_LOG_RETURN(SIZE, destinationSize);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)destinationSize);
 }
 
 /***********************************************************************************************************************************
