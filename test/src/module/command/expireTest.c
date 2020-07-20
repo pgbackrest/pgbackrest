@@ -2052,7 +2052,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archiveId comparator sorting");
 
-        StringList *list = strLstNewParam(archiveIdComparator);
+        StringList *list = strLstComparatorSet(strLstNew(), archiveIdComparator);
 
         strLstAddZ(list, "10-4");
         strLstAddZ(list, "11-10");
