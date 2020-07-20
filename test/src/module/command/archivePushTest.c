@@ -264,7 +264,8 @@ testRun(void)
         // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
         // directly from the buffers to reduce the cost of maintaining checksums.
         const char *walBuffer1Sha1 = TEST_64BIT() ?
-            "aae7591a1dbc58f21d0d004886075094f622e6dd" : "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
+            (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
+            "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 

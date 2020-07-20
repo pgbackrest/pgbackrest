@@ -1487,7 +1487,9 @@ testRun(void)
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
-            TEST_64BIT() ? "21e2ddc99cdf4cfca272eee4f38891146092e358" : "8bb70506d988a8698d9e8cf90736ada23634571b");
+            TEST_64BIT() ?
+                (TEST_BIG_ENDIAN() ? "749acedef8f8d5fe35fc20c0375657f876ccc38e" : "21e2ddc99cdf4cfca272eee4f38891146092e358") :
+                "8bb70506d988a8698d9e8cf90736ada23634571b");
 
         // Make pg no longer appear to be running
         storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);

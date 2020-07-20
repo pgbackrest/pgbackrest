@@ -190,8 +190,8 @@ testRun(void)
         unsigned char page[PG_PAGE_SIZE_DEFAULT];
         memset(page, 0xFF, PG_PAGE_SIZE_DEFAULT);
 
-        TEST_RESULT_UINT(pgPageChecksum(page, 0), 0x0E1C, "check 0xFF filled page, block 0");
-        TEST_RESULT_UINT(pgPageChecksum(page, 999), 0x0EC3, "check 0xFF filled page, block 999");
+        TEST_RESULT_UINT(pgPageChecksum(page, 0), TEST_BIG_ENDIAN() ? 0xF55E : 0x0E1C, "check 0xFF filled page, block 0");
+        TEST_RESULT_UINT(pgPageChecksum(page, 999), TEST_BIG_ENDIAN() ? 0xF1B9 : 0x0EC3, "check 0xFF filled page, block 999");
     }
 
     // *****************************************************************************************************************************
