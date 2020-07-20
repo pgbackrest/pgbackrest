@@ -141,7 +141,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         const String *blockId = strNewFmt("%016" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
         // Upload the block and add to block list
-        HttpQuery *query = httpQueryNew();
+        HttpQuery *query = httpQueryNewP();
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
@@ -240,7 +240,7 @@ storageWriteAzureClose(THIS_VOID)
                 // Finalize the multi-block upload
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
-                    .query = httpQueryAdd(httpQueryNew(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
+                    .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
                     .content = xmlDocumentBuf(blockXml));
             }
             // Else upload all the data in a single block

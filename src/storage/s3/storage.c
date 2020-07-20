@@ -43,11 +43,6 @@ STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
 STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 
 /***********************************************************************************************************************************
-S3 errors
-***********************************************************************************************************************************/
-STRING_STATIC(S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR,                 "RequestTimeTooSkewed");
-
-/***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
@@ -173,7 +168,7 @@ storageS3Auth(
         String *signedHeaders = NULL;
 
         String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strPtr(verb), strPtr(uri), query == NULL ? "" : strPtr(httpQueryRender(query)));
+            "%s\n%s\n%s\n", strPtr(verb), strPtr(uri), query == NULL ? "" : strPtr(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -303,59 +298,20 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
     ASSERT(request != NULL);
 
     HttpResponse *result = NULL;
-    unsigned int retryRemaining = 2;
-    bool done;
 
-    do
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        done = true;
+        // Get response
+        result = httpRequestResponse(request, !param.contentIo);
 
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Process request
-            result = httpRequest(request, !param.contentIo);
+        // Error if the request was not successful
+        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            httpRequestError(request, result);
 
-            // Error if the request was not successful
-            if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
-            {
-                // If there are retries remaining and a response parse it as XML to extract the S3 error code
-                const Buffer *content = httpResponseContent(result);
-
-                if (bufUsed(content) > 0 && retryRemaining > 0)
-                {
-                    // Attempt to parse the XML and extract the S3 error code
-                    TRY_BEGIN()
-                    {
-                        XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(content));
-                        const String *errorCode = xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true));
-
-                        if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
-                        {
-                            LOG_DEBUG_FMT(
-                                "retry %s: %s", strPtr(errorCode),
-                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
-
-                            retryRemaining--;
-                            done = false;
-                        }
-                    }
-                    // On failure just drop through and report the error as usual
-                    CATCH_ANY()
-                    {
-                    }
-                    TRY_END();
-                }
-
-                // If done throw the error
-                if (done)
-                    httpRequestError(request, result);
-            }
-            else
-                httpResponseMove(result, memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
+        // Move response to the prior context
+        httpResponseMove(result, memContextPrior());
     }
-    while (!done);
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
@@ -436,7 +392,7 @@ storageS3ListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNew();
+                HttpQuery *query = httpQueryNewP();
 
                 // Add continuation token from the prior loop if any
                 if (continuationToken != NULL)
@@ -700,7 +656,7 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
 
     const Buffer *response = httpResponseContent(
         storageS3RequestP(
-            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR),
             .content = xmlDocumentBuf(request)));
 
     // Nothing is returned when there are no errors

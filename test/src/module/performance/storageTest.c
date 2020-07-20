@@ -228,7 +228,7 @@ testRun(void)
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
                 protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server);
+                protocolServerProcess(server, NULL);
 
             }
             HARNESS_FORK_CHILD_END();

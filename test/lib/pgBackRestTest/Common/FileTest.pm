@@ -222,7 +222,7 @@ sub forceStorageMove
         }
         else
         {
-            $oStorage->put($strDestinationPath, ${$oStorage->get($strSourcePath)});
+            $oStorage->put($strDestinationPath, ${$oStorage->get($strSourcePath, {bRaw => true})}, {bRaw => true});
             $oStorage->remove($strSourcePath);
         }
     }

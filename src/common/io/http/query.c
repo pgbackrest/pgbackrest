@@ -17,6 +17,7 @@ struct HttpQuery
 {
     MemContext *memContext;                                         // Mem context
     KeyValue *kv;                                                   // KeyValue store
+    const StringList *redactList;                                   // List of keys to redact values for
 };
 
 OBJECT_DEFINE_MOVE(HTTP_QUERY);
@@ -24,9 +25,11 @@ OBJECT_DEFINE_FREE(HTTP_QUERY);
 
 /**********************************************************************************************************************************/
 HttpQuery *
-httpQueryNew(void)
+httpQueryNew(HttpQueryNewParam param)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
+    FUNCTION_TEST_END();
 
     HttpQuery *this = NULL;
 
@@ -39,6 +42,7 @@ httpQueryNew(void)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .kv = kvNew(),
+            .redactList = strLstDup(param.redactList),
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -101,10 +105,11 @@ httpQueryNewStr(const String *query)
 
 /**********************************************************************************************************************************/
 HttpQuery *
-httpQueryDup(const HttpQuery *query)
+httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+        FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
     HttpQuery *this = NULL;
@@ -120,6 +125,7 @@ httpQueryDup(const HttpQuery *query)
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .kv = kvDup(query->kv),
+                .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
             };
         }
         MEM_CONTEXT_NEW_END();
@@ -231,37 +237,60 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpQueryRender(const HttpQuery *this)
+bool
+httpQueryRedact(const HttpQuery *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
+        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    FUNCTION_TEST_RETURN(this->redactList != NULL && strLstExists(this->redactList, key));
+}
+
+/**********************************************************************************************************************************/
+String *
+httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_QUERY, this);
+        FUNCTION_TEST_PARAM(BOOL, param.redact);
     FUNCTION_TEST_END();
 
     String *result = NULL;
 
     if (this != NULL)
     {
-        const StringList *keyList = httpQueryList(this);
-
-        if (strLstSize(keyList) > 0)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            result = strNew("");
+            const StringList *keyList = httpQueryList(this);
 
-            MEM_CONTEXT_TEMP_BEGIN()
+            if (strLstSize(keyList) > 0)
             {
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strNew("");
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                 {
+                    const String *key = strLstGet(keyList, keyIdx);
+
                     if (strSize(result) != 0)
                         strCatZ(result, "&");
 
                     strCatFmt(
-                        result, "%s=%s", strPtr(strLstGet(keyList, keyIdx)),
-                        strPtr(httpUriEncode(httpQueryGet(this, strLstGet(keyList, keyIdx)), false)));
+                        result, "%s=%s", strPtr(key),
+                        param.redact && httpQueryRedact(this, key) ?
+                            "<redacted>" : strPtr(httpUriEncode(httpQueryGet(this, key), false)));
                 }
             }
-            MEM_CONTEXT_TEMP_END();
         }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -276,12 +305,17 @@ httpQueryToLog(const HttpQuery *this)
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
     {
+        const String *key = strLstGet(keyList, keyIdx);
+
         if (strSize(result) != 1)
             strCatZ(result, ", ");
 
-        strCatFmt(
-            result, "%s: '%s'", strPtr(strLstGet(keyList, keyIdx)),
-            strPtr(httpQueryGet(this, strLstGet(keyList, keyIdx))));
+        strCatFmt(result, "%s: ", strPtr(key));
+
+        if (httpQueryRedact(this, key))
+            strCatZ(result, "<redacted>");
+        else
+            strCatFmt(result, "'%s'", strPtr(httpQueryGet(this, key)));
     }
 
     strCatZ(result, "}");

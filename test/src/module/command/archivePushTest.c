@@ -261,6 +261,12 @@ testRun(void)
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
+        // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
+        // directly from the buffers to reduce the cost of maintaining checksums.
+        const char *walBuffer1Sha1 = TEST_64BIT() ?
+            (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
+            "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
+
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
@@ -268,10 +274,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/11-1/0000000100000001/000000010000000100000001-%s.gz",
-                    TEST_64BIT() ? "3e5ecd22712f319b2420d5b901fd29f4f6be2336" : "6903dce7e3cd64ba9a6134056405eaeb8dedcd37")),
+                storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000001-%s.gz", walBuffer1Sha1)),
             true, "check repo for WAL file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment again");
@@ -285,6 +288,7 @@ testRun(void)
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer2);
+        const char *walBuffer2Sha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer2);
 
@@ -299,18 +303,31 @@ testRun(void)
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, strNew("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+
+        // Create tmp file to make it look like a prior push failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp",
+                    walBuffer2Sha1)),
+                BUFSTRDEF("PARTIAL")),
+            "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz",
-                    TEST_64BIT() ? "edad2f5a9d8a03ee3c09e8ce92c771e0d20232f5" : "e7c81f5513e0c6e3f19b9dbfc450019165994dda")),
+                storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz", walBuffer2Sha1)),
             true, "check repo for WAL file");
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest,
+                strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", walBuffer2Sha1)),
+            false, "check WAL tmp file is gone");
 
         // Push a history file
         // -------------------------------------------------------------------------------------------------------------------------
@@ -413,10 +430,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s",
-                    TEST_64BIT() ? "edad2f5a9d8a03ee3c09e8ce92c771e0d20232f5" : "e7c81f5513e0c6e3f19b9dbfc450019165994dda")),
+                storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
             true, "check repo for WAL file");
     }
 
@@ -574,6 +588,7 @@ testRun(void)
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0xFF, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer1);
+        const char *walBuffer1Sha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/000000010000000100000001")), walBuffer1);
 
@@ -582,10 +597,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
-                    TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
+                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
             true, "check repo for WAL file");
 
         // Direct tests of the async function
@@ -647,10 +659,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s",
-                    TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
+                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
             true, "check repo for WAL 1 file");
 
         TEST_RESULT_STR_Z(
@@ -662,6 +671,7 @@ testRun(void)
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0x0C, bufSize(walBuffer2));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer2);
+        const char *walBuffer2Sha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/000000010000000100000002")), walBuffer2);
 
@@ -676,10 +686,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest,
-                strNewFmt(
-                    "repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s",
-                    TEST_64BIT() ? "0aea6fa5d53500ce548b84a86bc3a29ae77fa048" : "408822a89ef44ef6740e785743bf1b870d8024a2")),
+                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
             true, "check repo for WAL 2 file");
 
         TEST_RESULT_STR_Z(

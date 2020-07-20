@@ -6,6 +6,10 @@ Test Repo Commands
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessInfo.h"
+
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -231,14 +235,62 @@ testRun(void)
         const String *fileName = STRDEF("file.txt");
         const Buffer *fileBuffer = BUFSTRDEF("TESTFILE");
 
-        const String *fileEncName = STRDEF("file-enc.txt");
-        const Buffer *fileEncBuffer = BUFSTRDEF("TESTFILE-ENC");
-
         const String *fileEncCustomName = STRDEF("file-enc-custom.txt");
         const Buffer *fileEncCustomBuffer = BUFSTRDEF("TESTFILE-ENC-CUSTOM");
 
         const String *fileRawName = STRDEF("file-raw.txt");
         const Buffer *fileRawBuffer = BUFSTRDEF("TESTFILE-RAW");
+
+        const Buffer *archiveInfoFileBuffer = BUFSTRDEF(
+            "[cipher]\n"
+            "cipher-pass=\"custom\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6846378200844646865\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6846378200844646865,\"db-version\":\"12\"}\n"
+            "\n"
+            "[backrest]\n"
+            "backrest-checksum=\"85c2460341ddc2af8bdc0e07437965e3f1f64ea2\"\n");
+
+        const Buffer *backupInfoFileBuffer = BUFSTRDEF(
+            "[cipher]\n"
+            "cipher-pass=\"custom\"\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=1\n"
+            "db-system-id=6846378200844646865\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6846378200844646865,\"db-version\":\"12\"}\n"
+            "\n"
+            "[backrest]\n"
+            "backrest-checksum=\"089f3f0c862691ff083cd5db66d0cea3f5830b37\"\n");
+
+        const Buffer *manifestFileBuffer = BUFSTRDEF(
+            "[cipher]\n"
+            "cipher-pass=\"custom2\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=1\n"
+            "db-system-id=6846378200844646865\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/var/lib/pgsql/12/data\",\"type\":\"path\"}\n"
+            "\n"
+            "[backrest]\n"
+            "backrest-checksum=\"31706010d1aa7e850191b4de9e76dc1ed13fb855\"\n");
+
+        const Buffer *backupLabelBuffer = BUFSTRDEF("BACKUP-LABEL");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when missing destination");
@@ -256,17 +308,6 @@ testRun(void)
         harnessCfgLoad(cfgCmdRepoPut, argList);
 
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(fileBuffer)), "put");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("put an encrypted file");
-
-        argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
-        strLstAdd(argList, fileEncName);
-        harnessCfgLoad(cfgCmdRepoPut, argList);
-
-        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(fileEncBuffer)), "put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put an encrypted file with custom key");
@@ -303,6 +344,119 @@ testRun(void)
         dup2(stdinSave, STDIN_FILENO);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted archive.info");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(archiveInfoFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted archive.info.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(archiveInfoFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup.info");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE);
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupInfoFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup.info.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupInfoFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted WAL archive file");
+
+        // Create WAL segment
+        ioBufferSizeSet(oldBufferSize);
+        Buffer *archiveFileBuffer = bufNew(16 * 1024 * 1024);
+        memset(bufPtr(archiveFileBuffer), 0, bufSize(archiveFileBuffer));
+        bufUsedSet(archiveFileBuffer, bufSize(archiveFileBuffer));
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
+        strLstAdd(argList, strNew(STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(archiveFileBuffer)), "put");
+
+        // Reset small buffer size again for the next tests
+        ioBufferSizeSet(8);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup.manifest");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE);
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(manifestFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup.manifest.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(manifestFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup.history manifest");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz");
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(manifestFileBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("put encrypted backup_label");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom2");
+        strLstAdd(argList, strNew(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        harnessCfgLoad(cfgCmdRepoPut, argList);
+
+        TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupLabelBuffer)), "put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when missing source");
 
         argList = strLstNew();
@@ -322,17 +476,16 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(writeBuffer, fileBuffer), true, "    get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get an encrypted file");
+        TEST_TITLE("get a file with / repo");
 
         argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
-        strLstAdd(argList, fileEncName);
+        strLstAdd(argList, strNew("--" CFGOPT_REPO1_PATH "=/"));
+        strLstAdd(argList, strNewFmt("%s/repo/%s", testPath(), strPtr(fileName)));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, fileEncBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, fileBuffer), true, "    get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get an encrypted file with custom key");
@@ -386,6 +539,170 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(bufNew(0))), 1, "get");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get file outside of the repo error");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, "/somewhere/" INFO_ARCHIVE_FILE);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_ERROR(
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            strPtr(strNewFmt("absolute path '/somewhere/%s' is not in base path '%s/repo'", INFO_ARCHIVE_FILE, testPath())));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get file in repo root directory error");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAdd(argList, fileEncCustomName);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_ERROR(
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            strPtr(strNewFmt("unable to determine cipher passphrase for '%s'", strPtr(fileEncCustomName))));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted archive.info - stanza mismatch");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_ERROR(storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            "stanza name 'test2' given in option doesn't match the given path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted archive.info");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted archive.info.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup.info");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup.info.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Set higher buffer size for the WAL archive tests
+        ioBufferSizeSet(oldBufferSize);
+
+        TEST_TITLE("get encrypted WAL archive file");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAdd(argList, strNewFmt(
+            "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",testPath()));
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup.manifest");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE);
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup.manifest.copy");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy");
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup.history manifest");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz");
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted backup_label");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=" CIPHER_TYPE_AES_256_CBC);
+        strLstAdd(argList, strNew(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        harnessCfgLoad(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "    get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Reset env

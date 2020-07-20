@@ -320,6 +320,7 @@ STRING_EXTERN(CFGOPT_DB_TIMEOUT_STR,                                CFGOPT_DB_TI
 STRING_EXTERN(CFGOPT_DELTA_STR,                                     CFGOPT_DELTA);
 STRING_EXTERN(CFGOPT_DRY_RUN_STR,                                   CFGOPT_DRY_RUN);
 STRING_EXTERN(CFGOPT_EXCLUDE_STR,                                   CFGOPT_EXCLUDE);
+STRING_EXTERN(CFGOPT_EXPIRE_AUTO_STR,                               CFGOPT_EXPIRE_AUTO);
 STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTER);
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
 STRING_EXTERN(CFGOPT_HOST_ID_STR,                                   CFGOPT_HOST_ID);
@@ -447,6 +448,7 @@ STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_PATH_STR,                       CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CONTAINER_STR,                     CFGOPT_REPO1_AZURE_CONTAINER);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_HOST_STR,                          CFGOPT_REPO1_AZURE_HOST);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_STR,                           CFGOPT_REPO1_AZURE_KEY);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_TYPE_STR,                      CFGOPT_REPO1_AZURE_KEY_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_PORT_STR,                          CFGOPT_REPO1_AZURE_PORT);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_VERIFY_TLS_STR,                    CFGOPT_REPO1_AZURE_VERIFY_TLS);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_PASS_STR,                         CFGOPT_REPO1_CIPHER_PASS);
@@ -686,6 +688,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_EXCLUDE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptExclude)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_EXPIRE_AUTO)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptExpireAuto)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1702,6 +1712,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKey)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKeyType)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

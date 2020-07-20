@@ -12,7 +12,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.28dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2020-07-20" version="2.28" title="Azure Repository Storage">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -28,6 +31,9 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Azure support for repository storage."/>
+                        <commit subject="Add shared access signature (SAS) authorization for Azure."/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
@@ -36,11 +42,39 @@
 
                         <p>Azure support for repository storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>expire-auto</br-option> option.</p>
+
+                        <p>This allows automatic expiration after a successful backup to be disabled.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Asynchronous S3 multipart upload."/>
+                        <commit subject="Rename httpRequest() to httpRequestResponse() and fix comment."/>
+                        <commit subject="Update comment and parameter in HttpRequest."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
                         <p>Asynchronous S3 multipart upload.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatic retry for <cmd>backup</cmd>, <cmd>restore</cmd>, <cmd>archive-get</cmd>, and <cmd>archive-push</cmd>.</p>
                     </release-item>
 
                     <release-item>
@@ -93,6 +127,15 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically determine cipher passphrase in <cmd>repo-get</cmd> command.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="stefan.fercot"/>
@@ -151,24 +194,46 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Update the FAQ page to clarify how a backup set can be expired.</p>
+                        <p>Update <postgres/> versions used to build user guides.</p>
+
+                        <p>Also add version ranges to indicate that a user guide is accurate for a range of <postgres/> versions even if it was built for a specific version.</p>
                     </release-item>
 
                     <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Update the PITR FAQ to clarify the default behavior.</p>
+                        <p>Update FAQ for expiring a specific backup set.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update FAQ to clarify default PITR behavior.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
 
             <release-test-list>
                 <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove <id>real/all</id> integration tests now covered by unit tests.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

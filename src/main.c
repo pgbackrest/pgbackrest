@@ -119,14 +119,17 @@ main(int argListSize, const char *argList[])
                     // Run backup
                     cmdBackup();
 
-                    // Switch to expire command
-                    cmdEnd(0, NULL);
-                    cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
-                    cfgLoadLogFile();
-                    cmdBegin(true);
+                    if (cfgOptionBool(cfgOptExpireAuto))
+                    {
+                        // Switch to expire command
+                        cmdEnd(0, NULL);
+                        cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
+                        cfgLoadLogFile();
+                        cmdBegin(true);
 
-                    // Run expire
-                    cmdExpire();
+                        // Run expire
+                        cmdExpire();
+                    }
 
                     break;
                 }

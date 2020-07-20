@@ -19,12 +19,31 @@ typedef struct HttpQuery HttpQuery;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpQuery *httpQueryNew(void);
+typedef struct HttpQueryNewParam
+{
+    VAR_PARAM_HEADER;
+    const StringList *redactList;                                                    // List of keys to redact values for
+} HttpQueryNewParam;
+
+#define httpQueryNewP(...)                                                                                                         \
+    httpQueryNew((HttpQueryNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpQuery *httpQueryNew(HttpQueryNewParam param);
 
 // New from encoded query string
 HttpQuery *httpQueryNewStr(const String *query);
 
-HttpQuery *httpQueryDup(const HttpQuery *query);
+// Duplicate
+typedef struct HttpQueryDupParam
+{
+    VAR_PARAM_HEADER;
+    const StringList *redactList;                                                    // List of keys to redact values for
+} HttpQueryDupParam;
+
+#define httpQueryDupP(query, ...)                                                                                                  \
+    httpQueryDup(query, (HttpQueryDupParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+HttpQuery *httpQueryDup(const HttpQuery *query, HttpQueryDupParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -44,11 +63,23 @@ HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 // Move to a new parent mem context
 HttpQuery *httpQueryMove(HttpQuery *this, MemContext *parentNew);
 
-//Put a query item
+// Put a query item
 HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
 
+// Should the query key be redacted when logging?
+bool httpQueryRedact(const HttpQuery *this, const String *key);
+
 // Render the query for inclusion in an HTTP request
-String *httpQueryRender(const HttpQuery *this);
+typedef struct HttpQueryRenderParam
+{
+    VAR_PARAM_HEADER;
+    bool redact;                                                    // Redact user-visible query string
+} HttpQueryRenderParam;
+
+#define httpQueryRenderP(this, ...)                                                                                                \
+    httpQueryRender(this, (HttpQueryRenderParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
 
 /***********************************************************************************************************************************
 Destructor

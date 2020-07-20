@@ -546,6 +546,11 @@ testRun(void)
         uint64_t feature = storageRepo()->interface.feature;
         ((Storage *)storageRepo())->interface.feature = feature && ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
+        // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strPtr(backupPathFile))), NULL),
+            "    create tmp file");
+
         TEST_ASSIGN(
             result,
             backupFile(
@@ -562,6 +567,9 @@ testRun(void)
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file to repo success");
 
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strPtr(backupPathFile))), false,
+            "    check temp file removed");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1479,7 +1487,9 @@ testRun(void)
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
-            TEST_64BIT() ? "21e2ddc99cdf4cfca272eee4f38891146092e358" : "8bb70506d988a8698d9e8cf90736ada23634571b");
+            TEST_64BIT() ?
+                (TEST_BIG_ENDIAN() ? "749acedef8f8d5fe35fc20c0375657f876ccc38e" : "21e2ddc99cdf4cfca272eee4f38891146092e358") :
+                "8bb70506d988a8698d9e8cf90736ada23634571b");
 
         // Make pg no longer appear to be running
         storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
@@ -2261,6 +2271,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart), relation);
+            const char *rel1_3Sha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // File with bad page checksum
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -2271,6 +2282,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
+            const char *rel1_4Sha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // Add a tablespace
             storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_PGTBLSPC));
@@ -2319,71 +2331,74 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_KEYRPL(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
-                "pg_data {path}\n"
-                "pg_data/PG_VERSION.gz {file, s=2}\n"
-                "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/base {path}\n"
-                "pg_data/base/1 {path}\n"
-                "pg_data/base/1/1.gz {file, s=8192}\n"
-                "pg_data/base/1/2.gz {file, s=8193}\n"
-                "pg_data/base/1/3.gz {file, s=32768}\n"
-                "pg_data/base/1/4.gz {file, s=24576}\n"
-                "pg_data/global {path}\n"
-                "pg_data/global/pg_control.gz {file, s=8192}\n"
-                "pg_data/pg_tblspc {path}\n"
-                "pg_data/pg_wal {path}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000000.gz {file, s=1048576}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000001.gz {file, s=1048576}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000002.gz {file, s=1048576}\n"
-                "pg_data/postgresql.conf.gz {file, s=11}\n"
-                "pg_tblspc {path}\n"
-                "pg_tblspc/32768 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
-                "--------\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
-                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
-                    ",\"timestamp\":1572200000}\n"
-                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1572200002}\n"
-                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                    ",\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"8beb58e08394fe665fb04a17b4003faa3802760b\",\"checksum-page\":false"
-                    ",\"master\":false,\"size\":8193,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/3={\"checksum\":\"73e537a445ad34eab4b292ac6aa07b8ce14e8421\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[0,[2,3]],\"master\":false,\"size\":32768,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/4={\"checksum\":\"ba233be7198b3115f0480fa5274448f2a2fc2af1\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[1],\"master\":false,\"size\":24576,\"timestamp\":1572200000}\n"
-                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000001={\"size\":1048576,\"timestamp\":1572200002}\n"
-                "pg_data/pg_wal/0000000105DB5DE000000002={\"size\":1048576,\"timestamp\":1572200002}\n"
-                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                    ",\"timestamp\":1570000000}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0"
-                    ",\"timestamp\":1572200000}\n"
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_tblspc={}\n"
-                "pg_tblspc/32768={}\n"
-                "pg_tblspc/32768/PG_11_201809051={}\n"
-                "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                strNewFmt(
+                    "pg_data {path}\n"
+                    "pg_data/PG_VERSION.gz {file, s=2}\n"
+                    "pg_data/backup_label.gz {file, s=17}\n"
+                    "pg_data/base {path}\n"
+                    "pg_data/base/1 {path}\n"
+                    "pg_data/base/1/1.gz {file, s=8192}\n"
+                    "pg_data/base/1/2.gz {file, s=8193}\n"
+                    "pg_data/base/1/3.gz {file, s=32768}\n"
+                    "pg_data/base/1/4.gz {file, s=24576}\n"
+                    "pg_data/global {path}\n"
+                    "pg_data/global/pg_control.gz {file, s=8192}\n"
+                    "pg_data/pg_tblspc {path}\n"
+                    "pg_data/pg_wal {path}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000000.gz {file, s=1048576}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000001.gz {file, s=1048576}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000002.gz {file, s=1048576}\n"
+                    "pg_data/postgresql.conf.gz {file, s=11}\n"
+                    "pg_tblspc {path}\n"
+                    "pg_tblspc/32768 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
+                    "--------\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                    "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
+                        ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
+                        ",\"timestamp\":1572200000}\n"
+                    "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                        ",\"timestamp\":1572200002}\n"
+                    "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
+                        ",\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/2={\"checksum\":\"8beb58e08394fe665fb04a17b4003faa3802760b\",\"checksum-page\":false"
+                        ",\"master\":false,\"size\":8193,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,3]]"
+                        ",\"master\":false,\"size\":32768,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"master\":false"
+                        ",\"size\":24576,\"timestamp\":1572200000}\n"
+                    "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000001={\"size\":1048576,\"timestamp\":1572200002}\n"
+                    "pg_data/pg_wal/0000000105DB5DE000000002={\"size\":1048576,\"timestamp\":1572200002}\n"
+                    "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                        ",\"timestamp\":1570000000}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0"
+                        ",\"timestamp\":1572200000}\n"
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_tblspc={}\n"
+                    "pg_tblspc/32768={}\n"
+                    "pg_tblspc/32768/PG_11_201809051={}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                    rel1_3Sha1, rel1_4Sha1),
                 "compare file list");
 
             // Remove test files

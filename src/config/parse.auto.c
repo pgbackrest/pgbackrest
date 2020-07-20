@@ -298,6 +298,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // expire-auto option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "no-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "reset-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExpireAuto,
+    },
+
     // filter option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1925,6 +1940,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKey,
     },
 
+    // repo-azure-key-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureKeyType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKeyType,
+    },
+
     // repo-azure-port option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2692,6 +2719,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptHostId,
     cfgOptIgnoreMissing,
@@ -2845,6 +2873,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoAzureContainer,
     cfgOptRepoAzureHost,
     cfgOptRepoAzureKey,
+    cfgOptRepoAzureKeyType,
     cfgOptRepoAzurePort,
     cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,

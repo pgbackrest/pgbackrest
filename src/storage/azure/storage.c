@@ -45,6 +45,7 @@ STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
 STRING_STATIC(AZURE_QUERY_PREFIX_STR,                               "prefix");
 STRING_EXTERN(AZURE_QUERY_RESTYPE_STR,                              AZURE_QUERY_RESTYPE);
+STRING_STATIC(AZURE_QUERY_SIG_STR,                                  "sig");
 
 STRING_STATIC(AZURE_QUERY_VALUE_LIST_STR,                           "list");
 STRING_EXTERN(AZURE_QUERY_VALUE_CONTAINER_STR,                      AZURE_QUERY_VALUE_CONTAINER);
@@ -70,10 +71,12 @@ struct StorageAzure
     MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
+    StringList *queryRedactList;                                    // List of query keys to redact from logging
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
-    const String *key;                                              // Shared Secret Key
+    const String *sharedKey;                                        // Shared key
+    const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
     const String *uriPrefix;                                        // Account/container prefix
@@ -88,8 +91,7 @@ Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storages
 ***********************************************************************************************************************************/
 static void
 storageAzureAuth(
-    StorageAzure *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime,
-    HttpHeader *httpHeader)
+    StorageAzure *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
@@ -109,76 +111,85 @@ storageAzureAuth(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Set required headers
-        httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
+        // Host header is required for both types of authentication
         httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
-        httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
-        // Generate canonical headers
-        String *headerCanonical = strNew("");
-        StringList *headerKeyList = httpHeaderList(httpHeader);
-
-        for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
+        // Shared key authentication
+        if (this->sharedKey != NULL)
         {
-            const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
+            // Set required headers
+            httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
+            httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
-            if (!strBeginsWithZ(headerKey, "x-ms-"))
-                continue;
+            // Generate canonical headers
+            String *headerCanonical = strNew("");
+            StringList *headerKeyList = httpHeaderList(httpHeader);
 
-            strCatFmt(headerCanonical, "%s:%s\n", strPtr(headerKey), strPtr(httpHeaderGet(httpHeader, headerKey)));
-        }
-
-        // Generate canonical query
-        String *queryCanonical = strNew("");
-
-        if (query != NULL)
-        {
-            StringList *queryKeyList = httpQueryList(query);
-            ASSERT(strLstSize(queryKeyList) > 0);
-
-            for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
+            for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
             {
-                const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
+                const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
 
-                strCatFmt(queryCanonical, "\n%s:%s", strPtr(queryKey), strPtr(httpQueryGet(query, queryKey)));
+                if (!strBeginsWithZ(headerKey, "x-ms-"))
+                    continue;
+
+                strCatFmt(headerCanonical, "%s:%s\n", strPtr(headerKey), strPtr(httpHeaderGet(httpHeader, headerKey)));
             }
+
+            // Generate canonical query
+            String *queryCanonical = strNew("");
+
+            if (query != NULL)
+            {
+                StringList *queryKeyList = httpQueryList(query);
+                ASSERT(strLstSize(queryKeyList) > 0);
+
+                for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
+                {
+                    const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
+
+                    strCatFmt(queryCanonical, "\n%s:%s", strPtr(queryKey), strPtr(httpQueryGet(query, queryKey)));
+                }
+            }
+
+            // Generate string to sign
+            const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+            const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+
+            const String *stringToSign = strNewFmt(
+                "%s\n"                                                  // verb
+                "\n"                                                    // content-encoding
+                "\n"                                                    // content-language
+                "%s\n"                                                  // content-length
+                "%s\n"                                                  // content-md5
+                "\n"                                                    // content-type
+                "%s\n"                                                  // date
+                "\n"                                                    // If-Modified-Since
+                "\n"                                                    // If-Match
+                "\n"                                                    // If-None-Match
+                "\n"                                                    // If-Unmodified-Since
+                "\n"                                                    // range
+                "%s"                                                    // Canonicalized headers
+                "/%s%s"                                                 // Canonicalized account/uri
+                "%s",                                                   // Canonicalized query
+                strPtr(verb), strEq(contentLength, ZERO_STR) ? "" : strPtr(contentLength), contentMd5 == NULL ? "" : strPtr(contentMd5),
+                strPtr(dateTime), strPtr(headerCanonical), strPtr(this->account), strPtr(uri), strPtr(queryCanonical));
+
+            // Generate authorization header
+            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strPtr(this->sharedKey)));
+            decodeToBin(encodeBase64, strPtr(this->sharedKey), bufPtr(keyBin));
+            bufUsedSet(keyBin, bufSize(keyBin));
+
+            char authHmacBase64[45];
+            encodeToStr(
+                encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
+                HASH_TYPE_SHA256_SIZE, authHmacBase64);
+
+            httpHeaderPut(
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strPtr(this->account), authHmacBase64));
         }
-
-        // Generate string to sign
-        const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-        const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
-
-        const String *stringToSign = strNewFmt(
-            "%s\n"                                                  // verb
-            "\n"                                                    // content-encoding
-            "\n"                                                    // content-language
-            "%s\n"                                                  // content-length
-            "%s\n"                                                  // content-md5
-            "\n"                                                    // content-type
-            "%s\n"                                                  // date
-            "\n"                                                    // If-Modified-Since
-            "\n"                                                    // If-Match
-            "\n"                                                    // If-None-Match
-            "\n"                                                    // If-Unmodified-Since
-            "\n"                                                    // range
-            "%s"                                                    // Canonicalized headers
-            "/%s%s"                                                 // Canonicalized account/uri
-            "%s",                                                   // Canonicalized query
-            strPtr(verb), strEq(contentLength, ZERO_STR) ? "" : strPtr(contentLength), contentMd5 == NULL ? "" : strPtr(contentMd5),
-            strPtr(dateTime), strPtr(headerCanonical), strPtr(this->account), strPtr(uri), strPtr(queryCanonical));
-
-        // Generate authorization header
-        Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strPtr(this->key)));
-        decodeToBin(encodeBase64, strPtr(this->key), bufPtr(keyBin));
-        bufUsedSet(keyBin, bufSize(keyBin));
-
-        char authHmacBase64[45];
-        encodeToStr(
-            encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-            HASH_TYPE_SHA256_SIZE, authHmacBase64);
-
-        httpHeaderPut(
-            httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strPtr(this->account), authHmacBase64));
+        // SAS authentication
+        else
+            httpQueryMerge(query, this->sasKey);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -227,14 +238,20 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
         }
 
+        // Make a copy of the query so it can be modified
+        HttpQuery *query =
+            this->sasKey != NULL && param.query == NULL ?
+                httpQueryNewP(.redactList = this->queryRedactList) :
+                httpQueryDupP(param.query, .redactList = this->queryRedactList);
+
         // Generate authorization header
-        storageAzureAuth(this, verb, httpUriEncode(param.uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
+        storageAzureAuth(this, verb, httpUriEncode(param.uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, param.uri, .query = param.query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, param.uri, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -259,7 +276,7 @@ storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get response
-        result = httpRequest(request, !param.contentIo);
+        result = httpRequestResponse(request, !param.contentIo);
 
         // Error if the request was not successful
         if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
@@ -351,7 +368,7 @@ storageAzureListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNew();
+                HttpQuery *query = httpQueryNewP();
 
                 // Add continuation token from the prior loop if any
                 if (marker != NULL)
@@ -672,8 +689,8 @@ static const StorageInterface storageInterfaceAzure =
 Storage *
 storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, const String *key, size_t blockSize, const String *host, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath)
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -681,6 +698,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
+        FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -709,12 +727,17 @@ storageAzureNew(
             .interface = storageInterfaceAzure,
             .container = strDup(container),
             .account = strDup(account),
-            .key = strDup(key),
             .blockSize = blockSize,
             .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strPtr(account)) : host,
             .uriPrefix = host == NULL ?
                 strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),
         };
+
+        // Store shared key or parse sas query
+        if (keyType == storageAzureKeyTypeShared)
+            driver->sharedKey = key;
+        else
+            driver->sasKey = httpQueryNewStr(key);
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
@@ -723,6 +746,10 @@ storageAzureNew(
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
+
+        // Create list of redacted query keys
+        driver->queryRedactList = strLstNew();
+        strLstAdd(driver->queryRedactList, AZURE_QUERY_SIG_STR);
 
         // Generate starting file id
         cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));

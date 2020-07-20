@@ -152,7 +152,12 @@ String *strQuoteZ(const String *this, const char *quote);
 String *strReplaceChr(String *this, char find, char replace);
 
 // String size minus null-terminator, i.e. the same value that strlen() would return
-size_t strSize(const String *this);
+__attribute__((always_inline)) static inline size_t
+strSize(const String *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const StringConst *)this)->size;
+}
 
 // Format sizes (file, buffer, etc.) in human-readable form
 String *strSizeFormat(const uint64_t fileSize);

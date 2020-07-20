@@ -16,7 +16,9 @@ Test Protocol
 /***********************************************************************************************************************************
 Test protocol request handler
 ***********************************************************************************************************************************/
-bool
+static unsigned int testServerProtocolErrorTotal = 0;
+
+static bool
 testServerProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -46,6 +48,16 @@ testServerProtocol(const String *command, const VariantList *paramList, Protocol
             protocolServerWriteLine(server, strNew("LINEOFTEXT"));
             protocolServerWriteLine(server, NULL);
             ioWriteFlush(protocolServerIoWrite(server));
+        }
+        else if (strEq(command, STRDEF("error-until-0")))
+        {
+            if (testServerProtocolErrorTotal > 0)
+            {
+                testServerProtocolErrorTotal--;
+                THROW(FormatError, "error-until-0");
+            }
+
+            protocolServerResponse(server, varNewBool(true));
         }
         else
             found = false;
@@ -611,6 +623,15 @@ testRun(void)
                 // Exit
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
+
+                // Retry errors until success
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"error-until-0\"}")), "write error-until-0");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
+
+                // Exit
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -640,9 +661,23 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolServerHandlerAdd(server, testServerProtocol), "add handler");
 
-                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
+                TEST_RESULT_VOID(protocolServerProcess(server, NULL), "run process loop");
 
-                TEST_RESULT_VOID(protocolServerFree(server), "free server");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("run process loop with retries");
+
+                VariantList *retryInterval = varLstNew();
+                varLstAdd(retryInterval, varNewUInt64(0));
+                varLstAdd(retryInterval, varNewUInt64(50));
+
+                testServerProtocolErrorTotal = 2;
+
+                TEST_RESULT_VOID(protocolServerProcess(server, retryInterval), "run process loop");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("free server");
+
+                TEST_RESULT_VOID(protocolServerFree(server), "free");
             }
             HARNESS_FORK_PARENT_END();
         }
