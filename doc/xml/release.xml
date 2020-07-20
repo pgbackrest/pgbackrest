@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.28dev" title="UNDER DEVELOPMENT">
+        <release date="2020-07-20" version="2.28" title="Azure Repository Storage">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -200,19 +200,23 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Update the FAQ page to clarify how a backup set can be expired.</p>
+                        <p>Update FAQ for expiring a specific backup set.</p>
                     </release-item>
 
                     <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Update the PITR FAQ to clarify the default behavior.</p>
+                        <p>Update FAQ to clarify default PITR behavior.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>

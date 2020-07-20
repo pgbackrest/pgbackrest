@@ -799,14 +799,6 @@ src/common/io/handleWrite.h:
   class: core
   type: c/h
 
-src/common/io/http/cache.c:
-  class: core
-  type: c
-
-src/common/io/http/cache.h:
-  class: core
-  type: c/h
-
 src/common/io/http/client.c:
   class: core
   type: c
@@ -836,6 +828,30 @@ src/common/io/http/query.c:
   type: c
 
 src/common/io/http/query.h:
+  class: core
+  type: c/h
+
+src/common/io/http/request.c:
+  class: core
+  type: c
+
+src/common/io/http/request.h:
+  class: core
+  type: c/h
+
+src/common/io/http/response.c:
+  class: core
+  type: c
+
+src/common/io/http/response.h:
+  class: core
+  type: c/h
+
+src/common/io/http/session.c:
+  class: core
+  type: c
+
+src/common/io/http/session.h:
   class: core
   type: c/h
 
@@ -1371,6 +1387,34 @@ src/protocol/server.h:
   class: core
   type: c/h
 
+src/storage/azure/read.c:
+  class: core
+  type: c
+
+src/storage/azure/read.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.c:
+  class: core
+  type: c
+
+src/storage/azure/storage.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/azure/write.c:
+  class: core
+  type: c
+
+src/storage/azure/write.h:
+  class: core
+  type: c/h
+
 src/storage/cifs/storage.c:
   class: core
   type: c
@@ -1648,6 +1692,10 @@ test/lib/pgBackRestTest/Env/BackupInfo.pm:
   type: perl
 
 test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostAzureTest.pm:
   class: test/harness
   type: perl
 
@@ -2048,6 +2096,10 @@ test/src/module/postgres/interfaceTest.c:
   type: c
 
 test/src/module/protocol/protocolTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/azureTest.c:
   class: test/module
   type: c
 
