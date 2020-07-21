@@ -541,7 +541,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
 }
 
 PgWal
-pgWalFromFile(const String *walFile)
+pgWalFromFile(const String *walFile, const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
@@ -554,7 +554,7 @@ pgWalFromFile(const String *walFile)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read WAL segment header
-        Buffer *walBuffer = storageGetP(storageNewReadP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
+        Buffer *walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
         result = pgWalFromBuffer(walBuffer);
     }
