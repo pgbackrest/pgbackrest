@@ -649,10 +649,9 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                         // If the WAL segment size for this archiveId has not been set, get it from the first WAL
                         if (walSegmentSize == 0)
                         {
-                            // Read WAL segment header
-                            Buffer *walBuffer = storageGetP(storageNewReadP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
-                                strPtr(strLstGet(jobData->walFileList, 0)))), .exactSize = (unsigned int)(512));
-                            PgWal pgWalInfo = pgWalFromBuffer(walBuffer);
+                            PgWal pgWalInfo = pgWalFromFile(
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                    strPtr(strLstGet(jobData->walFileList, 0))), storageRepo());
                             walSegmentSize = pgWalInfo.size;
                         }
 
