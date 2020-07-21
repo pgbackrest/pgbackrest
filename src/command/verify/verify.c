@@ -727,7 +727,7 @@ cmdVerify(void)
         // If valid info files, then begin process of checking backups and archives in the repo
         if (errorTotal == 0)
         {
-// CSHANG TODO: Replace strLstNew() with strLstNewP()
+// CSHANG TODO: May need to replace strLstNew() with strLstNewP()
             // Initialize the job data
             VerifyJobData jobData =
             {

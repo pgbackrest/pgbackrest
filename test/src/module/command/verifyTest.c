@@ -620,7 +620,7 @@ EXPECTED VOID RESULT FROM STATEMENT: cmdVerify()
 
     BUT GOT ExecuteError: local-1 process terminated unexpectedly [102]: unable to execute '/home/vagrant/test/bin/u18/pgbackrest': [2] No such file or directory
 */
-//        TEST_RESULT_VOID(cmdVerify(), "TEST");
+       TEST_RESULT_VOID(cmdVerify(), "TEST");
 
     }
 

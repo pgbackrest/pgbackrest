@@ -7,6 +7,7 @@ Local Command
 #include "command/archive/push/protocol.h"
 #include "command/backup/protocol.h"
 #include "command/restore/protocol.h"
+#include "command/verify/protocol.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -34,12 +35,13 @@ cmdLocal(int handleRead, int handleWrite)
         ioReadOpen(read);
         IoWrite *write = ioHandleWriteNew(name, handleWrite);
         ioWriteOpen(write);
-// CSHANG I am guessing verify will need to go here? What are the rules for adding to this? Any code that uses the parrallel executor?
+
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
         protocolServerHandlerAdd(server, archiveGetProtocol);
         protocolServerHandlerAdd(server, archivePushProtocol);
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
+        protocolServerHandlerAdd(server, verifyProtocol);
         protocolServerProcess(server, retryInterval);
     }
     MEM_CONTEXT_TEMP_END();

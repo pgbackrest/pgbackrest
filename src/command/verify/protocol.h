@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
-Restore Protocol Handler
+Verify Protocol Handler
 ***********************************************************************************************************************************/
-#ifndef COMMAND_RESTORE_PROTOCOL_H
-#define COMMAND_RESTORE_PROTOCOL_H
+#ifndef COMMAND_VERIFY_PROTOCOL_H
+#define COMMAND_VERIFY_PROTOCOL_H
 
 #include "common/type/string.h"
 #include "common/type/variantList.h"
