@@ -605,15 +605,24 @@ testRun(void)
             "put backup.info files");
 
         // Create WAL file with just header info
-        Buffer *result = bufNew((size_t)512);
-        memset(bufPtr(result), 0, bufSize(result));
+        Buffer *walBuffer = bufNew((size_t)512);
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
         pgWalTestToBuffer(
-            (PgWal){.version = PG_VERSION_10, .systemId = 6626363367545678089, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
+            (PgWal){.version = PG_VERSION_10, .systemId = 6626363367545678089, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, walBuffer);
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageTest, strNewFmt("%s/10-2/0000000100000000", strPtr(archiveStanzaPath))),
+            "create empty timeline path");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest,
-                strNewFmt("%s/10-2/0000000100000000/0000000100000001000000FF-daa497dba64008db824607940609ba1cd7c6c501.gz",
-                strPtr(archiveStanzaPath))), result), "write WAL");
+                strNewFmt("%s/10-2/0000000200000000/0000000200000001000000FE-daa497dba64008db824607940609ba1cd7c6c501",
+                strPtr(archiveStanzaPath))), walBuffer), "write WAL");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest,
+                strNewFmt("%s/10-2/0000000200000000/0000000200000001000000FF-daa497dba64008db824607940609ba1cd7c6c501",
+                strPtr(archiveStanzaPath))), walBuffer), "write WAL");
 
 /* CSHANG not sure how to test this - when I run cmdVerify, I get
 EXPECTED VOID RESULT FROM STATEMENT: cmdVerify()

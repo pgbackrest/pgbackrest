@@ -213,10 +213,11 @@ Questions/Concerns
 // }
 
 static IoRead *
-verifyFileLoad(const String *fileName)
+verifyFileLoad(const String *fileName, const String *cipherPass)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, fileName);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_TEST_END();
 
 // CSHANG But how does this type of reading help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
@@ -225,8 +226,7 @@ verifyFileLoad(const String *fileName)
     StorageRead *read = storageNewReadP(storageRepo(), fileName);
     IoRead *result = storageReadIo(read);
     cipherBlockFilterGroupAdd(
-        ioReadFilterGroup(result), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
-        cfgOptionStrNull(cfgOptRepoCipherPass));
+        ioReadFilterGroup(result), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cipherPass);
     ioFilterGroupAdd(ioReadFilterGroup(result), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
     FUNCTION_TEST_RETURN(result);
@@ -249,10 +249,12 @@ typedef struct VerifyInfoFile
 } VerifyInfoFile;
 
 static VerifyInfoFile
-verifyInfoFile(const String *infoPathFile, bool loadFile)
+verifyInfoFile(const String *infoPathFile, bool loadFile, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, infoPathFile);
+        FUNCTION_LOG_PARAM(BOOL, loadFile);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(infoPathFile != NULL);
@@ -263,7 +265,7 @@ verifyInfoFile(const String *infoPathFile, bool loadFile)
     {
         TRY_BEGIN()
         {
-            IoRead *infoRead = verifyFileLoad(infoPathFile);
+            IoRead *infoRead = verifyFileLoad(infoPathFile, cipherPass);
 
             if (loadFile)
             {
@@ -312,7 +314,7 @@ verifyArchiveInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true);
+        VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyArchiveInfo.errorCode == 0)
@@ -321,7 +323,8 @@ verifyArchiveInfoFile(void)
             infoArchiveMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, false);
+            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
+                INFO_ARCHIVE_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If the copy loaded successfuly, then check the checksums
             if (verifyArchiveInfoCopy.errorCode == 0)
@@ -335,7 +338,8 @@ verifyArchiveInfoFile(void)
         else
         {
             // Attempt to load the copy
-            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, true);
+            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
+                INFO_ARCHIVE_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If loaded successfully, then return the copy as usable
             if (verifyArchiveInfoCopy.errorCode == 0)
@@ -360,7 +364,7 @@ verifyBackupInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true);
+        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyBackupInfo.errorCode == 0)
@@ -369,7 +373,8 @@ verifyBackupInfoFile(void)
             infoBackupMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, false);
+            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+                INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If the copy loaded successfuly, then check the checksums
             if (verifyBackupInfoCopy.errorCode == 0)
@@ -383,7 +388,8 @@ verifyBackupInfoFile(void)
         else
         {
             // Attempt to load the copy
-            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, true);
+            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+                INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If loaded successfully, then return the copy as usable
             if (verifyBackupInfoCopy.errorCode == 0)
@@ -397,6 +403,56 @@ verifyBackupInfoFile(void)
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
+//
+// static Manifest *
+// verifyManifestFile(void)
+// {
+//     FUNCTION_LOG_VOID(logLevelDebug);
+//
+//     InfoBackup *result = NULL;
+// CSHANG Need this somewhere: infoPgCipherPass(infoBackupPg(info))                      cfgOptionStrNull(cfgOptRepoCipherPass)
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//         // Get the main info file
+//         VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
+//
+//         // If the main file did not error, then report on the copy's status and check checksums
+//         if (verifyBackupInfo.errorCode == 0)
+//         {
+//             result = verifyBackupInfo.backup;
+//             infoBackupMove(result, memContextPrior());
+//
+//             // Attempt to load the copy and report on it's status but don't keep it in memory
+//             VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+//                 INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
+//
+//             // If the copy loaded successfuly, then check the checksums
+//             if (verifyBackupInfoCopy.errorCode == 0)
+//             {
+//                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
+//                 // log a warning but must trust main
+//                 if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
+//                     LOG_WARN("backup.info.copy doesn't match backup.info");
+//             }
+//         }
+//         else
+//         {
+//             // Attempt to load the copy
+//             VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+//                 INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
+//
+//             // If loaded successfully, then return the copy as usable
+//             if (verifyBackupInfoCopy.errorCode == 0)
+//             {
+//                 result = verifyBackupInfoCopy.backup;
+//                 infoBackupMove(result, memContextPrior());
+//             }
+//         }
+//     }
+//     MEM_CONTEXT_TEMP_END();
+// //
+//     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
+// }
 
 void
 verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
@@ -547,6 +603,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         {
             String *archiveId = strLstGet(jobData->archiveIdList, 0);
             unsigned int walSegmentSize = 0;
+            result = NULL;
 
             // CSHANG Switch memory context?
 
@@ -592,9 +649,10 @@ verifyJobCallback(void *data, unsigned int clientIdx)
                         // If the WAL segment size for this archiveId has not been set, get it from the first WAL
                         if (walSegmentSize == 0)
                         {
-                            PgWal pgWalInfo = pgWalFromFile(
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
-                                    strPtr(strLstGet(jobData->walFileList, 0))));
+                            // Read WAL segment header
+                            Buffer *walBuffer = storageGetP(storageNewReadP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                strPtr(strLstGet(jobData->walFileList, 0)))), .exactSize = (unsigned int)(512));
+                            PgWal pgWalInfo = pgWalFromBuffer(walBuffer);
                             walSegmentSize = pgWalInfo.size;
                         }
 
@@ -624,7 +682,7 @@ So, for now you'll need to check the first WAL and use that size to verify the s
                             // Get the fully qualified file name
                             const String *filePathName = strNewFmt(
                                 STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
-
+LOG_WARN_FMT("START NEW JOB ON %s, NUM FILES %u", strPtr(filePathName), strLstSize(jobData->walFileList)); // CSHANG Remove
                             // Get the checksum
                             String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
@@ -643,9 +701,13 @@ So, for now you'll need to check the first WAL and use that size to verify the s
                             //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
 
                             strLstRemoveIdx(jobData->walFileList, 0);
-
+LOG_WARN_FMT("NUM FILES AFTER remove %u", strLstSize(jobData->walFileList)); // CSHANG Remove
+                            // If this is the last file to process for this timeline, then remove the path
+                            if (strLstSize(jobData->walFileList) == 0)
+                                strLstRemoveIdx(jobData->walPathList, 0);
                             // Return the job found
-                            FUNCTION_TEST_RETURN(result); // CSHANG can only do if don't have a temp mem context
+                            break;
+                            // FUNCTION_TEST_RETURN(result); // CSHANG can only do if don't have a temp mem context
                         }
                         while (strLstSize(jobData->walFileList) > 0);
                     }
@@ -655,8 +717,26 @@ So, for now you'll need to check the first WAL and use that size to verify the s
                         LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
                         strLstRemoveIdx(jobData->walPathList, 0);
                     }
+LOG_WARN_FMT("IN FILELIST WALPATH SIZE %u", strLstSize(jobData->walPathList)); // CSHANG Remove
+                    if (result != NULL)
+                    {
+LOG_WARN("Break from WALPATH"); // CSHANG Remove
+                        break;
+                    }
                 }
                 while (strLstSize(jobData->walPathList) > 0);
+
+                // If this is the last timeline to process for this archiveId, then remove the archiveId
+                if (strLstSize(jobData->walPathList) == 0)
+                    strLstRemoveIdx(jobData->archiveIdList, 0);
+LOG_WARN_FMT("WALPATH SIZE %u", strLstSize(jobData->walPathList)); // CSHANG Remove
+
+                // If a file was sent to be processed then break so can process it
+                if (result != NULL)
+                {
+LOG_WARN("Break from ARVHIVEPATH"); // CSHANG Remove
+                    break;
+                }
             }
             else
             {
@@ -664,15 +744,49 @@ So, for now you'll need to check the first WAL and use that size to verify the s
                 LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
                 strLstRemoveIdx(jobData->archiveIdList, 0);
             }
+            // FUNCTION_TEST_RETURN(result);
+LOG_WARN_FMT("ARCHIVEID SIZE %u", strLstSize(jobData->archiveIdList)); // CSHANG Remove
         }
 
+        // If there is a result from archiving, then return it
+        if (result != NULL)
+        {
+            LOG_WARN("ARCHIVE RESULT != NULL"); // CSHANG Remove
+            FUNCTION_TEST_RETURN(result);
+        }
         // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
+        else
+        {
+            // Process backup files, if any
+            while (strLstSize(jobData->backupList) > 0)
+            {
+LOG_WARN("Processing BACKUPS"); // CSHANG Remove
+                // result == NULL;
+                        // // Get a usable backup manifest file
+                        // InfoBackup *backupInfo = verifyBackupInfoFile();
+                        //
+                        // // If a usable backup.info file is not found, then report an error in the log
+                        // if (backupInfo == NULL)
+                        // {
+                        //     LOG_ERROR(errorTypeCode(&FormatError), "No usable backup.info file");
+                        //     errorTotal++;
+                        // }
+            }
+
+            // If there is a result from backups, then return it
+            if (result != NULL)
+            {
+                LOG_WARN("BACKUP RESULT != NULL"); // CSHANG Remove
+                FUNCTION_TEST_RETURN(result);
+            }
+        }
+
 
 
     // }
     // MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(result);
 }
 
 
@@ -780,6 +894,7 @@ cmdVerify(void)
 
                     for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                     {
+LOG_WARN_FMT("NUM JOB COMPLETED %u,      JOBIDX %u", completed, jobIdx);  // CSHANG Remove
                         // Get the job and job key
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
@@ -800,7 +915,7 @@ cmdVerify(void)
 
                             if (verifyResult != verifyOk)
                             {
-                                LOG_WARN_PID_FMT(processId, "SOME ERROR %s, %s", strPtr(filePathName), strPtr(fileName));
+                                LOG_WARN_PID_FMT(processId, "SOME ERROR %u, ON %s, %s", verifyResult, strPtr(filePathName), strPtr(fileName));
 
                                 /* CSHANG pseudo code:
                                     Get the type of file this is (e.g. backup or archive file - probably just split the string into a stringlist by "/" and check that stringlist[0] = STORAGE_REPO_ARCHIVE or STORAGE_REPO_BACKUP)
@@ -824,13 +939,14 @@ cmdVerify(void)
                                 // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
 
                             }
-                            // Free the job
-                            protocolParallelJobFree(job);
                         }
                         // CSHANG I am assuming that there will only be an error if something went horribly wrong and the program needs to exit...
                         // Else the job errored
                         else
                             THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+
+                        // Free the job
+                        protocolParallelJobFree(job);
                     }
                 }
                 while (!protocolParallelDone(parallelExec));
