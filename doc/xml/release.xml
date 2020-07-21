@@ -13,6 +13,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-reviewer id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that <cmd>expire</cmd> must be run regularly when <br-option>expire-auto</br-option> is disabled.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2020-07-20" version="2.28" title="Azure Repository Storage">
