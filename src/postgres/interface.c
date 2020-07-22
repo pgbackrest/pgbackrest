@@ -50,12 +50,6 @@ really old storage with 512-byte sectors.  This is true across all versions of P
 #define PG_CONTROL_DATA_SIZE                                        ((unsigned int)(512))
 
 /***********************************************************************************************************************************
-WAL header size.  It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
-something far larger needed but <= the minimum read size on just about any system.
-***********************************************************************************************************************************/
-#define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
-
-/***********************************************************************************************************************************
 Name of default PostgreSQL database used for running all queries and commands
 ***********************************************************************************************************************************/
 STRING_EXTERN(PG_DB_POSTGRES_STR,                                   PG_DB_POSTGRES);

@@ -16,6 +16,7 @@ Verify Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
@@ -212,7 +213,7 @@ Questions/Concerns
 //         THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 // }
 
-static IoRead *
+static StorageRead *
 verifyFileLoad(const String *fileName, const String *cipherPass)
 {
     FUNCTION_TEST_BEGIN();
@@ -223,11 +224,15 @@ verifyFileLoad(const String *fileName, const String *cipherPass)
 // CSHANG But how does this type of reading help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
 
     // Read the file and error if missing
-    StorageRead *read = storageNewReadP(storageRepo(), fileName);
-    IoRead *result = storageReadIo(read);
+    StorageRead *result = storageNewReadP(storageRepo(), fileName);
+    IoRead *read = storageReadIo(result);
     cipherBlockFilterGroupAdd(
-        ioReadFilterGroup(result), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cipherPass);
-    ioFilterGroupAdd(ioReadFilterGroup(result), cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioReadFilterGroup(read), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cipherPass);
+    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+
+    // If the file is compressed, add a decompression filter
+    if (compressTypeFromName(fileName) != compressTypeNone)
+        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(fileName)));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -265,7 +270,7 @@ verifyInfoFile(const String *infoPathFile, bool loadFile, const String *cipherPa
     {
         TRY_BEGIN()
         {
-            IoRead *infoRead = verifyFileLoad(infoPathFile, cipherPass);
+            IoRead *infoRead = storageReadIo(verifyFileLoad(infoPathFile, cipherPass));
 
             if (loadFile)
             {
@@ -497,15 +502,11 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// typedef struct VerifyResultData
-// {
-//     // MemContext *memContext;   there will also be other things here like backup result data
-//     List *archiveIdRangeList;
-// } VerifyResultData;
 
 typedef struct ArchiveIdRange
 {
     String *archiveId;
+    PgWal pgWalInfo;
     List *walRangeList;
 } ArchiveIdRange;
 
@@ -529,7 +530,7 @@ typedef struct VerifyJobData
     StringList *walFileList;                                        // WAL file list for a single WAL path
     StringList *backupList;                                         // List of backups to verify
     StringList *backupFileList;                                     // List of files in a single backup directory
-    CipherType cipherType;                                          // Repository cipher type
+    bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
@@ -537,7 +538,7 @@ typedef struct VerifyJobData
 } VerifyJobData;
 
 static void
-updateArchiveIdRange(unsigned int walSegmentSize, ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
+updateArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
 {
     // Initialize the WAL range
     WalRange walRange =
@@ -552,14 +553,19 @@ updateArchiveIdRange(unsigned int walSegmentSize, ArchiveIdRange *archiveIdRange
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
-        if (pgLsnFromWalSegment(walSegment, walSegmentSize) -
-            pgLsnFromWalSegment(walRange.stop, walSegmentSize) == walSegmentSize)
+        // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
+        // the WAL size is static at 16MB but for some unknown reason, WAL ending in FF is skipped so it should never exist, so
+        // the next WAL is 2 times the distance (WAL segment size) away, not one.
+// CSHANG What to do if it does exist? Do we LOG_ERROR here and then skip it? Or do we create a range where the previous wal range ends at FE and then a new range starts at FF and continues until end. If we do the latter, then it will cause an error to be reported in the final results reconciliation that the backup is bad - which may or may not be true because we don't know why there is a "gap" - why there is an extra file FF
+        if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
+            pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
+                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
+                ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size))
         {
             walRange.stop = walSegment;
         }
         else
         {
-// CSHANG Should we put some debug/detail statements in?
             // A gap was found so add the current range to the list and start a new range
             lstAdd(archiveIdRange->walRangeList, &walRange);
             walRange = (WalRange)
@@ -575,6 +581,154 @@ updateArchiveIdRange(unsigned int walSegmentSize, ArchiveIdRange *archiveIdRange
 
     // Now we have our ranges for this archiveId so add them
     lstAdd(archiveIdRangeList, archiveIdRange);
+}
+
+static ProtocolParallelJob *
+verifyArchive(VerifyJobData *jobData)
+{
+    ProtocolParallelJob *result = NULL;
+
+    // Process archive files, if any
+    while (strLstSize(jobData->archiveIdList) > 0)
+    {
+        String *archiveId = strLstGet(jobData->archiveIdList, 0);
+        result = NULL;
+
+        ArchiveIdRange archiveIdRange =
+        {
+            .archiveId = strDup(archiveId),
+            .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+        };
+
+        if (strLstSize(jobData->walPathList) == 0)
+        {
+            // Get the WAL paths for the first item in the archive Id list
+            jobData->walPathList =
+                strLstSort(
+                    storageListP(
+                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
+                        .expression = WAL_SEGMENT_DIR_REGEXP_STR),
+                    sortOrderAsc);
+        }
+
+        // If there are WAL paths then get the file lists
+        if (strLstSize(jobData->walPathList) > 0)
+        {
+            do
+            {
+                String *walPath = strLstGet(jobData->walPathList, 0);
+
+                // Get the WAL files for the first item in the WAL paths list
+                if (strLstSize(jobData->walFileList) == 0)
+                {
+                    jobData->walFileList =
+                        strLstSort(
+                            storageListP(
+                                storageRepo(),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                .expression = WAL_SEGMENT_FILE_REGEXP_STR),
+                            sortOrderAsc);
+                }
+
+// CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.  If WAL segment size is reset, then can't do PITR.
+/* CSHANG per David:
+16MB is the whole segment.
+The header is like 40 bytes.
+What we need is for pgWalFromFile() to look more like pgControlFromFile().
+i.e. takes a storage object and reads the first few bytes from the file.
+But, if you just want to read the first 512 bytes for now and use pgWalFromBuffer() then that's fine. We can improve that later.
+But people do use pg_resetwal just to change the WAL size. You won't lose data if you do a clean shutdown and then pg_resetwal.
+So, for our purposes the size should never change for a db-id.
+We'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case. (<- in archive push/get)
+So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
+*/
+                if (strLstSize(jobData->walFileList) > 0)
+                {
+                    // If the WAL segment size for this archiveId has not been set, get it from the first WAL
+                    if (archiveIdRange.pgWalInfo.size == 0)
+                    {
+                        StorageRead *walRead = verifyFileLoad(
+                            strNewFmt(
+                                STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                strPtr(strLstGet(jobData->walFileList, 0))),
+                            jobData->walCipherPass);
+
+                        PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
+
+                        archiveIdRange.pgWalInfo.size = walInfo.size;
+                        archiveIdRange.pgWalInfo.version = walInfo.version;
+                    }
+// CSHANG Switch memory context to the VerifyJobData structure?
+                    updateArchiveIdRange(&archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
+
+// CSHANG Switch memory context back to current?
+
+                    do
+                    {
+                        const String *fileName = strLstGet(jobData->walFileList, 0);
+
+                        // Get the fully qualified file name
+                        const String *filePathName = strNewFmt(
+                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
+
+                        // Get the checksum
+                        String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
+
+                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                        protocolCommandParamAdd(command, VARSTR(filePathName));
+                        protocolCommandParamAdd(command, VARSTR(checksum));
+                        protocolCommandParamAdd(command, VARBOOL(false));   // Can the size be verified?
+                        protocolCommandParamAdd(command, VARUINT64(0));     // File size to verify
+                        protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
+                        protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+
+                        // Assign job to result
+                        result = protocolParallelJobNew(VARSTR(fileName), command);
+                        // CSHANG for now, since no temp context then no move
+                        // result = protocolParallelJobMove(
+                        //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
+
+                        // Remove the file to process from the list
+                        strLstRemoveIdx(jobData->walFileList, 0);
+
+                        // If this is the last file to process for this timeline, then remove the path
+                        if (strLstSize(jobData->walFileList) == 0)
+                            strLstRemoveIdx(jobData->walPathList, 0);
+
+                        // Return to process the job found
+                        break;
+                    }
+                    while (strLstSize(jobData->walFileList) > 0);
+                }
+                else
+                {
+                    // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
+                    LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
+                    strLstRemoveIdx(jobData->walPathList, 0);
+                }
+
+                // If a job was found to be processed then break out to process it
+                if (result != NULL)
+                    break;
+            }
+            while (strLstSize(jobData->walPathList) > 0);
+
+            // If this is the last timeline to process for this archiveId, then remove the archiveId
+            if (strLstSize(jobData->walPathList) == 0)
+                strLstRemoveIdx(jobData->archiveIdList, 0);
+
+            // If a file was sent to be processed then break so can process it
+            if (result != NULL)
+                break;
+        }
+        else
+        {
+            // Log that no WAL paths exist in the archive Id dir - remove the archive Id from the list (nothing to process)
+            LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
+            strLstRemoveIdx(jobData->archiveIdList, 0);
+        }
+    }
+    FUNCTION_TEST_RETURN(result);
 }
 
 static ProtocolParallelJob *
@@ -598,169 +752,27 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         // Get a new job if there are any left
         VerifyJobData *jobData = data;
 
-        // Process archive files, if any
-        while (strLstSize(jobData->archiveIdList) > 0)
+        if (!jobData->backupProcessing)
         {
-            String *archiveId = strLstGet(jobData->archiveIdList, 0);
-            unsigned int walSegmentSize = 0;
-            result = NULL;
 
-            // CSHANG Switch memory context?
+            result = verifyArchive(jobData);
+            jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
 
-            ArchiveIdRange archiveIdRange =
-            {
-                .archiveId = strDup(archiveId),
-                .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
-            };
-
-            if (strLstSize(jobData->walPathList) == 0)
-            {
-                // Get the WAL paths for the first item in the archive Id list
-                jobData->walPathList =
-                    strLstSort(
-                        storageListP(
-                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
-                            .expression = WAL_SEGMENT_DIR_REGEXP_STR),
-                        sortOrderAsc);
-            }
-
-            // If there are WAL paths then get the file lists
-            if (strLstSize(jobData->walPathList) > 0)
-            {
-                do
-                {
-                    String *walPath = strLstGet(jobData->walPathList, 0);
-
-                    // Get the WAL files for the first item in the WAL paths list
-                    if (strLstSize(jobData->walFileList) == 0)
-                    {
-                        jobData->walFileList =
-                            strLstSort(
-                                storageListP(
-                                    storageRepo(),
-                                    strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
-                                    .expression = WAL_SEGMENT_FILE_REGEXP_STR),
-                                sortOrderAsc);
-                    }
-
-                    if (strLstSize(jobData->walFileList) > 0)
-                    {
-// CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.
-                        // If the WAL segment size for this archiveId has not been set, get it from the first WAL
-                        if (walSegmentSize == 0)
-                        {
-                            PgWal pgWalInfo = pgWalFromFile(
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
-                                    strPtr(strLstGet(jobData->walFileList, 0))), storageRepo());
-                            walSegmentSize = pgWalInfo.size;
-                        }
-
-                    // CSHANG Switch memory context to the verifyResultData structure?
-
-/* CSHANG per David:
-16MB is the whole segment.
-The header is like 40 bytes.
-What we need is for pgWalFromFile() to look more like pgControlFromFile().
-i.e. takes a storage object and reads the first few bytes from the file.
-But, if you just want to read the first 512 bytes for now and use pgWalFromBuffer() then that's fine. We can improve that later.
-But people do use pg_resetwal just to change the WAL size. You won't lose data if you do a clean shutdown and then pg_resetwal.
-So, for our purposes the size should never change for a db-id.
-We'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case.
-So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
-*/
-                        updateArchiveIdRange(walSegmentSize, &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
-
-//    Switch memory context back to current;
-
-//    Continue with the processing below. SEE JOB COMPLETE code to see what to do with rest of data.
-
-                        do
-                        {
-                            const String *fileName = strLstGet(jobData->walFileList, 0);
-
-                            // Get the fully qualified file name
-                            const String *filePathName = strNewFmt(
-                                STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
-LOG_WARN_FMT("START NEW JOB ON %s, NUM FILES %u", strPtr(filePathName), strLstSize(jobData->walFileList)); // CSHANG Remove
-                            // Get the checksum
-                            String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
-
-                            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
-                            protocolCommandParamAdd(command, VARSTR(filePathName));
-                            protocolCommandParamAdd(command, VARSTR(checksum));
-                            protocolCommandParamAdd(command, VARBOOL(false));   // Can the size be verified?
-                            protocolCommandParamAdd(command, VARUINT64(0));     // File size to verify
-                            protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
-                            protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
-
-                            // Assign job to result
-                            result = protocolParallelJobNew(VARSTR(fileName), command);
-                            // CSHANG for now, since no temp context then no move
-                            // result = protocolParallelJobMove(
-                            //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
-
-                            strLstRemoveIdx(jobData->walFileList, 0);
-LOG_WARN_FMT("NUM FILES AFTER remove %u", strLstSize(jobData->walFileList)); // CSHANG Remove
-                            // If this is the last file to process for this timeline, then remove the path
-                            if (strLstSize(jobData->walFileList) == 0)
-                                strLstRemoveIdx(jobData->walPathList, 0);
-                            // Return the job found
-                            break;
-                            // FUNCTION_TEST_RETURN(result); // CSHANG can only do if don't have a temp mem context
-                        }
-                        while (strLstSize(jobData->walFileList) > 0);
-                    }
-                    else
-                    {
-                        // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
-                        LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
-                        strLstRemoveIdx(jobData->walPathList, 0);
-                    }
-LOG_WARN_FMT("IN FILELIST WALPATH SIZE %u", strLstSize(jobData->walPathList)); // CSHANG Remove
-                    if (result != NULL)
-                    {
-LOG_WARN("Break from WALPATH"); // CSHANG Remove
-                        break;
-                    }
-                }
-                while (strLstSize(jobData->walPathList) > 0);
-
-                // If this is the last timeline to process for this archiveId, then remove the archiveId
-                if (strLstSize(jobData->walPathList) == 0)
-                    strLstRemoveIdx(jobData->archiveIdList, 0);
-LOG_WARN_FMT("WALPATH SIZE %u", strLstSize(jobData->walPathList)); // CSHANG Remove
-
-                // If a file was sent to be processed then break so can process it
-                if (result != NULL)
-                {
-LOG_WARN("Break from ARVHIVEPATH"); // CSHANG Remove
-                    break;
-                }
-            }
-            else
-            {
-                // Log that no WAL paths exist in the archive Id dir - remove the archive Id from the list (nothing to process)
-                LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
-                strLstRemoveIdx(jobData->archiveIdList, 0);
-            }
-            // FUNCTION_TEST_RETURN(result);
-LOG_WARN_FMT("ARCHIVEID SIZE %u", strLstSize(jobData->archiveIdList)); // CSHANG Remove
+            // If there is a result from archiving, then return it
+            if (result != NULL)
+                FUNCTION_TEST_RETURN(result);  // CSHANG can only do if don't have a temp mem context
         }
 
-        // If there is a result from archiving, then return it
-        if (result != NULL)
-        {
-            LOG_WARN("ARCHIVE RESULT != NULL"); // CSHANG Remove
-            FUNCTION_TEST_RETURN(result);
-        }
         // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
-        else
+        if (jobData->backupProcessing)
         {
             // Process backup files, if any
             while (strLstSize(jobData->backupList) > 0)
             {
 LOG_WARN("Processing BACKUPS"); // CSHANG Remove
                 // result == NULL;
+/* If most rececnt has only copy, then move on since it cuold be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there. If main is not there and copy is but it is not the latest then warn that main is missing and skip.
+*/
                         // // Get a usable backup manifest file
                         // InfoBackup *backupInfo = verifyBackupInfoFile();
                         //
@@ -847,7 +859,6 @@ cmdVerify(void)
                 .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
-                .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
@@ -891,6 +902,7 @@ cmdVerify(void)
                 {
                     unsigned int completed = protocolParallelProcess(parallelExec);
 
+                    // Process completed jobs
                     for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                     {
 LOG_WARN_FMT("NUM JOB COMPLETED %u,      JOBIDX %u", completed, jobIdx);  // CSHANG Remove
@@ -900,10 +912,10 @@ LOG_WARN_FMT("NUM JOB COMPLETED %u,      JOBIDX %u", completed, jobIdx);  // CSH
                         const String *fileName = varStr(protocolParallelJobKey(job)); // CSHANG Actually, can probably make this the full filename again bcause we can just split the string on the forward slashes
 
                         // CSHANG The key will tell us what we just processed
-                        // ENUM type
-                        // String filename
-                        // const ENUM type = varUInt(varLstGet(varVarLst(protocolParallelJobKey(job)), 0);
+                        // const VerifyResult verifyResult = (VerifyResult)varUIntForce(varLstGet(jobResult, 0))
                         // const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
+                        // const ENUM type = varUInt(varLstGet(varVarLst(protocolParallelJobKey(job)), 2); -- May need a type?
+                        //
                         //
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
