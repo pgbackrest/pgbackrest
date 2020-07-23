@@ -217,6 +217,8 @@ protocolParallelProcess(ProtocolParallel *this)
                 protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
                 this->clientJobList[clientIdx] = job;
             }
+            else
+                protocolLocalFree(clientIdx + 1);
         }
     }
 
