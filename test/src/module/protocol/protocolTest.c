@@ -196,6 +196,27 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("protocolHelperClientFree()"))
+    {
+        TEST_TITLE("free with errors output as warnings");
+
+        // Create and free a mem context to give us an error to use
+        MemContext *memContext = memContextNew("test");
+        memContextFree(memContext);
+
+        // Create bogus client and exec witht the freed memcontext to generate errors
+        ProtocolClient client = {.memContext = memContext, .name = STRDEF("test")};
+        Exec exec = {.memContext = memContext, .name = STRDEF("test"), .command = strNew("test")};
+        ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
+
+        TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
+
+        harnessLogResult(
+            "P00   WARN: cannot free inactive context\n"
+            "P00   WARN: cannot free inactive context");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("protocolLocalParam()"))
     {
         StringList *argList = strLstNew();
@@ -889,6 +910,11 @@ testRun(void)
         // Call remote free before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free local that does not exist");
+
+        TEST_RESULT_VOID(protocolLocalFree(2), "free");
 
         // Call keep alive before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------

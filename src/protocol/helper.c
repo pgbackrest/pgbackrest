@@ -217,6 +217,64 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
 }
 
+
+/**********************************************************************************************************************************/
+static void
+protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, protocolHelperClient);
+    FUNCTION_LOG_END();
+
+    if (protocolHelperClient->client != NULL)
+    {
+        // Try to shutdown the protocol but only warn on error
+        TRY_BEGIN()
+        {
+            protocolClientFree(protocolHelperClient->client);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        // Try to end the child process but only warn on error
+        TRY_BEGIN()
+        {
+            execFree(protocolHelperClient->exec);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        protocolHelperClient->client = NULL;
+        protocolHelperClient->exec = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+protocolLocalFree(unsigned int protocolId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, protocolId);
+    FUNCTION_LOG_END();
+
+    ASSERT(protocolId > 0);
+
+    if (protocolHelper.clientLocal != NULL)
+    {
+        ASSERT(protocolId <= protocolHelper.clientLocalSize);
+        protocolHelperClientFree(&protocolHelper.clientLocal[protocolId - 1]);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
@@ -493,18 +551,7 @@ protocolRemoteFree(unsigned int hostId)
     ASSERT(hostId > 0);
 
     if (protocolHelper.clientRemote != NULL)
-    {
-        ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostId - 1];
-
-        if (protocolHelperClient->client != NULL)
-        {
-            protocolClientFree(protocolHelperClient->client);
-            execFree(protocolHelperClient->exec);
-
-            protocolHelperClient->client = NULL;
-            protocolHelperClient->exec = NULL;
-        }
-    }
+        protocolHelperClientFree(&protocolHelper.clientRemote[hostId - 1]);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -579,18 +626,8 @@ protocolFree(void)
             protocolRemoteFree(clientIdx + 1);
 
         // Free locals
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
-        {
-            ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientLocal[clientIdx];
-
-            if (protocolHelperClient->client != NULL)
-            {
-                protocolClientFree(protocolHelperClient->client);
-                execFree(protocolHelperClient->exec);
-
-                *protocolHelperClient = (ProtocolHelperClient){.exec = NULL};
-            }
-        }
+        for (unsigned int clientIdx = 1; clientIdx <= protocolHelper.clientLocalSize; clientIdx++)
+            protocolLocalFree(clientIdx);
     }
 
     FUNCTION_LOG_RETURN_VOID();
