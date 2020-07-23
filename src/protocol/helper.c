@@ -217,8 +217,10 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
 }
 
-
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Free the protocol client and underlying exec'd process. Log any errors as warnings since it is not worth terminating the process
+while closing a local/remote that has already completed its work. The warning will be an indication that something is not right.
+***********************************************************************************************************************************/
 static void
 protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
 {
@@ -257,6 +259,7 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 protocolLocalFree(unsigned int protocolId)
 {
