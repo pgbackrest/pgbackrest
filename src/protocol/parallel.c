@@ -14,6 +14,7 @@ Protocol Parallel Executor
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "protocol/command.h"
+#include "protocol/helper.h"
 #include "protocol/parallel.h"
 
 /***********************************************************************************************************************************
