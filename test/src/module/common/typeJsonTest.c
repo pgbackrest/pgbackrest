@@ -72,6 +72,7 @@ testRun(void)
         TEST_ERROR(jsonToVar(strNew("")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(strNew(" \t\r\n ")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(strNew("z")), JsonFormatError, "invalid type at 'z'");
+        TEST_ERROR(jsonToVar(strNew("3 =")), JsonFormatError, "unexpected characters after JSON at '='");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStr(jsonToVar(strNew(" \"test\""))), "test", "simple string");
