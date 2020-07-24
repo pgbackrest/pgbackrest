@@ -239,8 +239,17 @@ testRun(void)
         TEST_TITLE("load manifest");
 
         TimeMSec timeBegin = timeMSec();
-        Manifest *manifest = manifestNewLoad(ioBufferReadNew(contentLoad));
+        MemContext *memContext = memContextNew("test");
+        Manifest *manifest = NULL;
+
+        MEM_CONTEXT_BEGIN(memContext)
+        {
+            manifest = manifestNewLoad(ioBufferReadNew(contentLoad));
+        }
+        MEM_CONTEXT_END();
+
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+        TEST_LOG_FMT("memory used %zu", memContextSize(memContext));
 
         TEST_RESULT_UINT(manifestFileTotal(manifest), fileTotal, "   check file total");
 
