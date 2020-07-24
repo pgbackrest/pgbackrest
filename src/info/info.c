@@ -181,6 +181,36 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
 
     InfoLoadData *loadData = (InfoLoadData *)data;
 
+    bool retry;
+
+    do
+    {
+        retry = false;
+
+        TRY_BEGIN()
+        {
+            jsonToVar(value);
+        }
+        CATCH(JsonFormatError)
+        {
+            const char *equal = strstr(strPtr(value), "=");
+
+            if (equal == NULL)
+                RETHROW();
+
+            String *keyFix = strDup(key);
+            strCatZ(keyFix, "=");
+            strCatZN(keyFix, strPtr(value), (size_t)(equal - strPtr(value)));
+            key = keyFix;
+
+            value = strNew(equal + 1);
+
+            retry = true;
+        }
+        TRY_END();
+    }
+    while (retry);
+
     // Calculate checksum
     if (!(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR)))
     {
@@ -246,43 +276,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     }
     // Else pass to callback for processing
     else
-    {
-        bool retry;
-
-        do
-        {
-            retry = false;
-
-            TRY_BEGIN()
-            {
-                jsonToVar(value);
-            }
-            CATCH(JsonFormatError)
-            {
-                const char *equal = strstr(strPtr(value), "=");
-
-                if (equal == NULL)
-                    RETHROW();
-
-                LOG_DEBUG_FMT("BEFORE KEY %s VALUE %s", strPtr(key), strPtr(value));
-
-                String *keyFix = strDup(key);
-                strCatZN(keyFix, strPtr(value), (size_t)(equal - strPtr(value)) + 1);
-                key = keyFix;
-
-                value = strNew(equal + 1);
-
-                retry = true;
-
-                LOG_DEBUG_FMT("AFTER KEY %s VALUE %s", strPtr(key), strPtr(value));
-                // THROW(AssertError, "WELL THAT DID NOT WORK");
-            }
-            TRY_END();
-        }
-        while (retry);
-
         loadData->callbackFunction(loadData->callbackData, section, key, value);
-    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

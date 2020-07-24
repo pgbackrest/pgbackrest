@@ -32,6 +32,36 @@ harnessInfoChecksumCallback(void *callbackData, const String *section, const Str
 {
     HarnessInfoChecksumData *data = (HarnessInfoChecksumData *)callbackData;
 
+    bool retry;
+
+    do
+    {
+        retry = false;
+
+        TRY_BEGIN()
+        {
+            jsonToVar(value);
+        }
+        CATCH(JsonFormatError)
+        {
+            const char *equal = strstr(strPtr(value), "=");
+
+            if (equal == NULL)
+                RETHROW();
+
+            String *keyFix = strDup(key);
+            strCatZ(keyFix, "=");
+            strCatZN(keyFix, strPtr(value), (size_t)(equal - strPtr(value)));
+            key = keyFix;
+
+            value = strNew(equal + 1);
+
+            retry = true;
+        }
+        TRY_END();
+    }
+    while (retry);
+
     // Calculate checksum
     if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
     {
