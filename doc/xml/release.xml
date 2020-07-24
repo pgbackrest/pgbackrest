@@ -13,6 +13,19 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brad.nicholson"/>
+                            <release-item-ideator id="bastian.wegge"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue with <id>=</id> character in file or database names.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
@@ -8374,6 +8387,11 @@
         <contributor id="andrew.schwartz">
             <contributor-name-display>Andrew Schwartz</contributor-name-display>
             <contributor-id type="github">trinchan</contributor-id>
+        </contributor>
+
+        <contributor id="bastian.wegge">
+            <contributor-name-display>Bastian Wegge</contributor-name-display>
+            <contributor-id type="github">bastianwegge</contributor-id>
         </contributor>
 
         <contributor id="benoit.lobréau">
