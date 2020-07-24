@@ -101,7 +101,7 @@ testRun(void)
         unsigned int iniMax = 100000 * (unsigned int)testScale();
 
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
-            strCatFmt(iniStr, "key%u=value%u\n", keyIdx, keyIdx);
+            strCatFmt(iniStr, "key%u=\"value%u\"\n", keyIdx, keyIdx);
 
         TEST_LOG_FMT("ini size = %s, keys = %u", strPtr(strSizeFormat(strSize(iniStr))), iniMax);
 

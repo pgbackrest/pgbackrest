@@ -389,9 +389,12 @@ iniLoad(
                         if (lineEqual == NULL)
                             THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
-                        // Extract the key/value
-                        String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
-                        String *value = strTrim(strNew(lineEqual + 1));
+                        // Extract the key/value. This may require some retries if the key includes an = character since this is
+                        // also the separator. We know the value must be valid JSON so if it isn't then add the characters up to
+                        // the next = to the key and try to parse the value as JSON again. If the value never becomes valid JSON
+                        // then an error is thrown.
+                        String *key;
+                        String *value;
 
                         bool retry;
 
@@ -399,24 +402,24 @@ iniLoad(
                         {
                             retry = false;
 
+                            // Get key/value
+                            key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+                            value = strTrim(strNew(lineEqual + 1));
+
+                            // Check that the value is valid JSON
                             TRY_BEGIN()
                             {
                                 jsonToVar(value);
                             }
                             CATCH(JsonFormatError)
                             {
-                                const char *equal = strstr(strPtr(value), "=");
+                                // If value is not valid JSON look for another =. If not found then nothing to retry.
+                                lineEqual = strstr(lineEqual + 1, "=");
 
-                                if (equal == NULL)
+                                if (lineEqual == NULL)
                                     THROW_FMT(FormatError, "invalid JSON value at line %u: %s", lineIdx + 1, linePtr);
 
-                                String *keyFix = strDup(key);
-                                strCatZ(keyFix, "=");
-                                strCatZN(keyFix, strPtr(value), (size_t)(equal - strPtr(value)));
-                                key = keyFix;
-
-                                value = strNew(equal + 1);
-
+                                // Try again with = in new position
                                 retry = true;
                             }
                             TRY_END();
