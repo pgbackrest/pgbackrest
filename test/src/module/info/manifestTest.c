@@ -1674,6 +1674,7 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
+            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
             "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
@@ -1772,6 +1773,7 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE

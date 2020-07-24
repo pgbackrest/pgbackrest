@@ -11,6 +11,7 @@ Ini Handler
 #include "common/memContext.h"
 #include "common/log.h"
 #include "common/ini.h"
+#include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/object.h"
 
@@ -388,14 +389,46 @@ iniLoad(
                         if (lineEqual == NULL)
                             THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
-                        // Extract the key
+                        // Extract the key/value
                         String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+                        String *value = strTrim(strNew(lineEqual + 1));
 
+                        bool retry;
+
+                        do
+                        {
+                            retry = false;
+
+                            TRY_BEGIN()
+                            {
+                                jsonToVar(value);
+                            }
+                            CATCH(JsonFormatError)
+                            {
+                                const char *equal = strstr(strPtr(value), "=");
+
+                                if (equal == NULL)
+                                    THROW_FMT(FormatError, "invalid JSON value at line %u: %s", lineIdx + 1, linePtr);
+
+                                String *keyFix = strDup(key);
+                                strCatZ(keyFix, "=");
+                                strCatZN(keyFix, strPtr(value), (size_t)(equal - strPtr(value)));
+                                key = keyFix;
+
+                                value = strNew(equal + 1);
+
+                                retry = true;
+                            }
+                            TRY_END();
+                        }
+                        while (retry);
+
+                        // Key may not be zero-length
                         if (strSize(key) == 0)
                             THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                         // Callback with the section/key/value
-                        callbackFunction(callbackData, section, key, strTrim(strNew(lineEqual + 1)));
+                        callbackFunction(callbackData, section, key, value);
                     }
                 }
 
