@@ -65,26 +65,27 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         iniBuf = BUFSTRZ(
             "[section]\n"
-            "=value");
+            "=\"value\"");
 
         TEST_ERROR(
             iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "key is zero-length at line 1: =value");
+            "key is zero-length at line 1: =\"value\"");
 
-        // One section
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one section");
+
         iniBuf = BUFSTRZ(
             "# comment\n"
             "[section1]\n"
-            "key1=value1\n"
-            "key2=value2");
+            "key1=\"value1\"\n"
+            "key2=\"value2\"\n");
         result = strNew("");
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
             result,
-            "section1:key1:value1\n"
-                "section1:key2:value2\n",
+            "section1:key1:\"value1\"\n"
+            "section1:key2:\"value2\"\n",
             "    check ini");
 
         // Two sections
@@ -92,22 +93,22 @@ testRun(void)
         iniBuf = BUFSTRZ(
             "# comment\n"
             "[section1]\n"
-            "key1=value1\n"
-            "key2=value2\n"
+            "key1=\"value1\"\n"
+            "key2=\"value2\"\n"
             "\n"
             "[section2]\n"
             "key1=\n"
             "\n"
-            "key2=value2");
+            "key2=\"value2\"");
         result = strNew("");
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
             result,
-            "section1:key1:value1\n"
-                "section1:key2:value2\n"
-                "section2:key1:\n"
-                "section2:key2:value2\n",
+            "section1:key1:\"value1\"\n"
+            "section1:key2:\"value2\"\n"
+            "section2:key1:\n"
+            "section2:key2:\"value2\"\n",
             "    check ini");
     }
 
