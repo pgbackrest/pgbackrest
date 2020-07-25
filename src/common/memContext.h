@@ -234,13 +234,6 @@ void memContextCallbackClear(MemContext *this);
 // Free a memory context
 void memContextFree(MemContext *this);
 
-// #ifdef DEBUG
-
-// Get total size of mem context and all children
-size_t memContextSize(const MemContext *this);
-
-// #endif // DEBUG
-
 /***********************************************************************************************************************************
 Memory context getters
 ***********************************************************************************************************************************/
