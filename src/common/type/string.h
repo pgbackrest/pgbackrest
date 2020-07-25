@@ -78,7 +78,7 @@ String *strDup(const String *this);
 Functions
 ***********************************************************************************************************************************/
 // Return the file part of a string (i.e. everything after the last / or the entire string if there is no /). strBaseZ() does not
-// make a copy of the string so may be more appropriate for large loops where saving memory is important.
+// make a copy of the string so it may be more appropriate for large loops where saving memory is important.
 String *strBase(const String *this);
 const char *strBaseZ(const String *this);
 

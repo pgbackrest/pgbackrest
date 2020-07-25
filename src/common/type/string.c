@@ -194,6 +194,18 @@ strNewN(const char *string, size_t size)
 }
 
 /**********************************************************************************************************************************/
+String *
+strBase(const String *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(strNew(strBaseZ(this)));
+}
+
 const char *
 strBaseZ(const String *this)
 {
@@ -209,18 +221,6 @@ strBaseZ(const String *this)
         end--;
 
     FUNCTION_TEST_RETURN(end);
-}
-
-String *
-strBase(const String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(strNew(strBaseZ(this)));
 }
 
 /**********************************************************************************************************************************/
