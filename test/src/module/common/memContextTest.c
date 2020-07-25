@@ -145,6 +145,9 @@ testRun(void)
             memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE,
             "context child list initial size");
 
+        // This test will change if the contexts above change
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 256 : 144, "check size");
+
         TEST_ERROR(
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free current context 'test5'");
@@ -218,6 +221,9 @@ testRun(void)
 
         TEST_RESULT_VOID(memNew(3), "new allocation");
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
+
+        // This test will change if the allocations above change
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 249 : 165, "check size");
 
         TEST_ERROR(
             memFree(NULL), AssertError,
