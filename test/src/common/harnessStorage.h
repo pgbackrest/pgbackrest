@@ -12,7 +12,7 @@ Helper functions for testing storage and related functions.
 Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
 specific functions replaced for testing.
 ***********************************************************************************************************************************/
-const StorageInterface storageInterfaceTestDummy;
+extern const StorageInterface storageInterfaceTestDummy;
 
 /***********************************************************************************************************************************
 Callback for formatting info list results
