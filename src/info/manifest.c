@@ -990,9 +990,11 @@ manifestNewBuild(
 
                     while (fileIdx < manifestFileTotal(this))
                     {
-                        const ManifestFile *file = manifestFile(this, fileIdx);
+                        MEM_CONTEXT_TEMP_RESET(10000);
 
                         // If this file looks like a relation.  Note that this never matches on _init forks.
+                        const ManifestFile *file = manifestFile(this, fileIdx);
+
                         if (regExpMatch(relationExp, file->name))
                         {
                             String *fileName = strBase(file->name);
@@ -1031,13 +1033,11 @@ manifestNewBuild(
                             if (lastRelationFileIdUnlogged)
                             {
                                 manifestFileRemove(this, file->name);
-                                MEM_CONTEXT_TEMP_RESET(1000);
                                 continue;
                             }
                         }
 
                         fileIdx++;
-                        MEM_CONTEXT_TEMP_RESET(1000);
                     }
                 }
                 MEM_CONTEXT_TEMP_END();
