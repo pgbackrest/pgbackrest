@@ -6,7 +6,7 @@ up" in terms of execution time if there are performance problems without taking 
 
 These starting values can then be scaled up for profiling and stress testing as needed.  In general we hope to scale to 1000 without
 running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
-1000 is nowhere near to turning it up to 11.
+1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
@@ -122,8 +122,8 @@ storageTestManifestNewBuildInfoList(
         {
             result.type = storageTypeFile;
             result.size = 8192;
-            result.timeModified = 1595627966;
             result.mode = 0600;
+            result.timeModified = 1595627966;
 
             for (unsigned int fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {

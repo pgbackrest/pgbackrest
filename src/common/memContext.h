@@ -257,6 +257,9 @@ MemContext *memContextTop(void);
 // Mem context name
 const char *memContextName(MemContext *this);
 
+// Get total size of mem context and all children
+size_t memContextSize(const MemContext *this);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

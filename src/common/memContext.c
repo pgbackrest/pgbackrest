@@ -720,6 +720,36 @@ memContextPrior(void)
 }
 
 /**********************************************************************************************************************************/
+size_t
+memContextSize(const MemContext *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    // Size of struct and child context/alloc arrays
+    size_t result =
+        sizeof(MemContext) + (this->contextChildListSize * sizeof(MemContext *)) +
+        (this->allocListSize * sizeof(MemContextAlloc *));
+
+    // Add child contexts
+    for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+    {
+        if (this->contextChildList[contextIdx])
+            result += memContextSize(this->contextChildList[contextIdx]);
+    }
+
+    // Add allocations
+    for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
+    {
+        if (this->allocList[allocIdx] != NULL)
+            result += this->allocList[allocIdx]->size;
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 void
 memContextClean(unsigned int tryDepth)
 {
