@@ -146,7 +146,7 @@ testRun(void)
             "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 256 : 144, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 112 : 144, "check size");
 
         TEST_ERROR(
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
