@@ -982,19 +982,17 @@ manifestNewBuild(
             {
                 RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strPtr(buildData.tablespaceId)));
                 unsigned int fileIdx = 0;
-                char lastRelationFileId[21] = ""; // Large enough for a 64-bit unsigned integer
+                char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
                 bool lastRelationFileIdUnlogged = false;
 
 #ifdef DEBUG_TEST_TRACE
-                // Record the temp context size before the loop begins. Create and free a string to ensure that there are available
-                // allocations to keep the allocation list from growing during the loop and increasing the context size.
+                // Record the temp context size before the loop begins. Create/free a context/string to ensure that there are
+                // available contexts/allocations to prevent increasing the context size.
                 memContextNew("TEST");
                 memContextDiscard();
                 strFree(strNew("TEST"));
                 size_t sizeBegin = memContextSize(memContextCurrent());
 #endif
-
-                LOG_DEBUG_FMT("CONTEXT SIZE %zu", memContextSize(memContextCurrent()));
 
                 while (fileIdx < manifestFileTotal(this))
                 {
@@ -1027,19 +1025,14 @@ manifestNewBuild(
                         // Store the last relation so it does not need to be found everytime
                         if (strcmp(lastRelationFileId, relationFileId) != 0)
                         {
-// LOG_DEBUG_FMT("CONTEXT SIZE BEFORE STR %zu", memContextSize(memContextCurrent()));
                             // Determine if the relation is unlogged
                             String *relationInit = strNewFmt(
                                 "%.*s%s_init", (int)(strSize(file->name) - fileNameSize), strPtr(file->name), relationFileId);
-// LOG_DEBUG_FMT("CONTEXT SIZE AFTER STR %zu", memContextSize(memContextCurrent()));
-// LOG_DEBUG_FMT("CONTEXT SIZE BEFORE FIND %zu", memContextSize(memContextCurrent()));
                             lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
-// LOG_DEBUG_FMT("CONTEXT SIZE AFTER FIND %zu", memContextSize(memContextCurrent()));
-// LOG_DEBUG_FMT("CONTEXT SIZE BEFORE STR FREE %zu", memContextSize(memContextCurrent()));
                             strFree(relationInit);
 
+                            // Save the file id so we don't need to do the lookup next time if if doesn't change
                             strcpy(lastRelationFileId, relationFileId);
-// LOG_DEBUG_FMT("CONTEXT SIZE AFTER STR FREE %zu", memContextSize(memContextCurrent()));
                         }
 
                         // If relation is unlogged then remove it
@@ -1056,8 +1049,6 @@ manifestNewBuild(
 #ifdef DEBUG_TEST_TRACE
                 // Make sure that the temp context did grow during the loop
                 ASSERT(memContextSize(memContextCurrent()) == sizeBegin);
-                // if (memContextSize(memContextCurrent()) != sizeBegin)
-                //     THROW_FMT(AssertError, "BEGIN %zu END %zu", sizeBegin, memContextSize(memContextCurrent()));
 #endif
             }
         }
