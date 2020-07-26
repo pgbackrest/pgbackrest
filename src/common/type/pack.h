@@ -31,15 +31,16 @@ Pack type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pckTypeUInt64   = 0x01,
-    pckTypeUInt32   = 0x03,
-    pckTypeArray    = 0x04,
-    pckTypeBinary   = 0x08,
-    pckTypeBool     = 0x0C,
-    pckTypeInt32    = 0x10,
-    pckTypeInt64    = 0x14,
-    pckTypeObject   = 0x18,
-    pckTypeString   = 0x1C,
+    pckTypeUnknown = 0,
+    pckTypeArray,
+    pckTypeBinary,
+    pckTypeBool,
+    pckTypeInt32,
+    pckTypeInt64,
+    pckTypeObject,
+    pckTypeString,
+    pckTypeUInt32,
+    pckTypeUInt64,
 } PackType;
 
 /***********************************************************************************************************************************

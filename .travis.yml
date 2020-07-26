@@ -38,11 +38,11 @@ jobs:
     - arch: ppc64le
       dist: bionic
       env:
-        - PGB_CI="test --vm=none --param=no-valgrind --param=no-coverage --param=module=common --param=test=type-pack --param=tz=America/New_York"
+        - PGB_CI="test --vm=none --param=no-valgrind --param=module=common --param=test=type-pack --param=tz=America/New_York"
       services:
 
     # All unit tests (with coverage) on the newest gcc available
-    - env: PGB_CI="test --vm=f32 --param=no-coverage --param=module=common --param=test=type-pack"
+    - env: PGB_CI="test --vm=f32 --param=module=common --param=test=type-pack"
 
     # # RHEL/CentOS 6 documentation
     # - env: PGB_CI=" doc --vm=co6"

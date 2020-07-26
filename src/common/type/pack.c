@@ -95,100 +95,6 @@ struct PackWrite
 
 OBJECT_DEFINE_FREE(PACK_WRITE);
 
-/***********************************************************************************************************************************
-Pack/unpack an unsigned 32-bit integer to/from base-128 varint encoding
-***********************************************************************************************************************************/
-static size_t
-pckFromUInt32(uint32_t value, uint8_t *out)
-{
-    unsigned int result = 0;
-
-    if (value >= 0x80)
-    {
-        out[result++] = (uint8_t)(value | 0x80);
-        value >>= 7;
-
-        if (value >= 0x80)
-        {
-            out[result++] = (uint8_t)(value | 0x80);
-            value >>= 7;
-
-            if (value >= 0x80)
-            {
-                out[result++] = (uint8_t)(value | 0x80);
-                value >>= 7;
-
-                if (value >= 0x80)
-                {
-                    out[result++] = (uint8_t)(value | 0x80);
-                    value >>= 7;
-                }
-            }
-        }
-    }
-
-    out[result++] = (uint8_t)value;
-
-    return result;
-}
-
-/***********************************************************************************************************************************
-Pack/unpack an unsigned 64-bit integer to/from base-128 varint encoding
-***********************************************************************************************************************************/
-static size_t
-pckFromUInt64(uint64_t value, uint8_t *out)
-{
-    uint32_t hi = (uint32_t) (value >> 32);
-    uint32_t lo = (uint32_t) value;
-
-    if (hi == 0)
-        return pckFromUInt32((uint32_t) lo, out);
-
-    out[0] = (uint8_t)(lo | 0x80);
-    out[1] = (uint8_t)((lo >> 7) | 0x80);
-    out[2] = (uint8_t)((lo >> 14) | 0x80);
-    out[3] = (uint8_t)((lo >> 21) | 0x80);
-
-    if (hi < 8)
-    {
-        out[4] = (uint8_t)((hi << 4) | (lo >> 28));
-        return 5;
-    }
-    else
-    {
-        out[4] = (uint8_t)(((hi & 7) << 4) | (lo >> 28) | 0x80);
-        hi >>= 3;
-    }
-
-    unsigned int result = 5;
-
-    while (hi >= 128)
-    {
-        out[result++] = (uint8_t)(hi | 0x80);
-        hi >>= 7;
-    }
-
-    out[result++] = (uint8_t)hi;
-
-    return result;
-}
-
-static uint64_t
-pckToUInt64(const uint8_t *buffer)
-{
-    uint64_t result = buffer[0] & 0x7f;
-
-    for (unsigned int bufferIdx = 1; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
-    {
-        if (buffer[bufferIdx - 1] < 0x80)
-            break;
-
-        result |= (uint64_t)(buffer[bufferIdx] & 0x7f) << (7 * bufferIdx);
-    }
-
-    return result;
-}
-
 /**********************************************************************************************************************************/
 PackRead *
 pckReadNew(IoRead *read)
@@ -217,7 +123,9 @@ pckReadNew(IoRead *read)
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Unpack an unsigned 64-bit integer from base-128 varint encoding
+***********************************************************************************************************************************/
 static uint64_t
 pckReadUInt64Internal(PackRead *this)
 {
@@ -250,12 +158,13 @@ pckReadUInt64Internal(PackRead *this)
 
 /**********************************************************************************************************************************/
 static uint64_t
-pckReadTag(PackRead *this, unsigned int id, bool nullable)
+pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, id);
-        FUNCTION_TEST_PARAM(BOOL, nullable);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(BOOL, peek);
     FUNCTION_TEST_END();
 
     if (id <= this->idLast)
@@ -279,13 +188,11 @@ pckReadTag(PackRead *this, unsigned int id, bool nullable)
         }
 
         if (this->tagNext != 0)
-            tagId = this->idLast + (unsigned int)(this->tagNext >> 5) + 1;
-
-        LOG_DEBUG_FMT("TAG IS %u ID IS %u", tagId, (unsigned int)(this->tagNext >> 5) + 1);
+            tagId = this->idLast + (unsigned int)(this->tagNext >> 4) + 1;
 
         if (id < tagId)
         {
-            if (!nullable)
+            if (!peek)
                 THROW_FMT(FormatError, "field %u does not exist", id);
 
             break;
@@ -294,8 +201,11 @@ pckReadTag(PackRead *this, unsigned int id, bool nullable)
         {
             result = this->tagNext;
 
-            if (!nullable)
+            if (!peek)
             {
+                if ((result & 0xF) != type)
+                    THROW_FMT(FormatError, "field %u is type %" PRIu64 " but expected %u", tagId, result & 0xF, type);
+
                 this->tagNext = 0;
                 this->idLast = tagId;
             }
@@ -325,7 +235,23 @@ pckReadNull(PackRead *this, unsigned int id)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(pckReadTag(this, id, true) == 0);
+    FUNCTION_TEST_RETURN(pckReadTag(this, id, pckTypeUnknown, true) == 0);
+}
+
+/**********************************************************************************************************************************/
+uint64_t
+pckReadUInt32(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckReadTag(this, id, pckTypeUInt32, false);
+
+    FUNCTION_TEST_RETURN(pckReadUInt64Internal(this));
 }
 
 /**********************************************************************************************************************************/
@@ -339,8 +265,7 @@ pckReadUInt64(PackRead *this, unsigned int id)
 
     ASSERT(this != NULL);
 
-    uint64_t tag = pckReadTag(this, id, false);
-    CHECK(tag & pckTypeUInt64);
+    pckReadTag(this, id, pckTypeUInt64, false);
 
     FUNCTION_TEST_RETURN(pckReadUInt64Internal(this));
 }
@@ -379,7 +304,9 @@ pckWriteNew(IoWrite *write)
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Pack an unsigned 64-bit integer to base-128 varint encoding
+***********************************************************************************************************************************/
 static void
 pckWriteUInt64Internal(PackWrite *this, uint64_t value)
 {
@@ -391,31 +318,59 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
     ASSERT(this != NULL);
 
     unsigned char buffer[PACK_UINT64_SIZE_MAX];
-    size_t size = pckFromUInt64(value, buffer);
-    ioWrite(this->write, BUF(buffer, size));
+    size_t size = 0;
+
+    while (value >= 0x80)
+    {
+        buffer[size] = (unsigned char)value | 0x80;
+        value >>= 7;
+        size++;
+    }
+
+    buffer[size] = (unsigned char)value;
+
+    ioWrite(this->write, BUF(buffer, size + 1));
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-// static void
-// pckWriteTag(PackWrite *this, PackType type, unsigned int id)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-//         FUNCTION_TEST_PARAM(ENUM, type);
-//         FUNCTION_TEST_PARAM(UINT, id);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(id > this->idLast);
-//
-//     pckWriteUInt64Internal(this, (id - this->idLast) << 4 | type);
-//
-//     this->idLast = id;
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
+static void
+pckWriteTag(PackWrite *this, PackType type, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(id > this->idLast);
+
+    pckWriteUInt64Internal(this, (id - this->idLast - 1) << 4 | type);
+
+    this->idLast = id;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(UINT32, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeUInt32, id);
+    pckWriteUInt64Internal(this, value);
+
+    FUNCTION_TEST_RETURN(this);
+}
 
 /**********************************************************************************************************************************/
 PackWrite *
@@ -429,13 +384,8 @@ pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[PACK_UINT64_SIZE_MAX];
-    size_t size = pckFromUInt64(value, buffer);
-
-    pckWriteUInt64Internal(this, (uint64_t)(id - this->idLast - 1) << 5 | (size - 1) << 1 | pckTypeUInt64);
-    ioWrite(this->write, BUF(buffer, size));
-
-    this->idLast = id;
+    pckWriteTag(this, pckTypeUInt64, id);
+    pckWriteUInt64Internal(this, value);
 
     FUNCTION_TEST_RETURN(this);
 }
