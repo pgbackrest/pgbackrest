@@ -33,6 +33,8 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 20, 1), "write 1");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 21, 77), "write 77");
         TEST_RESULT_VOID(pckWriteUInt32(packWrite, 22, 127), "write 127");
+        TEST_RESULT_VOID(pckWriteInt64(packWrite, 23, -1), "write -1");
+        TEST_RESULT_VOID(pckWriteInt32(packWrite, 24, -1), "write -1");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -46,7 +48,9 @@ testRun(void)
             "19ffffffffffffffffff01"                                //  4, u64, 0xFFFFFFFFFFFFFFFF
             "f90101"                                                // 20, u64, 1
             "094d"                                                  // 21, u64, 77
-            "087f"                                                  // 22, u64, 127
+            "087f"                                                  // 22, u32, 127
+            "0501"                                                  // 23, i64, -1
+            "0401"                                                  // 24, i32, -1
             "00",                                                   // end
             "check pack");
 
@@ -68,9 +72,12 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadNull(packRead, 19), true, "field 19 is null");
         TEST_RESULT_BOOL(pckReadNull(packRead, 20), false, "field 20 is not null");
         TEST_RESULT_UINT(pckReadUInt64(packRead, 20), 1, "read 1");
-        TEST_RESULT_UINT(pckReadUInt32(packRead, 22), 127, "read 0 (skip field 10)");
-        TEST_ERROR(pckReadUInt64(packRead, 23), FormatError, "field 23 does not exist");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 23), true, "field 23 is null");
+        TEST_RESULT_UINT(pckReadUInt32(packRead, 22), 127, "read 127 (skip field 21)");
+        TEST_RESULT_INT(pckReadInt64(packRead, 23), -1, "read -1");
+        TEST_RESULT_INT(pckReadInt32(packRead, 24), -1, "read -1");
+
+        TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
+        TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");
 
         TEST_RESULT_VOID(pckReadFree(packRead), "free");
 

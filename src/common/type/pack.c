@@ -239,6 +239,40 @@ pckReadNull(PackRead *this, unsigned int id)
 }
 
 /**********************************************************************************************************************************/
+int32_t
+pckReadInt32(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckReadTag(this, id, pckTypeInt32, false);
+    uint32_t result = (uint32_t)pckReadUInt64Internal(this);
+
+    FUNCTION_TEST_RETURN((int32_t)((result >> 1) ^ (~(result & 1) + 1)));
+}
+
+/**********************************************************************************************************************************/
+int64_t
+pckReadInt64(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckReadTag(this, id, pckTypeInt64, false);
+    uint64_t result = pckReadUInt64Internal(this);
+
+    FUNCTION_TEST_RETURN((int64_t)((result >> 1) ^ (~(result & 1) + 1)));
+}
+
+/**********************************************************************************************************************************/
 uint64_t
 pckReadUInt32(PackRead *this, unsigned int id)
 {
@@ -352,6 +386,42 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id)
     this->idLast = id;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteInt32(PackWrite *this, unsigned int id, int32_t value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(INT, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeInt32, id);
+    pckWriteUInt64Internal(this, ((uint32_t)value << 1) ^ (uint32_t)(value >> 31));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteInt64(PackWrite *this, unsigned int id, int64_t value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(INT64, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeInt64, id);
+    pckWriteUInt64Internal(this, ((uint64_t)value << 1) ^ (uint64_t)(value >> 63));
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
