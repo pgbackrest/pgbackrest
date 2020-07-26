@@ -14,10 +14,10 @@ Minimum number of extra bytes to allocate for packs that are growing or are like
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PACK_TYPE                                                   Pack
-#define PACK_PREFIX                                                 pck
+#define PACK_WRITE_TYPE                                             PackWrite
+#define PACK_WRITE_PREFIX                                           pckWrite
 
-typedef struct Pack Pack;
+typedef struct PackWrite PackWrite;
 
 #include "common/type/string.h"
 
@@ -26,19 +26,21 @@ Pack type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pckTypeBinary = 1,
-    pckTypeBool,
-    pckTypeInt64,
-    pckTypeList,
-    pckTypeObject,
-    pckTypeString,
-    pckTypeUInt64,
+    pckTypeUInt64   = 0x01,
+    pckTypeUInt32   = 0x03,
+    pckTypeArray    = 0x04,
+    pckTypeBinary   = 0x08,
+    pckTypeBool     = 0x0C,
+    pckTypeInt32    = 0x10,
+    pckTypeInt64    = 0x14,
+    pckTypeObject   = 0x18,
+    pckTypeString   = 0x1C,
 } PackType;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Pack *pckNew(void);
+PackWrite *pckWriteNew(IoWrite *write);
 
 /***********************************************************************************************************************************
 Functions
@@ -51,16 +53,16 @@ Getters/Setters
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void pckFree(Pack *this);
+void pckWriteFree(PackWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *pckToLog(const Pack *this);
+String *pckWriteToLog(const PackWrite *this);
 
-#define FUNCTION_LOG_PACK_TYPE                                                                                                     \
-    Pack *
-#define FUNCTION_LOG_PACK_FORMAT(value, buffer, bufferSize)                                                                        \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckToLog, buffer, bufferSize)
+#define FUNCTION_LOG_PACK_WRITE_TYPE                                                                                               \
+    PackWrite *
+#define FUNCTION_LOG_PACK_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
 
 #endif
