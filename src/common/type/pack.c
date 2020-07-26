@@ -4,7 +4,9 @@ Pack Handler
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/log.h" // !!! REMOVE
 #include "common/type/pack.h"
 #include "common/type/object.h"
 
@@ -72,6 +74,18 @@ pack
     time_t timestamp;                                               // Original timestamp
 
 ***********************************************************************************************************************************/
+struct PackRead
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read pack from
+    Buffer *buffer;                                                 // Buffer to contain read data
+    unsigned int idLast;                                            // Last id read
+    uint64_t tagNext;                                               // The next tag to be parsed
+    bool done;                                                      // Is parsing complete?
+};
+
+OBJECT_DEFINE_FREE(PACK_READ);
+
 struct PackWrite
 {
     MemContext *memContext;                                         // Mem context
@@ -80,33 +94,6 @@ struct PackWrite
 };
 
 OBJECT_DEFINE_FREE(PACK_WRITE);
-
-/**********************************************************************************************************************************/
-PackWrite *
-pckWriteNew(IoWrite *write)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
-    FUNCTION_TEST_END();
-
-    ASSERT(write != NULL);
-
-    PackWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("PackWrite")
-    {
-        this = memNew(sizeof(PackWrite));
-
-        *this = (PackWrite)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-            .write = write,
-        };
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
 
 /***********************************************************************************************************************************
 Pack/unpack an unsigned 32-bit integer to/from base-128 varint encoding
@@ -200,6 +187,196 @@ pckToUInt64(const uint8_t *buffer)
     }
 
     return result;
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+pckReadNew(IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
+
+    PackRead *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("PackRead")
+    {
+        this = memNew(sizeof(PackRead));
+
+        *this = (PackRead)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .read = read,
+            .buffer = bufNew(PACK_UINT64_SIZE_MAX),
+        };
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+static uint64_t
+pckReadUInt64Internal(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    uint64_t result = 0;
+
+    bufLimitSet(this->buffer, 1);
+
+    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
+    {
+        bufUsedZero(this->buffer);
+        ioRead(this->read, this->buffer);
+
+        result |= (uint64_t)(bufPtr(this->buffer)[0] & 0x7f) << (7 * bufferIdx);
+
+        if (bufPtr(this->buffer)[0] < 0x80)
+            break;
+    }
+
+    ASSERT(bufPtr(this->buffer)[0] < 0x80);
+    bufUsedZero(this->buffer);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+static uint64_t
+pckReadTag(PackRead *this, unsigned int id, bool nullable)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(BOOL, nullable);
+    FUNCTION_TEST_END();
+
+    if (id <= this->idLast)
+        THROW_FMT(FormatError, "field %u was already read", id);
+
+    uint64_t result = 0;
+
+    do
+    {
+        unsigned int tagId = 0xFFFFFFFF;
+
+        if (this->tagNext == 0 && !this->done)
+        {
+            this->tagNext = pckReadUInt64Internal(this);
+
+            if (this->tagNext == 0)
+            {
+                this->done = true;
+                this->tagNext = 0;
+            }
+        }
+
+        if (this->tagNext != 0)
+            tagId = this->idLast + (unsigned int)(this->tagNext >> 5) + 1;
+
+        LOG_DEBUG_FMT("TAG IS %u ID IS %u", tagId, (unsigned int)(this->tagNext >> 5) + 1);
+
+        if (id < tagId)
+        {
+            if (!nullable)
+                THROW_FMT(FormatError, "field %u does not exist", id);
+
+            break;
+        }
+        else if (id == tagId)
+        {
+            result = this->tagNext;
+
+            if (!nullable)
+            {
+                this->tagNext = 0;
+                this->idLast = tagId;
+            }
+
+            break;
+        }
+
+        this->tagNext = 0;
+        this->idLast = tagId;
+
+        // Read data for the field being skipped
+        pckReadUInt64Internal(this);
+    }
+    while (1);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+bool
+pckReadNull(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(pckReadTag(this, id, true) == 0);
+}
+
+/**********************************************************************************************************************************/
+uint64_t
+pckReadUInt64(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    uint64_t tag = pckReadTag(this, id, false);
+    CHECK(tag & pckTypeUInt64);
+
+    FUNCTION_TEST_RETURN(pckReadUInt64Internal(this));
+}
+
+/**********************************************************************************************************************************/
+String *
+pckReadToLog(const PackRead *this)
+{
+    return strNewFmt("{idLast: %u}", this->idLast);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteNew(IoWrite *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    ASSERT(write != NULL);
+
+    PackWrite *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("PackWrite")
+    {
+        this = memNew(sizeof(PackWrite));
+
+        *this = (PackWrite)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .write = write,
+        };
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/

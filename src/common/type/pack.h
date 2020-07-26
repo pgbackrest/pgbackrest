@@ -14,6 +14,11 @@ Minimum number of extra bytes to allocate for packs that are growing or are like
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define PACK_READ_TYPE                                              PackRead
+#define PACK_READ_PREFIX                                            pckRead
+
+typedef struct PackRead PackRead;
+
 #define PACK_WRITE_TYPE                                             PackWrite
 #define PACK_WRITE_PREFIX                                           pckWrite
 
@@ -40,6 +45,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+PackRead *pckReadNew(IoRead *read);
 PackWrite *pckWriteNew(IoWrite *write);
 
 /***********************************************************************************************************************************
@@ -53,11 +59,19 @@ Getters/Setters
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
+void pckReadFree(PackRead *this);
 void pckWriteFree(PackWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *pckReadToLog(const PackRead *this);
+
+#define FUNCTION_LOG_PACK_READ_TYPE                                                                                                \
+    PackRead *
+#define FUNCTION_LOG_PACK_READ_FORMAT(value, buffer, bufferSize)                                                                   \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
+
 String *pckWriteToLog(const PackWrite *this);
 
 #define FUNCTION_LOG_PACK_WRITE_TYPE                                                                                               \
