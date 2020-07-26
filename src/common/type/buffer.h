@@ -48,7 +48,7 @@ Buffer *bufDup(const Buffer *buffer);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-//Append the contents of another buffer
+// Append the contents of another buffer
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
