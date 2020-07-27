@@ -18,10 +18,6 @@ Constants
 /***********************************************************************************************************************************
 Object type
 
-3 bits for type (0 byte is terminator)
-1 bit for default
-4 bits for id (will need to add an extra byte at some point)
-
 24  byte for allocation/list
   X name
 0-1 byte primary
