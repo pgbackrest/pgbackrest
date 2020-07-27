@@ -16,6 +16,73 @@ Constants
 #define PACK_UINT64_SIZE_MAX                                        10
 
 /***********************************************************************************************************************************
+Type data
+***********************************************************************************************************************************/
+typedef struct PackTypeData
+{
+    PackType type;
+    bool valueSingleBit;
+    bool valueMultiBit;
+    const char *const name;
+} PackTypeData;
+
+static const PackTypeData packTypeData[] =
+{
+    {
+        .type = pckTypeUnknown,
+        .name = "unknown",
+    },
+    {
+        .type = pckTypeArray,
+        .name = "array",
+    },
+    {
+        .type = pckTypeBin,
+        .valueSingleBit = true,
+        .name = "binary",
+    },
+    {
+        .type = pckTypeBool,
+        .valueSingleBit = true,
+        .name = "boolean",
+    },
+    {
+        .type = pckTypeInt32,
+        .valueMultiBit = true,
+        .name = "int32",
+    },
+    {
+        .type = pckTypeInt64,
+        .valueMultiBit = true,
+        .name = "int64",
+    },
+    {
+        .type = pckTypeObj,
+        .name = "object",
+    },
+    {
+        .type = pckTypePtr,
+        .valueMultiBit = true,
+        .name = "pointer",
+    },
+    {
+        .type = pckTypeStr,
+        .valueSingleBit = true,
+        .name = "string",
+    },
+    {
+        .type = pckTypeUInt32,
+        .valueMultiBit = true,
+        .name = "uint32",
+    },
+    {
+        .type = pckTypeUInt64,
+        .valueMultiBit = true,
+        .name = "uint64",
+    },
+};
+
+/***********************************************************************************************************************************
 Object type
 
 24  byte for allocation/list
@@ -184,28 +251,47 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
             {
                 this->tagNextType = tag & 0xF;
 
-                if (tag & 0x80)
+                if (packTypeData[this->tagNextType].valueMultiBit)
+                {
+                    if (tag & 0x80)
+                    {
+                        this->tagNextId = (tag >> 4) & 0x3;
+
+                        if (tag & 0x40)
+                            this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
+
+                        this->tagNextValue = pckReadUInt64Internal(this);
+                    }
+                    else
+                    {
+                        this->tagNextId = (tag >> 4) & 0x1;
+
+                        if (tag & 0x20)
+                            this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 1;
+
+                        this->tagNextValue = (tag >> 6) & 0x1;
+                    }
+                }
+                else if (packTypeData[this->tagNextType].valueSingleBit)
                 {
                     this->tagNextId = (tag >> 4) & 0x3;
 
                     if (tag & 0x40)
                         this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
 
-                    this->tagNextValue = pckReadUInt64Internal(this);
+                    this->tagNextValue = tag >> 7;
                 }
                 else
                 {
-                    this->tagNextId = (tag >> 4) & 0x1;
+                    this->tagNextId = (tag >> 4) & 0x7;
 
-                    if (tag & 0x20)
-                        this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 1;
+                    if (tag & 0x80)
+                        this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 3;
 
-                    this->tagNextValue = (tag >> 6) & 0x1;
+                    this->tagNextValue = 0;
                 }
 
                 this->tagNextId += this->idLast + 1;
-
-                LOG_DEBUG_FMT("TAG NEXT ID = %u", this->tagNextId);
             }
         }
 
@@ -221,7 +307,11 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
             if (!peek)
             {
                 if (this->tagNextType != type)
-                    THROW_FMT(FormatError, "field %u is type %u but expected %u", this->tagNextId, this->tagNextType, type);
+                {
+                    THROW_FMT(
+                        FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
+                        packTypeData[this->tagNextType].name, packTypeData[type].name);
+                }
 
                 this->idLast = this->tagNextId;
                 this->tagNextId = 0;
@@ -258,6 +348,20 @@ pckReadNull(PackRead *this, unsigned int id)
 }
 
 /**********************************************************************************************************************************/
+bool
+pckReadBool(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(pckReadTag(this, id, pckTypeBool, false));
+}
+
+/**********************************************************************************************************************************/
 int32_t
 pckReadInt32(PackRead *this, unsigned int id)
 {
@@ -287,6 +391,22 @@ pckReadInt64(PackRead *this, unsigned int id)
     uint64_t result = pckReadTag(this, id, pckTypeInt64, false);
 
     FUNCTION_TEST_RETURN((int64_t)((result >> 1) ^ (~(result & 1) + 1)));
+}
+
+/**********************************************************************************************************************************/
+void
+pckReadObj(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckReadTag(this, id, pckTypeObj, false);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -409,49 +529,84 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
     ASSERT(this != NULL);
     ASSERT(id > this->idLast);
 
-    unsigned int tagId = id - this->idLast - 1;
     uint64_t tag = type;
+    unsigned int tagId = id - this->idLast - 1;
 
-    // LOG_DEBUG_FMT("TAG ID: %u", tagId);
-
-    if (value < 2)
+    if (packTypeData[type].valueMultiBit)
     {
-        // uint8_t val = (uint8_t)value;
-        // LOG_DEBUG_FMT("VALUE < 2: %" PRIu64, value);
+        if (value < 2)
+        {
+            tag |= (value & 0x1) << 6;
+            value >>= 1;
 
-        tag |= (value & 0x1) << 6;
-        tag |= (tagId & 0x1) << 4;
+            tag |= (tagId & 0x1) << 4;
+            tagId >>= 1;
 
-        if (tagId > 1)
-            tag |= 0x20;
+            if (tagId > 0)
+                tag |= 0x20;
+        }
+        else
+        {
+            tag |= 0x80;
+
+            tag |= (tagId & 0x3) << 4;
+            tagId >>= 2;
+
+            if (tagId > 0)
+                tag |= 0x40;
+        }
+    }
+    else if (packTypeData[type].valueSingleBit)
+    {
+        tag |= (value & 0x1) << 7;
+        value >>= 1;
+
+        tag |= (tagId & 0x3) << 4;
+        tagId >>= 2;
+
+        if (tagId > 0)
+            tag |= 0x40;
     }
     else
     {
-        // LOG_DEBUG_FMT("VALUE >= 2: %" PRIu64, value);
+        ASSERT(value == 0);
 
-        tag |= 0x80;
-        tag |= (tagId & 0x3) << 4;
+        tag |= (tagId & 0x7) << 4;
+        tagId >>= 3;
 
-        if (tagId > 3)
-            tag |= 0x40;
+        if (tagId > 0)
+            tag |= 0x80;
     }
 
     uint8_t tagByte = (uint8_t)tag;
     ioWrite(this->write, BUF(&tagByte, 1));
 
-    if (tag & 0x80)
-    {
-        if (tag & 0x40)
-            pckWriteUInt64Internal(this, tagId >> 2);
+    if (tagId > 0)
+        pckWriteUInt64Internal(this, tagId);
 
+    if (value > 0)
         pckWriteUInt64Internal(this, value);
-    }
-    else if (tag & 0x20)
-        pckWriteUInt64Internal(this, tagId >> 1);
 
     this->idLast = id;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteBool(PackWrite *this, unsigned int id, bool value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(BOOL, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeBool, id, value);
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
@@ -488,6 +643,21 @@ pckWriteInt64(PackWrite *this, unsigned int id, int64_t value)
     FUNCTION_TEST_RETURN(this);
 }
 
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteObj(PackWrite *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeObj, id, 0);
+
+    FUNCTION_TEST_RETURN(this);
+}
 
 /**********************************************************************************************************************************/
 PackWrite *

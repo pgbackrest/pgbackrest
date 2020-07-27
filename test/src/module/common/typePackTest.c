@@ -29,12 +29,16 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0750), "write mode");
         TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{idLast: 1}", "log");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1911246845), "write timestamp");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 4, 0xFFFFFFFFFFFFFFFF), "write max u64");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 20, 1), "write 1");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 21, 77), "write 77");
-        TEST_RESULT_VOID(pckWriteUInt32(packWrite, 22, 127), "write 127");
-        TEST_RESULT_VOID(pckWriteInt64(packWrite, 23, -1), "write -1");
-        TEST_RESULT_VOID(pckWriteInt32(packWrite, 24, -1), "write -1");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 7, 0xFFFFFFFFFFFFFFFF), "write max u64");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 10, 1), "write 1");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 11, 77), "write 77");
+        TEST_RESULT_VOID(pckWriteUInt32(packWrite, 12, 127), "write 127");
+        TEST_RESULT_VOID(pckWriteInt64(packWrite, 13, -1), "write -1");
+        TEST_RESULT_VOID(pckWriteInt32(packWrite, 14, -1), "write -1");
+        TEST_RESULT_VOID(pckWriteBool(packWrite, 15, true), "write true");
+        TEST_RESULT_VOID(pckWriteBool(packWrite, 20, false), "write false");
+        TEST_RESULT_VOID(pckWriteObj(packWrite, 28), "write obj");
+        TEST_RESULT_VOID(pckWriteObj(packWrite, 37), "write obj");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -45,12 +49,16 @@ testRun(void)
             bufHex(pack),
             "8ae803"                                                //  1, u64, 750
             "8afd9fad8f07"                                          //  2, u64, 1911246845
-            "9affffffffffffffffff01"                                //  4, u64, 0xFFFFFFFFFFFFFFFF
-            "7a07"                                                  // 20, u64, 1
-            "8a4d"                                                  // 21, u64, 77
-            "897f"                                                  // 22, u32, 127
-            "45"                                                    // 23, i64, -1
-            "44"                                                    // 24, i32, -1
+            "ca01ffffffffffffffffff01"                              //  7, u64, 0xFFFFFFFFFFFFFFFF
+            "6a01"                                                  // 10, u64, 1
+            "8a4d"                                                  // 11, u64, 77
+            "897f"                                                  // 12, u32, 127
+            "45"                                                    // 13, i64, -1
+            "44"                                                    // 14, i32, -1
+            "83"                                                    // 15, bool, true
+            "4301"                                                  // 20, bool, false
+            "76"                                                    // 28,  obj
+            "8601"                                                  // 37,  obj
             "00",                                                   // end
             "check pack");
 
@@ -66,15 +74,18 @@ testRun(void)
         TEST_RESULT_UINT(pckReadUInt64(packRead, 1), 0750, "read mode");
         TEST_RESULT_UINT(pckReadUInt64(packRead, 2), 1911246845, "read timestamp");
         TEST_ERROR(pckReadUInt64(packRead, 2), FormatError, "field 2 was already read");
-        TEST_ERROR(pckReadUInt32(packRead, 4), FormatError, "field 4 is type 10 but expected 9");
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 4), 0xFFFFFFFFFFFFFFFF, "read max u64");
-        TEST_ERROR(pckReadUInt64(packRead, 19), FormatError, "field 19 does not exist");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 19), true, "field 19 is null");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 20), false, "field 20 is not null");
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 20), 1, "read 1");
-        TEST_RESULT_UINT(pckReadUInt32(packRead, 22), 127, "read 127 (skip field 21)");
-        TEST_RESULT_INT(pckReadInt64(packRead, 23), -1, "read -1");
-        TEST_RESULT_INT(pckReadInt32(packRead, 24), -1, "read -1");
+        TEST_ERROR(pckReadUInt32(packRead, 7), FormatError, "field 7 is type 'uint64' but expected 'uint32'");
+        TEST_RESULT_UINT(pckReadUInt64(packRead, 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
+        TEST_ERROR(pckReadUInt64(packRead, 9), FormatError, "field 9 does not exist");
+        TEST_RESULT_BOOL(pckReadNull(packRead, 9), true, "field 9 is null");
+        TEST_RESULT_BOOL(pckReadNull(packRead, 10), false, "field 10 is not null");
+        TEST_RESULT_UINT(pckReadUInt64(packRead, 10), 1, "read 1");
+        TEST_RESULT_UINT(pckReadUInt32(packRead, 12), 127, "read 127 (skip field 11)");
+        TEST_RESULT_INT(pckReadInt64(packRead, 13), -1, "read -1");
+        TEST_RESULT_INT(pckReadInt32(packRead, 14), -1, "read -1");
+        TEST_RESULT_BOOL(pckReadBool(packRead, 15), true, "read true");
+        TEST_RESULT_BOOL(pckReadBool(packRead, 20), false, "read false");
+        TEST_RESULT_VOID(pckReadObj(packRead, 28), "read object");
 
         TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");

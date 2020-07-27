@@ -55,13 +55,17 @@ Functions
 ***********************************************************************************************************************************/
 bool pckReadNull(PackRead *this, unsigned int id);
 
+bool pckReadBool(PackRead *this, unsigned int id);
 int32_t pckReadInt32(PackRead *this, unsigned int id);
 int64_t pckReadInt64(PackRead *this, unsigned int id);
+void *pckReadPtr(PackRead *this, unsigned int id);
 uint64_t pckReadUInt32(PackRead *this, unsigned int id);
 uint64_t pckReadUInt64(PackRead *this, unsigned int id);
 
+PackWrite *pckWriteBool(PackWrite *this, unsigned int id, bool value);
 PackWrite *pckWriteInt32(PackWrite *this, unsigned int id, int32_t value);
 PackWrite *pckWriteInt64(PackWrite *this, unsigned int id, int64_t value);
+PackWrite *pckWritePtr(PackWrite *this, unsigned int id, const void *value);
 PackWrite *pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value);
 PackWrite *pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value);
 
