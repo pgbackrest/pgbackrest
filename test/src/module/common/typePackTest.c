@@ -43,14 +43,14 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(pack),
-            "09e803"                                                //  1, u64, 750
-            "09fd9fad8f07"                                          //  2, u64, 1911246845
-            "19ffffffffffffffffff01"                                //  4, u64, 0xFFFFFFFFFFFFFFFF
-            "f90101"                                                // 20, u64, 1
-            "094d"                                                  // 21, u64, 77
-            "087f"                                                  // 22, u32, 127
-            "0501"                                                  // 23, i64, -1
-            "0401"                                                  // 24, i32, -1
+            "8ae803"                                                //  1, u64, 750
+            "8afd9fad8f07"                                          //  2, u64, 1911246845
+            "9affffffffffffffffff01"                                //  4, u64, 0xFFFFFFFFFFFFFFFF
+            "7a07"                                                  // 20, u64, 1
+            "8a4d"                                                  // 21, u64, 77
+            "897f"                                                  // 22, u32, 127
+            "45"                                                    // 23, i64, -1
+            "44"                                                    // 24, i32, -1
             "00",                                                   // end
             "check pack");
 
@@ -66,7 +66,7 @@ testRun(void)
         TEST_RESULT_UINT(pckReadUInt64(packRead, 1), 0750, "read mode");
         TEST_RESULT_UINT(pckReadUInt64(packRead, 2), 1911246845, "read timestamp");
         TEST_ERROR(pckReadUInt64(packRead, 2), FormatError, "field 2 was already read");
-        TEST_ERROR(pckReadUInt32(packRead, 4), FormatError, "field 4 is type 9 but expected 8");
+        TEST_ERROR(pckReadUInt32(packRead, 4), FormatError, "field 4 is type 10 but expected 9");
         TEST_RESULT_UINT(pckReadUInt64(packRead, 4), 0xFFFFFFFFFFFFFFFF, "read max u64");
         TEST_ERROR(pckReadUInt64(packRead, 19), FormatError, "field 19 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 19), true, "field 19 is null");

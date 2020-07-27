@@ -38,10 +38,10 @@ typedef enum
     pckTypeInt32,
     pckTypeInt64,
     pckTypeObj,
+    pckTypePtr,
     pckTypeStr,
     pckTypeUInt32,
     pckTypeUInt64,
-    pckTypePtr,
 } PackType;
 
 /***********************************************************************************************************************************
