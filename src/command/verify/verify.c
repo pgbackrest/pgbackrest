@@ -252,20 +252,21 @@ typedef struct VerifyInfoFile
 {
     InfoBackup *backup;                                             // Backup.info file contents
     InfoArchive *archive;                                           // Archive.info file contents
+    Manifest *manifest;                                             // Manifest file contents
     const String *checksum;                                         // File checksum
     int errorCode;                                                  // Error code else 0 for no error
 } VerifyInfoFile;
 
 static VerifyInfoFile
-verifyInfoFile(const String *infoPathFile, bool loadFile, const String *cipherPass)
+verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, infoPathFile);
+        FUNCTION_LOG_PARAM(STRING, pathFileName);
         FUNCTION_LOG_PARAM(BOOL, loadFile);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-    ASSERT(infoPathFile != NULL);
+    ASSERT(pathFileName != NULL);
 
     VerifyInfoFile result = {.errorCode = 0};
 
@@ -273,17 +274,21 @@ verifyInfoFile(const String *infoPathFile, bool loadFile, const String *cipherPa
     {
         TRY_BEGIN()
         {
-            IoRead *infoRead = storageReadIo(verifyFileLoad(infoPathFile, cipherPass));
+            IoRead *infoRead = storageReadIo(verifyFileLoad(pathFileName, cipherPass));
 
             if (loadFile)
             {
-                if (strBeginsWith(infoPathFile, INFO_BACKUP_PATH_FILE_STR))
+                if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR))
                 {
                     result.backup = infoBackupMove(infoBackupNewLoad(infoRead), memContextPrior());
                 }
-                else
+                else if (strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
                 {
                     result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
+                }
+                else
+                {
+                    result.manifest = manifestMove(manifestNewLoad(infoRead), memContextPrior());
                 }
             }
             else
@@ -301,7 +306,7 @@ verifyInfoFile(const String *infoPathFile, bool loadFile, const String *cipherPa
             String *errorMsg = strNew(errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
-                strCat(errorMsg, strNewFmt(" %s", strPtr(infoPathFile)));
+                strCat(errorMsg, strNewFmt(" %s", strPtr(pathFileName)));
 
             LOG_WARN(strPtr(errorMsg));
         }
@@ -411,56 +416,59 @@ verifyBackupInfoFile(void)
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
-//
-// static Manifest *
-// verifyManifestFile(void)
-// {
-//     FUNCTION_LOG_VOID(logLevelDebug);
-//
-//     InfoBackup *result = NULL;
-// CSHANG Need this somewhere: infoPgCipherPass(infoBackupPg(info))                      cfgOptionStrNull(cfgOptRepoCipherPass)
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Get the main info file
-//         VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
-//
-//         // If the main file did not error, then report on the copy's status and check checksums
-//         if (verifyBackupInfo.errorCode == 0)
-//         {
-//             result = verifyBackupInfo.backup;
-//             infoBackupMove(result, memContextPrior());
-//
-//             // Attempt to load the copy and report on it's status but don't keep it in memory
-//             VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
-//                 INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
-//
-//             // If the copy loaded successfuly, then check the checksums
-//             if (verifyBackupInfoCopy.errorCode == 0)
-//             {
-//                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
-//                 // log a warning but must trust main
-//                 if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-//                     LOG_WARN("backup.info.copy doesn't match backup.info");
-//             }
-//         }
-//         else
-//         {
-//             // Attempt to load the copy
-//             VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
-//                 INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
-//
-//             // If loaded successfully, then return the copy as usable
-//             if (verifyBackupInfoCopy.errorCode == 0)
-//             {
-//                 result = verifyBackupInfoCopy.backup;
-//                 infoBackupMove(result, memContextPrior());
-//             }
-//         }
-//     }
-//     MEM_CONTEXT_TEMP_END();
-// //
-//     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
-// }
+
+static Manifest *
+verifyManifestFile(const String *fileName, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    Manifest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get the main manifest file
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
+
+        // If the main file did not error, then report on the copy's status and check checksums
+        if (verifyManifestInfo.errorCode == 0)
+        {
+            result = verifyManifestInfo.manifest;
+            manifestMove(result, memContextPrior());
+
+            // Attempt to load the copy and report on it's status but don't keep it in memory
+            VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                strNewFmt("%s%s", strPtr(fileName), INFO_COPY_EXT), false, cipherPass);
+
+            // If the copy loaded successfuly, then check the checksums
+            if (verifyManifestInfoCopy.errorCode == 0)
+            {
+                // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
+                // corrupt so log a warning but must trust main
+                if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
+                    LOG_WARN("backup.manifest.copy doesn't match backup.manifest");
+            }
+        }
+        else
+        {
+            // Attempt to load the copy
+            VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                strNewFmt("%s%s", strPtr(fileName), INFO_COPY_EXT), true, cipherPass);
+
+            // If loaded successfully, then return the copy as usable
+            if (verifyManifestInfoCopy.errorCode == 0)
+            {
+                result = verifyManifestInfoCopy.manifest;
+                manifestMove(result, memContextPrior());
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, result);
+}
 
 /***********************************************************************************************************************************
 Check the history in the info files
@@ -603,7 +611,7 @@ verifyArchive(void *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_END();
+    FUNCTION_TEST_END();
 
     ProtocolParallelJob *result = NULL;
 
@@ -755,6 +763,7 @@ verifyArchive(void *data)
             lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
         }
     }
+
     FUNCTION_TEST_RETURN(result);
 }
 
@@ -796,26 +805,29 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         // Process backup files, if any
         while (strLstSize(jobData->backupList) > 0)
         {
+            String *backupLabel = strLstGet(jobData->backupList, 0);
+
 LOG_WARN("Processing BACKUPS"); // CSHANG Remove
             // result == NULL;
 /* CSHANG:
  If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there. If main is not there and copy is but it is not the latest then warn that main is missing and skip.
 */
-                    // // Get a usable backup manifest file
-                    // InfoBackup *backupInfo = verifyBackupInfoFile();
-                    //
-                    // // If a usable backup.info file is not found, then report an error in the log
-                    // if (backupInfo == NULL)
-                    // {
-                    //     LOG_ERROR(errorTypeCode(&FormatError), "No usable backup.info file");
-                    //     errorTotal++;
-                    // }
+            // Get a usable backup manifest file
+            Manifest *manifest = verifyManifestFile(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)), jobData->manifestCipherPass);
+
+            // If a usable backup.manifest file is not found, then report an error in the log
+            if (manifest == NULL)
+            {
+                LOG_ERROR(errorTypeCode(&FormatError), strPtr(strNewFmt("No usable %s/backup.manifest file", strPtr(backupLabel))));
+                // errorTotal++;  // CSHANG might need to make this a global
+            }
         }
 
         // If there is a result from backups, then return it
         if (result != NULL)
         {
-            LOG_WARN("BACKUP RESULT != NULL"); // CSHANG Remove
+LOG_WARN("BACKUP RESULT != NULL"); // CSHANG Remove
             FUNCTION_TEST_RETURN(result);
         }
     }
