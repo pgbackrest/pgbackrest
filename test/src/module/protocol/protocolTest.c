@@ -204,7 +204,7 @@ testRun(void)
         MemContext *memContext = memContextNew("test");
         memContextFree(memContext);
 
-        // Create bogus client and exec witht the freed memcontext to generate errors
+        // Create bogus client and exec with the freed memcontext to generate errors
         ProtocolClient client = {.memContext = memContext, .name = STRDEF("test")};
         Exec exec = {.memContext = memContext, .name = STRDEF("test"), .command = strNew("test")};
         ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
