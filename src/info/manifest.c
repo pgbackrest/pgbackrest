@@ -985,12 +985,8 @@ manifestNewBuild(
                 char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
                 bool lastRelationFileIdUnlogged = false;
 
-#ifdef DEBUG_TEST_TRACE
-                // Record the temp context size before the loop begins. Create/free a context/string to ensure that there are
-                // available contexts/allocations to prevent increasing the context size.
-                memContextNew("TEST");
-                memContextDiscard();
-                strFree(strNew("TEST"));
+#ifdef DEBUG_MEM
+                // Record the temp context size before the loop begins
                 size_t sizeBegin = memContextSize(memContextCurrent());
 #endif
 
@@ -1046,9 +1042,9 @@ manifestNewBuild(
                     fileIdx++;
                 }
 
-#ifdef DEBUG_TEST_TRACE
-                // Make sure that the temp context did grow during the loop
-                ASSERT(memContextSize(memContextCurrent()) == sizeBegin);
+#ifdef DEBUG_MEM
+                // Make sure that the temp context did not grow too much during the loop
+                ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
 #endif
             }
         }
