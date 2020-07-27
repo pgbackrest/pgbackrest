@@ -269,6 +269,22 @@ pckReadInt64(PackRead *this, unsigned int id)
 }
 
 /**********************************************************************************************************************************/
+void *
+pckReadPtr(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckReadTag(this, id, pckTypePtr, false);
+
+    FUNCTION_TEST_RETURN((void *)(uintptr_t)pckReadUInt64Internal(this));
+}
+
+/**********************************************************************************************************************************/
 uint64_t
 pckReadUInt32(PackRead *this, unsigned int id)
 {
@@ -416,6 +432,25 @@ pckWriteInt64(PackWrite *this, unsigned int id, int64_t value)
 
     pckWriteTag(this, pckTypeInt64, id);
     pckWriteUInt64Internal(this, ((uint64_t)value << 1) ^ (uint64_t)(value >> 63));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWritePtr(PackWrite *this, unsigned int id, const void *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM_P(VOID, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypePtr, id);
+    pckWriteUInt64Internal(this, (uintptr_t)value);
 
     FUNCTION_TEST_RETURN(this);
 }

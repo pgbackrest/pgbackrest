@@ -91,6 +91,25 @@ testRun(void)
         TEST_ASSIGN(packRead, pckReadNew(read), "new read");
 
         TEST_ERROR(pckReadUInt64(packRead, 1), AssertError, "assertion 'bufPtr(this->buffer)[0] < 0x80' failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pack/unpack pointer");
+
+        pack = bufNew(0);
+
+        write = ioBufferWriteNew(pack);
+        ioWriteOpen(write);
+
+        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+        TEST_RESULT_VOID(pckWritePtr(packWrite, 1, "sample"), "write pointer");
+
+        ioWriteClose(write);
+
+        read = ioBufferReadNew(pack);
+        ioReadOpen(read);
+
+        TEST_ASSIGN(packRead, pckReadNew(read), "new read");
+        TEST_RESULT_Z(pckReadPtr(packRead, 1), "sample", "read pointer");
     }
 
     // *****************************************************************************************************************************

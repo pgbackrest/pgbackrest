@@ -33,14 +33,15 @@ typedef enum
 {
     pckTypeUnknown = 0,
     pckTypeArray,
-    pckTypeBinary,
+    pckTypeBin,
     pckTypeBool,
     pckTypeInt32,
     pckTypeInt64,
-    pckTypeObject,
-    pckTypeString,
+    pckTypeObj,
+    pckTypeStr,
     pckTypeUInt32,
     pckTypeUInt64,
+    pckTypePtr,
 } PackType;
 
 /***********************************************************************************************************************************
