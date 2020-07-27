@@ -13,13 +13,13 @@ Variant List Handler
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Wrapper for lstNew()
+Wrapper for lstNewP()
 ***********************************************************************************************************************************/
 VariantList *
 varLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((VariantList *)lstNew(sizeof(Variant *)));
+    FUNCTION_TEST_RETURN((VariantList *)lstNewP(sizeof(Variant *)));
 }
 
 /**********************************************************************************************************************************/

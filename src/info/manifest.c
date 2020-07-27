@@ -1719,9 +1719,9 @@ manifestNewLoad(IoRead *read)
 
         MEM_CONTEXT_BEGIN(loadData.memContext)
         {
-            loadData.fileFoundList = lstNew(sizeof(ManifestLoadFound));  // cshang don't want the lists in the object context
-            loadData.linkFoundList = lstNew(sizeof(ManifestLoadFound));
-            loadData.pathFoundList = lstNew(sizeof(ManifestLoadFound));
+            loadData.fileFoundList = lstNewP(sizeof(ManifestLoadFound));
+            loadData.linkFoundList = lstNewP(sizeof(ManifestLoadFound));
+            loadData.pathFoundList = lstNewP(sizeof(ManifestLoadFound));
         }
         MEM_CONTEXT_END();
 

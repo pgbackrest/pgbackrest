@@ -31,17 +31,7 @@ OBJECT_DEFINE_FREE(LIST);
 
 /**********************************************************************************************************************************/
 List *
-lstNew(size_t itemSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SIZE, itemSize);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(lstNewP(itemSize));
-}
-
-List *
-lstNewParam(size_t itemSize, ListParam param)
+lstNew(size_t itemSize, ListParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, itemSize);

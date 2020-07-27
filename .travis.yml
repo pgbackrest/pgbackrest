@@ -27,6 +27,12 @@ jobs:
     # Debian/Ubuntu documentation
     - env: PGB_CI=" doc --vm=u18"
 
+    # All integration tests
+    - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
+
+    # All integration tests
+    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
+
     # Valgrind is disabled due to some platform-specific issues in getpwuid() and getgrgid() that do not seem to be pgBackRest bugs.
     # Run in a different timezone to check time tests.
     - arch: ppc64le
@@ -35,20 +41,11 @@ jobs:
         - PGB_CI="test --vm=none --param=no-valgrind --param=tz=America/New_York"
       services:
 
-    # All integration tests
-    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
-
-    # All integration tests
-    - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
-
     # All unit tests (with coverage) on the newest gcc available
     - env: PGB_CI="test --vm=f32 --param=c-only --param=no-performance"
 
     # RHEL/CentOS 6 documentation
     - env: PGB_CI=" doc --vm=co6"
-
-    # All integration tests
-    - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
 
     # RHEL/CentOS 7 documentation
     - env: PGB_CI=" doc --vm=co7"
@@ -59,6 +56,9 @@ jobs:
       env:
         - PGB_CI="test --vm=none --param=no-coverage --param=module=command --param=module=storage"
       services:
+
+    # All integration tests
+    - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
 
     # Basic unit tests only. Coverage testing is also disabled to save time.
     - arch: s390x

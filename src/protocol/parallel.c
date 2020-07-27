@@ -61,8 +61,8 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
             .timeout = timeout,
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
-            .clientList = lstNew(sizeof(ProtocolClient *)),
-            .jobList = lstNew(sizeof(ProtocolParallelJob *)),
+            .clientList = lstNewP(sizeof(ProtocolClient *)),
+            .jobList = lstNewP(sizeof(ProtocolParallelJob *)),
             .state = protocolParallelJobStatePending,
         };
     }

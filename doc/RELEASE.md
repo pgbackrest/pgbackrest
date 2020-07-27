@@ -162,7 +162,7 @@ If so, update the version above and copy `lib/install-sh` from the `automake` re
 wget -O ${PGBR_REPO?}/src/build/install-sh '[URL]'
 ```
 
-Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so only keep the version if it is at least two months old to help ensure stability.
+Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
 ```
 wget -O ${PGBR_REPO?}/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
 wget -O ${PGBR_REPO?}/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'

@@ -84,7 +84,7 @@ XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((XmlNodeList *)lstNew(sizeof(XmlNode *)));
+    FUNCTION_TEST_RETURN((XmlNodeList *)lstNewP(sizeof(XmlNode *)));
 }
 
 /**********************************************************************************************************************************/

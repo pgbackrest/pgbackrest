@@ -71,7 +71,7 @@ ioFilterGroupNew(void)
         {
             .memContext = memContextCurrent(),
             .done = false,
-            .filterList = lstNew(sizeof(IoFilterData)),
+            .filterList = lstNewP(sizeof(IoFilterData)),
         };
     }
     MEM_CONTEXT_NEW_END();

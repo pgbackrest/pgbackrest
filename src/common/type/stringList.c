@@ -19,17 +19,7 @@ StringList *
 strLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(strLstNewParam(lstComparatorStr));
-}
-
-StringList *
-strLstNewParam(ListComparator *comparator)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = comparator));
+    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr));
 }
 
 /***********************************************************************************************************************************

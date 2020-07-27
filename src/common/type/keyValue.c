@@ -55,7 +55,7 @@ kvNew(void)
         *this = (KeyValue)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .list = lstNew(sizeof(KeyValuePair)),
+            .list = lstNewP(sizeof(KeyValuePair)),
             .keyList = varLstNew(),
         };
     }

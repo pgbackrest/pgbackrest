@@ -51,8 +51,6 @@ int lstComparatorStr(const void *item1, const void *item2);
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-List *lstNew(size_t itemSize);
-
 typedef struct ListParam
 {
     VAR_PARAM_HEADER;
@@ -61,9 +59,9 @@ typedef struct ListParam
 } ListParam;
 
 #define lstNewP(itemSize, ...)                                                                                                     \
-    lstNewParam(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
+    lstNew(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-List *lstNewParam(size_t itemSize, ListParam param);
+List *lstNew(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
 Functions

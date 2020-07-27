@@ -558,7 +558,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                         }
 
                         // Get the data for the backup selected for retention and all backups associated with this archive id
-                        List *archiveIdBackupList = lstNew(sizeof(InfoBackupData));
+                        List *archiveIdBackupList = lstNewP(sizeof(InfoBackupData));
                         InfoBackupData archiveRetentionBackup = {0};
 
                         for (unsigned int infoBackupIdx = 0; infoBackupIdx < infoBackupDataTotal(infoBackup); infoBackupIdx++)
@@ -584,7 +584,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                             // important to preserve archive that is required to make the older backups consistent even though they
                             // cannot be played any further forward with PITR.
                             String *archiveExpireMax = NULL;
-                            List *archiveRangeList = lstNew(sizeof(ArchiveRange));
+                            List *archiveRangeList = lstNewP(sizeof(ArchiveRange));
 
                             // From the full list of backups, loop through those associated with this archiveId
                             for (unsigned int backupListIdx = 0; backupListIdx < lstSize(archiveIdBackupList); backupListIdx++)

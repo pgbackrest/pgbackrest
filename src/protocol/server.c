@@ -61,7 +61,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             .name = strDup(name),
             .read = read,
             .write = write,
-            .handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
+            .handlerList = lstNewP(sizeof(ProtocolServerProcessHandler)),
         };
 
         // Send the protocol greeting
