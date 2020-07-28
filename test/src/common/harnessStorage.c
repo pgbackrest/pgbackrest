@@ -5,10 +5,62 @@ Storage Test Harness
 
 #include "common/debug.h"
 #include "common/compress/helper.h"
+#include "common/type/object.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
 #include "common/harnessStorage.h"
+
+/***********************************************************************************************************************************
+Dummy functions and interface for constructing test storage drivers
+***********************************************************************************************************************************/
+static StorageInfo
+storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+{
+    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
+}
+
+static bool
+storageTestDummyInfoList(
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
+{
+    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
+}
+
+static StorageRead *
+storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+{
+    (void)thisVoid; (void)file; (void)ignoreMissing; (void)param; return NULL;
+}
+
+static StorageWrite *
+storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+{
+    (void)thisVoid; (void)file; (void)param; return NULL;
+}
+
+static bool
+storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+{
+    (void)thisVoid; (void)path; (void)recurse; (void)param; return false;
+}
+
+static void
+storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+{
+    (void)thisVoid; (void)file; (void)param;
+}
+
+const StorageInterface storageInterfaceTestDummy =
+{
+    .info = storageTestDummyInfo,
+    .infoList = storageTestDummyInfoList,
+    .newRead = storageTestDummyNewRead,
+    .newWrite = storageTestDummyNewWrite,
+    .pathRemove = storageTestDummyPathRemove,
+    .remove = storageTestDummyRemove,
+};
 
 /**********************************************************************************************************************************/
 void

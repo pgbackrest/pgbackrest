@@ -163,6 +163,8 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
+        &VMDEF_WITH_ZST => true,
+
         &VM_DB =>
         [
             PG_VERSION_91,

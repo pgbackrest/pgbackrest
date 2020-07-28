@@ -316,7 +316,7 @@ cfgFileLoad(                                                        // NOTE: Pas
     if (optionList[cfgOptConfigPath].found)
     {
         optConfigDefault =
-            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), strPtr(strBase(optConfigDefault)));
+            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), strBaseZ(optConfigDefault));
         optConfigIncludePathDefault =
             strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), PGBACKREST_CONFIG_INCLUDE_PATH);
     }

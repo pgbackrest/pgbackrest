@@ -6,6 +6,14 @@ Helper functions for testing storage and related functions.
 #ifndef TEST_COMMON_HARNESS_STORAGE_H
 #define TEST_COMMON_HARNESS_STORAGE_H
 
+#include "storage/storage.intern.h"
+
+/***********************************************************************************************************************************
+Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
+specific functions replaced for testing.
+***********************************************************************************************************************************/
+extern const StorageInterface storageInterfaceTestDummy;
+
 /***********************************************************************************************************************************
 Callback for formatting info list results
 ***********************************************************************************************************************************/

@@ -584,7 +584,12 @@ jsonToVar(const String *json)
     const char *jsonPtr = strPtr(json);
     unsigned int jsonPos = 0;
 
-    FUNCTION_LOG_RETURN(VARIANT, jsonToVarInternal(jsonPtr, &jsonPos));
+    Variant *result = jsonToVarInternal(jsonPtr, &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after JSON at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_LOG_RETURN(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/

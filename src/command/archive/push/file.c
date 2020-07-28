@@ -48,7 +48,7 @@ archivePushFile(
         // If this is a segment compare archive version and systemId to the WAL header
         if (isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource);
+            PgWal walInfo = pgWalFromFile(walSource, storageLocal());
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
