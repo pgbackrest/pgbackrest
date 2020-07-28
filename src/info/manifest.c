@@ -1369,7 +1369,6 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     ASSERT(callbackData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(value != NULL);
 
     ManifestLoadData *loadData = (ManifestLoadData *)callbackData;
     Manifest *manifest = loadData->manifest;

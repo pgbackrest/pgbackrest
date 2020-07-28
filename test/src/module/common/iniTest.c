@@ -9,8 +9,9 @@ Test Ini
 Test callback to accumulate ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
 {
+    ASSERT(strEq(value, jsonFromVar(valueVar)));
     strCatFmt((String *)data, "%s:%s:%s\n", strPtr(section), strPtr(key), strPtr(value));
 }
 

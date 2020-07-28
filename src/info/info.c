@@ -207,6 +207,8 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     // Process backrest section
     if (strEq(section, INFO_SECTION_BACKREST_STR))
     {
+        ASSERT(valueVar != NULL);
+
         // Validate format
         if (strEq(key, INFO_KEY_FORMAT_STR))
         {
@@ -235,6 +237,8 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     // Process cipher section
     else if (strEq(section, INFO_SECTION_CIPHER_STR))
     {
+        ASSERT(valueVar != NULL);
+
         // No validation needed for cipher-pass, just store it
         if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
         {
