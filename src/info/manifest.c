@@ -876,154 +876,159 @@ manifestNewBuild(
         this->data.backupOptionOnline = online;
         this->data.backupOptionChecksumPage = varNewBool(checksumPage);
 
-        // Data needed to build the manifest
-        ManifestBuildData buildData =
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            .manifest = this,
-            .storagePg = storagePg,
-            .tablespaceId = pgTablespaceId(pgVersion),
-            .online = online,
-            .checksumPage = checksumPage,
-            .tablespaceList = tablespaceList,
-            .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
-            .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(pgWalPath(pgVersion))),
-            .pgPath = storagePathP(storagePg, NULL),
-        };
-
-        // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't seem
-        // worth supporting this feature on such old versions of PostgreSQL.
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (pgVersion >= PG_VERSION_90)
-        {
-            ASSERT(buildData.tablespaceId != NULL);
-
-            // Expression to identify database paths
-            buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
-
-            // Expression to find temp relations
-            buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
-        }
-
-        // Build expression to identify files that can be copied from the standby when standby backup is supported
-        // -------------------------------------------------------------------------------------------------------------------------
-        buildData.standbyExp = regExpNew(
-            strNewFmt(
-                "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                    MANIFEST_TARGET_PGTBLSPC ")/",
-                strPtr(pgXactPath(pgVersion))));
-
-        // Build list of exclusions
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (excludeList != NULL)
-        {
-            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            // Data needed to build the manifest
+            ManifestBuildData buildData =
             {
-                const String *exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(strLstGet(excludeList, excludeIdx)));
+                .manifest = this,
+                .storagePg = storagePg,
+                .tablespaceId = pgTablespaceId(pgVersion),
+                .online = online,
+                .checksumPage = checksumPage,
+                .tablespaceList = tablespaceList,
+                .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
+                .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(pgWalPath(pgVersion))),
+                .pgPath = storagePathP(storagePg, NULL),
+            };
 
-                // If the exclusions refers to the contents of a path
-                if (strEndsWithZ(exclude, "/"))
+            // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't
+            // seem worth supporting this feature on such old versions of PostgreSQL.
+            // ---------------------------------------------------------------------------------------------------------------------
+            if (pgVersion >= PG_VERSION_90)
+            {
+                ASSERT(buildData.tablespaceId != NULL);
+
+                // Expression to identify database paths
+                buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
+
+                // Expression to find temp relations
+                buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
+            }
+
+            // Build expression to identify files that can be copied from the standby when standby backup is supported
+            // ---------------------------------------------------------------------------------------------------------------------
+            buildData.standbyExp = regExpNew(
+                strNewFmt(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                        MANIFEST_TARGET_PGTBLSPC ")/",
+                    strPtr(pgXactPath(pgVersion))));
+
+            // Build list of exclusions
+            // ---------------------------------------------------------------------------------------------------------------------
+            if (excludeList != NULL)
+            {
+                for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
                 {
-                    if (buildData.excludeContent == NULL)
-                        buildData.excludeContent = strLstNew();
+                    const String *exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(strLstGet(excludeList, excludeIdx)));
 
-                    strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                    // If the exclusions refers to the contents of a path
+                    if (strEndsWithZ(exclude, "/"))
+                    {
+                        if (buildData.excludeContent == NULL)
+                            buildData.excludeContent = strLstNew();
+
+                        strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                    }
+                    // Otherwise exclude a single file/link/path
+                    else
+                    {
+                        if (buildData.excludeSingle == NULL)
+                            buildData.excludeSingle = strLstNew();
+
+                        strLstAdd(buildData.excludeSingle, exclude);
+                    }
                 }
-                // Otherwise exclude a single file/link/path
-                else
-                {
-                    if (buildData.excludeSingle == NULL)
-                        buildData.excludeSingle = strLstNew();
+            }
 
-                    strLstAdd(buildData.excludeSingle, exclude);
+            // Build manifest
+            // ---------------------------------------------------------------------------------------------------------------------
+            StorageInfo info = storageInfoP(storagePg, buildData.pgPath, .followLink = true);
+
+            ManifestPath path =
+            {
+                .name = MANIFEST_TARGET_PGDATA_STR,
+                .mode = info.mode,
+                .user = info.user,
+                .group = info.group,
+            };
+
+            manifestPathAdd(this, &path);
+
+            ManifestTarget target =
+            {
+                .name = MANIFEST_TARGET_PGDATA_STR,
+                .path = buildData.pgPath,
+                .type = manifestTargetTypePath,
+            };
+
+            manifestTargetAdd(this, &target);
+
+            // Gather info for the rest of the files/links/paths
+            storageInfoListP(
+                storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+            // These may not be in order even if the incoming data was sorted
+            lstSort(this->fileList, sortOrderAsc);
+            lstSort(this->linkList, sortOrderAsc);
+            lstSort(this->pathList, sortOrderAsc);
+            lstSort(this->targetList, sortOrderAsc);
+
+            // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement
+            // to check for _init files which will sort after the vast majority of the relation files.  We could check storage for
+            // each _init file but that would be expensive.
+            // -------------------------------------------------------------------------------------------------------------------------
+            if (pgVersion >= PG_VERSION_91)
+            {
+                RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strPtr(buildData.tablespaceId)));
+                unsigned int fileIdx = 0;
+                const String *lastRelationFileId = NULL;
+                bool lastRelationFileIdUnlogged = false;
+
+                while (fileIdx < manifestFileTotal(this))
+                {
+                    const ManifestFile *file = manifestFile(this, fileIdx);
+
+                    // If this file looks like a relation.  Note that this never matches on _init forks.
+                    if (regExpMatch(relationExp, file->name))
+                    {
+                        String *fileName = strBase(file->name);
+                        String *relationFileId = strNew("");
+
+                        // Strip off the numeric part of the relation
+                        for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
+                        {
+                            char nameChr = strPtr(fileName)[nameIdx];
+
+                            if (!isdigit(nameChr))
+                                break;
+
+                            strCatChr(relationFileId, nameChr);
+                        }
+
+                        // Store the last relation so it does not need to be found everytime
+                        if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
+                        {
+                            // Determine if the relation is unlogged
+                            const String *relationInit = strNewFmt(
+                                "%s/%s_init", strPtr(strPath(file->name)), strPtr(relationFileId));
+                            lastRelationFileId = relationFileId;
+                            lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
+                        }
+
+                        // If relation is unlogged then remove it
+                        if (lastRelationFileIdUnlogged)
+                        {
+                            manifestFileRemove(this, file->name);
+                            continue;
+                        }
+                    }
+
+                    fileIdx++;
                 }
             }
         }
-
-        // Build manifest
-        // -------------------------------------------------------------------------------------------------------------------------
-        StorageInfo info = storageInfoP(storagePg, buildData.pgPath, .followLink = true);
-
-        ManifestPath path =
-        {
-            .name = MANIFEST_TARGET_PGDATA_STR,
-            .mode = info.mode,
-            .user = info.user,
-            .group = info.group,
-        };
-
-        manifestPathAdd(this, &path);
-
-        ManifestTarget target =
-        {
-            .name = MANIFEST_TARGET_PGDATA_STR,
-            .path = buildData.pgPath,
-            .type = manifestTargetTypePath,
-        };
-
-        manifestTargetAdd(this, &target);
-
-        // Gather info for the rest of the files/links/paths
-        storageInfoListP(
-            storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
-
-        // These may not be in order even if the incoming data was sorted
-        lstSort(this->fileList, sortOrderAsc);
-        lstSort(this->linkList, sortOrderAsc);
-        lstSort(this->pathList, sortOrderAsc);
-        lstSort(this->targetList, sortOrderAsc);
-
-        // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement to
-        // check for _init files which will sort after the vast majority of the relation files.  We could check storage for each
-        // _init file but that would be expensive.
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (pgVersion >= PG_VERSION_91)
-        {
-            RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strPtr(buildData.tablespaceId)));
-            unsigned int fileIdx = 0;
-            const String *lastRelationFileId = NULL;
-            bool lastRelationFileIdUnlogged = false;
-
-            while (fileIdx < manifestFileTotal(this))
-            {
-                const ManifestFile *file = manifestFile(this, fileIdx);
-
-                // If this file looks like a relation.  Note that this never matches on _init forks.
-                if (regExpMatch(relationExp, file->name))
-                {
-                    String *fileName = strBase(file->name);
-                    String *relationFileId = strNew("");
-
-                    // Strip off the numeric part of the relation
-                    for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
-                    {
-                        char nameChr = strPtr(fileName)[nameIdx];
-
-                        if (!isdigit(nameChr))
-                            break;
-
-                        strCatChr(relationFileId, nameChr);
-                    }
-
-                    // Store the last relation so it does not need to be found everytime
-                    if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
-                    {
-                        // Determine if the relation is unlogged
-                        const String *relationInit = strNewFmt("%s/%s_init", strPtr(strPath(file->name)), strPtr(relationFileId));
-                        lastRelationFileId = relationFileId;
-                        lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
-                    }
-
-                    // If relation is unlogged then remove it
-                    if (lastRelationFileIdUnlogged)
-                    {
-                        manifestFileRemove(this, file->name);
-                        continue;
-                    }
-                }
-
-                fileIdx++;
-            }
-        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_NEW_END();
 
