@@ -11,6 +11,7 @@ Ini Handler
 #include "common/memContext.h"
 #include "common/log.h"
 #include "common/ini.h"
+#include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/object.h"
 
@@ -388,14 +389,49 @@ iniLoad(
                         if (lineEqual == NULL)
                             THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
-                        // Extract the key
-                        String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+                        // Extract the key/value. This may require some retries if the key includes an = character since this is
+                        // also the separator. We know the value must be valid JSON so if it isn't then add the characters up to
+                        // the next = to the key and try to parse the value as JSON again. If the value never becomes valid JSON
+                        // then an error is thrown.
+                        String *key;
+                        String *value;
 
+                        bool retry;
+
+                        do
+                        {
+                            retry = false;
+
+                            // Get key/value
+                            key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+                            value = strTrim(strNew(lineEqual + 1));
+
+                            // Check that the value is valid JSON
+                            TRY_BEGIN()
+                            {
+                                jsonToVar(value);
+                            }
+                            CATCH(JsonFormatError)
+                            {
+                                // If value is not valid JSON look for another =. If not found then nothing to retry.
+                                lineEqual = strstr(lineEqual + 1, "=");
+
+                                if (lineEqual == NULL)
+                                    THROW_FMT(FormatError, "invalid JSON value at line %u: %s", lineIdx + 1, linePtr);
+
+                                // Try again with = in new position
+                                retry = true;
+                            }
+                            TRY_END();
+                        }
+                        while (retry);
+
+                        // Key may not be zero-length
                         if (strSize(key) == 0)
                             THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                         // Callback with the section/key/value
-                        callbackFunction(callbackData, section, key, strTrim(strNew(lineEqual + 1)));
+                        callbackFunction(callbackData, section, key, value);
                     }
                 }
 

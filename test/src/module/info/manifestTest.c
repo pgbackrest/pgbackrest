@@ -1674,6 +1674,7 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
+            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
             "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
@@ -1683,6 +1684,7 @@ testRun(void)
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
+            "pg_data/=equal=more=={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                       \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
@@ -1771,6 +1773,7 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE
