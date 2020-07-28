@@ -10,4 +10,4 @@ Functions
 Buffer *harnessInfoChecksum(const String *info);
 Buffer *harnessInfoChecksumZ(const char *info);
 
-void harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, const String *value);
+void harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, const Variant *value);

@@ -116,13 +116,13 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherP
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 static void
-infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
+infoBackupLoadCallback(void *data, const String *section, const String *key, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -135,7 +135,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     // Process current backup list
     if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
     {
-        const KeyValue *backupKv = jsonToKv(value);
+        const KeyValue *backupKv = varKv(value);
 
         MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->backup))
         {
