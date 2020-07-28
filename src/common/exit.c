@@ -14,6 +14,7 @@ Exit Routines
 #include "common/log.h"
 #include "config/config.h"
 #include "protocol/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Return signal names
@@ -98,24 +99,18 @@ exitSafe(int result, bool error, SignalType signalType)
     // Report error if one was thrown
     if (error)
     {
-        LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
-
-        // Assert errors always output a stack trace
-        if (logLevel == logLevelAssert)
-            LOG_FMT(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
-        else
-        {
-            // Log just the error to non-debug levels
-            LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
-
-            // Log the stack trace debug levels
-            if (logAny(logLevelDebug))
-            {
-                LOG_INTERNAL_FMT(
-                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
-                    errorStackTrace());
-            }
-        }
+        LOG_ERROR_FMT(
+            errorCode(),
+            "%s\n"
+            "----------------------------------------\n"
+            "PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
+            "\n"
+            "VERSION: " PROJECT_VERSION "\n"
+            "COMMAND: %s\n"
+            "\n"
+            "STACK TRACE:\n%s\n"
+            "----------------------------------------",
+            errorMessage(), strPtr(cfgCommandRoleName()), errorStackTrace());
 
         result = errorCode();
     }

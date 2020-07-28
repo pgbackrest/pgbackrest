@@ -60,6 +60,9 @@ testRun(void)
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        cfgInit();
+        cfgCommandSet(cfgCmdArchivePush, cfgCmdRoleAsync);
+
         TRY_BEGIN()
         {
             THROW(RuntimeError, "test error message");
@@ -69,55 +72,29 @@ testRun(void)
             exitSafe(0, true, signalTypeNone);
             harnessLogResult(
                 "P00  ERROR: [122]: test error message\n"
-                "P00   INFO: archive-push command end: aborted with exception [122]");
-        }
-        TRY_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        harnessLogLevelSet(logLevelDebug);
-
-        TRY_BEGIN()
-        {
-            THROW(RuntimeError, "test debug error message");
-        }
-        CATCH_ANY()
-        {
-            exitSafe(0, true, signalTypeNone);
-            harnessLogResultRegExp(
-                "P00  ERROR\\: \\[122\\]\\: test debug error message\n"
-                "            STACK TRACE\\:\n"
-                "            test\\/module\\/common\\/exitTest\\:testRun\\:.*\n"
-                "            test\\:main\\:.*\n");
-        }
-        TRY_END();
-
-        harnessLogLevelReset();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TRY_BEGIN()
-        {
-            THROW(AssertError, "test assert message");
-        }
-        CATCH_ANY()
-        {
-            exitSafe(0, true, signalTypeNone);
-            harnessLogResultRegExp(
-                "P00 ASSERT\\: \\[025\\]\\: test assert message\n"
-                "            STACK TRACE\\:\n"
-                "            test/module/common/exitTest\\:testRun\\:.*\n"
-                "            test\\:main\\:.*\n");
+                "            ----------------------------------------\n"
+                "            PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
+                "            \n"
+                "            VERSION: " PROJECT_VERSION "\n"
+                "            COMMAND: archive-push:async\n"
+                "            \n"
+                "            STACK TRACE:\n"
+                "            test/module/common/exitTest:testRun:68:(void)\n"
+                "            test:main:(argListSize: 1, argList: (char *[]))\n"
+                "            ----------------------------------------\n"
+                "P00   INFO: archive-push:async command end: aborted with exception [122]");
         }
         TRY_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
-        harnessLogResult("P00   INFO: archive-push command end: terminated on signal from child process");
+        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal from child process");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        harnessLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
+        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
