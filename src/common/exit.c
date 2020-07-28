@@ -120,12 +120,8 @@ exitSafe(int result, bool error, SignalType signalType)
         result = errorCode();
     }
 
-    // Free protocol objects but ignore errors
-    TRY_BEGIN()
-    {
-        protocolFree();
-    }
-    TRY_END();
+    // Free protocol objects
+    protocolFree();
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)
