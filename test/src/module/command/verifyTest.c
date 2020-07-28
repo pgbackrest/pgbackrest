@@ -359,7 +359,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoBase), "write valid archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
-            "P00   WARN: backup.info.copy doesn't match backup.info\n"
+            "P00   WARN: backup.info.copy does not match backup.info\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
             " <REPO:ARCHIVE>/archive.info\n"
             "P00  ERROR: [029]: backup info file and archive info file do not match\n"
@@ -378,7 +378,7 @@ testRun(void)
             "write valid archive.info");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         harnessLogResult(
-            "P00   WARN: archive.info.copy doesn't match archive.info\n"
+            "P00   WARN: archive.info.copy does not match archive.info\n"
             "P00   WARN: no archives or backups exist in the repo");
 
         //--------------------------------------------------------------------------------------------------------------------------

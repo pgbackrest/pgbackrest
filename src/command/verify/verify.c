@@ -345,7 +345,7 @@ verifyArchiveInfoFile(void)
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
                 // log a warning but must trust main
                 if (!strEq(verifyArchiveInfo.checksum, verifyArchiveInfoCopy.checksum))
-                    LOG_WARN("archive.info.copy doesn't match archive.info");
+                    LOG_WARN("archive.info.copy does not match archive.info");
             }
         }
         else
@@ -395,7 +395,7 @@ verifyBackupInfoFile(void)
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
                 // log a warning but must trust main
                 if (!strEq(verifyBackupInfo.checksum, verifyBackupInfoCopy.checksum))
-                    LOG_WARN("backup.info.copy doesn't match backup.info");
+                    LOG_WARN("backup.info.copy does not match backup.info");
             }
         }
         else
@@ -418,17 +418,20 @@ verifyBackupInfoFile(void)
 }
 
 static Manifest *
-verifyManifestFile(const String *fileName, const String *cipherPass)
+verifyManifestFile(const String *backupLabel, const String *cipherPass, bool currentBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(BOOL, currentBackup);
     FUNCTION_LOG_END();
 
     Manifest *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
         // Get the main manifest file
         VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
 
@@ -448,7 +451,7 @@ verifyManifestFile(const String *fileName, const String *cipherPass)
                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
                 // corrupt so log a warning but must trust main
                 if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-                    LOG_WARN("backup.manifest.copy doesn't match backup.manifest");
+                    LOG_WARN("backup.manifest.copy does not match backup.manifest");
             }
         }
         else
@@ -460,10 +463,22 @@ verifyManifestFile(const String *fileName, const String *cipherPass)
             // If loaded successfully, then return the copy as usable
             if (verifyManifestInfoCopy.errorCode == 0)
             {
+                // Warn if this is not the current backup and the main manifest file was missing
+                if (!currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError))
+                    LOG_WARN_FMT("%s/backup.manifest does not exist", strPtr(backupLabel));
+
                 result = verifyManifestInfoCopy.manifest;
                 manifestMove(result, memContextPrior());
             }
         }
+/* CSHANG:
+ If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR? ). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
+
+        if (result != NULL)
+        {
+            check the db history????
+        }
+*/
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -548,6 +563,7 @@ typedef struct VerifyJobData
     StringList *walFileList;                                        // WAL file list for a single WAL path
     StringList *backupList;                                         // List of backups to verify
     StringList *backupFileList;                                     // List of files in a single backup directory
+    String *currentBackup;                                          // In progress backup, if any
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
@@ -809,18 +825,24 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
 LOG_WARN("Processing BACKUPS"); // CSHANG Remove
             // result == NULL;
+
+
 /* CSHANG:
- If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there. If main is not there and copy is but it is not the latest then warn that main is missing and skip.
+ If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
 */
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)), jobData->manifestCipherPass);
+                backupLabel, jobData->manifestCipherPass, strEq(jobData->currentBackup, backupLabel));
 
             // If a usable backup.manifest file is not found, then report an error in the log
             if (manifest == NULL)
             {
                 LOG_ERROR(errorTypeCode(&FormatError), strPtr(strNewFmt("No usable %s/backup.manifest file", strPtr(backupLabel))));
-                // errorTotal++;  // CSHANG might need to make this a global
+                jobData->jobErrorTotal++;
+            }
+            else
+            {
+// CSHANG so here, I'm wondering if I should be checking the history or if that should be done in verifyManifestFile? If the db-id is not in, say, the backup.info history section, then do I skip verifying this manifest and report the error? Then if I get a valid manifest, I just read the, what, files only? Or do I check paths/links, etc? I can only read the manifest and send files to the parallel processor and it will decide if the file is missing or "corrupt". So then what do I need for reporting - I believe the backupLabel and then a list of invalid files with the reason.
             }
         }
 
@@ -1010,6 +1032,7 @@ verifyProcess(void)
                 .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
+                .currentBackup = NULL,
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
@@ -1036,6 +1059,17 @@ verifyProcess(void)
                 // distinguish between having processed all of the list or if the list was missing in the first place
                 if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
                     LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
+
+                // If there are backups, set the last backup as current if it is not in backup.info
+                if (strLstSize(jobData.backupList) > 0)
+                {
+                    String *backupLabel = strLstGet(jobData.backupList, strLstSize(jobData.backupList) - 1);
+
+                    if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
+                        jobData.currentBackup = backupLabel;
+                    else
+                        strFree(backupLabel);
+                }
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
