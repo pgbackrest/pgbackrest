@@ -25,6 +25,7 @@ typedef enum
     verifyFileMissing,
     verifyChecksumMismatch,
     verifySizeInvalid,
+    verifyDuplicate,
 } VerifyResult;
 
 /***********************************************************************************************************************************

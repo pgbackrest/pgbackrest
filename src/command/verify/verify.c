@@ -573,9 +573,11 @@ typedef struct VerifyJobData
 
 
 /**********************************************************************************************************************************/
-static void
+static unsigned int
 createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
 {
+    unsigned int result = 0;
+
     // Initialize the WAL range
     WalRange walRange =
     {
@@ -590,10 +592,23 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
+        // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist
+        if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
+        {
+            LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "invalid WAL %s exists, skipping", strPtr(walSegment));
+// CSHANG Should we add it to the invalidFileList?
+            result++;
+            continue;
+        }
+// CSHANG May have to rework this logic since if there are duplicates, we may have already added the walRange to the list and we don't want that. May need to check the next one before creating the range?
+        // // If the walSegment is a duplicate, adjust the stop file before checking for gaps so that a gap is created
+        // if (strEq(walRange.stop, walSegment))
+        // {
+        //     walRange.stop = strSubN(strLstGet(walFileList, walFileIdx - 2), 0, WAL_SEGMENT_NAME_SIZE);
+
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
-        // the WAL size is static at 16MB but for some unknown reason, WAL ending in FF is skipped so it should never exist, so
+        // the WAL size is static at 16MB but (for some unknown reason), WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
-// CSHANG What to do if it does exist? Do we LOG_ERROR here and then skip it? Or do we create a range where the previous wal range ends at FE and then a new range starts at FF and continues until end. If we do the latter, then it will cause an error to be reported in the final results reconciliation that the backup is bad - which may or may not be true because we don't know why there is a "gap" - why there is an extra file FF
         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
             pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
                 ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
@@ -828,7 +843,9 @@ LOG_WARN("Processing BACKUPS"); // CSHANG Remove
 
 
 /* CSHANG:
- If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
+ If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip BUT because backup reconstruct would remove it from current (what do we mean "skip" - shouldn't we use it to verify the backups?). So if in backup.info
+
+ go with the copy if not the latest backup and warn?
 */
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
@@ -837,7 +854,7 @@ LOG_WARN("Processing BACKUPS"); // CSHANG Remove
             // If a usable backup.manifest file is not found, then report an error in the log
             if (manifest == NULL)
             {
-                LOG_ERROR(errorTypeCode(&FormatError), strPtr(strNewFmt("No usable %s/backup.manifest file", strPtr(backupLabel))));
+                LOG_ERROR_FMT(errorTypeCode(&FormatError), "No usable %s/backup.manifest file", strPtr(backupLabel));
                 jobData->jobErrorTotal++;
             }
             else
@@ -887,6 +904,11 @@ verifyErrorMsg(VerifyResult verifyResult)
             result = strNew("invalid size");
             break;
         }
+        case verifyDuplicate:
+        {
+            result = strNew("duplicate file");
+            break;
+        }
         default:
         {
             result = strNew("unknown error");
@@ -921,6 +943,7 @@ verifyRender(void *data)
             unsigned int errMissing = 0;
             unsigned int errChecksum = 0;
             unsigned int errSize = 0;
+            unsigned int errDuplicate = 0;
 
             for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdRange->walRangeList); walIdx++)
             {
@@ -951,6 +974,11 @@ verifyRender(void *data)
                         case verifySizeInvalid:
                         {
                             errSize++;
+                            break;
+                        }
+                        case verifyDuplicated:
+                        {
+                            errDuplicate++;
                             break;
                         }
                         case verifyOk:
