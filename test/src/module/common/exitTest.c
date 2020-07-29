@@ -79,7 +79,7 @@ testRun(void)
             harnessLogResult(
                 "P00  ERROR: [122]: test error message\n"
                 "            --------------------------------------------------------------------\n"
-                "            If submitting an issue please provide the following information:\n"
+                "            If SUBMITTING AN ISSUE please provide the following information:\n"
                 "            \n"
                 "            version: " PROJECT_VERSION "\n"
                 "            command: archive-push:async\n"

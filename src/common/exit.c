@@ -103,7 +103,7 @@ exitSafe(int result, bool error, SignalType signalType)
             errorCode(),
             "%s\n"
             "--------------------------------------------------------------------\n"
-            "If submitting an issue please provide the following information:\n"
+            "If SUBMITTING AN ISSUE please provide the following information:\n"
             "\n"
             "version: " PROJECT_VERSION "\n"
             "command: %s\n"
