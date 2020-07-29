@@ -27,6 +27,9 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Fix issue with = character in file or database names."/>
+                        <commit subject="Preserve Variant parsed from JSON in iniLoad()."/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="brad.nicholson"/>
                             <release-item-ideator id="bastian.wegge"/>

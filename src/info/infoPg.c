@@ -126,10 +126,9 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const V
     // Process db:history section
     else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
     {
-        // Load JSON loadData into a KeyValue
+        // Get db values that are common to all info files
         const KeyValue *pgDataKv = varKv(value);
 
-        // Get db values that are common to all info files
         InfoPgData infoPgData =
         {
             .id = cvtZToUInt(strPtr(key)),
