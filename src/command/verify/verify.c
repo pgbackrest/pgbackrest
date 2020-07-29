@@ -472,7 +472,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
             }
         }
 /* CSHANG:
- If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR? ). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
+ If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR? ). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
 
         if (result != NULL)
         {
@@ -828,7 +828,7 @@ LOG_WARN("Processing BACKUPS"); // CSHANG Remove
 
 
 /* CSHANG:
- If most rececnt has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
+ If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
 */
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
@@ -1110,7 +1110,7 @@ verifyProcess(void)
 
                             if (verifyResult != verifyOk)
                             {
-// CSHANG Should this be made a LOG_ERROR and the error count incremented? errorTotal is "fatal" error, but if the file went missing, it's not always an error - could be that expire came through and legitimately removed it so maybe only error on other than missing? Could pass a pointer to errorTotal to verifyErrorMsg and have it increment...
+// CSHANG Should this be made a LOG_ERROR and the error count incremented? errorTotal is "fatal" error, but if the file went missing, it's not always an error - could be that expire came through and legitimately removed it so maybe only error on other than missing?
                                 LOG_WARN_PID_FMT(processId, "%s: %s", strPtr(verifyErrorMsg(verifyResult)), strPtr(filePathName));
 
                                 StringList *filePathLst = strLstNewSplit(filePathName, FSLASH_STR);
@@ -1168,7 +1168,7 @@ verifyProcess(void)
 
                                     If backup file
                                         Get the backup label from the filePathName (stringList[1] - is there a better way?)
-                                        Loop through verifyResultData.backupList and find the backup label
+                                        Loop through verifyResultData.backupList and find the backup label - NO we are removing the labels as we go along, so we will need to build the result
                                         If found, add the file name and the reason to the invalidFileList
 
 
