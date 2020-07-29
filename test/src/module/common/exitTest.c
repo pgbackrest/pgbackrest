@@ -4,7 +4,9 @@ Test Exit Routines
 #include "common/error.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "version.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
@@ -60,8 +62,12 @@ testRun(void)
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdArchivePush, cfgCmdRoleAsync);
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_PROCESS_MAX "=4");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_ASYNC);
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TRY_BEGIN()
         {
@@ -73,13 +79,14 @@ testRun(void)
             harnessLogResult(
                 "P00  ERROR: [122]: test error message\n"
                 "            --------------------------------------------------------------------\n"
-                "            PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
+                "            If submitting an issue please provide the following information:\n"
                 "            \n"
-                "            VERSION: " PROJECT_VERSION "\n"
-                "            COMMAND: archive-push:async\n"
+                "            version: " PROJECT_VERSION "\n"
+                "            command: archive-push:async\n"
+                "            options: --process-max=4 --stanza=test\n"
                 "            \n"
-                "            STACK TRACE:\n"
-                "            test/module/common/exitTest:testRun:68:(void)\n"
+                "            stack trace:\n"
+                "            test/module/common/exitTest:testRun:74:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]");

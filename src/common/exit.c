@@ -103,14 +103,15 @@ exitSafe(int result, bool error, SignalType signalType)
             errorCode(),
             "%s\n"
             "--------------------------------------------------------------------\n"
-            "PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
+            "If submitting an issue please provide the following information:\n"
             "\n"
-            "VERSION: " PROJECT_VERSION "\n"
-            "COMMAND: %s\n"
+            "version: " PROJECT_VERSION "\n"
+            "command: %s\n"
+            "options:%s\n"
             "\n"
-            "STACK TRACE:\n%s\n"
+            "stack trace:\n%s\n"
             "--------------------------------------------------------------------",
-            errorMessage(), strPtr(cfgCommandRoleName()), errorStackTrace());
+            errorMessage(), strPtr(cfgCommandRoleName()), strPtr(cmdOption()), errorStackTrace());
 
         result = errorCode();
     }
