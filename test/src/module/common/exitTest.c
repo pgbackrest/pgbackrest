@@ -72,7 +72,7 @@ testRun(void)
             exitSafe(0, true, signalTypeNone);
             harnessLogResult(
                 "P00  ERROR: [122]: test error message\n"
-                "            ----------------------------------------\n"
+                "            --------------------------------------------------------------------\n"
                 "            PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
                 "            \n"
                 "            VERSION: " PROJECT_VERSION "\n"
@@ -81,7 +81,7 @@ testRun(void)
                 "            STACK TRACE:\n"
                 "            test/module/common/exitTest:testRun:68:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
-                "            ----------------------------------------\n"
+                "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]");
         }
         TRY_END();

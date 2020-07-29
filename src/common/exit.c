@@ -102,14 +102,14 @@ exitSafe(int result, bool error, SignalType signalType)
         LOG_ERROR_FMT(
             errorCode(),
             "%s\n"
-            "----------------------------------------\n"
+            "--------------------------------------------------------------------\n"
             "PLEASE PROVIDE THE FOLLOWING INFORMATION WHEN REPORTING AN ERROR:\n"
             "\n"
             "VERSION: " PROJECT_VERSION "\n"
             "COMMAND: %s\n"
             "\n"
             "STACK TRACE:\n%s\n"
-            "----------------------------------------",
+            "--------------------------------------------------------------------",
             errorMessage(), strPtr(cfgCommandRoleName()), errorStackTrace());
 
         result = errorCode();
