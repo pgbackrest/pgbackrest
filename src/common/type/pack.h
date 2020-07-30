@@ -47,28 +47,62 @@ typedef enum
 } PackType;
 
 /***********************************************************************************************************************************
-Constructors
+Read Constructors
 ***********************************************************************************************************************************/
 PackRead *pckReadNew(IoRead *read);
 PackRead *pckReadNewBuf(const Buffer *read);
 
+/***********************************************************************************************************************************
+Write Constructors
+***********************************************************************************************************************************/
 PackWrite *pckWriteNew(IoWrite *write);
 PackWrite *pckWriteNewBuf(Buffer *write);
 
 /***********************************************************************************************************************************
-Functions
+Read Functions
 ***********************************************************************************************************************************/
 bool pckReadNext(PackRead *this);
 unsigned int pckReadId(PackRead *this);
 bool pckReadNull(PackRead *this, unsigned int id);
 
-void pckReadArrayBegin(PackRead *this, unsigned int id);
+// Read array begin/end
+typedef struct PackIdParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PackIdParam;
+
+#define pckReadArrayBeginP(this, ...)                                                                                              \
+    pckReadArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void pckReadArrayBegin(PackRead *this, PackIdParam param);
 void pckReadArrayEnd(PackRead *this);
-bool pckReadBool(PackRead *this, unsigned int id);
-int32_t pckReadInt32(PackRead *this, unsigned int id);
-int64_t pckReadInt64(PackRead *this, unsigned int id);
-void pckReadObjBegin(PackRead *this, unsigned int id);
+
+// Read bool
+#define pckReadBoolP(this, ...)                                                                                                    \
+    pckReadBool(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool pckReadBool(PackRead *this, PackIdParam param);
+
+// Read 32-bit unsigned integer
+#define pckReadInt32P(this, ...)                                                                                                   \
+    pckReadInt32(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+int32_t pckReadInt32(PackRead *this, PackIdParam param);
+
+// Read 64-bit unsigned integer
+#define pckReadInt64P(this, ...)                                                                                                   \
+    pckReadInt64(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+int64_t pckReadInt64(PackRead *this, PackIdParam param);
+
+// Read object begin/end
+#define pckReadObjBeginP(this, ...)                                                                                                \
+    pckReadObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void pckReadObjBegin(PackRead *this, PackIdParam param);
 void pckReadObjEnd(PackRead *this);
+
 void *pckReadPtr(PackRead *this, unsigned int id);
 String *pckReadStr(PackRead *this, unsigned int id);
 String *pckReadStrNull(PackRead *this, unsigned int id);
@@ -77,6 +111,9 @@ uint64_t pckReadUInt64(PackRead *this, unsigned int id);
 
 void pckReadEnd(PackRead *this);
 
+/***********************************************************************************************************************************
+Read Functions
+***********************************************************************************************************************************/
 PackWrite *pckWriteArrayBegin(PackWrite *this, unsigned int id);
 PackWrite *pckWriteArrayEnd(PackWrite *this);
 PackWrite *pckWriteBool(PackWrite *this, unsigned int id, bool value);
@@ -98,9 +135,13 @@ Getters/Setters
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
-Destructor
+Read Destructor
 ***********************************************************************************************************************************/
 void pckReadFree(PackRead *this);
+
+/***********************************************************************************************************************************
+Write Destructor
+***********************************************************************************************************************************/
 void pckWriteFree(PackWrite *this);
 
 /***********************************************************************************************************************************

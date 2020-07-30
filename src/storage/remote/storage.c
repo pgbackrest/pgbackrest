@@ -40,7 +40,7 @@ storageRemoteInfoParse(PackRead *read, StorageInfo *info)
     FUNCTION_TEST_END();
 
     info->type = pckReadUInt32(read, 0);
-    info->timeModified = pckReadInt64(read, 0);
+    info->timeModified = (time_t)pckReadInt64P(read);
 
     if (info->type == storageTypeFile)
         info->size = pckReadUInt64(read, 0);
@@ -150,11 +150,11 @@ storageRemoteInfoList(
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            pckReadArrayBegin(read, 0);
+            pckReadArrayBeginP(read);
 
             while (pckReadNext(read))
             {
-                pckReadObjBegin(read, 0);
+                pckReadObjBeginP(read);
 
                 StorageInfo info = {.exists = true, .level = level, .name = pckReadStr(read, 0)};
 

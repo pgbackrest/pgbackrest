@@ -109,22 +109,22 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadNull(packRead, 10), false, "field 10 is not null");
         TEST_RESULT_UINT(pckReadUInt64(packRead, 10), 1, "read 1");
         TEST_RESULT_UINT(pckReadUInt32(packRead, 12), 127, "read 127 (skip field 11)");
-        TEST_RESULT_INT(pckReadInt64(packRead, 13), -1, "read -1");
-        TEST_RESULT_INT(pckReadInt32(packRead, 14), -1, "read -1");
-        TEST_RESULT_BOOL(pckReadBool(packRead, 15), true, "read true");
-        TEST_RESULT_BOOL(pckReadBool(packRead, 20), false, "read false");
+        TEST_RESULT_INT(pckReadInt64P(packRead), -1, "read -1");
+        TEST_RESULT_INT(pckReadInt32P(packRead, 14), -1, "read -1");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 20), false, "read false");
 
         TEST_ERROR(pckReadObjEnd(packRead), FormatError, "not in object");
-        TEST_RESULT_VOID(pckReadObjBegin(packRead, 28), "read object begin");
+        TEST_RESULT_VOID(pckReadObjBeginP(packRead, 28), "read object begin");
         TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
-        TEST_RESULT_BOOL(pckReadBool(packRead, 1), true, "read true");
-        TEST_RESULT_BOOL(pckReadBool(packRead, 2), false, "read false");
-        TEST_ERROR(pckReadBool(packRead, 3), FormatError, "field 3 does not exist");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read false");
+        TEST_ERROR(pckReadBoolP(packRead), FormatError, "field 3 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 4), true, "field 3 is null");
         TEST_RESULT_VOID(pckReadObjEnd(packRead), "read object end");
 
         TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
-        TEST_RESULT_VOID(pckReadArrayBegin(packRead, 37), "read array begin");
+        TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = 37), "read array begin");
         TEST_ERROR(pckReadObjEnd(packRead), FormatError, "not in object");
 
         unsigned int value = 0;
