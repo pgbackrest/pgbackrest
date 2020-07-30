@@ -4,6 +4,8 @@ Pack Handler
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/log.h" // !!! REMOVE
@@ -23,6 +25,7 @@ typedef struct PackTypeData
     PackType type;
     bool valueSingleBit;
     bool valueMultiBit;
+    bool size;
     const char *const name;
 } PackTypeData;
 
@@ -39,6 +42,7 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeBin,
         .valueSingleBit = true,
+        .size = true,
         .name = "binary",
     },
     {
@@ -68,6 +72,7 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
+        .size = true,
         .name = "string",
     },
     {
@@ -162,6 +167,7 @@ struct PackWrite
 {
     MemContext *memContext;                                         // Mem context
     IoWrite *write;                                                 // Write pack to
+    bool closeOnEnd;                                                // Close write IO on end
 
     List *tagStack;                                                 // Stack of object/array tags
 };
@@ -169,14 +175,10 @@ struct PackWrite
 OBJECT_DEFINE_FREE(PACK_WRITE);
 
 /**********************************************************************************************************************************/
-PackRead *
-pckReadNew(IoRead *read)
+static PackRead *
+pckReadNewInternal(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, read);
-    FUNCTION_TEST_END();
-
-    ASSERT(read != NULL);
+    FUNCTION_TEST_VOID();
 
     PackRead *this = NULL;
 
@@ -187,7 +189,6 @@ pckReadNew(IoRead *read)
         *this = (PackRead)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .read = read,
             .buffer = bufNew(PACK_UINT64_SIZE_MAX),
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
@@ -195,6 +196,42 @@ pckReadNew(IoRead *read)
         lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackRead *
+pckReadNew(IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
+
+    PackRead *this = pckReadNewInternal();
+    this->read = read;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackRead *
+pckReadNewBuf(const Buffer *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, read);
+    FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
+
+    PackRead *this = pckReadNewInternal();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->read = ioBufferReadNew(read);
+        ioReadOpen(this->read);
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -230,6 +267,26 @@ pckReadUInt64Internal(PackRead *this)
     bufUsedZero(this->buffer);
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+static void
+pckReadSizeBuffer(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    size_t size = (size_t)pckReadUInt64Internal(this);
+    bufLimitClear(this->buffer);
+
+    if (size > bufSize(this->buffer))
+        bufResize(this->buffer, size);
+
+    bufLimitSet(this->buffer, size);
+    ioRead(this->read, this->buffer);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -349,11 +406,16 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
             break;
         }
 
+        // Read data for the field being skipped
+        if (packTypeData[type].size && this->tagNextValue != 0)
+        {
+            pckReadSizeBuffer(this);
+            bufUsedZero(this->buffer);
+        }
+
         tagStackTop->idLast = this->tagNextId;
         this->tagNextId = 0;
 
-        // Read data for the field being skipped
-        // pckReadUInt64Internal(this);
     }
     while (1);
 
@@ -545,6 +607,31 @@ pckReadPtr(PackRead *this, unsigned int id)
 }
 
 /**********************************************************************************************************************************/
+String *
+pckReadStr(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    if (pckReadTag(this, id, pckTypeStr, false))
+    {
+        pckReadSizeBuffer(this);
+        result = strNewBuf(this->buffer);
+        bufUsedZero(this->buffer);
+    }
+    else
+        result = strNew("");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 uint64_t
 pckReadUInt32(PackRead *this, unsigned int id)
 {
@@ -604,14 +691,10 @@ pckReadToLog(const PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
-pckWriteNew(IoWrite *write)
+static PackWrite *
+pckWriteNewInternal(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
-    FUNCTION_TEST_END();
-
-    ASSERT(write != NULL);
+    FUNCTION_TEST_VOID();
 
     PackWrite *this = NULL;
 
@@ -622,13 +705,49 @@ pckWriteNew(IoWrite *write)
         *this = (PackWrite)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .write = write,
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
         lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackWrite *
+pckWriteNew(IoWrite *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    ASSERT(write != NULL);
+
+    PackWrite *this = pckWriteNewInternal();
+    this->write = write;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackWrite *
+pckWriteNewBuf(Buffer *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, write);
+    FUNCTION_TEST_END();
+
+    ASSERT(write != NULL);
+
+    PackWrite *this = pckWriteNewInternal();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->write = ioBufferWriteNew(write);
+        ioWriteOpen(this->write);
+        this->closeOnEnd = true;
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -883,6 +1002,29 @@ pckWritePtr(PackWrite *this, unsigned int id, const void *value)
 
 /**********************************************************************************************************************************/
 PackWrite *
+pckWriteStr(PackWrite *this, unsigned int id, const String *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    pckWriteTag(this, pckTypeStr, id, strSize(value) > 0);
+
+    if (strSize(value) > 0)
+    {
+        pckWriteUInt64Internal(this, strSize(value));
+        ioWrite(this->write, BUF(strPtr(value), strSize(value)));
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
 pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value)
 {
     FUNCTION_TEST_BEGIN();
@@ -927,6 +1069,9 @@ pckWriteEnd(PackWrite *this)
     ASSERT(lstSize(this->tagStack) == 1);
 
     pckWriteUInt64Internal(this, 0);
+
+    if (this->closeOnEnd)
+        ioWriteClose(this->write);
 
     FUNCTION_TEST_RETURN(this);
 }

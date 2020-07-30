@@ -46,6 +46,11 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1), "write 1");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 3, 2), "write 2");
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 38, STRDEF("sample")), "write string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 39, STRDEF("enoughtoincreasebuffer")), "write string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 40, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 41, STRDEF("small")), "write string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 42, STRDEF("")), "write zero-length string");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -54,14 +59,14 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(pack),
-            "8ae803"                                                //  1, u64, 750
-            "8afd9fad8f07"                                          //  2, u64, 1911246845
-            "ca01ffffffffffffffffff01"                              //  7, u64, 0xFFFFFFFFFFFFFFFF
-            "6a01"                                                  // 10, u64, 1
-            "8a4d"                                                  // 11, u64, 77
-            "897f"                                                  // 12, u32, 127
-            "45"                                                    // 13, i64, -1
-            "44"                                                    // 14, i32, -1
+            "8ae803"                                                //  1,  u64, 750
+            "8afd9fad8f07"                                          //  2,  u64, 1911246845
+            "ca01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
+            "6a01"                                                  // 10,  u64, 1
+            "8a4d"                                                  // 11,  u64, 77
+            "897f"                                                  // 12,  u32, 127
+            "45"                                                    // 13,  i64, -1
+            "44"                                                    // 14,  i32, -1
             "83"                                                    // 15, bool, true
             "4301"                                                  // 20, bool, false
             "76"                                                    // 28, obj begin
@@ -73,6 +78,11 @@ testRun(void)
                 "4a"                                                //      2,  u64, 1
                 "8a02"                                              //      3,  u64, 2
                 "00"                                                //         array end
+            "880673616d706c65"                                      // 38,  str, sample
+            "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
+            "08"                                                    // 40,  str, zero length
+            "8805736d616c6c"                                        // 41,  str, small
+            "08"                                                    // 42,  str, zero length
             "00",                                                   // end
             "check pack");
 
@@ -123,6 +133,10 @@ testRun(void)
 
         TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
 
+        TEST_RESULT_STR_Z(pckReadStr(packRead, 39), "enoughtoincreasebuffer", "read string (skipped prior)");
+        TEST_RESULT_STR_Z(pckReadStr(packRead, 41), "small", "read string (skipped prior)");
+        TEST_RESULT_STR_Z(pckReadStr(packRead, 42), "", "zero length (skipped prior)");
+
         TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");
 
@@ -132,12 +146,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
-        read = ioBufferReadNew(BUFSTRDEF("\255\255\255\255\255\255\255\255\255"));
-        ioReadOpen(read);
-
-        packRead = NULL;
-        TEST_ASSIGN(packRead, pckReadNew(read), "new read");
-
+        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255")), "new read");
         TEST_ERROR(pckReadUInt64(packRead, 1), AssertError, "assertion 'bufPtr(this->buffer)[0] < 0x80' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -145,18 +154,11 @@ testRun(void)
 
         pack = bufNew(0);
 
-        write = ioBufferWriteNew(pack);
-        ioWriteOpen(write);
-
-        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewBuf(pack), "new write");
         TEST_RESULT_VOID(pckWritePtr(packWrite, 1, "sample"), "write pointer");
+        TEST_RESULT_VOID(pckWriteEnd(packWrite), "write end");
 
-        ioWriteClose(write);
-
-        read = ioBufferReadNew(pack);
-        ioReadOpen(read);
-
-        TEST_ASSIGN(packRead, pckReadNew(read), "new read");
+        TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
         TEST_RESULT_Z(pckReadPtr(packRead, 1), "sample", "read pointer");
     }
 
