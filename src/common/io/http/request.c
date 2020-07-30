@@ -103,8 +103,8 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         // Format the request
                         String *requestStr =
                             strNewFmt(
-                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
-                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strPtr(httpQueryRenderP(this->query)));
+                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strZ(this->verb), strZ(httpUriEncode(this->uri, true)),
+                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
                         const StringList *headerList = httpHeaderList(this->header);
@@ -113,8 +113,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         {
                             const String *headerKey = strLstGet(headerList, headerIdx);
 
-                            strCatFmt(
-                                requestStr, "%s:%s" CRLF_Z, strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey)));
+                            strCatFmt(requestStr, "%s:%s" CRLF_Z, strZ(headerKey), strZ(httpHeaderGet(this->header, headerKey)));
                         }
 
                         // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs
@@ -142,7 +141,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         // looks valid. There are a few errors that might be permanently fatal but they are rare and it seems best
                         // not to try and pick and choose errors in this class to retry.
                         if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-                            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
+                            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 
                         // Move response to outer temp context
                         httpResponseMove(result, memContextPrior());
@@ -248,15 +247,15 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
     // Add reason when present
     if (strSize(httpResponseReason(response)) > 0)
-        strCatFmt(error, " (%s)", strPtr(httpResponseReason(response)));
+        strCatFmt(error, " (%s)", strZ(httpResponseReason(response)));
 
     // Output uri/query
     strCatZ(error, ":\n*** URI/Query ***:");
 
-    strCatFmt(error, "\n%s", strPtr(httpUriEncode(this->uri, true)));
+    strCatFmt(error, "\n%s", strZ(httpUriEncode(this->uri, true)));
 
     if (this->query != NULL)
-        strCatFmt(error, "?%s", strPtr(httpQueryRenderP(this->query, .redact = true)));
+        strCatFmt(error, "?%s", strZ(httpQueryRenderP(this->query, .redact = true)));
 
     // Output request headers
     const StringList *requestHeaderList = httpHeaderList(this->header);
@@ -270,8 +269,8 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
             const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
 
             strCatFmt(
-                error, "\n%s: %s", strPtr(key),
-                httpHeaderRedact(this->header, key) ? "<redacted>" : strPtr(httpHeaderGet(this->header, key)));
+                error, "\n%s: %s", strZ(key),
+                httpHeaderRedact(this->header, key) ? "<redacted>" : strZ(httpHeaderGet(this->header, key)));
         }
     }
 
@@ -286,7 +285,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
         {
             const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+            strCatFmt(error, "\n%s: %s", strZ(key), strZ(httpHeaderGet(responseHeader, key)));
         }
     }
 
@@ -297,7 +296,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         strCat(error, strNewBuf(httpResponseContent(response)));
     }
 
-    THROW(ProtocolError, strPtr(error));
+    THROW(ProtocolError, strZ(error));
 }
 
 /**********************************************************************************************************************************/
@@ -305,7 +304,7 @@ String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
-        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}",
-        strPtr(this->verb), strPtr(this->uri), this->query == NULL ? "null" : strPtr(httpQueryToLog(this->query)),
-        strPtr(httpHeaderToLog(this->header)), this->content == NULL ? 0 : bufUsed(this->content));
+        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}", strZ(this->verb), strZ(this->uri),
+        this->query == NULL ? "null" : strZ(httpQueryToLog(this->query)), strZ(httpHeaderToLog(this->header)),
+        this->content == NULL ? 0 : bufUsed(this->content));
 }

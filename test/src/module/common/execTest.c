@@ -42,7 +42,7 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         close(exec->handleWrite);
 
-        TEST_ERROR(strPtr(ioReadLine(execIoRead(exec))), UnknownError, "cat terminated unexpectedly [0]");
+        TEST_ERROR(strZ(ioReadLine(execIoRead(exec))), UnknownError, "cat terminated unexpectedly [0]");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
-        TEST_ERROR(strPtr(ioReadLine(execIoRead(exec))), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_ERROR(strZ(ioReadLine(execIoRead(exec))), ExecuteError, "cat terminated unexpectedly on signal 9");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------

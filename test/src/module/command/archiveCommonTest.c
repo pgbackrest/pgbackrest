@@ -37,16 +37,16 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false), false, "directory and status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        mkdir(strPtr(strNewFmt("%s/archive", testPath())), 0750);
-        mkdir(strPtr(strNewFmt("%s/archive/db", testPath())), 0750);
-        mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
+        mkdir(strZ(strNewFmt("%s/archive", testPath())), 0750);
+        mkdir(strZ(strNewFmt("%s/archive/db", testPath())), 0750);
+        mkdir(strZ(strNewFmt("%s/archive/db/out", testPath())), 0750);
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("clear archive file errors");
 
-        const String *errorSegment = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment));
+        const String *errorSegment = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment));
         const String *errorGlobal = strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
 
         storagePutP(storageNewWriteP(storageSpoolWrite(), errorSegment), NULL);
@@ -59,53 +59,53 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR "\n"));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR "\nmessage"));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
+        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))), NULL);
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF("0\nwarning"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF("25\nerror"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
         harnessLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
         TEST_RESULT_VOID(
             storageRemoveP(
-                storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), .errorOnMissing = true),
+                storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment)), .errorOnMissing = true),
             "remove ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))), bufNew(0));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, true), AssertError,
             "status file '000000010000000100000001.error' has no content");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))),
             BUFSTRDEF("25\nmessage"));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
@@ -191,22 +191,20 @@ testRun(void)
 
         TEST_RESULT_STR_Z(walPath(strNew("/absolute/path"), pgPath, strNew("test")), "/absolute/path", "absolute path");
 
-        THROW_ON_SYS_ERROR(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir()");
+        THROW_ON_SYS_ERROR(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir()");
         TEST_RESULT_STR(
-            walPath(strNew("relative/path"), pgPath, strNew("test")), strNewFmt("%s/relative/path", strPtr(pgPath)),
+            walPath(strNew("relative/path"), pgPath, strNew("test")), strNewFmt("%s/relative/path", strZ(pgPath)),
             "relative path");
-
 
         const String *pgPathLink = storagePathP(storageTest, STRDEF("pg-link"));
         THROW_ON_SYS_ERROR_FMT(
-            symlink(strPtr(pgPath), strPtr(pgPathLink)) == -1, FileOpenError,
-            "unable to create symlink '%s' to '%s'", strPtr(pgPath), strPtr(pgPathLink));
+            symlink(strZ(pgPath), strZ(pgPathLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(pgPath),
+            strZ(pgPathLink));
 
-        THROW_ON_SYS_ERROR(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir()");
+        THROW_ON_SYS_ERROR(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir()");
         TEST_RESULT_STR(
-            walPath(strNew("relative/path"), pgPathLink, strNew("test")), strNewFmt("%s/relative/path", strPtr(pgPathLink)),
+            walPath(strNew("relative/path"), pgPathLink, strNew("test")), strNewFmt("%s/relative/path", strZ(pgPathLink)),
             "relative path");
-
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(

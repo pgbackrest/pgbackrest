@@ -12,7 +12,7 @@ static void
 testIniLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
 {
     ASSERT(strEq(value, jsonFromVar(valueVar)));
-    strCatFmt((String *)data, "%s:%s:%s\n", strPtr(section), strPtr(key), strPtr(value));
+    strCatFmt((String *)data, "%s:%s:%s\n", strZ(section), strZ(key), strZ(value));
 }
 
 /***********************************************************************************************************************************

@@ -247,7 +247,7 @@ cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId
     String *result = strNew(cfgCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleDefault)
-        strCatFmt(result, "%s%s", strPtr(separator), strPtr(cfgCommandRoleStr(commandRoleId)));
+        strCatFmt(result, "%s%s", strZ(separator), strZ(cfgCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -317,7 +317,7 @@ cfgCommandRoleEnum(const String *commandRole)
     else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
         FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
 
-    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strPtr(commandRole));
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strZ(commandRole));
 }
 
 const String *
@@ -616,7 +616,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                         OptionInvalidError,
                         "'%s' is not valid for option '%s'"
                             "\nHINT: is more than one port specified?",
-                        strPtr(host), cfgOptionName(optionId));
+                        strZ(host), cfgOptionName(optionId));
                 }
 
                 // Set the host
@@ -629,7 +629,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                 // Set the port and error if it is not a positive integer
                 TRY_BEGIN()
                 {
-                    *port = cvtZToUInt(strPtr(strLstGet(hostPart, 1)));
+                    *port = cvtZToUInt(strZ(strLstGet(hostPart, 1)));
                 }
                 CATCH(FormatError)
                 {
@@ -637,7 +637,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                         OptionInvalidError,
                         "'%s' is not valid for option '%s'"
                             "\nHINT: port is not a positive integer.",
-                        strPtr(host), cfgOptionName(optionId));
+                        strZ(host), cfgOptionName(optionId));
                 }
                 TRY_END();
             }

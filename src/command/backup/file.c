@@ -30,7 +30,7 @@ segmentNumber(const String *pgFile)
     FUNCTION_TEST_END();
 
     // Determine which segment number this is by checking for a numeric extension.  No extension means segment 0.
-    FUNCTION_TEST_RETURN(regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strPtr(pgFile), '.') + 1) : 0);
+    FUNCTION_TEST_RETURN(regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
 /**********************************************************************************************************************************/
@@ -71,7 +71,7 @@ backupFile(
     {
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(backupLabel), strPtr(repoFile), strPtr(compressExtStr(repoFileCompressType)));
+            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(repoFile), strZ(compressExtStr(repoFileCompressType)));
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.

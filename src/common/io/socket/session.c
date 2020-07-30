@@ -93,7 +93,7 @@ sckSessionReadyRead(SocketSession *this)
     if (!sckReadyRead(this->fd, this->timeout))
     {
         THROW_FMT(
-            ProtocolError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strZ(this->host),
             this->port);
     }
 
@@ -112,8 +112,7 @@ sckSessionReadyWrite(SocketSession *this)
     if (!sckReadyWrite(this->fd, this->timeout))
     {
         THROW_FMT(
-            ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strPtr(this->host),
-            this->port);
+            ProtocolError, "timeout after %" PRIu64 "ms waiting for write to '%s:%u'", this->timeout, strZ(this->host), this->port);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -125,5 +124,5 @@ sckSessionToLog(const SocketSession *this)
 {
     return strNewFmt(
         "{type: %s, fd %d, host: %s, port: %u, timeout: %" PRIu64 "}", this->type == sckSessionTypeClient ? "client" : "server",
-        this->fd, strPtr(this->host), this->port, this->timeout);
+        this->fd, strZ(this->host), this->port, this->timeout);
 }

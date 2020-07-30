@@ -105,7 +105,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
         {
             String *valueAppend = strDup(varStr(valueVar));
             strCatZ(valueAppend, ", ");
-            strCatZ(valueAppend, strPtr(value));
+            strCatZ(valueAppend, strZ(value));
 
             kvPut(this->kv, keyVar, VARSTR(valueAppend));
         }
@@ -196,9 +196,9 @@ httpHeaderToLog(const HttpHeader *this)
             strCatZ(result, ", ");
 
         if (httpHeaderRedact(this, key))
-            strCatFmt(result, "%s: <redacted>", strPtr(key));
+            strCatFmt(result, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "%s: '%s'", strPtr(key), strPtr(httpHeaderGet(this, key)));
+            strCatFmt(result, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
     }
 
     strCatZ(result, "}");

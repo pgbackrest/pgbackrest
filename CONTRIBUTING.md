@@ -300,7 +300,7 @@ If configuration options are required then a string list with the command and op
 ```
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
+strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));       // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
 harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
@@ -326,8 +326,9 @@ Sometimes it is necessary to store a file to the test directory. The following d
 ```
 String *content = strNew("bad content");
 TEST_RESULT_VOID(
-    storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
-        harnessInfoChecksum(content)), "store a corrupt backup.info file");
+    storagePutP(
+        storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strZ(repoPath))), harnessInfoChecksum(content)),
+    "store a corrupt backup.info file");
 ```
 **Testing a log message**
 

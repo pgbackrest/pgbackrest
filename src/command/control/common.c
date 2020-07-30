@@ -16,8 +16,7 @@ lockStopFileName(const String *stanza)
         FUNCTION_TEST_PARAM(STRING, stanza);
     FUNCTION_TEST_END();
 
-    String *result = strNewFmt(
-        "%s/%s" STOP_FILE_EXT, strPtr(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strPtr(stanza) : "all");
+    String *result = strNewFmt("%s/%s" STOP_FILE_EXT, strZ(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strZ(stanza) : "all");
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -34,7 +33,7 @@ lockStopTest(void)
         if (cfgOptionTest(cfgOptStanza))
         {
             if (storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
-                THROW_FMT(StopError, "stop file exists for stanza %s", strPtr(cfgOptionStr(cfgOptStanza)));
+                THROW_FMT(StopError, "stop file exists for stanza %s", strZ(cfgOptionStr(cfgOptStanza)));
         }
 
         // Check all stanzas

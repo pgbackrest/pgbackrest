@@ -306,12 +306,12 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
             const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
 
             if (data.checksumExpected == NULL)
-                THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strPtr(checksumActual));
+                THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strZ(checksumActual));
             else if (!strEq(data.checksumExpected, checksumActual))
             {
                 THROW_FMT(
-                    ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strPtr(checksumActual),
-                    strPtr(data.checksumExpected));
+                    ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strZ(checksumActual),
+                    strZ(data.checksumExpected));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -530,7 +530,7 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
                 if (loadErrorType == NULL)
                 {
                     loadErrorType = errorType();
-                    loadErrorMessage = strNewFmt("%s:", strPtr(error));
+                    loadErrorMessage = strNewFmt("%s:", strZ(error));
                 }
                 // Else if the error type is different
                 else if (loadErrorType != errorType())
@@ -557,7 +557,7 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
 
         // Error when no file was loaded
         if (!loaded)
-            THROWP(loadErrorType, strPtr(loadErrorMessage));
+            THROWP(loadErrorType, strZ(loadErrorMessage));
     }
     MEM_CONTEXT_TEMP_END();
 
