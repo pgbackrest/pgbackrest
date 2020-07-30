@@ -105,8 +105,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, strNew("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
         storagePutP(storageNewWriteP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
-        ASSERT(system(strPtr(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
-        ASSERT(system(strPtr(strNewFmt("mkfifo %s/repo/pipe", testPath()))) == 0);
+        ASSERT(system(strZ(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
+        ASSERT(system(strZ(strNewFmt("mkfifo %s/repo/pipe", testPath()))) == 0);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -172,7 +172,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.txt", testPath());
 
-        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdStorageList();
@@ -336,7 +336,7 @@ testRun(void)
         const String *stdinFile = storagePathP(storageRepo(), STRDEF("stdin.txt"));
         storagePutP(storageNewWriteP(storageRepoWrite(), stdinFile), fileRawBuffer);
 
-        THROW_ON_SYS_ERROR(freopen(strPtr(stdinFile), "r", stdin) == NULL, FileWriteError, "unable to reopen stdin");
+        THROW_ON_SYS_ERROR(freopen(strZ(stdinFile), "r", stdin) == NULL, FileWriteError, "unable to reopen stdin");
 
         TEST_RESULT_VOID(cmdStoragePut(), "put");
 
@@ -480,7 +480,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("--" CFGOPT_REPO1_PATH "=/"));
-        strLstAdd(argList, strNewFmt("%s/repo/%s", testPath(), strPtr(fileName)));
+        strLstAdd(argList, strNewFmt("%s/repo/%s", testPath(), strZ(fileName)));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -517,7 +517,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/repo/stdout.txt", testPath());
 
-        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         ASSERT(cmdStorageGet() == 0);
@@ -552,7 +552,7 @@ testRun(void)
         writeBuffer = bufNew(0);
         TEST_ERROR(
             storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
-            strPtr(strNewFmt("absolute path '/somewhere/%s' is not in base path '%s/repo'", INFO_ARCHIVE_FILE, testPath())));
+            strZ(strNewFmt("absolute path '/somewhere/%s' is not in base path '%s/repo'", INFO_ARCHIVE_FILE, testPath())));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get file in repo root directory error");
@@ -566,7 +566,7 @@ testRun(void)
         writeBuffer = bufNew(0);
         TEST_ERROR(
             storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
-            strPtr(strNewFmt("unable to determine cipher passphrase for '%s'", strPtr(fileEncCustomName))));
+            strZ(strNewFmt("unable to determine cipher passphrase for '%s'", strZ(fileEncCustomName))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted archive.info - stanza mismatch");

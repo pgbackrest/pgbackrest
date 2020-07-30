@@ -132,7 +132,7 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const S
         // Get db values that are common to all info files
         InfoPgData infoPgData =
         {
-            .id = cvtZToUInt(strPtr(key)),
+            .id = cvtZToUInt(strZ(key)),
             .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
@@ -386,7 +386,7 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
 
     InfoPgData pgData = infoPgData(this, pgDataIdx);
 
-    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strZ(pgVersionToStr(pgData.version)), pgData.id));
 }
 
 /**********************************************************************************************************************************/

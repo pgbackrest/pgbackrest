@@ -68,14 +68,14 @@ jsonToBool(const String *json)
     FUNCTION_TEST_END();
 
     unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
-    bool result = jsonToBoolInternal(strPtr(json), &jsonPos);
+    bool result = jsonToBoolInternal(strZ(json), &jsonPos);
 
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after boolean at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after boolean at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -117,9 +117,9 @@ jsonToNumberInternal(const char *json, unsigned int *jsonPos)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             if (intSigned)
-                result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
+                result = varNewInt64(cvtZToInt64(strZ(resultStr)));
             else
-                result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
+                result = varNewUInt64(cvtZToUInt64(strZ(resultStr)));
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -136,14 +136,14 @@ jsonToNumber(const String *json)
     FUNCTION_TEST_END();
 
     unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
-    Variant *result = jsonToNumberInternal(strPtr(json), &jsonPos);
+    Variant *result = jsonToNumberInternal(strZ(json), &jsonPos);
 
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after number at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after number at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -329,19 +329,19 @@ jsonToStr(const String *json)
     FUNCTION_TEST_END();
 
     unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     String *result = NULL;
 
-    if (strncmp(strPtr(json), NULL_Z, 4) == 0)
+    if (strncmp(strZ(json), NULL_Z, 4) == 0)
         jsonPos += 4;
     else
-        result = jsonToStrInternal(strPtr(json), &jsonPos);
+        result = jsonToStrInternal(strZ(json), &jsonPos);
 
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after string at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after string at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -406,17 +406,17 @@ jsonToKv(const String *json)
     FUNCTION_TEST_END();
 
     unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
-    if (strPtr(json)[jsonPos] != '{')
-        THROW_FMT(JsonFormatError, "expected '{' at '%s'", strPtr(json) + jsonPos);
+    if (strZ(json)[jsonPos] != '{')
+        THROW_FMT(JsonFormatError, "expected '{' at '%s'", strZ(json) + jsonPos);
 
-    KeyValue *result = jsonToKvInternal(strPtr(json), &jsonPos);
+    KeyValue *result = jsonToKvInternal(strZ(json), &jsonPos);
 
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after object at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after object at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -481,14 +481,14 @@ jsonToVarLst(const String *json)
     FUNCTION_TEST_END();
 
     unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
-    VariantList *result = jsonToVarLstInternal(strPtr(json), &jsonPos);
+    VariantList *result = jsonToVarLstInternal(strZ(json), &jsonPos);
 
-    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after array at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after array at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -581,13 +581,13 @@ jsonToVar(const String *json)
         FUNCTION_LOG_PARAM(STRING, json);
     FUNCTION_LOG_END();
 
-    const char *jsonPtr = strPtr(json);
+    const char *jsonPtr = strZ(json);
     unsigned int jsonPos = 0;
 
     Variant *result = jsonToVarInternal(jsonPtr, &jsonPos);
 
     if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after JSON at '%s'", strPtr(json) + jsonPos);
+        THROW_FMT(JsonFormatError, "unexpected characters after JSON at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_LOG_RETURN(VARIANT, result);
 }
@@ -683,7 +683,7 @@ jsonFromStrInternal(String *json, const String *string)
 
         for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
         {
-            char stringChr = strPtr(string)[stringIdx];
+            char stringChr = strZ(string)[stringIdx];
 
             switch (stringChr)
             {
@@ -754,7 +754,7 @@ jsonFromStrInternal(String *json, const String *string)
                 {
                     // If escape string is zero size then start it
                     if (noEscapeSize == 0)
-                        noEscape = strPtr(string) + stringIdx;
+                        noEscape = strZ(string) + stringIdx;
 
                     noEscapeSize++;
                     break;
@@ -813,7 +813,7 @@ jsonFromKvInternal(const KeyValue *kv)
                 strCatZ(result, ",");
 
             // Keys are always strings in the output, so add starting quote and colon.
-            strCatFmt(result, "\"%s\":", strPtr(key));
+            strCatFmt(result, "\"%s\":", strZ(key));
 
             // NULL value
             if (value == NULL)

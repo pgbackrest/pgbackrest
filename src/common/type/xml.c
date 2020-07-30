@@ -159,7 +159,7 @@ xmlNodeAdd(XmlNode *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    XmlNode *result = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(name)));
+    XmlNode *result = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(name)));
     xmlAddChild(this->node, result->node);
 
     FUNCTION_TEST_RETURN(result);
@@ -202,7 +202,7 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
     ASSERT(name != NULL);
 
     String *result = NULL;
-    xmlChar *value = xmlGetProp(this->node, (unsigned char *)strPtr(name));
+    xmlChar *value = xmlGetProp(this->node, (unsigned char *)strZ(name));
 
     if (value != NULL)
     {
@@ -244,7 +244,7 @@ xmlNodeContentSet(XmlNode *this, const String *content)
     ASSERT(this != NULL);
     ASSERT(content != NULL);
 
-    xmlAddChild(this->node, xmlNewText(BAD_CAST strPtr(content)));
+    xmlAddChild(this->node, xmlNewText(BAD_CAST strZ(content)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -303,7 +303,7 @@ xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool 
     }
 
     if (child == NULL && errorOnMissing)
-        THROW_FMT(FormatError, "unable to find child '%s':%u in node '%s'", strPtr(name), index, this->node->name);
+        THROW_FMT(FormatError, "unable to find child '%s':%u in node '%s'", strZ(name), index, this->node->name);
 
     FUNCTION_TEST_RETURN(child);
 }
@@ -394,7 +394,7 @@ xmlDocumentNew(const String *rootName)
         // Set callback to ensure xml document is freed
         memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
 
-        this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(rootName)));
+        this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(rootName)));
         xmlDocSetRootElement(this->xml, this->root->node);
     }
     MEM_CONTEXT_NEW_END();

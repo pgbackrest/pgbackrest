@@ -81,7 +81,7 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
         result.type = storageTypePath;
     }
     else
-        THROW_FMT(AssertError, "unhandled file info '%s'", strPtr(file));
+        THROW_FMT(AssertError, "unhandled file info '%s'", strZ(file));
 
     return result;
 }
@@ -133,7 +133,7 @@ storageTestManifestNewBuildInfoList(
             }
         }
         else
-            THROW_FMT(AssertError, "unhandled file list info '%s'", strPtr(path));
+            THROW_FMT(AssertError, "unhandled file list info '%s'", strZ(path));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -196,7 +196,7 @@ testRun(void)
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
             strCatFmt(iniStr, "key%u=\"value%u\"\n", keyIdx, keyIdx);
 
-        TEST_LOG_FMT("ini size = %s, keys = %u", strPtr(strSizeFormat(strSize(iniStr))), iniMax);
+        TEST_LOG_FMT("ini size = %s, keys = %u", strZ(strSizeFormat(strSize(iniStr))), iniMax);
 
         TimeMSec timeBegin = timeMSec();
         unsigned int iniTotal = 0;

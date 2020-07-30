@@ -315,8 +315,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     strLstAdd(
         result,
         strNewFmt(
-            "%s@%s", strPtr(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
-            strPtr(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
+            "%s@%s", strZ(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
+            strZ(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
 
     // Option replacements
     KeyValue *optionReplace = kvNew();
@@ -509,13 +509,13 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId, hostId - 1),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
@@ -594,7 +594,7 @@ protocolStorageTypeEnum(const String *type)
     else if (strEq(type, PROTOCOL_REMOTE_TYPE_REPO_STR))
         FUNCTION_TEST_RETURN(protocolStorageTypeRepo);
 
-    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strPtr(type));
+    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strZ(type));
 }
 
 const String *

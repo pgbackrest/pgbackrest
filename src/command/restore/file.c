@@ -98,9 +98,9 @@ restoreFile(
                             {
                                 THROW_ON_SYS_ERROR_FMT(
                                     utime(
-                                        strPtr(storagePathP(storagePg(), pgFile)),
+                                        strZ(storagePathP(storagePg(), pgFile)),
                                         &((struct utimbuf){.actime = pgFileModified, .modtime = pgFileModified})) == -1,
-                                    FileInfoError, "unable to set time for '%s'", strPtr(storagePathP(storagePg(), pgFile)));
+                                    FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), pgFile)));
                             }
 
                             result = false;
@@ -128,7 +128,7 @@ restoreFile(
                 {
                     THROW_ON_SYS_ERROR_FMT(
                         ftruncate(ioWriteHandle(storageWriteIo(pgFileWrite)), (off_t)pgFileSize) == -1, FileWriteError,
-                        "unable to truncate '%s'", strPtr(pgFile));
+                        "unable to truncate '%s'", strZ(pgFile));
 
                     // Report the file as not copied
                     result = false;
@@ -166,8 +166,8 @@ restoreFile(
                     storageNewReadP(
                         storageRepo(),
                         strNewFmt(
-                            STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(repoFileReference), strPtr(repoFile),
-                            strPtr(compressExtStr(repoFileCompressType))),
+                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(repoFileReference), strZ(repoFile),
+                            strZ(compressExtStr(repoFileCompressType))),
                         .compressible = compressible),
                     pgFileWrite);
 
@@ -176,8 +176,8 @@ restoreFile(
                 {
                     THROW_FMT(
                         ChecksumError,
-                        "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strPtr(pgFile),
-                        strPtr(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))), strPtr(pgFileChecksum));
+                        "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(pgFile),
+                        strZ(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))), strZ(pgFileChecksum));
                 }
             }
         }

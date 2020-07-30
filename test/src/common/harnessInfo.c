@@ -118,5 +118,5 @@ void
 harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, const String *value)
 {
     if (callbackData != NULL)
-        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
+        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(value));
 }

@@ -89,8 +89,8 @@ httpQueryNewStr(const String *query)
                 if (strLstSize(keyValue) != 2)
                 {
                     THROW_FMT(
-                        FormatError, "invalid key/value '%s' in query '%s'", strPtr(strLstGet(keyValueList, keyValueIdx)),
-                        strPtr(query));
+                        FormatError, "invalid key/value '%s' in query '%s'", strZ(strLstGet(keyValueList, keyValueIdx)),
+                        strZ(query));
                 }
 
                 httpQueryAdd(this, httpUriDecode(strLstGet(keyValue, 0)), httpUriDecode(strLstGet(keyValue, 1)));
@@ -152,7 +152,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
     const Variant *keyVar = VARSTR(key);
 
     if (kvGet(this->kv, keyVar) != NULL)
-        THROW_FMT(AssertError, "key '%s' already exists", strPtr(key));
+        THROW_FMT(AssertError, "key '%s' already exists", strZ(key));
 
     // Store the key
     kvPut(this->kv, keyVar, VARSTR(value));
@@ -284,9 +284,9 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
                         strCatZ(result, "&");
 
                     strCatFmt(
-                        result, "%s=%s", strPtr(key),
+                        result, "%s=%s", strZ(key),
                         param.redact && httpQueryRedact(this, key) ?
-                            "<redacted>" : strPtr(httpUriEncode(httpQueryGet(this, key), false)));
+                            "<redacted>" : strZ(httpUriEncode(httpQueryGet(this, key), false)));
                 }
             }
         }
@@ -310,12 +310,12 @@ httpQueryToLog(const HttpQuery *this)
         if (strSize(result) != 1)
             strCatZ(result, ", ");
 
-        strCatFmt(result, "%s: ", strPtr(key));
+        strCatFmt(result, "%s: ", strZ(key));
 
         if (httpQueryRedact(this, key))
             strCatZ(result, "<redacted>");
         else
-            strCatFmt(result, "'%s'", strPtr(httpQueryGet(this, key)));
+            strCatFmt(result, "'%s'", strZ(httpQueryGet(this, key)));
     }
 
     strCatZ(result, "}");

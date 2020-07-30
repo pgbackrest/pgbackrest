@@ -65,7 +65,7 @@ storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
+    info->type = storageRemoteInfoParseType(strZ(protocolClientReadLine(client))[0]);
     info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
 
     if (info->type == storageTypeFile)

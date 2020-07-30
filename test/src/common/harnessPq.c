@@ -83,7 +83,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     // Ensure script has not ended
     if (harnessPqScriptDone)
     {
-        snprintf(harnessPqScriptError, sizeof(harnessPqScriptError), "pq script ended before %s (%s)", function, strPtr(paramStr));
+        snprintf(harnessPqScriptError, sizeof(harnessPqScriptError), "pq script ended before %s (%s)", function, strZ(paramStr));
 
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
@@ -99,7 +99,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     {
         snprintf(
             harnessPqScriptError, sizeof(harnessPqScriptError), "pq script [%u] expected function %s (%s) but got %s (%s)",
-            harnessPqScriptIdx, result->function, result->param == NULL ? "" : result->param, function, strPtr(paramStr));
+            harnessPqScriptIdx, result->function, result->param == NULL ? "" : result->param, function, strZ(paramStr));
 
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
@@ -113,7 +113,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     {
         snprintf(
             harnessPqScriptError, sizeof(harnessPqScriptError), "pq script [%u] function '%s', expects param '%s' but got '%s'",
-            harnessPqScriptIdx, result->function, result->param ? result->param : "NULL", param ? strPtr(paramStr) : "NULL");
+            harnessPqScriptIdx, result->function, result->param ? result->param : "NULL", param ? strZ(paramStr) : "NULL");
 
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;

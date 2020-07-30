@@ -123,7 +123,7 @@ cmdStanzaCreate(void)
 
             // If no files copied, then the stanza was already valid
             if (sourceFile == NULL)
-                LOG_INFO_FMT("stanza '%s' already exists and is valid", strPtr(cfgOptionStr(cfgOptStanza)));
+                LOG_INFO_FMT("stanza '%s' already exists and is valid", strZ(cfgOptionStr(cfgOptStanza)));
         }
         // Else if both .info and corresponding .copy file are missing for one but not the other, then error
         else

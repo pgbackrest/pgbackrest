@@ -233,10 +233,9 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
 
     // Configure the context by setting key and cert
     cryptoError(
-        SSL_CTX_use_certificate_file(serverContext, strPtr(certificate), SSL_FILETYPE_PEM) <= 0,
-        "unable to load server certificate");
+        SSL_CTX_use_certificate_file(serverContext, strZ(certificate), SSL_FILETYPE_PEM) <= 0, "unable to load server certificate");
     cryptoError(
-        SSL_CTX_use_PrivateKey_file(serverContext, strPtr(key), SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
+        SSL_CTX_use_PrivateKey_file(serverContext, strZ(key), SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
 
     // Create the socket
     int serverSocket;
@@ -340,13 +339,13 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
 
                 for (unsigned int actualIdx = 0; actualIdx < strSize(actual); actualIdx++)
                 {
-                    if (strPtr(expected)[actualIdx] == '?')
-                        ((char *)strPtr(actual))[actualIdx] = '?';
+                    if (strZ(expected)[actualIdx] == '?')
+                        ((char *)strZ(actual))[actualIdx] = '?';
                 }
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))
-                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strPtr(expected), strPtr(actual));
+                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strZ(expected), strZ(actual));
 
                 break;
             }

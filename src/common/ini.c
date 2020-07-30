@@ -78,7 +78,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
 
     // If value is null and required then error
     if (result == NULL && required)
-        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
+        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strZ(section), strZ(key));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -251,7 +251,7 @@ iniParse(Ini *this, const String *content)
                 {
                     // Get next line
                     const String *line = strTrim(strLstGet(lines, lineIdx));
-                    const char *linePtr = strPtr(line);
+                    const char *linePtr = strZ(line);
 
                     // Only interested in lines that are not blank or comments
                     if (strSize(line) > 0 && linePtr[0] != '#')
@@ -358,7 +358,7 @@ iniLoad(
             do
             {
                 const String *line = strTrim(ioReadLineParam(read, true));
-                const char *linePtr = strPtr(line);
+                const char *linePtr = strZ(line);
 
                 // Only interested in lines that are not blank or comments
                 if (strSize(line) > 0 && linePtr[0] != '#')
