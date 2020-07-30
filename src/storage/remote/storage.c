@@ -39,22 +39,22 @@ storageRemoteInfoParse(PackRead *read, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = pckReadUInt32(read, 0);
+    info->type = pckReadUInt32P(read);
     info->timeModified = (time_t)pckReadInt64P(read);
 
     if (info->type == storageTypeFile)
-        info->size = pckReadUInt64(read, 0);
+        info->size = pckReadUInt64P(read);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        info->userId = pckReadUInt32(read, 0);
-        info->user = pckReadStrNull(read, 0);
-        info->groupId = pckReadUInt32(read, 0);
-        info->group = pckReadStrNull(read, 0);
-        info->mode = pckReadUInt32(read, 0);
+        info->userId = pckReadUInt32P(read);
+        info->user = pckReadStrNullP(read);
+        info->groupId = pckReadUInt32P(read);
+        info->group = pckReadStrNullP(read);
+        info->mode = pckReadUInt32P(read);
 
         if (info->type == storageTypeLink)
-            info->linkDestination = pckReadStr(read, 0);
+            info->linkDestination = pckReadStrP(read);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -156,7 +156,7 @@ storageRemoteInfoList(
             {
                 pckReadObjBeginP(read);
 
-                StorageInfo info = {.exists = true, .level = level, .name = pckReadStr(read, 0)};
+                StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
                 storageRemoteInfoParse(read, &info);
                 callback(callbackData, &info);

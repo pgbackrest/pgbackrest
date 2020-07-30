@@ -84,13 +84,13 @@ void pckReadArrayEnd(PackRead *this);
 
 bool pckReadBool(PackRead *this, PackIdParam param);
 
-// Read 32-bit unsigned integer
+// Read 32-bit signed integer
 #define pckReadInt32P(this, ...)                                                                                                   \
     pckReadInt32(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 int32_t pckReadInt32(PackRead *this, PackIdParam param);
 
-// Read 64-bit unsigned integer
+// Read 64-bit signed integer
 #define pckReadInt64P(this, ...)                                                                                                   \
     pckReadInt64(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
@@ -103,11 +103,34 @@ int64_t pckReadInt64(PackRead *this, PackIdParam param);
 void pckReadObjBegin(PackRead *this, PackIdParam param);
 void pckReadObjEnd(PackRead *this);
 
-void *pckReadPtr(PackRead *this, unsigned int id);
-String *pckReadStr(PackRead *this, unsigned int id);
-String *pckReadStrNull(PackRead *this, unsigned int id);
-uint32_t pckReadUInt32(PackRead *this, unsigned int id);
-uint64_t pckReadUInt64(PackRead *this, unsigned int id);
+// Read pointer. See pckWritePtrP() for cautions.
+#define pckReadPtrP(this, ...)                                                                                                     \
+    pckReadPtr(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void *pckReadPtr(PackRead *this, PackIdParam param);
+
+// Read string. pckReadStrNull() returns NULL if the string is NULL.
+#define pckReadStrP(this, ...)                                                                                                     \
+    pckReadStr(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *pckReadStr(PackRead *this, PackIdParam param);
+
+#define pckReadStrNullP(this, ...)                                                                                                 \
+    pckReadStrNull(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *pckReadStrNull(PackRead *this, PackIdParam param);
+
+// Read 32-bit unsigned integer
+#define pckReadUInt32P(this, ...)                                                                                                  \
+    pckReadUInt32(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint32_t pckReadUInt32(PackRead *this, PackIdParam param);
+
+// Read 64-bit unsigned integer
+#define pckReadUInt64P(this, ...)                                                                                                  \
+    pckReadUInt64(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint64_t pckReadUInt64(PackRead *this, PackIdParam param);
 
 void pckReadEnd(PackRead *this);
 
@@ -121,6 +144,8 @@ PackWrite *pckWriteInt32(PackWrite *this, unsigned int id, int32_t value);
 PackWrite *pckWriteInt64(PackWrite *this, unsigned int id, int64_t value);
 PackWrite *pckWriteObjBegin(PackWrite *this, unsigned int id);
 PackWrite *pckWriteObjEnd(PackWrite *this);
+
+// Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 PackWrite *pckWritePtr(PackWrite *this, unsigned int id, const void *value);
 PackWrite *pckWriteStr(PackWrite *this, unsigned int id, const String *value);
 PackWrite *pckWriteStrZ(PackWrite *this, unsigned int id, const char *value);

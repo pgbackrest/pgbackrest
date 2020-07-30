@@ -99,16 +99,16 @@ testRun(void)
         PackRead *packRead = NULL;
         TEST_ASSIGN(packRead, pckReadNew(read), "new read");
 
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 1), 0750, "read mode");
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 2), 1911246845, "read timestamp");
-        TEST_ERROR(pckReadUInt64(packRead, 2), FormatError, "field 2 was already read");
-        TEST_ERROR(pckReadUInt32(packRead, 7), FormatError, "field 7 is type 'uint64' but expected 'uint32'");
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
-        TEST_ERROR(pckReadUInt64(packRead, 9), FormatError, "field 9 does not exist");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead), 0750, "read mode");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead), 1911246845, "read timestamp");
+        TEST_ERROR(pckReadUInt64P(packRead, .id = 2), FormatError, "field 2 was already read");
+        TEST_ERROR(pckReadUInt32P(packRead, .id = 7), FormatError, "field 7 is type 'uint64' but expected 'uint32'");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
+        TEST_ERROR(pckReadUInt64P(packRead, 9), FormatError, "field 9 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 9), true, "field 9 is null");
         TEST_RESULT_BOOL(pckReadNull(packRead, 10), false, "field 10 is not null");
-        TEST_RESULT_UINT(pckReadUInt64(packRead, 10), 1, "read 1");
-        TEST_RESULT_UINT(pckReadUInt32(packRead, 12), 127, "read 127 (skip field 11)");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 10), 1, "read 1");
+        TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 12), 127, "read 127 (skip field 11)");
         TEST_RESULT_INT(pckReadInt64P(packRead), -1, "read -1");
         TEST_RESULT_INT(pckReadInt32P(packRead, 14), -1, "read -1");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
@@ -131,20 +131,20 @@ testRun(void)
 
         while (pckReadNext(packRead))
         {
-            TEST_RESULT_UINT(pckReadUInt64(packRead, pckReadId(packRead)), value, "read %u", value);
+            TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = pckReadId(packRead)), value, "read %u", value);
             value++;
         }
 
         TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
 
-        TEST_RESULT_STR_Z(pckReadStr(packRead, 39), "enoughtoincreasebuffer", "read string (skipped prior)");
-        TEST_RESULT_STR_Z(pckReadStr(packRead, 41), "small", "read string (skipped prior)");
-        TEST_RESULT_STR_Z(pckReadStr(packRead, 0), "", "zero length (skipped prior)");
-        TEST_RESULT_STR(pckReadStrNull(packRead, 43), NULL, "read NULL string");
-        TEST_RESULT_STR(pckReadStrNull(packRead, 0), NULL, "read NULL string");
-        TEST_RESULT_STR_Z(pckReadStrNull(packRead, 0), "", "read empty string");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 39), "enoughtoincreasebuffer", "read string (skipped prior)");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 41), "small", "read string (skipped prior)");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead), "", "zero length (skipped prior)");
+        TEST_RESULT_STR(pckReadStrNullP(packRead, 43), NULL, "read NULL string");
+        TEST_RESULT_STR(pckReadStrNullP(packRead, 0), NULL, "read NULL string");
+        TEST_RESULT_STR_Z(pckReadStrNullP(packRead, 0), "", "read empty string");
 
-        TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
+        TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");
 
         TEST_RESULT_VOID(pckReadEnd(packRead), "end");
@@ -154,7 +154,7 @@ testRun(void)
         TEST_TITLE("error on invalid uint64");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255")), "new read");
-        TEST_ERROR(pckReadUInt64(packRead, 1), AssertError, "assertion 'bufPtr(this->buffer)[0] < 0x80' failed");
+        TEST_ERROR(pckReadUInt64P(packRead), AssertError, "assertion 'bufPtr(this->buffer)[0] < 0x80' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");
@@ -166,7 +166,7 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "write end");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
-        TEST_RESULT_Z(pckReadPtr(packRead, 1), "sample", "read pointer");
+        TEST_RESULT_Z(pckReadPtrP(packRead, 1), "sample", "read pointer");
     }
 
     // *****************************************************************************************************************************
