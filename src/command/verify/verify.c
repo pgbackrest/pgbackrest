@@ -576,19 +576,27 @@ typedef struct VerifyJobData
 static unsigned int
 createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, archiveIdRange);  // CSHANG This may be a problem
+        FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
+        FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
+    FUNCTION_TEST_END();
+
     unsigned int result = 0;
 
     // Initialize the WAL range
     WalRange walRange =
     {
-        .start = strSubN(strLstGet(walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
-        .stop = strSubN(strLstGet(walFileList, 0), 0, WAL_SEGMENT_NAME_SIZE),
+        .start = NULL,
+        .stop = NULL,
         .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
     };
 
     // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
     // the last WAL
-    for (unsigned int walFileIdx = 1; walFileIdx < strLstSize(walFileList); walFileIdx++)
+    unsigned int walFileIdx = 0;
+
+    do
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
@@ -596,15 +604,49 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
         {
             LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "invalid WAL %s exists, skipping", strPtr(walSegment));
-// CSHANG Should we add it to the invalidFileList?
             result++;
+
+            // Remove the file from the original list so no attempt is made to verify it - results must fall withing a range
+            strLstRemoveIdx(walFileList, walFileIdx);
             continue;
         }
-// CSHANG May have to rework this logic since if there are duplicates, we may have already added the walRange to the list and we don't want that. May need to check the next one before creating the range?
-        // // If the walSegment is a duplicate, adjust the stop file before checking for gaps so that a gap is created
-        // if (strEq(walRange.stop, walSegment))
-        // {
-        //     walRange.stop = strSubN(strLstGet(walFileList, walFileIdx - 2), 0, WAL_SEGMENT_NAME_SIZE);
+
+        // If the walSegment is a duplicate, adjust the stop in the range, log error and move onto next
+        if (strEq(walRange.stop, walSegment))
+        {
+            // If the duplicate is also the start of the range, then this range is invalid so clear it
+            if (strEq(walRange.start, walSegment))
+            {
+                walRange.start = NULL;
+                walRange.stop = NULL;
+
+                // Remove this and the previous idx from the original list so no attempt is made to verify it - results must fall
+                // within a range
+                strLstRemoveIdx(walFileList, walFileIdx);
+                walFileIdx--;
+                strLstRemoveIdx(walFileList, walFileIdx);
+            }
+            else
+            {
+                walRange.stop = strSubN(strLstGet(walFileList, walFileIdx - 1), 0, WAL_SEGMENT_NAME_SIZE);
+                // Remove the file from the original list so no attempt is made to verify it - results must fall withing a range
+                strLstRemoveIdx(walFileList, walFileIdx);
+            }
+
+            LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "duplicate WAL %s exists, skipping", strPtr(walSegment));
+            result++;
+
+            continue;
+        }
+
+        // Initialize the range if it has not yet been initialized and continue to next
+        if (walRange.start == NULL)
+        {
+            walRange.start = walSegment;
+            walRange.stop = walSegment;
+            walFileIdx++;
+            continue;
+        }
 
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
         // the WAL size is static at 16MB but (for some unknown reason), WAL ending in FF is skipped so it should never exist, so
@@ -626,14 +668,23 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
                 .stop = strDup(walSegment),
             };
         }
-    }
-// CSHANG What if there are duplicate files?  How to handle? The filelist will contain both so each will be sent to verifyFile - if they are both valid, then we're not going to notice the duplicate. If one or both are invalid, they will be added to the invalidFileList but still no clear indication that there is a duplicate.
-    // Add the last walRange
-    lstAdd(archiveIdRange->walRangeList, &walRange);
 
-    // Now we have our ranges for this archiveId so sort ascending by the stop file add them
-    lstSort(archiveIdRange->walRangeList, sortOrderAsc);
-    lstAdd(archiveIdRangeList, archiveIdRange);
+        walFileIdx++;
+    }
+    while (walFileIdx < strLstSize(walFileList))
+
+    // If walRange containes a range, then add the last walRange to the list
+    if (walRange.start != NULL)
+        lstAdd(archiveIdRange->walRangeList, &walRange);
+
+    // Now if there are ranges for this archiveId then sort ascending by the stop file add them
+    if (lstSize(archiveIdRange->walRangeList) > 0)
+    {
+        lstSort(archiveIdRange->walRangeList, sortOrderAsc);
+        lstAdd(archiveIdRangeList, archiveIdRange);
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
