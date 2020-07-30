@@ -28,7 +28,7 @@ httpDateToTime(const String *lastModified)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Find the month
-        const char *month = strPtr(strSubN(lastModified, 8, 3));
+        const char *month = strZ(strSubN(lastModified, 8, 3));
         unsigned int monthIdx = 0;
 
         for (; monthIdx < sizeof(httpCommonMonthList) / sizeof(char *); monthIdx++)
@@ -42,9 +42,9 @@ httpDateToTime(const String *lastModified)
 
         // Convert to time_t
         result = epochFromParts(
-            cvtZToInt(strPtr(strSubN(lastModified, 12, 4))), (int)monthIdx + 1, cvtZToInt(strPtr(strSubN(lastModified, 5, 2))),
-            cvtZToInt(strPtr(strSubN(lastModified, 17, 2))), cvtZToInt(strPtr(strSubN(lastModified, 20, 2))),
-            cvtZToInt(strPtr(strSubN(lastModified, 23, 2))), 0);
+            cvtZToInt(strZ(strSubN(lastModified, 12, 4))), (int)monthIdx + 1, cvtZToInt(strZ(strSubN(lastModified, 5, 2))),
+            cvtZToInt(strZ(strSubN(lastModified, 17, 2))), cvtZToInt(strZ(strSubN(lastModified, 20, 2))),
+            cvtZToInt(strZ(strSubN(lastModified, 23, 2))), 0);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -87,17 +87,17 @@ httpUriDecode(const String *uri)
             // Iterate all characters in the string
             for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
             {
-                char uriChar = strPtr(uri)[uriIdx];
+                char uriChar = strZ(uri)[uriIdx];
 
                 // Convert escaped characters
                 if (uriChar == '%')
                 {
                     // Sequence must be exactly three characters (% and two hex digits)
                     if (strSize(uri) - uriIdx < 3)
-                        THROW_FMT(FormatError, "invalid escape sequence length in '%s'", strPtr(uri));
+                        THROW_FMT(FormatError, "invalid escape sequence length in '%s'", strZ(uri));
 
                     // Convert hex digits
-                    uriChar = (char)cvtZToUIntBase(strPtr(strSubN(uri, uriIdx + 1, 2)), 16);
+                    uriChar = (char)cvtZToUIntBase(strZ(strSubN(uri, uriIdx + 1, 2)), 16);
 
                     // Skip to next character or escape
                     uriIdx += 2;
@@ -131,7 +131,7 @@ httpUriEncode(const String *uri, bool path)
         // Iterate all characters in the string
         for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
         {
-            char uriChar = strPtr(uri)[uriIdx];
+            char uriChar = strZ(uri)[uriIdx];
 
             // These characters are reproduced verbatim
             if ((uriChar >= 'A' && uriChar <= 'Z') || (uriChar >= 'a' && uriChar <= 'z') || (uriChar >= '0' && uriChar <= '9') ||

@@ -102,7 +102,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR(
-            utime(strPtr(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+            utime(strZ(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
@@ -139,7 +139,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
 
-        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePathP(storageTest, strNew("repo/fifo"))));
+        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strZ(storagePathP(storageTest, strNew("repo/fifo"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("fifo")), "valid fifo");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -156,7 +156,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
 
-        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePathP(storageTest, strNew("repo/link"))));
+        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strZ(storagePathP(storageTest, strNew("repo/link"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link")), "valid link");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -247,7 +247,7 @@ testRun(void)
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strPtr(bufHex(pack))))),
+            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strZ(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -275,7 +275,7 @@ testRun(void)
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strPtr(bufHex(pack))))),
+            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strZ(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -310,7 +310,7 @@ testRun(void)
 
         // Path timestamp must be set after file is created since file creation updates it
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strPtr(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
@@ -362,7 +362,7 @@ testRun(void)
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("%s7b226f7574223a747275657d0a", strPtr(bufHex(pack))))),
+            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("%s7b226f7574223a747275657d0a", strZ(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -383,9 +383,9 @@ testRun(void)
         bufUsedSet(contentBuf, bufSize(contentBuf));
 
         TEST_ERROR_FMT(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storageRemote, strNew("test.txt"))))), FileMissingError,
+            strZ(strNewBuf(storageGetP(storageNewReadP(storageRemote, strNew("test.txt"))))), FileMissingError,
             "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_READ_MISSING,
-            strPtr(strNewFmt("%s/repo/test.txt", testPath())));
+            strZ(strNewFmt("%s/repo/test.txt", testPath())));
 
         storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), contentBuf);
 
@@ -666,14 +666,14 @@ testRun(void)
         // Create a path via the remote. Check the repo via the local test storage to ensure the remote created it.
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
         StorageInfo info = {0};
-        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strPtr(path))), "  get path info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
         TEST_RESULT_INT(info.mode, STORAGE_MODE_PATH_DEFAULT, "  mode is default");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
         varLstAdd(paramList, varNewBool(true));     // errorOnExists
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
@@ -686,7 +686,7 @@ testRun(void)
         // Error if parent path not exist
         path = strNew("parent/testpath");
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
         varLstAdd(paramList, varNewBool(false));    // errorOnExists
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
@@ -698,14 +698,14 @@ testRun(void)
 
         // Create parent and path with default mode
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
         varLstAdd(paramList, varNewBool(true));     // errorOnExists
         varLstAdd(paramList, varNewBool(false));    // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0777));   // path mode
 
         TEST_RESULT_VOID(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), "create parent and path");
-        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strPtr(path))), "  get path info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
         TEST_RESULT_INT(info.mode, 0777, "  mode is set");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
@@ -723,14 +723,14 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
 
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strPtr(path))), true, "path exists");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), true, "path exists");
         TEST_RESULT_VOID(storagePathRemoveP(storageRemote, path), "remote remove path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strPtr(path))), false, "path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "path removed");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
         varLstAdd(paramList, varNewBool(true));    // recurse
 
         TEST_RESULT_BOOL(
@@ -742,12 +742,12 @@ testRun(void)
 
         // Write the path and file to the repo and test the protocol
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRemote, strNewFmt("%s/file.txt", strPtr(path))), BUFSTRDEF("TEST")),
+            storagePutP(storageNewWriteP(storageRemote, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
             "new path and file");
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
             "  protocol path recurse remove");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strPtr(path))), false, "  recurse path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "  recurse path removed");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "  check result");
 
         bufUsedSet(serverWrite, 0);
@@ -766,14 +766,14 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRemote, file), BUFSTRDEF("TEST")), "new file");
 
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strPtr(file))), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), true, "file exists");
         TEST_RESULT_VOID(storageRemoveP(storageRemote, file), "remote remove file");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strPtr(file))), false, "file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "file removed");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(file))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(file))));
         varLstAdd(paramList, varNewBool(true));
 
         TEST_ERROR_FMT(
@@ -782,7 +782,7 @@ testRun(void)
             "[2] No such file or directory", testPath());
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(file))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(file))));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(
@@ -796,7 +796,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
             "protocol file remove");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strPtr(file))), false, "  confirm file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "  confirm file removed");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
     }
@@ -816,7 +816,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
@@ -829,7 +829,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
             "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
-            strPtr(strNewFmt("%s/repo/anewpath", testPath())));
+            strZ(strNewFmt("%s/repo/anewpath", testPath())));
     }
 
     protocolFree();

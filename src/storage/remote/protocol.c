@@ -84,7 +84,7 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         else if (strEq(filterKey, SIZE_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, ioSizeNew());
         else
-            THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filterKey));
+            THROW_FMT(AssertError, "unable to add filter '%s'", strZ(filterKey));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -369,7 +369,7 @@ storageRemoteProtocolBlockSize(const String *message)
 
     // Validate the header block size message
     if (!regExpMatch(storageRemoteProtocolLocal.blockRegExp, message))
-        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strPtr(message));
+        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strZ(message));
 
-    FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strPtr(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
+    FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strZ(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
 }

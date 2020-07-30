@@ -169,7 +169,7 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
         {
             // Wait for write-ready
             if (!sckReadyWrite(fd, timeout))
-                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strPtr(host), port);
+                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strZ(host), port);
 
             // Check for success or error. If the connection was successful this will set errNo to 0.
             socklen_t errNoLen = sizeof(errNo);
@@ -180,7 +180,7 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
 
         // Throw error if it is still set
         if (errNo != 0)
-            THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strPtr(host), port);
+            THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strZ(host), port);
     }
 
     FUNCTION_LOG_RETURN_VOID();

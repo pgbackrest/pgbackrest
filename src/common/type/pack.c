@@ -1081,7 +1081,7 @@ pckWriteStr(PackWrite *this, unsigned int id, const String *value)
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, strPtrNull(value), strPtrNull(value) == NULL ? 0 : strSize(value)));
+    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, strZNull(value), strZNull(value) == NULL ? 0 : strSize(value)));
 }
 
 /**********************************************************************************************************************************/

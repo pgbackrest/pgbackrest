@@ -64,7 +64,8 @@ Helper Functions
 ***********************************************************************************************************************************/
 // Load an ini file and return data to a callback
 void iniLoad(
-    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    IoRead *read,
+    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value, const Variant *valueVar),
     void *callbackData);
 
 /***********************************************************************************************************************************

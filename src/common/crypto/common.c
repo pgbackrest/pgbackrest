@@ -69,7 +69,7 @@ cipherType(const String *name)
     if (strEq(name, CIPHER_TYPE_AES_256_CBC_STR))
         result = cipherTypeAes256Cbc;
     else if (!strEq(name, CIPHER_TYPE_NONE_STR))
-        THROW_FMT(AssertError, "invalid cipher name '%s'", strPtr(name));
+        THROW_FMT(AssertError, "invalid cipher name '%s'", strZ(name));
 
     FUNCTION_TEST_RETURN(result);
 }
