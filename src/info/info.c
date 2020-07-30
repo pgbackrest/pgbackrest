@@ -165,13 +165,14 @@ typedef struct InfoLoadData
 } InfoLoadData;
 
 static void
-infoLoadCallback(void *data, const String *section, const String *key, const String *value)
+infoLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(VARIANT, valueVar);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -206,18 +207,20 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     // Process backrest section
     if (strEq(section, INFO_SECTION_BACKREST_STR))
     {
+        ASSERT(valueVar != NULL);
+
         // Validate format
         if (strEq(key, INFO_KEY_FORMAT_STR))
         {
-            if (jsonToUInt(value) != REPOSITORY_FORMAT)
-                THROW_FMT(FormatError, "expected format %d but found %d", REPOSITORY_FORMAT, cvtZToInt(strZ(value)));
+            if (varUInt64(valueVar) != REPOSITORY_FORMAT)
+                THROW_FMT(FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT, varUInt64(valueVar));
         }
         // Store pgBackRest version
         else if (strEq(key, INFO_KEY_VERSION_STR))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->backrestVersion = jsonToStr(value);
+                loadData->info->backrestVersion = strDup(varStr(valueVar));
             }
             MEM_CONTEXT_END();
         }
@@ -226,7 +229,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->checksumExpected = jsonToStr(value);
+                loadData->checksumExpected = strDup(varStr(valueVar));
             }
             MEM_CONTEXT_END();
         }
@@ -234,19 +237,21 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     // Process cipher section
     else if (strEq(section, INFO_SECTION_CIPHER_STR))
     {
+        ASSERT(valueVar != NULL);
+
         // No validation needed for cipher-pass, just store it
         if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->cipherPass = jsonToStr(value);
+                loadData->info->cipherPass = strDup(varStr(valueVar));
             }
             MEM_CONTEXT_END();
         }
     }
     // Else pass to callback for processing
     else
-        loadData->callbackFunction(loadData->callbackData, section, key, value);
+        loadData->callbackFunction(loadData->callbackData, section, key, valueVar);
 
     FUNCTION_TEST_RETURN_VOID();
 }

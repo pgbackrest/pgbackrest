@@ -34,7 +34,7 @@ Function types for loading and saving
 // start at 0 and be incremented on each call.
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 
-typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const String *value);
+typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const Variant *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
 /***********************************************************************************************************************************
