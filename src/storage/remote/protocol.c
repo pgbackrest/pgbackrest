@@ -14,6 +14,7 @@ Remote Storage Protocol Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/pack.h"
 #include "common/type/json.h"
 #include "config/config.h"
 #include "protocol/helper.h"
@@ -89,74 +90,32 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Write storage info into the protocol
-***********************************************************************************************************************************/
-// Helper to write storage type into the protocol
-static void
-storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    switch (type)
-    {
-        case storageTypeFile:
-        {
-            protocolServerWriteLine(server, STRDEF("f"));
-            break;
-        }
-
-        case storageTypePath:
-        {
-            protocolServerWriteLine(server, STRDEF("p"));
-            break;
-        }
-
-        case storageTypeLink:
-        {
-            protocolServerWriteLine(server, STRDEF("l"));
-            break;
-        }
-
-        case storageTypeSpecial:
-        {
-            protocolServerWriteLine(server, STRDEF("s"));
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 // Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
 // or check for level == storageInfoLevelExists.
 static void
-storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
+storageRemoteInfoWrite(PackWrite *write, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(PACK_WRITE, write);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    storageRemoteInfoWriteType(server, info->type);
-    protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
+    pckWriteUInt32(write, 0, info->type);
+    pckWriteInt64(write, 0, info->timeModified);
 
     if (info->type == storageTypeFile)
-        protocolServerWriteLine(server, jsonFromUInt64(info->size));
+        pckWriteUInt64(write, 0, info->size);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        protocolServerWriteLine(server, jsonFromUInt(info->userId));
-        protocolServerWriteLine(server, jsonFromStr(info->user));
-        protocolServerWriteLine(server, jsonFromUInt(info->groupId));
-        protocolServerWriteLine(server, jsonFromStr(info->group));
-        protocolServerWriteLine(server, jsonFromUInt(info->mode));
+        pckWriteUInt32(write, 0, info->userId);
+        pckWriteStr(write, 0, info->user);
+        pckWriteUInt32(write, 0, info->groupId);
+        pckWriteStr(write, 0, info->group);
+        pckWriteUInt32(write, 0, info->mode);
 
         if (info->type == storageTypeLink)
-            protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
+            pckWriteStr(write, 0, info->linkDestination);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -166,15 +125,17 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 Callback to write info list into the protocol
 ***********************************************************************************************************************************/
 static void
-storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
+storageRemoteProtocolInfoListCallback(void *write, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(PACK_WRITE, write);
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    protocolServerWriteLine(server, jsonFromStr(info->name));
-    storageRemoteInfoWrite(server, info);
+    pckWriteObjBegin(write, 0);
+    pckWriteStr(write, 0, info->name);
+    storageRemoteInfoWrite(write, info);
+    pckWriteObjEnd(write);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -219,17 +180,25 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
             if (info.exists)
             {
-                storageRemoteInfoWrite(server, &info);
+                PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+                storageRemoteInfoWrite(write, &info);
+                pckWriteEnd(write);
+
                 protocolServerResponse(server, NULL);
             }
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
+            PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+            pckWriteArrayBegin(write, 0);
+
             bool result = storageInterfaceInfoListP(
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-                storageRemoteProtocolInfoListCallback, server);
+                storageRemoteProtocolInfoListCallback, write);
 
-            protocolServerWriteLine(server, NULL);
+            pckWriteArrayEnd(write);
+            pckWriteEnd(write);
+
             protocolServerResponse(server, VARBOOL(result));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))

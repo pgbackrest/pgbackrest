@@ -30,10 +30,10 @@ Storage type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageTypeFile,
-    storageTypePath,
-    storageTypeLink,
-    storageTypeSpecial,
+    storageTypeFile     = 0,
+    storageTypePath     = 1,
+    storageTypeLink     = 2,
+    storageTypeSpecial  = 3,
 } StorageType;
 
 /***********************************************************************************************************************************

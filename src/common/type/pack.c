@@ -3,6 +3,8 @@ Pack Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -146,6 +148,7 @@ typedef struct PackTagStack
 {
     PackType type;
     unsigned int idLast;
+    unsigned int nullTotal;
 } PackTagStack;
 
 struct PackRead
@@ -373,7 +376,9 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
 
     PackTagStack *tagStackTop = lstGetLast(this->tagStack);
 
-    if (id <= tagStackTop->idLast)
+    if (id == 0)
+        id = tagStackTop->idLast + 1;
+    else if (id <= tagStackTop->idLast)
         THROW_FMT(FormatError, "field %u was already read", id);
 
     do
@@ -461,7 +466,7 @@ pckReadNull(PackRead *this, unsigned int id)
 
     pckReadTag(this, id, pckTypeUnknown, true);
 
-    FUNCTION_TEST_RETURN(id < this->tagNextId);
+    FUNCTION_TEST_RETURN((id == 0 ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast + 1 : id) < this->tagNextId);
 }
 
 /**********************************************************************************************************************************/
@@ -631,8 +636,31 @@ pckReadStr(PackRead *this, unsigned int id)
     FUNCTION_TEST_RETURN(result);
 }
 
+String *
+pckReadStrNull(PackRead *this, unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    if (pckReadNull(this, id))
+    {
+        PackTagStack *tagStackTop = lstGetLast(this->tagStack);
+        tagStackTop->idLast = id == 0 ? tagStackTop->idLast + 1 : id;
+    }
+    else
+        result = pckReadStr(this, id);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /**********************************************************************************************************************************/
-uint64_t
+uint32_t
 pckReadUInt32(PackRead *this, unsigned int id)
 {
     FUNCTION_TEST_BEGIN();
@@ -642,7 +670,7 @@ pckReadUInt32(PackRead *this, unsigned int id)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(pckReadTag(this, id, pckTypeUInt32, false));
+    FUNCTION_TEST_RETURN((uint32_t)pckReadTag(this, id, pckTypeUInt32, false));
 }
 
 /**********************************************************************************************************************************/
@@ -797,7 +825,12 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 
     PackTagStack *tagStackTop = lstGet(this->tagStack, lstSize(this->tagStack) - 1);
 
-    ASSERT(id > tagStackTop->idLast);
+    if (id == 0)
+        id = tagStackTop->idLast + tagStackTop->nullTotal + 1;
+    else
+        ASSERT(id > tagStackTop->idLast);
+
+    tagStackTop->nullTotal = 0;
 
     uint64_t tag = type;
     unsigned int tagId = id - tagStackTop->idLast - 1;
@@ -879,7 +912,6 @@ pckWriteArrayBegin(PackWrite *this, unsigned int id)
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
 PackWrite *
 pckWriteArrayEnd(PackWrite *this)
 {
@@ -965,7 +997,6 @@ pckWriteObjBegin(PackWrite *this, unsigned int id)
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
 PackWrite *
 pckWriteObjEnd(PackWrite *this)
 {
@@ -1002,6 +1033,46 @@ pckWritePtr(PackWrite *this, unsigned int id, const void *value)
 
 /**********************************************************************************************************************************/
 PackWrite *
+pckWriteStrZN(PackWrite *this, unsigned int id, const char *value, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (value != NULL)
+    {
+        pckWriteTag(this, pckTypeStr, id, size > 0);
+
+        if (size > 0)
+        {
+            pckWriteUInt64Internal(this, size);
+            ioWrite(this->write, BUF(value, size));
+        }
+    }
+    else
+        ((PackTagStack *)lstGetLast(this->tagStack))->nullTotal++;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackWrite *
+pckWriteStrZ(PackWrite *this, unsigned int id, const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, value, value == NULL ? 0 : strlen(value)));
+}
+
+PackWrite *
 pckWriteStr(PackWrite *this, unsigned int id, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1010,17 +1081,7 @@ pckWriteStr(PackWrite *this, unsigned int id, const String *value)
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-
-    pckWriteTag(this, pckTypeStr, id, strSize(value) > 0);
-
-    if (strSize(value) > 0)
-    {
-        pckWriteUInt64Internal(this, strSize(value));
-        ioWrite(this->write, BUF(strPtr(value), strSize(value)));
-    }
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, strPtrNull(value), strPtrNull(value) == NULL ? 0 : strSize(value)));
 }
 
 /**********************************************************************************************************************************/

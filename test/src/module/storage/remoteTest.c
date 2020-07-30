@@ -89,12 +89,6 @@ testRun(void)
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storage types that are not tested elsewhere");
-
-        TEST_RESULT_UINT(storageRemoteInfoParseType('s'), storageTypeSpecial, "read special type");
-        TEST_ERROR(storageRemoteInfoParseType('z'), AssertError, "unknown storage type 'z'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing file/path");
 
         TEST_ERROR(
@@ -192,26 +186,30 @@ testRun(void)
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("protocol storage types that are not tested elsewhere");
-
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypePath), "write path type");
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypeSpecial), "write special type");
-
-        ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".p\n.s\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol output that is not tested elsewhere (basic)");
 
+        Buffer *packCheck = bufNew(0);
+        PackWrite *packWriteCheck = pckWriteNewBuf(packCheck);
         info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
-        TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
+        TEST_RESULT_VOID(storageRemoteInfoWrite(packWriteCheck, &info), "write link info");
+        pckWriteEnd(packWriteCheck);
 
-        ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
+        Buffer *pack = bufNew(0);
+        PackWrite *packWrite = pckWriteNewBuf(pack);
+        pckWriteUInt32(packWrite, 0, storageTypeLink);
+        pckWriteInt64(packWrite, 0, 0);
+        pckWriteUInt32(packWrite, 0, 0);
+        pckWriteStrZ(packWrite, 0, NULL);
+        pckWriteUInt32(packWrite, 0, 0);
+        pckWriteStrZ(packWrite, 0, NULL);
+        pckWriteUInt32(packWrite, 0, 0);
+        pckWriteStrZ(packWrite, 0, "../");
+        pckWriteEnd(packWrite);
 
-        bufUsedSet(serverWrite, 0);
+        TEST_RESULT_STR(bufHex(packCheck), bufHex(pack), "check result");
+
+        info = (StorageInfo){.name = NULL};
+        storageRemoteInfoParse(pckReadNewBuf(pack), &info);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with missing path/file");
@@ -240,12 +238,16 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+
+        pack = bufNew(0);
+        packWrite = pckWriteNewBuf(pack);
+        pckWriteUInt32(packWrite, 0, storageTypeFile);
+        pckWriteInt64(packWrite, 0, 1555160001);
+        pckWriteUInt64(packWrite, 0, 6);
+        pckWriteEnd(packWrite);
+
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            hrnReplaceKey(
-                "{\"out\":true}\n"
-                ".f\n.1555160001\n.6\n"
-                "{}\n"),
+            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strPtr(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -259,12 +261,21 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+
+        pack = bufNew(0);
+        packWrite = pckWriteNewBuf(pack);
+        pckWriteUInt32(packWrite, 0, storageTypeFile);
+        pckWriteInt64(packWrite, 0, 1555160001);
+        pckWriteUInt64(packWrite, 0, 6);
+        pckWriteUInt32(packWrite, 0, getuid());
+        pckWriteStrZ(packWrite, 0, testUser());
+        pckWriteUInt32(packWrite, 0, getgid());
+        pckWriteStrZ(packWrite, 0, testGroup());
+        pckWriteUInt32(packWrite, 0, 0640);
+        pckWriteEnd(packWrite);
+
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            hrnReplaceKey(
-                "{\"out\":true}\n"
-                ".f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
-                "{}\n"),
+            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strPtr(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -319,13 +330,39 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
+
+        Buffer *pack = bufNew(0);
+        PackWrite *packWrite = pckWriteNewBuf(pack);
+        pckWriteArrayBegin(packWrite, 0);
+
+        pckWriteObjBegin(packWrite, 0);
+        pckWriteStrZ(packWrite, 0, ".");
+        pckWriteUInt32(packWrite, 0, storageTypePath);
+        pckWriteInt64(packWrite, 0, 1555160000);
+        pckWriteUInt32(packWrite, 0, getuid());
+        pckWriteStrZ(packWrite, 0, testUser());
+        pckWriteUInt32(packWrite, 0, getgid());
+        pckWriteStrZ(packWrite, 0, testGroup());
+        pckWriteUInt32(packWrite, 0, 0750);
+        pckWriteObjEnd(packWrite);
+
+        pckWriteObjBegin(packWrite, 0);
+        pckWriteStrZ(packWrite, 0, "test");
+        pckWriteUInt32(packWrite, 0, storageTypeFile);
+        pckWriteInt64(packWrite, 0, 1555160001);
+        pckWriteUInt64(packWrite, 0, 6);
+        pckWriteUInt32(packWrite, 0, getuid());
+        pckWriteStrZ(packWrite, 0, testUser());
+        pckWriteUInt32(packWrite, 0, getgid());
+        pckWriteStrZ(packWrite, 0, testGroup());
+        pckWriteUInt32(packWrite, 0, 0640);
+        pckWriteObjEnd(packWrite);
+
+        pckWriteArrayEnd(packWrite);
+        pckWriteEnd(packWrite);
+
         TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            hrnReplaceKey(
-                ".\".\"\n.p\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
-                ".\"test\"\n.f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
-                ".\n"
-                "{\"out\":true}\n"),
+            bufHex(serverWrite), hrnReplaceKey(strPtr(strNewFmt("%s7b226f7574223a747275657d0a", strPtr(bufHex(pack))))),
             "check result");
 
         bufUsedSet(serverWrite, 0);

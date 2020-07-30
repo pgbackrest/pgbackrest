@@ -48,9 +48,12 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
         TEST_RESULT_VOID(pckWriteStr(packWrite, 38, STRDEF("sample")), "write string");
         TEST_RESULT_VOID(pckWriteStr(packWrite, 39, STRDEF("enoughtoincreasebuffer")), "write string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 40, STRDEF("")), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 41, STRDEF("small")), "write string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 42, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 0, ""), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 41, "small"), "write string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 0, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 43, NULL), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 0, NULL), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStr(packWrite, 0, STRDEF("")), "write zero-length string");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -83,6 +86,7 @@ testRun(void)
             "08"                                                    // 40,  str, zero length
             "8805736d616c6c"                                        // 41,  str, small
             "08"                                                    // 42,  str, zero length
+            "28"                                                    // 45,  str, zero length
             "00",                                                   // end
             "check pack");
 
@@ -135,7 +139,10 @@ testRun(void)
 
         TEST_RESULT_STR_Z(pckReadStr(packRead, 39), "enoughtoincreasebuffer", "read string (skipped prior)");
         TEST_RESULT_STR_Z(pckReadStr(packRead, 41), "small", "read string (skipped prior)");
-        TEST_RESULT_STR_Z(pckReadStr(packRead, 42), "", "zero length (skipped prior)");
+        TEST_RESULT_STR_Z(pckReadStr(packRead, 0), "", "zero length (skipped prior)");
+        TEST_RESULT_STR(pckReadStrNull(packRead, 43), NULL, "read NULL string");
+        TEST_RESULT_STR(pckReadStrNull(packRead, 0), NULL, "read NULL string");
+        TEST_RESULT_STR_Z(pckReadStrNull(packRead, 0), "", "read empty string");
 
         TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");

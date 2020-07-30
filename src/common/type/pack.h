@@ -24,6 +24,8 @@ typedef struct PackRead PackRead;
 
 typedef struct PackWrite PackWrite;
 
+#include "common/io/read.h"
+#include "common/io/write.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -48,24 +50,44 @@ typedef enum
 Constructors
 ***********************************************************************************************************************************/
 PackRead *pckReadNew(IoRead *read);
+PackRead *pckReadNewBuf(const Buffer *read);
+
 PackWrite *pckWriteNew(IoWrite *write);
+PackWrite *pckWriteNewBuf(Buffer *write);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+bool pckReadNext(PackRead *this);
+unsigned int pckReadId(PackRead *this);
 bool pckReadNull(PackRead *this, unsigned int id);
 
+void pckReadArrayBegin(PackRead *this, unsigned int id);
+void pckReadArrayEnd(PackRead *this);
 bool pckReadBool(PackRead *this, unsigned int id);
 int32_t pckReadInt32(PackRead *this, unsigned int id);
 int64_t pckReadInt64(PackRead *this, unsigned int id);
+void pckReadObjBegin(PackRead *this, unsigned int id);
+void pckReadObjEnd(PackRead *this);
 void *pckReadPtr(PackRead *this, unsigned int id);
-uint64_t pckReadUInt32(PackRead *this, unsigned int id);
+String *pckReadStr(PackRead *this, unsigned int id);
+String *pckReadStrNull(PackRead *this, unsigned int id);
+uint32_t pckReadUInt32(PackRead *this, unsigned int id);
 uint64_t pckReadUInt64(PackRead *this, unsigned int id);
 
+void pckReadEnd(PackRead *this);
+
+PackWrite *pckWriteArrayBegin(PackWrite *this, unsigned int id);
+PackWrite *pckWriteArrayEnd(PackWrite *this);
 PackWrite *pckWriteBool(PackWrite *this, unsigned int id, bool value);
 PackWrite *pckWriteInt32(PackWrite *this, unsigned int id, int32_t value);
 PackWrite *pckWriteInt64(PackWrite *this, unsigned int id, int64_t value);
+PackWrite *pckWriteObjBegin(PackWrite *this, unsigned int id);
+PackWrite *pckWriteObjEnd(PackWrite *this);
 PackWrite *pckWritePtr(PackWrite *this, unsigned int id, const void *value);
+PackWrite *pckWriteStr(PackWrite *this, unsigned int id, const String *value);
+PackWrite *pckWriteStrZ(PackWrite *this, unsigned int id, const char *value);
+PackWrite *pckWriteStrZN(PackWrite *this, unsigned int id, const char *value, size_t size);
 PackWrite *pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value);
 PackWrite *pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value);
 
