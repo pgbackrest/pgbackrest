@@ -78,7 +78,7 @@ typedef struct PackIdParam
 void pckReadArrayBegin(PackRead *this, PackIdParam param);
 void pckReadArrayEnd(PackRead *this);
 
-// Read bool
+// Read boolean
 #define pckReadBoolP(this, ...)                                                                                                    \
     pckReadBool(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
@@ -135,11 +135,21 @@ uint64_t pckReadUInt64(PackRead *this, PackIdParam param);
 void pckReadEnd(PackRead *this);
 
 /***********************************************************************************************************************************
-Read Functions
+Write Functions
 ***********************************************************************************************************************************/
-PackWrite *pckWriteArrayBegin(PackWrite *this, unsigned int id);
+// Write array begin/end
+#define pckWriteArrayBeginP(this, ...)                                                                                             \
+    pckWriteArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
 PackWrite *pckWriteArrayEnd(PackWrite *this);
-PackWrite *pckWriteBool(PackWrite *this, unsigned int id, bool value);
+
+// Write boolean
+#define pckWriteBoolP(this, value, ...)                                                                                            \
+    pckWriteBool(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteBool(PackWrite *this, bool value, PackIdParam param);
+
 PackWrite *pckWriteInt32(PackWrite *this, unsigned int id, int32_t value);
 PackWrite *pckWriteInt64(PackWrite *this, unsigned int id, int64_t value);
 PackWrite *pckWriteObjBegin(PackWrite *this, unsigned int id);

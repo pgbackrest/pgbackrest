@@ -190,7 +190,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
-            pckWriteArrayBegin(write, 0);
+            pckWriteArrayBeginP(write);
 
             bool result = storageInterfaceInfoListP(
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),

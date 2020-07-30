@@ -35,13 +35,13 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteUInt32(packWrite, 12, 127), "write 127");
         TEST_RESULT_VOID(pckWriteInt64(packWrite, 13, -1), "write -1");
         TEST_RESULT_VOID(pckWriteInt32(packWrite, 14, -1), "write -1");
-        TEST_RESULT_VOID(pckWriteBool(packWrite, 15, true), "write true");
-        TEST_RESULT_VOID(pckWriteBool(packWrite, 20, false), "write false");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .id = 20), "write false");
         TEST_RESULT_VOID(pckWriteObjBegin(packWrite, 28), "write obj begin");
-        TEST_RESULT_VOID(pckWriteBool(packWrite, 1, true), "write true");
-        TEST_RESULT_VOID(pckWriteBool(packWrite, 2, false), "write false");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false), "write false");
         TEST_RESULT_VOID(pckWriteObjEnd(packWrite), "write obj end");
-        TEST_RESULT_VOID(pckWriteArrayBegin(packWrite, 37), "write array begin");
+        TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite, .id = 37), "write array begin");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0), "write 0");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1), "write 1");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 3, 2), "write 2");

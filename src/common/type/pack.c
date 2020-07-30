@@ -899,16 +899,16 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteArrayBegin(PackWrite *this, unsigned int id)
+pckWriteArrayBegin(PackWrite *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeArray, id, 0);
+    pckWriteTag(this, pckTypeArray, param.id, 0);
     lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray, .idLast = 0});
 
     FUNCTION_TEST_RETURN(this);
@@ -933,17 +933,17 @@ pckWriteArrayEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteBool(PackWrite *this, unsigned int id, bool value)
+pckWriteBool(PackWrite *this, bool value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(BOOL, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeBool, id, value);
+    pckWriteTag(this, pckTypeBool, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }

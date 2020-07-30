@@ -333,7 +333,7 @@ testRun(void)
 
         Buffer *pack = bufNew(0);
         PackWrite *packWrite = pckWriteNewBuf(pack);
-        pckWriteArrayBegin(packWrite, 0);
+        pckWriteArrayBeginP(packWrite);
 
         pckWriteObjBegin(packWrite, 0);
         pckWriteStrZ(packWrite, 0, ".");
