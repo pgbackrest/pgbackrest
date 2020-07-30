@@ -143,6 +143,23 @@ lstGet(const List *this, unsigned int listIdx)
     FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
 }
 
+void *
+lstGetLast(const List *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    // Ensure there are items in the list
+    if (this->listSize == 0)
+        THROW(AssertError, "cannot get last from list with no values");
+
+    // Return pointer to list item
+    FUNCTION_TEST_RETURN(lstGet(this, this->listSize - 1));
+}
+
 /**********************************************************************************************************************************/
 bool
 lstExists(const List *this, const void *item)
@@ -300,6 +317,7 @@ lstRemoveIdx(List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -335,6 +353,21 @@ lstRemove(List *this, const void *item)
     }
 
     FUNCTION_TEST_RETURN(false);
+}
+
+List *
+lstRemoveLast(List *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (this->listSize == 0)
+        THROW(AssertError, "cannot remove last from list with no values");
+
+    FUNCTION_TEST_RETURN(lstRemoveIdx(this, this->listSize - 1));
 }
 
 /**********************************************************************************************************************************/

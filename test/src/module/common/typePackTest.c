@@ -25,9 +25,9 @@ testRun(void)
         PackWrite *packWrite = NULL;
         TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
 
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{idLast: 0}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 0}", "log");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0750), "write mode");
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{idLast: 1}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 1}", "log");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1911246845), "write timestamp");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 7, 0xFFFFFFFFFFFFFFFF), "write max u64");
         TEST_RESULT_VOID(pckWriteUInt64(packWrite, 10, 1), "write 1");
@@ -37,8 +37,15 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteInt32(packWrite, 14, -1), "write -1");
         TEST_RESULT_VOID(pckWriteBool(packWrite, 15, true), "write true");
         TEST_RESULT_VOID(pckWriteBool(packWrite, 20, false), "write false");
-        TEST_RESULT_VOID(pckWriteObj(packWrite, 28), "write obj");
-        TEST_RESULT_VOID(pckWriteObj(packWrite, 37), "write obj");
+        TEST_RESULT_VOID(pckWriteObjBegin(packWrite, 28), "write obj begin");
+        TEST_RESULT_VOID(pckWriteBool(packWrite, 1, true), "write true");
+        TEST_RESULT_VOID(pckWriteBool(packWrite, 2, false), "write false");
+        TEST_RESULT_VOID(pckWriteObjEnd(packWrite), "write obj end");
+        TEST_RESULT_VOID(pckWriteArrayBegin(packWrite, 37), "write array begin");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0), "write 0");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1), "write 1");
+        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 3, 2), "write 2");
+        TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -57,8 +64,15 @@ testRun(void)
             "44"                                                    // 14, i32, -1
             "83"                                                    // 15, bool, true
             "4301"                                                  // 20, bool, false
-            "76"                                                    // 28,  obj
-            "8601"                                                  // 37,  obj
+            "76"                                                    // 28, obj begin
+                "83"                                                //      1, bool
+                "03"                                                //      2, bool
+                "00"                                                //         obj end
+            "8101"                                                  // 37, array begin
+                "0a"                                                //      1,  u64, 0
+                "4a"                                                //      2,  u64, 1
+                "8a02"                                              //      3,  u64, 2
+                "00"                                                //         array end
             "00",                                                   // end
             "check pack");
 
@@ -85,11 +99,34 @@ testRun(void)
         TEST_RESULT_INT(pckReadInt32(packRead, 14), -1, "read -1");
         TEST_RESULT_BOOL(pckReadBool(packRead, 15), true, "read true");
         TEST_RESULT_BOOL(pckReadBool(packRead, 20), false, "read false");
-        TEST_RESULT_VOID(pckReadObj(packRead, 28), "read object");
+
+        TEST_ERROR(pckReadObjEnd(packRead), FormatError, "not in object");
+        TEST_RESULT_VOID(pckReadObjBegin(packRead, 28), "read object begin");
+        TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
+        TEST_RESULT_BOOL(pckReadBool(packRead, 1), true, "read true");
+        TEST_RESULT_BOOL(pckReadBool(packRead, 2), false, "read false");
+        TEST_ERROR(pckReadBool(packRead, 3), FormatError, "field 3 does not exist");
+        TEST_RESULT_BOOL(pckReadNull(packRead, 4), true, "field 3 is null");
+        TEST_RESULT_VOID(pckReadObjEnd(packRead), "read object end");
+
+        TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
+        TEST_RESULT_VOID(pckReadArrayBegin(packRead, 37), "read array begin");
+        TEST_ERROR(pckReadObjEnd(packRead), FormatError, "not in object");
+
+        unsigned int value = 0;
+
+        while (pckReadNext(packRead))
+        {
+            TEST_RESULT_UINT(pckReadUInt64(packRead, pckReadId(packRead)), value, "read %u", value);
+            value++;
+        }
+
+        TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
 
         TEST_ERROR(pckReadUInt64(packRead, 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");
 
+        TEST_RESULT_VOID(pckReadEnd(packRead), "end");
         TEST_RESULT_VOID(pckReadFree(packRead), "free");
 
         // -------------------------------------------------------------------------------------------------------------------------

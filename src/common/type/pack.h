@@ -69,6 +69,8 @@ PackWrite *pckWritePtr(PackWrite *this, unsigned int id, const void *value);
 PackWrite *pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value);
 PackWrite *pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value);
 
+PackWrite *pckWriteEnd(PackWrite *this);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
