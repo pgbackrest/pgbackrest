@@ -90,52 +90,62 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Callback to write info list into the protocol
+***********************************************************************************************************************************/
 // Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
 // or check for level == storageInfoLevelExists.
+typedef struct StorageRemoteProtocolInfoListCallbackData
+{
+    PackWrite *write;
+    time_t timeModifiedLast;
+} StorageRemoteProtocolInfoListCallbackData;
+
 static void
-storageRemoteInfoWrite(PackWrite *write, const StorageInfo *info)
+storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_WRITE, write);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteUInt32P(write, info->type);
-    pckWriteInt64P(write, info->timeModified);
+    pckWriteUInt32P(data->write, info->type);
+    pckWriteInt64P(data->write, info->timeModified - data->timeModifiedLast);
 
     if (info->type == storageTypeFile)
-        pckWriteUInt64P(write, info->size);
+        pckWriteUInt64P(data->write, info->size);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        pckWriteUInt32P(write, info->userId);
-        pckWriteStrP(write, info->user);
-        pckWriteUInt32P(write, info->groupId);
-        pckWriteStrP(write, info->group);
-        pckWriteUInt32P(write, info->mode);
+        pckWriteUInt32P(data->write, info->userId);
+        pckWriteStrP(data->write, info->user);
+        pckWriteUInt32P(data->write, info->groupId);
+        pckWriteStrP(data->write, info->group);
+        pckWriteUInt32P(data->write, info->mode);
 
         if (info->type == storageTypeLink)
-            pckWriteStrP(write, info->linkDestination);
+            pckWriteStrP(data->write, info->linkDestination);
     }
+
+    data->timeModifiedLast = info->timeModified;
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Callback to write info list into the protocol
-***********************************************************************************************************************************/
 static void
-storageRemoteProtocolInfoListCallback(void *write, const StorageInfo *info)
+storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(PACK_WRITE, write);
+        FUNCTION_LOG_PARAM_P(VOID, dataVoid);
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteObjBeginP(write);
-    pckWriteStrP(write, info->name);
-    storageRemoteInfoWrite(write, info);
-    pckWriteObjEnd(write);
+    StorageRemoteProtocolInfoListCallbackData *data = dataVoid;
+
+    pckWriteObjBeginP(data->write);
+    pckWriteStrP(data->write, info->name);
+    storageRemoteInfoWrite(data, info);
+    pckWriteObjEnd(data->write);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -180,7 +190,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             pckWriteBoolP(write, info.exists);
 
             if (info.exists)
-                storageRemoteInfoWrite(write, &info);
+                storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
 
             pckWriteEnd(write);
             ioWriteFlush(protocolServerIoWrite(server));
@@ -190,9 +200,11 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
             pckWriteArrayBeginP(write);
 
+            StorageRemoteProtocolInfoListCallbackData data = {.write = write};
+
             bool result = storageInterfaceInfoListP(
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-                storageRemoteProtocolInfoListCallback, write);
+                storageRemoteProtocolInfoListCallback, &data);
 
             pckWriteArrayEnd(write);
             pckWriteBoolP(write, result);

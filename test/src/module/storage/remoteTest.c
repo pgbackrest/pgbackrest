@@ -191,15 +191,18 @@ testRun(void)
 
         Buffer *packCheck = bufNew(0);
         PackWrite *packWriteCheck = pckWriteNewBuf(packCheck);
+        StorageRemoteProtocolInfoListCallbackData callbackData = {.write = packWriteCheck};
         info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
-        TEST_RESULT_VOID(storageRemoteInfoWrite(packWriteCheck, &info), "write link info");
+        TEST_RESULT_VOID(storageRemoteInfoWrite(&callbackData, &info), "write link info");
         pckWriteEnd(packWriteCheck);
 
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(packCheck), "1:uint32:2, 2:int64:0, 3:uint32:0, 5:uint32:0, 7:uint32:0, 8:str:../", "check result");
 
+        StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};
+
         info = (StorageInfo){.name = NULL};
-        storageRemoteInfoParse(pckReadNewBuf(packCheck), &info);
+        storageRemoteInfoParse(&parseData, &info);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with missing path/file");
@@ -307,8 +310,8 @@ testRun(void)
                 "["
                     "1:obj:{1:str:., 2:uint32:1, 3:int64:1555160000, 4:uint32:1000, 5:str:vagrant, 6:uint32:1000, 7:str:vagrant"
                         ", 8:uint32:488}"
-                    ", 2:obj:{1:str:test, 2:uint32:0, 3:int64:1555160001, 4:uint64:6, 5:uint32:1000, 6:str:vagrant"
-                        ", 7:uint32:1000, 8:str:vagrant, 9:uint32:416}"
+                    ", 2:obj:{1:str:test, 2:uint32:0, 3:int64:1, 4:uint64:6, 5:uint32:1000, 6:str:vagrant, 7:uint32:1000"
+                        ", 8:str:vagrant, 9:uint32:416}"
                 "]"
                 ", 2:bool:true"),
             "check result");

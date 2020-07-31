@@ -30,32 +30,42 @@ struct StorageRemote
     unsigned int compressLevel;                                     // Protocol compression level
 };
 
-// Helper to parse storage info from the protocol output
+/***********************************************************************************************************************************
+Helper to parse storage info from the protocol output
+***********************************************************************************************************************************/
+typedef struct StorageRemoteInfoParseData
+{
+    PackRead *read;
+    time_t timeModifiedLast;
+} StorageRemoteInfoParseData;
+
 static void
-storageRemoteInfoParse(PackRead *read, StorageInfo *info)
+storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, read);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = pckReadUInt32P(read);
-    info->timeModified = (time_t)pckReadInt64P(read);
+    info->type = pckReadUInt32P(data->read);
+    info->timeModified = (time_t)pckReadInt64P(data->read) + data->timeModifiedLast;
 
     if (info->type == storageTypeFile)
-        info->size = pckReadUInt64P(read);
+        info->size = pckReadUInt64P(data->read);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        info->userId = pckReadUInt32P(read);
-        info->user = pckReadStrNullP(read);
-        info->groupId = pckReadUInt32P(read);
-        info->group = pckReadStrNullP(read);
-        info->mode = pckReadUInt32P(read);
+        info->userId = pckReadUInt32P(data->read);
+        info->user = pckReadStrNullP(data->read);
+        info->groupId = pckReadUInt32P(data->read);
+        info->group = pckReadStrNullP(data->read);
+        info->mode = pckReadUInt32P(data->read);
 
         if (info->type == storageTypeLink)
-            info->linkDestination = pckReadStrP(read);
+            info->linkDestination = pckReadStrP(data->read);
     }
+
+    data->timeModifiedLast = info->timeModified;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -93,7 +103,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
         if (result.exists)
         {
-            storageRemoteInfoParse(read, &result);
+            storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
 
             // Duplicate strings into the prior context
             MEM_CONTEXT_PRIOR_BEGIN()
@@ -148,6 +158,7 @@ storageRemoteInfoList(
         // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
         // since the filename is json-encoded so will always include quotes.
         PackRead *read = pckReadNew(protocolClientIoRead(this->client));
+        StorageRemoteInfoParseData parseData = {.read = read};
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -159,7 +170,7 @@ storageRemoteInfoList(
 
                 StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
-                storageRemoteInfoParse(read, &info);
+                storageRemoteInfoParse(&parseData, &info);
                 callback(callbackData, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
