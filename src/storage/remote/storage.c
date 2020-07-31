@@ -53,7 +53,7 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     FUNCTION_TEST_END();
 
     info->type = pckReadUInt32P(data->read, .defaultNull = true);
-    info->timeModified = (time_t)pckReadInt64P(data->read, .defaultNull = true) + data->timeModifiedLast;
+    info->timeModified = pckReadTimeP(data->read, .defaultNull = true) + data->timeModifiedLast;
 
     if (info->type == storageTypeFile)
         info->size = pckReadUInt64P(data->read, .defaultNull = true);

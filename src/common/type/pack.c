@@ -78,6 +78,11 @@ static const PackTypeData packTypeData[] =
         .name = STRDEF("str"),
     },
     {
+        .type = pckTypeTime,
+        .valueMultiBit = true,
+        .name = STRDEF("time"),
+    },
+    {
         .type = pckTypeUInt32,
         .valueMultiBit = true,
         .name = STRDEF("uint32"),
@@ -91,58 +96,6 @@ static const PackTypeData packTypeData[] =
 
 /***********************************************************************************************************************************
 Object type
-
-24  byte for allocation/list
-  X name
-0-1 byte primary
-0-1 byte checksumPage
-0-1 byte checksumPageError
-0-3 byte mode
- 12 byte sha1
-0-X checksumPageErrorList
-0-X user
-0-X group
-0-2 reference
-0-5 size
-0-5 sizeRepo
-  5 timestamp
-
-0 int
-1 sign
-2 len
-3-7 size
-
-struct   name
-   120 +   48 = 168
-
-list + alloc + struct + pack
-   8      16       21     18 = 63
-
-2 + 5 + 5 + 5
-
-pgdata/base/1000000000/1000000000.123456
-
-ManifestDataPack
-1 bytes flags (primary, checksumPage, checksumPageError, modeDefault, userDefault, groupDefault)
-20 bytes sha1
-name
-pack
-
-    const String *name;                                             // File name (must be first member in struct)
-    bool primary:1;                                                 // Should this file be copied from the primary?
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
-    mode_t mode;                                                    // File mode
-    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
-    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
-    const String *user;                                             // User name
-    const String *group;                                            // Group name
-    const String *reference;                                        // Reference to a prior backup
-
-    uint64_t size;                                                  // Original size
-    uint64_t sizeRepo;                                              // Size in repo
-    time_t timestamp;                                               // Original timestamp
-
 ***********************************************************************************************************************************/
 typedef struct PackTagStack
 {
@@ -201,7 +154,7 @@ pckReadNewInternal(void)
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
+        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
     }
     MEM_CONTEXT_NEW_END();
 
@@ -494,7 +447,7 @@ pckReadArrayBegin(PackRead *this, PackIdParam param)
     ASSERT(this != NULL);
 
     pckReadTag(this, PACK_TAG_ID(param.id), pckTypeArray, false);
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray, .idLast = 0});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray});
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -602,7 +555,7 @@ pckReadObjBegin(PackRead *this, PackIdParam param)
     ASSERT(this != NULL);
 
     pckReadTag(this, PACK_TAG_ID(param.id), pckTypeObj, false);
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -679,6 +632,32 @@ pckReadStr(PackRead *this, PckReadStrParam param)
         result = strNew("");
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+time_t
+pckReadTime(PackRead *this, PckReadTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+        FUNCTION_TEST_PARAM(TIME, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    param.id = PACK_TAG_ID(param.id);
+
+    if (param.defaultNull && pckReadNullP(this, .id = param.id))
+    {
+        this->tagStackTop->idLast = param.id;
+        FUNCTION_TEST_RETURN(param.defaultValue);
+    }
+
+    uint64_t result = pckReadTag(this, param.id, pckTypeTime, false);
+
+    FUNCTION_TEST_RETURN((time_t)((result >> 1) ^ (~(result & 1) + 1)));
 }
 
 /**********************************************************************************************************************************/
@@ -780,7 +759,7 @@ pckWriteNewInternal(void)
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
+        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
     }
     MEM_CONTEXT_NEW_END();
 
@@ -965,7 +944,7 @@ pckWriteArrayBegin(PackWrite *this, PackIdParam param)
     ASSERT(this != NULL);
 
     pckWriteTag(this, pckTypeArray, param.id, 0);
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray, .idLast = 0});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray});
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1056,7 +1035,7 @@ pckWriteObjBegin(PackWrite *this, PackIdParam param)
     ASSERT(this != NULL);
 
     pckWriteTag(this, pckTypeObj, param.id, 0);
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1122,6 +1101,28 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
             ioWrite(this->write, BUF(strZ(value), strSize(value)));
         }
     }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(TIME, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+        FUNCTION_TEST_PARAM(TIME, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (param.defaultNull && value == param.defaultValue)
+        this->tagStackTop->nullTotal++;
+    else
+        pckWriteTag(this, pckTypeTime, param.id, ((uint64_t)value << 1) ^ (uint64_t)((int64_t)value >> 63));
 
     FUNCTION_TEST_RETURN(this);
 }

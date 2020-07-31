@@ -225,9 +225,9 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(packCheck),
-            "1:obj:{2:int64:1, 3:uint64:5, 4:uint32:488, 5:uint32:7, 7:str:user, 8:uint32:9, 10:str:group}"
+            "1:obj:{2:time:1, 3:uint64:5, 4:uint32:488, 5:uint32:7, 7:str:user, 8:uint32:9, 10:str:group}"
             ", 2:obj:{}"
-            ", 3:obj:{1:uint32:2, 2:int64:-1, 3:uint32:0, 4:uint32:0, 5:bool:true, 7:uint32:0, 8:bool:true, 10:str:../}",
+            ", 3:obj:{1:uint32:2, 2:time:-1, 3:uint32:0, 4:uint32:0, 5:bool:true, 7:uint32:0, 8:bool:true, 10:str:../}",
             "check result");
 
         StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};
@@ -285,7 +285,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 3:int64:1555160001, 4:uint64:6", "check result");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 3:time:1555160001, 4:uint64:6", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -301,7 +301,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
-                "1:bool:true, 3:int64:1555160001, 4:uint64:6, 5:uint32:416, 6:uint32:{[user-id]}, 8:str:{[user]}"
+                "1:bool:true, 3:time:1555160001, 4:uint64:6, 5:uint32:416, 6:uint32:{[user-id]}, 8:str:{[user]}"
                     ", 9:uint32:{[group-id]}, 11:str:{[group]}"),
             "check result");
 
@@ -361,9 +361,9 @@ testRun(void)
             hrnReplaceKey(
                 "1:array:"
                 "["
-                    "1:obj:{1:str:., 2:uint32:1, 3:int64:1555160000, 4:uint32:488, 5:uint32:{[user-id]}, 7:str:{[user]}"
+                    "1:obj:{1:str:., 2:uint32:1, 3:time:1555160000, 4:uint32:488, 5:uint32:{[user-id]}, 7:str:{[user]}"
                         ", 8:uint32:{[group-id]}, 10:str:{[group]}}"
-                    ", 2:obj:{1:str:test, 3:int64:1, 4:uint64:6, 5:uint32:416}"
+                    ", 2:obj:{1:str:test, 3:time:1, 4:uint64:6, 5:uint32:416}"
                 "]"
                 ", 2:bool:true"),
             "check result");

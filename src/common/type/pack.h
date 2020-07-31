@@ -42,6 +42,7 @@ typedef enum
     pckTypeObj,
     pckTypePtr,
     pckTypeStr,
+    pckTypeTime,
     pckTypeUInt32,
     pckTypeUInt64,
 } PackType;
@@ -150,6 +151,20 @@ typedef struct PckReadStrParam
 
 String *pckReadStr(PackRead *this, PckReadStrParam param);
 
+// Read time
+typedef struct PckReadTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    time_t defaultValue;
+} PckReadTimeParam;
+
+#define pckReadTimeP(this, ...)                                                                                                    \
+    pckReadTime(this, (PckReadTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+time_t pckReadTime(PackRead *this, PckReadTimeParam param);
+
 // Read 32-bit unsigned integer
 typedef struct PckReadUInt32Param
 {
@@ -249,6 +264,20 @@ typedef struct PckWriteStrParam
     pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
+
+// Write time
+typedef struct PckWriteTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    time_t defaultValue;
+} PckWriteTimeParam;
+
+#define pckWriteTimeP(this, value, ...)                                                                                           \
+    pckWriteTime(this, value, (PckWriteTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param);
 
 // Write 32-bit unsigned integer
 typedef struct PckWriteUInt32Param

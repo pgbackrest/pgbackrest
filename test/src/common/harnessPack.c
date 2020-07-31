@@ -41,6 +41,9 @@ String *hrnPackToStr(PackRead *read)
 
         switch (type)
         {
+            case pckTypeUnknown:
+                THROW_FMT(AssertError, "invalid type %s", strZ(pckTypeToStr(type)));
+
             case pckTypeArray:
             {
                 pckReadArrayBeginP(read, .id = id);
@@ -54,6 +57,9 @@ String *hrnPackToStr(PackRead *read)
                 strCatZ(result, cvtBoolToConstZ(pckReadBoolP(read, .id = id)));
                 break;
             }
+
+            case pckTypeBin:
+                THROW_FMT(AssertError, "'%s' NOT YET IMPLEMENTED", strZ(pckTypeToStr(type)));
 
             case pckTypeInt32:
             {
@@ -75,9 +81,21 @@ String *hrnPackToStr(PackRead *read)
                 break;
             }
 
+            case pckTypePtr:
+            {
+                strCatFmt(result, "%p", pckReadPtrP(read, .id = id));
+                break;
+            }
+
             case pckTypeStr:
             {
                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
+                break;
+            }
+
+            case pckTypeTime:
+            {
+                strCatFmt(result, "%" PRId64, (int64_t)pckReadTimeP(read, .id = id));
                 break;
             }
 
@@ -92,9 +110,6 @@ String *hrnPackToStr(PackRead *read)
                 strCatFmt(result, "%" PRIu64, pckReadUInt64P(read, .id = id));
                 break;
             }
-
-            default:
-                THROW_FMT(AssertError, "'%s' NOT IMPLEMENTED", strZ(pckTypeToStr(type)));
         }
 
         first = false;

@@ -116,7 +116,7 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
     FUNCTION_TEST_END();
 
     pckWriteUInt32P(data->write, info->type, .defaultNull = true);
-    pckWriteInt64P(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
+    pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
 
     if (info->type == storageTypeFile)
         pckWriteUInt64P(data->write, info->size, .defaultNull = true);
