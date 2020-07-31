@@ -51,53 +51,33 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("sample"), .id = 38), "write string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("enoughtoincreasebuffer")), "write string");
-        TEST_RESULT_VOID(pckWriteStrZP(packWrite, ""), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStrZP(packWrite, "small", .id = 41), "write string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, EMPTY_STR), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("small"), .id = 41), "write string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL, .id = 43), "write NULL string");
-        TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL, .id = 43, .defaultNull = true), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL, .defaultNull = true), "write NULL string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
         TEST_RESULT_VOID(pckWriteUInt32P(packWrite, 0, .defaultNull = true), "write default 0");
         TEST_RESULT_VOID(pckWriteUInt32P(packWrite, 0, .defaultNull = true, .defaultValue = 1), "write 0");
+        TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite), "write array begin");
+        TEST_RESULT_VOID(pckWriteObjBeginP(packWrite), "write obj begin");
+        TEST_RESULT_VOID(pckWriteInt32P(packWrite, 555), "write 555");
+        TEST_RESULT_VOID(pckWriteInt32P(packWrite, 777, .id = 3), "write 777");
+        TEST_RESULT_VOID(pckWriteInt64P(packWrite, 0, .defaultNull = true), "write 0");
+        TEST_RESULT_VOID(pckWriteInt64P(packWrite, 1, .defaultNull = true), "write 1");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 0, .defaultNull = true), "write 0");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 1, .defaultNull = true), "write 1");
+        TEST_RESULT_VOID(pckWriteObjEnd(packWrite), "write obj end");
+        TEST_RESULT_VOID(pckWriteNull(packWrite), "write null");
+        TEST_RESULT_VOID(
+            pckWriteStrP(packWrite, STRDEF("A"), .defaultNull = true, .defaultValue = STRDEF("")), "write A");
+        TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
 
         ioWriteClose(write);
 
-        TEST_RESULT_STR_Z(
-            bufHex(pack),
-            "8ae803"                                                //  1,  u64, 750
-            "8afd9fad8f07"                                          //  2,  u64, 1911246845
-            "ca01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
-            "6a01"                                                  // 10,  u64, 1
-            "8a4d"                                                  // 11,  u64, 77
-            "897f"                                                  // 12,  u32, 127
-            "45"                                                    // 13,  i64, -1
-            "44"                                                    // 14,  i32, -1
-            "83"                                                    // 15, bool, true
-            "4301"                                                  // 20, bool, false
-            "76"                                                    // 28, obj begin
-                "83"                                                //      1, bool
-                "03"                                                //      2, bool
-                "00"                                                //         obj end
-            "8101"                                                  // 37, array begin
-                "0a"                                                //      1,  u64, 0
-                "4a"                                                //      2,  u64, 1
-                "8a02"                                              //      3,  u64, 2
-                "8a03"                                              //      4,  u64, 3
-                "00"                                                //         array end
-            "880673616d706c65"                                      // 38,  str, sample
-            "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
-            "08"                                                    // 40,  str, zero length
-            "8805736d616c6c"                                        // 41,  str, small
-            "08"                                                    // 42,  str, zero length
-            "28"                                                    // 45,  str, zero length
-            "19"                                                    // 47,  u64, 0
-            "00",                                                   // end
-            "check pack hex");
-
-        // !!! REALLY TOTALLY WRONG
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(pack),
                "1:uint64:488"
@@ -117,10 +97,10 @@ testRun(void)
             "}"
             ", 37:array:"
             "["
-                    "1:uint64:0"
-                  ", 2:uint64:1"
-                  ", 3:uint64:2"
-                  ", 4:uint64:3"
+                  "1:uint64:0"
+                ", 2:uint64:1"
+                ", 3:uint64:2"
+                ", 4:uint64:3"
             "]"
             ", 38:str:sample"
             ", 39:str:enoughtoincreasebuffer"
@@ -129,8 +109,59 @@ testRun(void)
             ", 42:str:"
             ", 45:str:"
             ", 47:uint32:0"
-            ,
+            ", 48:array:"
+            "["
+                    "1:obj:"
+                  "{"
+                        "1:int32:555"
+                      ", 3:int32:777"
+                      ", 5:int64:1"
+                      ", 7:uint64:1"
+                  "}"
+                  ", 3:str:A"
+            "]",
             "check pack string");
+
+        TEST_RESULT_STR_Z(
+            bufHex(pack),
+            "8ae803"                                                //  1,  u64, 750
+            "8afd9fad8f07"                                          //  2,  u64, 1911246845
+            "ca01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
+            "6a01"                                                  // 10,  u64, 1
+            "8a4d"                                                  // 11,  u64, 77
+            "897f"                                                  // 12,  u32, 127
+            "45"                                                    // 13,  i64, -1
+            "44"                                                    // 14,  i32, -1
+            "83"                                                    // 15, bool, true
+            "4301"                                                  // 20, bool, false
+            "76"                                                    // 28, obj begin
+                "83"                                                //      1, bool
+                "03"                                                //      2, bool
+                "00"                                                //     obj end
+            "8101"                                                  // 37, array begin
+                "0a"                                                //      1,  u64, 0
+                "4a"                                                //      2,  u64, 1
+                "8a02"                                              //      3,  u64, 2
+                "8a03"                                              //      4,  u64, 3
+                "00"                                                //     array end
+            "880673616d706c65"                                      // 38,  str, sample
+            "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
+            "08"                                                    // 40,  str, zero length
+            "8805736d616c6c"                                        // 41,  str, small
+            "08"                                                    // 42,  str, zero length
+            "28"                                                    // 45,  str, zero length
+            "19"                                                    // 47,  u64, 0
+            "01"                                                    // 48, array begin
+                "06"                                                //      1, obj begin
+                    "84d608"                                        //           1, int32, 555
+                    "94920c"                                        //           3, int32, 777
+                    "9502"                                          //           5, int64, 1
+                    "5a"                                            //           7, uint64, 1
+                    "00"                                            //         obj end
+                "980141"                                            //      3,  str, A
+                "00"                                                //     array end
+            "00",                                                   // end
+            "check pack hex");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read pack");
@@ -146,23 +177,25 @@ testRun(void)
         TEST_ERROR(pckReadUInt64P(packRead, .id = 2), FormatError, "field 2 was already read");
         TEST_ERROR(pckReadUInt32P(packRead, .id = 7), FormatError, "field 7 is type 'uint64' but expected 'uint32'");
         TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
-        TEST_ERROR(pckReadUInt64P(packRead, 9), FormatError, "field 9 does not exist");
+        TEST_ERROR(pckReadUInt64P(packRead, .id = 9), FormatError, "field 9 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 9), true, "field 9 is null");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 10), false, "field 10 is not null");
         TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 10), 1, "read 1");
         TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 12, .defaultNull = true), 127, "read 127 (skip field 11)");
         TEST_RESULT_INT(pckReadInt64P(packRead), -1, "read -1");
-        TEST_RESULT_INT(pckReadInt32P(packRead, 14), -1, "read -1");
+        TEST_RESULT_INT(pckReadInt32P(packRead, .id = 14), -1, "read -1");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 20), false, "read false");
 
         TEST_ERROR(pckReadObjEnd(packRead), FormatError, "not in object");
-        TEST_RESULT_VOID(pckReadObjBeginP(packRead, 28), "read object begin");
+        TEST_RESULT_VOID(pckReadObjBeginP(packRead, .id = 28), "read object begin");
         TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
-        TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead, .defaultNull = true), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read false");
         TEST_ERROR(pckReadBoolP(packRead), FormatError, "field 3 does not exist");
-        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 3 is null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead), true, "field 3 is null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 4 is null");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead, .defaultNull = true), false, "read default false");
         TEST_RESULT_VOID(pckReadObjEnd(packRead), "read object end");
 
         TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
@@ -182,12 +215,23 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 39), "enoughtoincreasebuffer", "read string (skipped prior)");
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 41), "small", "read string (skipped prior)");
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "", "zero length (skipped prior)");
-        TEST_RESULT_STR(pckReadStrNullP(packRead, 43), NULL, "read NULL string");
-        TEST_RESULT_STR(pckReadStrNullP(packRead, 0), NULL, "read NULL string");
-        TEST_RESULT_STR_Z(pckReadStrNullP(packRead, 0), "", "read empty string");
+        TEST_RESULT_STR(pckReadStrP(packRead, .id = 43, .defaultNull = true), NULL, "read NULL string");
+        TEST_RESULT_STR(pckReadStrP(packRead, .defaultNull = true), NULL, "read NULL string");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead, .defaultNull = true), "", "read empty string");
 
         TEST_RESULT_UINT(pckReadUInt32P(packRead, .defaultNull = true), 0, "read default 0");
         TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 47), 0, "read 0");
+
+        TEST_RESULT_VOID(pckReadArrayBeginP(packRead), "read array begin");
+        TEST_RESULT_VOID(pckReadObjBeginP(packRead), "read object begin");
+        TEST_RESULT_INT(pckReadInt32P(packRead), 555, "read 0");
+        TEST_RESULT_INT(pckReadInt32P(packRead, .id = 3), 777, "read 0");
+        TEST_RESULT_INT(pckReadInt64P(packRead, .defaultNull = true, .defaultValue = 44), 44, "read default 44");
+        TEST_RESULT_INT(pckReadInt64P(packRead, .defaultNull = true, .defaultValue = 44), 1, "read 1");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead, .defaultNull = true, .defaultValue = 55), 55, "read default 55");
+        TEST_RESULT_UINT(pckReadUInt64P(packRead, .defaultNull = true, .defaultValue = 55), 1, "read 1");
+        TEST_RESULT_VOID(pckReadObjEnd(packRead), "read object end");
+        TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
 
         TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");

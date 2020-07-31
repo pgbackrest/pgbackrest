@@ -90,10 +90,18 @@ void pckReadArrayBegin(PackRead *this, PackIdParam param);
 void pckReadArrayEnd(PackRead *this);
 
 // Read boolean
-#define pckReadBoolP(this, ...)                                                                                                    \
-    pckReadBool(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadBoolParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint32_t defaultValue;
+} PckReadBoolParam;
 
-bool pckReadBool(PackRead *this, PackIdParam param);
+#define pckReadBoolP(this, ...)                                                                                                    \
+    pckReadBool(this, (PckReadBoolParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool pckReadBool(PackRead *this, PckReadBoolParam param);
 
 // Read 32-bit signed integer
 #define pckReadInt32P(this, ...)                                                                                                   \
@@ -102,10 +110,18 @@ bool pckReadBool(PackRead *this, PackIdParam param);
 int32_t pckReadInt32(PackRead *this, PackIdParam param);
 
 // Read 64-bit signed integer
-#define pckReadInt64P(this, ...)                                                                                                   \
-    pckReadInt64(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadInt64Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    int64_t defaultValue;
+} PckReadInt64Param;
 
-int64_t pckReadInt64(PackRead *this, PackIdParam param);
+#define pckReadInt64P(this, ...)                                                                                                   \
+    pckReadInt64(this, (PckReadInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+int64_t pckReadInt64(PackRead *this, PckReadInt64Param param);
 
 // Read object begin/end
 #define pckReadObjBeginP(this, ...)                                                                                                \
@@ -120,16 +136,19 @@ void pckReadObjEnd(PackRead *this);
 
 void *pckReadPtr(PackRead *this, PackIdParam param);
 
-// Read string. pckReadStrNull() returns NULL if the string is NULL.
+// Read string
+typedef struct PckReadStrParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    const String *defaultValue;
+} PckReadStrParam;
+
 #define pckReadStrP(this, ...)                                                                                                     \
-    pckReadStr(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+    pckReadStr(this, (PckReadStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-String *pckReadStr(PackRead *this, PackIdParam param);
-
-#define pckReadStrNullP(this, ...)                                                                                                 \
-    pckReadStrNull(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-String *pckReadStrNull(PackRead *this, PackIdParam param);
+String *pckReadStr(PackRead *this, PckReadStrParam param);
 
 // Read 32-bit unsigned integer
 typedef struct PckReadUInt32Param
@@ -146,10 +165,18 @@ typedef struct PckReadUInt32Param
 uint32_t pckReadUInt32(PackRead *this, PckReadUInt32Param param);
 
 // Read 64-bit unsigned integer
-#define pckReadUInt64P(this, ...)                                                                                                  \
-    pckReadUInt64(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadUInt64Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint64_t defaultValue;
+} PckReadUInt64Param;
 
-uint64_t pckReadUInt64(PackRead *this, PackIdParam param);
+#define pckReadUInt64P(this, ...)                                                                                                  \
+    pckReadUInt64(this, (PckReadUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint64_t pckReadUInt64(PackRead *this, PckReadUInt64Param param);
 
 // Read end
 void pckReadEnd(PackRead *this);
@@ -177,10 +204,24 @@ PackWrite *pckWriteBool(PackWrite *this, bool value, PackIdParam param);
 PackWrite *pckWriteInt32(PackWrite *this, int32_t value, PackIdParam param);
 
 // Write 64-bit signed integer
-#define pckWriteInt64P(this, value, ...)                                                                                           \
-    pckWriteInt64(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWriteInt64Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    int64_t defaultValue;
+} PckWriteInt64Param;
 
-PackWrite *pckWriteInt64(PackWrite *this, int64_t value, PackIdParam param);
+#define pckWriteInt64P(this, value, ...)                                                                                           \
+    pckWriteInt64(this, value, (PckWriteInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteInt64(PackWrite *this, int64_t value, PckWriteInt64Param param);
+
+// Write null
+#define pckWriteNullP(this)                                                                                                        \
+    pckWriteNull(this)
+
+PackWrite *pckWriteNull(PackWrite *this);
 
 // Write object begin/end
 #define pckWriteObjBeginP(this, ...)                                                                                               \
@@ -196,20 +237,18 @@ PackWrite *pckWriteObjEnd(PackWrite *this);
 PackWrite *pckWritePtr(PackWrite *this, const void *value, PackIdParam param);
 
 // Write string
+typedef struct PckWriteStrParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    const String *defaultValue;
+} PckWriteStrParam;
+
 #define pckWriteStrP(this, value, ...)                                                                                             \
-    pckWriteStr(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+    pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteStr(PackWrite *this, const String *value, PackIdParam param);
-
-#define pckWriteStrZP(this, value, ...)                                                                                            \
-    pckWriteStrZ(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-PackWrite *pckWriteStrZ(PackWrite *this, const char *value, PackIdParam param);
-
-#define pckWriteStrZNP(this, value, ...)                                                                                           \
-    pckWriteStrZN(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-PackWrite *pckWriteStrZN(PackWrite *this, const char *value, size_t size, PackIdParam param);
+PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
 
 // Write 32-bit unsigned integer
 typedef struct PckWriteUInt32Param
@@ -226,10 +265,18 @@ typedef struct PckWriteUInt32Param
 PackWrite *pckWriteUInt32(PackWrite *this, uint32_t value, PckWriteUInt32Param param);
 
 // Write 64-bit unsigned integer
-#define pckWriteUInt64P(this, value, ...)                                                                                          \
-    pckWriteUInt64(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWriteUInt64Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint64_t defaultValue;
+} PckWriteUInt64Param;
 
-PackWrite *pckWriteUInt64(PackWrite *this, uint64_t value, PackIdParam param);
+#define pckWriteUInt64P(this, value, ...)                                                                                          \
+    pckWriteUInt64(this, value, (PckWriteUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteUInt64(PackWrite *this, uint64_t value, PckWriteUInt64Param param);
 
 // Write end
 PackWrite *pckWriteEnd(PackWrite *this);

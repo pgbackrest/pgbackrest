@@ -97,11 +97,14 @@ Callback to write info list into the protocol
 // or check for level == storageInfoLevelExists.
 typedef struct StorageRemoteProtocolInfoListCallbackData
 {
+    MemContext *memContext;
     PackWrite *write;
     time_t timeModifiedLast;
     mode_t modeLast;
     uid_t userIdLast;
     gid_t groupIdLast;
+    String *user;
+    String *group;
 } StorageRemoteProtocolInfoListCallbackData;
 
 static void
@@ -113,18 +116,39 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
     FUNCTION_TEST_END();
 
     pckWriteUInt32P(data->write, info->type, .defaultNull = true);
-    pckWriteInt64P(data->write, info->timeModified - data->timeModifiedLast);
+    pckWriteInt64P(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
 
     if (info->type == storageTypeFile)
-        pckWriteUInt64P(data->write, info->size);
+        pckWriteUInt64P(data->write, info->size, .defaultNull = true);
 
     if (info->level >= storageInfoLevelDetail)
     {
         pckWriteUInt32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
         pckWriteUInt32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
-        pckWriteStrP(data->write, info->user);
+
+        if (info->user == NULL)
+        {
+            pckWriteBoolP(data->write, true);
+            pckWriteNullP(data->write);
+        }
+        else
+        {
+            pckWriteNullP(data->write);
+            pckWriteStrP(data->write, info->user, .defaultNull = data->user != NULL, .defaultValue = data->user);
+        }
+
         pckWriteUInt32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
-        pckWriteStrP(data->write, info->group);
+
+        if (info->group == NULL)
+        {
+            pckWriteBoolP(data->write, true);
+            pckWriteNullP(data->write);
+        }
+        else
+        {
+            pckWriteNullP(data->write);
+            pckWriteStrP(data->write, info->group, .defaultNull = data->group != NULL, .defaultValue = data->group);
+        }
 
         if (info->type == storageTypeLink)
             pckWriteStrP(data->write, info->linkDestination);
@@ -134,6 +158,31 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
     data->modeLast = info->mode;
     data->userIdLast = info->userId;
     data->groupIdLast = info->groupId;
+
+    if (data->memContext != NULL)
+    {
+        if (!strEq(info->user, data->user) && info->user != NULL)
+        {
+            strFree(data->user);
+
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->user = strDup(info->user);
+            }
+            MEM_CONTEXT_END();
+        }
+
+        if (!strEq(info->group, data->group) && info->group != NULL)
+        {
+            strFree(data->group);
+
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->group = strDup(info->group);
+            }
+            MEM_CONTEXT_END();
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -206,7 +255,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
             pckWriteArrayBeginP(write);
 
-            StorageRemoteProtocolInfoListCallbackData data = {.write = write};
+            StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
 
             bool result = storageInterfaceInfoListP(
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),

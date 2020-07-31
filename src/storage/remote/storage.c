@@ -40,6 +40,8 @@ typedef struct StorageRemoteInfoParseData
     mode_t modeLast;
     uid_t userIdLast;
     gid_t groupIdLast;
+    String *user;
+    String *group;
 } StorageRemoteInfoParseData;
 
 static void
@@ -51,18 +53,27 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     FUNCTION_TEST_END();
 
     info->type = pckReadUInt32P(data->read, .defaultNull = true);
-    info->timeModified = (time_t)pckReadInt64P(data->read) + data->timeModifiedLast;
+    info->timeModified = (time_t)pckReadInt64P(data->read, .defaultNull = true) + data->timeModifiedLast;
 
     if (info->type == storageTypeFile)
-        info->size = pckReadUInt64P(data->read);
+        info->size = pckReadUInt64P(data->read, .defaultNull = true);
 
     if (info->level >= storageInfoLevelDetail)
     {
         info->mode = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
         info->userId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
-        info->user = pckReadStrNullP(data->read);
+
+        if (pckReadBoolP(data->read, .defaultNull = true))
+            info->user = pckReadStrP(data->read, .defaultNull = true);
+        else
+            info->user = pckReadStrP(data->read, .defaultNull = data->user != NULL, .defaultValue = data->user);
+
         info->groupId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
-        info->group = pckReadStrNullP(data->read);
+
+        if (pckReadBoolP(data->read, .defaultNull = true))
+            info->group = pckReadStrP(data->read, .defaultNull = true);
+        else
+            info->group = pckReadStrP(data->read, .defaultNull = data->group != NULL, .defaultValue = data->group);
 
         if (info->type == storageTypeLink)
             info->linkDestination = pckReadStrP(data->read);
@@ -72,6 +83,18 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     data->modeLast = info->mode;
     data->userIdLast = info->userId;
     data->groupIdLast = info->groupId;
+
+    if (!strEq(info->user, data->user) && info->user != NULL)
+    {
+        strFree(data->user);
+        data->user = strDup(info->user);
+    }
+
+    if (!strEq(info->group, data->group) && info->group != NULL)
+    {
+        strFree(data->group);
+        data->group = strDup(info->group);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

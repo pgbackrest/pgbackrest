@@ -191,17 +191,72 @@ testRun(void)
 
         Buffer *packCheck = bufNew(0);
         PackWrite *packWriteCheck = pckWriteNewBuf(packCheck);
-        StorageRemoteProtocolInfoListCallbackData callbackData = {.write = packWriteCheck};
-        info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
-        TEST_RESULT_VOID(storageRemoteInfoWrite(&callbackData, &info), "write link info");
+        StorageRemoteProtocolInfoListCallbackData callbackData = {.write = packWriteCheck, .memContext = memContextCurrent()};
+
+        pckWriteObjBeginP(packWriteCheck);
+        TEST_RESULT_VOID(
+            storageRemoteInfoWrite(
+                &callbackData,
+                &(StorageInfo){
+                    .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 5, .mode = 0750,
+                    .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
+            "write file info");
+        pckWriteObjEnd(packWriteCheck);
+
+        pckWriteObjBeginP(packWriteCheck);
+        TEST_RESULT_VOID(
+            storageRemoteInfoWrite(
+                &callbackData,
+                &(StorageInfo){
+                    .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 0, .mode = 0750,
+                    .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
+            "write file info");
+        pckWriteObjEnd(packWriteCheck);
+
+        pckWriteObjBeginP(packWriteCheck);
+        TEST_RESULT_VOID(
+            storageRemoteInfoWrite(
+                &callbackData,
+                &(StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")}),
+            "write link info");
+        pckWriteObjEnd(packWriteCheck);
+
         pckWriteEnd(packWriteCheck);
 
-        TEST_RESULT_STR_Z(hrnPackBufToStr(packCheck), "1:uint32:2, 2:int64:0, 8:str:../", "check result");
+        TEST_RESULT_STR_Z(
+            hrnPackBufToStr(packCheck),
+            "1:obj:{2:int64:1, 3:uint64:5, 4:uint32:488, 5:uint32:7, 7:str:user, 8:uint32:9, 10:str:group}"
+            ", 2:obj:{}"
+            ", 3:obj:{1:uint32:2, 2:int64:-1, 3:uint32:0, 4:uint32:0, 5:bool:true, 7:uint32:0, 8:bool:true, 10:str:../}",
+            "check result");
 
         StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};
+        HarnessStorageInfoListCallbackData infoListCallbackData = {.content = strNew("")};
 
-        info = (StorageInfo){.name = NULL};
+        info = (StorageInfo){.level = storageInfoLevelDetail};
+        pckReadObjBeginP(parseData.read);
         storageRemoteInfoParse(&parseData, &info);
+        pckReadObjEnd(parseData.read);
+        hrnStorageInfoListCallback(&infoListCallbackData, &info);
+
+        info = (StorageInfo){.level = storageInfoLevelDetail};
+        pckReadObjBeginP(parseData.read);
+        storageRemoteInfoParse(&parseData, &info);
+        pckReadObjEnd(parseData.read);
+        hrnStorageInfoListCallback(&infoListCallbackData, &info);
+
+        info = (StorageInfo){.level = storageInfoLevelDetail};
+        pckReadObjBeginP(parseData.read);
+        storageRemoteInfoParse(&parseData, &info);
+        pckReadObjEnd(parseData.read);
+        hrnStorageInfoListCallback(&infoListCallbackData, &info);
+
+        TEST_RESULT_STR_Z(
+            infoListCallbackData.content,
+            "null {file, s=5, m=0750, t=1, u=user, g=group}\n"
+            "null {file, s=0, m=0750, t=1, u=user, g=group}\n"
+            "null {link, d=../, u=0, g=0}\n",
+            "check result");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with missing path/file");
@@ -246,8 +301,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
-                "1:bool:true, 3:int64:1555160001, 4:uint64:6, 5:uint32:416, 6:uint32:1000, 7:str:vagrant, 8:uint32:1000"
-                    ", 9:str:vagrant"),
+                "1:bool:true, 3:int64:1555160001, 4:uint64:6, 5:uint32:416, 6:uint32:{[user-id]}, 8:str:{[user]}"
+                    ", 9:uint32:{[group-id]}, 11:str:{[group]}"),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -306,9 +361,9 @@ testRun(void)
             hrnReplaceKey(
                 "1:array:"
                 "["
-                    "1:obj:{1:str:., 2:uint32:1, 3:int64:1555160000, 4:uint32:488, 5:uint32:1000, 6:str:vagrant, 7:uint32:1000"
-                        ", 8:str:vagrant}"
-                    ", 2:obj:{1:str:test, 3:int64:1, 4:uint64:6, 5:uint32:416, 7:str:vagrant, 9:str:vagrant}"
+                    "1:obj:{1:str:., 2:uint32:1, 3:int64:1555160000, 4:uint32:488, 5:uint32:{[user-id]}, 7:str:{[user]}"
+                        ", 8:uint32:{[group-id]}, 10:str:{[group]}}"
+                    ", 2:obj:{1:str:test, 3:int64:1, 4:uint64:6, 5:uint32:416}"
                 "]"
                 ", 2:bool:true"),
             "check result");
