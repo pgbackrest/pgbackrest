@@ -196,14 +196,14 @@ testRun(void)
 
         Buffer *pack = bufNew(0);
         PackWrite *packWrite = pckWriteNewBuf(pack);
-        pckWriteUInt32(packWrite, 0, storageTypeLink);
-        pckWriteInt64(packWrite, 0, 0);
-        pckWriteUInt32(packWrite, 0, 0);
-        pckWriteStrZ(packWrite, 0, NULL);
-        pckWriteUInt32(packWrite, 0, 0);
-        pckWriteStrZ(packWrite, 0, NULL);
-        pckWriteUInt32(packWrite, 0, 0);
-        pckWriteStrZ(packWrite, 0, "../");
+        pckWriteUInt32P(packWrite, storageTypeLink);
+        pckWriteInt64P(packWrite, 0);
+        pckWriteUInt32P(packWrite, 0);
+        pckWriteStrZP(packWrite, NULL);
+        pckWriteUInt32P(packWrite, 0);
+        pckWriteStrZP(packWrite, NULL);
+        pckWriteUInt32P(packWrite, 0);
+        pckWriteStrZP(packWrite, "../");
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR(bufHex(packCheck), bufHex(pack), "check result");
@@ -241,9 +241,9 @@ testRun(void)
 
         pack = bufNew(0);
         packWrite = pckWriteNewBuf(pack);
-        pckWriteUInt32(packWrite, 0, storageTypeFile);
-        pckWriteInt64(packWrite, 0, 1555160001);
-        pckWriteUInt64(packWrite, 0, 6);
+        pckWriteUInt32P(packWrite, storageTypeFile);
+        pckWriteInt64P(packWrite, 1555160001);
+        pckWriteUInt64P(packWrite, 6);
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR_Z(
@@ -264,14 +264,14 @@ testRun(void)
 
         pack = bufNew(0);
         packWrite = pckWriteNewBuf(pack);
-        pckWriteUInt32(packWrite, 0, storageTypeFile);
-        pckWriteInt64(packWrite, 0, 1555160001);
-        pckWriteUInt64(packWrite, 0, 6);
-        pckWriteUInt32(packWrite, 0, getuid());
-        pckWriteStrZ(packWrite, 0, testUser());
-        pckWriteUInt32(packWrite, 0, getgid());
-        pckWriteStrZ(packWrite, 0, testGroup());
-        pckWriteUInt32(packWrite, 0, 0640);
+        pckWriteUInt32P(packWrite, storageTypeFile);
+        pckWriteInt64P(packWrite, 1555160001);
+        pckWriteUInt64P(packWrite, 6);
+        pckWriteUInt32P(packWrite, getuid());
+        pckWriteStrZP(packWrite, testUser());
+        pckWriteUInt32P(packWrite, getgid());
+        pckWriteStrZP(packWrite, testGroup());
+        pckWriteUInt32P(packWrite, 0640);
         pckWriteEnd(packWrite);
 
         TEST_RESULT_STR_Z(
@@ -335,27 +335,27 @@ testRun(void)
         PackWrite *packWrite = pckWriteNewBuf(pack);
         pckWriteArrayBeginP(packWrite);
 
-        pckWriteObjBegin(packWrite, 0);
-        pckWriteStrZ(packWrite, 0, ".");
-        pckWriteUInt32(packWrite, 0, storageTypePath);
-        pckWriteInt64(packWrite, 0, 1555160000);
-        pckWriteUInt32(packWrite, 0, getuid());
-        pckWriteStrZ(packWrite, 0, testUser());
-        pckWriteUInt32(packWrite, 0, getgid());
-        pckWriteStrZ(packWrite, 0, testGroup());
-        pckWriteUInt32(packWrite, 0, 0750);
+        pckWriteObjBeginP(packWrite);
+        pckWriteStrZP(packWrite, ".");
+        pckWriteUInt32P(packWrite, storageTypePath);
+        pckWriteInt64P(packWrite, 1555160000);
+        pckWriteUInt32P(packWrite, getuid());
+        pckWriteStrZP(packWrite, testUser());
+        pckWriteUInt32P(packWrite, getgid());
+        pckWriteStrZP(packWrite, testGroup());
+        pckWriteUInt32P(packWrite, 0750);
         pckWriteObjEnd(packWrite);
 
-        pckWriteObjBegin(packWrite, 0);
-        pckWriteStrZ(packWrite, 0, "test");
-        pckWriteUInt32(packWrite, 0, storageTypeFile);
-        pckWriteInt64(packWrite, 0, 1555160001);
-        pckWriteUInt64(packWrite, 0, 6);
-        pckWriteUInt32(packWrite, 0, getuid());
-        pckWriteStrZ(packWrite, 0, testUser());
-        pckWriteUInt32(packWrite, 0, getgid());
-        pckWriteStrZ(packWrite, 0, testGroup());
-        pckWriteUInt32(packWrite, 0, 0640);
+        pckWriteObjBeginP(packWrite);
+        pckWriteStrZP(packWrite, "test");
+        pckWriteUInt32P(packWrite, storageTypeFile);
+        pckWriteInt64P(packWrite, 1555160001);
+        pckWriteUInt64P(packWrite, 6);
+        pckWriteUInt32P(packWrite, getuid());
+        pckWriteStrZP(packWrite, testUser());
+        pckWriteUInt32P(packWrite, getgid());
+        pckWriteStrZP(packWrite, testGroup());
+        pckWriteUInt32P(packWrite, 0640);
         pckWriteObjEnd(packWrite);
 
         pckWriteArrayEnd(packWrite);

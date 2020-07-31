@@ -100,22 +100,22 @@ storageRemoteInfoWrite(PackWrite *write, const StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteUInt32(write, 0, info->type);
-    pckWriteInt64(write, 0, info->timeModified);
+    pckWriteUInt32P(write, info->type);
+    pckWriteInt64P(write, info->timeModified);
 
     if (info->type == storageTypeFile)
-        pckWriteUInt64(write, 0, info->size);
+        pckWriteUInt64P(write, info->size);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        pckWriteUInt32(write, 0, info->userId);
-        pckWriteStr(write, 0, info->user);
-        pckWriteUInt32(write, 0, info->groupId);
-        pckWriteStr(write, 0, info->group);
-        pckWriteUInt32(write, 0, info->mode);
+        pckWriteUInt32P(write, info->userId);
+        pckWriteStrP(write, info->user);
+        pckWriteUInt32P(write, info->groupId);
+        pckWriteStrP(write, info->group);
+        pckWriteUInt32P(write, info->mode);
 
         if (info->type == storageTypeLink)
-            pckWriteStr(write, 0, info->linkDestination);
+            pckWriteStrP(write, info->linkDestination);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -132,8 +132,8 @@ storageRemoteProtocolInfoListCallback(void *write, const StorageInfo *info)
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteObjBegin(write, 0);
-    pckWriteStr(write, 0, info->name);
+    pckWriteObjBeginP(write);
+    pckWriteStrP(write, info->name);
     storageRemoteInfoWrite(write, info);
     pckWriteObjEnd(write);
 

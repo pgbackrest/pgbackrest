@@ -950,50 +950,50 @@ pckWriteBool(PackWrite *this, bool value, PackIdParam param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteInt32(PackWrite *this, unsigned int id, int32_t value)
+pckWriteInt32(PackWrite *this, int32_t value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(INT, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeInt32, id, ((uint32_t)value << 1) ^ (uint32_t)(value >> 31));
+    pckWriteTag(this, pckTypeInt32, param.id, ((uint32_t)value << 1) ^ (uint32_t)(value >> 31));
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteInt64(PackWrite *this, unsigned int id, int64_t value)
+pckWriteInt64(PackWrite *this, int64_t value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(INT64, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeInt64, id, ((uint64_t)value << 1) ^ (uint64_t)(value >> 63));
+    pckWriteTag(this, pckTypeInt64, param.id, ((uint64_t)value << 1) ^ (uint64_t)(value >> 63));
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteObjBegin(PackWrite *this, unsigned int id)
+pckWriteObjBegin(PackWrite *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeObj, id, 0);
+    pckWriteTag(this, pckTypeObj, param.id, 0);
     lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj, .idLast = 0});
 
     FUNCTION_TEST_RETURN(this);
@@ -1018,37 +1018,37 @@ pckWriteObjEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWritePtr(PackWrite *this, unsigned int id, const void *value)
+pckWritePtr(PackWrite *this, const void *value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM_P(VOID, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypePtr, id, (uintptr_t)value);
+    pckWriteTag(this, pckTypePtr, param.id, (uintptr_t)value);
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteStrZN(PackWrite *this, unsigned int id, const char *value, size_t size)
+pckWriteStrZN(PackWrite *this, const char *value, size_t size, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(STRINGZ, value);
         FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
     if (value != NULL)
     {
-        pckWriteTag(this, pckTypeStr, id, size > 0);
+        pckWriteTag(this, pckTypeStr, param.id, size > 0);
 
         if (size > 0)
         {
@@ -1063,59 +1063,59 @@ pckWriteStrZN(PackWrite *this, unsigned int id, const char *value, size_t size)
 }
 
 PackWrite *
-pckWriteStrZ(PackWrite *this, unsigned int id, const char *value)
+pckWriteStrZ(PackWrite *this, const char *value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, value, value == NULL ? 0 : strlen(value)));
+    FUNCTION_TEST_RETURN(pckWriteStrZN(this, value, value == NULL ? 0 : strlen(value), param));
 }
 
 PackWrite *
-pckWriteStr(PackWrite *this, unsigned int id, const String *value)
+pckWriteStr(PackWrite *this, const String *value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pckWriteStrZN(this, id, strZNull(value), strZNull(value) == NULL ? 0 : strSize(value)));
+    FUNCTION_TEST_RETURN(pckWriteStrZN(this, strZNull(value), strZNull(value) == NULL ? 0 : strSize(value), param));
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value)
+pckWriteUInt32(PackWrite *this, uint32_t value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(UINT32, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeUInt32, id, value);
+    pckWriteTag(this, pckTypeUInt32, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value)
+pckWriteUInt64(PackWrite *this, uint64_t value, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(UINT64, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeUInt64, id, value);
+    pckWriteTag(this, pckTypeUInt64, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }

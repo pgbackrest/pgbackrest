@@ -26,34 +26,35 @@ testRun(void)
         TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
 
         TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 0}", "log");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0750), "write mode");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 0750), "write mode");
         TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 1}", "log");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1911246845), "write timestamp");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 7, 0xFFFFFFFFFFFFFFFF), "write max u64");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 10, 1), "write 1");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 11, 77), "write 77");
-        TEST_RESULT_VOID(pckWriteUInt32(packWrite, 12, 127), "write 127");
-        TEST_RESULT_VOID(pckWriteInt64(packWrite, 13, -1), "write -1");
-        TEST_RESULT_VOID(pckWriteInt32(packWrite, 14, -1), "write -1");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 1911246845), "write timestamp");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 0xFFFFFFFFFFFFFFFF, .id = 7), "write max u64");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 1, .id = 10), "write 1");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 77), "write 77");
+        TEST_RESULT_VOID(pckWriteUInt32P(packWrite, 127, .id = 12), "write 127");
+        TEST_RESULT_VOID(pckWriteInt64P(packWrite, -1, .id = 13), "write -1");
+        TEST_RESULT_VOID(pckWriteInt32P(packWrite, -1), "write -1");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .id = 20), "write false");
-        TEST_RESULT_VOID(pckWriteObjBegin(packWrite, 28), "write obj begin");
+        TEST_RESULT_VOID(pckWriteObjBeginP(packWrite, .id = 28), "write obj begin");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false), "write false");
         TEST_RESULT_VOID(pckWriteObjEnd(packWrite), "write obj end");
         TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite, .id = 37), "write array begin");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 1, 0), "write 0");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 2, 1), "write 1");
-        TEST_RESULT_VOID(pckWriteUInt64(packWrite, 3, 2), "write 2");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 0), "write 0");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 1), "write 1");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 2), "write 2");
+        TEST_RESULT_VOID(pckWriteUInt64P(packWrite, 3), "write 3");
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 38, STRDEF("sample")), "write string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 39, STRDEF("enoughtoincreasebuffer")), "write string");
-        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 0, ""), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 41, "small"), "write string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 0, STRDEF("")), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 43, NULL), "write NULL string");
-        TEST_RESULT_VOID(pckWriteStrZ(packWrite, 0, NULL), "write NULL string");
-        TEST_RESULT_VOID(pckWriteStr(packWrite, 0, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("sample"), .id = 38), "write string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("enoughtoincreasebuffer")), "write string");
+        TEST_RESULT_VOID(pckWriteStrZP(packWrite, ""), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrZP(packWrite, "small", .id = 41), "write string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL, .id = 43), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -80,6 +81,7 @@ testRun(void)
                 "0a"                                                //      1,  u64, 0
                 "4a"                                                //      2,  u64, 1
                 "8a02"                                              //      3,  u64, 2
+                "8a03"                                              //      4,  u64, 3
                 "00"                                                //         array end
             "880673616d706c65"                                      // 38,  str, sample
             "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
@@ -162,11 +164,11 @@ testRun(void)
         pack = bufNew(0);
 
         TEST_ASSIGN(packWrite, pckWriteNewBuf(pack), "new write");
-        TEST_RESULT_VOID(pckWritePtr(packWrite, 1, "sample"), "write pointer");
+        TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "write end");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
-        TEST_RESULT_Z(pckReadPtrP(packRead, 1), "sample", "read pointer");
+        TEST_RESULT_Z(pckReadPtrP(packRead, .id = 1), "sample", "read pointer");
     }
 
     // *****************************************************************************************************************************

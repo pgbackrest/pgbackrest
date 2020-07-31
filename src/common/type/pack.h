@@ -132,6 +132,7 @@ uint32_t pckReadUInt32(PackRead *this, PackIdParam param);
 
 uint64_t pckReadUInt64(PackRead *this, PackIdParam param);
 
+// Read end
 void pckReadEnd(PackRead *this);
 
 /***********************************************************************************************************************************
@@ -150,19 +151,60 @@ PackWrite *pckWriteArrayEnd(PackWrite *this);
 
 PackWrite *pckWriteBool(PackWrite *this, bool value, PackIdParam param);
 
-PackWrite *pckWriteInt32(PackWrite *this, unsigned int id, int32_t value);
-PackWrite *pckWriteInt64(PackWrite *this, unsigned int id, int64_t value);
-PackWrite *pckWriteObjBegin(PackWrite *this, unsigned int id);
+// Write 32-bit signed integer
+#define pckWriteInt32P(this, value, ...)                                                                                           \
+    pckWriteInt32(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteInt32(PackWrite *this, int32_t value, PackIdParam param);
+
+// Write 64-bit signed integer
+#define pckWriteInt64P(this, value, ...)                                                                                           \
+    pckWriteInt64(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteInt64(PackWrite *this, int64_t value, PackIdParam param);
+
+// Write object begin/end
+#define pckWriteObjBeginP(this, ...)                                                                                               \
+    pckWriteObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
 PackWrite *pckWriteObjEnd(PackWrite *this);
 
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-PackWrite *pckWritePtr(PackWrite *this, unsigned int id, const void *value);
-PackWrite *pckWriteStr(PackWrite *this, unsigned int id, const String *value);
-PackWrite *pckWriteStrZ(PackWrite *this, unsigned int id, const char *value);
-PackWrite *pckWriteStrZN(PackWrite *this, unsigned int id, const char *value, size_t size);
-PackWrite *pckWriteUInt32(PackWrite *this, unsigned int id, uint32_t value);
-PackWrite *pckWriteUInt64(PackWrite *this, unsigned int id, uint64_t value);
+#define pckWritePtrP(this, value, ...)                                                                                             \
+    pckWritePtr(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
+PackWrite *pckWritePtr(PackWrite *this, const void *value, PackIdParam param);
+
+// Write string
+#define pckWriteStrP(this, value, ...)                                                                                             \
+    pckWriteStr(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStr(PackWrite *this, const String *value, PackIdParam param);
+
+#define pckWriteStrZP(this, value, ...)                                                                                            \
+    pckWriteStrZ(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrZ(PackWrite *this, const char *value, PackIdParam param);
+
+#define pckWriteStrZNP(this, value, ...)                                                                                           \
+    pckWriteStrZN(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrZN(PackWrite *this, const char *value, size_t size, PackIdParam param);
+
+// Write 32-bit unsigned integer
+#define pckWriteUInt32P(this, value, ...)                                                                                          \
+    pckWriteUInt32(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteUInt32(PackWrite *this, uint32_t value, PackIdParam param);
+
+// Write 64-bit unsigned integer
+#define pckWriteUInt64P(this, value, ...)                                                                                          \
+    pckWriteUInt64(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteUInt64(PackWrite *this, uint64_t value, PackIdParam param);
+
+// Write end
 PackWrite *pckWriteEnd(PackWrite *this);
 
 /***********************************************************************************************************************************
