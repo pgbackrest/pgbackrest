@@ -93,8 +93,8 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 /***********************************************************************************************************************************
 Callback to write info list into the protocol
 ***********************************************************************************************************************************/
-// Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
-// or check for level == storageInfoLevelExists.
+// Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
+// check for level == storageInfoLevelExists.
 typedef struct StorageRemoteProtocolInfoListCallbackData
 {
     MemContext *memContext;

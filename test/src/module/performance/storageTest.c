@@ -196,10 +196,14 @@ testRun(void)
                 Storage *storageRemote = storageRemoteNew(
                     STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
 
+                TimeMSec timeBegin = timeMSec();
+
                 // Storage info list
                 TEST_RESULT_VOID(
                     storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
                     "list %" PRIu64 " remote files", fileTotal);
+
+                TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
                 // Free client
                 protocolClientFree(client);
