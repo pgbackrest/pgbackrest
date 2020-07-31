@@ -90,9 +90,10 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 }
 
 /***********************************************************************************************************************************
-Write storage info into the protocol. This function is not called unless the info exists so no need to write exists or check for
-level == storageInfoLevelExists.
+Callback to write info list into the protocol
 ***********************************************************************************************************************************/
+// Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
+// check for level == storageInfoLevelExists.
 static void
 storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 {
@@ -122,9 +123,6 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Callback to write info list into the protocol
-***********************************************************************************************************************************/
 static void
 storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
 {
