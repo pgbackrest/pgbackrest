@@ -195,9 +195,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoteInfoWrite(packWriteCheck, &info), "write link info");
         pckWriteEnd(packWriteCheck);
 
-        // !!! THIS RESULT SEEMS WRONG
         TEST_RESULT_STR_Z(
-            pckBufToStr(packCheck), "1:uint32:2, 2:int64:0, 3:uint32:0, 5:uint32:null, 5:uint32:null, 4:str:../", "check result");
+            hrnPackBufToStr(packCheck), "1:uint32:2, 2:int64:0, 3:uint32:0, 5:uint32:0, 7:uint32:0, 8:str:../", "check result");
 
         info = (StorageInfo){.name = NULL};
         storageRemoteInfoParse(pckReadNewBuf(packCheck), &info);
@@ -211,7 +210,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(pckBufToStr(serverWrite), "1:bool:false", "check result");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:false", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -229,7 +228,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(pckBufToStr(serverWrite), "1:bool:true, 2:uint32:0, 3:int64:1555160001, 4:uint64:6", "check result");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:uint32:0, 3:int64:1555160001, 4:uint64:6", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -243,7 +242,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
         TEST_RESULT_STR_Z(
-            pckBufToStr(serverWrite),
+            hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
                 "1:bool:true, 2:uint32:0, 3:int64:1555160001, 4:uint64:6, 5:uint32:{[user-id]}, 6:str:{[user]}"
                     ", 7:uint32:{[group-id]}, 8:str:{[group]}, 9:uint32:416"),
@@ -301,18 +300,17 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
-        // !!! THE NUMBERS HERE ARE WRONG
         TEST_RESULT_STR_Z(
-            pckBufToStr(serverWrite),
+            hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
                 "1:array:"
                 "["
                     "1:obj:{1:str:., 2:uint32:1, 3:int64:1555160000, 4:uint32:1000, 5:str:vagrant, 6:uint32:1000, 7:str:vagrant"
                         ", 8:uint32:488}"
-                    ", 9:obj:{9:str:test, 10:uint32:0, 11:int64:1555160001, 12:uint64:6, 13:uint32:1000, 14:str:vagrant"
-                        ", 15:uint32:1000, 16:str:vagrant, 17:uint32:416}"
+                    ", 2:obj:{1:str:test, 2:uint32:0, 3:int64:1555160001, 4:uint64:6, 5:uint32:1000, 6:str:vagrant"
+                        ", 7:uint32:1000, 8:str:vagrant, 9:uint32:416}"
                 "]"
-                ", 18:bool:true"),
+                ", 2:bool:true"),
             "check result");
 
         bufUsedSet(serverWrite, 0);

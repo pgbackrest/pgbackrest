@@ -10,17 +10,17 @@ Harness for Loading Test Configurations
 #include "common/harnessPack.h"
 
 /**********************************************************************************************************************************/
-String *pckBufToStr(const Buffer *buffer)
+String *hrnPackBufToStr(const Buffer *buffer)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BUFFER, buffer);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RESULT(STRING, pckToStr(pckReadNewBuf(buffer)));
+    FUNCTION_HARNESS_RESULT(STRING, hrnPackToStr(pckReadNewBuf(buffer)));
 }
 
 /**********************************************************************************************************************************/
-String *pckToStr(PackRead *read)
+String *hrnPackToStr(PackRead *read)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, read);
@@ -34,60 +34,67 @@ String *pckToStr(PackRead *read)
         if (!first)
             strCatZ(result, ", ");
 
-        strCatFmt(result, "%u:%s:", pckReadId(read), strZ(pckTypeToStr(pckReadType(read))));
+        PackType type = pckReadType(read);
+        unsigned int id = pckReadId(read);
 
-        if (pckReadType(read) == pckTypeArray)
-            strCatFmt(result, "[%s]", strZ(pckToStr(read)));
-        else if (pckReadType(read) == pckTypeObj)
-            strCatFmt(result, "{%s}", strZ(pckToStr(read)));
-        else
+        strCatFmt(result, "%u:%s:", id, strZ(pckTypeToStr(type)));
+
+        switch (type)
         {
-            if (pckReadNullP(read))
-                strCatZ(result, NULL_Z);
-            else
+            case pckTypeArray:
             {
-                switch (pckReadType(read))
-                {
-                    case pckTypeBool:
-                    {
-                        strCatZ(result, cvtBoolToConstZ(pckReadBoolP(read)));
-                        break;
-                    }
-
-                    case pckTypeInt32:
-                    {
-                        strCatFmt(result, "%d", pckReadInt32P(read));
-                        break;
-                    }
-
-                    case pckTypeInt64:
-                    {
-                        strCatFmt(result, "%" PRId64, pckReadInt64P(read));
-                        break;
-                    }
-
-                    case pckTypeStr:
-                    {
-                        strCatFmt(result, "%s", strZ(pckReadStrP(read)));
-                        break;
-                    }
-
-                    case pckTypeUInt32:
-                    {
-                        strCatFmt(result, "%u", pckReadUInt32P(read));
-                        break;
-                    }
-
-                    case pckTypeUInt64:
-                    {
-                        strCatFmt(result, "%" PRIu64, pckReadUInt64P(read));
-                        break;
-                    }
-
-                    default:
-                        THROW_FMT(AssertError, "'%s' NOT IMPLEMENTED", strZ(pckTypeToStr(pckReadType(read))));
-                }
+                pckReadArrayBeginP(read, .id = id);
+                strCatFmt(result, "[%s]", strZ(hrnPackToStr(read)));
+                pckReadArrayEnd(read);
+                break;
             }
+
+            case pckTypeBool:
+            {
+                strCatZ(result, cvtBoolToConstZ(pckReadBoolP(read, .id = id)));
+                break;
+            }
+
+            case pckTypeInt32:
+            {
+                strCatFmt(result, "%d", pckReadInt32P(read, .id = id));
+                break;
+            }
+
+            case pckTypeInt64:
+            {
+                strCatFmt(result, "%" PRId64, pckReadInt64P(read, .id = id));
+                break;
+            }
+
+            case pckTypeObj:
+            {
+                pckReadObjBeginP(read, .id = id);
+                strCatFmt(result, "{%s}", strZ(hrnPackToStr(read)));
+                pckReadObjEnd(read);
+                break;
+            }
+
+            case pckTypeStr:
+            {
+                strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
+                break;
+            }
+
+            case pckTypeUInt32:
+            {
+                strCatFmt(result, "%u", pckReadUInt32P(read, .id = id));
+                break;
+            }
+
+            case pckTypeUInt64:
+            {
+                strCatFmt(result, "%" PRIu64, pckReadUInt64P(read, .id = id));
+                break;
+            }
+
+            default:
+                THROW_FMT(AssertError, "'%s' NOT IMPLEMENTED", strZ(pckTypeToStr(type)));
         }
 
         first = false;

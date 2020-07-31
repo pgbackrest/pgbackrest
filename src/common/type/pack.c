@@ -726,8 +726,9 @@ String *
 pckReadToLog(const PackRead *this)
 {
     return strNewFmt(
-        "{depth: %u, idLast: %u}", lstSize(this->tagStack),
-        lstSize(this->tagStack) ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast : 0);
+        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", lstSize(this->tagStack),
+        lstSize(this->tagStack) ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast : 0, this->tagNextId, this->tagNextType,
+        this->tagNextValue);
 }
 
 /**********************************************************************************************************************************/

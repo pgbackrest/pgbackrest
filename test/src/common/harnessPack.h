@@ -7,7 +7,7 @@ Harness for Testing Packs
 Functions
 ***********************************************************************************************************************************/
 // Convert a pack to a string
-String *pckToStr(PackRead *read);
+String *hrnPackToStr(PackRead *read);
 
 // Convert a pack buffer to a string
-String *pckBufToStr(const Buffer *buffer);
+String *hrnPackBufToStr(const Buffer *buffer);
