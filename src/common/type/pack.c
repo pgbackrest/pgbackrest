@@ -420,7 +420,6 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
 
         tagStackTop->idLast = this->tagNextId;
         this->tagNextId = 0;
-
     }
     while (1);
 
