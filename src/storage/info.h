@@ -26,14 +26,14 @@ typedef enum
 } StorageInfoLevel;
 
 /***********************************************************************************************************************************
-Storage type
+Storage types. The values are used in the remote protocol so must not be changed.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageTypeFile,
-    storageTypePath,
-    storageTypeLink,
-    storageTypeSpecial,
+    storageTypeFile     = 0,
+    storageTypePath     = 1,
+    storageTypeLink     = 2,
+    storageTypeSpecial  = 3,
 } StorageType;
 
 /***********************************************************************************************************************************

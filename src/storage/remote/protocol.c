@@ -90,49 +90,9 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 }
 
 /***********************************************************************************************************************************
-Write storage info into the protocol
+Write storage info into the protocol. This function is not called unless the info exists so no need to write exists or check for
+level == storageInfoLevelExists.
 ***********************************************************************************************************************************/
-// Helper to write storage type into the protocol
-static void
-storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    switch (type)
-    {
-        case storageTypeFile:
-        {
-            protocolServerWriteLine(server, STRDEF("f"));
-            break;
-        }
-
-        case storageTypePath:
-        {
-            protocolServerWriteLine(server, STRDEF("p"));
-            break;
-        }
-
-        case storageTypeLink:
-        {
-            protocolServerWriteLine(server, STRDEF("l"));
-            break;
-        }
-
-        case storageTypeSpecial:
-        {
-            protocolServerWriteLine(server, STRDEF("s"));
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-// Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
-// or check for level == storageInfoLevelExists.
 static void
 storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 {
@@ -141,7 +101,7 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    storageRemoteInfoWriteType(server, info->type);
+    protocolServerWriteLine(server, jsonFromUInt(info->type));
     protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
 
     if (info->type == storageTypeFile)

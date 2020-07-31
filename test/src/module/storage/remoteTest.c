@@ -89,12 +89,6 @@ testRun(void)
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_POSIX_TYPE), true), "get remote repo storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storage types that are not tested elsewhere");
-
-        TEST_RESULT_UINT(storageRemoteInfoParseType('s'), storageTypeSpecial, "read special type");
-        TEST_ERROR(storageRemoteInfoParseType('z'), AssertError, "unknown storage type 'z'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing file/path");
 
         TEST_ERROR(
@@ -192,24 +186,13 @@ testRun(void)
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("protocol storage types that are not tested elsewhere");
-
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypePath), "write path type");
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypeSpecial), "write special type");
-
-        ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".p\n.s\n", "check result");
-
-        bufUsedSet(serverWrite, 0);
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol output that is not tested elsewhere (basic)");
 
         info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
         TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
         ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".2\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -244,7 +227,7 @@ testRun(void)
             strNewBuf(serverWrite),
             hrnReplaceKey(
                 "{\"out\":true}\n"
-                ".f\n.1555160001\n.6\n"
+                ".0\n.1555160001\n.6\n"
                 "{}\n"),
             "check result");
 
@@ -263,7 +246,7 @@ testRun(void)
             strNewBuf(serverWrite),
             hrnReplaceKey(
                 "{\"out\":true}\n"
-                ".f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
+                ".0\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 "{}\n"),
             "check result");
 
@@ -322,8 +305,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
-                ".\".\"\n.p\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
-                ".\"test\"\n.f\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
+                ".\".\"\n.1\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
+                ".\"test\"\n.0\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 ".\n"
                 "{\"out\":true}\n"),
             "check result");
