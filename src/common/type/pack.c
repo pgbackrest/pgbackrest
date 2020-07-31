@@ -918,7 +918,6 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-
 /**********************************************************************************************************************************/
 PackWrite *
 pckWriteNull(PackWrite *this)
