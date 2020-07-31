@@ -478,30 +478,34 @@ pckReadArrayEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
+#define PACK_READ_INTEGER(Type, TYPE, return)                                                                                      \
+    FUNCTION_TEST_BEGIN();                                                                                                         \
+        FUNCTION_TEST_PARAM(PACK_READ, this);                                                                                      \
+        FUNCTION_TEST_PARAM(UINT, param.id);                                                                                       \
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);                                                                              \
+        FUNCTION_TEST_PARAM(TYPE, param.defaultValue);                                                                             \
+    FUNCTION_TEST_END();                                                                                                           \
+                                                                                                                                   \
+    ASSERT(this != NULL);                                                                                                          \
+                                                                                                                                   \
+    param.id = PACK_TAG_ID(param.id);                                                                                              \
+                                                                                                                                   \
+    if (param.defaultNull && pckReadNullP(this, .id = param.id))                                                                   \
+    {                                                                                                                              \
+        this->tagStackTop->idLast = param.id;                                                                                      \
+        FUNCTION_TEST_RETURN(param.defaultValue);                                                                                  \
+    }                                                                                                                              \
+                                                                                                                                   \
+    uint64_t result = pckReadTag(this, param.id, pckType##Type, false);                                                            \
+                                                                                                                                   \
+    FUNCTION_TEST_RETURN(return)
+
 bool
 pckReadBool(PackRead *this, PckReadBoolParam param)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultValue);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    param.id = PACK_TAG_ID(param.id);
-
-    if (param.defaultNull && pckReadNullP(this, .id = param.id))
-    {
-        this->tagStackTop->idLast = param.id;
-        FUNCTION_TEST_RETURN(param.defaultValue);
-    }
-
-    FUNCTION_TEST_RETURN(pckReadTag(this, param.id, pckTypeBool, false));
+    PACK_READ_INTEGER(Bool, BOOL, result);
 }
 
-/**********************************************************************************************************************************/
 int32_t
 pckReadInt32(PackRead *this, PackIdParam param)
 {
@@ -517,30 +521,41 @@ pckReadInt32(PackRead *this, PackIdParam param)
     FUNCTION_TEST_RETURN((int32_t)((result >> 1) ^ (~(result & 1) + 1)));
 }
 
-/**********************************************************************************************************************************/
 int64_t
 pckReadInt64(PackRead *this, PckReadInt64Param param)
+{
+    PACK_READ_INTEGER(Int64, INT64, (int64_t)((result >> 1) ^ (~(result & 1) + 1)));
+}
+
+void *
+pckReadPtr(PackRead *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
-        FUNCTION_TEST_PARAM(INT64, param.defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    param.id = PACK_TAG_ID(param.id);
+    FUNCTION_TEST_RETURN((void *)(uintptr_t)pckReadTag(this, PACK_TAG_ID(param.id), pckTypePtr, false));
+}
 
-    if (param.defaultNull && pckReadNullP(this, .id = param.id))
-    {
-        this->tagStackTop->idLast = param.id;
-        FUNCTION_TEST_RETURN(param.defaultValue);
-    }
+time_t
+pckReadTime(PackRead *this, PckReadTimeParam param)
+{
+    PACK_READ_INTEGER(Time, TIME, (time_t)((result >> 1) ^ (~(result & 1) + 1)));
+}
 
-    uint64_t result = pckReadTag(this, param.id, pckTypeInt64, false);
+uint32_t
+pckReadUInt32(PackRead *this, PckReadUInt32Param param)
+{
+    PACK_READ_INTEGER(UInt32, UINT32, (uint32_t)result);
+}
 
-    FUNCTION_TEST_RETURN((int64_t)((result >> 1) ^ (~(result & 1) + 1)));
+uint64_t
+pckReadUInt64(PackRead *this, PckReadUInt64Param param)
+{
+    PACK_READ_INTEGER(UInt64, UINT64, result);
 }
 
 /**********************************************************************************************************************************/
@@ -586,20 +601,6 @@ pckReadObjEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-void *
-pckReadPtr(PackRead *this, PackIdParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN((void *)(uintptr_t)pckReadTag(this, PACK_TAG_ID(param.id), pckTypePtr, false));
-}
-
-/**********************************************************************************************************************************/
 String *
 pckReadStr(PackRead *this, PckReadStrParam param)
 {
@@ -632,80 +633,6 @@ pckReadStr(PackRead *this, PckReadStrParam param)
         result = strNew("");
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-time_t
-pckReadTime(PackRead *this, PckReadTimeParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
-        FUNCTION_TEST_PARAM(TIME, param.defaultValue);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    param.id = PACK_TAG_ID(param.id);
-
-    if (param.defaultNull && pckReadNullP(this, .id = param.id))
-    {
-        this->tagStackTop->idLast = param.id;
-        FUNCTION_TEST_RETURN(param.defaultValue);
-    }
-
-    uint64_t result = pckReadTag(this, param.id, pckTypeTime, false);
-
-    FUNCTION_TEST_RETURN((time_t)((result >> 1) ^ (~(result & 1) + 1)));
-}
-
-/**********************************************************************************************************************************/
-uint32_t
-pckReadUInt32(PackRead *this, PckReadUInt32Param param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
-        FUNCTION_TEST_PARAM(UINT32, param.defaultValue);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    param.id = PACK_TAG_ID(param.id);
-
-    if (param.defaultNull && pckReadNullP(this, .id = param.id))
-    {
-        this->tagStackTop->idLast = param.id;
-        FUNCTION_TEST_RETURN(param.defaultValue);
-    }
-
-    FUNCTION_TEST_RETURN((uint32_t)pckReadTag(this, param.id, pckTypeUInt32, false));
-}
-
-/**********************************************************************************************************************************/
-uint64_t
-pckReadUInt64(PackRead *this, PckReadUInt64Param param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
-        FUNCTION_TEST_PARAM(UINT64, param.defaultValue);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    param.id = PACK_TAG_ID(param.id);
-
-    if (param.defaultNull && pckReadNullP(this, .id = param.id))
-    {
-        this->tagStackTop->idLast = param.id;
-        FUNCTION_TEST_RETURN(param.defaultValue);
-    }
-
-    FUNCTION_TEST_RETURN(pckReadTag(this, param.id, pckTypeUInt64, false));
 }
 
 /**********************************************************************************************************************************/
