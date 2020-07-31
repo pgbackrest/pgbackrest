@@ -63,7 +63,7 @@ storageTestPerfInfoList(
         {
             for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
-                callback(callbackData, &(StorageInfo){.exists = true});
+                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
         }
