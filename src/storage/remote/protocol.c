@@ -99,6 +99,9 @@ typedef struct StorageRemoteProtocolInfoListCallbackData
 {
     PackWrite *write;
     time_t timeModifiedLast;
+    mode_t modeLast;
+    uid_t userIdLast;
+    gid_t groupIdLast;
 } StorageRemoteProtocolInfoListCallbackData;
 
 static void
@@ -109,7 +112,7 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteUInt32P(data->write, info->type);
+    pckWriteUInt32P(data->write, info->type, .defaultNull = true);
     pckWriteInt64P(data->write, info->timeModified - data->timeModifiedLast);
 
     if (info->type == storageTypeFile)
@@ -117,17 +120,20 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
 
     if (info->level >= storageInfoLevelDetail)
     {
-        pckWriteUInt32P(data->write, info->userId);
+        pckWriteUInt32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
+        pckWriteUInt32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
         pckWriteStrP(data->write, info->user);
-        pckWriteUInt32P(data->write, info->groupId);
+        pckWriteUInt32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
         pckWriteStrP(data->write, info->group);
-        pckWriteUInt32P(data->write, info->mode);
 
         if (info->type == storageTypeLink)
             pckWriteStrP(data->write, info->linkDestination);
     }
 
     data->timeModifiedLast = info->timeModified;
+    data->modeLast = info->mode;
+    data->userIdLast = info->userId;
+    data->groupIdLast = info->groupId;
 
     FUNCTION_TEST_RETURN_VOID();
 }

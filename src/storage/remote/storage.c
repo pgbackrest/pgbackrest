@@ -37,6 +37,9 @@ typedef struct StorageRemoteInfoParseData
 {
     PackRead *read;
     time_t timeModifiedLast;
+    mode_t modeLast;
+    uid_t userIdLast;
+    gid_t groupIdLast;
 } StorageRemoteInfoParseData;
 
 static void
@@ -47,7 +50,7 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = pckReadUInt32P(data->read);
+    info->type = pckReadUInt32P(data->read, .defaultNull = true);
     info->timeModified = (time_t)pckReadInt64P(data->read) + data->timeModifiedLast;
 
     if (info->type == storageTypeFile)
@@ -55,17 +58,20 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
 
     if (info->level >= storageInfoLevelDetail)
     {
-        info->userId = pckReadUInt32P(data->read);
+        info->mode = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
+        info->userId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
         info->user = pckReadStrNullP(data->read);
-        info->groupId = pckReadUInt32P(data->read);
+        info->groupId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
         info->group = pckReadStrNullP(data->read);
-        info->mode = pckReadUInt32P(data->read);
 
         if (info->type == storageTypeLink)
             info->linkDestination = pckReadStrP(data->read);
     }
 
     data->timeModifiedLast = info->timeModified;
+    data->modeLast = info->mode;
+    data->userIdLast = info->userId;
+    data->groupIdLast = info->groupId;
 
     FUNCTION_TEST_RETURN_VOID();
 }

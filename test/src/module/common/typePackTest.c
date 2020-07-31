@@ -57,6 +57,8 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL, .id = 43), "write NULL string");
         TEST_RESULT_VOID(pckWriteStrZP(packWrite, NULL), "write NULL string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
+        TEST_RESULT_VOID(pckWriteUInt32P(packWrite, 0, .defaultNull = true), "write default 0");
+        TEST_RESULT_VOID(pckWriteUInt32P(packWrite, 0, .defaultNull = true, .defaultValue = 1), "write 0");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -91,6 +93,7 @@ testRun(void)
             "8805736d616c6c"                                        // 41,  str, small
             "08"                                                    // 42,  str, zero length
             "28"                                                    // 45,  str, zero length
+            "19"                                                    // 47,  u64, 0
             "00",                                                   // end
             "check pack hex");
 
@@ -125,6 +128,7 @@ testRun(void)
             ", 41:str:small"
             ", 42:str:"
             ", 45:str:"
+            ", 47:uint32:0"
             ,
             "check pack string");
 
@@ -146,7 +150,7 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 9), true, "field 9 is null");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 10), false, "field 10 is not null");
         TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 10), 1, "read 1");
-        TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 12), 127, "read 127 (skip field 11)");
+        TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 12, .defaultNull = true), 127, "read 127 (skip field 11)");
         TEST_RESULT_INT(pckReadInt64P(packRead), -1, "read -1");
         TEST_RESULT_INT(pckReadInt32P(packRead, 14), -1, "read -1");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
@@ -181,6 +185,9 @@ testRun(void)
         TEST_RESULT_STR(pckReadStrNullP(packRead, 43), NULL, "read NULL string");
         TEST_RESULT_STR(pckReadStrNullP(packRead, 0), NULL, "read NULL string");
         TEST_RESULT_STR_Z(pckReadStrNullP(packRead, 0), "", "read empty string");
+
+        TEST_RESULT_UINT(pckReadUInt32P(packRead, .defaultNull = true), 0, "read default 0");
+        TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 47), 0, "read 0");
 
         TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");

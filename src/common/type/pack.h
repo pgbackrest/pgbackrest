@@ -132,10 +132,18 @@ String *pckReadStr(PackRead *this, PackIdParam param);
 String *pckReadStrNull(PackRead *this, PackIdParam param);
 
 // Read 32-bit unsigned integer
-#define pckReadUInt32P(this, ...)                                                                                                  \
-    pckReadUInt32(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadUInt32Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint32_t defaultValue;
+} PckReadUInt32Param;
 
-uint32_t pckReadUInt32(PackRead *this, PackIdParam param);
+#define pckReadUInt32P(this, ...)                                                                                                  \
+    pckReadUInt32(this, (PckReadUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint32_t pckReadUInt32(PackRead *this, PckReadUInt32Param param);
 
 // Read 64-bit unsigned integer
 #define pckReadUInt64P(this, ...)                                                                                                  \
@@ -204,10 +212,18 @@ PackWrite *pckWriteStrZ(PackWrite *this, const char *value, PackIdParam param);
 PackWrite *pckWriteStrZN(PackWrite *this, const char *value, size_t size, PackIdParam param);
 
 // Write 32-bit unsigned integer
-#define pckWriteUInt32P(this, value, ...)                                                                                          \
-    pckWriteUInt32(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWriteUInt32Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint32_t defaultValue;
+} PckWriteUInt32Param;
 
-PackWrite *pckWriteUInt32(PackWrite *this, uint32_t value, PackIdParam param);
+#define pckWriteUInt32P(this, value, ...)                                                                                          \
+    pckWriteUInt32(this, value, (PckWriteUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteUInt32(PackWrite *this, uint32_t value, PckWriteUInt32Param param);
 
 // Write 64-bit unsigned integer
 #define pckWriteUInt64P(this, value, ...)                                                                                          \
