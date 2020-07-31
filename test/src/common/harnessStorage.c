@@ -71,7 +71,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
     if (data->rootPathOmit && info->type == storageTypePath && strEq(info->name, DOT_STR))
         return;
 
-    strCatFmt(data->content, "%s {", strZ(info->name));
+    strCatFmt(data->content, "%s {", info->name == NULL ? NULL_Z : strZ(info->name));
 
     if (info->level > storageInfoLevelExists)
     {
