@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-message manifestFileData
-{
-    string user_name = 1;
-    int64 favourite_number = 2;
-    repeated string interests = 3;
-}

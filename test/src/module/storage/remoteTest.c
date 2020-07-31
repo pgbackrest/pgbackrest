@@ -355,6 +355,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
         varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
+
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(serverWrite),

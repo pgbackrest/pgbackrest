@@ -30,9 +30,7 @@ struct StorageRemote
     unsigned int compressLevel;                                     // Protocol compression level
 };
 
-/***********************************************************************************************************************************
-Helper to parse storage info from the protocol output
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct StorageRemoteInfoParseData
 {
     PackRead *read;
@@ -44,6 +42,7 @@ typedef struct StorageRemoteInfoParseData
     String *group;
 } StorageRemoteInfoParseData;
 
+// Helper to parse storage info from the protocol output
 static void
 storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
 {
