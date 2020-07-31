@@ -28,64 +28,64 @@ typedef struct PackTypeData
     bool valueSingleBit;
     bool valueMultiBit;
     bool size;
-    const char *const name;
+    const String *const name;
 } PackTypeData;
 
 static const PackTypeData packTypeData[] =
 {
     {
         .type = pckTypeUnknown,
-        .name = "unknown",
+        .name = STRDEF("unknown"),
     },
     {
         .type = pckTypeArray,
-        .name = "array",
+        .name = STRDEF("array"),
     },
     {
         .type = pckTypeBin,
         .valueSingleBit = true,
         .size = true,
-        .name = "binary",
+        .name = STRDEF("bin"),
     },
     {
         .type = pckTypeBool,
         .valueSingleBit = true,
-        .name = "boolean",
+        .name = STRDEF("bool"),
     },
     {
         .type = pckTypeInt32,
         .valueMultiBit = true,
-        .name = "int32",
+        .name = STRDEF("int32"),
     },
     {
         .type = pckTypeInt64,
         .valueMultiBit = true,
-        .name = "int64",
+        .name = STRDEF("int64"),
     },
     {
         .type = pckTypeObj,
-        .name = "object",
+        .name = STRDEF("obj"),
     },
     {
         .type = pckTypePtr,
         .valueMultiBit = true,
-        .name = "pointer",
+        .name = STRDEF("ptr"),
     },
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
         .size = true,
-        .name = "string",
+        .name = STRDEF("str"),
     },
     {
         .type = pckTypeUInt32,
         .valueMultiBit = true,
-        .name = "uint32",
+        .name = STRDEF("uint32"),
     },
     {
         .type = pckTypeUInt64,
         .valueMultiBit = true,
-        .name = "uint64",
+        .name = STRDEF("uint64"),
     },
 };
 
@@ -401,7 +401,7 @@ pckReadTag(PackRead *this, unsigned int id, PackType type, bool peek)
                 {
                     THROW_FMT(
                         FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
-                        packTypeData[this->tagNextType].name, packTypeData[type].name);
+                        strZ(packTypeData[this->tagNextType].name), strZ(packTypeData[type].name));
                 }
 
                 tagStackTop->idLast = this->tagNextId;
@@ -467,6 +467,19 @@ pckReadNull(PackRead *this, PackIdParam param)
     pckReadTag(this, param.id, pckTypeUnknown, true);
 
     FUNCTION_TEST_RETURN((param.id == 0 ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast + 1 : param.id) < this->tagNextId);
+}
+
+/**********************************************************************************************************************************/
+PackType
+pckReadType(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->tagNextType);
 }
 
 /**********************************************************************************************************************************/
@@ -1144,4 +1157,17 @@ String *
 pckWriteToLog(const PackWrite *this)
 {
     return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), ((PackTagStack *)lstGetLast(this->tagStack))->idLast);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pckTypeToStr(PackType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < sizeof(packTypeData) / sizeof(PackTypeData));
+
+    FUNCTION_TEST_RETURN(packTypeData[type].name);
 }

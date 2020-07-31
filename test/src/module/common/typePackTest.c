@@ -4,6 +4,8 @@ Test Packs
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 
+#include "common/harnessPack.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -90,7 +92,40 @@ testRun(void)
             "08"                                                    // 42,  str, zero length
             "28"                                                    // 45,  str, zero length
             "00",                                                   // end
-            "check pack");
+            "check pack hex");
+
+        // !!! REALLY TOTALLY WRONG
+        TEST_RESULT_STR_Z(
+            pckBufToStr(pack),
+              "1:uint64:488"
+            ", 2:uint64:1911246845"
+            ", 7:uint64:null"
+            ", 5:uint64:null"
+            ", 3:uint64:77"
+            ", 4:uint32:127"
+            ", 5:int64:-1"
+            ", 6:int32:-1"
+            ", 7:bool:true"
+            ", 12:bool:null"
+            ", 15:obj:"
+            "{"
+                  "8:bool:true"
+                ", 9:bool:false"
+            "}"
+            ", 18:array:"
+            "["
+                  "10:uint64:0"
+                  ", 11:uint64:1"
+                  ", 12:uint64:2"
+                  ", 13:uint64:3"
+            "]"
+            ", 14:str:sample"
+            ", 15:str:enoughtoincreasebuffer"
+            ", 16:str:"
+            ", 17:str:small"
+            ", 18:str:"
+            ", 21:str:null",
+            "check pack string");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read pack");

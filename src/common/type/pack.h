@@ -70,8 +70,11 @@ typedef struct PackIdParam
 // Read next field
 bool pckReadNext(PackRead *this);
 
-// Get id of current field
+// Current field id
 unsigned int pckReadId(PackRead *this);
+
+// Current field type
+PackType pckReadType(PackRead *this);
 
 // Is the field NULL?
 #define pckReadNullP(this, ...)                                                                                                    \
@@ -228,6 +231,11 @@ void pckReadFree(PackRead *this);
 Write Destructor
 ***********************************************************************************************************************************/
 void pckWriteFree(PackWrite *this);
+
+/***********************************************************************************************************************************
+Helper Functions
+***********************************************************************************************************************************/
+const String *pckTypeToStr(PackType type);
 
 /***********************************************************************************************************************************
 Macros for function logging
