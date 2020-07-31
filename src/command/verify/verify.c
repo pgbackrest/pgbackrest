@@ -18,6 +18,7 @@ Verify Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -243,9 +244,9 @@ verifyFileLoad(const String *fileName, const String *cipherPass)
 /***********************************************************************************************************************************
 Get status of info files in repository
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_VERIFY_INFO_FILE_RESULT_TYPE                                                                                  \
+#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
     VerifyInfoFile
-#define FUNCTION_LOG_VERIFY_INFO_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                     \
+#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
 
 typedef struct VerifyInfoFile
@@ -314,7 +315,7 @@ verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPa
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE_RESULT, result);
+    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE, result);
 }
 
 static InfoArchive *
@@ -418,12 +419,13 @@ verifyBackupInfoFile(void)
 }
 
 static Manifest *
-verifyManifestFile(const String *backupLabel, const String *cipherPass, bool currentBackup)
+verifyManifestFile(const String *backupLabel, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, backupLabel);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
         FUNCTION_LOG_PARAM(BOOL, currentBackup);
+        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
     FUNCTION_LOG_END();
 
     Manifest *result = NULL;
@@ -465,20 +467,37 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
             {
                 // Warn if this is not the current backup and the main manifest file was missing
                 if (!currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError))
-                    LOG_WARN_FMT("%s/backup.manifest does not exist", strPtr(backupLabel));
+                    LOG_WARN_FMT("%s/backup.manifest does not exist, using copy", strPtr(backupLabel));
 
                 result = verifyManifestInfoCopy.manifest;
                 manifestMove(result, memContextPrior());
             }
         }
-/* CSHANG:
- If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR? ). If main is not there and copy is but it is not the latest then warn that main is missing and skip (what do we mean "skip" - shouldn't we use it to verify the backups?).
 
+        // If found a usable manifest then check that the database it was based on is in the history
         if (result != NULL)
         {
-            check the db history????
+            bool found = false;
+            const ManifestData *manData = manifestData(result);
+
+            // Confirm the PG database information from the manifest is in the history list
+            for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(pgHistory); infoPgIdx++)
+            {
+                InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
+
+                if (pgHistoryData.id == manData->pgId && pgHistoryData.systemId == manData->pgSystemId &&
+                    pgHistoryData.version == manData->pgVersion)
+                {
+                    found = true;
+                    break;
+                }
+            }
+// CSHANG Still need to decide if we verify the backup or skip it at this point
+            // If the PG data is not found in the backup.info history, then warn but check all the files anyway
+            if (!found)
+                LOG_WARN_FMT("%s will not be a usable backup, the PG data is not in the backup.info history", strPtr(backupLabel));
         }
-*/
+
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -535,6 +554,11 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 /***********************************************************************************************************************************
 Process the job data
 ***********************************************************************************************************************************/
+#define FUNCTION_LOG_ARCHIVE_ID_RANGE_TYPE                                                                                  \
+    ArchiveIdRange
+#define FUNCTION_LOG_ARCHIVE_ID_RANGE_FORMAT(value, buffer, bufferSize)                                                     \
+    objToLog(&value, "ArchiveIdRange", buffer, bufferSize)
+
 typedef struct ArchiveIdRange
 {
     String *archiveId;
@@ -564,6 +588,7 @@ typedef struct VerifyJobData
     StringList *backupList;                                         // List of backups to verify
     StringList *backupFileList;                                     // List of files in a single backup directory
     String *currentBackup;                                          // In progress backup, if any
+    const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
@@ -577,7 +602,7 @@ static unsigned int
 createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, archiveIdRange);  // CSHANG This may be a problem
+        FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
         FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
     FUNCTION_TEST_END();
@@ -592,8 +617,6 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
     };
 
-    // Get the ranges by comparing the next WAL in the list to see if it is WAL Segment Size distance from
-    // the last WAL
     unsigned int walFileIdx = 0;
 
     do
@@ -606,7 +629,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
             LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "invalid WAL %s exists, skipping", strPtr(walSegment));
             result++;
 
-            // Remove the file from the original list so no attempt is made to verify it - results must fall withing a range
+            // Remove the file from the original list so no attempt is made to verify it - results must fall within a range
             strLstRemoveIdx(walFileList, walFileIdx);
             continue;
         }
@@ -629,7 +652,8 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
             else
             {
                 walRange.stop = strSubN(strLstGet(walFileList, walFileIdx - 1), 0, WAL_SEGMENT_NAME_SIZE);
-                // Remove the file from the original list so no attempt is made to verify it - results must fall withing a range
+
+                // Remove the file from the original list so no attempt is made to verify it - results must fall within a range
                 strLstRemoveIdx(walFileList, walFileIdx);
             }
 
@@ -649,7 +673,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         }
 
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
-        // the WAL size is static at 16MB but (for some unknown reason), WAL ending in FF is skipped so it should never exist, so
+        // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
             pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
@@ -671,7 +695,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
 
         walFileIdx++;
     }
-    while (walFileIdx < strLstSize(walFileList))
+    while (walFileIdx < strLstSize(walFileList));
 
     // If walRange containes a range, then add the last walRange to the list
     if (walRange.start != NULL)
@@ -759,7 +783,8 @@ verifyArchive(void *data)
 
                         archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
 
-                        createArchiveIdRange(&archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
+                        jobData->jobErrorTotal += createArchiveIdRange(
+                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
                     }
                 }
 
@@ -900,7 +925,7 @@ LOG_WARN("Processing BACKUPS"); // CSHANG Remove
 */
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
-                backupLabel, jobData->manifestCipherPass, strEq(jobData->currentBackup, backupLabel));
+                backupLabel, jobData->manifestCipherPass, strEq(jobData->currentBackup, backupLabel), jobData->pgHistory);
 
             // If a usable backup.manifest file is not found, then report an error in the log
             if (manifest == NULL)
@@ -955,11 +980,6 @@ verifyErrorMsg(VerifyResult verifyResult)
             result = strNew("invalid size");
             break;
         }
-        case verifyDuplicate:
-        {
-            result = strNew("duplicate file");
-            break;
-        }
         default:
         {
             result = strNew("unknown error");
@@ -994,7 +1014,6 @@ verifyRender(void *data)
             unsigned int errMissing = 0;
             unsigned int errChecksum = 0;
             unsigned int errSize = 0;
-            unsigned int errDuplicate = 0;
 
             for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdRange->walRangeList); walIdx++)
             {
@@ -1025,11 +1044,6 @@ verifyRender(void *data)
                         case verifySizeInvalid:
                         {
                             errSize++;
-                            break;
-                        }
-                        case verifyDuplicated:
-                        {
-                            errDuplicate++;
                             break;
                         }
                         case verifyOk:
@@ -1112,6 +1126,7 @@ verifyProcess(void)
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
                 .currentBackup = NULL,
+                .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
@@ -1148,6 +1163,29 @@ verifyProcess(void)
                         jobData.currentBackup = backupLabel;
                     else
                         strFree(backupLabel);
+                }
+
+                // If there are archive directories on disk, make sure they are in the database history list
+                if (strLstSize(jobData.archiveIdList) > 0)
+                {
+                    StringList *archiveIdHistoryList = strLstNew();
+                    String *missingFromHistory = NULL;
+
+                    for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(jobData.pgHistory); histIdx++)
+                    {
+                        strLstAdd(archiveIdHistoryList, infoPgArchiveId(jobData.pgHistory, histIdx));
+                    }
+
+                    // Get all archiveIds on disk that are not in the history list
+                    missingFromHistory = strLstJoin(
+                        strLstMergeAnti(jobData.archiveIdList,
+                            strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
+
+                    if (!strEmpty(missingFromHistory))
+                        LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
+
+                    strLstFree(archiveIdHistoryList);
+                    strFree(missingFromHistory);
                 }
 
                 // Create the parallel executor
@@ -1279,6 +1317,8 @@ verifyProcess(void)
             }
             else
                 LOG_WARN("no archives or backups exist in the repo");
+
+            errorTotal += jobData.jobErrorTotal;
         }
 
         // Throw an error if cannot proceed
