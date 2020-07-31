@@ -176,16 +176,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
                 .followLink = varBool(varLstGet(paramList, 2)));
 
-            protocolServerResponse(server, VARBOOL(info.exists));
+            PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+            pckWriteBoolP(write, info.exists);
 
             if (info.exists)
-            {
-                PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
                 storageRemoteInfoWrite(write, &info);
-                pckWriteEnd(write);
 
-                protocolServerResponse(server, NULL);
-            }
+            pckWriteEnd(write);
+            ioWriteFlush(protocolServerIoWrite(server));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
@@ -197,9 +195,9 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 storageRemoteProtocolInfoListCallback, write);
 
             pckWriteArrayEnd(write);
+            pckWriteBoolP(write, result);
             pckWriteEnd(write);
-
-            protocolServerResponse(server, VARBOOL(result));
+            ioWriteFlush(protocolServerIoWrite(server));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {

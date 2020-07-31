@@ -61,17 +61,25 @@ PackWrite *pckWriteNewBuf(Buffer *write);
 /***********************************************************************************************************************************
 Read Functions
 ***********************************************************************************************************************************/
-bool pckReadNext(PackRead *this);
-unsigned int pckReadId(PackRead *this);
-bool pckReadNull(PackRead *this, unsigned int id);
-
-// Read array begin/end
 typedef struct PackIdParam
 {
     VAR_PARAM_HEADER;
     unsigned int id;
 } PackIdParam;
 
+// Read next field
+bool pckReadNext(PackRead *this);
+
+// Get id of current field
+unsigned int pckReadId(PackRead *this);
+
+// Is the field NULL?
+#define pckReadNullP(this, ...)                                                                                                    \
+    pckReadNull(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool pckReadNull(PackRead *this, PackIdParam param);
+
+// Read array begin/end
 #define pckReadArrayBeginP(this, ...)                                                                                              \
     pckReadArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 

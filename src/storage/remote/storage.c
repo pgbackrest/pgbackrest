@@ -83,18 +83,17 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         protocolCommandParamAdd(command, VARUINT(level));
         protocolCommandParamAdd(command, VARBOOL(param.followLink));
 
-        result.exists = varBool(protocolClientExecute(this->client, command, true));
+        // Send command
+        protocolClientWriteCommand(this->client, command);
+
+        // Read info from protocol
+        PackRead *read = pckReadNew(protocolClientIoRead(this->client));
+
+        result.exists = pckReadBoolP(read);
 
         if (result.exists)
         {
-
-            // Read info from protocol
-            PackRead *read = pckReadNew(protocolClientIoRead(this->client));
             storageRemoteInfoParse(read, &result);
-            pckReadEnd(read);
-
-            // Acknowledge command completed
-            protocolClientReadOutput(this->client, false);
 
             // Duplicate strings into the prior context
             MEM_CONTEXT_PRIOR_BEGIN()
@@ -106,6 +105,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             }
             MEM_CONTEXT_PRIOR_END();
         }
+
+        pckReadEnd(read);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -168,12 +169,13 @@ storageRemoteInfoList(
             }
 
             pckReadArrayEnd(read);
-            pckReadEnd(read);
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Acknowledge command completed
-        result = varBool(protocolClientReadOutput(this->client, true));
+        // Get result
+        result = pckReadBoolP(read);
+
+        pckReadEnd(read);
     }
     MEM_CONTEXT_TEMP_END();
 

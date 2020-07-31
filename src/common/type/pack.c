@@ -455,18 +455,18 @@ pckReadId(PackRead *this)
 
 /**********************************************************************************************************************************/
 bool
-pckReadNull(PackRead *this, unsigned int id)
+pckReadNull(PackRead *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, id);
+        FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckReadTag(this, id, pckTypeUnknown, true);
+    pckReadTag(this, param.id, pckTypeUnknown, true);
 
-    FUNCTION_TEST_RETURN((id == 0 ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast + 1 : id) < this->tagNextId);
+    FUNCTION_TEST_RETURN((param.id == 0 ? ((PackTagStack *)lstGetLast(this->tagStack))->idLast + 1 : param.id) < this->tagNextId);
 }
 
 /**********************************************************************************************************************************/
@@ -648,7 +648,7 @@ pckReadStrNull(PackRead *this, PackIdParam param)
 
     String *result = NULL;
 
-    if (pckReadNull(this, param.id))
+    if (pckReadNull(this, param))
     {
         PackTagStack *tagStackTop = lstGetLast(this->tagStack);
         tagStackTop->idLast = param.id == 0 ? tagStackTop->idLast + 1 : param.id;

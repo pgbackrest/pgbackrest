@@ -107,8 +107,8 @@ testRun(void)
         TEST_ERROR(pckReadUInt32P(packRead, .id = 7), FormatError, "field 7 is type 'uint64' but expected 'uint32'");
         TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
         TEST_ERROR(pckReadUInt64P(packRead, 9), FormatError, "field 9 does not exist");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 9), true, "field 9 is null");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 10), false, "field 10 is not null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 9), true, "field 9 is null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 10), false, "field 10 is not null");
         TEST_RESULT_UINT(pckReadUInt64P(packRead, .id = 10), 1, "read 1");
         TEST_RESULT_UINT(pckReadUInt32P(packRead, .id = 12), 127, "read 127 (skip field 11)");
         TEST_RESULT_INT(pckReadInt64P(packRead), -1, "read -1");
@@ -122,7 +122,7 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read false");
         TEST_ERROR(pckReadBoolP(packRead), FormatError, "field 3 does not exist");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 4), true, "field 3 is null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 3 is null");
         TEST_RESULT_VOID(pckReadObjEnd(packRead), "read object end");
 
         TEST_ERROR(pckReadArrayEnd(packRead), FormatError, "not in array");
@@ -147,7 +147,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrNullP(packRead, 0), "", "read empty string");
 
         TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
-        TEST_RESULT_BOOL(pckReadNull(packRead, 999), true, "field 999 is null");
+        TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");
 
         TEST_RESULT_VOID(pckReadEnd(packRead), "end");
         TEST_RESULT_VOID(pckReadFree(packRead), "free");

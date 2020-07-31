@@ -220,7 +220,13 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
+
+        pack = bufNew(0);
+        packWrite = pckWriteNewBuf(pack);
+        pckWriteBoolP(packWrite, false);
+        pckWriteEnd(packWrite);
+
+        TEST_RESULT_STR(bufHex(serverWrite), bufHex(pack), "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -241,14 +247,13 @@ testRun(void)
 
         pack = bufNew(0);
         packWrite = pckWriteNewBuf(pack);
+        pckWriteBoolP(packWrite, true);
         pckWriteUInt32P(packWrite, storageTypeFile);
         pckWriteInt64P(packWrite, 1555160001);
         pckWriteUInt64P(packWrite, 6);
         pckWriteEnd(packWrite);
 
-        TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strZ(bufHex(pack))))),
-            "check result");
+        TEST_RESULT_STR(bufHex(serverWrite), bufHex(pack), "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -264,6 +269,7 @@ testRun(void)
 
         pack = bufNew(0);
         packWrite = pckWriteNewBuf(pack);
+        pckWriteBoolP(packWrite, true);
         pckWriteUInt32P(packWrite, storageTypeFile);
         pckWriteInt64P(packWrite, 1555160001);
         pckWriteUInt64P(packWrite, 6);
@@ -274,9 +280,7 @@ testRun(void)
         pckWriteUInt32P(packWrite, 0640);
         pckWriteEnd(packWrite);
 
-        TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("7b226f7574223a747275657d0a%s7b7d0a", strZ(bufHex(pack))))),
-            "check result");
+        TEST_RESULT_STR(bufHex(serverWrite), bufHex(pack), "check result");
 
         bufUsedSet(serverWrite, 0);
     }
@@ -359,11 +363,11 @@ testRun(void)
         pckWriteObjEnd(packWrite);
 
         pckWriteArrayEnd(packWrite);
+
+        pckWriteBoolP(packWrite, true);
         pckWriteEnd(packWrite);
 
-        TEST_RESULT_STR_Z(
-            bufHex(serverWrite), hrnReplaceKey(strZ(strNewFmt("%s7b226f7574223a747275657d0a", strZ(bufHex(pack))))),
-            "check result");
+        TEST_RESULT_STR(bufHex(serverWrite), bufHex(pack), "check result");
 
         bufUsedSet(serverWrite, 0);
     }
