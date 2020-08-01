@@ -81,6 +81,14 @@ bufSize(const Buffer *this)
     return ((const BufferConst *)this)->size;
 }
 
+// Allocated buffer size. This may be different from bufSize() if a limit has been set.
+__attribute__((always_inline)) static inline size_t
+bufSizeAlloc(const Buffer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const BufferConst *)this)->sizeAlloc;
+}
+
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
 // bufPtr() then the user is responsible for updating used.
 __attribute__((always_inline)) static inline size_t
