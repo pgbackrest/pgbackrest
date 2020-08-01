@@ -24,6 +24,8 @@ testRun(void)
         IoWrite *write = ioBufferWriteNew(pack);
         ioWriteOpen(write);
 
+        ioBufferSizeSet(3);
+
         PackWrite *packWrite = NULL;
         TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
 
@@ -266,10 +268,16 @@ testRun(void)
         TEST_RESULT_VOID(pckReadFree(packRead), "free");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("EOF on short buffer");
+
+        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255")), "new read");
+        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unexpected EOF");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255")), "new read");
-        TEST_ERROR(pckReadUInt64P(packRead), AssertError, "assertion 'bufPtr(this->buffer)[0] < 0x80' failed");
+        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255")), "new read");
+        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unterminated base-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");

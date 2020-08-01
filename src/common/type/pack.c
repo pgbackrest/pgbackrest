@@ -15,6 +15,7 @@ Pack Handler
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/log.h" // !!! REMOVE
@@ -117,6 +118,9 @@ struct PackRead
     MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read pack from
     Buffer *buffer;                                                 // Buffer to contain read data
+    const uint8_t *bufferPtr;                                       // Pointer to buffer
+    size_t bufferPos;                                               // Position in the buffer
+    size_t bufferMax;                                               // Maximum position of buffer
 
     unsigned int tagNextId;                                         // Next tag id
     PackType tagNextType;                                           // Next tag type
@@ -155,7 +159,6 @@ pckReadNewInternal(void)
         *this = (PackRead)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .buffer = bufNew(PACK_UINT64_SIZE_MAX),
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
@@ -177,6 +180,8 @@ pckReadNew(IoRead *read)
 
     PackRead *this = pckReadNewInternal();
     this->read = read;
+    this->buffer = bufNew(ioBufferSize());
+    this->bufferPtr = bufPtr(this->buffer);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -191,15 +196,55 @@ pckReadNewBuf(const Buffer *read)
     ASSERT(read != NULL);
 
     PackRead *this = pckReadNewInternal();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->read = ioBufferReadNew(read);
-        ioReadOpen(this->read);
-    }
-    MEM_CONTEXT_END();
+    this->bufferPtr = bufPtrConst(read);
+    this->bufferMax = bufUsed(read);
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+!!!
+DON"T USE THIS FUNCTION AS A PARAMETER IN FUNCTION CALLS SINCE this->bufferPos MAY BE UPDATED.
+***********************************************************************************************************************************/
+static size_t pckReadBuffer(PackRead *this, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    size_t remaining = this->bufferMax - this->bufferPos;
+
+    if (remaining < size)
+    {
+        if (this->read != NULL)
+        {
+            // Nothing can be remaining since each read fetches exactly the number of bytes required
+            ASSERT(remaining == 0);
+            bufUsedZero(this->buffer);
+
+            // Limit the buffer for the next read when required (!!! NOT VERY EFFICIENT BUT AT LEAST LOCALIZED)
+            bufLimitClear(this->buffer);
+
+            if (size < bufSize(this->buffer))
+                bufLimitSet(this->buffer, size);
+
+            ioRead(this->read, this->buffer);
+            this->bufferPos = 0;
+            this->bufferMax = bufUsed(this->buffer);
+            remaining = this->bufferMax - this->bufferPos;
+        }
+
+        if (remaining < 1)
+            THROW(FormatError, "unexpected EOF");
+
+        // !!! ASSERT((size < this->bufferMax - this->bufferPos) && size == bufSize);
+        FUNCTION_TEST_RETURN(remaining < size ? remaining : size);
+    }
+
+    FUNCTION_TEST_RETURN(size);
 }
 
 /***********************************************************************************************************************************
@@ -215,46 +260,27 @@ pckReadUInt64Internal(PackRead *this)
     ASSERT(this != NULL);
 
     uint64_t result = 0;
-
-    bufLimitSet(this->buffer, 1);
+    uint8_t byte;
 
     for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
     {
-        bufUsedZero(this->buffer);
-        ioRead(this->read, this->buffer);
+        pckReadBuffer(this, 1);
+        byte = this->bufferPtr[this->bufferPos];
 
-        result |= (uint64_t)(bufPtr(this->buffer)[0] & 0x7f) << (7 * bufferIdx);
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
 
-        if (bufPtr(this->buffer)[0] < 0x80)
+        if (byte < 0x80)
             break;
+
+        this->bufferPos++;
     }
 
-    ASSERT(bufPtr(this->buffer)[0] < 0x80);
-    bufUsedZero(this->buffer);
+    if (byte >= 0x80)
+        THROW(FormatError, "unterminated base-128 integer");
+
+    this->bufferPos++;
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-!!!
-***********************************************************************************************************************************/
-static void
-pckReadSizeBuffer(PackRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-    FUNCTION_TEST_END();
-
-    size_t size = (size_t)pckReadUInt64Internal(this);
-    bufLimitClear(this->buffer);
-
-    if (size > bufSize(this->buffer))
-        bufResize(this->buffer, size);
-
-    bufLimitSet(this->buffer, size);
-    ioRead(this->read, this->buffer);
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -269,11 +295,9 @@ pckReadTagNext(PackRead *this)
 
     bool result = 0;
 
-    bufLimitSet(this->buffer, 1);
-    ioRead(this->read, this->buffer);
-
-    unsigned int tag = bufPtr(this->buffer)[0];
-    bufUsedZero(this->buffer);
+    pckReadBuffer(this, 1);
+    unsigned int tag = this->bufferPtr[this->bufferPos];
+    this->bufferPos++;
 
     if (tag == 0)
         this->tagNextId = 0xFFFFFFFF;
@@ -383,8 +407,14 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
         // Read data for the field being skipped
         if (packTypeData[type].size && this->tagNextValue != 0)
         {
-            pckReadSizeBuffer(this);
-            bufUsedZero(this->buffer);
+            size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
+
+            while (sizeExpected != 0)
+            {
+                size_t sizeRead = pckReadBuffer(this, sizeExpected);
+                sizeExpected -= sizeRead;
+                this->bufferPos += sizeRead;
+            }
         }
 
         this->tagStackTop->idLast = this->tagNextId;
@@ -551,7 +581,13 @@ pckReadBin(PackRead *this, PckReadBinParam param)
     if (pckReadTag(this, &param.id, pckTypeBin, false))
     {
         result = bufNew((size_t)pckReadUInt64Internal(this));
-        ioRead(this->read, result);
+
+        while (bufUsed(result) < bufSize(result))
+        {
+            size_t size = pckReadBuffer(this, bufRemains(result));
+            bufCatC(result, this->bufferPtr, this->bufferPos, size);
+            this->bufferPos += size;
+        }
     }
     else
         result = bufNew(0);
@@ -697,9 +733,15 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 
     if (pckReadTag(this, &param.id, pckTypeStr, false))
     {
-        pckReadSizeBuffer(this);
-        result = strNewBuf(this->buffer);
-        bufUsedZero(this->buffer);
+        size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
+        result = strNew("");
+
+        while (strSize(result) != sizeExpected)
+        {
+            size_t sizeRead = pckReadBuffer(this, sizeExpected - strSize(result));
+            strCatZN(result, (char *)this->bufferPtr + this->bufferPos, sizeRead);
+            this->bufferPos += sizeRead;
+        }
     }
     else
         result = strNew("");
