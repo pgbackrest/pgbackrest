@@ -34,6 +34,32 @@ size_t cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize);
 int64_t cvtZToInt64(const char *value);
 int64_t cvtZToInt64Base(const char *value, int base);
 
+// Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign bit in the least significant
+// bit so that -1 is encoded as 1, 1 as 2, etc.
+__attribute__((always_inline)) static inline uint32_t
+cvtInt32ToZigZag(int32_t value)
+{
+    return ((uint32_t)value << 1) ^ (uint32_t)(value >> 31);
+}
+
+__attribute__((always_inline)) static inline int32_t
+cvtInt32FromZigZag(uint32_t value)
+{
+    return (int32_t)((value >> 1) ^ (~(value & 1) + 1));
+}
+
+__attribute__((always_inline)) static inline uint64_t
+cvtInt64ToZigZag(int64_t value)
+{
+    return ((uint64_t)value << 1) ^ (uint64_t)(value >> 63);
+}
+
+__attribute__((always_inline)) static inline int64_t
+cvtInt64FromZigZag(uint64_t value)
+{
+    return (int64_t)((value >> 1) ^ (~(value & 1) + 1));
+}
+
 // Convert mode to zero-terminated string and vice versa
 size_t cvtModeToZ(mode_t value, char *buffer, size_t bufferSize);
 mode_t cvtZToMode(const char *value);
