@@ -35,7 +35,8 @@ int64_t cvtZToInt64(const char *value);
 int64_t cvtZToInt64Base(const char *value, int base);
 
 // Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign bit in the least significant
-// bit so that -1 is encoded as 1, 1 as 2, etc.
+// bit so that -1 is encoded as 1, 1 as 2, etc. This moves as many bits as possible into the low order bits which is good for other
+// types of encoding, e.g. base-128.
 __attribute__((always_inline)) static inline uint32_t
 cvtInt32ToZigZag(int32_t value)
 {
