@@ -235,7 +235,9 @@ pckReadUInt64Internal(PackRead *this)
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static void
 pckReadSizeBuffer(PackRead *this)
 {
@@ -255,7 +257,9 @@ pckReadSizeBuffer(PackRead *this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static bool
 pckReadTagNext(PackRead *this)
 {
@@ -324,7 +328,9 @@ pckReadTagNext(PackRead *this)
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static uint64_t
 pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
 {
@@ -416,7 +422,8 @@ pckReadId(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-__attribute__((always_inline)) static inline bool
+// Helper to !!!
+static inline bool
 pckReadNullInternal(PackRead *this, unsigned int *id)
 {
     FUNCTION_TEST_BEGIN();
@@ -448,7 +455,7 @@ pckReadNull(PackRead *this, PackIdParam param)
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline bool
+static inline bool
 pckReadDefaultNull(PackRead *this, bool defaultNull, unsigned int *id)
 {
     FUNCTION_TEST_BEGIN();
@@ -546,14 +553,19 @@ pckReadBool(PackRead *this, PckReadBoolParam param)
 
 /**********************************************************************************************************************************/
 int32_t
-pckReadInt32(PackRead *this, PackIdParam param)
+pckReadInt32(PackRead *this, PckReadInt32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+        FUNCTION_TEST_PARAM(INT, param.defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+
+    if (pckReadDefaultNull(this, param.defaultNull, &param.id))
+        FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(cvtInt32FromZigZag((uint32_t)pckReadTag(this, &param.id, pckTypeInt32, false)));
 }
@@ -622,14 +634,18 @@ pckReadObjEnd(PackRead *this)
 
 /**********************************************************************************************************************************/
 void *
-pckReadPtr(PackRead *this, PackIdParam param)
+pckReadPtr(PackRead *this, PckReadPtrParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+
+    if (pckReadDefaultNull(this, param.defaultNull, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
 
     FUNCTION_TEST_RETURN((void *)(uintptr_t)pckReadTag(this, &param.id, pckTypePtr, false));
 }
@@ -680,7 +696,7 @@ pckReadTime(PackRead *this, PckReadTimeParam param)
     if (pckReadDefaultNull(this, param.defaultNull, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
-    FUNCTION_TEST_RETURN(cvtInt64FromZigZag(pckReadTag(this, &param.id, pckTypeTime, false)));
+    FUNCTION_TEST_RETURN((time_t)cvtInt64FromZigZag(pckReadTag(this, &param.id, pckTypeTime, false)));
 }
 
 /**********************************************************************************************************************************/
@@ -847,7 +863,9 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static void
 pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 {
@@ -932,6 +950,29 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
+static inline bool
+pckWriteDefaultNull(PackWrite *this, bool defaultNull, bool defaultEqual)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(BOOL, defaultNull);
+        FUNCTION_TEST_PARAM(BOOL, defaultEqual);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (defaultNull && defaultEqual)
+    {
+        this->tagStackTop->nullTotal++;
+        FUNCTION_TEST_RETURN(true);
+    }
+
+    FUNCTION_TEST_RETURN(false);
+}
+
 /**********************************************************************************************************************************/
 PackWrite *
 pckWriteNull(PackWrite *this)
@@ -982,34 +1023,40 @@ pckWriteArrayEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteBool(PackWrite *this, bool value, PackIdParam param)
+pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
         FUNCTION_TEST_PARAM(BOOL, value);
         FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeBool, param.id, value);
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
+        pckWriteTag(this, pckTypeBool, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteInt32(PackWrite *this, int32_t value, PackIdParam param)
+pckWriteInt32(PackWrite *this, int32_t value, PckWriteInt32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
         FUNCTION_TEST_PARAM(INT, value);
         FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+        FUNCTION_TEST_PARAM(INT, param.defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypeInt32, param.id, cvtInt32ToZigZag(value));
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
+        pckWriteTag(this, pckTypeInt32, param.id, cvtInt32ToZigZag(value));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1028,9 +1075,7 @@ pckWriteInt64(PackWrite *this, int64_t value, PckWriteInt64Param param)
 
     ASSERT(this != NULL);
 
-    if (param.defaultNull && value == param.defaultValue)
-        this->tagStackTop->nullTotal++;
-    else
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
         pckWriteTag(this, pckTypeInt64, param.id, cvtInt64ToZigZag(value));
 
     FUNCTION_TEST_RETURN(this);
@@ -1073,17 +1118,19 @@ pckWriteObjEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWritePtr(PackWrite *this, const void *value, PackIdParam param)
+pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
         FUNCTION_TEST_PARAM_P(VOID, value);
         FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    pckWriteTag(this, pckTypePtr, param.id, (uintptr_t)value);
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == NULL))
+        pckWriteTag(this, pckTypePtr, param.id, (uintptr_t)value);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1100,9 +1147,7 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
         FUNCTION_TEST_PARAM(STRING, param.defaultValue);
     FUNCTION_TEST_END();
 
-    if (param.defaultNull && strEq(value, param.defaultValue))
-        this->tagStackTop->nullTotal++;
-    else
+    if (!pckWriteDefaultNull(this, param.defaultNull, strEq(value, param.defaultValue)))
     {
         ASSERT(value != NULL);
 
@@ -1132,9 +1177,7 @@ pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param)
 
     ASSERT(this != NULL);
 
-    if (param.defaultNull && value == param.defaultValue)
-        this->tagStackTop->nullTotal++;
-    else
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
         pckWriteTag(this, pckTypeTime, param.id, cvtInt64ToZigZag(value));
 
     FUNCTION_TEST_RETURN(this);
@@ -1154,9 +1197,7 @@ pckWriteUInt32(PackWrite *this, uint32_t value, PckWriteUInt32Param param)
 
     ASSERT(this != NULL);
 
-    if (param.defaultNull && value == param.defaultValue)
-        this->tagStackTop->nullTotal++;
-    else
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
         pckWriteTag(this, pckTypeUInt32, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
@@ -1176,9 +1217,7 @@ pckWriteUInt64(PackWrite *this, uint64_t value, PckWriteUInt64Param param)
 
     ASSERT(this != NULL);
 
-    if (param.defaultNull && value == param.defaultValue)
-        this->tagStackTop->nullTotal++;
-    else
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == param.defaultValue))
         pckWriteTag(this, pckTypeUInt64, param.id, value);
 
     FUNCTION_TEST_RETURN(this);

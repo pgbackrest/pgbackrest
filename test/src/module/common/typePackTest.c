@@ -74,6 +74,8 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteTimeP(packWrite, 0, .defaultNull = true), "write null");
         TEST_RESULT_VOID(pckWriteTimeP(packWrite, 33, .defaultNull = true), "write 33");
         TEST_RESULT_VOID(pckWriteTimeP(packWrite, 66, .id = 6), "write 66");
+        TEST_RESULT_VOID(pckWriteInt32P(packWrite, 1, .defaultNull = true, .defaultValue = 1), "write default 1");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultNull = true), "write default false");
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
@@ -241,6 +243,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 3), "A", "read A");
         TEST_RESULT_INT(pckReadTimeP(packRead, .defaultNull = true, .defaultValue = 99), 99, "read default 99");
         TEST_RESULT_INT(pckReadTimeP(packRead, .id = 5, .defaultNull = true, .defaultValue = 44), 33, "read 33");
+        TEST_RESULT_INT(pckReadInt32P(packRead, .id = 7, .defaultNull = true, .defaultValue = 1), 1, "read default 1");
         TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
 
         TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
@@ -261,11 +264,13 @@ testRun(void)
         pack = bufNew(0);
 
         TEST_ASSIGN(packWrite, pckWriteNewBuf(pack), "new write");
+        TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL, .defaultNull = true), "write default pointer");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEnd(packWrite), "write end");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
-        TEST_RESULT_Z(pckReadPtrP(packRead, .id = 1), "sample", "read pointer");
+        TEST_RESULT_Z(pckReadPtrP(packRead, .defaultNull = true), NULL, "read default pointer");
+        TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
     }
 
     // *****************************************************************************************************************************

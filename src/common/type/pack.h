@@ -105,10 +105,18 @@ typedef struct PckReadBoolParam
 bool pckReadBool(PackRead *this, PckReadBoolParam param);
 
 // Read 32-bit signed integer
-#define pckReadInt32P(this, ...)                                                                                                   \
-    pckReadInt32(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadInt32Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    int32_t defaultValue;
+} PckReadInt32Param;
 
-int32_t pckReadInt32(PackRead *this, PackIdParam param);
+#define pckReadInt32P(this, ...)                                                                                                   \
+    pckReadInt32(this, (PckReadInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+int32_t pckReadInt32(PackRead *this, PckReadInt32Param param);
 
 // Read 64-bit signed integer
 typedef struct PckReadInt64Param
@@ -132,10 +140,17 @@ void pckReadObjBegin(PackRead *this, PackIdParam param);
 void pckReadObjEnd(PackRead *this);
 
 // Read pointer. See pckWritePtrP() for cautions.
-#define pckReadPtrP(this, ...)                                                                                                     \
-    pckReadPtr(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckReadPtrParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+} PckReadPtrParam;
 
-void *pckReadPtr(PackRead *this, PackIdParam param);
+#define pckReadPtrP(this, ...)                                                                                                     \
+    pckReadPtr(this, (PckReadPtrParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void *pckReadPtr(PackRead *this, PckReadPtrParam param);
 
 // Read string
 typedef struct PckReadStrParam
@@ -207,16 +222,32 @@ PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
 PackWrite *pckWriteArrayEnd(PackWrite *this);
 
 // Write boolean
-#define pckWriteBoolP(this, value, ...)                                                                                            \
-    pckWriteBool(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWriteBoolParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    uint32_t defaultValue;
+} PckWriteBoolParam;
 
-PackWrite *pckWriteBool(PackWrite *this, bool value, PackIdParam param);
+#define pckWriteBoolP(this, value, ...)                                                                                            \
+    pckWriteBool(this, value, (PckWriteBoolParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param);
 
 // Write 32-bit signed integer
-#define pckWriteInt32P(this, value, ...)                                                                                           \
-    pckWriteInt32(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWriteInt32Param
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+    int32_t defaultValue;
+} PckWriteInt32Param;
 
-PackWrite *pckWriteInt32(PackWrite *this, int32_t value, PackIdParam param);
+#define pckWriteInt32P(this, value, ...)                                                                                           \
+    pckWriteInt32(this, value, (PckWriteInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteInt32(PackWrite *this, int32_t value, PckWriteInt32Param param);
 
 // Write 64-bit signed integer
 typedef struct PckWriteInt64Param
@@ -246,10 +277,17 @@ PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
 PackWrite *pckWriteObjEnd(PackWrite *this);
 
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-#define pckWritePtrP(this, value, ...)                                                                                             \
-    pckWritePtr(this, value, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct PckWritePtrParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+} PckWritePtrParam;
 
-PackWrite *pckWritePtr(PackWrite *this, const void *value, PackIdParam param);
+#define pckWritePtrP(this, value, ...)                                                                                             \
+    pckWritePtr(this, value, (PckWritePtrParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param);
 
 // Write string
 typedef struct PckWriteStrParam
