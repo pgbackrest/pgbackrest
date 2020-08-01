@@ -532,6 +532,33 @@ pckReadArrayEnd(PackRead *this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+Buffer *
+pckReadBin(PackRead *this, PckReadBinParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadDefaultNull(this, param.defaultNull, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    Buffer *result = NULL;
+
+    if (pckReadTag(this, &param.id, pckTypeBin, false))
+    {
+        result = bufNew((size_t)pckReadUInt64Internal(this));
+        ioRead(this->read, result);
+    }
+    else
+        result = bufNew(0);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /**********************************************************************************************************************************/
 bool
 pckReadBool(PackRead *this, PckReadBoolParam param)
@@ -1017,6 +1044,33 @@ pckWriteArrayEnd(PackWrite *this)
     pckWriteUInt64Internal(this, 0);
     lstRemoveLast(this->tagStack);
     this->tagStackTop = lstGetLast(this->tagStack);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(BUFFER, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
+    FUNCTION_TEST_END();
+
+    if (!pckWriteDefaultNull(this, param.defaultNull, value == NULL))
+    {
+        ASSERT(value != NULL);
+
+        pckWriteTag(this, pckTypeBin, param.id, bufUsed(value) > 0);
+
+        if (bufUsed(value) > 0)
+        {
+            pckWriteUInt64Internal(this, bufUsed(value));
+            ioWrite(this->write, value);
+        }
+    }
 
     FUNCTION_TEST_RETURN(this);
 }

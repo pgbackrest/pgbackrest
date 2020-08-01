@@ -90,6 +90,19 @@ bool pckReadNull(PackRead *this, PackIdParam param);
 void pckReadArrayBegin(PackRead *this, PackIdParam param);
 void pckReadArrayEnd(PackRead *this);
 
+// Read binary
+typedef struct PckReadBinParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+} PckReadBinParam;
+
+#define pckReadBinP(this, ...)                                                                                                     \
+    pckReadBin(this, (PckReadBinParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Buffer *pckReadBin(PackRead *this, PckReadBinParam param);
+
 // Read boolean
 typedef struct PckReadBoolParam
 {
@@ -220,6 +233,19 @@ Write Functions
 
 PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
 PackWrite *pckWriteArrayEnd(PackWrite *this);
+
+// Write binary
+typedef struct PckWriteBinParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultNull;
+    unsigned int id;
+} PckWriteBinParam;
+
+#define pckWriteBinP(this, value, ...)                                                                                             \
+    pckWriteBin(this, value, (PckWriteBinParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param);
 
 // Write boolean
 typedef struct PckWriteBoolParam

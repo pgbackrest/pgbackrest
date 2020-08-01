@@ -77,8 +77,13 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteInt32P(packWrite, 1, .defaultNull = true, .defaultValue = 1), "write default 1");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultNull = true), "write default false");
         TEST_RESULT_VOID(pckWriteArrayEnd(packWrite), "write array end");
-        TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
 
+        const unsigned char bin[] = {0x05, 0x04, 0x03, 0x02, 0x01, 0x00};
+        TEST_RESULT_VOID(pckWriteBinP(packWrite, BUF(bin, sizeof(bin))), "write bin");
+        TEST_RESULT_VOID(pckWriteBinP(packWrite, NULL, .defaultNull = true), "write bin NULL default");
+        TEST_RESULT_VOID(pckWriteBinP(packWrite, bufNew(0)), "write bin zero length");
+
+        TEST_RESULT_VOID(pckWriteEnd(packWrite), "end");
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
 
         ioWriteClose(write);
@@ -116,17 +121,19 @@ testRun(void)
             ", 47:uint32:0"
             ", 48:array:"
             "["
-                    "1:obj:"
-                  "{"
-                        "1:int32:555"
-                      ", 3:int32:777"
-                      ", 5:int64:1"
-                      ", 7:uint64:1"
-                  "}"
-                  ", 3:str:A"
-                  ", 5:time:33"
-                  ", 6:time:66"
-            "]",
+                  "1:obj:"
+                "{"
+                      "1:int32:555"
+                    ", 3:int32:777"
+                    ", 5:int64:1"
+                    ", 7:uint64:1"
+                "}"
+                ", 3:str:A"
+                ", 5:time:33"
+                ", 6:time:66"
+            "]"
+            ", 49:bin:050403020100"
+            ", 51:bin:",
             "check pack string");
 
         TEST_RESULT_STR_Z(
@@ -169,6 +176,8 @@ testRun(void)
                 "9942"                                              //      5, time, 33
                 "898401"                                            //      6, time, 66
                 "00"                                                //     array end
+            "8206050403020100"                                      // 49,  bin, 0x050403020100
+            "12"                                                    // 51,  bin, zero length
             "00",                                                   // end
             "check pack hex");
 
@@ -245,6 +254,10 @@ testRun(void)
         TEST_RESULT_INT(pckReadTimeP(packRead, .id = 5, .defaultNull = true, .defaultValue = 44), 33, "read 33");
         TEST_RESULT_INT(pckReadInt32P(packRead, .id = 7, .defaultNull = true, .defaultValue = 1), 1, "read default 1");
         TEST_RESULT_VOID(pckReadArrayEnd(packRead), "read array end");
+
+        TEST_RESULT_STR_Z(bufHex(pckReadBinP(packRead)), "050403020100", "read bin");
+        TEST_RESULT_PTR(pckReadBinP(packRead, .defaultNull = true), NULL, "read bin null");
+        TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
 
         TEST_ERROR(pckReadUInt64P(packRead, .id = 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");

@@ -302,8 +302,8 @@ testRun(void)
             hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
                 "1:bool:true"
-                ", 2:obj:{2:time:1555160001, 3:uint64:6, 4:uint32:416, 5:uint32:1000, 7:str:vagrant, 8:uint32:1000"
-                    ", 10:str:vagrant}"),
+                ", 2:obj:{2:time:1555160001, 3:uint64:6, 4:uint32:416, 5:uint32:{[user-id]}, 7:str:{[user]}"
+                    ", 8:uint32:{[group-id]}, 10:str:{[group]}}"),
             "check result");
 
         bufUsedSet(serverWrite, 0);

@@ -59,7 +59,10 @@ String *hrnPackToStr(PackRead *read)
             }
 
             case pckTypeBin:
-                THROW_FMT(AssertError, "'%s' NOT YET IMPLEMENTED", strZ(pckTypeToStr(type)));
+            {
+                strCatFmt(result, "%s", strZ(bufHex(pckReadBinP(read, .id = id))));
+                break;
+            }
 
             case pckTypeInt32:
             {
