@@ -285,7 +285,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 3:time:1555160001, 4:uint64:6", "check result");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:uint64:6}", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -301,8 +301,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
-                "1:bool:true, 3:time:1555160001, 4:uint64:6, 5:uint32:416, 6:uint32:{[user-id]}, 8:str:{[user]}"
-                    ", 9:uint32:{[group-id]}, 11:str:{[group]}"),
+                "1:bool:true"
+                ", 2:obj:{2:time:1555160001, 3:uint64:6, 4:uint32:416, 5:uint32:1000, 7:str:vagrant, 8:uint32:1000"
+                    ", 10:str:vagrant}"),
             "check result");
 
         bufUsedSet(serverWrite, 0);

@@ -131,7 +131,9 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
         if (result.exists)
         {
+            pckReadObjBeginP(read);
             storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
+            pckReadObjEnd(read);
 
             // Duplicate strings into the prior context
             MEM_CONTEXT_PRIOR_BEGIN()

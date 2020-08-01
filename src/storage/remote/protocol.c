@@ -245,7 +245,11 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             pckWriteBoolP(write, info.exists);
 
             if (info.exists)
+            {
+                pckWriteObjBeginP(write);
                 storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
+                pckWriteObjEnd(write);
+            }
 
             pckWriteEnd(write);
             ioWriteFlush(protocolServerIoWrite(server));
