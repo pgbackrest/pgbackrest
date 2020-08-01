@@ -225,13 +225,11 @@ static size_t pckReadBuffer(PackRead *this, size_t size)
             ASSERT(remaining == 0);
             bufUsedZero(this->buffer);
 
-            // Limit the buffer for the next read when required (!!! NOT VERY EFFICIENT BUT AT LEAST LOCALIZED)
-            bufLimitClear(this->buffer);
+            // Limit the buffer for the next read so we don't read past the end of the pack
+            bufLimitSet(this->buffer, size < bufSizeAlloc(this->buffer) ? size : bufSizeAlloc(this->buffer));
 
-            if (size < bufSize(this->buffer))
-                bufLimitSet(this->buffer, size);
-
-            ioRead(this->read, this->buffer);
+            // Read bytes
+            ioReadSmall(this->read, this->buffer);
             this->bufferPos = 0;
             this->bufferMax = bufUsed(this->buffer);
             remaining = this->bufferMax - this->bufferPos;
