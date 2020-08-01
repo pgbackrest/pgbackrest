@@ -211,6 +211,63 @@ ioRead(IoRead *this, Buffer *buffer)
     FUNCTION_LOG_RETURN(SIZE, outputRemains - bufRemains(buffer));
 }
 
+/**********************************************************************************************************************************/
+void
+ioReadSmall(IoRead *this, Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->opened && !this->closed);
+
+    do
+    {
+        // Use any data in the output buffer
+        if (this->output != NULL && bufUsed(this->output) > 0)
+        {
+            // Determine how much data should be copied
+            size_t size = bufUsed(this->output) > bufRemains(buffer) ? bufRemains(buffer) : bufUsed(this->output);
+
+            // Copy data to the user buffer
+            bufCatSub(buffer, this->output, 0, size);
+
+            // Remove copied data from the output buffer
+            memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
+            bufUsedSet(this->output, bufUsed(this->output) - size);
+        }
+
+        // If more data is required
+        if (!bufFull(buffer))
+        {
+            // Allocate the internal buffer if it has not already been allocated
+            if (this->output == NULL)
+            {
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    this->output = bufNew(ioBufferSize());
+                }
+                MEM_CONTEXT_END();
+            }
+
+            // If the data required is the same size as the internal buffer then just read into the passed buffer
+            if (bufRemains(buffer) >= bufSize(this->output))
+            {
+                ioReadInternal(this, buffer, true);
+            }
+            // Else read as much data as is available. If is not enough we will try again.
+            else
+                ioReadInternal(this, this->output, false);
+        }
+    }
+    while (!bufFull(buffer));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/

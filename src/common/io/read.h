@@ -29,6 +29,9 @@ bool ioReadOpen(IoRead *this);
 // Read data from IO and process filters
 size_t ioRead(IoRead *this, Buffer *buffer);
 
+// Same as ioRead() but optimized for small reads
+void ioReadSmall(IoRead *this, Buffer *buffer);
+
 // Read linefeed-terminated string
 String *ioReadLine(IoRead *this);
 
