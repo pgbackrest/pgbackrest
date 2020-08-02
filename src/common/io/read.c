@@ -22,7 +22,8 @@ struct IoRead
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *input;                                                  // Input buffer
-    Buffer *output;                                                 // Output buffer (holds extra data from line read)
+    Buffer *output;                                                 // Output buffer (holds extra data from small reads)
+    size_t outputPos;                                               // Current position in the output buffer
 
     bool eofAll;                                                    // Is the read done (read and filters complete)?
 
@@ -192,17 +193,17 @@ ioRead(IoRead *this, Buffer *buffer)
     size_t outputRemains = bufRemains(buffer);
 
     // Use any data in the output buffer left over from a line read
-    if (this->output != NULL && bufUsed(this->output) > 0 && bufRemains(buffer) > 0)
+    if (this->output != NULL && bufUsed(this->output) - this->outputPos > 0 && bufRemains(buffer) > 0)
     {
+        // Internal output buffer remains taking into account the position
+        size_t outputRemains = bufUsed(this->output) - this->outputPos;
+
         // Determine how much data should be copied
-        size_t size = bufUsed(this->output) > bufRemains(buffer) ? bufRemains(buffer) : bufUsed(this->output);
+        size_t size = outputRemains > bufRemains(buffer) ? bufRemains(buffer) : outputRemains;
 
         // Copy data to the user buffer
-        bufCatSub(buffer, this->output, 0, size);
-
-        // Remove copied data from the output buffer
-        memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
-        bufUsedSet(this->output, bufUsed(this->output) - size);
+        bufCatSub(buffer, this->output, this->outputPos, size);
+        this->outputPos += size;
     }
 
     // Read data
@@ -224,46 +225,55 @@ ioReadSmall(IoRead *this, Buffer *buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->opened && !this->closed);
 
+    // Allocate the internal output buffer if it has not already been allocated
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_END();
+    }
+
     do
     {
+        // Internal output buffer remains taking into account the position
+        size_t outputRemains = bufUsed(this->output) - this->outputPos;
+
         // Use any data in the output buffer
-        if (this->output != NULL && bufUsed(this->output) > 0)
+        if (outputRemains > 0)
         {
             // Determine how much data should be copied
-            size_t size = bufUsed(this->output) > bufRemains(buffer) ? bufRemains(buffer) : bufUsed(this->output);
+            size_t size = outputRemains > bufRemains(buffer) ? bufRemains(buffer) : outputRemains;
 
             // Copy data to the user buffer
-            bufCatSub(buffer, this->output, 0, size);
-
-            // Remove copied data from the output buffer
-            memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
-            bufUsedSet(this->output, bufUsed(this->output) - size);
+            bufCatSub(buffer, this->output, this->outputPos, size);
+            this->outputPos += size;
+            LOG_DEBUG_FMT("BUF SIZE %zu POS %zu REMAINS %zu", size, this->outputPos, outputRemains);
         }
 
         // If more data is required
         if (!bufFull(buffer))
         {
-            // Allocate the internal buffer if it has not already been allocated
-            if (this->output == NULL)
-            {
-                MEM_CONTEXT_BEGIN(this->memContext)
-                {
-                    this->output = bufNew(ioBufferSize());
-                }
-                MEM_CONTEXT_END();
-            }
-
-            // If the data required is the same size as the internal buffer then just read into the passed buffer
+            // If the data required is the same size as the internal output buffer then just read into the external buffer
             if (bufRemains(buffer) >= bufSize(this->output))
             {
                 ioReadInternal(this, buffer, true);
             }
-            // Else read as much data as is available. If is not enough we will try again.
+            // Else read as much data as is available. If is not enough we will try again later.
             else
+            {
+                // Clear the internal output buffer since all data it in must have been copied already
+                bufUsedZero(this->output);
+                this->outputPos = 0;
+
                 ioReadInternal(this, this->output, false);
+            }
         }
     }
     while (!bufFull(buffer));
+
+    LOG_DEBUG_FMT("EXIT");
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -298,29 +308,51 @@ ioReadLineParam(IoRead *this, bool allowEof)
 
     do
     {
-        if (bufUsed(this->output) > 0)
+        // Internal output buffer remains taking into account the position
+        size_t outputRemains = bufUsed(this->output) - this->outputPos;
+
+        if (outputRemains > 0)
         {
+            // Internal output buffer pointer taking into account the position
+            char *outputPtr = (char *)bufPtr(this->output) + this->outputPos;
+
+            LOG_DEBUG_FMT("STR POS %zu USED %zu REMAINS %zu", this->outputPos, bufUsed(this->output), outputRemains);
+
             // Search for a linefeed in the buffer
-            char *linefeed = memchr(bufPtr(this->output), '\n', bufUsed(this->output));
+            char *linefeed = memchr(outputPtr, '\n', outputRemains);
 
             // A linefeed was found so get the string
             if (linefeed != NULL)
             {
                 // Get the string size
-                size_t size = (size_t)(linefeed - (char *)bufPtr(this->output) + 1);
+                size_t size = (size_t)(linefeed - outputPtr);
 
                 // Create the string
-                result = strNewN((char *)bufPtr(this->output), size - 1);
+                result = strNewN(outputPtr, size);
+                this->outputPos += size + 1;
 
-                // Remove string from the output buffer
-                memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
-                bufUsedSet(this->output, bufUsed(this->output) - size);
+                LOG_DEBUG_FMT("STR SIZE %zu POS %zu USED %zu REMAINS %zu", size, this->outputPos, bufUsed(this->output), outputRemains);
             }
         }
 
         // Read data if no linefeed was found in the existing buffer
         if (result == NULL)
         {
+            // If there is remaining data left in the internal output buffer then trim off the used data
+            if (outputRemains > 0)
+            {
+                LOG_DEBUG_FMT("MOVE POS %zu USED %zu REMAINS %zu", this->outputPos, bufUsed(this->output), outputRemains);
+                memmove(bufPtr(this->output), bufPtr(this->output) + (bufUsed(this->output) - outputRemains), outputRemains);
+                bufUsedSet(this->output, outputRemains);
+                this->outputPos = 0;
+            }
+            // Else just clear the buffer
+            else
+            {
+                bufUsedZero(this->output);
+                this->outputPos = 0;
+            }
+
             if (bufFull(this->output))
                 THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
 
