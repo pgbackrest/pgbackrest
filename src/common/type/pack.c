@@ -1,12 +1,22 @@
 /***********************************************************************************************************************************
 Pack Handler
 
-  7 more value indicator
-  6 value low-order bit
-  5 more id indicator
-  4 id low order bit
-0-3 type
+The four high order bits of the field tag contain the field type (PackType). The four lower order bits vary by type.
 
+When packTypeData[type].valueMultiBit (integer types):
+  3 more value indicator
+  2 value low-order bit
+  1 more id indicator
+  0 id low order bit
+
+When packTypeData[type].valueSingleBit (string and binary types):
+  3 value bit
+  2 more id indicator
+0-1 id low order bits
+
+Else (array and object types):
+  4 more id indicator
+0-3 id low order bit
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -301,43 +311,43 @@ pckReadTagNext(PackRead *this)
         this->tagNextId = 0xFFFFFFFF;
     else
     {
-        this->tagNextType = tag & 0xF;
+        this->tagNextType = tag >> 4;
 
         if (packTypeData[this->tagNextType].valueMultiBit)
         {
-            if (tag & 0x80)
+            if (tag & 0x8)
             {
-                this->tagNextId = (tag >> 4) & 0x3;
+                this->tagNextId = tag & 0x3;
 
-                if (tag & 0x40)
+                if (tag & 0x4)
                     this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
 
                 this->tagNextValue = pckReadUInt64Internal(this);
             }
             else
             {
-                this->tagNextId = (tag >> 4) & 0x1;
+                this->tagNextId = tag & 0x1;
 
-                if (tag & 0x20)
+                if (tag & 0x2)
                     this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 1;
 
-                this->tagNextValue = (tag >> 6) & 0x1;
+                this->tagNextValue = (tag >> 2) & 0x1;
             }
         }
         else if (packTypeData[this->tagNextType].valueSingleBit)
         {
-            this->tagNextId = (tag >> 4) & 0x3;
+            this->tagNextId = tag & 0x3;
 
-            if (tag & 0x40)
+            if (tag & 0x4)
                 this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
 
-            this->tagNextValue = tag >> 7;
+            this->tagNextValue = (tag >> 3) & 0x1;
         }
         else
         {
-            this->tagNextId = (tag >> 4) & 0x7;
+            this->tagNextId = tag & 0x7;
 
-            if (tag & 0x80)
+            if (tag & 0x8)
                 this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 3;
 
             this->tagNextValue = 0;
@@ -954,53 +964,53 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 
     this->tagStackTop->nullTotal = 0;
 
-    uint64_t tag = type;
+    uint64_t tag = type << 4;
     unsigned int tagId = id - this->tagStackTop->idLast - 1;
 
     if (packTypeData[type].valueMultiBit)
     {
         if (value < 2)
         {
-            tag |= (value & 0x1) << 6;
+            tag |= (value & 0x1) << 2;
             value >>= 1;
 
-            tag |= (tagId & 0x1) << 4;
+            tag |= tagId & 0x1;
             tagId >>= 1;
 
             if (tagId > 0)
-                tag |= 0x20;
+                tag |= 0x2;
         }
         else
         {
-            tag |= 0x80;
+            tag |= 0x8;
 
-            tag |= (tagId & 0x3) << 4;
+            tag |= tagId & 0x3;
             tagId >>= 2;
 
             if (tagId > 0)
-                tag |= 0x40;
+                tag |= 0x4;
         }
     }
     else if (packTypeData[type].valueSingleBit)
     {
-        tag |= (value & 0x1) << 7;
+        tag |= (value & 0x1) << 3;
         value >>= 1;
 
-        tag |= (tagId & 0x3) << 4;
+        tag |= tagId & 0x3;
         tagId >>= 2;
 
         if (tagId > 0)
-            tag |= 0x40;
+            tag |= 0x4;
     }
     else
     {
         ASSERT(value == 0);
 
-        tag |= (tagId & 0x7) << 4;
+        tag |= tagId & 0x7;
         tagId >>= 3;
 
         if (tagId > 0)
-            tag |= 0x80;
+            tag |= 0x8;
     }
 
     uint8_t tagByte = (uint8_t)tag;

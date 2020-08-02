@@ -262,7 +262,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
             // Else read as much data as is available. If is not enough we will try again later.
             else
             {
-                // Clear the internal output buffer since all data it in must have been copied already
+                // Clear the internal output buffer since all data was copied already
                 bufUsedZero(this->output);
                 this->outputPos = 0;
 

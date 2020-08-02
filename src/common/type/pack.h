@@ -1,5 +1,58 @@
 /***********************************************************************************************************************************
 Pack Handler
+
+Encode binary data compactly while still maintaining structure and strict typing. The idea is based on Thrift, ProtocolBuffers, and
+Avro which are nicely explained here: https://medium.com/better-programming/use-binary-encoding-instead-of-json-dec745ec09b6. It has
+been further optimized to balance between purely in-memory structures and those intended to be passed via a protocol or saved in a
+file.
+
+The overall idea is similar to JSON but IDs are used instead of names, typing is more granular, and the representation is far more
+compact. A pack can readily be converted to JSON but the reverse is not as precise due to loose typing in JSON. A pack is a stream
+format, i.e. it is intended to be read in order from beginning to end.
+
+Fields in a pack are identified by IDs. A field ID is stored as a delta from the previous ID, which is very efficient, but means
+that reading from the middle is generally not practical. The size of the gap between field IDs is important -- a gap of 1 never
+incurs extra cost, but depending on the field type larger gaps may require additional bytes to store the field ID delta.
+
+NULLs are not stored in a pack and are therefore not typed. A NULL is essential just a gap in the field IDs. Fields that are
+frequently NULL are best stored at the end of an object.
+
+A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
+containers. Fields contain discrete!!! data to be stored, e.g. integers, strings, etc.
+
+Here a simple example of a pack:
+
+PackWrite *write = pckWriteNew(buffer);
+pckWriteUInt64P(write, 77);
+pckWriteBoolP(write, false, .defaultNull = true);
+pckWriteInt32P(write, -1, .defaultNull = true, .defaultValue = -1);
+pckWriteStringP(write, STRDEF("sample"));
+pckWriteEnd();
+
+A string representation of this pack would be: 1:uint64:77,4:str:sample. The boolean was not stored because we requested NULL on
+default and the default was false (because it was not set to anything else). The int32 field was also not stored but we set an
+explicit detault value. Note that there is a gap in the ID stream, which represents the NULL values.
+
+This pack can be read with:
+
+PackRead *read = pckReadNew(buffer);
+pckReadUInt64P(read);
+pckReadBoolP(read, .defaultNull = true);
+pckReadBoolP(read, .defaultNull = true, .defaultValue = -1);
+pckReadStringP(read);
+pckReadEnd();
+
+If we don't care about the NULLs, another way to read this is:
+
+PackRead *read = pckReadNew(buffer);
+pckReadUInt64P(read);
+pckReadStringP(read, .id = 4);
+pckReadEnd();
+
+This essentially skips the NULLs but in practice it is better to read the NULLs so static IDs are not required. The trick is to read
+all the fields in the same order that they were written. By default each read and write advances the ID by one.
+
+!!!
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H

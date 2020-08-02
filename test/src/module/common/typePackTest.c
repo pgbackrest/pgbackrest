@@ -140,46 +140,46 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(pack),
-            "8be803"                                                //  1,  u64, 750
-            "8bfd9fad8f07"                                          //  2,  u64, 1911246845
-            "cb01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
-            "6b01"                                                  // 10,  u64, 1
-            "8b4d"                                                  // 11,  u64, 77
-            "8a7f"                                                  // 12,  u32, 127
-            "45"                                                    // 13,  i64, -1
+            "b8e803"                                                //  1,  u64, 750
+            "b8fd9fad8f07"                                          //  2,  u64, 1911246845
+            "bc01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
+            "b601"                                                  // 10,  u64, 1
+            "b84d"                                                  // 11,  u64, 77
+            "a87f"                                                  // 12,  u32, 127
+            "54"                                                    // 13,  i64, -1
             "44"                                                    // 14,  i32, -1
-            "83"                                                    // 15, bool, true
-            "4301"                                                  // 20, bool, false
-            "76"                                                    // 28, obj begin
-                "83"                                                //      1, bool
-                "03"                                                //      2, bool
+            "38"                                                    // 15, bool, true
+            "3401"                                                  // 20, bool, false
+            "67"                                                    // 28, obj begin
+                "38"                                                //      1, bool
+                "30"                                                //      2, bool
                 "00"                                                //     obj end
-            "8101"                                                  // 37, array begin
-                "0b"                                                //      1,  u64, 0
-                "4b"                                                //      2,  u64, 1
-                "8b02"                                              //      3,  u64, 2
-                "8b03"                                              //      4,  u64, 3
+            "1801"                                                  // 37, array begin
+                "b0"                                                //      1,  u64, 0
+                "b4"                                                //      2,  u64, 1
+                "b802"                                              //      3,  u64, 2
+                "b803"                                              //      4,  u64, 3
                 "00"                                                //     array end
             "880673616d706c65"                                      // 38,  str, sample
             "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
-            "08"                                                    // 40,  str, zero length
+            "80"                                                    // 40,  str, zero length
             "8805736d616c6c"                                        // 41,  str, small
-            "08"                                                    // 42,  str, zero length
-            "28"                                                    // 45,  str, zero length
-            "1a"                                                    // 47,  u32, 0
-            "01"                                                    // 48, array begin
-                "06"                                                //      1, obj begin
-                    "84d608"                                        //           1, int32, 555
-                    "94920c"                                        //           3, int32, 777
-                    "9502"                                          //           5, int64, 1
-                    "5b"                                            //           7, uint64, 1
+            "80"                                                    // 42,  str, zero length
+            "82"                                                    // 45,  str, zero length
+            "a1"                                                    // 47,  u32, 0
+            "10"                                                    // 48, array begin
+                "60"                                                //      1, obj begin
+                    "48d608"                                        //           1, int32, 555
+                    "49920c"                                        //           3, int32, 777
+                    "5902"                                          //           5, int64, 1
+                    "b5"                                            //           7, uint64, 1
                     "00"                                            //         obj end
-                "980141"                                            //      3,  str, A
+                "890141"                                            //      3,  str, A
                 "9942"                                              //      5, time, 33
-                "898401"                                            //      6, time, 66
+                "988401"                                            //      6, time, 66
                 "00"                                                //     array end
-            "8206050403020100"                                      // 49,  bin, 0x050403020100
-            "12"                                                    // 51,  bin, zero length
+            "2806050403020100"                                      // 49,  bin, 0x050403020100
+            "21"                                                    // 51,  bin, zero length
             "00",                                                   // end
             "check pack hex");
 
