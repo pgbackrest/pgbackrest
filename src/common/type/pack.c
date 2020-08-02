@@ -1,22 +1,36 @@
 /***********************************************************************************************************************************
 Pack Handler
 
-The four high order bits of the field tag contain the field type (PackType). The four lower order bits vary by type.
+Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackType). The four lower
+order bits vary by type.
 
-When packTypeData[type].valueMultiBit (integer types):
-  3 more value indicator
+Integer types (packTypeData[type].valueMultiBit) when the value is >= -1 and <= 1:
+  3 more value indicator set to 0
   2 value low-order bit
-  1 more id indicator
-  0 id low order bit
+  1 more ID delta indicator
+  0 ID delta low order bit
 
-When packTypeData[type].valueSingleBit (string and binary types):
+Integer types (packTypeData[type].valueMultiBit) when the value is < -1 or > 1:
+  3 more value indicator set to 1
+  2 more ID delta indicator
+0-1 ID delta low order bit
+
+String and binary types (packTypeData[type].valueSingleBit):
   3 value bit
-  2 more id indicator
-0-1 id low order bits
+  2 more ID delta indicator
+0-1 ID delta low order bits
 
-Else (array and object types):
-  4 more id indicator
-0-3 id low order bit
+Array and object types:
+  4 more ID delta indicator
+0-3 ID delta low order bit
+
+When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
+bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
+delta, if any) will be followed by a base-128 encoded integer with the high order value bits, i.e. the bits that were not stored
+directly in the tag.
+
+For integer types the value is the integer being stored. For string and binary types the value is the length of the string/binary.
+In that case the string/binary bytes immediately follow the value.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
