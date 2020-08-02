@@ -249,7 +249,6 @@ ioReadSmall(IoRead *this, Buffer *buffer)
             // Copy data to the user buffer
             bufCatSub(buffer, this->output, this->outputPos, size);
             this->outputPos += size;
-            LOG_DEBUG_FMT("BUF SIZE %zu POS %zu REMAINS %zu", size, this->outputPos, outputRemains);
         }
 
         // If more data is required
@@ -272,8 +271,6 @@ ioReadSmall(IoRead *this, Buffer *buffer)
         }
     }
     while (!bufFull(buffer));
-
-    LOG_DEBUG_FMT("EXIT");
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -316,8 +313,6 @@ ioReadLineParam(IoRead *this, bool allowEof)
             // Internal output buffer pointer taking into account the position
             char *outputPtr = (char *)bufPtr(this->output) + this->outputPos;
 
-            LOG_DEBUG_FMT("STR POS %zu USED %zu REMAINS %zu", this->outputPos, bufUsed(this->output), outputRemains);
-
             // Search for a linefeed in the buffer
             char *linefeed = memchr(outputPtr, '\n', outputRemains);
 
@@ -330,8 +325,6 @@ ioReadLineParam(IoRead *this, bool allowEof)
                 // Create the string
                 result = strNewN(outputPtr, size);
                 this->outputPos += size + 1;
-
-                LOG_DEBUG_FMT("STR SIZE %zu POS %zu USED %zu REMAINS %zu", size, this->outputPos, bufUsed(this->output), outputRemains);
             }
         }
 
@@ -341,7 +334,6 @@ ioReadLineParam(IoRead *this, bool allowEof)
             // If there is remaining data left in the internal output buffer then trim off the used data
             if (outputRemains > 0)
             {
-                LOG_DEBUG_FMT("MOVE POS %zu USED %zu REMAINS %zu", this->outputPos, bufUsed(this->output), outputRemains);
                 memmove(bufPtr(this->output), bufPtr(this->output) + (bufUsed(this->output) - outputRemains), outputRemains);
                 bufUsedSet(this->output, outputRemains);
                 this->outputPos = 0;
