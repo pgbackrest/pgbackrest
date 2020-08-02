@@ -22,8 +22,8 @@ struct IoRead
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *input;                                                  // Input buffer
-    Buffer *output;                                                 // Output buffer (holds extra data from small reads)
-    size_t outputPos;                                               // Current position in the output buffer
+    Buffer *output;                                                 // Internal output buffer (holds extra data from small reads)
+    size_t outputPos;                                               // Current position in the internal output buffer
 
     bool eofAll;                                                    // Is the read done (read and filters complete)?
 
@@ -192,7 +192,7 @@ ioRead(IoRead *this, Buffer *buffer)
     // Store size of remaining portion of buffer to calculate total read at the end
     size_t outputRemains = bufRemains(buffer);
 
-    // Use any data in the output buffer left over from a line read
+    // Use any data in the internal output buffer left over from a line read
     if (this->output != NULL && bufUsed(this->output) - this->outputPos > 0 && bufRemains(buffer) > 0)
     {
         // Internal output buffer remains taking into account the position
@@ -201,7 +201,7 @@ ioRead(IoRead *this, Buffer *buffer)
         // Determine how much data should be copied
         size_t size = outputRemains > bufRemains(buffer) ? bufRemains(buffer) : outputRemains;
 
-        // Copy data to the user buffer
+        // Copy data to the output buffer
         bufCatSub(buffer, this->output, this->outputPos, size);
         this->outputPos += size;
     }
@@ -240,13 +240,13 @@ ioReadSmall(IoRead *this, Buffer *buffer)
         // Internal output buffer remains taking into account the position
         size_t outputRemains = bufUsed(this->output) - this->outputPos;
 
-        // Use any data in the output buffer
+        // Use any data in the internal output buffer
         if (outputRemains > 0)
         {
             // Determine how much data should be copied
             size_t size = outputRemains > bufRemains(buffer) ? bufRemains(buffer) : outputRemains;
 
-            // Copy data to the user buffer
+            // Copy data to the output buffer
             bufCatSub(buffer, this->output, this->outputPos, size);
             this->outputPos += size;
         }
@@ -333,18 +333,13 @@ ioReadLineParam(IoRead *this, bool allowEof)
         {
             // If there is remaining data left in the internal output buffer then trim off the used data
             if (outputRemains > 0)
-            {
                 memmove(bufPtr(this->output), bufPtr(this->output) + (bufUsed(this->output) - outputRemains), outputRemains);
-                bufUsedSet(this->output, outputRemains);
-                this->outputPos = 0;
-            }
-            // Else just clear the buffer
-            else
-            {
-                bufUsedZero(this->output);
-                this->outputPos = 0;
-            }
 
+            // Set used bytes and reset position
+            bufUsedSet(this->output, outputRemains);
+            this->outputPos = 0;
+
+            // If the buffer is full then the linefeed (if it exists) is outside the buffer
             if (bufFull(this->output))
                 THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
 
