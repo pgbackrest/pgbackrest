@@ -164,6 +164,7 @@ struct Manifest
 };
 
 OBJECT_DEFINE_MOVE(MANIFEST);
+OBJECT_DEFINE_FREE(MANIFEST);
 
 /***********************************************************************************************************************************
 Internal functions to add types to their lists

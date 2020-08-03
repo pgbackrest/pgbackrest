@@ -2008,7 +2008,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("manifestLoadFile()"))
+    if (testBegin("manifestLoadFile(), manifestFree()"))
     {
         Manifest *manifest = NULL;
 
@@ -2088,5 +2088,8 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
+
+        TEST_RESULT_VOID(manifestFree(manifest), "free manifest");
+        TEST_RESULT_VOID(manifestFree(NULL), "free null manifest");
     }
 }
