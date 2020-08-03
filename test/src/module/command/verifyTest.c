@@ -289,6 +289,36 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("setBackupCheckArchive()"))
+    {
+        InfoBackup *backupInfo = NULL;
+        InfoArchive *archiveInfo = NULL;
+        TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info");
+        TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoMultiHistoryBase)), "archive.info");
+        InfoPg *pgHistory = infoArchivePg(archiveInfo);
+
+        StringList *backupList= strLstNew();
+        strLstAddZ(backupList, "20181119-152138F");
+        strLstAddZ(backupList, "20181119-152900F");
+        StringList *archiveIdList = strLstComparatorSet(strLstNew(), archiveIdComparator);
+        strLstAddZ(archiveIdList, "9.4-1");
+        strLstAddZ(archiveIdList, "11-2");
+
+        TEST_RESULT_STR_Z(setBackupCheckArchive(strLstNew(), backupInfo, strLstNew(), pgHistory), NULL, "no archives or backups");
+        TEST_RESULT_STR_Z(
+            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory), NULL, "no current backup, no missing archive");
+
+        // Add backup to end of list
+        strLstAddZ(backupList, "20181119-153000F");
+        strLstAddZ(archiveIdList, "12-3");
+
+        TEST_RESULT_STR_Z(
+            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory),
+            "20181119-153000F", "current backup, missing archive");
+        harnessLogResult("P00   WARN: archiveIds '12-3' are not in the archive.info history list");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdVerify()"))
     {
         // Load Parameters

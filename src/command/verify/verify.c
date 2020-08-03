@@ -492,10 +492,10 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
                     break;
                 }
             }
-// CSHANG Still need to decide if we verify the backup or skip it at this point
+
             // If the PG data is not found in the backup.info history, then warn but check all the files anyway
             if (!found)
-                LOG_WARN_FMT("%s will not be a usable backup, the PG data is not in the backup.info history", strPtr(backupLabel));
+                LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strPtr(backupLabel));
         }
 
     }
@@ -554,9 +554,9 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 /***********************************************************************************************************************************
 Process the job data
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_ID_RANGE_TYPE                                                                                  \
+#define FUNCTION_LOG_ARCHIVE_ID_RANGE_TYPE                                                                                         \
     ArchiveIdRange
-#define FUNCTION_LOG_ARCHIVE_ID_RANGE_FORMAT(value, buffer, bufferSize)                                                     \
+#define FUNCTION_LOG_ARCHIVE_ID_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "ArchiveIdRange", buffer, bufferSize)
 
 typedef struct ArchiveIdRange
@@ -1063,6 +1063,61 @@ verifyRender(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
+String *
+setBackupCheckArchive(
+    const StringList *backupList, const InfoBackup *backupInfo, const StringList *archiveIdList, const InfoPg *pgHistory)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, backupList);
+        FUNCTION_TEST_PARAM(INFO_BACKUP, backupInfo);
+        FUNCTION_TEST_PARAM(STRING_LIST, archiveIdList);
+        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If there are backups, set the last backup as current if it is not in backup.info (if it is, then it is complete)
+        if (strLstSize(backupList) > 0)
+        {
+            String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
+
+            if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
+            {
+                // Duplicate the string into the prior context
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(backupLabel);
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+        }
+
+        // If there are archive directories on disk, make sure they are in the database history list
+        if (strLstSize(archiveIdList) > 0)
+        {
+            StringList *archiveIdHistoryList = strLstNew();
+
+            for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(pgHistory); histIdx++)
+            {
+                strLstAdd(archiveIdHistoryList, infoPgArchiveId(pgHistory, histIdx));
+            }
+
+            // Get all archiveIds on disk that are not in the history list
+            String *missingFromHistory = strLstJoin(
+                strLstMergeAnti(archiveIdList,
+                    strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
+
+            if (!strEmpty(missingFromHistory))
+                LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /**********************************************************************************************************************************/
 static String *
 verifyProcess(void)
@@ -1125,7 +1180,6 @@ verifyProcess(void)
                 .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
-                .currentBackup = NULL,
                 .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
@@ -1154,39 +1208,42 @@ verifyProcess(void)
                 if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
                     LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
 
-                // If there are backups, set the last backup as current if it is not in backup.info
-                if (strLstSize(jobData.backupList) > 0)
-                {
-                    String *backupLabel = strLstGet(jobData.backupList, strLstSize(jobData.backupList) - 1);
+                // Set current backup if there is one and verify the archive history on disk is in the database history
+                jobData.currentBackup = setBackupCheckArchive(
+                    jobData.backupList, backupInfo, jobData.archiveIdList, jobData.pgHistory);
 
-                    if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
-                        jobData.currentBackup = backupLabel;
-                    else
-                        strFree(backupLabel);
-                }
-
-                // If there are archive directories on disk, make sure they are in the database history list
-                if (strLstSize(jobData.archiveIdList) > 0)
-                {
-                    StringList *archiveIdHistoryList = strLstNew();
-                    String *missingFromHistory = NULL;
-
-                    for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(jobData.pgHistory); histIdx++)
-                    {
-                        strLstAdd(archiveIdHistoryList, infoPgArchiveId(jobData.pgHistory, histIdx));
-                    }
-
-                    // Get all archiveIds on disk that are not in the history list
-                    missingFromHistory = strLstJoin(
-                        strLstMergeAnti(jobData.archiveIdList,
-                            strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
-
-                    if (!strEmpty(missingFromHistory))
-                        LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
-
-                    strLstFree(archiveIdHistoryList);
-                    strFree(missingFromHistory);
-                }
+                // // If there are backups, set the last backup as current if it is not in backup.info
+                // if (strLstSize(jobData.backupList) > 0)
+                // {
+                //     String *backupLabel = strLstGet(jobData.backupList, strLstSize(jobData.backupList) - 1);
+                //
+                //     if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
+                //         jobData.currentBackup = backupLabel;
+                //     else
+                //         strFree(backupLabel);
+                // }
+                //
+                // // If there are archive directories on disk, make sure they are in the database history list
+                // if (strLstSize(jobData.archiveIdList) > 0)
+                // {
+                //     StringList *archiveIdHistoryList = strLstNew();
+                //
+                //     for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(jobData.pgHistory); histIdx++)
+                //     {
+                //         strLstAdd(archiveIdHistoryList, infoPgArchiveId(jobData.pgHistory, histIdx));
+                //     }
+                //
+                //     // Get all archiveIds on disk that are not in the history list
+                //     String *missingFromHistory = strLstJoin(
+                //         strLstMergeAnti(jobData.archiveIdList,
+                //             strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
+                //
+                //     if (!strEmpty(missingFromHistory))
+                //         LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
+                //
+                //     strLstFree(archiveIdHistoryList);
+                //     strFree(missingFromHistory);
+                // }
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
