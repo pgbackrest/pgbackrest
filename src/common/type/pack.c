@@ -926,6 +926,23 @@ pckWriteNewBuf(Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
+!!! NEED TO IMPLEMENT WRITE DIRECTLY TO BUFFER AND WRITE TO IOWRITE()
+***********************************************************************************************************************************/
+static void pckWriteBuffer(PackWrite *this, const Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    ioWrite(this->write, buffer);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Pack an unsigned 64-bit integer to base-128 varint encoding
 ***********************************************************************************************************************************/
 static void
@@ -950,7 +967,7 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
 
     buffer[size] = (unsigned char)value;
 
-    ioWrite(this->write, BUF(buffer, size + 1));
+    pckWriteBuffer(this, BUF(buffer, size + 1));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1029,7 +1046,7 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
     }
 
     uint8_t tagByte = (uint8_t)tag;
-    ioWrite(this->write, BUF(&tagByte, 1));
+    pckWriteBuffer(this, BUF(&tagByte, 1));
 
     if (tagId > 0)
         pckWriteUInt64Internal(this, tagId);
@@ -1133,7 +1150,7 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
         if (bufUsed(value) > 0)
         {
             pckWriteUInt64Internal(this, bufUsed(value));
-            ioWrite(this->write, value);
+            pckWriteBuffer(this, value);
         }
     }
 
@@ -1275,7 +1292,7 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
         if (strSize(value) > 0)
         {
             pckWriteUInt64Internal(this, strSize(value));
-            ioWrite(this->write, BUF(strZ(value), strSize(value)));
+            pckWriteBuffer(this, BUF(strZ(value), strSize(value)));
         }
     }
 
