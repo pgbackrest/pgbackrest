@@ -38,7 +38,7 @@ This pack can be read with:
 PackRead *read = pckReadNew(buffer);
 pckReadUInt64P(read);
 pckReadBoolP(read, .defaultNull = true);
-pckReadBoolP(read, .defaultNull = true, .defaultValue = -1);
+pckReadInt32P(read, .defaultNull = true, .defaultValue = -1);
 pckReadStringP(read);
 pckReadEnd();
 
