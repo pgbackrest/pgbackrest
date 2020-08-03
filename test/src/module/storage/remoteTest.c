@@ -201,7 +201,7 @@ testRun(void)
                     .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 5, .mode = 0750,
                     .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
             "write file info");
-        pckWriteObjEnd(packWriteCheck);
+        pckWriteObjEndP(packWriteCheck);
 
         pckWriteObjBeginP(packWriteCheck);
         TEST_RESULT_VOID(
@@ -211,7 +211,7 @@ testRun(void)
                     .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 0, .mode = 0750,
                     .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
             "write file info");
-        pckWriteObjEnd(packWriteCheck);
+        pckWriteObjEndP(packWriteCheck);
 
         pckWriteObjBeginP(packWriteCheck);
         TEST_RESULT_VOID(
@@ -219,15 +219,15 @@ testRun(void)
                 &callbackData,
                 &(StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")}),
             "write link info");
-        pckWriteObjEnd(packWriteCheck);
+        pckWriteObjEndP(packWriteCheck);
 
-        pckWriteEnd(packWriteCheck);
+        pckWriteEndP(packWriteCheck);
 
         TEST_RESULT_STR_Z(
             hrnPackBufToStr(packCheck),
-            "1:obj:{2:time:1, 3:uint64:5, 4:uint32:488, 5:uint32:7, 7:str:user, 8:uint32:9, 10:str:group}"
+            "1:obj:{2:time:1, 3:u64:5, 4:u32:488, 5:u32:7, 7:str:user, 8:u32:9, 10:str:group}"
             ", 2:obj:{}"
-            ", 3:obj:{1:uint32:2, 2:time:-1, 3:uint32:0, 4:uint32:0, 5:bool:true, 7:uint32:0, 8:bool:true, 10:str:../}",
+            ", 3:obj:{1:u32:2, 2:time:-1, 3:u32:0, 4:u32:0, 5:bool:true, 7:u32:0, 8:bool:true, 10:str:../}",
             "check result");
 
         StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};
@@ -236,19 +236,19 @@ testRun(void)
         info = (StorageInfo){.level = storageInfoLevelDetail};
         pckReadObjBeginP(parseData.read);
         storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEnd(parseData.read);
+        pckReadObjEndP(parseData.read);
         hrnStorageInfoListCallback(&infoListCallbackData, &info);
 
         info = (StorageInfo){.level = storageInfoLevelDetail};
         pckReadObjBeginP(parseData.read);
         storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEnd(parseData.read);
+        pckReadObjEndP(parseData.read);
         hrnStorageInfoListCallback(&infoListCallbackData, &info);
 
         info = (StorageInfo){.level = storageInfoLevelDetail};
         pckReadObjBeginP(parseData.read);
         storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEnd(parseData.read);
+        pckReadObjEndP(parseData.read);
         hrnStorageInfoListCallback(&infoListCallbackData, &info);
 
         TEST_RESULT_STR_Z(
@@ -285,7 +285,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:uint64:6}", "check result");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:u64:6}", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -302,8 +302,8 @@ testRun(void)
             hrnPackBufToStr(serverWrite),
             hrnReplaceKey(
                 "1:bool:true"
-                ", 2:obj:{2:time:1555160001, 3:uint64:6, 4:uint32:416, 5:uint32:{[user-id]}, 7:str:{[user]}"
-                    ", 8:uint32:{[group-id]}, 10:str:{[group]}}"),
+                ", 2:obj:{2:time:1555160001, 3:u64:6, 4:u32:416, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
+                    ", 10:str:{[group]}}"),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -363,9 +363,9 @@ testRun(void)
             hrnReplaceKey(
                 "1:array:"
                 "["
-                    "1:obj:{1:str:., 2:uint32:1, 3:time:1555160000, 4:uint32:488, 5:uint32:{[user-id]}, 7:str:{[user]}"
-                        ", 8:uint32:{[group-id]}, 10:str:{[group]}}"
-                    ", 2:obj:{1:str:test, 3:time:1, 4:uint64:6, 5:uint32:416}"
+                    "1:obj:{1:str:., 2:u32:1, 3:time:1555160000, 4:u32:488, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
+                        ", 10:str:{[group]}}"
+                    ", 2:obj:{1:str:test, 3:time:1, 4:u64:6, 5:u32:416}"
                 "]"
                 ", 2:bool:true"),
             "check result");

@@ -23,11 +23,11 @@ containers. Fields contain data to be stored, e.g. integers, strings, etc.
 Here a simple example of a pack:
 
 PackWrite *write = pckWriteNew(buffer);
-pckWriteUInt64P(write, 77);
+pckWriteU64P(write, 77);
 pckWriteBoolP(write, false, .defaultNull = true);
-pckWriteInt32P(write, -1, .defaultNull = true, .defaultValue = -1);
+pckWriteI32P(write, -1, .defaultNull = true, .defaultValue = -1);
 pckWriteStringP(write, STRDEF("sample"));
-pckWriteEnd();
+pckWriteEndP();
 
 A string representation of this pack is `1:uint64:77,4:str:sample`. The boolean was not stored because we requested NULL on default
 and the default was false (because it was not set to anything else). The int32 field was also not stored but we set an explicit
@@ -36,18 +36,18 @@ default value. Note that there is a gap in the ID stream, which represents the N
 This pack can be read with:
 
 PackRead *read = pckReadNew(buffer);
-pckReadUInt64P(read);
+pckReadU64P(read);
 pckReadBoolP(read, .defaultNull = true);
-pckReadInt32P(read, .defaultNull = true, .defaultValue = -1);
+pckReadI32P(read, .defaultNull = true, .defaultValue = -1);
 pckReadStringP(read);
-pckReadEnd();
+pckReadEndP();
 
 If we don't care about the NULLs, another way to read is:
 
 PackRead *read = pckReadNew(buffer);
-pckReadUInt64P(read);
+pckReadU64P(read);
 pckReadStringP(read, .id = 4);
-pckReadEnd();
+pckReadEndP();
 
 This skips the NULLs but in practice it is better to read all the fields just as they were written so static IDs are not required.
 By default each read and write advances the ID by one.
@@ -91,21 +91,21 @@ typedef enum
     pckTypeArray,
     pckTypeBin,
     pckTypeBool,
-    pckTypeInt32,
-    pckTypeInt64,
+    pckTypeI32,
+    pckTypeI64,
     pckTypeObj,
     pckTypePtr,
     pckTypeStr,
     pckTypeTime,
-    pckTypeUInt32,
-    pckTypeUInt64,
+    pckTypeU32,
+    pckTypeU64,
 } PackType;
 
 /***********************************************************************************************************************************
 Read Constructors
 ***********************************************************************************************************************************/
 PackRead *pckReadNew(IoRead *read);
-PackRead *pckReadNewBuf(const Buffer *read);
+PackRead *pckReadNewBuf(const Buffer *buffer);
 
 /***********************************************************************************************************************************
 Read Functions
@@ -136,6 +136,10 @@ bool pckReadNull(PackRead *this, PackIdParam param);
     pckReadArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void pckReadArrayBegin(PackRead *this, PackIdParam param);
+
+#define pckReadArrayEndP(this)                                                                                                     \
+    pckReadArrayEnd(this)
+
 void pckReadArrayEnd(PackRead *this);
 
 // Read binary
@@ -174,10 +178,10 @@ typedef struct PckReadInt32Param
     int32_t defaultValue;
 } PckReadInt32Param;
 
-#define pckReadInt32P(this, ...)                                                                                                   \
-    pckReadInt32(this, (PckReadInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadI32P(this, ...)                                                                                                     \
+    pckReadI32(this, (PckReadInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-int32_t pckReadInt32(PackRead *this, PckReadInt32Param param);
+int32_t pckReadI32(PackRead *this, PckReadInt32Param param);
 
 // Read 64-bit signed integer
 typedef struct PckReadInt64Param
@@ -188,16 +192,21 @@ typedef struct PckReadInt64Param
     int64_t defaultValue;
 } PckReadInt64Param;
 
-#define pckReadInt64P(this, ...)                                                                                                   \
-    pckReadInt64(this, (PckReadInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadI64P(this, ...)                                                                                                     \
+    pckReadI64(this, (PckReadInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-int64_t pckReadInt64(PackRead *this, PckReadInt64Param param);
+int64_t pckReadI64(PackRead *this, PckReadInt64Param param);
 
 // Read object begin/end
 #define pckReadObjBeginP(this, ...)                                                                                                \
     pckReadObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void pckReadObjBegin(PackRead *this, PackIdParam param);
+
+
+#define pckReadObjEndP(this)                                                                                                       \
+    pckReadObjEnd(this)
+
 void pckReadObjEnd(PackRead *this);
 
 // Read pointer. See pckWritePtrP() for cautions.
@@ -250,10 +259,10 @@ typedef struct PckReadUInt32Param
     uint32_t defaultValue;
 } PckReadUInt32Param;
 
-#define pckReadUInt32P(this, ...)                                                                                                  \
-    pckReadUInt32(this, (PckReadUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadU32P(this, ...)                                                                                                     \
+    pckReadU32(this, (PckReadUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint32_t pckReadUInt32(PackRead *this, PckReadUInt32Param param);
+uint32_t pckReadU32(PackRead *this, PckReadUInt32Param param);
 
 // Read 64-bit unsigned integer
 typedef struct PckReadUInt64Param
@@ -264,12 +273,15 @@ typedef struct PckReadUInt64Param
     uint64_t defaultValue;
 } PckReadUInt64Param;
 
-#define pckReadUInt64P(this, ...)                                                                                                  \
-    pckReadUInt64(this, (PckReadUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadU64P(this, ...)                                                                                                     \
+    pckReadU64(this, (PckReadUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint64_t pckReadUInt64(PackRead *this, PckReadUInt64Param param);
+uint64_t pckReadU64(PackRead *this, PckReadUInt64Param param);
 
 // Read end
+#define pckReadEndP(this)                                                                                                          \
+    pckReadEnd(this)
+
 void pckReadEnd(PackRead *this);
 
 /***********************************************************************************************************************************
@@ -281,7 +293,7 @@ void pckReadFree(PackRead *this);
 Write Constructors
 ***********************************************************************************************************************************/
 PackWrite *pckWriteNew(IoWrite *write);
-PackWrite *pckWriteNewBuf(Buffer *write);
+PackWrite *pckWriteNewBuf(Buffer *buffer);
 
 /***********************************************************************************************************************************
 Write Functions
@@ -291,6 +303,10 @@ Write Functions
     pckWriteArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
+
+#define pckWriteArrayEndP(this)                                                                                                    \
+    pckWriteArrayEnd(this)
+
 PackWrite *pckWriteArrayEnd(PackWrite *this);
 
 // Write binary
@@ -329,10 +345,10 @@ typedef struct PckWriteInt32Param
     int32_t defaultValue;
 } PckWriteInt32Param;
 
-#define pckWriteInt32P(this, value, ...)                                                                                           \
-    pckWriteInt32(this, value, (PckWriteInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckWriteI32P(this, value, ...)                                                                                             \
+    pckWriteI32(this, value, (PckWriteInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteInt32(PackWrite *this, int32_t value, PckWriteInt32Param param);
+PackWrite *pckWriteI32(PackWrite *this, int32_t value, PckWriteInt32Param param);
 
 // Write 64-bit signed integer
 typedef struct PckWriteInt64Param
@@ -343,10 +359,10 @@ typedef struct PckWriteInt64Param
     int64_t defaultValue;
 } PckWriteInt64Param;
 
-#define pckWriteInt64P(this, value, ...)                                                                                           \
-    pckWriteInt64(this, value, (PckWriteInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckWriteI64P(this, value, ...)                                                                                             \
+    pckWriteI64(this, value, (PckWriteInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteInt64(PackWrite *this, int64_t value, PckWriteInt64Param param);
+PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteInt64Param param);
 
 // Write null
 #define pckWriteNullP(this)                                                                                                        \
@@ -359,6 +375,10 @@ PackWrite *pckWriteNull(PackWrite *this);
     pckWriteObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
+
+#define pckWriteObjEndP(this)                                                                                                      \
+    pckWriteObjEnd(this)
+
 PackWrite *pckWriteObjEnd(PackWrite *this);
 
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
@@ -397,7 +417,7 @@ typedef struct PckWriteTimeParam
     time_t defaultValue;
 } PckWriteTimeParam;
 
-#define pckWriteTimeP(this, value, ...)                                                                                           \
+#define pckWriteTimeP(this, value, ...)                                                                                            \
     pckWriteTime(this, value, (PckWriteTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param);
@@ -411,10 +431,10 @@ typedef struct PckWriteUInt32Param
     uint32_t defaultValue;
 } PckWriteUInt32Param;
 
-#define pckWriteUInt32P(this, value, ...)                                                                                          \
-    pckWriteUInt32(this, value, (PckWriteUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckWriteU32P(this, value, ...)                                                                                             \
+    pckWriteU32(this, value, (PckWriteUInt32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteUInt32(PackWrite *this, uint32_t value, PckWriteUInt32Param param);
+PackWrite *pckWriteU32(PackWrite *this, uint32_t value, PckWriteUInt32Param param);
 
 // Write 64-bit unsigned integer
 typedef struct PckWriteUInt64Param
@@ -425,12 +445,15 @@ typedef struct PckWriteUInt64Param
     uint64_t defaultValue;
 } PckWriteUInt64Param;
 
-#define pckWriteUInt64P(this, value, ...)                                                                                          \
-    pckWriteUInt64(this, value, (PckWriteUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckWriteU64P(this, value, ...)                                                                                             \
+    pckWriteU64(this, value, (PckWriteUInt64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteUInt64(PackWrite *this, uint64_t value, PckWriteUInt64Param param);
+PackWrite *pckWriteU64(PackWrite *this, uint64_t value, PckWriteUInt64Param param);
 
 // Write end
+#define pckWriteEndP(this)                                                                                                         \
+    pckWriteEnd(this)
+
 PackWrite *pckWriteEnd(PackWrite *this);
 
 /***********************************************************************************************************************************

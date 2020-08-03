@@ -115,16 +115,16 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    pckWriteUInt32P(data->write, info->type, .defaultNull = true);
+    pckWriteU32P(data->write, info->type, .defaultNull = true);
     pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
 
     if (info->type == storageTypeFile)
-        pckWriteUInt64P(data->write, info->size, .defaultNull = true);
+        pckWriteU64P(data->write, info->size, .defaultNull = true);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        pckWriteUInt32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
-        pckWriteUInt32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
+        pckWriteU32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
+        pckWriteU32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
 
         if (info->user == NULL)
         {
@@ -137,7 +137,7 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
             pckWriteStrP(data->write, info->user, .defaultNull = data->user != NULL, .defaultValue = data->user);
         }
 
-        pckWriteUInt32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
+        pckWriteU32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
 
         if (info->group == NULL)
         {
@@ -200,7 +200,7 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
     pckWriteObjBeginP(data->write);
     pckWriteStrP(data->write, info->name);
     storageRemoteInfoWrite(data, info);
-    pckWriteObjEnd(data->write);
+    pckWriteObjEndP(data->write);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -248,10 +248,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             {
                 pckWriteObjBeginP(write);
                 storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
-                pckWriteObjEnd(write);
+                pckWriteObjEndP(write);
             }
 
-            pckWriteEnd(write);
+            pckWriteEndP(write);
             ioWriteFlush(protocolServerIoWrite(server));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
@@ -265,9 +265,9 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
                 storageRemoteProtocolInfoListCallback, &data);
 
-            pckWriteArrayEnd(write);
+            pckWriteArrayEndP(write);
             pckWriteBoolP(write, result);
-            pckWriteEnd(write);
+            pckWriteEndP(write);
             ioWriteFlush(protocolServerIoWrite(server));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))

@@ -48,7 +48,7 @@ String *hrnPackToStr(PackRead *read)
             {
                 pckReadArrayBeginP(read, .id = id);
                 strCatFmt(result, "[%s]", strZ(hrnPackToStr(read)));
-                pckReadArrayEnd(read);
+                pckReadArrayEndP(read);
                 break;
             }
 
@@ -64,15 +64,15 @@ String *hrnPackToStr(PackRead *read)
                 break;
             }
 
-            case pckTypeInt32:
+            case pckTypeI32:
             {
-                strCatFmt(result, "%d", pckReadInt32P(read, .id = id));
+                strCatFmt(result, "%d", pckReadI32P(read, .id = id));
                 break;
             }
 
-            case pckTypeInt64:
+            case pckTypeI64:
             {
-                strCatFmt(result, "%" PRId64, pckReadInt64P(read, .id = id));
+                strCatFmt(result, "%" PRId64, pckReadI64P(read, .id = id));
                 break;
             }
 
@@ -80,7 +80,7 @@ String *hrnPackToStr(PackRead *read)
             {
                 pckReadObjBeginP(read, .id = id);
                 strCatFmt(result, "{%s}", strZ(hrnPackToStr(read)));
-                pckReadObjEnd(read);
+                pckReadObjEndP(read);
                 break;
             }
 
@@ -102,15 +102,15 @@ String *hrnPackToStr(PackRead *read)
                 break;
             }
 
-            case pckTypeUInt32:
+            case pckTypeU32:
             {
-                strCatFmt(result, "%u", pckReadUInt32P(read, .id = id));
+                strCatFmt(result, "%u", pckReadU32P(read, .id = id));
                 break;
             }
 
-            case pckTypeUInt64:
+            case pckTypeU64:
             {
-                strCatFmt(result, "%" PRIu64, pckReadUInt64P(read, .id = id));
+                strCatFmt(result, "%" PRIu64, pckReadU64P(read, .id = id));
                 break;
             }
         }

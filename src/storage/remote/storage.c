@@ -51,23 +51,23 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = pckReadUInt32P(data->read, .defaultNull = true);
+    info->type = pckReadU32P(data->read, .defaultNull = true);
     info->timeModified = pckReadTimeP(data->read, .defaultNull = true) + data->timeModifiedLast;
 
     if (info->type == storageTypeFile)
-        info->size = pckReadUInt64P(data->read, .defaultNull = true);
+        info->size = pckReadU64P(data->read, .defaultNull = true);
 
     if (info->level >= storageInfoLevelDetail)
     {
-        info->mode = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
-        info->userId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
+        info->mode = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
+        info->userId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
 
         if (pckReadBoolP(data->read, .defaultNull = true))
             info->user = pckReadStrP(data->read, .defaultNull = true);
         else
             info->user = pckReadStrP(data->read, .defaultNull = data->user != NULL, .defaultValue = data->user);
 
-        info->groupId = pckReadUInt32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
+        info->groupId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
 
         if (pckReadBoolP(data->read, .defaultNull = true))
             info->group = pckReadStrP(data->read, .defaultNull = true);
@@ -133,7 +133,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         {
             pckReadObjBeginP(read);
             storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
-            pckReadObjEnd(read);
+            pckReadObjEndP(read);
 
             // Duplicate strings into the prior context
             MEM_CONTEXT_PRIOR_BEGIN()
@@ -146,7 +146,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             MEM_CONTEXT_PRIOR_END();
         }
 
-        pckReadEnd(read);
+        pckReadEndP(read);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -206,17 +206,17 @@ storageRemoteInfoList(
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
 
-                pckReadObjEnd(read);
+                pckReadObjEndP(read);
             }
 
-            pckReadArrayEnd(read);
+            pckReadArrayEndP(read);
         }
         MEM_CONTEXT_TEMP_END();
 
         // Get result
         result = pckReadBoolP(read);
 
-        pckReadEnd(read);
+        pckReadEndP(read);
     }
     MEM_CONTEXT_TEMP_END();
 
