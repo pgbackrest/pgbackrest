@@ -1,57 +1,51 @@
 /***********************************************************************************************************************************
-TLS Session
+IO Session Interface
 
-TLS sessions are created by calling tlsClientOpen().
-
-TLS sessions are generally reused so the user must be prepared to retry their transaction on a read/write error if the server closes
-the session before it is reused. If this behavior is not desirable then tlsSessionFree()/tlsClientOpen() can be called to get a new
-session.
+!!!
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_TLS_SESSION_H
-#define COMMON_IO_TLS_SESSION_H
+#ifndef COMMON_IO_SESSION_H
+#define COMMON_IO_SESSION_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define TLS_SESSION_TYPE                                            TlsSession
-#define TLS_SESSION_PREFIX                                          tlsSession
+#define IO_SESSION_TYPE                                             IoSession
+#define IO_SESSION_PREFIX                                           ioSession
 
-typedef struct TlsSession TlsSession;
+typedef struct IoSession IoSession;
 
-#include "common/io/read.h"
-#include "common/io/socket/session.h"
-#include "common/io/write.h"
+#include "common/io/filter/group.h"
+#include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Close the session. Shutdown should not be attempted after an error, which means the client never has the opportunity to do a
-// shutdown since the connection is held open until it is disconnected by the server.
-void tlsSessionClose(TlsSession *this, bool shutdown);
+// Close the session
+void ioSessionClose(IoSession *this);
 
 // Move to a new parent mem context
-TlsSession *tlsSessionMove(TlsSession *this, MemContext *parentNew);
+IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
-IoRead *tlsSessionIoRead(TlsSession *this);
+IoRead *ioSessionIoRead(IoSession *this);
 
 // Write interface
-IoWrite *tlsSessionIoWrite(TlsSession *this);
+IoWrite *ioSessionIoWrite(IoSession *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void tlsSessionFree(TlsSession *this);
+void ioSessionFree(IoSession *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
-    TlsSession *
-#define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "TlsSession", buffer, bufferSize)
+#define FUNCTION_LOG_IO_SESSION_TYPE                                                                                                  \
+    IoSession *
+#define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                     \
+    objToLog(value, "IoSession", buffer, bufferSize)
 
 #endif
