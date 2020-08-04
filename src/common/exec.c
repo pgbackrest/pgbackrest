@@ -13,6 +13,7 @@ Execute Process
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/exec.h"
+#include "common/fork.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
 #include "common/io/io.h"
@@ -315,7 +316,7 @@ execOpen(Exec *this)
     THROW_ON_SYS_ERROR(pipe(pipeError) == -1, KernelError, "unable to create error pipe");
 
     // Fork the subprocess
-    this->processId = fork();
+    this->processId = forkSafe();
 
     // Exec command in the child process
     if (this->processId == 0)
