@@ -249,6 +249,12 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
         // Detach from parent process
         forkDetach();
 
+        // Close any open file descriptors above the standard three (stdin, stdout, stderr). Don't check the return value since we
+        // don't know which file descriptors are actually open (might be none). It's possible that there are open files >= 1024 but
+        // there is no easy way to detect that and this should give us enough descriptors to do our work.
+        for (int fd = 3; fd < 1024; fd++)
+            close(fd);
+
         // Execute the binary.  This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
             execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
