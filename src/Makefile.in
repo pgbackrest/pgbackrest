@@ -82,6 +82,7 @@ SRCS = \
 	common/io/http/session.c \
 	common/io/io.c \
 	common/io/read.c \
+	common/io/session.c \
 	common/io/socket/client.c \
 	common/io/socket/common.c \
 	common/io/socket/session.c \

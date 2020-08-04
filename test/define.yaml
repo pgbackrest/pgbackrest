@@ -242,6 +242,7 @@ unit:
         total: 5
 
         coverage:
+          common/io/session: full
           common/io/tls/client: full
           common/io/tls/session: full
           common/io/socket/client: full

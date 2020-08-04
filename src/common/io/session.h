@@ -14,8 +14,8 @@ Object type
 
 typedef struct IoSession IoSession;
 
-#include "common/io/filter/group.h"
-#include "common/type/buffer.h"
+#include "common/io/read.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Functions
