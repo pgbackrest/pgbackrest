@@ -135,7 +135,14 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, uint64_t errorTlsDetail,
 
         // Any other error that we cannot handle
         default:
-            THROW_FMT(ServiceError, "TLS error [%d:%" PRIu64 "]", errorTls, errorTlsDetail);
+        {
+            // Get detailed error message when available
+            const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
+
+            THROW_FMT(
+                ServiceError, "TLS error [%d:%" PRIu64 "] %s", errorTls, errorTlsDetail,
+                errorTlsDetailMessage == NULL ? "no details available" : errorTlsDetailMessage);
+        }
     }
 
     FUNCTION_LOG_RETURN(INT, result);
