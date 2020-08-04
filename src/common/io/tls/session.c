@@ -86,7 +86,7 @@ Returns:
 ***********************************************************************************************************************************/
 // Helper to process error conditions
 static int
-tlsSessionResultProcess(TlsSession *this, int errorTls, uint64_t errorTlsDetail, int errorSys, bool closeOk)
+tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorTlsDetail, int errorSys, bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
@@ -140,7 +140,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, uint64_t errorTlsDetail,
             const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
 
             THROW_FMT(
-                ServiceError, "TLS error [%d:%" PRIu64 "] %s", errorTls, errorTlsDetail,
+                ServiceError, "TLS error [%d:%lu] %s", errorTls, errorTlsDetail,
                 errorTlsDetailMessage == NULL ? "no details available" : errorTlsDetailMessage);
         }
     }
