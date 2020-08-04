@@ -211,7 +211,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("TlsClient verification"))
     {
-        TlsClient *client = NULL;
+        IoClient *client = NULL;
 
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
@@ -219,20 +219,20 @@ testRun(void)
             client, tlsClientNew(sckClientNew(strNew("99.99.99.99.99"), hrnTlsServerPort(), 0), 0, true, NULL, NULL),
             "new client");
         TEST_ERROR(
-            tlsClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
+            ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
         TEST_ASSIGN(
             client, tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(), 100), 100, true, NULL, NULL),
             "new client");
         TEST_ERROR_FMT(
-            tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
             hrnTlsServerPort());
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bogus client cert/path");
 
         TEST_ERROR(
-            tlsClientOpen(
+            ioClientOpen(
                 tlsClientNew(
                     sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), 0, true, strNew("bogus.crt"), strNew("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
@@ -273,7 +273,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR_FMT(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(
                             sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), 0, true, NULL, strNew("/bogus"))),
                     CryptoError,
@@ -287,7 +287,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_RESULT_VOID(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(
                             sckClientNew(strNew("test.pgbackrest.org"), hrnTlsServerPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
@@ -300,7 +300,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_RESULT_VOID(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(
                             sckClientNew(strNew("host.test2.pgbackrest.org"), hrnTlsServerPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
@@ -313,7 +313,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(
                             sckClientNew(strNew("test3.pgbackrest.org"), hrnTlsServerPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
@@ -327,7 +327,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_ERROR_FMT(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(
                             sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
@@ -343,7 +343,7 @@ testRun(void)
                 hrnTlsServerClose();
 
                 TEST_RESULT_VOID(
-                    tlsClientOpen(
+                    ioClientOpen(
                         tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), 0, false, NULL, NULL)),
                         "open connection");
 
@@ -359,7 +359,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("TlsClient general usage"))
     {
-        TlsClient *client = NULL;
+        IoClient *client = NULL;
         IoSession *session = NULL;
 
         // Reset statistics
@@ -502,7 +502,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection");
 
-                TEST_RESULT_VOID(tlsClientFree(client), "free client");
+                TEST_RESULT_VOID(ioClientFree(client), "free client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnTlsClientEnd();

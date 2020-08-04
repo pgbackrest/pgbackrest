@@ -1,32 +1,30 @@
 /***********************************************************************************************************************************
-Io Session Interface Internal
+Io Client Interface Internal
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_SESSION_INTERN_H
-#define COMMON_IO_SESSION_INTERN_H
+#ifndef COMMON_IO_CLIENT_INTERN_H
+#define COMMON_IO_CLIENT_INTERN_H
 
-#include "common/io/session.h"
+#include "common/io/client.h"
 
 /***********************************************************************************************************************************
 Interface
 ***********************************************************************************************************************************/
-typedef struct IoSessionInterface
+typedef struct IoClientInterface
 {
-    void (*close)(void *driver);
-    IoRead *(*ioRead)(void *driver);
-    IoWrite *(*ioWrite)(void *driver);
-} IoSessionInterface;
+    IoSession *(*open)(void *driver);
+} IoClientInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
+IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_SESSION_INTERFACE_TYPE                                                                                     \
-    IoSessionInterface *
-#define FUNCTION_LOG_IO_SESSION_INTERFACE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(&value, "IoSessionInterface", buffer, bufferSize)
+#define FUNCTION_LOG_IO_CLIENT_INTERFACE_TYPE                                                                                      \
+    IoClientInterface *
+#define FUNCTION_LOG_IO_CLIENT_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(&value, "IoClientInterface", buffer, bufferSize)
 
 #endif

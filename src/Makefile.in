@@ -66,6 +66,7 @@ SRCS = \
 	common/fork.c \
 	common/io/bufferRead.c \
 	common/io/bufferWrite.c \
+	common/io/client.c \
 	common/io/filter/buffer.c \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \

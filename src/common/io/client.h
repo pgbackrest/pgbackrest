@@ -1,39 +1,38 @@
 /***********************************************************************************************************************************
-TLS Client
+Io Client Interface
 
-A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because
-SSL methods are disabled so only TLS connections are allowed.
-
-This object is intended to be used for multiple TLS sessions so ioClientOpen() can be called each time a new session is needed.
+!!!
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_TLS_CLIENT_H
-#define COMMON_IO_TLS_CLIENT_H
+#ifndef COMMON_IO_CLIENT_H
+#define COMMON_IO_CLIENT_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#include "common/io/client.h"
-#include "common/io/socket/client.h"
+#define IO_CLIENT_TYPE                                             IoClient
+#define IO_CLIENT_PREFIX                                           ioClient
 
-/***********************************************************************************************************************************
-Statistics
-***********************************************************************************************************************************/
-typedef struct TlsClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} TlsClientStat;
+typedef struct IoClient IoClient;
 
-/***********************************************************************************************************************************
-Constructors
-***********************************************************************************************************************************/
-IoClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+#include "common/io/session.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Statistics as a formatted string
-String *tlsClientStatStr(void);
+// Open session
+IoSession *ioClientOpen(IoClient *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
+void ioClientFree(IoClient *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_IO_CLIENT_TYPE                                                                                                \
+    IoClient *
+#define FUNCTION_LOG_IO_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(value, "IoClient", buffer, bufferSize)
 
 #endif

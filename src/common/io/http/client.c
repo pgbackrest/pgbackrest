@@ -21,7 +21,7 @@ struct HttpClient
 {
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Request timeout
-    TlsClient *tlsClient;                                           // TLS client
+    IoClient *ioClient;                                             // Io client
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
@@ -54,7 +54,7 @@ httpClientNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
-            .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
+            .ioClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
@@ -90,7 +90,7 @@ httpClientOpen(HttpClient *this)
     // Else create a new session
     else
     {
-        result = httpSessionNew(this, tlsClientOpen(this->tlsClient));
+        result = httpSessionNew(this, ioClientOpen(this->ioClient));
         httpClientStat.session++;
     }
 

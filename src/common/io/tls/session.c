@@ -272,7 +272,7 @@ tlsSessionEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoRead *tlsSessionIoRead(THIS_VOID)
+static IoRead *tlsSessionIoRead(THIS_VOID)
 {
     THIS(TlsSession);
 
@@ -286,7 +286,7 @@ IoRead *tlsSessionIoRead(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *tlsSessionIoWrite(THIS_VOID)
+static IoWrite *tlsSessionIoWrite(THIS_VOID)
 {
     THIS(TlsSession);
 
@@ -300,7 +300,7 @@ IoWrite *tlsSessionIoWrite(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-const IoSessionInterface tlsSessionInterface =
+static const IoSessionInterface tlsSessionInterface =
 {
     .close = tlsSessionClose,
     .ioRead = tlsSessionIoRead,

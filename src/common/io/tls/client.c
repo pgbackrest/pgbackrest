@@ -26,7 +26,10 @@ static TlsClientStat tlsClientStatLocal;
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct TlsClient
+#define TLS_CLIENT_TYPE                                             TlsClient
+#define TLS_CLIENT_PREFIX                                           tlsClient
+
+typedef struct TlsClient
 {
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
@@ -34,9 +37,15 @@ struct TlsClient
     SocketClient *socketClient;                                     // Socket client
 
     SSL_CTX *context;                                               // TLS context
-};
+} TlsClient;
 
-OBJECT_DEFINE_FREE(TLS_CLIENT);
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
+    TlsClient *
+#define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
+    objToLog(value, "TlsClient", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -46,78 +55,6 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
     SSL_CTX_free(this->context);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
-
-/**********************************************************************************************************************************/
-TlsClient *
-tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
-        FUNCTION_LOG_PARAM(STRING, caFile);
-        FUNCTION_LOG_PARAM(STRING, caPath);
-    FUNCTION_LOG_END();
-
-    ASSERT(socket != NULL);
-
-    TlsClient *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("TlsClient")
-    {
-        this = memNew(sizeof(TlsClient));
-
-        *this = (TlsClient)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-            .socketClient = sckClientMove(socket, MEM_CONTEXT_NEW()),
-            .timeout = timeout,
-            .verifyPeer = verifyPeer,
-        };
-
-        // Setup TLS context
-        // -------------------------------------------------------------------------------------------------------------------------
-        cryptoInit();
-
-        // Select the TLS method to use.  To maintain compatibility with older versions of OpenSSL we need to use an SSL method,
-        // but SSL versions will be excluded in SSL_CTX_set_options().
-        const SSL_METHOD *method = SSLv23_method();
-        cryptoError(method == NULL, "unable to load TLS method");
-
-        // Create the TLS context
-        this->context = SSL_CTX_new(method);
-        cryptoError(this->context == NULL, "unable to create TLS context");
-
-        memContextCallbackSet(this->memContext, tlsClientFreeResource, this);
-
-        // Exclude SSL versions to only allow TLS and also disable compression
-        SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
-
-        // Disable auto-retry to prevent SSL_read() from hanging
-        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
-
-        // Set location of CA certificates if the server certificate will be verified
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (this->verifyPeer)
-        {
-            // If the user specified a location
-            if (caFile != NULL || caPath != NULL)                                                                   // {vm_covered}
-            {
-                cryptoError(                                                                                        // {vm_covered}
-                    SSL_CTX_load_verify_locations(this->context, strZNull(caFile), strZNull(caPath)) != 1,          // {vm_covered}
-                    "unable to set user-defined CA certificate location");                                          // {vm_covered}
-            }
-            // Else use the defaults
-            else
-                cryptoError(SSL_CTX_set_default_verify_paths(this->context) != 1, "unable to set default CA certificate location");
-        }
-
-        tlsClientStatLocal.object++;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(TLS_CLIENT, this);
-}
 
 /***********************************************************************************************************************************
 Convert an ASN1 string used in certificates to a String
@@ -259,9 +196,11 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 /***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
-IoSession *
-tlsClientOpen(TlsClient *this)
+static IoSession *
+tlsClientOpen(THIS_VOID)
 {
+    THIS(TlsClient);
+
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
     FUNCTION_LOG_END();
@@ -352,6 +291,89 @@ tlsClientOpen(TlsClient *this)
     }
 
     FUNCTION_LOG_RETURN(IO_SESSION, result);
+}
+
+/**********************************************************************************************************************************/
+static const IoClientInterface tlsClientInterface =
+{
+    .open = tlsClientOpen,
+};
+
+IoClient *
+tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
+        FUNCTION_LOG_PARAM(STRING, caFile);
+        FUNCTION_LOG_PARAM(STRING, caPath);
+    FUNCTION_LOG_END();
+
+    ASSERT(socket != NULL);
+
+    IoClient *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("TlsClient")
+    {
+        TlsClient *driver = memNew(sizeof(TlsClient));
+
+        *driver = (TlsClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .socketClient = sckClientMove(socket, MEM_CONTEXT_NEW()),
+            .timeout = timeout,
+            .verifyPeer = verifyPeer,
+        };
+
+        // Setup TLS context
+        // -------------------------------------------------------------------------------------------------------------------------
+        cryptoInit();
+
+        // Select the TLS method to use.  To maintain compatibility with older versions of OpenSSL we need to use an SSL method,
+        // but SSL versions will be excluded in SSL_CTX_set_options().
+        const SSL_METHOD *method = SSLv23_method();
+        cryptoError(method == NULL, "unable to load TLS method");
+
+        // Create the TLS context
+        driver->context = SSL_CTX_new(method);
+        cryptoError(driver->context == NULL, "unable to create TLS context");
+
+        memContextCallbackSet(driver->memContext, tlsClientFreeResource, driver);
+
+        // Exclude SSL versions to only allow TLS and also disable compression
+        SSL_CTX_set_options(driver->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
+
+        // Disable auto-retry to prevent SSL_read() from hanging
+        SSL_CTX_clear_mode(driver->context, SSL_MODE_AUTO_RETRY);
+
+        // Set location of CA certificates if the server certificate will be verified
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (driver->verifyPeer)
+        {
+            // If the user specified a location
+            if (caFile != NULL || caPath != NULL)                                                                   // {vm_covered}
+            {
+                cryptoError(                                                                                        // {vm_covered}
+                    SSL_CTX_load_verify_locations(driver->context, strZNull(caFile), strZNull(caPath)) != 1,        // {vm_covered}
+                    "unable to set user-defined CA certificate location");                                          // {vm_covered}
+            }
+            // Else use the defaults
+            else
+            {
+                cryptoError(
+                    SSL_CTX_set_default_verify_paths(driver->context) != 1, "unable to set default CA certificate location");
+            }
+        }
+
+        tlsClientStatLocal.object++;
+
+        // Create client interface
+        this = ioClientNew(driver, &tlsClientInterface);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }
 
 /**********************************************************************************************************************************/
