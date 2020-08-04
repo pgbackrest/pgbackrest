@@ -18,7 +18,7 @@ Object type
 typedef struct TlsClient TlsClient;
 
 #include "common/io/socket/client.h"
-#include "common/io/tls/session.h"
+#include "common/io/session.h"
 
 /***********************************************************************************************************************************
 Statistics
@@ -38,8 +38,8 @@ TlsClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer,
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Open tls session
-TlsSession *tlsClientOpen(TlsClient *this);
+// Open TLS session
+IoSession *tlsClientOpen(TlsClient *this);
 
 // Statistics as a formatted string
 String *tlsClientStatStr(void);

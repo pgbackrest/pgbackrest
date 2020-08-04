@@ -34,20 +34,14 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    IoSession *this = NULL;
+    IoSession *this = memNew(sizeof(IoSession));
 
-    MEM_CONTEXT_NEW_BEGIN("IoSession")
+    *this = (IoSession)
     {
-        this = memNew(sizeof(IoSession));
-
-        *this = (IoSession)
-        {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        };
-    }
-    MEM_CONTEXT_NEW_END();
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+    };
 
     FUNCTION_LOG_RETURN(IO_SESSION, this);
 }

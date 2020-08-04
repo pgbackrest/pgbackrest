@@ -13,7 +13,7 @@ TLS Client
 #include "common/log.h"
 #include "common/io/io.h"
 #include "common/io/tls/client.h"
-#include "common/io/tls/session.intern.h"
+#include "common/io/tls/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -259,7 +259,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 /***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
-TlsSession *
+IoSession *
 tlsClientOpen(TlsClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -268,7 +268,7 @@ tlsClientOpen(TlsClient *this)
 
     ASSERT(this != NULL);
 
-    TlsSession *result = NULL;
+    IoSession *result = NULL;
     SSL *session = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -286,7 +286,7 @@ tlsClientOpen(TlsClient *this)
                 // Open the socket session first since this is mostly likely to fail
                 SocketSession *socketSession = sckClientOpen(this->socketClient);
 
-                // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
+                // Create internal TLS session. If there is a failure before the TLS session object is created there may be a leak
                 // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
                 cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
 
@@ -317,7 +317,7 @@ tlsClientOpen(TlsClient *this)
         }
         while (retry);
 
-        tlsSessionMove(result, memContextPrior());
+        ioSessionMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -351,7 +351,7 @@ tlsClientOpen(TlsClient *this)
         }
     }
 
-    FUNCTION_LOG_RETURN(TLS_SESSION, result);
+    FUNCTION_LOG_RETURN(IO_SESSION, result);
 }
 
 /**********************************************************************************************************************************/

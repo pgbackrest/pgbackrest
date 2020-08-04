@@ -62,8 +62,8 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 /***********************************************************************************************************************************
 Host and URI for automatically fetching the current role and credentials
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_CREDENTIAL_HOST,                                   "169.254.169.254");
-STRING_STATIC(S3_CREDENTIAL_URI,                                    "/latest/meta-data/iam/security-credentials");
+// STRING_STATIC(S3_CREDENTIAL_HOST,                                   "169.254.169.254");
+// STRING_STATIC(S3_CREDENTIAL_URI,                                    "/latest/meta-data/iam/security-credentials");
 
 /*
 First, get the role:

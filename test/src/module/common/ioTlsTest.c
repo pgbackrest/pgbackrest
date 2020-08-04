@@ -360,7 +360,7 @@ testRun(void)
     if (testBegin("TlsClient general usage"))
     {
         TlsClient *client = NULL;
-        TlsSession *session = NULL;
+        IoSession *session = NULL;
 
         // Reset statistics
         sckClientStatLocal = (SocketClientStat){0};
@@ -391,6 +391,7 @@ testRun(void)
                 hrnTlsServerAccept();
 
                 TEST_ASSIGN(session, tlsClientOpen(client), "open client");
+                TlsSession *tlsSession = (TlsSession *)session->driver;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("socket read/write ready");
@@ -407,16 +408,18 @@ testRun(void)
                 TEST_ERROR(
                     sckReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
 
-                TEST_RESULT_BOOL(sckReadyRead(session->socketSession->fd, 0), false, "socket is not read ready");
-                TEST_RESULT_BOOL(sckReadyWrite(session->socketSession->fd, 100), true, "socket is write ready");
-                TEST_RESULT_VOID(sckSessionReadyWrite(session->socketSession), "socket session is write ready");
+                TEST_RESULT_BOOL(sckReadyRead(tlsSession->socketSession->fd, 0), false, "socket is not read ready");
+                TEST_RESULT_BOOL(sckReadyWrite(tlsSession->socketSession->fd, 100), true, "socket is write ready");
+                TEST_RESULT_VOID(sckSessionReadyWrite(tlsSession->socketSession), "socket session is write ready");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");
 
-                TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
-                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
-                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
+                TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
+                TEST_ERROR(
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
+                TEST_ERROR(
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("first protocol exchange");
@@ -425,11 +428,11 @@ testRun(void)
                 hrnTlsServerReplyZ("something:0\n");
 
                 const Buffer *input = BUFSTRDEF("some protocol info");
-                TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
-                ioWriteFlush(tlsSessionIoWrite(session));
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(session), input), "write input");
+                ioWriteFlush(ioSessionIoWrite(session));
 
-                TEST_RESULT_STR_Z(ioReadLine(tlsSessionIoRead(session)), "something:0", "read line");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_STR_Z(ioReadLine(ioSessionIoRead(session)), "something:0", "read line");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
 
                 hrnTlsServerSleep(100);
                 hrnTlsServerReplyZ("some ");
@@ -438,14 +441,14 @@ testRun(void)
                 hrnTlsServerReplyZ("contentAND MORE");
 
                 Buffer *output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 12, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 12, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "some content", "check output");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
 
                 output = bufNew(8);
-                TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 8, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 8, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "check output");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("read eof");
@@ -453,11 +456,11 @@ testRun(void)
                 hrnTlsServerSleep(500);
 
                 output = bufNew(12);
-                session->socketSession->timeout = 100;
+                tlsSession->socketSession->timeout = 100;
                 TEST_ERROR_FMT(
-                    ioRead(tlsSessionIoRead(session), output), ProtocolError,
+                    ioRead(ioSessionIoRead(session), output), ProtocolError,
                     "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort());
-                session->socketSession->timeout = 5000;
+                tlsSession->socketSession->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("second protocol exchange");
@@ -468,19 +471,19 @@ testRun(void)
                 hrnTlsServerClose();
 
                 input = BUFSTRDEF("more protocol info");
-                TEST_RESULT_VOID(ioWrite(tlsSessionIoWrite(session), input), "write input");
-                ioWriteFlush(tlsSessionIoWrite(session));
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(session), input), "write input");
+                ioWriteFlush(ioSessionIoWrite(session));
 
                 output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 12, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 12, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "check output");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
 
                 output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(tlsSessionIoRead(session), output), 0, "read no output after eof");
-                TEST_RESULT_BOOL(ioReadEof(tlsSessionIoRead(session)), true, "check eof = true");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 0, "read no output after eof");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), true, "check eof = true");
 
-                TEST_RESULT_VOID(tlsSessionClose(session, false), "close again");
+                TEST_RESULT_VOID(ioSessionClose(session), "close again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("aborted connection before read complete (blocking socket)");
@@ -494,7 +497,7 @@ testRun(void)
                 socketLocal.block = false;
 
                 output = bufNew(13);
-                TEST_ERROR(ioRead(tlsSessionIoRead(session), output), KernelError, "TLS syscall error");
+                TEST_ERROR(ioRead(ioSessionIoRead(session), output), KernelError, "TLS syscall error");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection");
