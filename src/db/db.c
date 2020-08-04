@@ -233,8 +233,14 @@ dbOpen(Db *this)
         }
         MEM_CONTEXT_END();
 
+        // Set application name to help identify the backup session
         if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
-            dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
+            dbExec(this, strNewFmt("set application_name = '%s'", strZ(this->applicationName)));
+
+        // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
+        // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
+        if (this->pgVersion >= PG_VERSION_PARALLEL_QUERY)
+            dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -256,7 +262,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
         "  from pg_catalog.pg_start_backup('" PROJECT_NAME " backup started at ' || current_timestamp",
-        strPtr(pgWalName(pgVersion)));
+        strZ(pgWalName(pgVersion)));
 
     // Start backup after immediate checkpoint
     if (startFast)
@@ -355,12 +361,12 @@ dbBackupStopQuery(unsigned int pgVersion)
     String *result = strNewFmt(
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
-        strPtr(pgWalName(pgVersion)));
+        strZ(pgWalName(pgVersion)));
 
     // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
     if (pgVersion >= PG_VERSION_96)
     {
-        strCat(
+        strCatZ(
             result,
             ",\n"
             "       labelfile::text as backuplabel_file,\n"
@@ -368,7 +374,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     }
 
     // Build stop backup function
-    strCat(
+    strCatZ(
         result,
         "\n"
         "  from pg_catalog.pg_stop_backup(");
@@ -487,9 +493,9 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);
         bool targetReached = false;
-        const char *lsnName = strPtr(pgLsnName(dbPgVersion(this)));
+        const char *lsnName = strZ(pgLsnName(dbPgVersion(this)));
         const String *replayLsnFunction = strNewFmt(
-            "pg_catalog.pg_last_%s_replay_%s()", strPtr(pgWalName(dbPgVersion(this))), lsnName);
+            "pg_catalog.pg_last_%s_replay_%s()", strZ(pgWalName(dbPgVersion(this))), lsnName);
         const String *replayLsn = NULL;
 
         do
@@ -498,21 +504,22 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
             String *query = strNewFmt(
                 "select replayLsn::text,\n"
                 "       (replayLsn > '%s')::bool as targetReached",
-                strPtr(targetLsn));
+                strZ(targetLsn));
 
             if (replayLsn != NULL)
             {
                 strCatFmt(
                     query,
                     ",\n"
-                    "       (replayLsn > '%s')::bool as replayProgress", strPtr(replayLsn));
+                    "       (replayLsn > '%s')::bool as replayProgress",
+                    strZ(replayLsn));
             }
 
             strCatFmt(
                 query,
                 "\n"
                 "  from %s as replayLsn",
-                strPtr(replayLsnFunction));
+                strZ(replayLsnFunction));
 
             // Execute the query and get replayLsn
             VariantList *row = dbQueryRow(this, query);
@@ -526,7 +533,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
                     ArchiveTimeoutError,
                     "unable to query replay lsn on the standby using '%s'\n"
                     "HINT: Is this a standby?",
-                    strPtr(replayLsnFunction));
+                    strZ(replayLsnFunction));
             }
 
             targetReached = varBool(varLstGet(row, 1));
@@ -543,8 +550,8 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         if (!targetReached)
         {
             THROW_FMT(
-                ArchiveTimeoutError, "timeout before standby replayed to %s - only reached %s", strPtr(targetLsn),
-                strPtr(replayLsn));
+                ArchiveTimeoutError, "timeout before standby replayed to %s - only reached %s", strZ(targetLsn),
+                strZ(replayLsn));
         }
 
         // Perform a checkpoint
@@ -562,7 +569,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
                 "select (checkpoint_%s > '%s')::bool as targetReached,\n"
                 "       checkpoint_%s::text as checkpointLsn\n"
                 "  from pg_catalog.pg_control_checkpoint()",
-                lsnName, strPtr(targetLsn), lsnName);
+                lsnName, strZ(targetLsn), lsnName);
 
             // Execute query
             VariantList *row = dbQueryRow(this, query);
@@ -573,7 +580,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
                 THROW_FMT(
                     ArchiveTimeoutError,
                     "the checkpoint lsn %s is less than the target lsn %s even though the replay lsn is %s",
-                    strPtr(varStr(varLstGet(row, 1))), strPtr(targetLsn), strPtr(replayLsn));
+                    strZ(varStr(varLstGet(row, 1))), strZ(targetLsn), strZ(replayLsn));
             }
         }
     }
@@ -625,7 +632,7 @@ dbWalSwitch(Db *this)
             dbQueryColumn(this, STRDEF("select pg_catalog.pg_create_restore_point('" PROJECT_NAME " Archive Check')::text"));
 
         // Request a WAL segment switch
-        const char *walName = strPtr(pgWalName(this->pgVersion));
+        const char *walName = strZ(pgWalName(this->pgVersion));
         const String *walFileName = varStr(
             dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
 
@@ -698,6 +705,6 @@ String *
 dbToLog(const Db *this)
 {
     return strNewFmt(
-        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strPtr(pgClientToLog(this->client)),
-        this->remoteClient == NULL ? NULL_Z : strPtr(protocolClientToLog(this->remoteClient)));
+        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strZ(pgClientToLog(this->client)),
+        this->remoteClient == NULL ? NULL_Z : strZ(protocolClientToLog(this->remoteClient)));
 }

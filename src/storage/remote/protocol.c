@@ -83,56 +83,17 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
         else if (strEq(filterKey, SIZE_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, ioSizeNew());
         else
-            THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filterKey));
+            THROW_FMT(AssertError, "unable to add filter '%s'", strZ(filterKey));
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Write storage info into the protocol
+Callback to write info list into the protocol
 ***********************************************************************************************************************************/
-// Helper to write storage type into the protocol
-static void
-storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    switch (type)
-    {
-        case storageTypeFile:
-        {
-            protocolServerWriteLine(server, STRDEF("f"));
-            break;
-        }
-
-        case storageTypePath:
-        {
-            protocolServerWriteLine(server, STRDEF("p"));
-            break;
-        }
-
-        case storageTypeLink:
-        {
-            protocolServerWriteLine(server, STRDEF("l"));
-            break;
-        }
-
-        case storageTypeSpecial:
-        {
-            protocolServerWriteLine(server, STRDEF("s"));
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-// Helper to write storage info into the protocol.  This function is not called unless the info exists so no need to write exists
-// or check for level == storageInfoLevelExists.
+// Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
+// check for level == storageInfoLevelExists.
 static void
 storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 {
@@ -141,7 +102,7 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    storageRemoteInfoWriteType(server, info->type);
+    protocolServerWriteLine(server, jsonFromUInt(info->type));
     protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
 
     if (info->type == storageTypeFile)
@@ -162,9 +123,6 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Callback to write info list into the protocol
-***********************************************************************************************************************************/
 static void
 storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
 {
@@ -400,7 +358,7 @@ storageRemoteProtocolBlockSize(const String *message)
 
     // Validate the header block size message
     if (!regExpMatch(storageRemoteProtocolLocal.blockRegExp, message))
-        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strPtr(message));
+        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strZ(message));
 
-    FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strPtr(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
+    FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strZ(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
 }

@@ -35,12 +35,14 @@ sub coverageLCovConfigGenerate
 {
     my $oStorage = shift;
     my $strOutFile = shift;
+    my $bContainer = shift;
     my $bCoverageSummary = shift;
 
     my $strBranchFilter =
         'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|assert|switch\s)\(|\{\+{0,1}' .
         ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
-    my $strLineFilter = '\{\+{0,1}uncover' . ($bCoverageSummary ? 'able' : '(ed|able)') . '[^_]';
+    my $strLineFilter =
+        '\{\+{0,1}' . ($bCoverageSummary ? 'uncoverable' : '(uncover(ed|able)' . ($bContainer ? '' : '|vm_covered') . ')') . '[^_]';
 
     my $strConfig =
         "# LCOV Settings\n" .
@@ -80,12 +82,19 @@ sub coverageExtract
     my $oStorage = shift;
     my $strModule = shift;
     my $strTest = shift;
+    my $bContainer = shift;
     my $bSummary = shift;
     my $strContainerImage = shift;
     my $strWorkPath = shift;
     my $strWorkTmpPath = shift;
     my $strWorkUnitPath = shift;
     my $strTestResultCoveragePath = shift . '/coverage';
+
+    # Coverage summary must be run in a container
+    if ($bSummary && !$bContainer)
+    {
+        confess &log(ERROR, "coverage summary must be run on containers for full coverage");
+    }
 
     # Generate a list of files to cover
     my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
@@ -101,7 +110,7 @@ sub coverageExtract
 
     # Generate coverage reports for the modules
     my $strLCovConf = "${strTestResultCoveragePath}/raw/lcov.conf";
-    coverageLCovConfigGenerate($oStorage, $strLCovConf, $bSummary);
+    coverageLCovConfigGenerate($oStorage, $strLCovConf, $bContainer, $bSummary);
 
     my $strLCovExe = "lcov --config-file=${strLCovConf}";
     my $strLCovOut = "${strWorkUnitPath}/test.lcov";
@@ -213,6 +222,7 @@ sub coverageValidateAndGenerate
 {
     my $oyTestRun = shift;
     my $oStorage = shift;
+    my $bCoverageReport = shift;
     my $bCoverageSummary = shift;
     my $strWorkPath = shift;
     my $strWorkTmpPath = shift;
@@ -278,17 +288,10 @@ sub coverageValidateAndGenerate
 
     # Generate C coverage report
     #---------------------------------------------------------------------------------------------------------------------------
-    &log(INFO, 'writing C coverage report');
-
     my $strLCovFile = "${strWorkTmpPath}/all.lcov";
 
     if ($oStorage->exists($strLCovFile))
     {
-        executeTest(
-            "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
-                " --prefix=${strWorkPath}/repo" .
-                " --output-directory=${strTestResultCoveragePath}/lcov");
-
         foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
         {
             my $strCoverageFile = $strCodeModule;
@@ -335,8 +338,23 @@ sub coverageValidateAndGenerate
             }
         }
 
-        coverageGenerate(
-            $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+        if ($result == 0)
+        {
+            &log(INFO, "tested modules have full coverage");
+        }
+
+        if ($bCoverageReport)
+        {
+            &log(INFO, 'writing C coverage report');
+
+            executeTest(
+                "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
+                    " --prefix=${strWorkPath}/repo" .
+                    " --output-directory=${strTestResultCoveragePath}/lcov");
+
+            coverageGenerate(
+                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+        }
 
         if ($bCoverageSummary)
         {
@@ -346,9 +364,11 @@ sub coverageValidateAndGenerate
                 $oStorage, "${strTestResultCoveragePath}/raw", "${strTestResultSummaryPath}/metric-coverage-report.auto.xml");
         }
     }
-    else
+
+    # Remove coverage report when no coverage or no report to avoid confusion from looking at an old report
+    if (!$bCoverageReport || !$oStorage->exists($strLCovFile))
     {
-        executeTest("rm -rf ${strTestResultCoveragePath}/test/tesult/coverage");
+        executeTest("rm -rf ${strTestResultCoveragePath}");
     }
 
     return $result;

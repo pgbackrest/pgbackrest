@@ -12,6 +12,7 @@ Info Command
 #include "command/info/info.h"
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -63,6 +64,9 @@ VARIANT_STRDEF_STATIC(STANZA_KEY_CIPHER_VAR,                        "cipher");
 VARIANT_STRDEF_STATIC(STANZA_KEY_STATUS_VAR,                        "status");
 VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -77,15 +81,18 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid ba
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
 
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           "backup/expire running");
+
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
 ***********************************************************************************************************************************/
 static void
-stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
+stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(STRING, message);
+        FUNCTION_TEST_PARAM(BOOL, backupLockHeld);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
@@ -97,6 +104,11 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 
     kvAdd(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
     kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(message));
+
+    // Construct a specific lock part
+    KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
+    KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
+    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -110,7 +122,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM_P(INFO_PG_DATA, pgData);
-        FUNCTION_TEST_PARAM(VARIANT, archiveSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, archiveSection);
         FUNCTION_TEST_PARAM(BOOL, currentDb);
     FUNCTION_TEST_END();
 
@@ -123,7 +135,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     // If there is no match, an error will be thrown.
     const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
-    String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), strPtr(archiveId));
+    String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv(kvNew());
@@ -139,7 +151,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the oldest one as the archive start
@@ -157,7 +169,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the newest one as the archive stop
@@ -196,7 +208,7 @@ static void
 backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, backupSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
@@ -267,7 +279,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
         {
             // Load the manifest file
             const Manifest *manifest = manifestLoadFile(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)),
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(info)));
 
             // Get the list of databases in this backup
@@ -313,8 +325,8 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                     {
                         kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file));
                         kvPut(
-                            varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strPtr(target->path),
-                            strPtr(target->file))));
+                            varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strZ(target->path),
+                            strZ(target->file))));
                         varLstAdd(linkSection, link);
                     }
                     else
@@ -383,14 +395,14 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         {
             // Attempt to load the backup info file
             info = infoBackupLoadFile(
-                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE),
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaListName), INFO_BACKUP_FILE),
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
         {
             // If there is no backup.info then set the status to indicate missing
             stanzaStatus(
-                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
+                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, false, stanzaInfo);
         }
         CATCH(CryptoError)
         {
@@ -430,8 +442,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveLoadFile(
-                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaListName), INFO_ARCHIVE_FILE),
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
 
@@ -444,16 +456,28 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
         kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
 
+        // If a status has not already been set, check if there's a local backup running
+        static bool backupLockHeld = false;
+
+        if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
+        {
+            // Try to acquire a lock. If not possible, assume another backup or expire is already running.
+            backupLockHeld = !lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeBackup, 0, false);
+
+            // Immediately release the lock acquired
+            lockRelease(!backupLockHeld);
+        }
+
         // If a status has not already been set and there are no backups then set status to no backup
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL &&
             varLstSize(kvGetList(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR)) == 0)
         {
-            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
+            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, backupLockHeld, stanzaInfo);
         }
 
         // If a status has still not been set then set it to OK
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
-            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
+            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, backupLockHeld, stanzaInfo);
 
         varLstAdd(result, stanzaInfo);
     }
@@ -468,7 +492,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(varLstNew()));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(varLstNew()));
 
-        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
+        stanzaStatus(
+            INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, false, stanzaInfo);
         varLstAdd(result, stanzaInfo);
     }
 
@@ -524,7 +549,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
         // List is ordered so 0 is always the current DB index
         if (dbIdx == varLstSize(dbSection) - 1)
-            strCat(resultStr, "\n    db (current)");
+            strCatZ(resultStr, "\n    db (current)");
 
         // Get the min/max archive information for the database
         String *archiveResult = strNew("");
@@ -539,17 +564,17 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
             {
                 strCatFmt(
                     archiveResult, "\n        wal archive min/max (%s): ",
-                    strPtr(varStr(kvGet(archiveInfo, DB_KEY_ID_VAR))));
+                    strZ(varStr(kvGet(archiveInfo, DB_KEY_ID_VAR))));
 
                 // Get the archive min/max if there are any archives for the database
                 if (kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR) != NULL)
                 {
                     strCatFmt(
-                        archiveResult, "%s/%s\n", strPtr(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))),
-                        strPtr(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))));
+                        archiveResult, "%s/%s\n", strZ(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))),
+                        strZ(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))));
                 }
                 else
-                    strCat(archiveResult, "none present\n");
+                    strCatZ(archiveResult, "none present\n");
             }
         }
 
@@ -569,8 +594,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
             if (backupDbId == dbId)
             {
                 strCatFmt(
-                    backupResult, "\n        %s backup: %s\n", strPtr(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
-                    strPtr(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR))));
+                    backupResult, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
+                    strZ(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR))));
 
                 KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
@@ -585,101 +610,103 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
                 strCatFmt(
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
-                strCat(backupResult, "            wal start/stop: ");
+                strCatZ(backupResult, "            wal start/stop: ");
 
                 KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
                 if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
                     kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
                 {
-                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveBackupInfo, KEY_START_VAR))),
-                        strPtr(varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR))));
+                    strCatFmt(
+                        backupResult, "%s / %s\n", strZ(varStr(kvGet(archiveBackupInfo, KEY_START_VAR))),
+                        strZ(varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR))));
                 }
                 else
-                    strCat(backupResult, "n/a\n");
+                    strCatZ(backupResult, "n/a\n");
 
                 KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
 
                 strCatFmt(
                     backupResult, "            database size: %s, backup size: %s\n",
-                    strPtr(strSizeFormat(varUInt64Force(kvGet(info, KEY_SIZE_VAR)))),
-                    strPtr(strSizeFormat(varUInt64Force(kvGet(info, KEY_DELTA_VAR)))));
+                    strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_SIZE_VAR)))),
+                    strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_DELTA_VAR)))));
 
                 KeyValue *repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
 
                 strCatFmt(
                     backupResult, "            repository size: %s, repository backup size: %s\n",
-                    strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
-                    strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
+                    strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
+                    strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
 
                 if (kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR) != NULL)
                 {
                     StringList *referenceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR)));
-                    strCatFmt(backupResult, "            backup reference list: %s\n", strPtr(strLstJoin(referenceList, ", ")));
+                    strCatFmt(backupResult, "            backup reference list: %s\n", strZ(strLstJoin(referenceList, ", ")));
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_DATABASE_REF_VAR) != NULL)
                 {
                     VariantList *dbSection = kvGetList(backupInfo, BACKUP_KEY_DATABASE_REF_VAR);
-                    strCat(backupResult, "            database list:");
+                    strCatZ(backupResult, "            database list:");
 
                     if (varLstSize(dbSection) == 0)
-                        strCat(backupResult, " none\n");
+                        strCatZ(backupResult, " none\n");
                     else
                     {
                         for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
                         {
                             KeyValue *db = varKv(varLstGet(dbSection, dbIdx));
                             strCatFmt(
-                                backupResult, " %s (%s)", strPtr(varStr(kvGet(db, KEY_NAME_VAR))),
-                                strPtr(varStrForce(kvGet(db, KEY_OID_VAR))));
+                                backupResult, " %s (%s)", strZ(varStr(kvGet(db, KEY_NAME_VAR))),
+                                strZ(varStrForce(kvGet(db, KEY_OID_VAR))));
 
                             if (dbIdx != varLstSize(dbSection) - 1)
-                                strCat(backupResult, ",");
+                                strCatZ(backupResult, ",");
                         }
-                        strCat(backupResult, "\n");
+
+                        strCat(backupResult, LF_STR);
                     }
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
                 {
                     VariantList *linkSection = kvGetList(backupInfo, BACKUP_KEY_LINK_VAR);
-                    strCat(backupResult, "            symlinks:\n");
+                    strCatZ(backupResult, "            symlinks:\n");
 
                     for (unsigned int linkIdx = 0; linkIdx < varLstSize(linkSection); linkIdx++)
                     {
                         KeyValue *link = varKv(varLstGet(linkSection, linkIdx));
 
                         strCatFmt(
-                            backupResult, "                %s => %s", strPtr(varStr(kvGet(link, KEY_NAME_VAR))),
-                            strPtr(varStr(kvGet(link, KEY_DESTINATION_VAR))));
+                            backupResult, "                %s => %s", strZ(varStr(kvGet(link, KEY_NAME_VAR))),
+                            strZ(varStr(kvGet(link, KEY_DESTINATION_VAR))));
 
                         if (linkIdx != varLstSize(linkSection) - 1)
-                            strCat(backupResult, "\n");
+                            strCat(backupResult, LF_STR);
                     }
 
-                    strCat(backupResult, "\n");
+                    strCat(backupResult, LF_STR);
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR) != NULL)
                 {
                     VariantList *tablespaceSection = kvGetList(backupInfo, BACKUP_KEY_TABLESPACE_VAR);
-                    strCat(backupResult, "            tablespaces:\n");
+                    strCatZ(backupResult, "            tablespaces:\n");
 
                     for (unsigned int tblIdx = 0; tblIdx < varLstSize(tablespaceSection); tblIdx++)
                     {
                         KeyValue *tablespace = varKv(varLstGet(tablespaceSection, tblIdx));
 
                         strCatFmt(
-                            backupResult, "                %s (%s) => %s", strPtr(varStr(kvGet(tablespace, KEY_NAME_VAR))),
-                            strPtr(varStrForce(kvGet(tablespace, KEY_OID_VAR))),
-                            strPtr(varStr(kvGet(tablespace, KEY_DESTINATION_VAR))));
+                            backupResult, "                %s (%s) => %s", strZ(varStr(kvGet(tablespace, KEY_NAME_VAR))),
+                            strZ(varStrForce(kvGet(tablespace, KEY_OID_VAR))),
+                            strZ(varStr(kvGet(tablespace, KEY_DESTINATION_VAR))));
 
                         if (tblIdx != varLstSize(tablespaceSection) - 1)
-                            strCat(backupResult, "\n");
+                            strCat(backupResult, LF_STR);
                     }
 
-                    strCat(backupResult, "\n");
+                    strCat(backupResult, LF_STR);
                 }
             }
         }
@@ -688,13 +715,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
         if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
         {
             if (dbIdx != varLstSize(dbSection) - 1)
-                strCat(resultStr, "\n    db (prior)");
+                strCatZ(resultStr, "\n    db (prior)");
 
             if (strSize(archiveResult) > 0)
-                strCat(resultStr, strPtr(archiveResult));
+                strCat(resultStr, archiveResult);
 
             if (strSize(backupResult) > 0)
-                strCat(resultStr, strPtr(backupResult));
+                strCat(resultStr, backupResult);
         }
     }
     FUNCTION_TEST_RETURN_VOID();
@@ -713,10 +740,10 @@ infoRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get stanza if specified
-        const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
+        const String *stanza = cfgOptionStrNull(cfgOptStanza);
 
         // Get the backup label if specified
-        const String *backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
+        const String *backupLabel = cfgOptionStrNull(cfgOptSet);
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
@@ -727,11 +754,11 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option 'set' is currently only valid for text output");
 
-            if (!storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))))
+            if (!storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
             {
                 THROW_FMT(
                     FileMissingError, "manifest does not exist for backup '%s'\n"
-                    "HINT: is the backup listed when running the info command with --stanza option only?", strPtr(backupLabel));
+                    "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
             }
         }
 
@@ -760,23 +787,38 @@ infoRender(void)
 
                     // Stanza name and status
                     strCatFmt(
-                        resultStr, "stanza: %s\n    status: ", strPtr(varStr(kvGet(stanzaInfo, KEY_NAME_VAR))));
+                        resultStr, "stanza: %s\n    status: ", strZ(varStr(kvGet(stanzaInfo, KEY_NAME_VAR))));
 
                     // If an error has occurred, provide the information that is available and move onto next stanza
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));
                     int statusCode = varInt(kvGet(stanzaStatus, STATUS_KEY_CODE_VAR));
 
+                    // Get the lock info
+                    KeyValue *lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
+                    KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
+
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-                        strCatFmt(
-                            resultStr, "%s (%s)\n", INFO_STANZA_STATUS_ERROR,
-                            strPtr(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))));
+                        // Change displayed status if backup lock is found
+                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s, %s)\n", INFO_STANZA_STATUS_ERROR,
+                                strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
+                                strZ(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR));
+                        }
+                        else
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s)\n", INFO_STANZA_STATUS_ERROR,
+                                strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))));
+                        }
 
                         if (statusCode == INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA ||
                             statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
                         {
                             strCatFmt(
-                                resultStr, "    cipher: %s\n", strPtr(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
+                                resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
 
                             // If there is a backup.info file but no backups, then process the archive info
                             if (statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
@@ -786,11 +828,20 @@ infoRender(void)
                         continue;
                     }
                     else
-                        strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
+                    {
+                        // Change displayed status if backup lock is found
+                        if (varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR)))
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, strZ(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR));
+                        }
+                        else
+                            strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
+                    }
 
                     // Cipher
-                    strCatFmt(resultStr, "    cipher: %s\n",
-                        strPtr(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
+                    strCatFmt(
+                        resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
 
                     formatTextDb(stanzaInfo, resultStr, backupLabel);
                 }

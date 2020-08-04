@@ -247,7 +247,7 @@ cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId
     String *result = strNew(cfgCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleDefault)
-        strCatFmt(result, "%s%s", strPtr(separator), strPtr(cfgCommandRoleStr(commandRoleId)));
+        strCatFmt(result, "%s%s", strZ(separator), strZ(cfgCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -317,7 +317,7 @@ cfgCommandRoleEnum(const String *commandRole)
     else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
         FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
 
-    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strPtr(commandRole));
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strZ(commandRole));
 }
 
 const String *
@@ -616,7 +616,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                         OptionInvalidError,
                         "'%s' is not valid for option '%s'"
                             "\nHINT: is more than one port specified?",
-                        strPtr(host), cfgOptionName(optionId));
+                        strZ(host), cfgOptionName(optionId));
                 }
 
                 // Set the host
@@ -629,7 +629,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                 // Set the port and error if it is not a positive integer
                 TRY_BEGIN()
                 {
-                    *port = cvtZToUInt(strPtr(strLstGet(hostPart, 1)));
+                    *port = cvtZToUInt(strZ(strLstGet(hostPart, 1)));
                 }
                 CATCH(FormatError)
                 {
@@ -637,7 +637,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                         OptionInvalidError,
                         "'%s' is not valid for option '%s'"
                             "\nHINT: port is not a positive integer.",
-                        strPtr(host), cfgOptionName(optionId));
+                        strZ(host), cfgOptionName(optionId));
                 }
                 TRY_END();
             }
@@ -802,6 +802,41 @@ cfgOptionResetSet(ConfigOption optionId, bool reset)
 }
 
 /**********************************************************************************************************************************/
+// Helper to enforce contraints when getting options
+static Variant *
+cfgOptionInternal(ConfigOption optionId, VariantType typeRequested, bool nullAllowed)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(ENUM, typeRequested);
+        FUNCTION_TEST_PARAM(BOOL, nullAllowed);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    // Check that the option is valid for the current command
+    if (!cfgOptionValid(optionId))
+        THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionName(optionId));
+
+    // If the option is not NULL then check it is the requested type
+    Variant *result = configStatic.option[optionId].value;
+
+    if (result != NULL)
+    {
+        if (varType(result) != typeRequested)
+        {
+            THROW_FMT(
+                AssertError, "option '%s' is type %u but %u was requested", cfgOptionName(optionId), varType(result),
+                typeRequested);
+        }
+    }
+    // Else check the option is allowed to be NULL
+    else if (!nullAllowed)
+        THROW_FMT(AssertError, "option '%s' is null but non-null was requested", cfgOptionName(optionId));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 const Variant *
 cfgOption(ConfigOption optionId)
 {
@@ -821,10 +856,7 @@ cfgOptionBool(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeBool);
-
-    FUNCTION_LOG_RETURN(BOOL, varBool(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(BOOL, varBool(cfgOptionInternal(optionId, varTypeBool, false)));
 }
 
 double
@@ -834,10 +866,7 @@ cfgOptionDbl(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeDouble);
-
-    FUNCTION_LOG_RETURN(DOUBLE, varDbl(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(DOUBLE, varDbl(cfgOptionInternal(optionId, varTypeDouble, false)));
 }
 
 int
@@ -847,10 +876,7 @@ cfgOptionInt(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
-
-    FUNCTION_LOG_RETURN(INT, varIntForce(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(INT, varIntForce(cfgOptionInternal(optionId, varTypeInt64, false)));
 }
 
 int64_t
@@ -860,10 +886,7 @@ cfgOptionInt64(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
-
-    FUNCTION_LOG_RETURN(INT64, varInt64(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(INT64, varInt64(cfgOptionInternal(optionId, varTypeInt64, false)));
 }
 
 unsigned int
@@ -873,10 +896,7 @@ cfgOptionUInt(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
-
-    FUNCTION_LOG_RETURN(UINT, varUIntForce(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(UINT, varUIntForce(cfgOptionInternal(optionId, varTypeInt64, false)));
 }
 
 uint64_t
@@ -886,10 +906,7 @@ cfgOptionUInt64(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeInt64);
-
-    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(cfgOptionInternal(optionId, varTypeInt64, false)));
 }
 
 const KeyValue *
@@ -899,10 +916,7 @@ cfgOptionKv(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(varType(configStatic.option[optionId].value) == varTypeKeyValue);
-
-    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionInternal(optionId, varTypeKeyValue, false)));
 }
 
 const VariantList *
@@ -912,19 +926,19 @@ cfgOptionLst(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configStatic.option[optionId].value == NULL || varType(configStatic.option[optionId].value) == varTypeVariantList);
+    Variant *optionValue = cfgOptionInternal(optionId, varTypeVariantList, true);
 
-    if (configStatic.option[optionId].value == NULL)
+    if (optionValue == NULL)
     {
         MEM_CONTEXT_BEGIN(configStatic.memContext)
         {
-            configStatic.option[optionId].value = varNewVarLst(varLstNew());
+            optionValue = varNewVarLst(varLstNew());
+            configStatic.option[optionId].value = optionValue;
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(configStatic.option[optionId].value));
+    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(optionValue));
 }
 
 const String *
@@ -934,15 +948,17 @@ cfgOptionStr(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configStatic.option[optionId].value == NULL || varType(configStatic.option[optionId].value) == varTypeString);
+    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionInternal(optionId, varTypeString, false)));
+}
 
-    const String *result = NULL;
+const String *
+cfgOptionStrNull(ConfigOption optionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+    FUNCTION_LOG_END();
 
-    if (configStatic.option[optionId].value != NULL)
-        result = varStr(configStatic.option[optionId].value);
-
-    FUNCTION_LOG_RETURN_CONST(STRING, result);
+    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionInternal(optionId, varTypeString, true)));
 }
 
 void

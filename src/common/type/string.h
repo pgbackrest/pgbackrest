@@ -35,7 +35,24 @@ String object
 ***********************************************************************************************************************************/
 typedef struct String String;
 
+#include "common/assert.h"
 #include "common/type/buffer.h"
+
+/***********************************************************************************************************************************
+Fields that are common between dynamically allocated and constant strings
+
+There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
+functions that process dynamically allocated strings.
+***********************************************************************************************************************************/
+#define STRING_COMMON                                                                                                              \
+    uint64_t size:32;                                               /* Actual size of the string */                                \
+    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
+    char *buffer;                                                   /* String buffer */
+
+typedef struct StringConst
+{
+    STRING_COMMON
+} StringConst;
 
 /***********************************************************************************************************************************
 Constructors
@@ -60,15 +77,18 @@ String *strDup(const String *this);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Return the file part of a string (i.e. everything after the last / or the entire string if there is no /)
+// Return the file part of a string (i.e. everything after the last / or the entire string if there is no /). strBaseZ() does not
+// make a copy of the string so it may be more appropriate for large loops where saving memory is important.
 String *strBase(const String *this);
+const char *strBaseZ(const String *this);
 
 // Does the string begin with the specified string?
 bool strBeginsWith(const String *this, const String *beginsWith);
 bool strBeginsWithZ(const String *this, const char *beginsWith);
 
-// Append a string
-String *strCat(String *this, const char *cat);
+// Append a string or zero-terminated string
+String *strCat(String *this, const String *cat);
+String *strCatZ(String *this, const char *cat);
 
 // Append a character
 String *strCatChr(String *this, char cat);
@@ -116,8 +136,15 @@ String *strPath(const String *this);
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
 
-// String pointer
-const char *strPtr(const String *this);
+// Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
+__attribute__((always_inline)) static inline const char *
+strZ(const String *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const StringConst *)this)->buffer;
+}
+
+const char *strZNull(const String *this);
 
 // Quote a string
 String *strQuote(const String *this, const String *quote);
@@ -127,7 +154,12 @@ String *strQuoteZ(const String *this, const char *quote);
 String *strReplaceChr(String *this, char find, char replace);
 
 // String size minus null-terminator, i.e. the same value that strlen() would return
-size_t strSize(const String *this);
+__attribute__((always_inline)) static inline size_t
+strSize(const String *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const StringConst *)this)->size;
+}
 
 // Format sizes (file, buffer, etc.) in human-readable form
 String *strSizeFormat(const uint64_t fileSize);
@@ -148,22 +180,6 @@ String *strTrunc(String *this, int idx);
 Destructor
 ***********************************************************************************************************************************/
 void strFree(String *this);
-
-/***********************************************************************************************************************************
-Fields that are common between dynamically allocated and constant strings
-
-There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
-functions that process dynamically allocated strings.
-***********************************************************************************************************************************/
-#define STRING_COMMON                                                                                                              \
-    uint64_t size:32;                                               /* Actual size of the string */                                \
-    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
-    char *buffer;                                                   /* String buffer */
-
-typedef struct StringConst
-{
-    STRING_COMMON
-} StringConst;
 
 /***********************************************************************************************************************************
 Macros for constant strings
@@ -202,6 +218,7 @@ STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
 STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
+STRING_DECLARE(CRLF_STR);
 STRING_DECLARE(DASH_STR);
 STRING_DECLARE(DOT_STR);
 STRING_DECLARE(DOTDOT_STR);
@@ -212,6 +229,7 @@ STRING_DECLARE(FSLASH_STR);
 STRING_DECLARE(LF_STR);
 STRING_DECLARE(N_STR);
 STRING_DECLARE(NULL_STR);
+STRING_DECLARE(QUOTED_STR);
 STRING_DECLARE(TRUE_STR);
 STRING_DECLARE(Y_STR);
 STRING_DECLARE(ZERO_STR);

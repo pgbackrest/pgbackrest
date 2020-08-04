@@ -1,5 +1,1278 @@
 [
     {
+        "commit": "5a4b91f90a81019e456a50c0f7311824f7e61475",
+        "date": "2020-07-20 08:57:22 -0400",
+        "subject": "v2.28: Azure Repository Storage"
+    },
+    {
+        "commit": "67d9d3350c8a844bd4cf3c2bc5496739b6c8ed8a",
+        "date": "2020-07-17 13:27:14 -0400",
+        "subject": "Update recovery.conf in user guide for PostgreSQL >= 12.",
+        "body": "The postgresql.auto.conf file was being used instead of recovery.conf, but there were still instances in the text that used recovery.conf. Update to postgresql.auto.conf for PostgreSQL >= 10 and change wording where needed."
+    },
+    {
+        "commit": "24d2c5b27780ad8bc8a5a255eeed422a3a4c7a49",
+        "date": "2020-07-16 13:57:14 -0400",
+        "subject": "Remove real/all integration tests now covered by unit tests.",
+        "body": "Remove all check and stanza-* tests except for the ones that are intended to succeed. The successful tests show that the queries run with expected results against each version of PG which should also validate queries for the failure tests in the unit tests.\r\n\r\nAlso remove the tests for --no-online backups since they don't require a database and are well tested in the unit tests."
+    },
+    {
+        "commit": "332f2fb7f56483e266e7fbc046c96576cb58ac39",
+        "date": "2020-07-16 12:54:52 -0400",
+        "subject": "Update PostgreSQL versions used to build user guides.",
+        "body": "Also add version ranges to indicate that a user guide is accurate for a range of PostgreSQL versions even if it was built for a specific version."
+    },
+    {
+        "commit": "232d14993dac215571fbc152368913c3fb0cfc90",
+        "date": "2020-07-16 12:45:24 -0400",
+        "subject": "Fix CentOS path for PostgreSQL >= 10 logs in user guide.",
+        "body": "Debian worked since logs default to another location, but CentOS/RHEL on PostgreSQL >= 10 requires the new location."
+    },
+    {
+        "commit": "047d85c26395bd8f47845fc3ba9d5de0b8c37cf0",
+        "date": "2020-07-16 12:24:03 -0400",
+        "subject": "Automatically determine cipher passphrase in repo-get command.",
+        "body": "The prior code was only able to use the main passphrase automatically and expected sub passphrases to be specified for each operation. This was fine for testing but hardly sufficient for a user-facing feature.\r\n\r\nUpdate the code to determine which passphrase to use for any file in the repository and error when an invalid file or location is selected.\r\n\r\nThe repo-get command is still internal for now, but with this improvement it should be ready to be made public."
+    },
+    {
+        "commit": "aa4e13b665b71b249bb74e124109d29b438bd654",
+        "date": "2020-07-16 11:27:14 -0400",
+        "subject": "Move encrypted files as raw in integration tests.",
+        "body": "The encryption key should not be changed when moving a file so no need to decrypt/encrypt."
+    },
+    {
+        "commit": "50ff5d905eddd46f8780a0b1bebc04ed40dd3c12",
+        "date": "2020-07-15 13:54:01 -0400",
+        "subject": "Update comment and parameter in HttpRequest."
+    },
+    {
+        "commit": "88b0f6245d5f3b49ece2ce33b8d0f9c131b53190",
+        "date": "2020-07-15 13:19:16 -0400",
+        "subject": "Run non version specific real/tests on the expect version.",
+        "body": "There are a few non version specific tests that need to be run in integration because we can't get coverage in the unit tests.\n\nTo save some time we'll only run those tests against the same version we use for expect testing."
+    },
+    {
+        "commit": "574f36c9d2a64d5caac18c2311defcd0c949dcb6",
+        "date": "2020-07-14 15:14:41 -0400",
+        "subject": "Rename httpRequest() to httpRequestResponse() and fix comment."
+    },
+    {
+        "commit": "620a8d17cfc0d6d8bdd892171abeea9ab7b9c1b3",
+        "date": "2020-07-14 15:05:31 -0400",
+        "subject": "Automatic retry for backup, restore, archive-get, and archive-push.",
+        "body": "If a local command, e.g. backupFile(), fails it will stop the entire process. Instead, retry local commands to deal with transient errors.\r\n\r\nRemove special logic in the S3 storage driver to retry RequestTimeTooSkewed errors since this is now handled by the general retry mechanism in the places where it is most likely to happen, i.e. file read/write. Also, this error should have been entirely eliminated by the asynchronous TLS implementation."
+    },
+    {
+        "commit": "91c7adc8341db64390156336e487d5fc9b45e851",
+        "date": "2020-07-14 13:09:48 -0400",
+        "subject": "Allow redactions for HTTP queries.",
+        "body": "The Azure storage driver exposes secrets in the query when using SAS authorization. These secrets can show up during logging or when an error occurs.\n\nAllow redaction of queries to prevent secrets from being exposed in logs and errors."
+    },
+    {
+        "commit": "d3dd32a031fa7dab98bbef3eee5c7390a774a9d9",
+        "date": "2020-07-14 08:12:25 -0400",
+        "subject": "Add expire-auto option.",
+        "body": "This allows automatic expiration after a successful backup to be disabled."
+    },
+    {
+        "commit": "083350aeda2f1ccf5b6cb5f0988a84d174208152",
+        "date": "2020-07-10 08:18:15 -0400",
+        "subject": "Inline Buffer functions when possible.",
+        "body": "It makes sense to inline these functions for the same reasons String functions were inlined in fbff2995 and f1edf0ad."
+    },
+    {
+        "commit": "f1edf0ad100db961e4ddaa429c1c4c60c933800c",
+        "date": "2020-07-10 08:00:18 -0400",
+        "subject": "Inline strSize().",
+        "body": "Inlining strPtr() in fbff2995 does not seem to have caused any problems so do the same with strSize()."
+    },
+    {
+        "commit": "d5df3974b51efccc628461c6428414e3a6307e23",
+        "date": "2020-07-09 17:32:36 -0400",
+        "subject": "Read segment size from WAL headers.",
+        "body": "This allows validation of the WAL segment size for PostgreSQL versions <= 10."
+    },
+    {
+        "commit": "2f7823c627c62715a7970233fd6171da94b4b479",
+        "date": "2020-07-09 14:46:48 -0400",
+        "subject": "Add shared access signature (SAS) authorization for Azure.",
+        "body": "A shared access signature (SAS) provides granular, delegated access to resources in a storage account. This is often preferable to using a shared key which provides more access and is a greater security risk if compromised."
+    },
+    {
+        "commit": "511e5db5bf9016ce74722ebc019a33fab72955dc",
+        "date": "2020-07-09 11:16:45 -0400",
+        "subject": "Improve buffer size limit implementation.",
+        "body": "Rework size limits so that this->size is always the current size no matter how much is allocated.\n\nMost importantly, this removes the conditional in bufSize(), which makes it a better candidate for inlining."
+    },
+    {
+        "commit": "15502f5b4b21f4e4b932714c387f7ba029e6fcb0",
+        "date": "2020-07-09 07:16:15 -0400",
+        "subject": "Remove bufNewUseC().",
+        "body": "This was used in the Perl LibC interface to wrap Perl-allocated buffers but is no longer needed since LibC was removed."
+    },
+    {
+        "commit": "18f36752ae4d048006a835192e0b11e4e6c62d46",
+        "date": "2020-07-08 17:31:48 -0400",
+        "subject": "Add ASSERT_INLINE() macro.",
+        "body": "When coverage testing ASSERT() macros in inline functions will be expanded and won't be recognized in our coverage rules that ignore ASSERT(). Since there are then uncovered conditions the coverage is incomplete.\n\nThe prior method required copying several lines of code and an explanatory comment into each inline function. Instead create a special macro for inclusion in inline functions.\n\nAnother possibility would be to automatically identify inline functions and add them to the coverage exclusions but that's an idea for another day."
+    },
+    {
+        "commit": "eaa05fdc49e3ee5166655c28105eea58138d4ffa",
+        "date": "2020-07-08 15:07:29 -0400",
+        "subject": "Write HTTP request as a buffer to hide secrets.",
+        "body": "The prior method of writing headers as strings could expose secrets in trace level logs.\n\nInstead write the entire request as a buffer to prevent secrets from being logged and also reduce the amount of logging."
+    },
+    {
+        "commit": "dd9e14b628db37fe7e87e3ab3a6e70cd105a9637",
+        "date": "2020-07-08 12:25:39 -0400",
+        "subject": "Add pgLsnFromWalSegment().",
+        "body": "Provides the reverse operation for pgLsnToWalSegment()."
+    },
+    {
+        "commit": "a27ff7c33578c5e262a20ad126229cb23aed0a09",
+        "date": "2020-07-07 08:24:08 -0400",
+        "subject": "Remove dead test code that should have been removed in 3f4371d7."
+    },
+    {
+        "commit": "57ddd38c51dfa202eeec720a230f08de47685f5e",
+        "date": "2020-07-06 16:57:12 -0400",
+        "subject": "S3 storage driver cleanup inspired by Azure review.",
+        "body": "These improvements were suggested during the review of 3f4371d7 and it seemed a good idea to apply them to the S3 driver as well."
+    },
+    {
+        "commit": "682ac656f552a35dba946c303610a69c70a4de42",
+        "date": "2020-07-06 15:03:24 -0400",
+        "subject": "Fix restore --force acting like --force --delta.",
+        "body": "This caused restore to replace files based on timestamp and size rather than overwriting, which meant some files that should have been updated were left unchanged. Normal restore and restore --delta were not affected by this issue."
+    },
+    {
+        "commit": "8409ab7b2ba798ceaf738e1e38805bc2998feb7b",
+        "date": "2020-07-06 12:04:35 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "cf284fbe8ad8dd9c32ca9b5b39869e32fe04f9ac",
+        "date": "2020-07-06 07:48:12 -0400",
+        "subject": "Add httpUriDecode(), httpQueryNewStr(), and httpQueryMerge().",
+        "body": "httpUriDecode() reverses the encoding in httpUriEncode().\n\nhttpQueryNewStr() creates a new HttpQuery by parsing a query string.\n\nhttpQueryMerge() merges the contents of one query into another query."
+    },
+    {
+        "commit": "3f4371d7a2407b0ef12404cc2ff2661229bdf283",
+        "date": "2020-07-02 16:24:34 -0400",
+        "subject": "Azure support for repository storage.",
+        "body": "Azure and Azure-compatible object stores can now be used for repository storage.\n\nCurrently only shared key authentication is supported but SAS will be added soon."
+    },
+    {
+        "commit": "3e2c8874f7249cc5a70ec8738370f654e280e582",
+        "date": "2020-07-01 07:39:29 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "be16bf69a8e66f3eb42bb0789ff210e6d36ddee3",
+        "date": "2020-06-29 15:07:17 -0400",
+        "subject": "Remove internal commands from HTML and man command references.",
+        "body": "Some of these commands will be made public in the future but for now their interfaces are not stable so they remain internal."
+    },
+    {
+        "commit": "c2dea180fbac39782ed0051205affbb1266642a2",
+        "date": "2020-06-26 16:50:29 -0400",
+        "subject": "Remove redundant storage type constants.",
+        "body": "These constants predate the C storage drivers which now provide their own constants."
+    },
+    {
+        "commit": "1416dc32251e66992bbf1639079f7137af3f2d99",
+        "date": "2020-06-26 16:44:10 -0400",
+        "subject": "Add missing end braces in debug log functions.",
+        "body": "These had no effect on functionality but made debug messages harder to read."
+    },
+    {
+        "commit": "96adf8e513f62d4fbcc2905286127b3558b5aa3d",
+        "date": "2020-06-26 07:44:56 -0400",
+        "subject": "PostgreSQL 13 beta2 support.",
+        "body": "There don't appear to be any behavioral changes since PostgreSQL 12 and all the tests pass.\n\nChanges to the control/catalog/WAL versions in subsequent betas may break compatibility but pgBackRest will be updated with each release to keep pace."
+    },
+    {
+        "commit": "e53de3ce46497edee69dc4fb65d54185ccbcfd66",
+        "date": "2020-06-26 06:50:20 -0400",
+        "subject": "Add/update comments in storage/s3 module."
+    },
+    {
+        "commit": "974cc10b90b11d67ba32ba765e1c445cf3a3b3c7",
+        "date": "2020-06-26 06:46:25 -0400",
+        "subject": "Minor improvements to storage/s3 unit test."
+    },
+    {
+        "commit": "e46eeefadae218c2552b17a0303b15b6af90718d",
+        "date": "2020-06-26 06:34:21 -0400",
+        "subject": "Add review for ea04ec7b."
+    },
+    {
+        "commit": "ea04ec7b3f4c6cf25c1b827c25c6a3c5896159a8",
+        "date": "2020-06-25 08:02:48 -0400",
+        "subject": "Disable query parallelism in PostgreSQL sessions used for backup control.",
+        "body": "There is no need to have parallelism enabled in a backup control session. In particular, 9.6 marks pg_stop_backup() as parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker."
+    },
+    {
+        "commit": "c5a507b9a64b2d775f3269690e925698ce56e9e1",
+        "date": "2020-06-24 19:33:56 -0400",
+        "subject": "Add comment about setting application_name."
+    },
+    {
+        "commit": "ce98e326e1a9477d2cb1253e00f917e350f96527",
+        "date": "2020-06-24 18:40:19 -0400",
+        "subject": "Replace HRNPQ_MACRO_OPEN_92() test macro with HRNPQ_MACRO_OPEN_GE_92()."
+    },
+    {
+        "commit": "f55cb386d4d1ab87404643619f054e1b27d35944",
+        "date": "2020-06-24 18:33:20 -0400",
+        "subject": "Fix versions passed to HRNPQ_MACRO_OPEN_GE_92() test macro.",
+        "body": "These were not noticed because currently 9.3 and 9.6 behave the same on open."
+    },
+    {
+        "commit": "c5892d129169b2d6e62390e7aaa597bc412f528b",
+        "date": "2020-06-24 13:44:00 -0400",
+        "subject": "Asynchronous S3 multipart upload.",
+        "body": "When uploading large files the upload is split into multiple parts which are assembled at the end to create the final file. Previously we waited until each part was acknowledged before starting on the processing (i.e. compression, etc.) of the next part.\r\n\r\nNow, the request for each part is sent while processing continues and the response is read just before sending the request for the next part. This asynchronous method allows us to continue processing while the S3 server formulates a response.\r\n\r\nTesting from outside AWS in a high-bandwidth, low-latency environment showed a 35% improvement in the upload time of 1GB files. The time spent waiting for multipart notifications was reduced by ~300% (this measurement included the final part which is not uploaded asynchronously).\r\n\r\nThere are still some possible improvements: 1) the creation of the multipart id could be made asynchronous when it looks like the upload will need to be multipart (this may incur cost if the upload turns out not to be multipart). 2) allow more than one async request (this will use more memory).\r\n\r\nA fair amount of refactoring was required to make the HTTP responses asynchronous. This may seem like overkill but having well-defined request, response, and session objects will also be advantageous for the upcoming HTTP server functionality.\r\n\r\nAnother advantage is that the lifecycle of an HttpSession is better defined. We only want to reuse sessions that complete the request/response cycle successfully, otherwise we consider the session to be in a bad state and would prefer to start clean with a new one. Previously, this required complex notifications to mark a session as \"successfully done\". Now, ownership of the session is passed to the request and then the response and only returned to the client after a successful response. If an error occurs anywhere along the way the session will be automatically closed by the object destructor when the request/response object is freed (depending on which one currently owns the session)."
+    },
+    {
+        "commit": "45d9b0313632dce934d842e8daf7245a70bc026c",
+        "date": "2020-06-24 12:09:24 -0400",
+        "subject": "Add strCatZ().",
+        "body": "strCat() did not follow our convention of appending Z to functions that accept zero-terminated strings rather than String objects.\r\n\r\nAdd strCatZ() to accept zero-terminated strings and update strCat() to accept String objects.\r\n\r\nUse LF_STR where appropriate but don't use other String constants because they do not improve readability."
+    },
+    {
+        "commit": "dab00e2010dca8acdd559ebfc0161b69a936842d",
+        "date": "2020-06-24 07:45:00 -0400",
+        "subject": "Remove expect logs obsoleted in a3e5e66f.",
+        "body": "These expect logs are no longer used but are not automatically removed by test.pl."
+    },
+    {
+        "commit": "a3e5e66f05362cc3a0ea41db0098c2fca56c4cd7",
+        "date": "2020-06-23 13:44:29 -0400",
+        "subject": "Simplify test matrix for real/all tests.",
+        "body": "Test matrices were previously simplified for the mock/* tests (e.g. d4410611, d489eb87) but not for real/all since the rules for which tests would run with which options was extremely complex. This only got more complex when new compression formats were added.\n\nBecause the loop-generated matrix was so large, mosts tests were skipped for most option combinations following arcane logic which was nearly impossible to decipher even when reading the code, and completely impossible from the test.pl interface. As a consequence, important tests got excluded. For example, backup from standby was excluded for most versions of PostgreSQL because it was only run once per distro, against the latest version to be included in that distro.\n\nSimplify the tests by having a single run per PostgreSQL version and vary test parameters according to the capabilities of each version and the underlying distro. So, ZST testing is based on whether the distro supports ZST. Every test is run for each set of parameters based on the capabilities of the PostgreSQL version, e.g. backup from standby is not attempted on versions that don't support it.\n\nNote that since more tests are running the overall time to run the mock/all tests has increased by about 20-25%. Some time may be saved my removing tests that are adequately covered by unit tests but that should the subject of another commit. Another option would be to limit some non version-specific tests to a single, well defined version of PostgreSQL, .e.g the version that is run by expect tests, currently 9.6.\n\nThe motivation for this refactor is that new storage drivers are coming and the loop-generated test matrix simply was not up to the task of adding them.\n\nThe following is an example of the new test log (note longer runtime of each test):\n\nmodule=real, test=all, run=1, pg-version=10 (106.91s)\nmodule=real, test=all, run=1, pg-version=9.5 (151.09s)\nmodule=real, test=all, run=1, pg-version=9.2 (123.11s)\nmodule=real, test=all, run=1, pg-version=9.1 (129s)\n\nvs. the old test log (sub-second tests were skipped entirely):\n\nmodule=real, test=all, run=2, pg-version=10 (0.31s)\nmodule=real, test=all, run=3, pg-version=10 (0.26s)\nmodule=real, test=all, run=4, pg-version=10 (60.39s)\nmodule=real, test=all, run=1, pg-version=10 (69.12s)\nmodule=real, test=all, run=6, pg-version=10 (34s)\nmodule=real, test=all, run=5, pg-version=10 (42.75s)\nmodule=real, test=all, run=2, pg-version=9.5 (0.21s)\nmodule=real, test=all, run=3, pg-version=9.5 (0.21s)\nmodule=real, test=all, run=4, pg-version=9.5 (0.21s)\nmodule=real, test=all, run=5, pg-version=9.5 (0.26s)\nmodule=real, test=all, run=6, pg-version=9.5 (0.21s)\nmodule=real, test=all, run=1, pg-version=9.2 (72.78s)\nmodule=real, test=all, run=2, pg-version=9.2 (0.26s)\nmodule=real, test=all, run=3, pg-version=9.2 (0.31s)\nmodule=real, test=all, run=4, pg-version=9.2 (0.21s)\nmodule=real, test=all, run=5, pg-version=9.2 (0.21s)\nmodule=real, test=all, run=6, pg-version=9.2 (0.21s)\nmodule=real, test=all, run=1, pg-version=9.5 (88.41s)\nmodule=real, test=all, run=2, pg-version=9.1 (0.21s)\nmodule=real, test=all, run=3, pg-version=9.1 (0.26s)\nmodule=real, test=all, run=4, pg-version=9.1 (0.21s)\nmodule=real, test=all, run=5, pg-version=9.1 (0.31s)\nmodule=real, test=all, run=6, pg-version=9.1 (0.26s)\nmodule=real, test=all, run=1, pg-version=9.1 (72.4s)"
+    },
+    {
+        "commit": "d560c1bf19b2ef3699971790e1f887dac4168964",
+        "date": "2020-06-23 12:42:46 -0400",
+        "subject": "Ignore \"unsupported frontend protocol\" error on Centos/RHEL 6.",
+        "body": "The unsupported version error is showing up on older versions of PostgreSQL (e.g. 9.1, 9.2) on RHEL6 when setting up a standby with streaming replication. The error occurs when a client does not properly send a version number and it's not clear why it is happening here, but it does not appear to have anything to do with pgBackRest and only affects RHEL6, i.e. 9.1 and 9.2 do not show this error on other distros.\n\nFor now ignore the error since RHEL6 is nearly EOL."
+    },
+    {
+        "commit": "04b2e4a831409d1a2edff669bedb6108a9ca20ed",
+        "date": "2020-06-23 09:24:18 -0400",
+        "subject": "Increase log level of checkManifest() to debug.",
+        "body": "This function is only called once and is very likely throw errors so debug level is more appropriate."
+    },
+    {
+        "commit": "1aedc75b03c5d17acde853918150c2dc043dae35",
+        "date": "2020-06-21 11:47:41 -0400",
+        "subject": "Rename http/Http to HTTP in comments and messages.",
+        "body": "HTTP is an acronym so it should be capitalized. Coding conventions dictate otherwise for function and type names but that should not have been propagated to comments and messages."
+    },
+    {
+        "commit": "911384d9b9b7cfd042a18eeb79b5a6f0c79544e7",
+        "date": "2020-06-21 11:07:18 -0400",
+        "subject": "Add httpDateFromTime().",
+        "body": "Also rename httpLastModifiedToTime() to httpDateToTime() since the RFC-2822 date format used by HTTP is used in all Date headers."
+    },
+    {
+        "commit": "fbff29957cd165e6262359629a672e240d45c3bb",
+        "date": "2020-06-18 13:13:55 -0400",
+        "subject": "Inline strPtr() to increase profiling accuracy.",
+        "body": "strPtr() is called more than any other function and during profiling (with or without optimization) it can end up using a disproportionate amount of the total runtime. Even though it is fast, the profiler has a minimum resolution for each function call so strPtr() will often end up towards the top of the list even though the real runtime is quite small.\r\n\r\nInstead, inline strPtr() and indicate to gcc that it should be inlined even for non-optimized builds, since that's how profiles are usually generated.\r\n\r\nTo make strPtr() smaller require \"this\" to be non-NULL and add another function, strPtrNull(), to deal with the few cases where we need NULL handling.\r\n\r\nAs a bonus this makes the executable about 1% smaller even when compared to a prior optimized build which would inline some percentage of strPtr() calls."
+    },
+    {
+        "commit": "3d74ec1190c14f103c88852e3419d8b1b49cca50",
+        "date": "2020-06-17 15:14:59 -0400",
+        "subject": "Use PostgreSQL instead of postmaster where appropriate.",
+        "body": "Using postmaster in messages was not very helpful since users rarely interact directly with the postmaster. Using PostgreSQL instead seems clearer."
+    },
+    {
+        "commit": "417818dccae7b6e1b559d3adb423a26999040882",
+        "date": "2020-06-17 15:07:30 -0400",
+        "subject": "Add --no-coverage-report to test.pl to disable report generation.",
+        "body": "There is no sense in generating detailed coverage reports in CI environments where they will never be seen. It takes time and format differences in some older versions can cause problems in the report generation code.\n\nNote that missing coverage will still be reported on stdout and the test will fail."
+    },
+    {
+        "commit": "ea984c4d3e4749afa8b17bfd991023e590cb76b8",
+        "date": "2020-06-17 09:46:09 -0400",
+        "subject": "Update TEST_RESULT_PTR() to TEST_RESULT_STR() where appropriate.",
+        "body": "These were missed in d41eea68 when the functionality of TEST_RESULT_STR() was changed. Using TEST_RESULT_STR() instead of TEST_RESULT_PTR() is more type-safe and clearer.\n\nAdd a comment to make it clear that TEST_RESULT_PTR() should be used only when a better alternative is not available."
+    },
+    {
+        "commit": "c4fe09dabe48c9aa2ccff2b1cd94d0614c3808e9",
+        "date": "2020-06-16 19:25:16 -0400",
+        "subject": "Fix incorrect param log types."
+    },
+    {
+        "commit": "6a851994f3c2822115e1819f9739368344d9c08a",
+        "date": "2020-06-16 15:40:32 -0400",
+        "subject": "Make sure functions/types needed for profiling are defined.",
+        "body": "Profiling runs with debugging disabled but the tests still need TestError and stackTraceTestFileLineSet() to be valid even if they are noops."
+    },
+    {
+        "commit": "0680cfc8dca832d4733302cce5bc67bfe1fedee2",
+        "date": "2020-06-16 14:06:38 -0400",
+        "subject": "Rename most instances of master to primary in tests.",
+        "body": "This aligns better with general PostgreSQL usage and our own documentation (updated in 4bcef702).\n\nUsage in the backup.manifest tests has not been updated since it might break the file format."
+    },
+    {
+        "commit": "11c192f30ee859e011f1db026fcff76e6560eed0",
+        "date": "2020-06-16 13:20:01 -0400",
+        "subject": "Add hint when checksum delta is enabled after a timeline switch.",
+        "body": "This warning is normal when restoring a backup or promoting a standby so add a hint to make that clear."
+    },
+    {
+        "commit": "1094a2d802a9c3e0af9f222e8e0e74dc81128086",
+        "date": "2020-06-12 11:27:18 -0400",
+        "subject": "Update the PITR FAQ to clarify the default behavior."
+    },
+    {
+        "commit": "a60d4c939accb0e3d380968ed2bbcbe55ac8249c",
+        "date": "2020-06-11 14:06:36 -0400",
+        "subject": "Update FAQ page for expiring a specific backup set.",
+        "body": "The FAQ should have been updated with the addition of ad hoc expire in 1c1a7104."
+    },
+    {
+        "commit": "6fe60a2428f5c28a2da66b84cb2d7910155df60c",
+        "date": "2020-06-11 13:17:35 -0400",
+        "subject": "Improve behavior of the repo-ls command.",
+        "body": "* Exclude linefeed when there is no output to avoid a blank line.\r\n* Honor filter when adding . path or listing a single file."
+    },
+    {
+        "commit": "237ba54d206b2a598ba0113bbaa5bedf39b6f583",
+        "date": "2020-06-11 11:48:42 -0400",
+        "subject": "Fix expression when recursion enabled in storageInfoListP().",
+        "body": "Expressions only worked at the first level of recursion because the expression was also being applied to paths so the path had to match the filter in order to recurse.\r\n\r\nThis is not considered a bug since it does not affect any existing code paths, but it is required for the general-purpose repo-ls command."
+    },
+    {
+        "commit": "da4f15663b517ce7922012efc05105e1f9d0e6e6",
+        "date": "2020-06-10 11:41:08 -0400",
+        "subject": "Improve error when pg1-path option missing for archive-get command.",
+        "body": "The assert thrown was not as descriptive as a proper option missing error."
+    },
+    {
+        "commit": "d0e08a537d36bb1b321ab3c8a305e4988666364d",
+        "date": "2020-06-05 15:08:39 -0400",
+        "subject": "Better error when closing an already closed session in TLS test harness."
+    },
+    {
+        "commit": "38bf3d51546486a5085e9dda3cfc7c5bdad24b46",
+        "date": "2020-06-03 09:02:53 -0400",
+        "subject": "Add missing ioReadClose().",
+        "body": "This probably wouldn't be a big issue since the close would happen when the IoRead object was destroyed, but better to be safe."
+    },
+    {
+        "commit": "9efbafc84c4a51f48aaf64616c10de1f395fda10",
+        "date": "2020-06-01 13:19:47 -0400",
+        "subject": "Fix incorrect example for repo-retention-full-type option."
+    },
+    {
+        "commit": "ae15aced9983daebe5b935670e55095e8b03e4f6",
+        "date": "2020-06-01 12:24:19 -0400",
+        "subject": "Update RHEL package to add logrotate script."
+    },
+    {
+        "commit": "fe829af4ece88afabc026e876250fc04851bb51c",
+        "date": "2020-05-28 10:27:45 -0400",
+        "subject": "Remove exclamations from test data.",
+        "body": "Three exclamations are commonly used to mark areas of the code that need attention before commit so having them in a test is distracting."
+    },
+    {
+        "commit": "28676e1707a36e273b7f236d495b3e611a06328d",
+        "date": "2020-05-28 09:19:12 -0400",
+        "subject": "Add missing parameter logging."
+    },
+    {
+        "commit": "3b5f76b434a2c5831104fc582327ef1f584f5fe0",
+        "date": "2020-05-27 15:13:55 -0400",
+        "subject": "Improve handling of invalid HTTP response status.",
+        "body": "A truncated HTTP response status could lead to an an unfriendly error message, which would be retried, but could be confusing if the error was persistent and required debugging.\r\n\r\nImprove the error handling overall to catch more error cases explicitly and respond better to edge cases.\r\n\r\nAlso update the terminology in comments to align with the RFC. Variable and function names were not changed because a refactor is intended for HTTP response and it doesn't seem worth the additional code churn."
+    },
+    {
+        "commit": "d05090ab7bacdd95cc5c2d4b45fd25b7bc71a602",
+        "date": "2020-05-27 09:22:30 -0400",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "b27f9e886b4f21ac199ededde3a189355eac9f88",
+        "date": "2020-05-26 09:16:57 -0400",
+        "subject": "Refactor TLS server test harness for ease of use.",
+        "body": "The prior harness required a separate function to contain the server behavior but this made keeping the client/server code in sync very difficult and in general meant test writing took longer.\n\nNow, commands to define server behavior are inline with the client code, which should greatly simplify test writing."
+    },
+    {
+        "commit": "d92d0513c09c3e28a4c5961c4fc5a62aaac263d8",
+        "date": "2020-05-26 08:40:40 -0400",
+        "subject": "Update install-sh to v1.16.2.",
+        "body": "No version bump for some reason.\n\nhttps://git.savannah.gnu.org/gitweb/?p=automake.git;a=commit;h=6774c9b219cd78445964cd694588cfc4df9b8316"
+    },
+    {
+        "commit": "943b80e1a712b9040967ff8a4aeb4a0f0e8f39a9",
+        "date": "2020-05-26 08:30:27 -0400",
+        "subject": "Begin v2.28 development."
+    },
+    {
+        "commit": "d8214e0d78ca8922eecb4da03008034c6a258b3b",
+        "date": "2020-05-26 08:11:50 -0400",
+        "subject": "v2.27: Expiration Improvements and Compression Drivers"
+    },
+    {
+        "commit": "20d8c76b6cbf4d803b155680802e8dd245f3d107",
+        "date": "2020-05-22 13:51:26 -0400",
+        "subject": "Ignore pg-host* and repo-host* options for the remote command.",
+        "body": "The purpose of the remote command is to get access to local resources, so a remote should never start another remote. However, this could happen if there were host settings on the remote host, which ended badly with lock errors, loops, etc.\r\n\r\nAdd pg-local and repo-local options to indicate that the resource is local even if there are host settings.\r\n\r\nNote that for the time being these options are internal and not intended for general usage. However, this is likely the direction needed to allow for more symmetric and manageable configurations."
+    },
+    {
+        "commit": "35ab61da708c6b42341449ed5fb68b24bd3a854c",
+        "date": "2020-05-22 09:28:50 -0400",
+        "subject": "Remove extra spaces.",
+        "body": "These spaces crept in over time and then got copy-pasted all over the place."
+    },
+    {
+        "commit": "ae75ffc1731e2d3e7f230d8cceee1e6050b37a33",
+        "date": "2020-05-21 16:09:23 -0400",
+        "subject": "Fix possibly missing pg1-* options for the remote command.",
+        "body": "Some pg1-* options are required by the remote so if they are not provided in the remote's configuration file then it may cause a configuration error, depending on the operation. This currently only applies to the pg1-path option.\r\n\r\nThis is still an issue for repo-* options but the same solution cannot be applied because some repo-* options are secure and cannot be passed on the command-line."
+    },
+    {
+        "commit": "ec7b7c5a3e2062de05e68baec987c35eef4d0a27",
+        "date": "2020-05-21 13:46:16 -0400",
+        "subject": "PostgreSQL 13 beta1 support.",
+        "body": "There don't appear to be any behavioral changes since PostgreSQL 12 and all the tests pass.\r\n\r\nChanges to the control/catalog/WAL versions in subsequent betas may break compatibility but pgBackRest will be updated with each release to keep pace."
+    },
+    {
+        "commit": "ed814321514259a55e84607cd28358ec8cfae754",
+        "date": "2020-05-21 13:43:12 -0400",
+        "subject": "Revert PostgreSQL comment to original source version.",
+        "body": "Not sure how \"iff\" got changed to \"if\". Perhaps an unintentional spell check."
+    },
+    {
+        "commit": "f15d6104d245330db0de59714e9872a18a65e658",
+        "date": "2020-05-20 14:56:13 -0400",
+        "subject": "Add local MD5 implementation so S3 works when FIPS is enabled.",
+        "body": "S3 requires the Content-MD5 header for many requests but MD5 is not available via OpenSSL when FIPS is enabled because it is considered to be insecure.\r\n\r\nEven though our usage does not present any security risks a local M5 implementation is required to circumvent the over-broad FIPS restriction.\r\n\r\nVendorize the MD5 implementation found at https://openwall.info/wiki/people/solar/software/public-domain-source-code/md5 and add full coverage for the module in the common/crypto unit tests."
+    },
+    {
+        "commit": "d5f451a8b99609b220e24346df636e902e9f1aee",
+        "date": "2020-05-20 08:52:15 -0400",
+        "subject": "Add missing asserts."
+    },
+    {
+        "commit": "ea9147e2e082ef4bcb793de31b166e65719e9d08",
+        "date": "2020-05-19 16:58:49 -0400",
+        "subject": "Reduce buffer-size default to 1MiB.",
+        "body": "The prior default was determined by benchmarking the Perl code prior to the 1.0 release. In general buffer allocation was more expensive in Perl so large buffers gave the best performance. This was due to multiple buffer allocations for each filter in an IO operation.\n\nThe C code allocates fixed buffers for each IO operation so the cost for buffer allocation is lower than Perl. That being the case it made sense to benchmark the C code to determine the optimal buffer default.\n\nThe performance/storage tests were used to measure the performance of a variety of filters. 1GiB of data was processed by each filter 10 times and the results of the tests were averaged.\n\nWhile most buffer sizes gave similar performance, 1MiB appeared to perform the best overall. Of course, different architectures are likely to yield different results but this seems like a sensible default. The buffer-size option may still need to be manually configured to give optimal results.\n\nRaw test data for reference:\n\n4MB buffer (prior default)\n\ncopy time 1807ms, avg time 180ms, avg throughput: 5942MB/s\nmd5 time 14200ms, avg time 1420ms, avg throughput: 756MB/s\nsha1 time 11431ms, avg time 1143ms, avg throughput: 939MB/s\nsha256 time 23463ms, avg time 2346ms, avg throughput: 457MB/s\ngzip -6 time 381199ms, avg time 38119ms, avg throughput: 28MB/s\nlz4 -1 time 15484ms, avg time 1548ms, avg throughput: 693MB/s\n\n1MB buffer (new default)\n\ncopy time 1760ms, avg time 176ms, avg throughput: 6100MB/s\nmd5 time 13739ms, avg time 1373ms, avg throughput: 781MB/s\nsha1 time 11025ms, avg time 1102ms, avg throughput: 973MB/s\nsha256 time 22539ms, avg time 2253ms, avg throughput: 476MB/s\ngzip -6 time 372995ms, avg time 37299ms, avg throughput: 28MB/s\nlz4 -1 time 15118ms, avg time 1511ms, avg throughput: 710MB/s\n\n512K buffer\n\ncopy time 1782ms, avg time 178ms, avg throughput: 6025MB/s\nmd5 time 13724ms, avg time 1372ms, avg throughput: 782MB/s\nsha1 time 10959ms, avg time 1095ms, avg throughput: 979MB/s\nsha256 time 22982ms, avg time 2298ms, avg throughput: 467MB/s\ngzip -6 time 378120ms, avg time 37812ms, avg throughput: 28MB/s\nlz4 -1 time 15484ms, avg time 1548ms, avg throughput: 693MB/s\n\n256K buffer\n\ncopy time 1805ms, avg time 180ms, avg throughput: 5948MB/s\nmd5 time 13706ms, avg time 1370ms, avg throughput: 783MB/s\nsha1 time 11074ms, avg time 1107ms, avg throughput: 969MB/s\nsha256 time 22588ms, avg time 2258ms, avg throughput: 475MB/s\ngzip -6 time 372645ms, avg time 37264ms, avg throughput: 28MB/s\nlz4 -1 time 16346ms, avg time 1634ms, avg throughput: 656MB/s"
+    },
+    {
+        "commit": "f773d909be42ba68125df991e8fbabb30f2bbe4a",
+        "date": "2020-05-19 14:35:20 -0400",
+        "subject": "Improve storage filter performance tests.",
+        "body": "Improve the accuracy of the calculations in several areas with better integer expressions.\n\nMake the input buffer size configurable. Previously it was always 1mb, i.e. block size.\n\nUse a macro for output results to reduce code duplication."
+    },
+    {
+        "commit": "a3d9d9a387c61d02cf66eac0c6ab84517898dc34",
+        "date": "2020-05-19 08:20:33 -0400",
+        "subject": "Handle missing reason phrase in HTTP response.",
+        "body": "Reason phrases (e.g. OK) are optional in HTTP 1.1 but the space after the status code is not. When the reason phrase was missing the required space was trimmed along with the trailing CR leading to a format error.\n\nRework the logic to preserve the space and allow empty reason phrases.\n\nFound while testing against the Backblaze S3-compatible API."
+    },
+    {
+        "commit": "cffdadad927e3860bd33247ef6b7c3037fc7d9cb",
+        "date": "2020-05-18 19:55:09 -0400",
+        "subject": "Fix typo pp64le -> ppc64le.",
+        "body": "Travis-CI guessed the correct value but logged a warning."
+    },
+    {
+        "commit": "688ec2a8f5634694a3985ec003d118ed8c74b540",
+        "date": "2020-05-18 19:11:26 -0400",
+        "subject": "Use an extension to denote vendorized code.",
+        "body": "Vendorized code is copied from another project when a library is not available and a git subproject won't work. Currently all the vendorized code is copied from PostgreSQL but it makes sense to have a more general mechanism for indicating vendorized code.\n\nThe .vendor extension will be used to denote vendorized code in the same way that .auto is used to denote auto-generated code."
+    },
+    {
+        "commit": "a329afd3be16206e0397732f0de79c93686702f1",
+        "date": "2020-05-18 19:02:11 -0400",
+        "subject": "Add MD5 hash filter to performance tests."
+    },
+    {
+        "commit": "92c036b966b3f88b4914c5be24c96c22d5019e98",
+        "date": "2020-05-18 18:09:41 -0400",
+        "subject": "Add code count rule for valgrind suppression missed in 6be5ea33.",
+        "body": "6be5ea33 changed valgrind suppression file naming but failed to update the code count rules."
+    },
+    {
+        "commit": "ac5d46dc50a662c97c2948aac9101c0df71110f3",
+        "date": "2020-05-16 18:25:31 -0400",
+        "subject": "Increase buffer size for lz4 compression flush.",
+        "body": "Some lz4 versions between r131 and 1.7.5 did not return a sufficient buffer size from LZ4F_compressBound() to allow LZ4F_compressEnd() to complete reliably. While this issue was fixed in lz4 1.7.5 there are affected versions in supported distributions such as CentOS/RHEL 7.\n\nUse one of the hacks suggested in https://github.com/lz4/lz4/issues/290 to increase the buffer size enough for LZ4F_compressEnd() to complete. This means that a slightly larger buffer size is required for all versions but it seems worth it to (hopefully) to fix the issue in all lz4 versions."
+    },
+    {
+        "commit": "f4e6e6bd80c68dca6a33a8e23e0fa32026f52d23",
+        "date": "2020-05-15 07:49:23 -0400",
+        "subject": "Add missing cryptoInit() in cryptoHmacOne().",
+        "body": "If cryptoInit() had not already been called then EVP_get_digestbyname() would fail.\n\nThis does not appear to be a problem currently because of call order. Also, newer versions of OpenSSL auto-initialize."
+    },
+    {
+        "commit": "ea485e916bb29c9c0306b7c28148f09883835482",
+        "date": "2020-05-14 18:45:23 -0400",
+        "subject": "Add jq to tools installed by Vagrantfile."
+    },
+    {
+        "commit": "ed5149c9be9e41ba4b2ccccac3644f24ecb36bd7",
+        "date": "2020-05-14 18:27:26 -0400",
+        "subject": "Disable package builds for CentOS 7 which are broken upstream."
+    },
+    {
+        "commit": "e7ad795ffba6f963457b27142fe17d4aa6bd5c01",
+        "date": "2020-05-13 19:00:48 -0400",
+        "subject": "Move common HTTP headers to HTTP client.",
+        "body": "Some headers in the S3 driver were common HTTP headers that may be used by other drivers that utilize HTTP.\n\nAlso change the order of HTTP_HEADER_TRANSFER_ENCODING to be alphabetical."
+    },
+    {
+        "commit": "4cbd1f1e7efe5217540e2e69bb3baf5d55556068",
+        "date": "2020-05-13 14:27:28 -0400",
+        "subject": "Fix incorrect whitespace."
+    },
+    {
+        "commit": "b5dd14e6f306b18f4a1f555ccde28ffda8e41ac8",
+        "date": "2020-05-12 18:55:20 -0400",
+        "subject": "Make storage type more generic in the integration tests.",
+        "body": "Rather than bS3 use strStorage which can indicate more than two storage types.\n\nFor the moment there are still only two storage types but this change is required before more can be added."
+    },
+    {
+        "commit": "9639a2c15fa3e3bb5cffc6bf6ac4eb82f85aef49",
+        "date": "2020-05-12 13:30:46 -0400",
+        "subject": "Add missing do...while loop to harness macro."
+    },
+    {
+        "commit": "b8a5c3ac6fe5b4c321270ae256492e11b8276445",
+        "date": "2020-05-12 13:13:04 -0400",
+        "subject": "Fix incorrect command in reference documentation.",
+        "body": "Also update process to command to be more consistent with the surrounding text."
+    },
+    {
+        "commit": "33cbdb78fd3f51f758b2da948faaee97d6bcd870",
+        "date": "2020-05-11 10:10:22 -0400",
+        "subject": "Add ppc64le to Travis-CI build matrix.",
+        "body": "apt.postgresql.org provides packages for ppcle64 so it's important that we support it.\n\nRearrange jobs a bit based on current runtimes and importance. Also reduce the number of tests run for arm64 since it is slower than other architectures."
+    },
+    {
+        "commit": "86855e271d476e9cf04d5844a7630a979b0398d6",
+        "date": "2020-05-09 12:12:29 -0400",
+        "subject": "Fix subtle timing issue in command/expire tests.",
+        "body": "cdebfb09 added relative times to backup.into but a subtle issue was introduced that would cause the tests to fail if the time acquired by cmdExpire() was exactly the same as timeNow used to format backup.info. cmdExpire() was working correctly given the inputs, but the tests did not run predictably.\n\nThis was found while running the tests with --no-valgrind --no-coverage which allows them to run a lot faster, thus exposing the timing issue."
+    },
+    {
+        "commit": "22d260ad53c4517ece42fe64ff75e022e5054466",
+        "date": "2020-05-09 09:17:33 -0400",
+        "subject": "Allow more tests to run outside of containers.",
+        "body": "These tests required sudo to achieve complete coverage.\n\nAdd a new coverage exception, vm_covered, that applies to code that can only be covered in a container. When the test is run outside of a container code sections that require a container will be excluded with TEST_CONTAINER_REQUIRED and the coverage exception will be added to prevent a coverage error.\n\nThis does require marking up the core code with vm_covered, which in some modules (e.g. common/io/tls/client) can be extensive. It's possible that some of these tests can be rewritten to be less dependent on sudo but no attempt was made to do that here.\n\nOnly allow coverage summaries in a vm since coverage summaries outside a vm will not be complete, which was true even before this commit."
+    },
+    {
+        "commit": "b4fc1804a83beb2628b1094cec2962f550e40bcd",
+        "date": "2020-05-08 16:27:54 -0400",
+        "subject": "Minor updates for bzip2 compression after more review.",
+        "body": "Update error types throw by bzip2 to be more consistent with gzip.\r\n\r\nUpdate the bzip2 and gzip error default to be AssertError as that's the more common case in both, and add a 'break;' to the default clause -- we don't intend to be just falling through those case statements, even if the default is the last, we should be explicit about that.\r\n\r\nClean up some tabs that snuck in, rename a variable to be more clear, and add some comments."
+    },
+    {
+        "commit": "14369c1c3c8231e7b09b60493f2ad5047f39053c",
+        "date": "2020-05-08 15:36:20 -0400",
+        "subject": "Mark variables modified in TRY block as volatile.",
+        "body": "It's important that the values in these variables are maintained even after an exception is thrown, so they must be marked volatile.\n\nFound while testing on the ppc64le architecture."
+    },
+    {
+        "commit": "cdebfb09e01e64d6acfe650345a56d2b1805374e",
+        "date": "2020-05-08 15:25:03 -0400",
+        "subject": "Add time-based retention for full backups.",
+        "body": "The --repo-retention-full-type option allows retention of full backups based on a time period, specified in days.\r\n\r\nThe new option will default to 'count' and therefore will not affect current installations. Setting repo-retention-full-type to 'time' will allow the user to use a time period, in days, to indicate full backup retention. Using this method, a full backup can be expired only if the time the backup completed is older than the number of days set with repo-retention-full (calculated from the moment the 'expire' command is run) and at least one full backup meets the retention period. If archive retention has not been configured, then the default settings will expire archives that are prior to the oldest retained full backup. For example, if there are three full backups ending in times that are 25 days old (F1), 20 days old (F2) and 10 days old (F3), then if the full retention period is 15 days, then only F1 will be expired; F2 will be retained because F1 is not at least 15 days old."
+    },
+    {
+        "commit": "e873ad6da0b1c2b15a360a117f71df386aa23a0d",
+        "date": "2020-05-07 17:26:46 -0400",
+        "subject": "Update Minio version to 2020-05-06T23-23-25Z in tests/documentation.",
+        "body": "This release fixes the issue we submitted regarding an unquoted eTag: https://github.com/minio/minio/issues/9517"
+    },
+    {
+        "commit": "faabf1227d05dcfbefcd0dfa57fae9a537e2fc08",
+        "date": "2020-05-07 11:06:56 -0400",
+        "subject": "Update Fedora container to Fedora 32.",
+        "body": "This allows unit testing on gcc 10.\n\nAlso fix an incorrect enum in the config/config unit test that was caught by the new compiler."
+    },
+    {
+        "commit": "6646446d2a1ed6182c8388c0007e184d15522127",
+        "date": "2020-05-07 10:22:22 -0400",
+        "subject": "Use Z_STREAM_END to detect gz compression finish.",
+        "body": "Checking for free space in the output buffer worked, but if the buffer was completely filled then deflate() would need to be called again, which was wasteful and a bit confusing for debugging.\n\nInstead, use Z_STREAM_END to detect that compression is done.\n\nThis change was inspired by the bz2 implementation in a021c9fe since bz2 does not allow BZ2_bzCompress() to be called after BZ_STREAM_END is returned. That made it obvious that gz would prefer the same implementation, even if it is more tolerant. The documentation at https://www.zlib.net/manual.html agrees."
+    },
+    {
+        "commit": "f8509ab76ca9fc3469ab8a9752223c6462213e00",
+        "date": "2020-05-07 07:38:28 -0400",
+        "subject": "Don't allow sudo to disable core dumps in test containers.",
+        "body": "Newer versions of sudo output this message to stderr when run in a container:\n\nsudo: setrlimit(RLIMIT_CORE): Operation not permitted\n\nSee https://github.com/sudo-project/sudo/issues/42 for details.\n\nA simple workaround is to prevent sudo from disabling core dumps. This seems safe enough because if sudo is segfaulting then core files are the least of our worries."
+    },
+    {
+        "commit": "3a7558985505ce1a764e846aa01e943dc1e470d1",
+        "date": "2020-05-07 07:23:15 -0400",
+        "subject": "Don't allow sudo to disable core dumps in documentation.",
+        "body": "Newer versions of sudo output this message to stdout when run in a container:\n\nsudo: setrlimit(RLIMIT_CORE): Operation not permitted\n\nSee https://github.com/sudo-project/sudo/issues/42 for details.\n\nA simple workaround is to prevent sudo from disabling core dumps. This seems safe enough because if sudo is segfaulting then core files are the least of our worries."
+    },
+    {
+        "commit": "ad784e19971d43d886abdec9ee2c326954d9d7a3",
+        "date": "2020-05-07 07:12:42 -0400",
+        "subject": "Add libz-dev to required build packages in Debian documentation.",
+        "body": "This is apparently not installed by default in Ubuntu 20.04 as it was in prior versions."
+    },
+    {
+        "commit": "12a5d8a155aeb999a4683caaa0e2ca22925be443",
+        "date": "2020-05-06 19:11:28 -0400",
+        "subject": "Add arm64 to Travis-CI build matrix.",
+        "body": "apt.postgresql.org will soon be providing packages for arm64 so it's important that we support it.\n\nTesting on multiple architectures also helps expose potential issues in popular architectures. See 10a5182d for an example."
+    },
+    {
+        "commit": "6be5ea3388a0238247e2a2cf47f9efd6b1a21d74",
+        "date": "2020-05-06 18:24:48 -0400",
+        "subject": "Suppress Valgrind errors on a per-VM basis.",
+        "body": "There are a number of Valgrind errors on Ubuntu 12.04 which do not happen on newer distro versions. However, suppressions for these errors have masked legitimate issues in subsequent code.\n\nInstead, make suppressions VM specific so errors in other VMs are not masked."
+    },
+    {
+        "commit": "28967951abb47d82914b3b8822a6bc4b79502ac0",
+        "date": "2020-05-06 18:17:50 -0400",
+        "subject": "Fix leak in TlsClient object.",
+        "body": "sckClientOpen() is the most likely part of this code to error so move it up above SSL session creation to reduce the chance of a leak."
+    },
+    {
+        "commit": "e67792980249b2e35c81d26d2fa574bab52250cb",
+        "date": "2020-05-06 18:09:11 -0400",
+        "subject": "Fix leak in CipherBlock object.",
+        "body": "EVP_CIPHER_CTX_cleanup() was being called instead of EVP_CIPHER_CTX_free() so most of the memory was being freed but not all of it.\n\nThis leak was masked by Valgrind suppressions which are only applicable to Ubuntu 12.04, which will be addressed in a future commit."
+    },
+    {
+        "commit": "10a5182d626bd4ba55d4c6ae711555fb030121ca",
+        "date": "2020-05-06 15:00:34 -0400",
+        "subject": "Simplify retry handling in tls/http/socket clients.",
+        "body": "Travis-CI arm64 was not happy with this pattern, perhaps because connected was being reset after a longjmp() even though it should have stayed with its originally initialized value of false. In any case, tlsClientOpen() ended up returning NULL on error rather than throwing an exception.\n\nThe new pattern seems simpler and passes all tests unmodified, so even though the error was only seen in TlsClient it makes sense to propagate to the other clients."
+    },
+    {
+        "commit": "8aede3353cac6a7ddd08f89e23343c6e8b81d3fd",
+        "date": "2020-05-06 14:49:03 -0400",
+        "subject": "Always use 127.0.0.1 on TLS tests outside of containers.",
+        "body": "Resolving localhost can vary based on the local network configuration so it is safer to just use a static IP.\n\nThis was found while testing on Travis-CI arm64."
+    },
+    {
+        "commit": "3fe6ad5047515f51b6ef9bf783e41900eca21c24",
+        "date": "2020-05-06 10:23:42 -0400",
+        "subject": "Build branches with -cit suffix on Travis-CI.",
+        "body": "This allows a branch to be targeted at only Travis-CI and not other CI services."
+    },
+    {
+        "commit": "4c6dbe17eaea15b342f03292dd899de335ff2971",
+        "date": "2020-05-06 09:12:50 -0400",
+        "subject": "Remove redundant Cirrus-CI branch filter."
+    },
+    {
+        "commit": "a021c9fe053934b9b620f20caffbbf311c457bb8",
+        "date": "2020-05-05 16:49:01 -0400",
+        "subject": "Add bzip2 compression support.",
+        "body": "bzip2 is a widely available, high-quality data compressor. It typically compresses files to within 10% to 15% of the best available techniques (the PPM family of statistical compressors), while being around twice as fast at compression and six times faster at decompression.\r\n\r\nbzip2 is currently available on all supported platforms."
+    },
+    {
+        "commit": "98f30ef2225e849ecaf501ff11db3952c7ff93c7",
+        "date": "2020-05-05 15:00:13 -0400",
+        "subject": "Move PostgreSQL 9.4 real integration tests to Ubuntu 18.04.",
+        "body": "PostgreSQL 9.4 packages for RHEL 6 were dropped from yum.p.o."
+    },
+    {
+        "commit": "99405cbb1582c6dcc133ce9d722beef6e4a0cf78",
+        "date": "2020-05-05 13:23:36 -0400",
+        "subject": "Replace booleans with enums in compressType parameters.",
+        "body": "This was an oversight in 438b957f which added multiple compression type support. The booleans were interpreted as none and gz which works fine for the CompressType enum until the position of gz or none changes."
+    },
+    {
+        "commit": "d04c21ca83163e875ad4d9e06c57402f45979272",
+        "date": "2020-05-04 19:05:38 -0400",
+        "subject": "Centralize String and Buffer constants in stringz.h.",
+        "body": "It's not clear how useful single-character zero-terminated constants are or if we want propagate them through the code, but it at least makes sense to centralize the constants used by the Buffer and String objects."
+    },
+    {
+        "commit": "47aa765375844509edc1b6e406d4d020590b2e1d",
+        "date": "2020-05-04 15:25:27 -0400",
+        "subject": "Add Zstandard compression support.",
+        "body": "Zstandard is a fast lossless compression algorithm targeting real-time compression scenarios at zlib-level and better compression ratios. It's backed by a very fast entropy stage, provided by Huff0 and FSE library.\n\nZstandard version >= 1.0 is required, which is generally only available on newer distributions."
+    },
+    {
+        "commit": "1aaaa94253c3d50b5f4adbe5521cf2cee6cadbe3",
+        "date": "2020-05-04 14:02:25 -0400",
+        "subject": "Remove Ubuntu 19.04 container definition.",
+        "body": "Ubuntu 19.04 is no longer supported."
+    },
+    {
+        "commit": "39f5f3a0b484f16c2820bd47c0a12a530bd04c30",
+        "date": "2020-05-04 13:12:52 -0400",
+        "subject": "Remove PostgreSQL 9.4 for Fedora 30 dropped from yum.p.o."
+    },
+    {
+        "commit": "64a21920e2cbe8444f78ce281d06c9dfa118ed12",
+        "date": "2020-05-03 18:42:33 -0400",
+        "subject": "Move S3 initialization in user guide quickstart.",
+        "body": "The previous location was too late to allow --var=s3-all=y to work with --require=/repo-host, which depends on /quickstart/configure-archiving.\n\nSince the section is not included in production documentation, the position is not very important to flow so just move it to where it works."
+    },
+    {
+        "commit": "ef9324992250028657f7fcc9393d79fbbd0148c3",
+        "date": "2020-05-01 17:32:31 -0400",
+        "subject": "Add contributor for 816ba924 and reclassify as a bug."
+    },
+    {
+        "commit": "816ba9244f31bc9cc333eeed1e7e12e76e36edc3",
+        "date": "2020-05-01 10:30:35 -0400",
+        "subject": "Allow pg-path1 to be optional for synchronous archive-push.",
+        "body": "If the WAL path is absolute then pg1-path should be optional but in fact it was required to load pg_control.\n\nSkip the pg_control check when pg1-path is not specified. The check against the stanza version/system-id remains to protect the repo from corruption."
+    },
+    {
+        "commit": "1d45282b9723a05d0b14e7222c42b915aa217735",
+        "date": "2020-05-01 09:31:50 -0400",
+        "subject": "Add missing spaces between while keyword and condition.",
+        "body": "Our convention is to have a space here but some were missed."
+    },
+    {
+        "commit": "28ab65df1049be7623ce7af99a58a6dee616ea36",
+        "date": "2020-05-01 09:08:37 -0400",
+        "subject": "Remove unused struct member.",
+        "body": "Perhaps this was intended to verify the WAL size but was never implemented.\n\nVerifying the WAL size is probably a good idea so this member may be added back if the feature is implemented."
+    },
+    {
+        "commit": "22ba1f02ceca93a8a0fba1f1ba93243bbcb12337",
+        "date": "2020-04-30 11:01:38 -0400",
+        "subject": "Convert storagePosixNew() to storagePosixNewP().",
+        "body": "An upcoming feature requires new parameters for storagePosixNew() and this causes a lot of churn because almost every test creates a Posix storage object. Some refactoring in the tests might reduce this duplication but storagePosixNew() is collecting a lot of parameters so converting to storagePosixNewP() makes sense in any case.\n\nThere are relatively few call sites in the core code but they still benefit from better readability after this change."
+    },
+    {
+        "commit": "baf8cb90684fe743e51412f305f4194196f429ea",
+        "date": "2020-04-30 10:47:09 -0400",
+        "subject": "Fix issue checking if file links are contained in path links.",
+        "body": "There is no conflict if the path containing a file link is a parent path of a path link. The Perl code apparently had this right but the migration to C missed it.\n\nExclude this case when checking for link conflicts."
+    },
+    {
+        "commit": "ce55866714ac706e542bba7e14a9306b5de848f1",
+        "date": "2020-04-30 10:34:44 -0400",
+        "subject": "Enforce non-null for most string options.",
+        "body": "There have been a number of segfaults reported because a string option expected to be non-null was actually null. This is generally due to options that are expected to be set but are in fact optional.\n\nProtect against this by creating cfgOptionStrNull() to get options that can be null, while changing cfgOptionStr() to always expect non-null. There are relatively few places where nulls are expected.\n\nThere is definitely a chance for breakage here as null options might currently be working in the field but will be caught by this new check. Hopefully introducing the check early in the release cycle will allow us to catch any issues."
+    },
+    {
+        "commit": "1158e7d645331ed364542f10b2c92a1740229601",
+        "date": "2020-04-29 13:55:05 -0400",
+        "subject": "Move command-line decompress check in common/compress test.",
+        "body": "It makes sense to do this check right after the first compression so any issues are caught early.\n\nAlso, none of the current compression formats omit decompressCmd so make the test mandatory."
+    },
+    {
+        "commit": "c5241e5007c4736b52a519e1eefd9a38f7971dc2",
+        "date": "2020-04-29 08:06:49 -0400",
+        "subject": "Expire WAL archive only when repo-retention-archive threshold is met.",
+        "body": "Previously when retention-archive was set (either by the user or by default), archives prior to the archive-start of the oldest remaining full backup (after backup expiration occurred) would be expired even though the retention-archive threshold had not been met. For example, if there were 1 full backup remaining after backup expiration and the retention-archive was set to 2 and retention-archive-type=full, then archives prior to the archive-start of the remaining full backup would still be removed even though retention-archive required 2 full backups remaining before archives should be expired.\n\nThe thought was to keep the archive directory clean and since the full backup did not require prior archives, it was safe to delete them. However, this has caused problems for some users in the past (because they needed the WAL for other purposes) and with the new adhoc and time-based retention features, it was decided that the archives should remain until the threshold was met. The archives will eventually be removed and if having them causes space issues, the expire command and the retention-archive can always be run and adjusted."
+    },
+    {
+        "commit": "775e81a74deb4da274c1e4fc86b218e957a2173d",
+        "date": "2020-04-28 15:55:54 -0400",
+        "subject": "Refactor regular expression error handling per Coverity report.",
+        "body": "Coverity was concerned that regExpError() might return and lead to an invalid reference of \"this\". This was unlikely since the function should never return but Coverity didn't know that. Also, a difference in error-handling logic at the two sites could cause the issue Coverity reported if they were to get out of sync.\n\nFix by refactoring out the core error function so that it is clear it will never return."
+    },
+    {
+        "commit": "e421cf9dd31e0916885e1510278f918afc2318fd",
+        "date": "2020-04-28 15:04:34 -0400",
+        "subject": "Fix possible NULL reference reported by Coverity.",
+        "body": "this->input is set to NULL when the read input goes to EOF but it was possible that this->input could be used again in a subsequent loop, according to Coverity.\n\nIn fact this would really only be a problem if EOF suddenly went back to false, which is not allowed. However, checking this->input is cheaper than calling ioReadEofDriver() driver on each loop so this change makes sense as an optimization and it makes Coverity happy, too."
+    },
+    {
+        "commit": "f764953b70ee1ec839079fbda262a60d91b284c9",
+        "date": "2020-04-27 17:25:38 -0400",
+        "subject": "Check that options are valid when requested.",
+        "body": "If an option may not be valid for a command it should be checked with cfgOptionValid() or cfgOptionTest().\n\nIt appears this rule is followed pretty strictly since the only changes required were in unit tests."
+    },
+    {
+        "commit": "1c1a7104604073feff3109a74d1d8ee4a2efc86d",
+        "date": "2020-04-27 14:00:36 -0400",
+        "subject": "Add --set option to the expire command.",
+        "body": "The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository."
+    },
+    {
+        "commit": "ad33f545d165260c85cb41f39fd9b0044cc97841",
+        "date": "2020-04-27 13:17:30 -0400",
+        "subject": "Move latest backup link functionality to backup/common module.",
+        "body": "This function is needed for new expire features."
+    },
+    {
+        "commit": "483838233fb4d36425a84dc6274cc1f8833feaa2",
+        "date": "2020-04-27 10:57:19 -0400",
+        "subject": "The expire command now checks if a stop file is present.",
+        "body": "This check has always been missing but it was not noticed because expire is not usually run independently of backup, which does the check correctly."
+    },
+    {
+        "commit": "a5b2630d7c089b229f48e2f9cbd1e9b390fcf496",
+        "date": "2020-04-27 10:49:05 -0400",
+        "subject": "Throw user-friendly error if expire is not run on repository host.",
+        "body": "Running the expire command on a non-repository host threw an assertion because the command is not yet configured for remote execution."
+    },
+    {
+        "commit": "987df62ec014c9b3f21b1ff9cd6db9a33f837a84",
+        "date": "2020-04-26 17:22:37 -0400",
+        "subject": "Centralize enforcement of option constraints.",
+        "body": "Each option type enforced its own constraints but there was a lot of duplication. Centralize the enforcement to remove the duplication.\n\nAlso convert the option type assert to a production error. This is unlikely to happen in production but the test is quite cheap so it can't hurt.\n\nFinally, add a NULL check. Most option types can never be NULL."
+    },
+    {
+        "commit": "12069ff8f388171cf094a579ad27f5969d92b60e",
+        "date": "2020-04-24 08:45:54 -0400",
+        "subject": "Add reviewer."
+    },
+    {
+        "commit": "0dd6629a2dba7c011e03c5f39659dc516da28456",
+        "date": "2020-04-24 08:40:54 -0400",
+        "subject": "Automatically add default user as reviewer.",
+        "body": "Contributions looked like they had no reviewer when reviewed by the default user."
+    },
+    {
+        "commit": "e92eb709d6c60e44f406af139b8346b12fee1868",
+        "date": "2020-04-24 08:00:00 -0400",
+        "subject": "Add backup/expire running status to the info command.",
+        "body": "This is implemented by checking for a backup lock on the host where info is running so there are a few limitations:\n\n* It is not currently possible to know which command is running: backup, expire, or stanza-*. The stanza commands are very unlikely to be running so it's pretty safe to guess backup/expire. Command information may be added to the lock file to improve the accuracy of the reported command.\n\n* If the info command is run on a host that is not participating in the backup, e.g. a standby, then there will be no backup lock. This seems like a minor limitation since running info on the repo or primary host is preferred."
+    },
+    {
+        "commit": "2e6938fad9ab4e93c472a3f86812ed82fba1df4d",
+        "date": "2020-04-21 17:55:36 -0400",
+        "subject": "Restore works when PGDATA is a link.",
+        "body": "Make the restore clean process look more like manifest build, i.e. do cleanup of each target root directory outside the main cleanup callback. This means some code duplication but removes the logic handling \"dot\" paths.\n\nAdd tests for both restore and backup (which already worked but was not tested)."
+    },
+    {
+        "commit": "1eb26789387eff604e5902848be4ea7cb633557e",
+        "date": "2020-04-21 17:20:42 -0400",
+        "subject": "Fix minor leak in TLS host verification.",
+        "body": "sk_GENERAL_NAME_free() only freed the name stack, not the names in the stack. sk_GENERAL_NAME_pop_free() frees both.\n\nDue to aggressive connection reuse this leak was unlikely to be very noticeable."
+    },
+    {
+        "commit": "6d11fe53f773163407cf28096f3e48f75c119460",
+        "date": "2020-04-21 10:51:38 -0400",
+        "subject": "Update RHEL package location (again).",
+        "body": "This changed (again) upstream so update the file paths."
+    },
+    {
+        "commit": "a999500d2c6fe07cfc935ba40dbf2d9a192a8f0c",
+        "date": "2020-04-20 16:21:53 -0400",
+        "subject": "Remove XML source for test/README.md.",
+        "body": "63b9f46a removed test/README.md but did not remove the XML source so it reappeared when the release documentation was built."
+    },
+    {
+        "commit": "3e2dc058173bdd01f6d48d7715c70e3c5b17facb",
+        "date": "2020-04-20 15:58:06 -0400",
+        "subject": "Begin v2.27 development."
+    },
+    {
+        "commit": "2352ecf7c0db8d12cda4759709b4cd570e1b5de4",
+        "date": "2020-04-20 15:44:31 -0400",
+        "subject": "v2.26: Non-blocking TLS"
+    },
+    {
+        "commit": "93e4fe0199bdff3de34eee92b6ace99dab1acb98",
+        "date": "2020-04-20 13:11:34 -0400",
+        "subject": "Specify that the io-timeout option is measured in seconds."
+    },
+    {
+        "commit": "1c319e051b26930da69bef8eebbe1414db820a1a",
+        "date": "2020-04-20 11:49:11 -0400",
+        "subject": "Remove stray copy of LibCAuto.pm.",
+        "body": "This was removed in 79cfd3ae but accidentally added back in 2fa69af8, probably due to an incorrectly resolved merge conflict."
+    },
+    {
+        "commit": "4b28f79c92b497eb336ab9b180f029a6bffda5c1",
+        "date": "2020-04-20 11:08:58 -0400",
+        "subject": "Clear error queue before each SSL_*() call.",
+        "body": "The documentation recommends clearing the error queue before each SSL_*() call.\n\nSince we always check the results of SSL_*() for errors instead of blindly calling SSL_get_error() it's not clear this makes any difference, but it still seems like a good idea to be sure there are no stray errors in the queue."
+    },
+    {
+        "commit": "6f41ce1182c3417f4a7844cbe5de5875c27e4363",
+        "date": "2020-04-20 09:45:08 -0400",
+        "subject": "Add expire to commands that support io-timeout.",
+        "body": "The command list was not complete. Copy the command list from buffer-size to make sure all commands are included."
+    },
+    {
+        "commit": "21a1cf9a2f18cc294474efda064a2ae08cc8d18d",
+        "date": "2020-04-17 09:55:40 -0400",
+        "subject": "Add sck-block option.",
+        "body": "This option puts sockets into blocking mode.\n\nIt is only intended for internal use and is not included in the test matrix."
+    },
+    {
+        "commit": "5d25e508aeb8febd509f26225425b391fe45ad06",
+        "date": "2020-04-17 09:18:52 -0400",
+        "subject": "Add io-timeout option.",
+        "body": "Timeout used for connections and read/write operations.\n\nNote that the entire read/write operation does not need to complete within this timeout but some progress must be made, even if it is only a single byte."
+    },
+    {
+        "commit": "c88684e2bf32cef8cc185cca4ef213457b03fa62",
+        "date": "2020-04-16 16:05:44 -0400",
+        "subject": "Non-blocking TLS implementation.",
+        "body": "The prior blocking implementation seemed to be prone to locking up on some (especially recent) kernel versions. Since we were unable to reproduce the issue in a development environment we can only speculate as to the cause, but there is a good chance that blocking sockets were the issue or contributed to the issue.\n\nSo move to a non-blocking implementation to hopefully clear up these issues. Testing in production environments that were prone to locking shows that the approach is promising and at the very least not a regression.\n\nThe main differences from the blocking version are the non-blocking connect() implementation and handling of WANT_READ/WANT_WRITE retries for all SSL*() functions.\n\nTimeouts in the tests needed to be increased because socket connect() and TLS SSL_connect() were not included in the timeout before. The tests don't run any slower, though. In fact, all platforms but Ubuntu 12.04 worked fine with the shorter timeouts."
+    },
+    {
+        "commit": "2260a7512aab7a50473466cc524aabb2a5002edf",
+        "date": "2020-04-16 15:02:33 -0400",
+        "subject": "Use poll() instead of select() for monitoring socket read/write ready.",
+        "body": "select() is a bit old-fashioned and cumbersome to use. Since the select() code needed to be modified to handle write ready this seems like a good time to upgrade to poll().\n\npoll() has been around for a long time so there doesn't seem to be any need to provide a fallback to select().\n\nAlso change the error on timeout from FileReadError to ProtocolError. This works better for read vs. write and failure to poll() is indicative of a protocol error or unexpected EOF."
+    },
+    {
+        "commit": "e5e81d3839648617266285ca519f76835b79f611",
+        "date": "2020-04-16 14:48:16 -0400",
+        "subject": "Only limit backup copy size for WAL-logged files.",
+        "body": "The prior behavior introduced in dcddf3a5 could possibly lead to postgresql.conf or postgresql.auto.conf being truncated in the backup since they are copied via tmp files and could change size during the backup.\n\nIn general it seems safer to limit this feature to WAL-logged files which will be reconstructed during recovery."
+    },
+    {
+        "commit": "85f4eef55e62dcaf05705ce3123cb04b59c2a1f4",
+        "date": "2020-04-16 14:13:53 -0400",
+        "subject": "Add Cirrus CI and Vagrant configuration for FreeBSD and MacOS.",
+        "body": "Building on these platforms gives us better coverage for our build code. Cirrus CI was chosen because it is the only service that supports FreeBSD (that we could find).\n\nThe FreedBSD configuration for Vagrant is currently just enough to perform a build.\n\nThe MacOS configuration is not actually for Vagrant (yet) but does show the steps needed to setup the build environment on MacOS."
+    },
+    {
+        "commit": "09fc69f3e8a0f8ccf6ce95b5d7e59b68b00d14ff",
+        "date": "2020-04-16 13:58:46 -0400",
+        "subject": "Make existing Vagrantfile configuration the default.",
+        "body": "This allows us to add new configurations mostly without changing the behavior of vagrant from the command line, i.e. vagrant up and vagrant ssh will continue to bring up the default configuration.\n\nHowever, vagrant destroy -f will remove all configurations. That's really only a change in behavior if more than one configuration is running, which is not currently possible."
+    },
+    {
+        "commit": "34d7338604b423b858e315db58a7a0976ad30e17",
+        "date": "2020-04-16 11:50:35 -0400",
+        "subject": "Fix headers for FreeBSD/MacOS.",
+        "body": "It looks like Linux is tolerant of the BSD headers so remove the conditionals.\n\nEventually it might be a good idea to include these based on configure rules but that seems over overkill for now."
+    },
+    {
+        "commit": "492180837ee654bb5052bbaca3d04111ee89a4c6",
+        "date": "2020-04-14 18:03:41 -0400",
+        "subject": "Classify all .h files as C.",
+        "body": "Github classifies many C header files as C++, perhaps because they don't contain anything definitively C-like.\n\nAdd an override to ensure .h files are always classified as C since this project contains no C++."
+    },
+    {
+        "commit": "0c07c5111fb73821abed678166cc7bfb132f2285",
+        "date": "2020-04-14 15:33:43 -0400",
+        "subject": "Remove empty subexpression from manifest regular expression.",
+        "body": "MacOS was not happy about this though other platforms seemed to work fine.\n\nThis was likely a typo or a relic from refactoring."
+    },
+    {
+        "commit": "8fb0a8fd6ed7453202ca6bee6516bb5489f9a555",
+        "date": "2020-04-14 15:28:43 -0400",
+        "subject": "Remove incorrect Github id.",
+        "body": "This was a copy-pasto from another contributor entry."
+    },
+    {
+        "commit": "02ebba02b29739b0ff7a1c8e3833c3ff8732041c",
+        "date": "2020-04-14 15:23:19 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "9ffa2c618fe54710a37448302a0efa1368a041f0",
+        "date": "2020-04-14 15:22:49 -0400",
+        "subject": "Use SocketSession/TlsSession for test servers.",
+        "body": "A session looks much the same whether it is initiated from the client or the server, so use the session objects to implement the TLS, HTTP, and S3 test servers.\n\nFor TLS, at least, there are some differences between client and server sessions so add a client/server type to SocketSession to determine how the session was initiated.\n\nAside from reducing code duplication, the main advantage is that the test server will now timeout rather than hanging indefinitely when less input that expected is received."
+    },
+    {
+        "commit": "71fb28bf3f7387a225c8a32b810772f3f2b09820",
+        "date": "2020-04-14 15:20:50 -0400",
+        "subject": "Always throw error when OpenSSL returns SSL_ERROR_SYSCALL.",
+        "body": "Previously an error was only thrown when errno was set but in practice this is usually not the case. This may have something to do with getting errno late but attempts to get it earlier have not been successful. It appears that errno usually gets cleared and spot research seems to indicate that other users have similar issues.\n\nAn error at this point indicates unexpected EOF so it seems better to just throw an error all the time and be consistent.\n\nTo test this properly our test server needs to call SSL_shutdown() except when the client expects this error."
+    },
+    {
+        "commit": "9f2d647badb666c31ba25c4df8c7294331287a23",
+        "date": "2020-04-14 15:02:18 -0400",
+        "subject": "Split session functionality of TlsClient out into TlsSession.",
+        "body": "This abstraction allows the session code to be shared between the TLS client and (upcoming) server code.\n\nSession management is no longer implemented in TlsClient so the HttpClient was updated to free and create sessions as needed. No test changes were required for HttpClient so the functionality should be unchanged.\n\nMechanical changes to the TLS tests were required to use TlsSession where appropriate rather than TlsClient. There should be no change in functionality other than how sessions are managed, i.e. using tlsClientOpen()/tlsSessionFree() rather than just tlsClientOpen()."
+    },
+    {
+        "commit": "c9481bb95f1edaa93b26f8fce767950e00b40543",
+        "date": "2020-04-14 14:51:14 -0400",
+        "subject": "Update contributing.xml to use Ubuntu 18.04.",
+        "body": "Ubuntu 19.04 was EOL in January and has been removed from the repository servers.\n\nIt may be best to stick to LTS versions from now on."
+    },
+    {
+        "commit": "f03d1b5b7b880b25a19a087ec5e29e3393e2ce43",
+        "date": "2020-04-14 11:43:50 -0400",
+        "subject": "Use __noreturn_ on error functions when coverage testing.",
+        "body": "The errorInternalThrowSys*() functions were marked as returning during coverage testing even when they had no possibility to return, i.e. the error parameter was set to constant true. This meant the compiler would treat the functions as returning even when they would not.\n\nInstead create completely separate functions for coverage to use for THROW_ON_SYS_ERROR*() that can return and leave the regular functions marked __noreturn__."
+    },
+    {
+        "commit": "b7d8d61526e1ed7e617953fc36736d89f9295252",
+        "date": "2020-04-13 16:59:02 -0400",
+        "subject": "Split session functionality of SocketClient out into SocketSession.",
+        "body": "This abstraction allows the session code to be shared between the socket client and (upcoming) server code. There should no difference in how the code works -- only the organization has changed. Note that no changes to the tests were required.\n\nThis same abstraction will be required for TlsClient but that will be done in a separate commit because it requires test changes."
+    },
+    {
+        "commit": "b5347070af5e3e5b9d6a44555aed0212b5cd022a",
+        "date": "2020-04-13 16:44:29 -0400",
+        "subject": "Remove extraneous assignment.",
+        "body": "This is likely leftover cruft from a prior refactor."
+    },
+    {
+        "commit": "9d2223b18881bf862d6ca5da7a2ad28b86421fb1",
+        "date": "2020-04-13 14:57:01 -0400",
+        "subject": "Improve comments and fix typos in the storage interface."
+    },
+    {
+        "commit": "310d42ca35431bb196dfc81300b7d8dfa96bbd35",
+        "date": "2020-04-13 14:51:04 -0400",
+        "subject": "Correct option name in test.pl help."
+    },
+    {
+        "commit": "71ce6375571bf9253b7aebad5ee44774fb3cbb07",
+        "date": "2020-04-12 09:01:41 -0400",
+        "subject": "Use standard HARNESS_FORK*() macros to fork test servers.",
+        "body": "These forks were done in a custom way (not sure why) and lack the capability of the standard macros for the parent to wait for child exit.\n\nThis mean that the server would continue to run after the tests were complete and that multiple servers could run at once. This caused subtle timing and connection issues that required larger timeouts to resolve.\n\nDon't change the timeouts here since they need to be adjusted in future commits anyway."
+    },
+    {
+        "commit": "42246401b8805c14d8b2a6938dfef152d2905d70",
+        "date": "2020-04-11 16:24:45 -0400",
+        "subject": "Add comment."
+    },
+    {
+        "commit": "674b65886face9b2f7966c4f9ff1dc321b90e61c",
+        "date": "2020-04-11 16:21:03 -0400",
+        "subject": "Suppress uncoverable error in common/io-tls test module.",
+        "body": "It is pretty much impossible for a static IP to not resolve to an address but in theory the error could catch other conditions so it seems best to keep it."
+    },
+    {
+        "commit": "9a751c2d98f27c4e270d6d47c0262cad68aee68f",
+        "date": "2020-04-10 12:56:28 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "63b9f46a34ce20c172394a625858d807b1e2a5a9",
+        "date": "2020-04-09 18:25:25 -0400",
+        "subject": "Update contributing documentation and remove test/README.md.",
+        "body": "When the Vagrant file was updated to use pgbackrest/ vs /backrest/ as the location for executing tests and building the documentation, parts of the contributing.xml (and hence the CONTRIBUTING.md) were not updated since some parts of the document are not actually executed when the CONTRIBUTING.md is built from contributing.xml: those parts that are executed were updated but those parts that are not executed were not.\n\nThis commit fixes the contributing.xml issue but also removes test/README.md as its contents were out of date and redundant given that they are covered in CONTRIBUTING.md."
+    },
+    {
+        "commit": "55c3a3c8d3d58c4b02327be39b3cf080f3805358",
+        "date": "2020-04-09 18:13:35 -0400",
+        "subject": "Allow zero wait times in Wait object.",
+        "body": "This limitation forced extra logic in cases where zero wait times were needed.\n\nRemove the limitation and the extra logic in cases where zero wait times are possible."
+    },
+    {
+        "commit": "c292e8957ded825483f08060ce8857ad935637fd",
+        "date": "2020-04-07 14:56:09 -0400",
+        "subject": "Add some debugging to tests that fork servers.",
+        "body": "Help identify whether errors are happening in the forked server or the main test by showing the line number where the server was forked off in the stack trace."
+    },
+    {
+        "commit": "099bd85ed7cdca017fbfae4d12134a00fcf2236b",
+        "date": "2020-04-07 14:42:05 -0400",
+        "subject": "Reset line number in TEST_ERROR*() macros.",
+        "body": "If these are not reset then an error not wrapped in a TEST_ERROR*() macro may show the line number of the previous error in a stack trace, which is confusing.\n\nIt is better for the line number to be unreported than wrong."
+    },
+    {
+        "commit": "627b49535222bf8408b2593b633a79c8eba3b832",
+        "date": "2020-04-07 14:35:36 -0400",
+        "subject": "Add waitRemaining() to get remaining wait time.",
+        "body": "This can be used to set timeouts so they do not wait longer than needed."
+    },
+    {
+        "commit": "ac3cfa4c9c31a00fb9f88ad65430cd0c550fee49",
+        "date": "2020-04-07 14:23:31 -0400",
+        "subject": "Allow default process id to be specified in logInit().",
+        "body": "The default process id was previously always 0 but there are cases where it is useful to be able to set the default.\n\nCurrently the only use case is for testing but the upcoming server code will also make use of it."
+    },
+    {
+        "commit": "2ec379fa40142462fd018a385affa14346ca76e7",
+        "date": "2020-04-07 11:10:58 -0400",
+        "subject": "Add ideator to release note."
+    },
+    {
+        "commit": "5e55d588507e7948dbb48bb8d9427ab4d4503c20",
+        "date": "2020-04-06 16:09:18 -0400",
+        "subject": "Simplify storage driver info and list functions.",
+        "body": "The storage driver requires two list functions to be implemented, list and infoList. But the former is a subset of the latter so implementing both in every driver is wasteful. The reason both exist is that in Posix it is cheaper to get a list of names than it is to stat files to get size, time, etc. In S3 these operations are equivalent.\n\nIntroduce storageInfoLevelType to determine the amount of information required by the caller. That way Posix can work efficiently and all drivers can return only the data required which saves some bandwidth. The storageList() and storageInfoList() functions remain in the storage interface since they are useful -- the only change is simplifying the drivers with no external impact.\n\nNote that since list() accepted an expression infoList() must now do so. Checking the expression is optional for the driver but can be used to limit results or save IO costs.\n\nSimilarly, exists() and pathExists() are just specialized forms of info() so adapt them to call info() instead."
+    },
+    {
+        "commit": "7679f8f88622cd14d442e69d133bd108783cdd80",
+        "date": "2020-04-04 13:59:50 -0400",
+        "subject": "Fix issue with THROW*_SYS_ERROR_CODE*() using wrong errno.",
+        "body": "When DEBUG_COVERAGE was defined errno was being used instead of the value being passed. This apparently worked by happenstance in the single existing usage but it won't work in general."
+    },
+    {
+        "commit": "f984aec66508354e8537b3f8c226f0e574592306",
+        "date": "2020-04-03 18:15:32 -0400",
+        "subject": "Standardize some section names in headers.",
+        "body": "It's better to start out with plural forms rather than flip back and forth as functions are added and subtracted. So, use \"Constructors\" instead of \"Constructor\".\n\nUse \"Getters/Setters\" rather than \"Getters\" or \"Setters\" to avoid similar churn."
+    },
+    {
+        "commit": "1aca2cc90290ffefcc95530dba55e19313754219",
+        "date": "2020-04-03 18:01:28 -0400",
+        "subject": "Move extern function comments to headers.",
+        "body": "This has been the policy for some time but due to migration pressure only new functions and refactors have been following this rule. Now it seems sensible to make a clean sweep and move all the comments that have not been moved already (i.e. most of them).\n\nOnly obvious typos and gross inaccuracies in the comments have been fixed. For this most part this was a copy and paste operation.\n\nUseless comments, e.g. \"New object\", were not copied. Even so, there are surely many deficient comments left.\n\nSome rearranging was done where needed and functions were placed in the proper sections, e.g. \"Constructors\", \"Functions\", etc.\n\nA few function prototypes were found that not longer had an implementation. These were removed, but there may be more.\n\nThe coding document has been updated to reflect this policy, which is not new but has never been documented."
+    },
+    {
+        "commit": "3fbde30c6fac4c752a3a1f47bbf309571b123b7a",
+        "date": "2020-04-03 13:25:38 -0400",
+        "subject": "Add/remove dependent backups during backup.info reconstruct.",
+        "body": "Prior to performing a backup or expiring backups, the backup.info file is validated by reconstructing it from the backups in the repository. When a backup had already been removed from the repo, it was removed from the backup.info file but its dependents were not.\n\nNow, the dependent backups will also be removed from backup.info and only backups in the repo that have their full dependency chain will be added to backup.info if they are missing."
+    },
+    {
+        "commit": "f3ae74b0d62a7b85e1452d46dd60aafbeb88226d",
+        "date": "2020-04-03 08:38:28 -0400",
+        "subject": "Remove storageRead() and storageWriteDriver().",
+        "body": "These functions were only being used in the tests. This usage likely dates to before the include directive was available in define.yaml."
+    },
+    {
+        "commit": "1214f1d70b5a34bd648892519777c6bd3b33619d",
+        "date": "2020-04-03 08:18:07 -0400",
+        "subject": "Update RHEL package location.",
+        "body": "This changed upstream so update the file paths."
+    },
+    {
+        "commit": "713211d89fd341e5b39b5273c4cb0cea495c245d",
+        "date": "2020-04-02 17:25:49 -0400",
+        "subject": "Clean up const usage in bufPtr() and bufRemainsPtr().",
+        "body": "These functions accepted const Buffer objects and returned non-const pointers which is definitely not a good idea. Add bufPtrConst() to handle cases where only a const return value is needed and update call sites.\n\nUse UNCONSTIFY() in cases where library code out of our control requires a non-const pointer. This includes the already-documented exception in command/backup/pageChecksum and input buffers in the gzCompress and gzDecompress filters."
+    },
+    {
+        "commit": "76b88a3cd58cb69ba8660247ed0959707c12401c",
+        "date": "2020-04-02 16:58:38 -0400",
+        "subject": "Add UNCONSTIFY() macro.",
+        "body": "Allows casting const-ness away from an expression, but doesn't allow changing the type. Enforcement of the latter currently only works for gcc-like compilers.\n\nNote that it is not safe to cast const-ness away if the result will ever be modified (it would be undefined behavior). Doing so can cause compiler mis-optimizations or runtime crashes (by modifying read-only memory). It is only safe to use when the result will not be modified, but API design or language restrictions prevent you from declaring that (e.g. because a function returns both const and non-const variables).\n\nNote that this only works in function scope, not for global variables (it would be nice, but not trivial, to improve that).\n\nUNCONSTIFY() requires static assert which is a feature in its own right."
+    },
+    {
+        "commit": "78beb16d6f30b2de561b391579c30b2811a94cd3",
+        "date": "2020-04-01 19:33:11 -0400",
+        "subject": "Remove unused getters in common/io/write module.",
+        "body": "These were probably added for symmetry with IoRead but we would prefer to remove those getters.\n\nSo, just remove the equivalents in IoWrite."
+    },
+    {
+        "commit": "f19c59ab38452bd4d247aa3a073c5c525b3b3cbe",
+        "date": "2020-04-01 18:03:16 -0400",
+        "subject": "Remove unused exports from pgBackRestBuild::Config::Data.",
+        "body": "These were once used heavily in the Perl code but now only a few of them are used in the documentation.\n\nRemove the unused exports as there is generally no need create them for new commands/options."
+    },
+    {
+        "commit": "3aedcd17760e677058e679ffaa7500ce57e42805",
+        "date": "2020-04-01 17:20:47 -0400",
+        "subject": "Enable FD_CLOEXEC.",
+        "body": "PostgreSQL enables this option when available which seems like a good idea since we also do not share connections between processes.\n\nNote that as in PostgreSQL there is no way to disable this option."
+    },
+    {
+        "commit": "967f2c0d7f56702059f433c248c1d2640dc26fde",
+        "date": "2020-04-01 16:56:15 -0400",
+        "subject": "Enable TCP_NODELAY.",
+        "body": "PostgreSQL enables this option when available which seems like a good idea since we also buffer transmissions.\n\nNote that as in PostgreSQL there is no way to disable this option."
+    },
+    {
+        "commit": "a1a0a23c6a086bb9f95ebdd280cca4c4f7ce683d",
+        "date": "2020-04-01 16:51:29 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "789e364e6b35260a5805f1643761cd7f24b2bfdc",
+        "date": "2020-04-01 15:44:51 -0400",
+        "subject": "Rename tcp-keep-alive option to sck-keep-alive.",
+        "body": "This is really a socket option so the new name is clearer.\n\nSince common/io/socket/tcp will contains a mix of options it makes sense to rename it to socket and cascade name changes as needed."
+    },
+    {
+        "commit": "5c6fb88bef242c071fd02671798b296bd65fa47f",
+        "date": "2020-03-31 18:13:11 -0400",
+        "subject": "TCP keep-alive options are configurable.",
+        "body": "Prior to 2.25 the individual TCP keep-alive options were not being configured due to a missing header. In 2.25 they were being configured incorrectly due to a disconnect between the timeout specified in ms and what was expected by the TCP options, i.e. seconds.\n\nInstead make the TCP keep-alive options directly configurable, with correct units and better testing. Keep-alive is enabled by default (though it can be defaulted to the system setting instead) and the rest of the options are not set by default. This is in line with what PostgreSQL does, though PostgreSQL does not allow keep-alive to be defaulted.\n\nAlso move configuration of TCP options before connect() as PostgreSQL does."
+    },
+    {
+        "commit": "8989118cc656eeb3458404a4a9beff059c0c984c",
+        "date": "2020-03-31 12:43:29 -0400",
+        "subject": "Add SocketClient object.",
+        "body": "This functionality was embedded into TlsClient but that was starting to get unwieldy.\n\nAdd SocketClient to contain all socket-related client functionality."
+    },
+    {
+        "commit": "abb76398079fdfb7842bbd1f83fe46e33a5121b5",
+        "date": "2020-03-31 11:10:26 -0400",
+        "subject": "Add OBJECT_DEFINE_GET() macro to define object getters.",
+        "body": "Simple object getters involve a lot of boilerplate code so create a macro to simplify implementing them."
+    },
+    {
+        "commit": "da43db354343d629029fd78ceefecaa57bf58c73",
+        "date": "2020-03-30 20:52:57 -0400",
+        "subject": "Move common/object.h to common/type/object.h.",
+        "body": "This header does not contain a type but is used to define types so this seems like a better location."
+    },
+    {
+        "commit": "a29e25a845bed5d3b635766dd3ea7ca6a793ac47",
+        "date": "2020-03-29 21:25:48 -0400",
+        "subject": "Add storage filter performance test.",
+        "body": "This test allows the important storage filters to be benchmarked by MiB/s."
+    },
+    {
+        "commit": "1e0b0c9344c3cdb7e11ff67820a681bba1c1c05d",
+        "date": "2020-03-29 09:17:39 -0400",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "bf7b989103d6804362b4fb0994b96f13f5cc0dd8",
+        "date": "2020-03-28 18:25:51 -0400",
+        "subject": "Add time since last test started to test output.",
+        "body": "This makes it easier to see the timing of each step in the test."
+    },
+    {
+        "commit": "7e519e72d516dc03f60c25252928a24de8cc6e58",
+        "date": "2020-03-28 18:20:29 -0400",
+        "subject": "Add TEST_TITLE_FMT() macro."
+    },
+    {
+        "commit": "e1c72f6f97e9020874e1f31c97d1e1ff7269104d",
+        "date": "2020-03-28 17:48:57 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "af734d69f4fc32502ae9b5baa7ba2ee244d0462c",
+        "date": "2020-03-27 08:22:58 -0400",
+        "subject": "Restore prefix/exec_prefix Makefile variables removed in 237a3da4."
+    },
+    {
+        "commit": "4b1d995bbacac8baebd8a71045d87a2126ad851b",
+        "date": "2020-03-26 22:20:09 -0400",
+        "subject": "Update packages required for each CI job.",
+        "body": "Documentation builds and tests have only a few packages in common so rearrange packages to save some time and clarify dependencies.\n\nRemove the libperl-dev package which became obsolete when the LibC module was removed in 79cfd3ae.\n\nAdd a few comments for good measure."
+    },
+    {
+        "commit": "65285ff5b28f81a5e223337f93fe127d2eed2872",
+        "date": "2020-03-26 22:00:40 -0400",
+        "subject": "Rearrange Travis CI jobs based on current runtimes.",
+        "body": "The runtimes of the tests have change with recent updates and it is generally best to order the slowest tests first."
+    },
+    {
+        "commit": "0f742204e84c1a9529085fcfad61318e1c1a1842",
+        "date": "2020-03-26 21:39:40 -0400",
+        "subject": "Add comments to make the purpose of each CI job clearer."
+    },
+    {
+        "commit": "09d26d54ceb42a1f14de4ed59541f602b7c99ee6",
+        "date": "2020-03-26 21:16:21 -0400",
+        "subject": "Updates for key changes in travis.yaml.",
+        "body": "The format has evolved over time and the old keys were showing warnings during builds."
+    },
+    {
+        "commit": "3d255dce3c83fe0de49ab5a5ff3d71151e0761b3",
+        "date": "2020-03-26 21:05:36 -0400",
+        "subject": "Add performance/storage test.",
+        "body": "The primary purpose of this test (currently) is to measure the performance of storageRemoteInfoList(), which is critical for building a manifest when the PostgreSQL host is remote.\n\nThe starting baseline of 1 million files is perhaps a bit aggressive but it seems very likely to blow up if there are performance regressions."
+    },
+    {
+        "commit": "b64755d6352c9e3e4ac2508b47e2a223f755afe5",
+        "date": "2020-03-26 20:52:05 -0400",
+        "subject": "Increase baseline of the performance/type test.",
+        "body": "Recent performance improvements allow increasing the baseline of this test.\n\nIn general it is best if the baseline is large enough to cause the test to blow up if there are performance regressions."
+    },
+    {
+        "commit": "50cf7370ee171053225a5d4511fd186da2c4c61e",
+        "date": "2020-03-26 20:36:09 -0400",
+        "subject": "Add --no-performance to test.pl to suppress performance tests.",
+        "body": "Performance tests do not need to be run on all platforms. Using vm=none to run performance tests seems best ... for performance."
+    },
+    {
+        "commit": "24e03e1320fcc19059599c136de293183cb77f43",
+        "date": "2020-03-26 20:25:42 -0400",
+        "subject": "Remove RHEL package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "fa8642237146bc1b79fd57271219e0e9aa07882e",
+        "date": "2020-03-26 17:20:58 -0400",
+        "subject": "Begin v2.26 development."
+    },
+    {
         "commit": "fd3dca036b1436564dec17b7c23b62b9d9fa1051",
         "date": "2020-03-26 17:14:53 -0400",
         "subject": "v2.25: LZ4 Compression Support"

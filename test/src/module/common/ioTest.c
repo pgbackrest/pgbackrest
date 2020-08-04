@@ -604,7 +604,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.txt", testPath());
-        int fileHandle = open(strPtr(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
+        int fileHandle = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
         TEST_RESULT_VOID(ioHandleWriteOneStr(fileHandle, strNew("test1\ntest2")), "write string to file");
     }

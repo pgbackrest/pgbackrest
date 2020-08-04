@@ -64,6 +64,7 @@
                     apt-get install rsync git devscripts build-essential valgrind lcov autoconf
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config
                     libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
+                    zstd libzstd-dev bzip2 libbz2-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -333,7 +334,7 @@ if (testBegin("expireBackup()"))
                 <code-block>
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
+strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));       // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
 harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
@@ -357,8 +358,9 @@ TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text -
                 <code-block>
 String *content = strNew("bad content");
 TEST_RESULT_VOID(
-    storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
-        harnessInfoChecksum(content)), "store a corrupt backup.info file");
+    storagePutP(
+        storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strZ(repoPath))), harnessInfoChecksum(content)),
+    "store a corrupt backup.info file");
                 </code-block>
 
                 <p><b>Testing a log message</b></p>

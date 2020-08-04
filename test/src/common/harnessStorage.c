@@ -5,10 +5,62 @@ Storage Test Harness
 
 #include "common/debug.h"
 #include "common/compress/helper.h"
+#include "common/type/object.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
 #include "common/harnessStorage.h"
+
+/***********************************************************************************************************************************
+Dummy functions and interface for constructing test storage drivers
+***********************************************************************************************************************************/
+static StorageInfo
+storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+{
+    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
+}
+
+static bool
+storageTestDummyInfoList(
+    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
+    StorageInterfaceInfoListParam param)
+{
+    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
+}
+
+static StorageRead *
+storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+{
+    (void)thisVoid; (void)file; (void)ignoreMissing; (void)param; return NULL;
+}
+
+static StorageWrite *
+storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+{
+    (void)thisVoid; (void)file; (void)param; return NULL;
+}
+
+static bool
+storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+{
+    (void)thisVoid; (void)path; (void)recurse; (void)param; return false;
+}
+
+static void
+storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+{
+    (void)thisVoid; (void)file; (void)param;
+}
+
+const StorageInterface storageInterfaceTestDummy =
+{
+    .info = storageTestDummyInfo,
+    .infoList = storageTestDummyInfoList,
+    .newRead = storageTestDummyNewRead,
+    .newWrite = storageTestDummyNewWrite,
+    .pathRemove = storageTestDummyPathRemove,
+    .remove = storageTestDummyRemove,
+};
 
 /**********************************************************************************************************************************/
 void
@@ -19,7 +71,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
     if (data->rootPathOmit && info->type == storageTypePath && strEq(info->name, DOT_STR))
         return;
 
-    strCatFmt(data->content, "%s {", strPtr(info->name));
+    strCatFmt(data->content, "%s {", info->name == NULL ? NULL_Z : strZ(info->name));
 
     if (info->level > storageInfoLevelExists)
     {
@@ -27,7 +79,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         {
             case storageTypeFile:
             {
-                    strCat(data->content, "file");
+                strCatZ(data->content, "file");
 
                 if (info->level >= storageInfoLevelBasic && !data->sizeOmit)
                 {
@@ -41,7 +93,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
                         StorageRead *read = storageNewReadP(
                             data->storage,
-                            data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
+                            data->path != NULL ? strNewFmt("%s/%s", strZ(data->path), strZ(info->name)) : info->name);
                         ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGz));
                         size = bufUsed(storageGetP(read));
                     }
@@ -54,19 +106,19 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
             case storageTypeLink:
             {
-                strCatFmt(data->content, "link, d=%s", strPtr(info->linkDestination));
+                strCatFmt(data->content, "link, d=%s", strZ(info->linkDestination));
                 break;
             }
 
             case storageTypePath:
             {
-                strCat(data->content, "path");
+                strCatZ(data->content, "path");
                 break;
             }
 
             case storageTypeSpecial:
             {
-                strCat(data->content, "special");
+                strCatZ(data->content, "special");
                 break;
             }
         }
@@ -93,7 +145,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             {
                 if (info->user != NULL)
                 {
-                    strCatFmt(data->content, ", u=%s", strPtr(info->user));
+                    strCatFmt(data->content, ", u=%s", strZ(info->user));
                 }
                 else
                 {
@@ -105,7 +157,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             {
                 if (info->group != NULL)
                 {
-                    strCatFmt(data->content, ", g=%s", strPtr(info->group));
+                    strCatFmt(data->content, ", g=%s", strZ(info->group));
                 }
                 else
                 {
@@ -115,5 +167,5 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         }
     }
 
-    strCat(data->content, "}\n");
+    strCatZ(data->content, "}\n");
 }

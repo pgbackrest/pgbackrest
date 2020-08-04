@@ -108,7 +108,7 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
+                TestError, "EXPECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),               \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
@@ -217,6 +217,8 @@ Macros to compare results of common data types
     }                                                                                                                              \
     while (0)
 
+// Compare raw pointers. When checking for NULL use the type-specific macro when available, e.g. TEST_RESULT_STR(). This is more
+// type-safe and makes it clearer what is being tested.
 #define TEST_RESULT_PTR(statement, expected, ...)                                                                                  \
     TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
 #define TEST_RESULT_PTR_NE(statement, expected, ...)                                                                               \
@@ -237,13 +239,15 @@ Macros to compare results of common data types
     TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strPtr(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__);
+#define TEST_RESULT_STR_KEYRPL(statement, resultExpected, ...)                                                                     \
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__);
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strPtr(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
 
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
@@ -283,7 +287,7 @@ Test system calls
                 AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
                 TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
         }                                                                                                                          \
-    } while(0)
+    } while (0)
 
 #define TEST_SYSTEM_FMT(...)                                                                                                       \
     do                                                                                                                             \
@@ -294,7 +298,7 @@ Test system calls
             THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
                                                                                                                                    \
         TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Test log result
@@ -311,7 +315,7 @@ Test log result
             THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
-    } while(0)
+    } while (0)
 
 #define TEST_RESULT_LOG_FMT(...)                                                                                                   \
     do                                                                                                                             \
@@ -326,7 +330,7 @@ Test log result
         }                                                                                                                          \
                                                                                                                                    \
         TEST_RESULT_LOG(TEST_RESULT_LOG_FMT_buffer);                                                                               \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Logging macros
@@ -337,7 +341,7 @@ Logging macros
         hrnTestLogPrefix(__LINE__, true);                                                                                          \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 #define TEST_LOG_FMT(format, ...)                                                                                                  \
     do                                                                                                                             \
@@ -345,7 +349,7 @@ Logging macros
         hrnTestLogPrefix(__LINE__, true);                                                                                          \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Test title macro
@@ -356,7 +360,7 @@ Test title macro
         hrnTestLogPrefix(__LINE__, false);                                                                                         \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 #define TEST_TITLE_FMT(format, ...)                                                                                                \
     do                                                                                                                             \
@@ -364,12 +368,17 @@ Test title macro
         hrnTestLogPrefix(__LINE__, false);                                                                                         \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
-    } while(0)
+    } while (0)
 
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)
+
+/***********************************************************************************************************************************
+Is this a big-endian system?
+***********************************************************************************************************************************/
+#define TEST_BIG_ENDIAN() (!*(unsigned char *)&(uint16_t){1})
 
 #endif

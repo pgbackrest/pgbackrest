@@ -35,15 +35,15 @@ cfgLoadLogSetting(void)
     unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
-        logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
+        logLevelConsole = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelConsole)));
 
     if (cfgOptionValid(cfgOptLogLevelStderr))
     {
-        logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
+        logLevelStdErr = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelStderr)));
     }
 
     if (cfgOptionValid(cfgOptLogLevelFile))
-        logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
+        logLevelFile = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelFile)));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
@@ -104,8 +104,8 @@ cfgLoadUpdateOption(void)
                 OptionInvalidValueError,
                 "'%s' is not valid for '" CFGOPT_PROTOCOL_TIMEOUT "' option\nHINT '" CFGOPT_PROTOCOL_TIMEOUT "' option (%s)"
                     " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
-                strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),  strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),
-                strPtr(varStrForce(cfgOption(cfgOptDbTimeout))));
+                strZ(varStrForce(cfgOption(cfgOptProtocolTimeout))),  strZ(varStrForce(cfgOption(cfgOptProtocolTimeout))),
+                strZ(varStrForce(cfgOption(cfgOptDbTimeout))));
         }
     }
 
@@ -135,17 +135,18 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull) && cfgCommandRole() == cfgCmdRoleDefault)
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
             // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)))
             {
                 LOG_WARN_FMT(
-                    "option %s is not set, the repository may run out of space"
-                        "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
-                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
+                    "option '%s' is not set for '%s=%s', the repository may run out of space"
+                    "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
+                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx), cfgOptionName(cfgOptRepoRetentionFullType + optionIdx),
+                    strZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx)),
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
             }
         }
@@ -161,16 +162,18 @@ cfgLoadUpdateOption(void)
 
             const String *msgArchiveOff = strNewFmt(
                 "WAL segments will not be expired: option '" CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE "=%s' but",
-                strPtr(archiveRetentionType));
+                strZ(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to
             if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
             {
-                // If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive
-                // to this value, else ignore archiving
+                // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
+                // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
+                // retention-full-type is 'time' then the the expire command will default the archive retention accordingly.
                 if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
                 {
-                    if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+                    if (strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT)
+                        && cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
                             VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));
@@ -186,7 +189,8 @@ cfgLoadUpdateOption(void)
                     }
                     else
                     {
-                        LOG_WARN_FMT("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
+                        LOG_WARN_FMT(
+                            "%s neither option '%s' nor option '%s' is set", strZ(msgArchiveOff),
                             cfgOptionName(cfgOptRepoRetentionArchive + optionIdx),
                             cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
                     }
@@ -195,7 +199,8 @@ cfgLoadUpdateOption(void)
                 {
                     CHECK(strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR));
 
-                    LOG_WARN_FMT("%s option '%s' is not set", strPtr(msgArchiveOff),
+                    LOG_WARN_FMT(
+                        "%s option '%s' is not set", strZ(msgArchiveOff),
                         cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
                 }
             }
@@ -228,7 +233,7 @@ cfgLoadUpdateOption(void)
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                 "\nHINT: remove dots from the bucket name.",
-            strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
+            strZ(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
@@ -279,8 +284,8 @@ cfgLoadLogFile(void)
         {
             // Construct log filename prefix
             String *logFile = strNewFmt(
-                "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
+                "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
+                cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
 
             // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
             // case the async role is added to more commands.
@@ -292,17 +297,17 @@ cfgLoadLogFile(void)
 
             // Add command role if it is not default
             if (cfgCommandRole() != cfgCmdRoleDefault)
-                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
+                strCatFmt(logFile, "-%s", strZ(cfgCommandRoleStr(cfgCommandRole())));
 
             // Add process id if local or remote role
             if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
                 strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
 
             // Add extension
-            strCat(logFile, ".log");
+            strCatZ(logFile, ".log");
 
             // Attempt to open log file
-            if (!logFileSet(strPtr(logFile)))
+            if (!logFileSet(strZ(logFile)))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
         }
         MEM_CONTEXT_TEMP_END();

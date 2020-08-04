@@ -17,12 +17,13 @@ testRun(void)
         // Load configuration
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAddZ(argList, "--repo1-type=cifs");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_CIFS), true), "get cifs repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_CIFS_TYPE), true), "get cifs repo storage");
         TEST_RESULT_STR_Z(storage->type, "cifs", "check storage type");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), true, "    check compress feature");

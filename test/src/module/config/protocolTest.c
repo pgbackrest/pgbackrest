@@ -31,13 +31,14 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
+                strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
                 strLstAddZ(argList, "--repo1-host=repo-host");
                 strLstAddZ(argList, "--repo1-host-user=repo-host-user");
                 harnessCfgLoad(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
                 protocolServerHandlerAdd(server, configProtocol);
-                protocolServerProcess(server);
+                protocolServerProcess(server, NULL);
             }
             HARNESS_FORK_CHILD_END();
 

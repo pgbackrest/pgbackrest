@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strSize(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strZ(), strZNull(), strSize(), and strFree()"))
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
@@ -29,8 +29,8 @@ testRun(void)
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
         TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
-        TEST_RESULT_UINT(strlen(strPtr(string)), 13, "check size with strlen()");
-        TEST_RESULT_INT(strPtr(string)[2], 'a', "check character");
+        TEST_RESULT_UINT(strlen(strZ(string)), 13, "check size with strlen()");
+        TEST_RESULT_INT(strZNull(string)[2], 'a', "check character");
 
         TEST_RESULT_VOID(strFree(string), "free string");
 
@@ -47,7 +47,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
         TEST_RESULT_STR_Z(string, "formatted string 0001", "new with formatted string");
-        TEST_RESULT_PTR(strPtr(NULL), NULL, "null string pointer");
+        TEST_RESULT_Z(strZNull(NULL), NULL, "null string pointer");
 
         TEST_RESULT_VOID(strFree(string), "free string");
         TEST_RESULT_VOID(strFree(NULL), "free null string");
@@ -99,7 +99,7 @@ testRun(void)
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
 
-        TEST_RESULT_STR_Z(strCat(string, "YYYY"), "XXXXYYYY", "cat string");
+        TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
         TEST_RESULT_UINT(string->extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
         TEST_RESULT_UINT(string->extra, 55, "check extra");
@@ -120,7 +120,7 @@ testRun(void)
         String *stringDup = strDup(string);
         TEST_RESULT_STR(stringDup, string, "duplicated strings match");
 
-        TEST_RESULT_PTR(strDup(NULL), NULL, "duplicate null string");
+        TEST_RESULT_STR(strDup(NULL), NULL, "duplicate null string");
     }
 
     // *****************************************************************************************************************************
@@ -239,7 +239,7 @@ testRun(void)
         TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
 
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'd')), "abc", "simple string truncated");
-        strCat(val, "\r\n to end");
+        strCatZ(val, "\r\n to end");
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'n')), "abc\r\n to e", "complex string truncated");
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'a')), "", "complete string truncated - empty string");
 
@@ -290,7 +290,7 @@ testRun(void)
             {
                 if (listIdx == 0)
                 {
-                    TEST_RESULT_PTR(strLstAdd(list, NULL), NULL, "add null item");
+                    TEST_RESULT_STR(strLstAdd(list, NULL), NULL, "add null item");
                 }
                 else
                 {
@@ -311,7 +311,7 @@ testRun(void)
         {
             if (listIdx == 0)
             {
-                TEST_RESULT_PTR(strLstGet(list, listIdx), NULL, "check null item");
+                TEST_RESULT_STR(strLstGet(list, listIdx), NULL, "check null item");
             }
             else
             {

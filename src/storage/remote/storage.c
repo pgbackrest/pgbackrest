@@ -30,32 +30,6 @@ struct StorageRemote
 };
 
 /**********************************************************************************************************************************/
-// Helper to convert protocol storage type to an enum
-static StorageType
-storageRemoteInfoParseType(const char type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHAR, type);
-    FUNCTION_TEST_END();
-
-    switch (type)
-    {
-        case 'f':
-            FUNCTION_TEST_RETURN(storageTypeFile);
-
-        case 'p':
-            FUNCTION_TEST_RETURN(storageTypePath);
-
-        case 'l':
-            FUNCTION_TEST_RETURN(storageTypeLink);
-
-        case 's':
-            FUNCTION_TEST_RETURN(storageTypeSpecial);
-    }
-
-    THROW_FMT(AssertError, "unknown storage type '%c'", type);
-}
-
 // Helper to parse storage info from the protocol output
 static void
 storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
@@ -65,7 +39,7 @@ storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
+    info->type = jsonToUInt(protocolClientReadLine(client));
     info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
 
     if (info->type == storageTypeFile)

@@ -45,34 +45,34 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, s3 =>  true, encrypt => false},
-        {vm => VM2, s3 => false, encrypt =>  true},
-        {vm => VM3, s3 => false, encrypt => false},
-        {vm => VM4, s3 =>  true, encrypt =>  true},
+        {vm => VM1, storage => POSIX, encrypt => false},
+        {vm => VM2, storage =>    S3, encrypt =>  true},
+        {vm => VM3, storage => POSIX, encrypt => false},
+        {vm => VM4, storage => AZURE, encrypt =>  true},
     )
     {
         # Only run tests for this vm
         next if ($rhRun->{vm} ne vmTest($self->vm()));
 
         # Increment the run, log, and decide whether this unit test should be run
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
 
-        if ($bS3 && ($self->vm() eq VM3))
+        if ($strStorage ne POSIX && ($self->vm() eq VM3))
         {
-            confess &log("cannot configure s3 for expect log tests");
+            confess &log("cannot configure non-posix storage for expect log tests");
         }
 
         ############################################################################################################################
-        if ($self->begin("simple, enc ${bEncrypt}, s3 ${bS3}"))
+        if ($self->begin("simple, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
+                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -153,22 +153,18 @@ sub run
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, undef, $strDescription);
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Use oldest full backup for archive retention';
-            $oExpireTest->process($self->stanza(), 10, 10, CFGOPTVAL_BACKUP_TYPE_FULL, 10, $strDescription);
         }
 
         ############################################################################################################################
-        if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, s3 ${bS3}"))
+        if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
+                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbMaster->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 

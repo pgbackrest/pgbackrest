@@ -9,12 +9,14 @@ stress testing as needed.
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/io/filter/sink.h"
+#include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -24,58 +26,6 @@ stress testing as needed.
 #include "protocol/server.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/protocol.h"
-#include "storage/storage.intern.h"
-
-/***********************************************************************************************************************************
-Dummy functions and interface for constructing test drivers
-***********************************************************************************************************************************/
-static StorageInfo
-storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
-{
-    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
-}
-
-static bool
-storageTestDummyInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
-{
-    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
-}
-
-static StorageRead *
-storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
-{
-    (void)thisVoid; (void)file; (void)ignoreMissing; (void)param; return NULL;
-}
-
-static StorageWrite *
-storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
-{
-    (void)thisVoid; (void)file; (void)param; return NULL;
-}
-
-static bool
-storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
-{
-    (void)thisVoid; (void)path; (void)recurse; (void)param; return false;
-}
-
-static void
-storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
-{
-    (void)thisVoid; (void)file; (void)param;
-}
-
-static const StorageInterface storageInterfaceTestDummy =
-{
-    .info = storageTestDummyInfo,
-    .infoList = storageTestDummyInfoList,
-    .newRead = storageTestDummyNewRead,
-    .newWrite = storageTestDummyNewWrite,
-    .pathRemove = storageTestDummyPathRemove,
-    .remove = storageTestDummyRemove,
-};
 
 /***********************************************************************************************************************************
 Dummy callback functions
@@ -113,7 +63,7 @@ storageTestPerfInfoList(
         {
             for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
-                callback(callbackData, &(StorageInfo){.exists = true});
+                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
         }
@@ -154,7 +104,7 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
     this->byteTotal += bufUsed(input);
 
     // Determine how many ms these bytes should take to go through the filter and sleep if greater than elapsed time
-    uint64_t timeRate = this->byteTotal / this->bytesPerSec * MSEC_PER_SEC;
+    uint64_t timeRate = this->byteTotal * MSEC_PER_SEC / this->bytesPerSec;
 
     if (timeElapsed < timeRate)
         sleepMSec(timeRate - timeElapsed);
@@ -175,7 +125,7 @@ testIoRateNew(uint64_t bytesPerSec)
             .bytesPerSec = bytesPerSec,
         };
 
-        this = ioFilterNewP(STRDEF("TestIoRate"), driver, NULL, .in = testIoRateProcess);
+        this = ioFilterNewP(strNew("TestIoRate"), driver, NULL, .in = testIoRateProcess);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -227,7 +177,7 @@ testRun(void)
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
                 protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server);
+                protocolServerProcess(server, NULL);
 
             }
             HARNESS_FORK_CHILD_END();
@@ -246,10 +196,14 @@ testRun(void)
                 Storage *storageRemote = storageRemoteNew(
                     STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
 
+                TimeMSec timeBegin = timeMSec();
+
                 // Storage info list
                 TEST_RESULT_VOID(
                     storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
                     "list %" PRIu64 " remote files", fileTotal);
+
+                TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
                 // Free client
                 protocolClientFree(client);
@@ -263,7 +217,7 @@ testRun(void)
     if (testBegin("benchmark filters"))
     {
         // 4MB buffers are the current default
-        ioBufferSizeSet(1024 * 1024);
+        ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
         CHECK(testScale() <= 1024 * 1024 * 1024);
@@ -273,45 +227,63 @@ testRun(void)
         unsigned int iteration = 1;
 
         // Set rate
-        uint64_t rateIn = 100000;
-        uint64_t rateOut = 100000;
+        uint64_t rateIn = 0; // MB/s (0 disables)
+        uint64_t rateOut = 0; // MB/s (0 disables)
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(
-            storageNewReadP(
-                storagePosixNew(STR(testRepoPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
-                STRDEF("test/data/filecopy.table.bin")));
-
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
+
+        // Build the input buffer
+        Buffer *input = bufNew(blockTotal * bufSize(block));
+
+        for (unsigned int blockIdx = 0; blockIdx < blockTotal; blockIdx++)
+            memcpy(bufPtr(input) + (blockIdx * bufSize(block)), bufPtr(block), bufSize(block));
+
+        bufUsedSet(input, bufSize(input));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT(
-            "%u iteration(s) of %" PRIu64 "MiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration, blockTotal, rateIn,
-            rateOut);
+            "%u iteration(s) of %" PRIu64 "MiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
+            bufUsed(input) / bufUsed(block), rateIn, rateOut);
 
         #define BENCHMARK_BEGIN()                                                                                                  \
             IoWrite *write = ioBufferWriteNew(bufNew(0));                                                                          \
-            ioFilterGroupAdd(ioWriteFilterGroup(write), testIoRateNew(rateIn * 1000 * 1000));
 
         #define BENCHMARK_FILTER_ADD(filter)                                                                                       \
             ioFilterGroupAdd(ioWriteFilterGroup(write), filter);
 
         #define BENCHMARK_END(addTo)                                                                                               \
-            ioFilterGroupAdd(ioWriteFilterGroup(write), testIoRateNew(rateOut * 1000 * 1000));                                     \
+            if (rateOut != 0)                                                                                                      \
+                ioFilterGroupAdd(ioWriteFilterGroup(write), testIoRateNew(rateOut * 1000 * 1000));                                 \
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSinkNew());                                                              \
             ioWriteOpen(write);                                                                                                    \
                                                                                                                                    \
+            IoRead *read = ioBufferReadNew(input);                                                                                 \
+            if (rateIn != 0)                                                                                                       \
+                ioFilterGroupAdd(ioReadFilterGroup(read), testIoRateNew(rateIn * 1000 * 1000));                                    \
+            ioReadOpen(read);                                                                                                      \
+                                                                                                                                   \
             uint64_t benchMarkBegin = timeMSec();                                                                                  \
                                                                                                                                    \
-            for (uint64_t blockIdx = 0; blockIdx < blockTotal; blockIdx++)                                                         \
-                ioWrite(write, block);                                                                                             \
+            Buffer *buffer = bufNew(ioBufferSize());                                                                               \
                                                                                                                                    \
+            do                                                                                                                     \
+            {                                                                                                                      \
+                ioRead(read, buffer);                                                                                              \
+                ioWrite(write, buffer);                                                                                            \
+                bufUsedZero(buffer);                                                                                               \
+            }                                                                                                                      \
+            while (!ioReadEof(read));                                                                                              \
+                                                                                                                                   \
+            ioReadClose(read);                                                                                                     \
             ioWriteClose(write);                                                                                                   \
                                                                                                                                    \
             addTo += timeMSec() - benchMarkBegin;
 
         // Start totals to 1ms just in case something takes 0ms to run
         uint64_t copyTotal = 1;
+        uint64_t md5Total = 1;
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
@@ -326,6 +298,17 @@ testRun(void)
             {
                 BENCHMARK_BEGIN();
                 BENCHMARK_END(copyTotal);
+            }
+            MEM_CONTEXT_TEMP_END();
+
+            // -------------------------------------------------------------------------------------------------------------------------
+            TEST_LOG_FMT("md5 iteration %u", idx + 1);
+
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                BENCHMARK_BEGIN();
+                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_MD5_STR));
+                BENCHMARK_END(md5Total);
             }
             MEM_CONTEXT_TEMP_END();
 
@@ -377,11 +360,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("results");
 
-        TEST_LOG_FMT("copy average: %" PRIu64 "MiB/s", blockTotal * 1000 / copyTotal / iteration);
-        TEST_LOG_FMT("sha1 average: %" PRIu64 "MiB/s", blockTotal * 1000 / sha1Total / iteration);
-        TEST_LOG_FMT("sha256 average: %" PRIu64 "MiB/s", blockTotal * 1000 / sha256Total / iteration);
-        TEST_LOG_FMT("gzip -6 average: %" PRIu64 "MiB/s", blockTotal * 1000 / gzip6Total / iteration);
-        TEST_LOG_FMT("lz4 -1 average: %" PRIu64 "MiB/s", blockTotal * 1000 / lz41Total / iteration);
+        #define TEST_RESULT(name, total)                                                                                           \
+            TEST_LOG_FMT(                                                                                                          \
+                "%s time %" PRIu64"ms, avg time %" PRIu64"ms, avg throughput: %" PRIu64 "MB/s", name, total, total / iteration,    \
+                iteration * blockTotal * 1024 * 1024 * 1000 / total / 1000000);
+
+        TEST_RESULT("copy", copyTotal);
+        TEST_RESULT("md5", md5Total);
+        TEST_RESULT("sha1", sha1Total);
+        TEST_RESULT("sha256", sha256Total);
+        TEST_RESULT("gzip -6", gzip6Total);
+        TEST_RESULT("lz4 -1", lz41Total);
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

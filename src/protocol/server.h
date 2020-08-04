@@ -32,7 +32,7 @@ Functions
 void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
-void protocolServerProcess(ProtocolServer *this);
+void protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval);
 
 // Respond to request with output if provided
 void protocolServerResponse(ProtocolServer *this, const Variant *output);

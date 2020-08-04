@@ -21,8 +21,7 @@ Test Run
 void
 testRun(void)
 {
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
@@ -174,10 +173,8 @@ testRun(void)
 
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
 
-        Storage *storagePg = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        Storage *storagePgWrite = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        Storage *storagePg = storagePosixNewP(strNewFmt("%s/pg", testPath()));
+        Storage *storagePgWrite = storagePosixNewP(strNewFmt("%s/pg", testPath()), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8.3 with custom exclusions and special file");
@@ -189,8 +186,7 @@ testRun(void)
 
         // Create special file
         String *specialFile = strNewFmt("%s/pg/testpipe", testPath());
-        TEST_RESULT_INT(
-            system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(specialFile)))), 0, "create pipe");
+        TEST_RESULT_INT(system(strZ(strNewFmt("mkfifo -m 666 %s", strZ(specialFile)))), 0, "create pipe");
 
         // Files that will always be ignored
         storagePutP(
@@ -359,13 +355,13 @@ testRun(void)
         // Config directory and file links
         storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../config/postgresql.conf", strPtr(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
+            symlink("../config/postgresql.conf", strZ(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
             BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
-            symlink("../config/pg_hba.conf", strPtr(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
+            symlink("../config/pg_hba.conf", strZ(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
@@ -384,7 +380,7 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("ts/1/1"), .mode = 0700);
         storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -483,7 +479,7 @@ testRun(void)
         storagePathRemoveP(storagePgWrite, strNew("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink("../../archivestatus", strPtr(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
+            symlink("../../archivestatus", strZ(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -589,7 +585,7 @@ testRun(void)
 
         // Remove symlinks and directories
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
         storagePathRemoveP(storageTest, STRDEF("ts/1/PG_9.0_201008051"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -685,7 +681,7 @@ testRun(void)
         // create pg_xlog/wal as a link
         storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/wal", testPath())), strPtr(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
+            symlink(strZ(strNewFmt("%s/wal", testPath())), strZ(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
 
         // Files to conditionally ignore before 9.4
@@ -796,7 +792,7 @@ testRun(void)
         // Tablespace 1
         storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -826,7 +822,7 @@ testRun(void)
         // Tablespace 2
         storagePathCreateP(storageTest, STRDEF("ts/2/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/2", strPtr(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/2", strZ(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -934,7 +930,7 @@ testRun(void)
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
         storagePutP(
@@ -1083,7 +1079,7 @@ testRun(void)
         TEST_TITLE("error on link to pg_data");
 
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/pg/base", testPath())), strPtr(strNewFmt("%s/pg/link", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/pg/base", testPath())), strZ(strNewFmt("%s/pg/link", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
@@ -1091,7 +1087,7 @@ testRun(void)
             hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
 
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path in pg_tblspc");
@@ -1119,7 +1115,7 @@ testRun(void)
         TEST_TITLE("error on link that points to nothing");
 
         THROW_ON_SYS_ERROR(
-            symlink("../bogus-link", strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
+            symlink("../bogus-link", strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
 
         TEST_ERROR(
@@ -1127,17 +1123,17 @@ testRun(void)
             hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
 
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to a link");
 
         storagePathCreateP(storageTest, STRDEF("linktestdir"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktestdir", testPath())), strPtr(strNewFmt("%s/linktest", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/linktestdir", testPath())), strZ(strNewFmt("%s/linktest", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktest", testPath())), strPtr(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/linktest", testPath())), strZ(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR_FMT(
@@ -1194,7 +1190,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in future forces delta");
 
-        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, true), "validate manifest");
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, compressTypeGz), "validate manifest");
         TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
         TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGz, "check compress");
@@ -1486,7 +1482,9 @@ testRun(void)
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")), "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum\n"
+            "            HINT: this is normal after restoring from backup or promoting a standby.");
 
         TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta is enabled");
 
@@ -1675,6 +1673,7 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
+            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
             "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
@@ -1684,6 +1683,7 @@ testRun(void)
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
+            "pg_data/=equal=more=={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                       \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
@@ -1772,6 +1772,7 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE
@@ -1874,6 +1875,15 @@ testRun(void)
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of or the same directory as"
                 " link 'base/1' (/pg/base-1)");
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check that a file link in the parent path of a path link does not conflict");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
+        TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
+        manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
 
         // ManifestFile getters
         const ManifestFile *file = NULL;
@@ -2021,7 +2031,7 @@ testRun(void)
             "backup-timestamp-start=1565282140\n"
             "backup-timestamp-stop=1565282142\n"
             "backup-type=\"full\"\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "\n"
             "[backup:db]\n"
             "db-catalog-version=201409291\n"
@@ -2029,10 +2039,10 @@ testRun(void)
             "db-id=1\n"
             "db-system-id=1000000000000000094\n"
             "db-version=\"9.4\"\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "\n"
             "[backup:option]\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "option-archive-check=true\n"
             "option-archive-copy=true\n"
             "option-compress=false\n"
@@ -2043,27 +2053,27 @@ testRun(void)
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
             "\n"
             "[ignore-section]\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
             "\n"
             "[target:file:default]\n"
             "group=\"group1\"\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "master=true\n"
             "mode=\"0600\"\n"
             "user=\"user1\"\n"
             "\n"
             "[target:link:default]\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
             "\n"
             "[target:path:default]\n"
             "group=\"group1\"\n"
-            "ignore-key=ignore-value\n"
+            "ignore-key=\"ignore-value\"\n"
             "mode=\"0700\"\n"
             "user=\"user1\"\n"
         );

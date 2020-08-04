@@ -24,6 +24,9 @@ testRun(void)
         }
         TRY_END();
 
+
+        TEST_ERROR(regExpErrorCheck(REG_BADBR), FormatError, "Invalid content of \\{\\}");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new regexp");
 
@@ -35,7 +38,7 @@ testRun(void)
 
         const String *string = STRDEF("abcdef");
         TEST_RESULT_BOOL(regExpMatch(regExp, string), true, "match regexp");
-        TEST_RESULT_PTR(regExpMatchPtr(regExp), strPtr(string), "check ptr");
+        TEST_RESULT_PTR(regExpMatchPtr(regExp), strZ(string), "check ptr");
         TEST_RESULT_UINT(regExpMatchSize(regExp), 3, "check size");
         TEST_RESULT_STR_Z(regExpMatchStr(regExp), "abc", "check str");
 
@@ -45,7 +48,7 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatch(regExp, strNew("bcdef")), false, "no match regexp");
         TEST_RESULT_PTR(regExpMatchPtr(regExp), NULL, "check ptr");
         TEST_RESULT_UINT(regExpMatchSize(regExp), 0, "check size");
-        TEST_RESULT_PTR(regExpMatchStr(regExp), NULL, "check str");
+        TEST_RESULT_STR(regExpMatchStr(regExp), NULL, "check str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free regexp");
@@ -56,10 +59,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("regExpPrefix()"))
     {
-        TEST_RESULT_PTR(regExpPrefix(NULL), NULL, "null expression has no prefix");
-        TEST_RESULT_PTR(regExpPrefix(strNew("")), NULL, "empty expression has no prefix");
-        TEST_RESULT_PTR(regExpPrefix(strNew("ABC")), NULL, "expression without begin anchor has no prefix");
-        TEST_RESULT_PTR(regExpPrefix(strNew("^.")), NULL, "expression with no regular character has no prefix");
+        TEST_RESULT_STR(regExpPrefix(NULL), NULL, "null expression has no prefix");
+        TEST_RESULT_STR(regExpPrefix(strNew("")), NULL, "empty expression has no prefix");
+        TEST_RESULT_STR(regExpPrefix(strNew("ABC")), NULL, "expression without begin anchor has no prefix");
+        TEST_RESULT_STR(regExpPrefix(strNew("^.")), NULL, "expression with no regular character has no prefix");
 
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC$")), "ABC", "prefix stops at special character");
         TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC*")), "ABC", "prefix stops at special character");

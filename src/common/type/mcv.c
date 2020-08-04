@@ -41,7 +41,7 @@ mcvNew(void)
         *this = (MostCommonValue)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .list = lstNew(sizeof(MostCommonValueEntry)),
+            .list = lstNewP(sizeof(MostCommonValueEntry)),
         };
     }
     MEM_CONTEXT_NEW_END();

@@ -18,7 +18,6 @@ typedef struct StringList StringList;
 Constructors
 ***********************************************************************************************************************************/
 StringList *strLstNew(void);
-StringList *strLstNewParam(ListComparator *comparator);
 
 // Split a string into a string list based on a delimiter
 StringList *strLstNewSplit(const String *string, const String *delimiter);

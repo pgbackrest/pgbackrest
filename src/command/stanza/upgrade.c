@@ -46,12 +46,12 @@ cmdStanzaUpgrade(void)
         // Load the info files (errors if missing)
         InfoArchive *infoArchive = infoArchiveLoadFile(
             storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
         InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
         InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
         InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Since the file save of archive.info and backup.info are not atomic, then check and update each separately.
@@ -80,7 +80,7 @@ cmdStanzaUpgrade(void)
         {
             infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
 
         // Save backup info
@@ -88,11 +88,11 @@ cmdStanzaUpgrade(void)
         {
             infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
 
         if (!(infoArchiveUpgrade || infoBackupUpgrade))
-            LOG_INFO_FMT("stanza '%s' is already up to date", strPtr(cfgOptionStr(cfgOptStanza)));
+            LOG_INFO_FMT("stanza '%s' is already up to date", strZ(cfgOptionStr(cfgOptStanza)));
     }
     MEM_CONTEXT_TEMP_END();
 

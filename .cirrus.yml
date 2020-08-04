@@ -10,8 +10,6 @@ auto_cancellation: $CIRRUS_BRANCH != 'integration'
 # FreeBSD 12
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_12_task:
-  only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
-
   freebsd_instance:
     image_family: freebsd-12-1
 

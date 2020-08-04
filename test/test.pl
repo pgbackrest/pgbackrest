@@ -94,6 +94,7 @@ test.pl [options]
    --expect             --vm=co7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
+   --no-coverage-report run coverage but don't generate coverage report (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
    --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
@@ -160,6 +161,7 @@ my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
 my $bNoCoverage = false;
+my $bNoCoverageReport = false;
 my $bCOnly = false;
 my $bContainerOnly = false;
 my $bNoPerformance = false;
@@ -213,6 +215,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
+            'no-coverage-report' => \$bNoCoverageReport,
             'c-only' => \$bCOnly,
             'container-only' => \$bContainerOnly,
             'no-performance' => \$bNoPerformance,
@@ -961,10 +964,13 @@ eval
                             "mkdir /root/package-src && " .
                             "wget -q -O /root/package-src/pgbackrest-conf.patch " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
-                                "f=rpm/redhat/master/non-common/pgbackrest/master/pgbackrest-conf.patch' && " .
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest-conf.patch' && " .
+                            "wget -q -O /root/package-src/pgbackrest.logrotate " .
+                                "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest.logrotate' && " .
                             "wget -q -O /root/package-src/pgbackrest.spec " .
                                 "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/master;" .
-                                "f=rpm/redhat/master/non-common/pgbackrest/master/pgbackrest.spec'\"");
+                                "f=rpm/redhat/master/common/pgbackrest/master/pgbackrest.spec'\"");
 
                         # Create build directories
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
@@ -990,6 +996,7 @@ eval
                             "ln -s ${strBuildPath} /root/rpmbuild && " .
                             "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
                             "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
+                            "cp /root/package-src/pgbackrest.logrotate ${strBuildPath}/SOURCES && " .
                             "sudo chown -R " . TEST_USER . " ${strBuildPath}'");
 
                         # Patch files in RHEL package builds
@@ -1153,7 +1160,7 @@ eval
         if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
-                $oyTestRun, $oStorageBackRest, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
+                $oyTestRun, $oStorageBackRest, !$bNoCoverageReport, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
                 "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
         }
 

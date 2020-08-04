@@ -43,14 +43,14 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, s3 => false, encrypt => false, compress =>   LZ4, error => 0},
-        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 1},
-        {vm => VM2, remote => false, s3 =>  true, encrypt => false, compress =>  NONE, error => 0},
-        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true, compress =>    GZ, error => 0},
-        {vm => VM3, remote => false, s3 => false, encrypt =>  true, compress =>  NONE, error => 0},
-        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false, compress =>   LZ4, error => 1},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, compress =>    GZ, error => 0},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, compress =>  NONE, error => 0},
+        {vm => VM1, remote => false, storage => POSIX, encrypt => false, compress =>   LZ4, error => 0},
+        {vm => VM1, remote =>  true, storage => AZURE, encrypt =>  true, compress =>    GZ, error => 1},
+        {vm => VM2, remote => false, storage =>    S3, encrypt => false, compress =>  NONE, error => 0},
+        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress =>   BZ2, error => 0},
+        {vm => VM3, remote => false, storage => POSIX, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM3, remote =>  true, storage => AZURE, encrypt => false, compress =>   LZ4, error => 1},
+        {vm => VM4, remote => false, storage =>    S3, encrypt =>  true, compress =>   ZST, error => 0},
+        {vm => VM4, remote =>  true, storage => POSIX, encrypt => false, compress =>  NONE, error => 0},
     )
     {
         # Only run tests for this vm
@@ -58,7 +58,7 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
-        my $bS3 = $rhRun->{s3};
+        my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
         my $iError = $rhRun->{error};
@@ -66,30 +66,30 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin(
                 "rmt ${bRemote}, cmp ${strCompressType}, error " . ($iError ? 'connect' : 'version') .
-                    ", s3 ${bS3}, enc ${bEncrypt}")) {next}
+                    ", storage ${strStorage}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+        my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, strCompressType => $strCompressType, bArchiveAsync => true,
-            bS3 => $bS3, bRepoEncrypt => $bEncrypt});
+            strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
         # Create compression extension
         my $strCompressExt = $strCompressType ne NONE ? ".${strCompressType}" : '';
 
         # Create the wal path
-        my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        my $strWalPath = $oHostDbPrimary->dbBasePath() . '/pg_xlog';
         storageTest()->pathCreate($strWalPath, {bCreateParent => true});
 
         # Create the test path for pg_control and generate pg_control for stanza-create
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
+        storageTest()->pathCreate($oHostDbPrimary->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
 
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-online'});
 
         # Push a WAL segment
         &log(INFO, '    push first WAL');
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 1);
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 1);
 
         # Break the database version of the archive info file
         if ($iError == 0)
@@ -103,18 +103,18 @@ sub run
         # Push two more segments with errors to exceed archive-push-queue-max
         &log(INFO, '    push second WAL');
 
-        $oHostDbMaster->archivePush(
+        $oHostDbPrimary->archivePush(
             $strWalPath, $strWalTestFile, 2, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
 
         &log(INFO, '    push third WAL');
 
-        $oHostDbMaster->archivePush(
+        $oHostDbPrimary->archivePush(
             $strWalPath, $strWalTestFile, 3, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
         &log(INFO, '    push fourth WAL');
 
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
 
         # Fix the database version
         if ($iError == 0)
@@ -129,7 +129,7 @@ sub run
             'segment 2-4 not pushed', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
+        $oHostDbPrimary->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
             sub {storageRepo()->list($oHostBackup->repoArchivePath(PG_VERSION_94 . '-1/0000000100000001'))},

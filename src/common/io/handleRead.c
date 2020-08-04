@@ -72,16 +72,16 @@ ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
 
             // Determine if there is data to be read
             int result = select(this->handle + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strPtr(this->name));
+            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strZ(this->name));
 
             // If no data read after time allotted then error
             if (!result)
-                THROW_FMT(FileReadError, "unable to read data from %s after %" PRIu64 "ms", strPtr(this->name), this->timeout);
+                THROW_FMT(FileReadError, "unable to read data from %s after %" PRIu64 "ms", strZ(this->name), this->timeout);
 
             // Read and handle errors
             THROW_ON_SYS_ERROR_FMT(
                 (actualBytes = read(this->handle, bufRemainsPtr(buffer), bufRemains(buffer))) == -1, FileReadError,
-                "unable to read from %s", strPtr(this->name));
+                "unable to read from %s", strZ(this->name));
 
             // Update amount of buffer used
             bufUsedInc(buffer, (size_t)actualBytes);
@@ -135,7 +135,9 @@ IoRead *
 ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(handle != -1);

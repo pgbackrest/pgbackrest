@@ -218,6 +218,67 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
 }
 
 /***********************************************************************************************************************************
+Free the protocol client and underlying exec'd process. Log any errors as warnings since it is not worth terminating the process
+while closing a local/remote that has already completed its work. The warning will be an indication that something is not right.
+***********************************************************************************************************************************/
+static void
+protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, protocolHelperClient);
+    FUNCTION_LOG_END();
+
+    if (protocolHelperClient->client != NULL)
+    {
+        // Try to shutdown the protocol but only warn on error
+        TRY_BEGIN()
+        {
+            protocolClientFree(protocolHelperClient->client);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        // Try to end the child process but only warn on error
+        TRY_BEGIN()
+        {
+            execFree(protocolHelperClient->exec);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        protocolHelperClient->client = NULL;
+        protocolHelperClient->exec = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+protocolLocalFree(unsigned int protocolId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, protocolId);
+    FUNCTION_LOG_END();
+
+    ASSERT(protocolId > 0);
+
+    if (protocolHelper.clientLocal != NULL)
+    {
+        ASSERT(protocolId <= protocolHelper.clientLocalSize);
+        protocolHelperClientFree(&protocolHelper.clientLocal[protocolId - 1]);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
 static StringList *
@@ -254,8 +315,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     strLstAdd(
         result,
         strNewFmt(
-            "%s@%s", strPtr(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
-            strPtr(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
+            "%s@%s", strZ(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
+            strZ(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
 
     // Option replacements
     KeyValue *optionReplace = kvNew();
@@ -277,7 +338,14 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
+    // Set local so host settings configured on the remote will not accidentally be picked up
+    kvPut(
+        optionReplace,
+        protocolStorageType == protocolStorageTypeRepo ? VARSTR(CFGOPT_REPO1_LOCAL_STR) : VARSTR(CFGOPT_PG1_LOCAL_STR),
+        BOOL_TRUE_VAR);
+
     // Update/remove repo/pg options that are sent to the remote
+    ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
@@ -285,7 +353,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        const String *optionDefName = STR(cfgDefOptionName(cfgOptionDefIdFromId(optionId)));
+        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+        const String *optionDefName = STR(cfgDefOptionName(optionDefId));
         bool remove = false;
 
         // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
@@ -308,10 +377,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         }
         else if (strBeginsWith(optionDefName, pgPrefix))
         {
-            // Remove pg options when the remote type is repo since they won't be used
+            // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = true;
+                remove = !cfgDefOptionRequired(commandDefId, optionDefId) || cfgDefOptionDefault(commandDefId, optionDefId) != NULL;
             }
             // Else move/remove pg options with index > 0 since they won't be used
             else if (cfgOptionIndex(optionId) > 0)
@@ -440,13 +509,13 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId, hostId - 1),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
@@ -485,18 +554,7 @@ protocolRemoteFree(unsigned int hostId)
     ASSERT(hostId > 0);
 
     if (protocolHelper.clientRemote != NULL)
-    {
-        ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostId - 1];
-
-        if (protocolHelperClient->client != NULL)
-        {
-            protocolClientFree(protocolHelperClient->client);
-            execFree(protocolHelperClient->exec);
-
-            protocolHelperClient->client = NULL;
-            protocolHelperClient->exec = NULL;
-        }
-    }
+        protocolHelperClientFree(&protocolHelper.clientRemote[hostId - 1]);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -536,7 +594,7 @@ protocolStorageTypeEnum(const String *type)
     else if (strEq(type, PROTOCOL_REMOTE_TYPE_REPO_STR))
         FUNCTION_TEST_RETURN(protocolStorageTypeRepo);
 
-    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strPtr(type));
+    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strZ(type));
 }
 
 const String *
@@ -571,18 +629,8 @@ protocolFree(void)
             protocolRemoteFree(clientIdx + 1);
 
         // Free locals
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
-        {
-            ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientLocal[clientIdx];
-
-            if (protocolHelperClient->client != NULL)
-            {
-                protocolClientFree(protocolHelperClient->client);
-                execFree(protocolHelperClient->exec);
-
-                *protocolHelperClient = (ProtocolHelperClient){.exec = NULL};
-            }
-        }
+        for (unsigned int clientIdx = 1; clientIdx <= protocolHelper.clientLocalSize; clientIdx++)
+            protocolLocalFree(clientIdx);
     }
 
     FUNCTION_LOG_RETURN_VOID();

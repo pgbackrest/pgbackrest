@@ -1,21 +1,21 @@
 /***********************************************************************************************************************************
 PostgreSQL Version Interface
 
-Macros for building version-specific functions that interface with the types in version.auto.h.  Due to the way PostgreSQL types
+Macros for building version-specific functions that interface with the types in version.vendor.h.  Due to the way PostgreSQL types
 evolve over time, this seems to be the easiest way to extract information from them.
 
 These macros should be kept as simple as possible, with most of the logic contained in postgres/interface.c.
 
 Each version of PostgreSQL will need a vXXX.c file to contain the version-specific functions created by these macros.
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_INTERFACE_IMPLEMENTATION_H
-#define POSTGRES_INTERFACE_IMPLEMENTATION_H
+#ifndef POSTGRES_INTERFACE_VERSIONINTERN_H
+#define POSTGRES_INTERFACE_VERSIONINTERN_H
 
 #include "common/debug.h"
 #include "postgres/interface/version.h"
 #include "postgres/version.h"
 
-#include "postgres/interface/version.auto.h"
+#include "postgres/interface/version.vendor.h"
 
 /***********************************************************************************************************************************
 Get the catalog version
@@ -191,6 +191,7 @@ Read the version specific WAL header into a general data structure
         return (PgWal)                                                                                                             \
         {                                                                                                                          \
             .systemId = ((XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                            \
+            .size = ((XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                             \
         };                                                                                                                         \
     }
 
@@ -210,6 +211,7 @@ Create a WAL file file for testing
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
+        ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
 
 #endif

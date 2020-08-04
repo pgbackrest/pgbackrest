@@ -22,7 +22,7 @@ Helper functions (to assist with testing)
 static unsigned int
 checkManifest(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     // Return the actual number of pg* defined
     unsigned int result = 0;
@@ -81,7 +81,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // Check that the backup and archive info files exist and are valid for the current database of the stanza
         checkStanzaInfoPg(
             storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
 
         LOG_INFO("switch wal not performed because this is a standby");
 
@@ -119,12 +119,12 @@ checkPrimary(const DbGetResult dbGroup)
         // Check that the backup and archive info files exist and are valid for the current database of the stanza
         checkStanzaInfoPg(
             storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // Attempt to load the archive info file and retrieve the archiveId
         InfoArchive *archiveInfo = infoArchiveLoadFile(
             storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            cfgOptionStrNull(cfgOptRepoCipherPass));
         const String *archiveId = infoArchiveId(archiveInfo);
 
         // Perform a WAL switch
@@ -136,9 +136,8 @@ checkPrimary(const DbGetResult dbGroup)
         const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
 
         LOG_INFO_FMT(
-            "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-            strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-            strPtr(walSegmentFile)))));
+            "WAL segment %s successfully archived to '%s'", strZ(walSegment),
+            strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walSegmentFile)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();

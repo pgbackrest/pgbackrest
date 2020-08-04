@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.26dev])
+AC_INIT([pgBackRest], [2.29dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -118,12 +118,31 @@ AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 AC_CHECK_HEADER(zlib.h, [], [AC_MSG_ERROR([header file <zlib.h> is required])])
 
+# Check required bzip2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB([bz2], [BZ2_bzCompress], [], [AC_MSG_ERROR([library 'bz2' is required])])
+AC_CHECK_HEADER(bzlib.h, [], [AC_MSG_ERROR([header file <bzlib.h> is required])])
+
 # Check optional lz4 library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB(
     [lz4], [LZ4F_isError],
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
+
+# Check optional zst library. Ignore any versions below 1.0.
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [zstd], [ZSTD_isError],
+    [AC_CHECK_HEADER(zstd.h,
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <zstd.h>],
+                [#if ZSTD_VERSION_MAJOR < 1
+                    #error "ZSTD_VERSION_MAJOR must be >= 1"
+                    #endif])],
+            [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
+        [AC_MSG_ERROR([header file <zstd.h> is required])])])
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------

@@ -9,6 +9,11 @@ Common Functions and Definitions for Backup and Expire Commands
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
+Backup constants
+***********************************************************************************************************************************/
+#define BACKUP_PATH_HISTORY                                         "backup.history"
+
+/***********************************************************************************************************************************
 Backup type enum and constants
 ***********************************************************************************************************************************/
 typedef enum
@@ -45,5 +50,8 @@ String *backupRegExp(BackupRegExpParam param);
 // Convert text backup type to an enum and back
 BackupType backupType(const String *type);
 const String *backupTypeStr(BackupType type);
+
+// Create a symlink to the specified backup (if symlinks are supported)
+void backupLinkLatest(const String *backupLabel);
 
 #endif

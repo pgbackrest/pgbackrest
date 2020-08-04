@@ -361,7 +361,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4";
+                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2";
 
             if ($strOS eq VM_CO6)
             {
@@ -380,7 +380,8 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
+                "        libbz2-dev bzip2";
 
             if ($strOS eq VM_U12)
             {
@@ -389,6 +390,19 @@ sub containerBuild
             else
             {
                 $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
+            }
+        }
+
+        # Add zst command-line tool and development libs when available
+        if (vmWithZst($strOS))
+        {
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+            {
+                $strScript .= ' zstd libzstd-devel';
+            }
+            else
+            {
+                $strScript .= ' zstd libzstd-dev';
             }
         }
 
@@ -478,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F30)
+                elsif ($strOS eq VM_F32)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -492,7 +506,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS eq VM_U18 ? ' 13' : '') .
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
@@ -579,6 +593,8 @@ sub containerBuild
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 $strScript .=
+                    # Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42)
+                    "    echo \"Set disable_coredump false\" >> /etc/sudo.conf && \\\n" .
                     "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
                     "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
             }

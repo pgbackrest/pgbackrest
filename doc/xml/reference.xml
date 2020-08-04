@@ -141,8 +141,10 @@
 
                         <text>The following compression types are supported:
                         <ul>
+                            <li><id>bz2</id> - bzip2 compression format</li>
                             <li><id>gz</id> - gzip compression format</li>
                             <li><id>lz4</id> - lz4 compression format (not available on all platforms)</li>
+                            <li><id>zst</id> - Zstandard compression format (not available on all platforms)</li>
                         </ul></text>
 
                         <example>n</example>
@@ -192,7 +194,7 @@
                     <config-key id="io-timeout" name="I/O Timeout">
                         <summary>I/O timeout.</summary>
 
-                        <text>Timeout used for connections and read/write operations.
+                        <text>Timeout, in seconds, used for connections and read/write operations.
 
                         Note that the entire read/write operation does not need to complete within this timeout but <i>some</i> progress must be made, even if it is only a single byte.</text>
 
@@ -227,7 +229,7 @@
 
                         The asynchronous <cmd>archive-push</cmd> command writes acknowledgements into the spool path when it has successfully stored WAL in the archive (and errors on failure) so the foreground process can quickly notify <postgres/>. Acknowledgement files are very small (zero on success and a few hundred bytes on error).
 
-                        The asynchronous <cmd>archive-push</cmd> process queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it.  Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.
+                        The asynchronous <cmd>archive-get</cmd> command queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it.  Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.
 
                         The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived for <cmd>archive-push</cmd> and rebuild the queue for <cmd>archive-get</cmd>.
 
@@ -304,9 +306,96 @@
 
                 <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
 
-                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if retention-full is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
+                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the count of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-account" name="Azure Repository Account">
+                        <summary>Azure repository account.</summary>
+
+                        <text>Azure account used to store the repository.</text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-ca-file" name="Azure Repository TLS CA File">
+                        <summary>Azure repository TLS CA file.</summary>
+
+                        <text>Use a CA file other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-ca-path" name="Azure Respository TLS CA Path">
+                        <summary>Azure repository TLS CA path.</summary>
+
+                        <text>Use a CA path other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-container" name="Azure Repository Container">
+                        <summary>Azure repository container.</summary>
+
+                        <text>Azure container used to store the repository.
+
+                        <backrest/> repositories can be stored in the container root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other Azure-generated content can also be stored in the container.</text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-host" name="Azure Repository Host">
+                        <summary>Azure repository host.</summary>
+
+                        <text>Connect to a host other than the default. This is typically used for testing.</text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-key" name="Azure Repository Key">
+                        <summary>Azure repository key.</summary>
+
+                        <text>A shared key or shared access signature depending on the <br-option>repo-azure-key-type</br-option> option.</text>
+
+                        <example>T+9+aov82qNhrcXSNGZCzm9mjd4d75/oxxOr6r1JVpgTLA==</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-key-type" name="Azure Repository Key Type">
+                        <summary>Azure repository key type.</summary>
+
+                        <text>The following types are supported for authorization:
+                        <ul>
+                            <li><id>shared</id> - Shared key</li>
+                            <li><id>sas</id> - Shared access signature</li>
+                        </ul></text>
+
+                        <example>sas</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-port" name="Azure Repository Server Port">
+                        <summary>Azure repository server port.</summary>
+
+                        <text>Port to use when connecting to the default server (or host if specified). This is typically used for testing.</text>
+
+                        <example>10000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                        <config-key id="repo-azure-verify-tls" name="Azure Repository Server Certificate Verify">
+                        <summary>Azure repository server certificate verify.</summary>
+
+                        <text>Disables verification of the Azure server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
@@ -393,13 +482,22 @@
                         <example>/backup/db/backrest</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-FULL-RETENTION KEY -->
+                    <!-- CONFIG - RETENTION SECTION - REPO-RETENTION-FULL KEY -->
                     <config-key id="repo-retention-full" name="Full Retention">
-                        <summary>Number of full backups to retain.</summary>
+                        <summary>Full backup retention count/time.</summary>
 
                         <text>When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When the option is not defined a warning will be issued.  If indefinite retention is desired then set the option to the max value.</text>
 
                         <example>2</example>
+                    </config-key>
+
+                    <!-- CONFIG - RETENTION SECTION - REPO-RETENTION-FULL-TYPE KEY -->
+                    <config-key id="repo-retention-full-type" name="Full Retention Type">
+                        <summary>Retention type for full backups.</summary>
+
+                        <text>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or count of full backups to keep. If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</text>
+
+                        <example>time</example>
                     </config-key>
 
                     <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->
@@ -424,7 +522,7 @@
                     <config-key id="repo-retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of continuous WAL to retain.</summary>
 
-                        <text><admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>If this value is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
+                        <text><admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>If this value is not set and <setting>repo-retention-full-type</setting> is <setting>count</setting> (default), then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired. If <setting>repo-retention-full-type</setting> is <setting>time</setting>, then this value will default to removing archives that are earlier than the oldest full backup retained after satisfying the <setting>repo-retention-full</setting> setting.
 
                         This option must be set if <setting>repo-retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>repo-retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
 
@@ -657,6 +755,15 @@
                         Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
 
                         <example>5G</example>
+                    </config-key>
+
+                    <!-- CONFIG - BACKUP SECTION - EXPIRE-AUTO -->
+                    <config-key id="expire-auto" name="Expire Auto">
+                        <summary>Automatically run the <cmd>expire</cmd> command after a successful backup.</summary>
+
+                        <text>The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all backups and archives indefinitely, which could cause your repository to run out of space. The <cmd>expire</cmd> command will need to be run regularly to prevent this from happening.</text>
+
+                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - RESUME -->
@@ -1129,6 +1236,16 @@
                 <summary>Expire backups that exceed retention.</summary>
 
                 <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
+
+                <option-list>
+                    <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
+                    <option id="set" name="Set">
+                        <summary>Backup set to expire.</summary>
+
+                        <text>The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing adhoc expiration.</admonition></text>
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
 
                 <command-example-list>
                     <command-example>

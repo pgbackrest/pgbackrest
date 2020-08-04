@@ -74,7 +74,7 @@ cmdStanzaCreate(void)
 
             infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
             cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
@@ -84,7 +84,7 @@ cmdStanzaCreate(void)
 
             infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
         // Else if at least one archive and one backup info file exists, then ensure both are valid
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
@@ -93,7 +93,7 @@ cmdStanzaCreate(void)
             // current database
             checkStanzaInfoPg(
                 storageRepoReadStanza, pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // The files are valid - upgrade
             const String *sourceFile = NULL;
@@ -123,7 +123,7 @@ cmdStanzaCreate(void)
 
             // If no files copied, then the stanza was already valid
             if (sourceFile == NULL)
-                LOG_INFO_FMT("stanza '%s' already exists and is valid", strPtr(cfgOptionStr(cfgOptStanza)));
+                LOG_INFO_FMT("stanza '%s' already exists and is valid", strZ(cfgOptionStr(cfgOptStanza)));
         }
         // Else if both .info and corresponding .copy file are missing for one but not the other, then error
         else

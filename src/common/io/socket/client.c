@@ -85,7 +85,6 @@ sckClientOpen(SocketClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool connected = false;
         bool retry;
         Wait *wait = waitNew(this->timeout);
 
@@ -113,10 +112,10 @@ sckClientOpen(SocketClient *this)
                 struct addrinfo *hostAddress;
                 int resultAddr;
 
-                if ((resultAddr = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
+                if ((resultAddr = getaddrinfo(strZ(this->host), port, &hints, &hostAddress)) != 0)
                 {
                     THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), resultAddr,
+                        HostConnectError, "unable to get address for '%s': [%d] %s", strZ(this->host), resultAddr,
                         gai_strerror(resultAddr));
                 }
 
@@ -141,9 +140,6 @@ sckClientOpen(SocketClient *this)
                     result = sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout);
                 }
                 MEM_CONTEXT_PRIOR_END();
-
-                // Connection was successful
-                connected = true;
             }
             CATCH_ANY()
             {
@@ -158,13 +154,12 @@ sckClientOpen(SocketClient *this)
 
                     sckClientStatLocal.retry++;
                 }
+                else
+                    RETHROW();
             }
             TRY_END();
         }
-        while (!connected && retry);
-
-        if (!connected)
-            RETHROW();
+        while (retry);
 
         sckClientStatLocal.session++;
     }
@@ -195,5 +190,5 @@ sckClientStatStr(void)
 String *
 sckClientToLog(const SocketClient *this)
 {
-    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strPtr(this->host), this->port, this->timeout);
+    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
 }

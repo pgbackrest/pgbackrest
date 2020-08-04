@@ -9,6 +9,7 @@ Repository List Command
 #include "common/io/handleWrite.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/string.h"
 #include "config/config.h"
@@ -45,13 +46,8 @@ storageListRenderCallback(void *data, const StorageInfo *info)
     }
 
     // Add seperator character
-    if (!listData->first)
-    {
-        if (listData->json)
-            ioWrite(listData->write, COMMA_BUF);
-        else
-            ioWrite(listData->write, LF_BUF);
-    }
+    if (!listData->first && listData->json)
+        ioWrite(listData->write, COMMA_BUF);
     else
         listData->first = false;
 
@@ -95,7 +91,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         }
 
         if (info->type == storageTypeLink)
-            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strPtr(jsonFromStr(info->linkDestination))));
+            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromStr(info->linkDestination))));
 
         ioWrite(listData->write, BRACER_BUF);
     }
@@ -103,6 +99,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
     else
     {
         ioWrite(listData->write, BUFSTR(info->name));
+        ioWrite(listData->write, LF_BUF);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -134,8 +131,10 @@ storageListRender(IoWrite *write)
     else if (strLstSize(cfgCommandParam()) > 1)
         THROW(ParamInvalidError, "only one path may be specified");
 
-    // Get output
+    // Get options
     bool json = strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false;
+    const String *expression = cfgOptionStrNull(cfgOptFilter);
+    RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 
     // Render the info list
     StorageListRenderCallbackData data =
@@ -155,24 +154,30 @@ storageListRender(IoWrite *write)
 
     if (info.exists && info.type == storageTypeFile)
     {
-        info.name = DOT_STR;
-        storageListRenderCallback(&data, &info);
+        if (regExp == NULL || regExpMatch(regExp, storagePathP(storageRepo(), path)))
+        {
+            info.name = DOT_STR;
+            storageListRenderCallback(&data, &info);
+        }
     }
     // Else try to list the path
     else
     {
         // The path will always be reported as existing so we don't get different results from storage that does not support paths
-        if (data.json)
+        if (data.json && (regExp == NULL || regExpMatch(regExp, DOT_STR)))
             storageListRenderCallback(&data, &(StorageInfo){.type = storageTypePath, .name = DOT_STR});
 
         // List content of the path
         storageInfoListP(
-            storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = cfgOptionStr(cfgOptFilter),
+            storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = expression,
             .recurse = cfgOptionBool(cfgOptRecurse));
     }
 
     if (data.json)
+    {
         ioWrite(data.write, BRACER_BUF);
+        ioWrite(data.write, LF_BUF);
+    }
 
     ioWriteClose(data.write);
 
@@ -190,7 +195,6 @@ cmdStorageList(void)
         TRY_BEGIN()
         {
             storageListRender(ioHandleWriteNew(STRDEF("stdout"), STDOUT_FILENO));
-            ioHandleWriteOneStr(STDOUT_FILENO, LF_STR);
         }
         // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
         // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken

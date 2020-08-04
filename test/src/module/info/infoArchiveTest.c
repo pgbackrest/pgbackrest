@@ -16,8 +16,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoArchive"))
@@ -39,7 +38,7 @@ testRun(void)
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "    load new archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
+        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
 
         // Save info and verify
         Buffer *contentSave = bufNew(0);
@@ -53,7 +52,7 @@ testRun(void)
             info, infoArchiveNew(PG_VERSION_94, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
+        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
 
         Buffer *contentCompare = bufNew(0);

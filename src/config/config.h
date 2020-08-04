@@ -50,6 +50,9 @@ Constants for configuration options.
 #define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL              "full"
 #define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR              "incr"
 
+#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT                "count"
+#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME                 "time"
+
 /***********************************************************************************************************************************
 Command Functions
 
@@ -105,6 +108,7 @@ int64_t cfgOptionInt64(ConfigOption optionId);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
 const VariantList *cfgOptionLst(ConfigOption optionId);
 const String *cfgOptionStr(ConfigOption optionId);
+const String *cfgOptionStrNull(ConfigOption optionId);
 unsigned int cfgOptionUInt(ConfigOption optionId);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 

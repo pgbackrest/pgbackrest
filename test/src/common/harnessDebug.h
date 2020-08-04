@@ -56,8 +56,12 @@ C Debug Harness
         while (0)
 
     #define FUNCTION_HARNESS_RESULT(typeMacroPrefix, result)                                                                       \
-        STACK_TRACE_POP(false);                                                                                                    \
-        return result                                                                                                              \
+        do                                                                                                                         \
+        {                                                                                                                          \
+            STACK_TRACE_POP(false);                                                                                                \
+            return result;                                                                                                         \
+        }                                                                                                                          \
+        while (0)
 
     #define FUNCTION_HARNESS_RESULT_VOID()                                                                                         \
         STACK_TRACE_POP(false);

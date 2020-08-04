@@ -298,6 +298,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // expire-auto option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "no-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptExpireAuto,
+    },
+    {
+        .name = "reset-" CFGOPT_EXPIRE_AUTO,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExpireAuto,
+    },
+
     // filter option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1253,6 +1268,105 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + 7),
     },
 
+    // pg-local option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_PG1_LOCAL,
+        .val = PARSE_OPTION_FLAG | cfgOptPgLocal,
+    },
+    {
+        .name = "no-" CFGOPT_PG1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgLocal,
+    },
+    {
+        .name = "reset-" CFGOPT_PG1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgLocal,
+    },
+    {
+        .name = CFGOPT_PG2_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 1),
+    },
+    {
+        .name = "no-" CFGOPT_PG2_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 1),
+    },
+    {
+        .name = "reset-" CFGOPT_PG2_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 1),
+    },
+    {
+        .name = CFGOPT_PG3_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 2),
+    },
+    {
+        .name = "no-" CFGOPT_PG3_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 2),
+    },
+    {
+        .name = "reset-" CFGOPT_PG3_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 2),
+    },
+    {
+        .name = CFGOPT_PG4_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 3),
+    },
+    {
+        .name = "no-" CFGOPT_PG4_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 3),
+    },
+    {
+        .name = "reset-" CFGOPT_PG4_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 3),
+    },
+    {
+        .name = CFGOPT_PG5_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 4),
+    },
+    {
+        .name = "no-" CFGOPT_PG5_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 4),
+    },
+    {
+        .name = "reset-" CFGOPT_PG5_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 4),
+    },
+    {
+        .name = CFGOPT_PG6_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 5),
+    },
+    {
+        .name = "no-" CFGOPT_PG6_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 5),
+    },
+    {
+        .name = "reset-" CFGOPT_PG6_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 5),
+    },
+    {
+        .name = CFGOPT_PG7_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 6),
+    },
+    {
+        .name = "no-" CFGOPT_PG7_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 6),
+    },
+    {
+        .name = "reset-" CFGOPT_PG7_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 6),
+    },
+    {
+        .name = CFGOPT_PG8_LOCAL,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgLocal + 7),
+    },
+    {
+        .name = "no-" CFGOPT_PG8_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgLocal + 7),
+    },
+    {
+        .name = "reset-" CFGOPT_PG8_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgLocal + 7),
+    },
+
     // pg-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1754,6 +1868,117 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
 
+    // repo-azure-account option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_ACCOUNT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureAccount,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_ACCOUNT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureAccount,
+    },
+
+    // repo-azure-ca-file option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CA_FILE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureCaFile,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CA_FILE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureCaFile,
+    },
+
+    // repo-azure-ca-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CA_PATH,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureCaPath,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CA_PATH,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureCaPath,
+    },
+
+    // repo-azure-container option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_CONTAINER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureContainer,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_CONTAINER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureContainer,
+    },
+
+    // repo-azure-host option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_HOST,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureHost,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_HOST,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureHost,
+    },
+
+    // repo-azure-key option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_KEY,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureKey,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_KEY,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKey,
+    },
+
+    // repo-azure-key-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureKeyType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_KEY_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureKeyType,
+    },
+
+    // repo-azure-port option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_PORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzurePort,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_PORT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzurePort,
+    },
+
+    // repo-azure-verify-tls option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+    {
+        .name = "no-" CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureVerifyTls,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1920,6 +2145,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoHostUser,
     },
 
+    // repo-local option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoLocal,
+    },
+    {
+        .name = "no-" CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoLocal,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_LOCAL,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoLocal,
+    },
+
     // repo-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2003,6 +2243,18 @@ static const struct option optionList[] =
         .name = "retention-full",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionFull,
+    },
+
+    // repo-retention-full-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_RETENTION_FULL_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionFullType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_RETENTION_FULL_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionFullType,
     },
 
     // repo-s3-bucket option and deprecations
@@ -2467,6 +2719,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptHostId,
     cfgOptIgnoreMissing,
@@ -2484,6 +2737,79 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPgLocal,
+    cfgOptPgLocal + 1,
+    cfgOptPgLocal + 2,
+    cfgOptPgLocal + 3,
+    cfgOptPgLocal + 4,
+    cfgOptPgLocal + 5,
+    cfgOptPgLocal + 6,
+    cfgOptPgLocal + 7,
+    cfgOptPgPath,
+    cfgOptPgPath + 1,
+    cfgOptPgPath + 2,
+    cfgOptPgPath + 3,
+    cfgOptPgPath + 4,
+    cfgOptPgPath + 5,
+    cfgOptPgPath + 6,
+    cfgOptPgPath + 7,
+    cfgOptPgPort,
+    cfgOptPgPort + 1,
+    cfgOptPgPort + 2,
+    cfgOptPgPort + 3,
+    cfgOptPgPort + 4,
+    cfgOptPgPort + 5,
+    cfgOptPgPort + 6,
+    cfgOptPgPort + 7,
+    cfgOptPgSocketPath,
+    cfgOptPgSocketPath + 1,
+    cfgOptPgSocketPath + 2,
+    cfgOptPgSocketPath + 3,
+    cfgOptPgSocketPath + 4,
+    cfgOptPgSocketPath + 5,
+    cfgOptPgSocketPath + 6,
+    cfgOptPgSocketPath + 7,
+    cfgOptPgUser,
+    cfgOptPgUser + 1,
+    cfgOptPgUser + 2,
+    cfgOptPgUser + 3,
+    cfgOptPgUser + 4,
+    cfgOptPgUser + 5,
+    cfgOptPgUser + 6,
+    cfgOptPgUser + 7,
+    cfgOptProcess,
+    cfgOptProcessMax,
+    cfgOptProtocolTimeout,
+    cfgOptRaw,
+    cfgOptRecurse,
+    cfgOptRemoteType,
+    cfgOptRepoCipherType,
+    cfgOptRepoHardlink,
+    cfgOptRepoLocal,
+    cfgOptRepoPath,
+    cfgOptRepoRetentionArchive,
+    cfgOptRepoRetentionArchiveType,
+    cfgOptRepoRetentionDiff,
+    cfgOptRepoRetentionFull,
+    cfgOptRepoRetentionFullType,
+    cfgOptRepoType,
+    cfgOptResume,
+    cfgOptSckBlock,
+    cfgOptSckKeepAlive,
+    cfgOptSet,
+    cfgOptSort,
+    cfgOptSpoolPath,
+    cfgOptStartFast,
+    cfgOptStopAuto,
+    cfgOptTablespaceMap,
+    cfgOptTablespaceMapAll,
+    cfgOptTcpKeepAliveCount,
+    cfgOptTcpKeepAliveIdle,
+    cfgOptTcpKeepAliveInterval,
+    cfgOptType,
+    cfgOptArchiveCheck,
+    cfgOptArchiveCopy,
+    cfgOptForce,
     cfgOptPgHost,
     cfgOptPgHost + 1,
     cfgOptPgHost + 2,
@@ -2540,46 +2866,17 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgHostUser + 5,
     cfgOptPgHostUser + 6,
     cfgOptPgHostUser + 7,
-    cfgOptPgPath,
-    cfgOptPgPath + 1,
-    cfgOptPgPath + 2,
-    cfgOptPgPath + 3,
-    cfgOptPgPath + 4,
-    cfgOptPgPath + 5,
-    cfgOptPgPath + 6,
-    cfgOptPgPath + 7,
-    cfgOptPgPort,
-    cfgOptPgPort + 1,
-    cfgOptPgPort + 2,
-    cfgOptPgPort + 3,
-    cfgOptPgPort + 4,
-    cfgOptPgPort + 5,
-    cfgOptPgPort + 6,
-    cfgOptPgPort + 7,
-    cfgOptPgSocketPath,
-    cfgOptPgSocketPath + 1,
-    cfgOptPgSocketPath + 2,
-    cfgOptPgSocketPath + 3,
-    cfgOptPgSocketPath + 4,
-    cfgOptPgSocketPath + 5,
-    cfgOptPgSocketPath + 6,
-    cfgOptPgSocketPath + 7,
-    cfgOptPgUser,
-    cfgOptPgUser + 1,
-    cfgOptPgUser + 2,
-    cfgOptPgUser + 3,
-    cfgOptPgUser + 4,
-    cfgOptPgUser + 5,
-    cfgOptPgUser + 6,
-    cfgOptPgUser + 7,
-    cfgOptProcess,
-    cfgOptProcessMax,
-    cfgOptProtocolTimeout,
-    cfgOptRaw,
-    cfgOptRecurse,
-    cfgOptRemoteType,
-    cfgOptRepoCipherType,
-    cfgOptRepoHardlink,
+    cfgOptRecoveryOption,
+    cfgOptRepoAzureAccount,
+    cfgOptRepoAzureCaFile,
+    cfgOptRepoAzureCaPath,
+    cfgOptRepoAzureContainer,
+    cfgOptRepoAzureHost,
+    cfgOptRepoAzureKey,
+    cfgOptRepoAzureKeyType,
+    cfgOptRepoAzurePort,
+    cfgOptRepoAzureVerifyTls,
+    cfgOptRepoCipherPass,
     cfgOptRepoHost,
     cfgOptRepoHostCmd,
     cfgOptRepoHostConfig,
@@ -2587,31 +2884,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
-    cfgOptRepoPath,
-    cfgOptRepoRetentionArchive,
-    cfgOptRepoRetentionArchiveType,
-    cfgOptRepoRetentionDiff,
-    cfgOptRepoRetentionFull,
-    cfgOptRepoType,
-    cfgOptResume,
-    cfgOptSckBlock,
-    cfgOptSckKeepAlive,
-    cfgOptSet,
-    cfgOptSort,
-    cfgOptSpoolPath,
-    cfgOptStartFast,
-    cfgOptStopAuto,
-    cfgOptTablespaceMap,
-    cfgOptTablespaceMapAll,
-    cfgOptTcpKeepAliveCount,
-    cfgOptTcpKeepAliveIdle,
-    cfgOptTcpKeepAliveInterval,
-    cfgOptType,
-    cfgOptArchiveCheck,
-    cfgOptArchiveCopy,
-    cfgOptForce,
-    cfgOptRecoveryOption,
-    cfgOptRepoCipherPass,
     cfgOptRepoS3Bucket,
     cfgOptRepoS3CaFile,
     cfgOptRepoS3CaPath,

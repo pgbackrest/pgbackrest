@@ -66,7 +66,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .errorOnMissing = true), sortOrderAsc);
 
         // Only preserve files that match the ideal queue. error/ok files are deleted so the async process can try again.
-        RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strPtr(strLstJoin(idealQueue, "|"))));
+        RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strZ(strLstJoin(idealQueue, "|"))));
 
         // Build a list of WAL segments that are being kept so we can later make a list of what is needed
         StringList *keepQueue = strLstNew();
@@ -82,7 +82,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
             // Else delete it
             else
-                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
+                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)));
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
@@ -152,20 +152,20 @@ cmdArchiveGet(void)
                 if (archiveAsyncStatus(archiveModeGet, walSegment, throwOnError))
                 {
                     storageRemoveP(
-                        storageSpoolWrite(),
-                        strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strPtr(walSegment)), .errorOnMissing = true);
+                        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
+                        .errorOnMissing = true);
                     break;
                 }
 
                 // Check if the WAL segment is already in the queue
-                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                 // If found then move the WAL segment to the destination directory
                 if (found)
                 {
                     // Source is the WAL segment in the spool queue
                     StorageRead *source = storageNewReadP(
-                        storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+                        storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
                     // will be performed instead.
@@ -261,14 +261,14 @@ cmdArchiveGet(void)
             // Get the archive file
             result = archiveGetFile(
                 storageLocalWrite(), walSegment, walDestination, false, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+                cfgOptionStrNull(cfgOptRepoCipherPass));
         }
 
         // Log whether or not the file was found
         if (result == 0)
-            LOG_INFO_FMT("found %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("found %s in the archive", strZ(walSegment));
         else
-            LOG_INFO_FMT("unable to find %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("unable to find %s in the archive", strZ(walSegment));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -329,10 +329,10 @@ cmdArchiveGetAsync(void)
 
             LOG_INFO_FMT(
                 "get %u WAL file(s) from archive: %s%s",
-                strLstSize(jobData.walSegmentList), strPtr(strLstGet(jobData.walSegmentList, 0)),
+                strLstSize(jobData.walSegmentList), strZ(strLstGet(jobData.walSegmentList, 0)),
                 strLstSize(jobData.walSegmentList) == 1 ?
                     "" :
-                    strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
+                    strZ(strNewFmt("...%s", strZ(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
 
             // Create the parallel executor
             ProtocolParallel *parallelExec = protocolParallelNew(
@@ -359,12 +359,12 @@ cmdArchiveGetAsync(void)
                         // Get the archive file
                         if (varIntForce(protocolParallelJobResult(job)) == 0)
                         {
-                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strZ(walSegment));
                         }
                         // If it does not exist write an ok file to indicate that it was checked
                         else
                         {
-                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strZ(walSegment));
                             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
@@ -373,8 +373,8 @@ cmdArchiveGetAsync(void)
                     {
                         LOG_WARN_PID_FMT(
                             processId,
-                            "could not get %s from the archive (will be retried): [%d] %s", strPtr(walSegment),
-                            protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+                            "could not get %s from the archive (will be retried): [%d] %s", strZ(walSegment),
+                            protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
                         archiveAsyncStatusErrorWrite(
                             archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));

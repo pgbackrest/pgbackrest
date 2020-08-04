@@ -175,10 +175,6 @@ doc/xml/release.xml:
   class: doc/source
   type: xml
 
-doc/xml/test.xml:
-  class: doc/source
-  type: xml
-
 doc/xml/user-guide-index.xml:
   class: doc/source
   type: xml
@@ -519,6 +515,30 @@ src/common/assert.h:
   class: core
   type: c/h
 
+src/common/compress/bz2/common.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/bz2/compress.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/bz2/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/bz2/decompress.h:
+  class: core
+  type: c/h
+
 src/common/compress/gz/common.c:
   class: core
   type: c
@@ -579,6 +599,30 @@ src/common/compress/lz4/decompress.h:
   class: core
   type: c/h
 
+src/common/compress/zst/common.c:
+  class: core
+  type: c
+
+src/common/compress/zst/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/zst/compress.c:
+  class: core
+  type: c
+
+src/common/compress/zst/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/zst/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/zst/decompress.h:
+  class: core
+  type: c/h
+
 src/common/crypto/cipherBlock.c:
   class: core
   type: c
@@ -602,6 +646,10 @@ src/common/crypto/hash.c:
 src/common/crypto/hash.h:
   class: core
   type: c/h
+
+src/common/crypto/md5.vendor.c:
+  class: core/vendor
+  type: c
 
 src/common/debug.c:
   class: core
@@ -751,14 +799,6 @@ src/common/io/handleWrite.h:
   class: core
   type: c/h
 
-src/common/io/http/cache.c:
-  class: core
-  type: c
-
-src/common/io/http/cache.h:
-  class: core
-  type: c/h
-
 src/common/io/http/client.c:
   class: core
   type: c
@@ -791,6 +831,30 @@ src/common/io/http/query.h:
   class: core
   type: c/h
 
+src/common/io/http/request.c:
+  class: core
+  type: c
+
+src/common/io/http/request.h:
+  class: core
+  type: c/h
+
+src/common/io/http/response.c:
+  class: core
+  type: c
+
+src/common/io/http/response.h:
+  class: core
+  type: c/h
+
+src/common/io/http/session.c:
+  class: core
+  type: c
+
+src/common/io/http/session.h:
+  class: core
+  type: c/h
+
 src/common/io/io.c:
   class: core
   type: c
@@ -811,11 +875,47 @@ src/common/io/read.intern.h:
   class: core
   type: c/h
 
+src/common/io/socket/client.c:
+  class: core
+  type: c
+
+src/common/io/socket/client.h:
+  class: core
+  type: c/h
+
+src/common/io/socket/common.c:
+  class: core
+  type: c
+
+src/common/io/socket/common.h:
+  class: core
+  type: c/h
+
+src/common/io/socket/session.c:
+  class: core
+  type: c
+
+src/common/io/socket/session.h:
+  class: core
+  type: c/h
+
 src/common/io/tls/client.c:
   class: core
   type: c
 
 src/common/io/tls/client.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/session.c:
+  class: core
+  type: c
+
+src/common/io/tls/session.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/session.intern.h:
   class: core
   type: c/h
 
@@ -860,10 +960,6 @@ src/common/memContext.c:
   type: c
 
 src/common/memContext.h:
-  class: core
-  type: c/h
-
-src/common/type/object.h:
   class: core
   type: c/h
 
@@ -936,6 +1032,10 @@ src/common/type/mcv.c:
   type: c
 
 src/common/type/mcv.h:
+  class: core
+  type: c/h
+
+src/common/type/object.h:
   class: core
   type: c/h
 
@@ -1163,12 +1263,12 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.auto.c:
-  class: core/auto
+src/postgres/interface/pageChecksum.vendor.c:
+  class: core/vendor
   type: c
 
-src/postgres/interface/static.auto.h:
-  class: core/auto
+src/postgres/interface/static.vendor.h:
+  class: core/vendor
   type: c/h
 
 src/postgres/interface/v083.c:
@@ -1219,9 +1319,9 @@ src/postgres/interface/v120.c:
   class: core
   type: c
 
-src/postgres/interface/version.auto.h:
-  class: core/auto
-  type: c/h
+src/postgres/interface/v130.c:
+  class: core
+  type: c
 
 src/postgres/interface/version.h:
   class: core
@@ -1229,6 +1329,10 @@ src/postgres/interface/version.h:
 
 src/postgres/interface/version.intern.h:
   class: core
+  type: c/h
+
+src/postgres/interface/version.vendor.h:
+  class: core/vendor
   type: c/h
 
 src/postgres/version.h:
@@ -1280,6 +1384,34 @@ src/protocol/server.c:
   type: c
 
 src/protocol/server.h:
+  class: core
+  type: c/h
+
+src/storage/azure/read.c:
+  class: core
+  type: c
+
+src/storage/azure/read.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.c:
+  class: core
+  type: c
+
+src/storage/azure/storage.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/azure/write.c:
+  class: core
+  type: c
+
+src/storage/azure/write.h:
   class: core
   type: c/h
 
@@ -1563,6 +1695,10 @@ test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Env/Host/HostAzureTest.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Env/Host/HostBackupTest.pm:
   class: test/harness
   type: perl
@@ -1597,10 +1733,6 @@ test/lib/pgBackRestTest/Env/InfoCommon.pm:
 
 test/lib/pgBackRestTest/Env/Manifest.pm:
   class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/LibCAuto.pm:
-  class: test/harness/auto
   type: perl
 
 test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
@@ -1835,10 +1967,6 @@ test/src/module/common/memContextTest.c:
   class: test/module
   type: c
 
-test/src/module/common/objectTest.c:
-  class: test/module
-  type: c
-
 test/src/module/common/regExpTest.c:
   class: test/module
   type: c
@@ -1872,6 +2000,10 @@ test/src/module/common/typeListTest.c:
   type: c
 
 test/src/module/common/typeMcvTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeObjectTest.c:
   class: test/module
   type: c
 
@@ -1947,6 +2079,10 @@ test/src/module/info/manifestTest.c:
   class: test/module
   type: c
 
+test/src/module/performance/storageTest.c:
+  class: test/module
+  type: c
+
 test/src/module/performance/typeTest.c:
   class: test/module
   type: c
@@ -1960,6 +2096,10 @@ test/src/module/postgres/interfaceTest.c:
   type: c
 
 test/src/module/protocol/protocolTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/azureTest.c:
   class: test/module
   type: c
 

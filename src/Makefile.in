@@ -42,12 +42,18 @@ SRCS = \
 	command/stanza/delete.c \
 	command/stanza/upgrade.c \
 	common/compress/helper.c \
+	common/compress/bz2/common.c \
+	common/compress/bz2/compress.c \
+	common/compress/bz2/decompress.c \
 	common/compress/gz/common.c \
 	common/compress/gz/compress.c \
 	common/compress/gz/decompress.c \
 	common/compress/lz4/common.c \
 	common/compress/lz4/compress.c \
 	common/compress/lz4/decompress.c \
+	common/compress/zst/common.c \
+	common/compress/zst/compress.c \
+	common/compress/zst/decompress.c \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
@@ -67,11 +73,13 @@ SRCS = \
 	common/io/filter/size.c \
 	common/io/handleRead.c \
 	common/io/handleWrite.c \
-	common/io/http/cache.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
 	common/io/http/header.c \
 	common/io/http/query.c \
+	common/io/http/request.c \
+	common/io/http/response.c \
+	common/io/http/session.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/socket/client.c \
@@ -129,12 +137,16 @@ SRCS = \
 	postgres/interface/v100.c \
 	postgres/interface/v110.c \
 	postgres/interface/v120.c \
+	postgres/interface/v130.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
 	protocol/parallel.c \
 	protocol/parallelJob.c \
 	protocol/server.c \
+	storage/azure/read.c \
+	storage/azure/storage.c \
+	storage/azure/write.c \
 	storage/cifs/storage.c \
 	storage/posix/read.c \
 	storage/posix/storage.c \

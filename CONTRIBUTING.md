@@ -12,7 +12,8 @@ pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
-       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
+       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
+       zstd libzstd-dev bzip2 libbz2-dev
 ```
 
 Some unit tests and all the integration test require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
@@ -45,12 +46,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 62 tests selected
+--> P00   INFO: 67 tests selected
                 
-    P00   INFO: P1-T01/62 - vm=none, module=common, test=error
-           [filtered 59 lines of output]
-    P00   INFO: P1-T61/62 - vm=none, module=command, test=repo
-    P00   INFO: P1-T62/62 - vm=none, module=performance, test=type
+    P00   INFO: P1-T01/67 - vm=none, module=common, test=error
+           [filtered 64 lines of output]
+    P00   INFO: P1-T66/67 - vm=none, module=performance, test=type
+    P00   INFO: P1-T67/67 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -71,28 +72,36 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
         run 001 - waitNew(), waitMore, and waitFree()
-            l0018 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
-            l0019 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
-            l0024 -     new wait = 0.2 sec
-            l0025 -         check wait time
-            l0026 -         check sleep time
-            l0027 -         check sleep prev time
-            l0028 -         check begin time
-            l0034 -         lower range check
-            l0035 -         upper range check
-            l0037 -         free wait
-            l0042 -     new wait = 1.1 sec
-            l0043 -         check wait time
-            l0044 -         check sleep time
-            l0045 -         check sleep prev time
-            l0046 -         check begin time
-            l0052 -         lower range check
-            l0053 -         upper range check
-            l0055 -         free wait
+            l0018 -     expect AssertError: assertion 'waitTime <= 999999000' failed
+            l0021 - 0ms wait
+            l0025 -     new wait
+            l0026 -         check remaining time
+            l0027 -         check wait time
+            l0028 -         check sleep time
+            l0029 -         check sleep prev time
+            l0030 -         no wait more
+            l0033 -     new wait = 0.2 sec
+            l0034 -         check remaining time
+            l0035 -         check wait time
+            l0036 -         check sleep time
+            l0037 -         check sleep prev time
+            l0038 -         check begin time
+            l0044 -         lower range check
+            l0045 -         upper range check
+            l0047 -         free wait
+            l0052 -     new wait = 1.1 sec
+            l0053 -         check wait time
+            l0054 -         check sleep time
+            l0055 -         check sleep prev time
+            l0056 -         check begin time
+            l0062 -         lower range check
+            l0063 -         upper range check
+            l0065 -         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
+    P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
@@ -113,6 +122,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
                 
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
+    P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
@@ -128,7 +138,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 --- output ---
 
     P00   INFO: test begin - log level info
-    P00   INFO: Using cached pgbackrest/test:u18-base-20200310A image (5e295130131d5fe96e2483885c171677b52c8ce3) ...
+    P00   INFO: Using cached pgbackrest/test:u18-base-20200626A image (7df9a43ce9b6736e5f8dc797edd0f6326908fd2b) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
 ```
@@ -151,7 +161,6 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
                 
     P00   INFO: P1-T1/1 - vm=u18, module=mock, test=archive, run=2
     P00   INFO: no code modules had all tests run required for coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -291,7 +300,7 @@ If configuration options are required then a string list with the command and op
 ```
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
+strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));       // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
 harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
@@ -317,8 +326,9 @@ Sometimes it is necessary to store a file to the test directory. The following d
 ```
 String *content = strNew("bad content");
 TEST_RESULT_VOID(
-    storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
-        harnessInfoChecksum(content)), "store a corrupt backup.info file");
+    storagePutP(
+        storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strZ(repoPath))), harnessInfoChecksum(content)),
+    "store a corrupt backup.info file");
 ```
 **Testing a log message**
 

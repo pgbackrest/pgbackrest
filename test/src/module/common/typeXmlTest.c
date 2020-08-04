@@ -50,7 +50,7 @@ testRun(void)
         TEST_ASSIGN(nodeMaxKeys, xmlNodeChild(rootNode, strNew("MaxKeys"), true), "get max keys");
         TEST_RESULT_STR_Z(xmlNodeContent(nodeMaxKeys), "1000", "    check MaxKeys content");
 
-        TEST_RESULT_PTR(xmlNodeContent(NULL), NULL, "    get null content for null node");
+        TEST_RESULT_STR(xmlNodeContent(NULL), NULL, "    get null content for null node");
 
         TEST_RESULT_VOID(xmlNodeFree(nodeMaxKeys), "free node");
         TEST_RESULT_VOID(xmlNodeFree(NULL), "free null node");
@@ -79,7 +79,7 @@ testRun(void)
             "unable to find child 'Contents':2 in node 'ListBucketResult'");
         TEST_RESULT_PTR(xmlNodeChildN(rootNode, strNew("Contents"), 2, false), NULL, "get missing child without error");
 
-        TEST_RESULT_PTR(xmlNodeAttribute(rootNode, strNew(BOGUS_STR)), NULL, "attempt to get missing attribute");
+        TEST_RESULT_STR(xmlNodeAttribute(rootNode, strNew(BOGUS_STR)), NULL, "attempt to get missing attribute");
         TEST_RESULT_STR_Z(xmlNodeAttribute(xmlNodeChild(rootNode, strNew("Name"), true), strNew("id")), "test", "get attribute");
 
         TEST_RESULT_VOID(xmlDocumentFree(xmlDocument), "free xmldoc");

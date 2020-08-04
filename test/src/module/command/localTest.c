@@ -32,6 +32,7 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
+                strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
                 strLstAddZ(argList, "--process=1");
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--host-id=1");

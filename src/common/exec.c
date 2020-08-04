@@ -13,6 +13,7 @@ Execute Process
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/exec.h"
+#include "common/fork.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
 #include "common/io/io.h"
@@ -98,7 +99,7 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
 
             // If the process did not exit then error -- else we may end up with a collection of zombie processes
             if (processResult == 0)
-                THROW_FMT(ExecuteError, "%s did not exit when expected", strPtr(this->name));
+                THROW_FMT(ExecuteError, "%s did not exit when expected", strZ(this->name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -175,18 +176,18 @@ execCheck(Exec *this)
         if (WIFEXITED(processStatus))
         {
             // Get data from stderr to help diagnose the problem
-            IoRead *ioReadError = ioHandleReadNew(strNewFmt("%s error", strPtr(this->name)), this->handleError, 0);
+            IoRead *ioReadError = ioHandleReadNew(strNewFmt("%s error", strZ(this->name)), this->handleError, 0);
             ioReadOpen(ioReadError);
             String *errorStr = strTrim(strNewBuf(ioReadBuf(ioReadError)));
 
             // Throw the error with as much information as is available
             THROWP_FMT(
-                errorTypeFromCode(WEXITSTATUS(processStatus)), "%s terminated unexpectedly [%d]%s%s", strPtr(this->name),
-                WEXITSTATUS(processStatus), strSize(errorStr) > 0 ? ": " : "", strSize(errorStr) > 0 ? strPtr(errorStr) : "");
+                errorTypeFromCode(WEXITSTATUS(processStatus)), "%s terminated unexpectedly [%d]%s%s", strZ(this->name),
+                WEXITSTATUS(processStatus), strSize(errorStr) > 0 ? ": " : "", strSize(errorStr) > 0 ? strZ(errorStr) : "");
         }
 
         // If the process did not exit normally then it must have been a signal
-        THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strPtr(this->name), WTERMSIG(processStatus));
+        THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(processStatus));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -315,7 +316,7 @@ execOpen(Exec *this)
     THROW_ON_SYS_ERROR(pipe(pipeError) == -1, KernelError, "unable to create error pipe");
 
     // Fork the subprocess
-    this->processId = fork();
+    this->processId = forkSafe();
 
     // Exec command in the child process
     if (this->processId == 0)
@@ -333,11 +334,11 @@ execOpen(Exec *this)
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
         // Execute the binary.  This statement will not return if it is successful
-        execvp(strPtr(this->command), (char ** const)strLstPtr(this->param));
+        execvp(strZ(this->command), (char ** const)strLstPtr(this->param));
 
         // If we got here then there was an error.  We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.
-        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strPtr(this->command), errno, strerror(errno));
+        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(this->command), errno, strerror(errno));
         exit(errorTypeCode(&ExecuteError));
     }
 
@@ -352,8 +353,8 @@ execOpen(Exec *this)
     this->handleError = pipeError[0];
 
     // Assign handles to io interfaces
-    this->ioReadHandle = ioHandleReadNew(strNewFmt("%s read", strPtr(this->name)), this->handleRead, this->timeout);
-    this->ioWriteHandle = ioHandleWriteNew(strNewFmt("%s write", strPtr(this->name)), this->handleWrite);
+    this->ioReadHandle = ioHandleReadNew(strNewFmt("%s read", strZ(this->name)), this->handleRead, this->timeout);
+    this->ioWriteHandle = ioHandleWriteNew(strNewFmt("%s write", strZ(this->name)), this->handleWrite);
     ioWriteOpen(this->ioWriteHandle);
 
     // Create wrapper interfaces that check process state

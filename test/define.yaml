@@ -142,7 +142,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 10
+        total: 11
 
         coverage:
           common/type/convert: full
@@ -240,7 +240,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
         total: 5
-        containerReq: true
 
         coverage:
           common/io/tls/client: full
@@ -251,26 +250,34 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
-        total: 6
+        total: 5
 
         coverage:
-          common/io/http/cache: full
           common/io/http/client: full
           common/io/http/common: full
           common/io/http/header: full
           common/io/http/query: full
+          common/io/http/request: full
+          common/io/http/response: full
+          common/io/http/session: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
-        total: 3
+        total: 5
 
         coverage:
+          common/compress/bz2/common: full
+          common/compress/bz2/compress: full
+          common/compress/bz2/decompress: full
           common/compress/gz/common: full
           common/compress/gz/compress: full
           common/compress/gz/decompress: full
           common/compress/lz4/common: full
           common/compress/lz4/compress: full
           common/compress/lz4/decompress: full
+          common/compress/zst/common: full
+          common/compress/zst/compress: full
+          common/compress/zst/decompress: full
           common/compress/helper: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -281,6 +288,7 @@ unit:
           common/crypto/cipherBlock: full
           common/crypto/common: full
           common/crypto/hash: full
+          common/crypto/md5.vendor: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
@@ -391,6 +399,20 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: azure
+        total: 3
+
+        coverage:
+          storage/azure/read: full
+          storage/azure/storage: full
+          storage/azure/write: full
+          storage/helper: full
+
+        include:
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: cifs
         total: 1
 
@@ -405,7 +427,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
         total: 21
-        containerReq: true
 
         coverage:
           storage/posix/read: full
@@ -456,7 +477,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
-        total: 9
+        total: 10
         containerReq: true
         binReq: true
 
@@ -467,6 +488,9 @@ unit:
           protocol/parallel: full
           protocol/parallelJob: full
           protocol/server: full
+
+        include:
+          - common/exec
 
   # ********************************************************************************************************************************
   - name: info
@@ -556,6 +580,7 @@ unit:
           command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      # --test=backup and --test=backup-common must must be run together to get full coverage of backup/common
       - name: backup-common
         total: 3
 
@@ -570,6 +595,7 @@ unit:
 
         coverage:
           command/backup/backup: full
+          command/backup/common: full
           command/backup/file: full
           command/backup/protocol: full
 
@@ -605,7 +631,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: expire
-        total: 7
+        total: 9
 
         coverage:
           command/expire/expire: full
@@ -644,7 +670,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
         total: 12
-        containerReq: true
         binReq: true
 
         coverage:
@@ -721,7 +746,7 @@ integration:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: all
-        total: 6
+        total: 1
 
 # **********************************************************************************************************************************
 # Performance tests

@@ -12,7 +12,7 @@ old context and then back. Below is a simplified example:
 
         MEM_CONTEXT_PRIOR_BEGIN() <--- switch to old context so creation of the variant from the string is in old context
         {
-            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr))); <--- recreates variant from the string in the old context.
+            result = varNewUInt64(cvtZToUInt64(strZ(resultStr))); <--- recreates variant from the string in the old context.
         }
         MEM_CONTEXT_PRIOR_END(); <--- switch back to the temporary context
     }

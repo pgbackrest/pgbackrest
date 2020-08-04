@@ -120,12 +120,8 @@ exitSafe(int result, bool error, SignalType signalType)
         result = errorCode();
     }
 
-    // Free protocol objects but ignore errors
-    TRY_BEGIN()
-    {
-        protocolFree();
-    }
-    TRY_END();
+    // Free protocol objects
+    protocolFree();
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)
@@ -142,7 +138,7 @@ exitSafe(int result, bool error, SignalType signalType)
 
                 // Terminate from a child
                 if (signalType == signalTypeNone)
-                    strCat(errorMessage, "from child process");
+                    strCatZ(errorMessage, "from child process");
                 // Else terminated directly
                 else
                     strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));

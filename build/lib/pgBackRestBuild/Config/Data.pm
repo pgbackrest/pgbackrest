@@ -197,8 +197,11 @@ use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PR
 use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
 use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
 use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
+use constant CFGOPT_REPO_RETENTION_FULL_TYPE                        => CFGDEF_PREFIX_REPO . '-retention-full-type';
 
 # Repository Host
+use constant CFGOPT_REPO_LOCAL                                      => CFGDEF_PREFIX_REPO . '-local';
+
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
 use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_REPO_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
@@ -207,6 +210,18 @@ use constant CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH                   => CFGOPT_RE
 use constant CFGOPT_REPO_HOST_CONFIG_PATH                           => CFGOPT_REPO_HOST_CONFIG . '-path';
 use constant CFGOPT_REPO_HOST_PORT                                  => CFGOPT_REPO_HOST . '-port';
 use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_REPO_HOST . '-user';
+
+# Repository Azure
+use constant CFGDEF_REPO_AZURE                                      => CFGDEF_PREFIX_REPO . '-azure';
+use constant CFGOPT_REPO_AZURE_ACCOUNT                              => CFGDEF_REPO_AZURE . '-account';
+use constant CFGOPT_REPO_AZURE_CA_FILE                              => CFGDEF_REPO_AZURE . '-ca-file';
+use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_REPO_AZURE . '-ca-path';
+use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
+use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
+use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
+use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
+use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
+use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
@@ -236,6 +251,7 @@ use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
 use constant CFGOPT_EXCLUDE                                         => 'exclude';
+use constant CFGOPT_EXPIRE_AUTO                                     => 'expire-auto';
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
 use constant CFGOPT_RESUME                                          => 'resume';
 use constant CFGOPT_START_FAST                                      => 'start-fast';
@@ -259,6 +275,8 @@ use constant CFGDEF_INDEX_PG                                        => 8;
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
+
+use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
 use constant CFGOPT_PG_HOST                                         => CFGDEF_PREFIX_PG . '-host';
 use constant CFGOPT_PG_HOST_CMD                                     => CFGOPT_PG_HOST . '-cmd';
@@ -291,6 +309,7 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 
 # Repo type
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPTVAL_REPO_TYPE_AZURE                              => 'azure';
 use constant CFGOPTVAL_REPO_TYPE_CIFS                               => 'cifs';
 use constant CFGOPTVAL_REPO_TYPE_POSIX                              => 'posix';
 use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
@@ -702,6 +721,10 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_COMMAND =>
         {
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
             &CFGCMD_INFO =>
             {
                 &CFGDEF_REQUIRED => false,
@@ -1088,7 +1111,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
-        &CFGDEF_DEFAULT => 4194304,
+        &CFGDEF_DEFAULT => 1048576,
         &CFGDEF_ALLOW_LIST =>
         [
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN,
@@ -1230,8 +1253,10 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_LIST =>
         [
             'none',
+            'bz2',
             'gz',
             'lz4',
+            'zst',
         ],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
     },
@@ -1327,23 +1352,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [.1, 3600],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        }
+        &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
     },
 
     &CFGOPT_LOCK_PATH =>
@@ -1477,17 +1486,14 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_REPO_HOST =>
+    &CFGOPT_REPO_LOCAL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_NAME_ALT =>
-        {
-            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1522,6 +1528,25 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_REPO_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_LOCAL,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_LOCAL,
+            &CFGDEF_DEPEND_LIST => [false],
         },
     },
 
@@ -1715,11 +1740,113 @@ my %hConfigDefine =
         {
             'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
+        &CFGDEF_COMMAND => CFGOPT_REPO_RETENTION_FULL_TYPE,
+    },
+
+    &CFGOPT_REPO_RETENTION_FULL_TYPE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 'count',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'count',
+            'time',
+        ],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
         }
+    },
+
+    &CFGOPT_REPO_AZURE_ACCOUNT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_SECURE => true,
+        &CFGDEF_REQUIRED => true,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_AZURE],
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_CA_FILE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
+    },
+
+    &CFGOPT_REPO_AZURE_CA_PATH =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
+    },
+
+    &CFGOPT_REPO_AZURE_CONTAINER =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_KEY =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_ACCOUNT,
+    },
+
+    &CFGOPT_REPO_AZURE_KEY_TYPE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_CONTAINER,
+        &CFGDEF_DEFAULT => 'shared',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'shared',
+            'sas',
+        ],
+    },
+
+    &CFGOPT_REPO_AZURE_PORT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 443,
+        &CFGDEF_ALLOW_RANGE => [1, 65535],
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_VERIFY_TLS =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_BUCKET =>
@@ -1900,6 +2027,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
         &CFGDEF_ALLOW_LIST =>
         [
+            &CFGOPTVAL_REPO_TYPE_AZURE,
             &CFGOPTVAL_REPO_TYPE_CIFS,
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
@@ -2218,6 +2346,17 @@ my %hConfigDefine =
         },
     },
 
+    &CFGOPT_EXPIRE_AUTO =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        }
+    },
+
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -2346,18 +2485,14 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_PG_HOST =>
+    &CFGOPT_PG_LOCAL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_NAME_ALT =>
-        {
-            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-            'db?-host' => {&CFGDEF_RESET => false},
-        },
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>
@@ -2380,6 +2515,26 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_PG_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-host' => {&CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_PG_LOCAL,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_LOCAL,
+            &CFGDEF_DEPEND_LIST => [false],
         },
     },
 
@@ -2477,10 +2632,7 @@ my %hConfigDefine =
         },
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH =>
             {
                 &CFGDEF_REQUIRED => false

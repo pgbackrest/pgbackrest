@@ -19,23 +19,25 @@ String Handler
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
-STRING_EXTERN(BRACKETL_STR,                                         "[");
-STRING_EXTERN(BRACKETR_STR,                                         "]");
+STRING_EXTERN(BRACKETL_STR,                                         BRACKETL_Z);
+STRING_EXTERN(BRACKETR_STR,                                         BRACKETR_Z);
 STRING_EXTERN(COLON_STR,                                            COLON_Z);
-STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(CR_STR,                                               CR_Z);
+STRING_EXTERN(CRLF_STR,                                             CRLF_Z);
 STRING_EXTERN(DASH_STR,                                             DASH_Z);
-STRING_EXTERN(DOT_STR,                                              ".");
-STRING_EXTERN(DOTDOT_STR,                                           "..");
-STRING_EXTERN(EMPTY_STR,                                            "");
-STRING_EXTERN(EQ_STR,                                               "=");
+STRING_EXTERN(DOT_STR,                                              DOT_Z);
+STRING_EXTERN(DOTDOT_STR,                                           DOTDOT_Z);
+STRING_EXTERN(EMPTY_STR,                                            EMPTY_Z);
+STRING_EXTERN(EQ_STR,                                               EQ_Z);
 STRING_EXTERN(FALSE_STR,                                            FALSE_Z);
-STRING_EXTERN(FSLASH_STR,                                           "/");
-STRING_EXTERN(LF_STR,                                               "\n");
-STRING_EXTERN(N_STR,                                                "n");
+STRING_EXTERN(FSLASH_STR,                                           FSLASH_Z);
+STRING_EXTERN(LF_STR,                                               LF_Z);
+STRING_EXTERN(N_STR,                                                N_Z);
 STRING_EXTERN(NULL_STR,                                             NULL_Z);
+STRING_EXTERN(QUOTED_STR,                                           QUOTED_Z);
 STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
-STRING_EXTERN(Y_STR,                                                "y");
-STRING_EXTERN(ZERO_STR,                                             "0");
+STRING_EXTERN(Y_STR,                                                Y_Z);
+STRING_EXTERN(ZERO_STR,                                             ZERO_Z);
 
 /***********************************************************************************************************************************
 Maximum size of a string
@@ -48,7 +50,7 @@ Maximum size of a string
         if ((size) > STRING_SIZE_MAX)                                                                                              \
             THROW(AssertError, "string size must be <= " STRINGIFY(STRING_SIZE_MAX) " bytes");                                     \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 /***********************************************************************************************************************************
 Object type
@@ -201,12 +203,24 @@ strBase(const String *this)
 
     ASSERT(this != NULL);
 
+    FUNCTION_TEST_RETURN(strNew(strBaseZ(this)));
+}
+
+const char *
+strBaseZ(const String *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
     const char *end = this->buffer + this->size;
 
     while (end > this->buffer && *(end - 1) != '/')
         end--;
 
-    FUNCTION_TEST_RETURN(strNew(end));
+    FUNCTION_TEST_RETURN(end);
 }
 
 /**********************************************************************************************************************************/
@@ -221,7 +235,7 @@ strBeginsWith(const String *this, const String *beginsWith)
     ASSERT(this != NULL);
     ASSERT(beginsWith != NULL);
 
-    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtr(beginsWith)));
+    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strZ(beginsWith)));
 }
 
 bool
@@ -239,7 +253,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
 
     if (this->size >= beginsWithSize)
-        result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
+        result = strncmp(strZ(this), beginsWith, beginsWithSize) == 0;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -279,7 +293,21 @@ strResize(String *this, size_t requested)
 
 /**********************************************************************************************************************************/
 String *
-strCat(String *this, const char *cat)
+strCat(String *this, const String *cat)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, cat);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != NULL);
+
+    FUNCTION_TEST_RETURN(strCatZN(this, strZ(cat), strSize(cat)));
+}
+
+String *
+strCatZ(String *this, const char *cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -394,7 +422,7 @@ strCmp(const String *this, const String *compare)
     FUNCTION_TEST_END();
 
     if (this != NULL && compare != NULL)
-        FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+        FUNCTION_TEST_RETURN(strcmp(strZ(this), strZ(compare)));
     else if (this == NULL)
     {
         if (compare == NULL)
@@ -428,7 +456,7 @@ strDup(const String *this)
     String *result = NULL;
 
     if (this != NULL)
-        result = strNew(strPtr(this));
+        result = strNew(strZ(this));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -456,7 +484,7 @@ strEndsWith(const String *this, const String *endsWith)
     ASSERT(this != NULL);
     ASSERT(endsWith != NULL);
 
-    FUNCTION_TEST_RETURN(strEndsWithZ(this, strPtr(endsWith)));
+    FUNCTION_TEST_RETURN(strEndsWithZ(this, strZ(endsWith)));
 }
 
 bool
@@ -474,7 +502,7 @@ strEndsWithZ(const String *this, const char *endsWith)
     unsigned int endsWithSize = (unsigned int)strlen(endsWith);
 
     if (this->size >= endsWithSize)
-        result = strcmp(strPtr(this) + (this->size - endsWithSize), endsWith) == 0;
+        result = strcmp(strZ(this) + (this->size - endsWithSize), endsWith) == 0;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -496,7 +524,7 @@ strEq(const String *this, const String *compare)
     if (this != NULL && compare != NULL)
     {
         if (this->size == compare->size)
-            result = strcmp(strPtr(this), strPtr(compare)) == 0;
+            result = strcmp(strZ(this), strZ(compare)) == 0;
     }
     else
         result = this == NULL && compare == NULL;
@@ -515,7 +543,7 @@ strEqZ(const String *this, const char *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare) == 0);
+    FUNCTION_TEST_RETURN(strcmp(strZ(this), compare) == 0);
 }
 
 /**********************************************************************************************************************************/
@@ -631,7 +659,7 @@ strPathAbsolute(const String *this, const String *base)
 
         // Base must be absolute to start
         if (!strBeginsWith(base, FSLASH_STR))
-            THROW_FMT(AssertError, "base path '%s' is not absolute", strPtr(base));
+            THROW_FMT(AssertError, "base path '%s' is not absolute", strZ(base));
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -652,7 +680,7 @@ strPathAbsolute(const String *this, const String *base)
                         break;
                     }
 
-                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
                 }
 
                 if (strEq(pathPart, DOTDOT_STR))
@@ -660,10 +688,7 @@ strPathAbsolute(const String *this, const String *base)
                     const String *basePart = strLstGet(baseList, strLstSize(baseList) - 1);
 
                     if (strSize(basePart) == 0)
-                    {
-                        THROW_FMT(
-                            AssertError, "relative path '%s' goes back too far in base path '%s'", strPtr(this), strPtr(base));
-                    }
+                        THROW_FMT(AssertError, "relative path '%s' goes back too far in base path '%s'", strZ(this), strZ(base));
 
                     strLstRemoveIdx(baseList, strLstSize(baseList) - 1);
                 }
@@ -686,15 +711,15 @@ strPathAbsolute(const String *this, const String *base)
     }
 
     // There should not be any stray .. or // in the final result
-    if (strstr(strPtr(result), "/..") != NULL || strstr(strPtr(result), "//") != NULL)
-        THROW_FMT(AssertError, "result path '%s' is not absolute", strPtr(result));
+    if (strstr(strZ(result), "/..") != NULL || strstr(strZ(result), "//") != NULL)
+        THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
 
     FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
 const char *
-strPtr(const String *this)
+strZNull(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -715,7 +740,7 @@ strQuote(const String *this, const String *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(strQuoteZ(this, strPtr(quote)));
+    FUNCTION_TEST_RETURN(strQuoteZ(this, strZ(quote)));
 }
 
 String *
@@ -729,7 +754,7 @@ strQuoteZ(const String *this, const char *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(strNewFmt("%s%s%s", quote, strPtr(this), quote));
+    FUNCTION_TEST_RETURN(strNewFmt("%s%s%s", quote, strZ(this), quote));
 }
 
 /**********************************************************************************************************************************/
@@ -783,19 +808,6 @@ strSubN(const String *this, size_t start, size_t size)
     ASSERT(start + size <= this->size);
 
     FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));
-}
-
-/**********************************************************************************************************************************/
-size_t
-strSize(const String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->size);
 }
 
 /**********************************************************************************************************************************/
@@ -910,7 +922,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strZ(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -921,7 +933,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 String *
 strToLog(const String *this)
 {
-    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strPtr(this));
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strZ(this));
 }
 
 /**********************************************************************************************************************************/

@@ -106,6 +106,7 @@ PostgreSQL WAL Info
 typedef struct PgWal
 {
     unsigned int version;
+    unsigned int size;
     uint64_t systemId;
 } PgWal;
 
@@ -127,7 +128,7 @@ unsigned int pgVersionFromStr(const String *version);
 String *pgVersionToStr(unsigned int version);
 
 // Get info from WAL header
-PgWal pgWalFromFile(const String *walFile);
+PgWal pgWalFromFile(const String *walFile, const Storage *storage);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
@@ -137,8 +138,9 @@ String *pgTablespaceId(unsigned int pgVersion);
 uint64_t pgLsnFromStr(const String *lsn);
 String *pgLsnToStr(uint64_t lsn);
 
-// Convert a timeline and lsn to a wal segment
+// Convert a timeline and lsn to a wal segment and vice versa
 String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
+uint64_t pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize);
 
 // Convert a timeline and lsn range to a list of wal segments
 StringList *pgLsnRangeToWalSegmentList(

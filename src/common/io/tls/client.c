@@ -101,11 +101,11 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         if (this->verifyPeer)
         {
             // If the user specified a location
-            if (caFile != NULL || caPath != NULL)
+            if (caFile != NULL || caPath != NULL)                                                                   // {vm_covered}
             {
-                cryptoError(
-                    SSL_CTX_load_verify_locations(this->context, strPtr(caFile), strPtr(caPath)) != 1,
-                    "unable to set user-defined CA certificate location");
+                cryptoError(                                                                                        // {vm_covered}
+                    SSL_CTX_load_verify_locations(this->context, strZNull(caFile), strZNull(caPath)) != 1,          // {vm_covered}
+                    "unable to set user-defined CA certificate location");                                          // {vm_covered}
             }
             // Else use the defaults
             else
@@ -130,10 +130,10 @@ asn1ToStr(ASN1_STRING *nameAsn1)
     FUNCTION_TEST_END();
 
     // The name should not be null
-    if (nameAsn1 == NULL)
+    if (nameAsn1 == NULL)                                                                                           // {vm_covered}
         THROW(CryptoError, "TLS certificate name entry is missing");
 
-    FUNCTION_TEST_RETURN(
+    FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
         strNewN(
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             (const char *)ASN1_STRING_data(nameAsn1),
@@ -160,15 +160,15 @@ tlsClientHostVerifyName(const String *host, const String *name)
     ASSERT(name != NULL);
 
     // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
-    if (strlen(strPtr(name)) != strSize(name))
+    if (strlen(strZ(name)) != strSize(name))
         THROW(CryptoError, "TLS certificate name contains embedded null");
 
     bool result = false;
 
     // Try an exact match
-    if (strcasecmp(strPtr(name), strPtr(host)) == 0)
+    if (strcasecmp(strZ(name), strZ(host)) == 0)                                                                    // {vm_covered}
     {
-        result = true;
+        result = true;                                                                                              // {vm_covered}
     }
     // Else check if a wildcard certificate matches the host name
     //
@@ -180,11 +180,12 @@ tlsClientHostVerifyName(const String *host, const String *name)
     //
     // This is roughly in line with RFC2818, but contrary to what most browsers appear to be implementing (point 3 being the
     // difference)
-    else if (strPtr(name)[0] == '*' && strPtr(name)[1] == '.' && strSize(name) > 2 && strSize(name) < strSize(host) &&
-             strcasecmp(strPtr(name) + 1, strPtr(host) + strSize(host) - strSize(name) + 1) == 0 &&
-             strChr(host, '.') >= (int)(strSize(host) - strSize(name)))
+    else if (strZ(name)[0] == '*' && strZ(name)[1] == '.' && strSize(name) > 2 &&                                   // {vm_covered}
+             strSize(name) < strSize(host) &&                                                                       // {vm_covered}
+             strcasecmp(strZ(name) + 1, strZ(host) + strSize(host) - strSize(name) + 1) == 0 &&                     // {vm_covered}
+             strChr(host, '.') >= (int)(strSize(host) - strSize(name)))                                             // {vm_covered}
     {
-        result = true;
+        result = true;                                                                                              // {vm_covered}
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -208,50 +209,51 @@ tlsClientHostVerify(const String *host, X509 *certificate)
     bool result = false;
 
     // Error if the certificate is NULL
-    if (certificate == NULL)
-        THROW(CryptoError, "No certificate presented by the TLS server");
+    if (certificate == NULL)                                                                                        // {vm_covered}
+        THROW(CryptoError, "No certificate presented by the TLS server");                                           // {vm_covered}
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()                                                                                        // {vm_covered}
     {
         // First get the subject alternative names from the certificate and compare them against the hostname
-        STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(
-            certificate, NID_subject_alt_name, NULL, NULL);
-        bool altNameFound = false;
+        STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(                          // {vm_covered}
+            certificate, NID_subject_alt_name, NULL, NULL);                                                         // {vm_covered}
+        bool altNameFound = false;                                                                                  // {vm_covered}
 
-        if (altNameStack)
+        if (altNameStack)                                                                                           // {vm_covered}
         {
-            for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)
+            for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)                  // {vm_covered}
             {
-                const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);
-                altNameFound = true;
+                const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);                         // {vm_covered}
+                altNameFound = true;                                                                                // {vm_covered}
 
-                if (name->type == GEN_DNS)
-                    result = tlsClientHostVerifyName(host, asn1ToStr(name->d.dNSName));
+                if (name->type == GEN_DNS)                                                                          // {vm_covered}
+                    result = tlsClientHostVerifyName(host, asn1ToStr(name->d.dNSName));                             // {vm_covered}
 
-                if (result != false)
-                    break;
+                if (result != false)                                                                                // {vm_covered}
+                    break;                                                                                          // {vm_covered}
             }
 
-            sk_GENERAL_NAME_free(altNameStack);
+            sk_GENERAL_NAME_pop_free(altNameStack, GENERAL_NAME_free);                                              // {vm_covered}
         }
 
         // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName
         // extension of type dNSName is present the CN must be ignored.
-        if (!altNameFound)
+        if (!altNameFound)                                                                                          // {vm_covered}
         {
-            X509_NAME *subjectName = X509_get_subject_name(certificate);
-            CHECK(subjectName != NULL);
+            X509_NAME *subjectName = X509_get_subject_name(certificate);                                            // {vm_covered}
+            CHECK(subjectName != NULL);                                                                             // {vm_covered}
 
-            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
-            CHECK(commonNameIndex >= 0);
+            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);                      // {vm_covered}
+            CHECK(commonNameIndex >= 0);                                                                            // {vm_covered}
 
-            result = tlsClientHostVerifyName(
-                host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
+            result = tlsClientHostVerifyName(                                                                       // {vm_covered}
+                host,                                                                                               // {vm_covered}
+                asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));            // {vm_covered}
         }
     }
-    MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_TEMP_END();                                                                                         // {vm_covered}
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);                                                                              // {vm_covered}
 }
 
 /***********************************************************************************************************************************
@@ -271,7 +273,6 @@ tlsClientOpen(TlsClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool connected = false;
         bool retry;
         Wait *wait = waitNew(this->timeout);
 
@@ -282,23 +283,23 @@ tlsClientOpen(TlsClient *this)
 
             TRY_BEGIN()
             {
-                // Create internal TLS session
+                // Open the socket session first since this is mostly likely to fail
+                SocketSession *socketSession = sckClientOpen(this->socketClient);
+
+                // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
+                // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
                 cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
 
                 // Set server host name used for validation
                 cryptoError(
-                    SSL_set_tlsext_host_name(session, strPtr(sckClientHost(this->socketClient))) != 1,
+                    SSL_set_tlsext_host_name(session, strZ(sckClientHost(this->socketClient))) != 1,
                     "unable to set TLS host name");
 
                 // Create the TLS session
-                result = tlsSessionNew(session, sckClientOpen(this->socketClient), this->timeout);
-
-                // Connection was successful
-                connected = true;
+                result = tlsSessionNew(session, socketSession, this->timeout);
             }
             CATCH_ANY()
             {
-                tlsSessionFree(result);
                 result = NULL;
 
                 // Retry if wait time has not expired
@@ -309,13 +310,12 @@ tlsClientOpen(TlsClient *this)
 
                     tlsClientStatLocal.retry++;
                 }
+                else
+                    RETHROW();
             }
             TRY_END();
         }
-        while (!connected && retry);
-
-        if (!connected)
-            RETHROW();
+        while (retry);
 
         tlsSessionMove(result, memContextPrior());
     }
@@ -324,30 +324,30 @@ tlsClientOpen(TlsClient *this)
     tlsClientStatLocal.session++;
 
     // Verify that the certificate presented by the server is valid
-    if (this->verifyPeer)
+    if (this->verifyPeer)                                                                                           // {vm_covered}
     {
         // Verify that the chain of trust leads to a valid CA
-        long int verifyResult = SSL_get_verify_result(session);
+        long int verifyResult = SSL_get_verify_result(session);                                                     // {vm_covered}
 
-        if (verifyResult != X509_V_OK)
+        if (verifyResult != X509_V_OK)                                                                              // {vm_covered}
         {
-            THROW_FMT(
-                CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",
-                strPtr(sckClientHost(this->socketClient)), sckClientPort(this->socketClient), verifyResult,
-                X509_verify_cert_error_string(verifyResult));
+            THROW_FMT(                                                                                              // {vm_covered}
+                CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",                         // {vm_covered}
+                strZ(sckClientHost(this->socketClient)), sckClientPort(this->socketClient), verifyResult,           // {vm_covered}
+                X509_verify_cert_error_string(verifyResult));                                                       // {vm_covered}
         }
 
         // Verify that the hostname appears in the certificate
-        X509 *certificate = SSL_get_peer_certificate(session);
-        bool nameResult = tlsClientHostVerify(sckClientHost(this->socketClient), certificate);
-        X509_free(certificate);
+        X509 *certificate = SSL_get_peer_certificate(session);                                                      // {vm_covered}
+        bool nameResult = tlsClientHostVerify(sckClientHost(this->socketClient), certificate);                      // {vm_covered}
+        X509_free(certificate);                                                                                     // {vm_covered}
 
-        if (!nameResult)
+        if (!nameResult)                                                                                            // {vm_covered}
         {
-            THROW_FMT(
-                CryptoError,
-                "unable to find hostname '%s' in certificate common name or subject alternative names",
-                strPtr(sckClientHost(this->socketClient)));
+            THROW_FMT(                                                                                              // {vm_covered}
+                CryptoError,                                                                                        // {vm_covered}
+                "unable to find hostname '%s' in certificate common name or subject alternative names",             // {vm_covered}
+                strZ(sckClientHost(this->socketClient)));                                                           // {vm_covered}
         }
     }
 

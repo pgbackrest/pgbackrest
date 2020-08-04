@@ -40,7 +40,7 @@ testRun(void)
         TEST_ERROR(jsonToStr(strNew("\"normal\"L")), JsonFormatError, "unexpected characters after string at 'L'");
         TEST_ERROR(jsonToStr(strNew("nullz")), JsonFormatError, "unexpected characters after string at 'z'");
 
-        TEST_RESULT_PTR(jsonToStr(strNew("null")), NULL, "null string");
+        TEST_RESULT_STR(jsonToStr(strNew("null")), NULL, "null string");
         TEST_RESULT_STR_Z(jsonToStr(strNew(" \"test\"")), "test", "simple string");
         TEST_RESULT_STR_Z(jsonToStr(strNew("\"te\\\"st\" ")), "te\"st", "string with quote");
         TEST_RESULT_STR_Z(jsonToStr(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\"")), "\"\\/\b\n\r\t\f", "string with escapes");
@@ -72,6 +72,7 @@ testRun(void)
         TEST_ERROR(jsonToVar(strNew("")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(strNew(" \t\r\n ")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(strNew("z")), JsonFormatError, "invalid type at 'z'");
+        TEST_ERROR(jsonToVar(strNew("3 =")), JsonFormatError, "unexpected characters after JSON at '='");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStr(jsonToVar(strNew(" \"test\""))), "test", "simple string");

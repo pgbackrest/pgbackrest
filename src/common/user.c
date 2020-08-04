@@ -81,7 +81,7 @@ groupIdFromName(const String *groupName)
 
     if (groupName != NULL)
     {
-        struct group *groupData = getgrnam(strPtr(groupName));
+        struct group *groupData = getgrnam(strZ(groupName));
 
         if (groupData != NULL)
             FUNCTION_TEST_RETURN(groupData->gr_gid);
@@ -132,7 +132,7 @@ userIdFromName(const String *userName)
 
     if (userName != NULL)
     {
-        struct passwd *userData = getpwnam(strPtr(userName));
+        struct passwd *userData = getpwnam(strZ(userName));
 
         if (userData != NULL)
             FUNCTION_TEST_RETURN(userData->pw_uid);

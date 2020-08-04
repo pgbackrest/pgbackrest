@@ -26,6 +26,7 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
+use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
@@ -53,13 +54,17 @@ sub setup
     my $oLogTest = shift;
     my $oConfigParam = shift;
 
-    # Start S3 server first since it takes the longest
+    # Start object server first since it takes the longest
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oHostS3;
+    my $oHostObject;
 
-    if ($oConfigParam->{bS3})
+    if ($oConfigParam->{strStorage} eq S3)
     {
-        $oHostS3 = new pgBackRestTest::Env::Host::HostS3Test();
+        $oHostObject = new pgBackRestTest::Env::Host::HostS3Test();
+    }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostAzureTest();
     }
 
     # Get host group
@@ -78,32 +83,32 @@ sub setup
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
-                bRepoLocal => !$oConfigParam->{bS3}, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
     {
         $strBackupDestination =
-            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_MASTER;
+            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_PRIMARY;
     }
 
-    # Create the db-master host
-    my $oHostDbMaster = undef;
+    # Create the db-primary host
+    my $oHostDbPrimary = undef;
 
     if ($bSynthetic)
     {
-        $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
-                bRepoEncrypt => $bRepoEncrypt});
+        $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
     else
     {
-        $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
-                bRepoEncrypt => $bRepoEncrypt});
+        $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbTest(
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
+                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
     }
 
-    $oHostGroup->hostAdd($oHostDbMaster);
+    $oHostGroup->hostAdd($oHostDbPrimary);
 
     # Create the db-standby host
     my $oHostDbStandby = undef;
@@ -112,25 +117,29 @@ sub setup
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
-                bRepoLocal => !$oConfigParam->{bS3}});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
     # Finalize S3 server
     #-------------------------------------------------------------------------------------------------------------------------------
-    if (defined($oHostS3))
+    if ($oConfigParam->{strStorage} eq S3)
     {
-        $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
+        $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
+    }
+    elsif ($oConfigParam->{strStorage} eq AZURE)
+    {
+        $oHostGroup->hostAdd($oHostObject);
     }
 
-    # Create db master config
-    $oHostDbMaster->configCreate({
+    # Create db-primary config
+    $oHostDbPrimary->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
-        bS3 => $$oConfigParam{bS3}});
+        strStorage => $oConfigParam->{strStorage}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -138,20 +147,21 @@ sub setup
         $oHostBackup->configCreate({
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
-            bS3 => $$oConfigParam{bS3}});
+            strStorage => $oConfigParam->{strStorage}});
     }
-    # If backup host is not defined set it to db-master
+    # If backup host is not defined set it to db-primary
     else
     {
-        $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
+        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY ? $oHostDbPrimary : $oHostDbStandby;
     }
 
     storageRepoCommandSet(
         $self->backrestExeHelper() .
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
-            ($oConfigParam->{bS3} ? ' --no-repo1-s3-verify-tls --repo1-s3-host=' . $oHostS3->ipGet() : ''),
-        $oConfigParam->{bS3} ? STORAGE_OBJECT : STORAGE_POSIX);
+            ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
+                " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
+        $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config
     if (defined($oHostDbStandby))
@@ -160,16 +170,17 @@ sub setup
             strBackupSource => $$oConfigParam{strBackupSource},
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
-            bArchiveAsync => $$oConfigParam{bArchiveAsync}});
+            bArchiveAsync => $$oConfigParam{bArchiveAsync},
+            strStorage => $oConfigParam->{strStorage}});
     }
 
-    # Create S3 bucket
-    if (defined($oHostS3))
+    # Create object storage
+    if (defined($oHostObject))
     {
         storageRepo()->create();
     }
 
-    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
+    return $oHostDbPrimary, $oHostDbStandby, $oHostBackup;
 }
 
 ####################################################################################################################################
@@ -227,6 +238,7 @@ sub dbCatalogVersion
         &PG_VERSION_10 => 201707211,
         &PG_VERSION_11 => 201806231,
         &PG_VERSION_12 => 201909212,
+        &PG_VERSION_13 => 202005171,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -270,6 +282,7 @@ sub dbControlVersion
         &PG_VERSION_10 => 1002,
         &PG_VERSION_11 => 1100,
         &PG_VERSION_12 => 1201,
+        &PG_VERSION_13 => 1300,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))
@@ -320,6 +333,7 @@ sub controlGenerateContent
              '10' => 200 - length($tControlContent),
              '11' => 192 - length($tControlContent),
              '12' => 196 - length($tControlContent),
+             '13' => 196 - length($tControlContent),
         },
 
         64 =>
@@ -336,6 +350,7 @@ sub controlGenerateContent
              '10' => 216 - length($tControlContent),
              '11' => 208 - length($tControlContent),
              '12' => 212 - length($tControlContent),
+             '13' => 212 - length($tControlContent),
         },
     };
 
@@ -428,6 +443,7 @@ sub walGenerateContent
         &PG_VERSION_10 => hex('0xD097'),
         &PG_VERSION_11 => hex('0xD098'),
         &PG_VERSION_12 => hex('0xD101'),
+        &PG_VERSION_13 => hex('0xD106'),
     };
 
     my $tWalContent = pack('S', $hWalMagic->{$strPgVersion});
@@ -441,6 +457,9 @@ sub walGenerateContent
 
     # Add the system identifier
     $tWalContent .= pack('Q', $self->dbSysId($strPgVersion));
+
+    # Add segment size
+    $tWalContent .= pack('L', PG_WAL_SEGMENT_SIZE);
 
     # Add the source number to produce WAL segments with different checksums
     $tWalContent .= pack('S', $iSourceNo);

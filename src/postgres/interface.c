@@ -111,6 +111,23 @@ typedef struct PgInterface
 static const PgInterface pgInterface[] =
 {
     {
+        .version = PG_VERSION_13,
+
+        .catalogVersion = pgInterfaceCatalogVersion130,
+
+        .controlIs = pgInterfaceControlIs130,
+        .control = pgInterfaceControl130,
+        .controlVersion = pgInterfaceControlVersion130,
+
+        .walIs = pgInterfaceWalIs130,
+        .wal = pgInterfaceWal130,
+
+#ifdef DEBUG
+        .controlTest = pgInterfaceControlTest130,
+        .walTest = pgInterfaceWalTest130,
+#endif
+    },
+    {
         .version = PG_VERSION_12,
 
         .catalogVersion = pgInterfaceCatalogVersion120,
@@ -369,6 +386,27 @@ pgCatalogVersion(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion());
 }
 
+/***********************************************************************************************************************************
+Check expected WAL segment size for older PostgreSQL versions
+***********************************************************************************************************************************/
+static void
+pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
+    {
+        THROW_FMT(
+            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_STR, walSegmentSize,
+            PG_WAL_SEGMENT_SIZE_DEFAULT);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 PgControl
 pgControlFromBuffer(const Buffer *controlFile)
@@ -408,12 +446,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     result.version = interface->version;
 
     // Check the segment size
-    if (result.version < PG_VERSION_11 && result.walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
-    {
-        THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_STR, result.walSegmentSize,
-            PG_WAL_SEGMENT_SIZE_DEFAULT);
-    }
+    pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
 
     // Check the page size
     if (result.pageSize != PG_PAGE_SIZE_DEFAULT)
@@ -509,11 +542,14 @@ pgWalFromBuffer(const Buffer *walBuffer)
     PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
+    // Check the segment size
+    pgWalSegmentSizeCheck(result.version, result.size);
+
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
 PgWal
-pgWalFromFile(const String *walFile)
+pgWalFromFile(const String *walFile, const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
@@ -526,7 +562,7 @@ pgWalFromFile(const String *walFile)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read WAL segment header
-        Buffer *walBuffer = storageGetP(storageNewReadP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
+        Buffer *walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
         result = pgWalFromBuffer(walBuffer);
     }
@@ -553,7 +589,7 @@ pgTablespaceId(unsigned int pgVersion)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
+                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion(pgVersion));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -579,7 +615,7 @@ pgLsnFromStr(const String *lsn)
 
         CHECK(strLstSize(lsnPart) == 2);
 
-        result = (cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 1)), 16);
+        result = (cvtZToUInt64Base(strZ(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strZ(strLstGet(lsnPart, 1)), 16);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -608,6 +644,23 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
 
     FUNCTION_TEST_RETURN(
         strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
+}
+
+uint64_t
+pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+    ASSERT(walSegmentSize > 0);
+
+    FUNCTION_TEST_RETURN(
+        (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
+        (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
 }
 
 /**********************************************************************************************************************************/
@@ -756,6 +809,10 @@ pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
 
     ASSERT(walBuffer != NULL);
 
+    // Set default WAL segment size if not specified
+    if (pgWal.size == 0)
+        pgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+
     // Generate WAL
     pgInterfaceVersion(pgWal.version)->walTest(pgWal, bufPtr(walBuffer));
 
@@ -780,7 +837,7 @@ pgVersionFromStr(const String *version)
     {
         // If format is not number.number (9.4) or number only (10) then error
         if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
-            THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
+            THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 
         // If there is a dot set the major and minor versions, else just the major
         int idxStart = strChr(version, '.');
@@ -789,11 +846,11 @@ pgVersionFromStr(const String *version)
 
         if (idxStart != -1)
         {
-            major = cvtZToUInt(strPtr(strSubN(version, 0, (size_t)idxStart)));
-            minor = cvtZToUInt(strPtr(strSub(version, (size_t)idxStart + 1)));
+            major = cvtZToUInt(strZ(strSubN(version, 0, (size_t)idxStart)));
+            minor = cvtZToUInt(strZ(strSub(version, (size_t)idxStart + 1)));
         }
         else
-            major = cvtZToUInt(strPtr(version));
+            major = cvtZToUInt(strZ(version));
 
         // No check to see if valid/supported PG version is on purpose
         result = major * 10000 + minor * 100;

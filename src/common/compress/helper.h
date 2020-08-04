@@ -15,15 +15,15 @@ Available compression types
 typedef enum
 {
     compressTypeNone,                                               // No compression
+    compressTypeBz2,                                                // bzip2
     compressTypeGz,                                                 // gzip
     compressTypeLz4,                                                // lz4
+    compressTypeZst,                                                // zstandard
 
     // These types have not been implemented but are included here so older versions can identify compression types added by future
     // versions. In that sense this list is speculative, but these seem to be all the types that are likely to be added in the
     // foreseeable future.
-    compressTypeZst,                                                // zstandard
     compressTypeXz,                                                 // xz/lzma
-    compressTypeBz2,                                                // bzip2
 } CompressType;
 
 #include <common/type/string.h>

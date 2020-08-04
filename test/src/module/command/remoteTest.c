@@ -19,8 +19,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageData = storagePosixNew(
-        strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageData = storagePosixNewP(strNew(testDataPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
@@ -70,6 +69,7 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
                 strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
                 harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -157,9 +157,7 @@ testRun(void)
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
-                    storageExistsP(
-                        storagePosixNew(strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
-                        STRDEF("lock/test-archive" LOCK_FILE_EXT)),
+                    storageExistsP(storagePosixNewP(strNew(testDataPath())), STRDEF("lock/test-archive" LOCK_FILE_EXT)),
                     true, "lock exists");
 
                 protocolClientFree(client);

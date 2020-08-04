@@ -47,7 +47,7 @@ Close the file handle
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
 {
     if (this->handle != -1)
-        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strPtr(this->interface.name));
+        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -69,18 +69,18 @@ storageReadPosixOpen(THIS_VOID)
     bool result = false;
 
     // Open the file
-    this->handle = open(strPtr(this->interface.name), O_RDONLY, 0);
+    this->handle = open(strZ(this->interface.name), O_RDONLY, 0);
 
     // Handle errors
     if (this->handle == -1)
     {
-        if (errno == ENOENT)
+        if (errno == ENOENT)                                                                                        // {vm_covered}
         {
             if (!this->interface.ignoreMissing)
-                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(this->interface.name));
+                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
         }
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strPtr(this->interface.name));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));                // {vm_covered}
     }
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
@@ -125,7 +125,7 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
 
         // Error occurred during read
         if (actualBytes == -1)
-            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->interface.name));
+            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
 
         // Update amount of buffer used
         bufUsedInc(buffer, (size_t)actualBytes);

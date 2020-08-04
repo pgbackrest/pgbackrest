@@ -48,14 +48,14 @@ archivePushFile(
         // If this is a segment compare archive version and systemId to the WAL header
         if (isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource);
+            PgWal walInfo = pgWalFromFile(walSource, storageLocal());
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
                 THROW_FMT(
                     ArchiveMismatchError,
                     "WAL file '%s' version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64,
-                    strPtr(walSource), strPtr(pgVersionToStr(walInfo.version)), walInfo.systemId, strPtr(pgVersionToStr(pgVersion)),
+                    strZ(walSource), strZ(pgVersionToStr(walInfo.version)), walInfo.systemId, strZ(pgVersionToStr(pgVersion)),
                     pgSystemId);
             }
         }
@@ -89,16 +89,16 @@ archivePushFile(
                         result = strNewFmt(
                             "WAL file '%s' already exists in the archive with the same checksum"
                                 "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                            strPtr(archiveFile));
+                            strZ(archiveFile));
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
                 else
-                    THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strPtr(archiveFile));
+                    THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strZ(archiveFile));
             }
 
             // Append the checksum to the archive destination
-            strCatFmt(archiveDestination, "-%s", strPtr(walSegmentChecksum));
+            strCatFmt(archiveDestination, "-%s", strZ(walSegmentChecksum));
         }
 
         // Only copy if the file was not found in the archive
@@ -130,7 +130,7 @@ archivePushFile(
             storageCopyP(
                 source,
                 storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveDestination)),
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveDestination)),
                 .compressible = compressible));
         }
     }

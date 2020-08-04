@@ -39,16 +39,20 @@ Handle errors
 static void
 regExpError(int error)
 {
+    char buffer[4096];
+    regerror(error, NULL, buffer, sizeof(buffer));
+    THROW(FormatError, buffer);
+}
+
+static void
+regExpErrorCheck(int error)
+{
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, error);
     FUNCTION_TEST_END();
 
     if (error != 0 && error != REG_NOMATCH)
-    {
-        char buffer[4096];
-        regerror(error, NULL, buffer, sizeof(buffer));
-        THROW(FormatError, buffer);
-    }
+        regExpError(error);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -77,7 +81,7 @@ regExpNew(const String *expression)
         // Compile the regexp and process errors
         int result = 0;
 
-        if ((result = regcomp(&this->regExp, strPtr(expression), REG_EXTENDED)) != 0)
+        if ((result = regcomp(&this->regExp, strZ(expression), REG_EXTENDED)) != 0)
         {
             memFree(this);
             regExpError(result);
@@ -105,15 +109,15 @@ regExpMatch(RegExp *this, const String *string)
 
     // Test for a match
     regmatch_t matchPtr;
-    int result = regexec(&this->regExp, strPtr(string), 1, &matchPtr, 0);
+    int result = regexec(&this->regExp, strZ(string), 1, &matchPtr, 0);
 
     // Check for an error
-    regExpError(result);
+    regExpErrorCheck(result);
 
     // Store match results
     if (result == 0)
     {
-        this->matchPtr = strPtr(string) + matchPtr.rm_so;
+        this->matchPtr = strZ(string) + matchPtr.rm_so;
         this->matchSize = (size_t)(matchPtr.rm_eo - matchPtr.rm_so);
     }
     // Else reset match results
@@ -204,9 +208,9 @@ regExpPrefix(const String *expression)
     String *result = NULL;
 
     // Only generate prefix if expression is defined and has a beginning anchor
-    if (expression != NULL && strPtr(expression)[0] == '^')
+    if (expression != NULL && strZ(expression)[0] == '^')
     {
-        const char *expressionZ = strPtr(expression);
+        const char *expressionZ = strZ(expression);
         size_t expressionSize = strSize(expression);
         unsigned int expressionIdx = 1;
 

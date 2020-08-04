@@ -14,6 +14,7 @@ Protocol Parallel Executor
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "protocol/command.h"
+#include "protocol/helper.h"
 #include "protocol/parallel.h"
 
 /***********************************************************************************************************************************
@@ -61,8 +62,8 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
             .timeout = timeout,
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
-            .clientList = lstNew(sizeof(ProtocolClient *)),
-            .jobList = lstNew(sizeof(ProtocolParallelJob *)),
+            .clientList = lstNewP(sizeof(ProtocolClient *)),
+            .jobList = lstNewP(sizeof(ProtocolParallelJob *)),
             .state = protocolParallelJobStatePending,
         };
     }
@@ -217,6 +218,9 @@ protocolParallelProcess(ProtocolParallel *this)
                 protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
                 this->clientJobList[clientIdx] = job;
             }
+            // Else no more jobs for this client so free it
+            else
+                protocolLocalFree(clientIdx + 1);
         }
     }
 

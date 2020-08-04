@@ -412,7 +412,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', 'set ownership [^\:]+', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'cannot be used for restore\, set to .+$', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '-user=[a-z0-9_]+', '[^=]+$');
-    $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-master', '^[^\@]+');
+    $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-primary', '^[^\@]+');
     $strLine = $self->regExpReplace($strLine, 'USER', '[\( ]{1}' . TEST_USER . '[\,\)]{1}', TEST_USER);
 
     $strLine = $self->regExpReplace($strLine, 'CIPHER-PASS', '^cipher\-pass\=.+$', '[^\=]+$');

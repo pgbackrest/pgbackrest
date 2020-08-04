@@ -5,12 +5,12 @@ PostgreSQL Page Interface
 
 #include <string.h>
 
-#include "postgres/interface/static.auto.h"
+#include "postgres/interface/static.vendor.h"
 
 /***********************************************************************************************************************************
 Include the page checksum code
 ***********************************************************************************************************************************/
-#include "postgres/interface/pageChecksum.auto.c"
+#include "postgres/interface/pageChecksum.vendor.c"
 
 /**********************************************************************************************************************************/
 uint16_t

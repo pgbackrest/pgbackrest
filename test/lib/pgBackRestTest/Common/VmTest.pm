@@ -51,6 +51,8 @@ use constant VMDEF_WITH_BACKTRACE                                   => 'with-bac
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
+use constant VMDEF_WITH_ZST                                         => 'with-zst';
+    push @EXPORT, qw(VMDEF_WITH_ZST);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -91,8 +93,8 @@ use constant VM_CO6                                                 => 'co6';
     push @EXPORT, qw(VM_CO6);
 use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
-use constant VM_F30                                                 => 'f30';
-    push @EXPORT, qw(VM_F30);
+use constant VM_F32                                                 => 'f32';
+    push @EXPORT, qw(VM_F32);
 use constant VM_U12                                                 => 'u12';
     push @EXPORT, qw(VM_U12);
 use constant VM_U14                                                 => 'u14';
@@ -101,8 +103,6 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
-use constant VM_U19                                                 => 'u19';
-    push @EXPORT, qw(VM_U19);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -141,6 +141,8 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
+        &VMDEF_WITH_ZST => true,
+
         &VM_DB =>
         [
             PG_VERSION_10,
@@ -161,11 +163,12 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
+        &VMDEF_WITH_ZST => true,
+
         &VM_DB =>
         [
             PG_VERSION_91,
             PG_VERSION_92,
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
@@ -177,7 +180,6 @@ my $oyVm =
         [
             PG_VERSION_91,
             PG_VERSION_92,
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_10,
         ],
@@ -193,6 +195,7 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -211,21 +214,21 @@ my $oyVm =
         ],
     },
 
-    # Fedora 30
-    &VM_F30 =>
+    # Fedora 32
+    &VM_F32 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
-        &VM_IMAGE => 'fedora:30',
+        &VM_IMAGE => 'fedora:32',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
         &VMDEF_DEBUG_INTEGRATION => false,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
@@ -235,7 +238,7 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_11,
+            PG_VERSION_12,
         ],
     },
 
@@ -402,6 +405,7 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -412,42 +416,15 @@ my $oyVm =
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
+            PG_VERSION_13,
         ],
 
         &VM_DB_TEST =>
-        [
-            PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-    },
-
-    # Ubuntu 19.04
-    &VM_U19 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'disco',
-        &VM_IMAGE => 'ubuntu:19.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_COVERAGE_C => true,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_LCOV_VERSION => '1.14',
-        &VMDEF_WITH_BACKTRACE => true,
-
-        &VM_DB =>
         [
             PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_12,
+            PG_VERSION_13,
         ],
     },
 };
@@ -607,6 +584,18 @@ sub vmWithLz4
 }
 
 push @EXPORT, qw(vmWithLz4);
+
+####################################################################################################################################
+# Does the VM support liblzst?
+####################################################################################################################################
+sub vmWithZst
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_WITH_ZST}) ? $oyVm->{$strVm}{&VMDEF_WITH_ZST} : false);
+}
+
+push @EXPORT, qw(vmWithZst);
 
 ####################################################################################################################################
 # Will integration tests be run in debug mode?

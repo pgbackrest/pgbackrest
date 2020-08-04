@@ -91,7 +91,17 @@ Macros for defining groups of functions that implement various queries and comma
 
 #define HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)                                                                             \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
-        .param = strPtr(strNewFmt("[\"set application_name = '" PROJECT_NAME " [%s]'\"]", cfgCommandName(cfgCommand()))),          \
+        .param = strZ(strNewFmt("[\"set application_name = '" PROJECT_NAME " [%s]'\"]", cfgCommandName(cfgCommand()))),            \
+        .resultInt = 1},                                                                                                           \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},                                      \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
+#define HRNPQ_MACRO_SET_MAX_PARALLEL_WORKERS_PER_GATHER(sessionParam)                                                              \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set max_parallel_workers_per_gather = 0\"]",               \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -155,7 +165,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]",                                                        \
-        .resultZ = strPtr(strNewFmt("%" PRId64, (int64_t)(timeParam)))},                                                           \
+        .resultZ = strZ(strNewFmt("%" PRId64, (int64_t)(timeParam)))},                                                             \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
@@ -213,7 +223,7 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_START_BACKUP_84_95(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = strPtr(strNewFmt(                                                                                                 \
+        .param = strZ(strNewFmt(                                                                                                   \
             "[\"select lsn::text as lsn,\\n"                                                                                       \
             "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
             "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s) as lsn\"]",               \
@@ -235,7 +245,7 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_START_BACKUP_96(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                   \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = strPtr(strNewFmt(                                                                                                 \
+        .param = strZ(strNewFmt(                                                                                                   \
             "[\"select lsn::text as lsn,\\n"                                                                                       \
             "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
             "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s, false) as lsn\"]",        \
@@ -257,7 +267,7 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_START_BACKUP_GE_10(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = strPtr(strNewFmt(                                                                                                 \
+        .param = strZ(strNewFmt(                                                                                                   \
             "[\"select lsn::text as lsn,\\n"                                                                                       \
             "       pg_catalog.pg_walfile_name(lsn)::text as wal_segment_name\\n"                                                  \
             "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s, false) as lsn\"]",        \
@@ -400,7 +410,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 2},                                                          \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = strPtr(strNewFmt("%d", id1Param))},         \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = strZ(strNewFmt("%d", id1Param))},           \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = name1Param},                                \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
@@ -418,7 +428,7 @@ Macros for defining groups of functions that implement various queries and comma
     sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                                  \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =  strPtr(strNewFmt(                                                                                                \
+        .param =  strZ(strNewFmt(                                                                                                  \
             "[\"select replayLsn::text,\\n"                                                                                        \
             "       (replayLsn > '%s')::bool as targetReached\\n"                                                                  \
             "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]", targetLsnParam)),              \
@@ -445,7 +455,7 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam)  \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = strPtr(strNewFmt(                                                                                                 \
+        .param = strZ(strNewFmt(                                                                                                   \
             "[\"select (checkpoint_" lsnNameParam " > '%s')::bool as targetReached,\\n"                                            \
             "       checkpoint_" lsnNameParam "::text as checkpointLsn\\n"                                                         \
             "  from pg_catalog.pg_control_checkpoint()\"]", targetLsnParam)),                                                      \
@@ -506,9 +516,14 @@ Macros to simplify dbOpen() for specific database versions
     HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam),                                                                                \
     HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
 
-// ??? This is really just a special case of the above and should be replaced by it
-#define HRNPQ_MACRO_OPEN_92(sessionParam, connectParam, pgPathParam, standbyParam, archiveMode, archiveCommand)                    \
-    HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, PG_VERSION_92, pgPathParam, standbyParam, archiveMode, archiveCommand)
+#define HRNPQ_MACRO_OPEN_GE_96(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
+    HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
+    HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
+    HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
+    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                                 \
+    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam),                                                                                \
+    HRNPQ_MACRO_SET_MAX_PARALLEL_WORKERS_PER_GATHER(sessionParam),                                                                 \
+    HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
 
 /***********************************************************************************************************************************
 Data type constants

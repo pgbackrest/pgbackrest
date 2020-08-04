@@ -29,6 +29,7 @@ use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::BackupInfo;
+use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::Manifest;
@@ -73,10 +74,14 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
-use constant STORAGE_CIFS                                           => 'cifs';
-    push @EXPORT, qw(STORAGE_CIFS);
-use constant STORAGE_S3                                             => 's3';
-    push @EXPORT, qw(STORAGE_S3);
+use constant AZURE                                                  => 'azure';
+    push @EXPORT, qw(AZURE);
+use constant CIFS                                                   => 'cifs';
+    push @EXPORT, qw(CIFS);
+use constant POSIX                                                  => STORAGE_POSIX;
+    push @EXPORT, qw(POSIX);
+use constant S3                                                     => 's3';
+    push @EXPORT, qw(S3);
 
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
@@ -95,10 +100,14 @@ use constant CFGOPTVAL_RESTORE_TYPE_XID                             => 'xid';
 
 use constant NONE                                                   => 'none';
     push @EXPORT, qw(NONE);
+use constant BZ2                                                    => 'bz2';
+    push @EXPORT, qw(BZ2);
 use constant GZ                                                     => 'gz';
     push @EXPORT, qw(GZ);
 use constant LZ4                                                    => 'lz4';
     push @EXPORT, qw(LZ4);
+use constant ZST                                                    => 'zst';
+    push @EXPORT, qw(ZST);
 
 ####################################################################################################################################
 # new
@@ -452,7 +461,7 @@ sub backupEnd
     my $strLatestLink = $self->repoBackupPath(LINK_LATEST);
     my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq STORAGE_POSIX) && $self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -484,9 +493,9 @@ sub backupEnd
     {
         my $oHostGroup = hostGroupGet();
 
-        if (defined($oHostGroup->hostGet(HOST_DB_MASTER, true)))
+        if (defined($oHostGroup->hostGet(HOST_DB_PRIMARY, true)))
         {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_MASTER)->testPath() . '/' . PROJECT_CONF);
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_PRIMARY)->testPath() . '/' . PROJECT_CONF);
         }
 
         if (defined($oHostGroup->hostGet(HOST_DB_STANDBY, true)))
@@ -817,6 +826,7 @@ sub expire
         'expire' .
         (defined($$oParam{iRetentionFull}) ? " full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " diff=$$oParam{iRetentionDiff}" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' (' . $self->nameGet() . ' host)';
     &log(INFO, "        ${strComment}");
 
@@ -828,6 +838,7 @@ sub expire
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         '  --stanza=' . $self->stanza() . ' expire',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
@@ -1129,7 +1140,7 @@ sub configCreate
     my $strStanza = $self->stanza();
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = $oHostGroup->hostGet($self->backupDestination());
-    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER);
+    my $oHostDbPrimary = $oHostGroup->hostGet(HOST_DB_PRIMARY);
     my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY, true);
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
@@ -1154,7 +1165,7 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level'} = 3;
 
     # Only set network compress level if there is more than one host
-    if ($oHostBackup != $oHostDbMaster)
+    if ($oHostBackup != $oHostDbPrimary)
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level-network'} = 1;
     }
@@ -1175,15 +1186,24 @@ sub configCreate
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
         # S3 settings
-        if ($oParam->{bS3})
+        if ($oParam->{strStorage} eq S3)
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = STORAGE_S3;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = S3;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key'} = HOST_S3_ACCESS_KEY;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-key-secret'} = HOST_S3_ACCESS_SECRET_KEY;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-bucket'} = HOST_S3_BUCKET;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-endpoint'} = HOST_S3_ENDPOINT;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-region'} = HOST_S3_REGION;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-verify-ssl'} = 'n';
+        }
+        elsif ($oParam->{strStorage} eq AZURE)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = AZURE;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-account'} = HOST_AZURE_ACCOUNT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-key'} = HOST_AZURE_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-container'} = HOST_AZURE_CONTAINER;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
@@ -1202,13 +1222,13 @@ sub configCreate
     # If this is the backup host
     if ($self->isHostBackup())
     {
-        my $oHostDb1 = $oHostDbMaster;
+        my $oHostDb1 = $oHostDbPrimary;
         my $oHostDb2 = $oHostDbStandby;
 
         if ($self->nameTest(HOST_DB_STANDBY))
         {
             $oHostDb1 = $oHostDbStandby;
-            $oHostDb2 = $oHostDbMaster;
+            $oHostDb2 = $oHostDbPrimary;
         }
 
         if ($self->nameTest(HOST_BACKUP))
@@ -2163,9 +2183,9 @@ sub hardLink {return shift->{bHardLink}}
 sub hasLink {storageRepo()->capability(STORAGE_CAPABILITY_LINK)}
 sub isFS {storageRepo()->type() ne STORAGE_OBJECT}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
-sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
+sub isHostDbPrimary {return shift->nameGet() eq HOST_DB_PRIMARY}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}
-sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby()}
+sub isHostDb {my $self = shift; return $self->isHostDbPrimary() || $self->isHostDbStandby()}
 sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoArchivePath {return shift->repoSubPath('archive', shift)}

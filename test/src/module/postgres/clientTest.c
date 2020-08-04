@@ -35,7 +35,7 @@ testRun(void)
         if (system("sudo pg_ctlcluster 11 test start") != 0)
             THROW(AssertError, "unable to start cluster");
 
-        if (system(strPtr(strNewFmt("sudo -u postgres psql -c 'create user %s superuser'", testUser()))) != 0)
+        if (system(strZ(strNewFmt("sudo -u postgres psql -c 'create user %s superuser'", testUser()))) != 0)
             THROW(AssertError, "unable to create superuser");
 #endif
 
@@ -105,7 +105,7 @@ testRun(void)
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB, .param = strPtr(
+            {.function = HRNPQ_CONNECTDB, .param = strZ(
                 strNewFmt("[\"dbname='postgres' port=5432 user='%s' host='/var/run/postgresql'\"]", testUser()))},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
             {.function = NULL}

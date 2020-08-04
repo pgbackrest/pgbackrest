@@ -41,7 +41,7 @@ testRun(void)
         String *configFile = strNewFmt("%s/test.config", testPath());
 
         String *configIncludePath = strNewFmt("%s/conf.d", testPath());
-        mkdir(strPtr(configIncludePath), 0750);
+        mkdir(strZ(configIncludePath), 0750);
 
         // Check old config file constants
         // -------------------------------------------------------------------------------------------------------------------------
@@ -53,8 +53,8 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
-        strLstAdd(argList, strNewFmt("--config-include-path=%s", strPtr(configIncludePath)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
+        strLstAdd(argList, strNewFmt("--config-include-path=%s", strZ(configIncludePath)));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
@@ -68,7 +68,7 @@ testRun(void)
                 "spool-path=/path/to/spool\n"));
 
         storagePut(
-            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/global-backup.conf", strZ(configIncludePath))),
             BUFSTRDEF(
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
@@ -82,14 +82,14 @@ testRun(void)
                 "buffer-size=65536\n"));
 
         storagePut(
-            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strZ(configIncludePath))),
             BUFSTRDEF(
                 "[db:backup]\n"
                 "delta=n\n"
                 "recovery-option=a=b\n"));
 
         storagePut(
-            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza.db.conf", strPtr(configIncludePath))),
+            storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza.db.conf", strZ(configIncludePath))),
             BUFSTRDEF(
                 "[db]\n"
                 "pg1-host=db\n"
@@ -99,7 +99,7 @@ testRun(void)
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command with config-include");
         harnessLogResult(
-            strPtr(
+            strZ(
                 strNew(
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "P00   WARN: configuration file contains invalid option 'bogus'\n"
@@ -126,10 +126,10 @@ testRun(void)
 
         // Rename conf files - ensure read of conf extension only is attempted
         //--------------------------------------------------------------------------------------------------------------------------
-        rename(strPtr(strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
-            strPtr(strNewFmt("%s/db-backup.conf.save", strPtr(configIncludePath))));
-        rename(strPtr(strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
-            strPtr(strNewFmt("%s/global-backup.confsave", strPtr(configIncludePath))));
+        rename(strZ(strNewFmt("%s/db-backup.conf", strZ(configIncludePath))),
+            strZ(strNewFmt("%s/db-backup.conf.save", strZ(configIncludePath))));
+        rename(strZ(strNewFmt("%s/global-backup.conf", strZ(configIncludePath))),
+            strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
         String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
@@ -194,7 +194,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
-            FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(strNewFmt("%s/BOGUS", testPath())));
+            FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(strNewFmt("%s/BOGUS", testPath())));
 
         strLstFree(parseOptionList[cfgOptConfig].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
@@ -237,7 +237,7 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        mkdir(strPtr(strPath(oldConfigDefault)), 0750);
+        mkdir(strZ(strPath(oldConfigDefault)), 0750);
         storagePut(
             storageNewWriteP(storageLocalWrite(), oldConfigDefault),
             BUFSTRDEF(
@@ -433,7 +433,7 @@ testRun(void)
         // config file (that was not read in the previous test) to pgbackrest.conf so it will be read by the override
         TEST_RESULT_INT(
             system(
-                strPtr(strNewFmt("cp %s %s", strPtr(configFile), strPtr(strNewFmt("%s/pgbackrest.conf", testPath()))))), 0,
+                strZ(strNewFmt("cp %s %s", strZ(configFile), strZ(strNewFmt("%s/pgbackrest.conf", testPath()))))), 0,
                 "copy configFile to pgbackrest.conf");
 
         parseOptionList[cfgOptConfig].found = false;
@@ -467,7 +467,7 @@ testRun(void)
         // config default and config-include-path passed - but no config files in the include path - only in the default path
         // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+        TEST_RESULT_INT(system(strZ(strNewFmt("rm -rf %s/" "*", strZ(configIncludePath)))), 0, "remove all include files");
 
         value = strLstNew();
         strLstAdd(value, configIncludePath);
@@ -487,7 +487,8 @@ testRun(void)
 
         // config default and config-include-path passed - only empty file in the include path and nothing in either config defaults
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
+        TEST_RESULT_INT(
+            system(strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/empty.conf", strZ(configIncludePath)))))), 0,
             "add empty conf file to include directory");
 
         value = strLstNew();
@@ -513,76 +514,76 @@ testRun(void)
         TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
         strTrunc(value, strChr(value, '.'));
-        strCat(value, "K2");
+        strCatZ(value, "K2");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10K2' is not valid");
         strTrunc(value, strChr(value, '1'));
-        strCat(value, "ab");
+        strCatZ(value, "ab");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value 'ab' is not valid");
 
         strTrunc(value, strChr(value, 'a'));
-        strCat(value, "10");
+        strCatZ(value, "10");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
         TEST_RESULT_STR_Z(value, "10", "value no character identifier - straight to bytes");
 
-        strCat(value, "B");
+        strCatZ(value, "B");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
         TEST_RESULT_STR_Z(value, "10", "value B to bytes");
 
-        strCat(value, "Kb");
+        strCatZ(value, "Kb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
         TEST_RESULT_STR_Z(value, "10240", "value KB to bytes");
 
         strTrunc(value, strChr(value, '2'));
-        strCat(value, "k");
+        strCatZ(value, "k");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
         TEST_RESULT_STR_Z(value, "10240", "value k to bytes");
 
-        strCat(value, "pB");
+        strCatZ(value, "pB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
         TEST_RESULT_STR_Z(value, "11529215046068469760", "value Pb to bytes");
 
         strTrunc(value, strChr(value, '5'));
-        strCat(value, "GB");
+        strCatZ(value, "GB");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
         TEST_RESULT_STR_Z(value, "11811160064", "value GB to bytes");
 
         strTrunc(value, strChr(value, '8'));
-        strCat(value, "g");
+        strCatZ(value, "g");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
         TEST_RESULT_STR_Z(value, "11811160064", "value g to bytes");
 
         strTrunc(value, strChr(value, '8'));
-        strCat(value, "T");
+        strCatZ(value, "T");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
         TEST_RESULT_STR_Z(value, "12094627905536", "value T to bytes");
 
         strTrunc(value, strChr(value, '0'));
-        strCat(value, "tb");
+        strCatZ(value, "tb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
         TEST_RESULT_STR_Z(value, "13194139533312", "value tb to bytes");
 
         strTrunc(value, strChr(value, '3'));
-        strCat(value, "0m");
+        strCatZ(value, "0m");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
         TEST_RESULT_STR_Z(value, "10485760", "value m to bytes");
 
-        strCat(value, "mb");
+        strCatZ(value, "mb");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
         TEST_RESULT_STR_Z(value, "10995116277760", "value mb to bytes");
 
         strTrunc(value, strChr(value, '0'));
-        strCat(value, "99999999999999999999p");
+        strCatZ(value, "99999999999999999999p");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_STR_Z(value, "225179981368524800000000000000000000", "value really large  to bytes");
     }
@@ -1004,7 +1005,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePutP(
@@ -1021,7 +1022,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePutP(
@@ -1038,7 +1039,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePutP(
@@ -1050,13 +1051,13 @@ testRun(void)
 
         TEST_ERROR(configParse(
             strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            strPtr(strNew("configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'")));
+            strZ(strNew("configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePutP(
@@ -1132,6 +1133,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
         strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
@@ -1171,7 +1173,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 1048576, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
@@ -1181,8 +1183,9 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
+        strLstAddZ(argList, "--" CFGOPT_PG2_LOCAL);
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -1224,11 +1227,13 @@ testRun(void)
                 "[db]\n"
                 "pg1-host=db\n"
                 "pg1-path=/path/to/db\n"
+                CFGOPT_PG2_HOST "=ignore\n"
+                CFGOPT_PG2_PATH "=/path/to/db2\n"
                 "recovery-option=c=d\n"));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(
-            strPtr(
+            strZ(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
                     "P00   WARN: environment contains invalid negate option 'no-delta'\n"
@@ -1242,6 +1247,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptPgLocal + 1), true, "    pg2-local is set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost + 1), false, "    pg2-host is not set (pg2-local override)");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath + 1), "/path/to/db2", "    pg2-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
@@ -1277,7 +1285,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--archive-push-queue-max=4503599627370496"));
         strLstAdd(argList, strNew("--buffer-size=2MB"));
@@ -1353,7 +1361,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
 
@@ -1400,7 +1408,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("info"));
 
         storagePutP(
@@ -1465,17 +1473,17 @@ testRun(void)
 
         for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
         {
-            testOptionFind(strPtr(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
             testOptionFind(
-                strPtr(strNewFmt("db%u-config", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + optionIdx));
-            testOptionFind(strPtr(strNewFmt("db%u-host", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHost + optionIdx));
-            testOptionFind(strPtr(strNewFmt("db%u-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPath + optionIdx));
-            testOptionFind(strPtr(strNewFmt("db%u-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPort + optionIdx));
+                strZ(strNewFmt("db%u-config", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHost + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPath + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPort + optionIdx));
             testOptionFind(
-                strPtr(strNewFmt("db%u-socket-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + optionIdx));
+                strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + optionIdx));
             testOptionFind(
-                strPtr(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
-            testOptionFind(strPtr(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
+                strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
         }
     }
 

@@ -83,16 +83,23 @@ testSuite(CompressType type, const char *decompressCmd)
     varLstAdd(compressParamList, varNewUInt(1));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     TEST_TITLE("simple data");
 
     TEST_ASSIGN(
         compressed,
         testCompress(
-            compressFilterVar(strNewFmt("%sCompress", strPtr(compressTypeStr(type))), compressParamList), decompressed, 1024,
+            compressFilterVar(strNewFmt("%sCompress", strZ(compressTypeStr(type))), compressParamList), decompressed, 1024,
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
+
+    // -------------------------------------------------------------------------------------------------------------------------
+    TEST_TITLE("compressed output can be decompressed with command-line tool");
+
+    storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
+    TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
+    TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
     TEST_RESULT_BOOL(
         bufEq(compressed, testCompress(compressFilter(type, 1), decompressed, 1024, 1)), true,
@@ -110,7 +117,7 @@ testSuite(CompressType type, const char *decompressCmd)
         bufEq(
             decompressed,
             testDecompress(
-                compressFilterVar(strNewFmt("%sDecompress", strPtr(compressTypeStr(type))), NULL), compressed, 1024, 1024)),
+                compressFilterVar(strNewFmt("%sDecompress", strZ(compressTypeStr(type))), NULL), compressed, 1024, 1024)),
         true, "simple data - decompress large in/large out buffer");
 
     TEST_RESULT_BOOL(
@@ -124,16 +131,6 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_RESULT_BOOL(
         bufEq(decompressed, testDecompress(decompressFilter(type), compressed, 1, 1)), true,
         "simple data - decompress small in/small out buffer");
-
-    // -------------------------------------------------------------------------------------------------------------------------
-    if (decompressCmd != NULL)
-    {
-        TEST_TITLE("compressed output can be decompressed with command-line tool");
-
-        storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
-        TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
-        TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
-    }
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("error on no compression data");
@@ -150,19 +147,25 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
-    TEST_TITLE("compress a large zero input buffer into small output buffer");
+    TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    memset(bufPtr(decompressed), 0, bufSize(decompressed));
+    unsigned char *chr = bufPtr(decompressed);
+
+    // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
+    // sure that we fill the compression library's small output buffer
+    for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
+        chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
+
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
-        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 1024),
-        "zero data - compress large in/small out buffer");
+        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
+        "non-zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
         bufEq(decompressed, testDecompress(decompressFilter(type), compressed, bufSize(compressed), 1024 * 256)), true,
-        "zero data - decompress large in/small out buffer");
+        "non-zero data - decompress large in/small out buffer");
 }
 
 /***********************************************************************************************************************************
@@ -207,6 +210,49 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("bz2"))
+    {
+        // Run standard test suite
+        testSuite(compressTypeBz2, "bzip2 -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2Error()");
+
+        TEST_RESULT_INT(bz2Error(BZ_OK), BZ_OK, "check ok");
+        TEST_RESULT_INT(bz2Error(BZ_RUN_OK), BZ_RUN_OK, "check run ok");
+        TEST_RESULT_INT(bz2Error(BZ_FLUSH_OK), BZ_FLUSH_OK, "check flush ok");
+        TEST_RESULT_INT(bz2Error(BZ_FINISH_OK), BZ_FINISH_OK, "check finish ok");
+        TEST_RESULT_INT(bz2Error(BZ_STREAM_END), BZ_STREAM_END, "check stream end");
+        TEST_ERROR(bz2Error(BZ_SEQUENCE_ERROR), AssertError, "bz2 error: [-1] sequence error");
+        TEST_ERROR(bz2Error(BZ_PARAM_ERROR), AssertError, "bz2 error: [-2] parameter error");
+        TEST_ERROR(bz2Error(BZ_MEM_ERROR), MemoryError, "bz2 error: [-3] memory error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR), FormatError, "bz2 error: [-4] data error");
+        TEST_ERROR(bz2Error(BZ_DATA_ERROR_MAGIC), FormatError, "bz2 error: [-5] data error magic");
+        TEST_ERROR(bz2Error(BZ_IO_ERROR), AssertError, "bz2 error: [-6] io error");
+        TEST_ERROR(bz2Error(BZ_UNEXPECTED_EOF), AssertError, "bz2 error: [-7] unexpected eof");
+        TEST_ERROR(bz2Error(BZ_OUTBUFF_FULL), AssertError, "bz2 error: [-8] outbuff full");
+        TEST_ERROR(bz2Error(BZ_CONFIG_ERROR), AssertError, "bz2 error: [-9] config error");
+        TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
+
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
+
+        compress->stream.avail_in = 999;
+
+        TEST_RESULT_STR_Z(
+            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+
+        Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+
+        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("lz4"))
     {
 #ifdef HAVE_LIBLZ4
@@ -244,6 +290,45 @@ testRun(void)
 #endif // HAVE_LIBLZ4
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("zst"))
+    {
+#ifdef HAVE_LIBZST
+        // Run standard test suite
+        testSuite(compressTypeZst, "zstd -dc");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zstError()");
+
+        TEST_RESULT_UINT(zstError(0), 0, "check success");
+        TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
+
+        ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
+
+        compress->inputSame = true;
+        compress->inputOffset = 49;
+        compress->flushing = true;
+
+        TEST_RESULT_STR_Z(
+            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+
+        ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
+
+        decompress->inputSame = true;
+        decompress->done = true;
+        decompress->inputOffset = 999;
+
+        TEST_RESULT_STR_Z(
+            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
+            "format object");
+#else
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+#endif // HAVE_LIBZST
+    }
+
     // Test everything in the helper that is not tested in the individual compression type tests
     // *****************************************************************************************************************************
     if (testBegin("helper"))
@@ -258,7 +343,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

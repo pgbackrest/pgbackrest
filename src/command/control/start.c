@@ -18,7 +18,7 @@ cmdStart(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Remove the stop file so processes can run
-        String *stopFile = lockStopFileName(cfgOptionStr(cfgOptStanza));
+        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file exists, then remove it
         if (storageExistsP(storageLocal(), stopFile))
@@ -28,8 +28,9 @@ cmdStart(void)
         }
         else
         {
-            LOG_WARN_FMT("stop file does not exist%s",
-                (cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt(" for stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) : ""));
+            LOG_WARN_FMT(
+                "stop file does not exist%s",
+                (cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt(" for stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : ""));
         }
     }
     MEM_CONTEXT_TEMP_END();

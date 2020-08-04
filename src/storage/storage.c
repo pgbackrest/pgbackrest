@@ -53,7 +53,7 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
-    ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
+    ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
     ASSERT(interface.infoList != NULL);
@@ -197,10 +197,7 @@ storageGet(StorageRead *file, StorageGetParam param)
 
                 // If an exact read make sure the size is as expected
                 if (bufUsed(result) != param.exactSize)
-                {
-                    THROW_FMT(
-                        FileReadError, "unable to read %zu byte(s) from '%s'", param.exactSize, strPtr(storageReadName(file)));
-                }
+                    THROW_FMT(FileReadError, "unable to read %zu byte(s) from '%s'", param.exactSize, strZ(storageReadName(file)));
             }
             // Else read entire file
             else
@@ -263,7 +260,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strPtr(file));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(file));
 
         // Dup the strings into the prior context
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -410,28 +407,29 @@ storageInfoListCallback(void *data, const StorageInfo *info)
     StorageInfo infoUpdate = *info;
 
     if (listData->subPath != NULL)
-        infoUpdate.name = strNewFmt("%s/%s", strPtr(listData->subPath), strPtr(infoUpdate.name));
+        infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
 
-    // Only continue if there is no expression or the expression matches
-    if (listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name))
+    // Is this file a match?
+    bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
+
+    // Callback before checking path contents when not descending
+    if (match && listData->sortOrder != sortOrderDesc)
+        listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+    // Recurse into paths
+    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
     {
-        if (listData->sortOrder != sortOrderDesc)
-            listData->callbackFunction(listData->callbackData, &infoUpdate);
+        StorageInfoListData data = *listData;
+        data.subPath = infoUpdate.name;
 
-        // Recurse into paths
-        if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
-        {
-            StorageInfoListData data = *listData;
-            data.subPath = infoUpdate.name;
-
-            storageInfoListSort(
-                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), infoUpdate.level, data.expression,
-                data.sortOrder, storageInfoListCallback, &data);
-        }
-
-        if (listData->sortOrder == sortOrderDesc)
-            listData->callbackFunction(listData->callbackData, &infoUpdate);
+        storageInfoListSort(
+            data.storage, strNewFmt("%s/%s", strZ(data.path), strZ(data.subPath)), infoUpdate.level, data.expression,
+            data.sortOrder, storageInfoListCallback, &data);
     }
+
+    // Callback after checking path contents when descending
+    if (match && listData->sortOrder == sortOrderDesc)
+        listData->callbackFunction(listData->callbackData, &infoUpdate);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -492,7 +490,7 @@ storageInfoList(
             result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
-            THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
+            THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -691,15 +689,15 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
     else
     {
         // If the path expression is absolute then use it as is
-        if ((strPtr(pathExp))[0] == '/')
+        if ((strZ(pathExp))[0] == '/')
         {
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
                 if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
+                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
                 {
-                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
+                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
                 }
             }
 
@@ -712,20 +710,20 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
             String *pathEvaluated = NULL;
 
             // Check if there is a path expression that needs to be evaluated
-            if ((strPtr(pathExp))[0] == '<')
+            if ((strZ(pathExp))[0] == '<')
             {
                 if (this->pathExpressionFunction == NULL)
-                    THROW_FMT(AssertError, "expression '%s' not valid without callback function", strPtr(pathExp));
+                    THROW_FMT(AssertError, "expression '%s' not valid without callback function", strZ(pathExp));
 
                 // Get position of the expression end
-                char *end = strchr(strPtr(pathExp), '>');
+                char *end = strchr(strZ(pathExp), '>');
 
                 // Error if end is not found
                 if (end == NULL)
-                    THROW_FMT(AssertError, "end > not found in path expression '%s'", strPtr(pathExp));
+                    THROW_FMT(AssertError, "end > not found in path expression '%s'", strZ(pathExp));
 
                 // Create a string from the expression
-                String *expression = strNewN(strPtr(pathExp), (size_t)(end - strPtr(pathExp) + 1));
+                String *expression = strNewN(strZ(pathExp), (size_t)(end - strZ(pathExp) + 1));
 
                 // Create a string from the path if there is anything left after the expression
                 String *path = NULL;
@@ -734,11 +732,11 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                 {
                     // Error if path separator is not found
                     if (end[1] != '/')
-                        THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strPtr(pathExp));
+                        THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strZ(pathExp));
 
                     // Only create path if there is something after the path separator
                     if (end[2] == 0)
-                        THROW_FMT(AssertError, "path '%s' should not end in '/'", strPtr(pathExp));
+                        THROW_FMT(AssertError, "path '%s' should not end in '/'", strZ(pathExp));
 
                     path = strNew(end + 2);
                 }
@@ -748,7 +746,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 
                 // Evaluated path cannot be NULL
                 if (pathEvaluated == NULL)
-                    THROW_FMT(AssertError, "evaluated path '%s' cannot be null", strPtr(pathExp));
+                    THROW_FMT(AssertError, "evaluated path '%s' cannot be null", strZ(pathExp));
 
                 // Assign evaluated path to path
                 pathExp = pathEvaluated;
@@ -759,9 +757,9 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
             }
 
             if (strEqZ(this->path, "/"))
-                result = strNewFmt("/%s", strPtr(pathExp));
+                result = strNewFmt("/%s", strZ(pathExp));
             else
-                result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));
+                result = strNewFmt("%s/%s", strZ(this->path), strZ(pathExp));
 
             strFree(pathEvaluated);
         }
@@ -843,7 +841,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         // Call driver function
         if (!storageInterfacePathRemoveP(this->driver, path, param.recurse) && param.errorOnMissing)
         {
-            THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strPtr(path));
+            THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strZ(path));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -977,5 +975,5 @@ String *
 storageToLog(const Storage *this)
 {
     return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strPtr(this->type), strPtr(strToLog(this->path)), cvtBoolToConstZ(this->write));
+        "{type: %s, path: %s, write: %s}", strZ(this->type), strZ(strToLog(this->path)), cvtBoolToConstZ(this->write));
 }

@@ -13,26 +13,6 @@ export PGBR_REPO=/backrest
 git checkout -b release-ci
 ```
 
-## Update automake/config scripts
-
-These scripts are required by `src/config` and should be updated with each release, when needed. Note that these files are updated very infrequently.
-
-Check the latest version of `automake` and see if it is > `1.16.1`:
-```
-https://git.savannah.gnu.org/gitweb/?p=automake.git
-```
-
-If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
-```
-wget -O ${PGBR_REPO?}/src/build/install-sh '[URL]'
-```
-
-Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so only keep the version if it is at least two months old to help ensure stability.
-```
-wget -O ${PGBR_REPO?}/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O ${PGBR_REPO?}/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
-```
-
 ## Update the date, version, and release title
 
 Edit the latest release in `doc/xml/release.xml`, e.g.:
@@ -141,6 +121,10 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Announce release on Twitter
 
+## Do a press release once per quarter
+
+Start from the press release at https://www.postgresql.org/about/news/2057 (logon required) and update for improvements made in the last quarter. Then convert to text and send to `pgsql-announce` using https://www.postgresql.org/message-id/6b1bbd0f-08a7-bc51-7252-12bd3a645aea%40pgmasters.net as an example of how it looks in text format.
+
 ## Prepare for the next release
 
 Add new release in `doc/xml/release.xml`, e.g.:
@@ -166,4 +150,24 @@ Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."
 git push origin integration
+```
+
+## Update automake/config scripts
+
+These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
+
+Check the latest version of `automake` and see if it is > `1.16.2`:
+```
+https://git.savannah.gnu.org/gitweb/?p=automake.git
+```
+
+If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
+```
+wget -O ${PGBR_REPO?}/src/build/install-sh '[URL]'
+```
+
+Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
+```
+wget -O ${PGBR_REPO?}/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+wget -O ${PGBR_REPO?}/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 ```

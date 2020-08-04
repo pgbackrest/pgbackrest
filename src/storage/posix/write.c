@@ -56,7 +56,7 @@ Close file handle
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
 {
-    THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
+    THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -76,25 +76,25 @@ storageWritePosixOpen(THIS_VOID)
     ASSERT(this->handle == -1);
 
     // Open the file
-    this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    this->handle = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
 
-    // Attempt the create the path if it is missing
-    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)
+    // Attempt to create the path if it is missing
+    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)                                        // {vm_covered}
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->handle = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
     }
 
     // Handle errors
     if (this->handle == -1)
     {
-        if (errno == ENOENT)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strPtr(this->interface.name));
+        if (errno == ENOENT)                                                                                        // {vm_covered}
+            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strPtr(this->interface.name));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));               // {vm_covered}
     }
 
     // Set free callback to ensure file handle is freed
@@ -114,8 +114,8 @@ storageWritePosixOpen(THIS_VOID)
             updateGroupId = (gid_t)-1;
 
         THROW_ON_SYS_ERROR_FMT(
-            chown(strPtr(this->nameTmp), updateUserId, updateGroupId) == -1,
-            FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
+            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
+            strZ(this->nameTmp));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -140,7 +140,7 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
 
     // Write the data
     if (write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -164,11 +164,11 @@ storageWritePosixClose(THIS_VOID)
     {
         // Sync the file
         if (this->interface.syncFile)
-            THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strPtr(this->nameTmp));
+            THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
 
         // Close the file
         memContextCallbackClear(this->memContext);
-        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
+        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
         this->handle = -1;
 
         // Update modified time
@@ -176,19 +176,16 @@ storageWritePosixClose(THIS_VOID)
         {
             THROW_ON_SYS_ERROR_FMT(
                 utime(
-                    strPtr(this->nameTmp),
+                    strZ(this->nameTmp),
                     &((struct utimbuf){.actime = this->interface.timeModified, .modtime = this->interface.timeModified})) == -1,
-                FileInfoError, "unable to set time for '%s'", strPtr(this->nameTmp));
+                FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
         }
 
         // Rename from temp file
         if (this->interface.atomic)
         {
-            if (rename(strPtr(this->nameTmp), strPtr(this->interface.name)) == -1)
-            {
-                THROW_SYS_ERROR_FMT(
-                    FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->interface.name));
-            }
+            if (rename(strZ(this->nameTmp), strZ(this->interface.name)) == -1)
+                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         }
 
         // Sync the path
@@ -279,7 +276,7 @@ storageWritePosixNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : driver->interface.name;
+        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
 
         this = storageWriteNew(driver, &driver->interface);
     }

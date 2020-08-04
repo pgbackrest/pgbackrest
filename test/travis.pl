@@ -186,7 +186,7 @@ eval
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind liblz4-dev liblz4-tool";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev";
         }
         # Else packages needed for integration tests on containers
         else
@@ -219,7 +219,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --vm-host=none --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --no-gen --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
             (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();

@@ -18,7 +18,7 @@ testRun(void)
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
 
     // General help text is used in more than one test
-    const char *generalHelp = strPtr(strNewFmt(
+    const char *generalHelp = strZ(strNewFmt(
         "%s - General help\n"
         "\n"
         "Usage:\n"
@@ -94,7 +94,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const char *commandHelp = strPtr(strNewFmt(
+        const char *commandHelp = strZ(strNewFmt(
             "%s%s",
             helpVersion,
             " - 'version' command help\n"
@@ -112,7 +112,7 @@ testRun(void)
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
-        commandHelp = strPtr(strNewFmt(
+        commandHelp = strZ(strNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -147,7 +147,7 @@ testRun(void)
             "General Options:\n"
             "\n"
             "  --buffer-size                    buffer size for file operations\n"
-            "                                   [current=32768, default=4194304]\n"
+            "                                   [current=32768, default=1048576]\n"
             "  --cmd-ssh                        path to ssh client executable [default=ssh]\n"
             "  --compress-level-network         network compression level [default=3]\n"
             "  --config                         pgBackRest configuration file\n"
@@ -182,6 +182,16 @@ testRun(void)
             "\n",
             "Repository Options:\n"
             "\n"
+            "  --repo-azure-account             azure repository account\n"
+            "  --repo-azure-ca-file             azure repository TLS CA file\n"
+            "  --repo-azure-ca-path             azure repository TLS CA path\n"
+            "  --repo-azure-container           azure repository container\n"
+            "  --repo-azure-host                azure repository host\n"
+            "  --repo-azure-key                 azure repository key\n"
+            "  --repo-azure-key-type            azure repository key type [default=shared]\n"
+            "  --repo-azure-port                azure repository server port [default=443]\n"
+            "  --repo-azure-verify-tls          azure repository server certificate verify\n"
+            "                                   [default=y]\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
@@ -257,7 +267,7 @@ testRun(void)
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const char *optionHelp = strPtr(strNewFmt(
+        const char *optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
             "\n"
             "Buffer size for file operations.\n"
@@ -281,15 +291,15 @@ testRun(void)
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 4194304\n", optionHelp), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 1048576\n", optionHelp), "    check text");
 
         strLstAddZ(argList, "--buffer-size=32768");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 4194304\n", optionHelp), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'repo1-s3-host' option help\n"
             "\n"
             "S3 repository host.\n"
@@ -313,7 +323,7 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: s3-host\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
             "\n"
             "Repository cipher passphrase.\n"
@@ -336,7 +346,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'backup' command - 'repo-hardlink' option help\n"
             "\n"
             "Hardlink files between backups in the repository.\n"
@@ -362,7 +372,7 @@ testRun(void)
 
         // Check admonition
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'backup' command - 'repo-retention-archive' option help\n"
             "\n"
             "Number of backups worth of continuous WAL to retain.\n"
@@ -370,10 +380,13 @@ testRun(void)
             "NOTE: WAL segments required to make a backup consistent are always retained\n"
             "until the backup is expired regardless of how this option is configured.\n"
             "\n"
-            "If this value is not set, then the archive to expire will default to the\n"
-            "repo-retention-full (or repo-retention-diff) value corresponding to the\n"
-            "repo-retention-archive-type if set to full (or diff). This will ensure that WAL\n"
-            "is only expired for backups that are already expired.\n"
+            "If this value is not set and repo-retention-full-type is count (default), then\n"
+            "the archive to expire will default to the repo-retention-full (or\n"
+            "repo-retention-diff) value corresponding to the repo-retention-archive-type if\n"
+            "set to full (or diff). This will ensure that WAL is only expired for backups\n"
+            "that are already expired. If repo-retention-full-type is time, then this value\n"
+            "will default to removing archives that are earlier than the oldest full backup\n"
+            "retained after satisfying the repo-retention-full setting.\n"
             "\n"
             "This option must be set if repo-retention-archive-type is set to incr. If disk\n"
             "space is at a premium, then this setting, in conjunction with\n"
@@ -405,7 +418,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
 
-        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdHelp();
@@ -413,8 +426,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNew(
-            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+        Storage *storage = storagePosixNewP(strNew(testPath()));
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 

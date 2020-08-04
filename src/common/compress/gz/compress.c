@@ -109,13 +109,13 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression
-    gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
+    int result = gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
 
     // Is compression done?
-    if (this->flushing && this->stream.avail_out > 0)
+    if (this->flushing && result == Z_STREAM_END)
         this->done = true;
 
     // Can more input be provided on the next call?
