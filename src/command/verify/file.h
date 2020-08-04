@@ -39,8 +39,7 @@ typedef struct VerifyFileResult
 } VerifyFileResult;
 
 VerifyFileResult verifyFile(
-    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, CompressType fileCompressType,
-    CipherType cipherType, const String *cipherPass);
+    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -810,15 +810,14 @@ verifyArchive(void *data)
                         const String *filePathName = strNewFmt(
                             STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
 
-                        // Get the checksum
+                        // Get the checksum from the file name
                         String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                         protocolCommandParamAdd(command, VARSTR(filePathName));
                         protocolCommandParamAdd(command, VARSTR(checksum));
-                        protocolCommandParamAdd(command, VARBOOL(false));   // Can the size be verified?
-                        protocolCommandParamAdd(command, VARUINT64(0));     // File size to verify
-                        protocolCommandParamAdd(command, VARUINT(compressTypeFromName(fileName)));
+                        protocolCommandParamAdd(command, VARBOOL(false));                   // Can the size be verified?
+                        protocolCommandParamAdd(command, VARUINT64(0));                     // File size to verify
                         protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
                         // Assign job to result
@@ -1063,15 +1062,17 @@ verifyRender(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
-String *
+static String *
 setBackupCheckArchive(
-    const StringList *backupList, const InfoBackup *backupInfo, const StringList *archiveIdList, const InfoPg *pgHistory)
+    const StringList *backupList, const InfoBackup *backupInfo, const StringList *archiveIdList, const InfoPg *pgHistory,
+    unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, backupList);
         FUNCTION_TEST_PARAM(INFO_BACKUP, backupInfo);
         FUNCTION_TEST_PARAM(STRING_LIST, archiveIdList);
         FUNCTION_TEST_PARAM(INFO_PG, pgHistory);
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -1110,7 +1111,13 @@ setBackupCheckArchive(
                     strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
 
             if (!strEmpty(missingFromHistory))
-                LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
+            {
+                LOG_ERROR_FMT(
+                    errorTypeCode(&ArchiveMismatchError), "archiveIds '%s' are not in the archive.info history list",
+                    strPtr(missingFromHistory));
+
+                (*jobErrorTotal)++;
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1210,40 +1217,7 @@ verifyProcess(void)
 
                 // Set current backup if there is one and verify the archive history on disk is in the database history
                 jobData.currentBackup = setBackupCheckArchive(
-                    jobData.backupList, backupInfo, jobData.archiveIdList, jobData.pgHistory);
-
-                // // If there are backups, set the last backup as current if it is not in backup.info
-                // if (strLstSize(jobData.backupList) > 0)
-                // {
-                //     String *backupLabel = strLstGet(jobData.backupList, strLstSize(jobData.backupList) - 1);
-                //
-                //     if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
-                //         jobData.currentBackup = backupLabel;
-                //     else
-                //         strFree(backupLabel);
-                // }
-                //
-                // // If there are archive directories on disk, make sure they are in the database history list
-                // if (strLstSize(jobData.archiveIdList) > 0)
-                // {
-                //     StringList *archiveIdHistoryList = strLstNew();
-                //
-                //     for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(jobData.pgHistory); histIdx++)
-                //     {
-                //         strLstAdd(archiveIdHistoryList, infoPgArchiveId(jobData.pgHistory, histIdx));
-                //     }
-                //
-                //     // Get all archiveIds on disk that are not in the history list
-                //     String *missingFromHistory = strLstJoin(
-                //         strLstMergeAnti(jobData.archiveIdList,
-                //             strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
-                //
-                //     if (!strEmpty(missingFromHistory))
-                //         LOG_WARN_FMT("archiveIds '%s' are not in the archive.info history list", strPtr(missingFromHistory));
-                //
-                //     strLstFree(archiveIdHistoryList);
-                //     strFree(missingFromHistory);
-                // }
+                    jobData.backupList, backupInfo, jobData.archiveIdList, jobData.pgHistory, &jobData.jobErrorTotal);
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(

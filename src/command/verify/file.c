@@ -16,16 +16,13 @@ Verify File
 
 VerifyFileResult
 verifyFile(
-    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, CompressType fileCompressType,
-    CipherType cipherType, const String *cipherPass)
+    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
         FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum that the file should be
         FUNCTION_LOG_PARAM(BOOL, sizeCheck);                        // Can the size be verified?
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file (if checkable, else 0)
-        FUNCTION_LOG_PARAM(ENUM, fileCompressType);                 // Compress type for file
-        FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
     FUNCTION_LOG_END();
 
@@ -38,7 +35,7 @@ verifyFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepare the file for reading
-        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), filePathName));
+        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
@@ -46,8 +43,8 @@ verifyFile(
             ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
 // CSHANG How do I tell if file could not decompress? And what about errors that could be thrown - do I need to catch all those here and try to return something?
         // Add decompression filter
-        if (fileCompressType != compressTypeNone)
-            ioFilterGroupAdd(filterGroup, decompressFilter(fileCompressType));
+        if (compressTypeFromName(filePathName) != compressTypeNone)
+            ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeFromName(filePathName)));
 
         // Add sha1 filter
         ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));

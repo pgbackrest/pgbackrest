@@ -304,22 +304,29 @@ testRun(void)
         strLstAddZ(archiveIdList, "9.4-1");
         strLstAddZ(archiveIdList, "11-2");
 
-        TEST_RESULT_STR_Z(setBackupCheckArchive(strLstNew(), backupInfo, strLstNew(), pgHistory), NULL, "no archives or backups");
+        unsigned int errTotal = 0;
+
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory), NULL, "no current backup, no missing archive");
+            setBackupCheckArchive(strLstNew(), backupInfo, strLstNew(), pgHistory, &errTotal), NULL, "no archives or backups");
+        TEST_RESULT_UINT(errTotal, 0, "no error");
+        TEST_RESULT_STR_Z(
+            setBackupCheckArchive(
+                backupList, backupInfo, archiveIdList, pgHistory, &errTotal), NULL, "no current backup, no missing archive");
+        TEST_RESULT_UINT(errTotal, 0, "no error");
 
         // Add backup to end of list
         strLstAddZ(backupList, "20181119-153000F");
         strLstAddZ(archiveIdList, "12-3");
 
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory),
+            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "current backup, missing archive");
-        harnessLogResult("P00   WARN: archiveIds '12-3' are not in the archive.info history list");
+        TEST_RESULT_UINT(errTotal, 1, "error logged");
+        harnessLogResult("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdVerify()"))
+    if (testBegin("cmdVerify()- info files"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -436,9 +443,20 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file", testPath(), testPath())));
+    }
 
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("valid info files, WAL files present, no backups");
+    // *****************************************************************************************************************************
+    if (testBegin("cmdVerify()"))
+    {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
+        // Store valid archive/backup info files
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
+            "write valid archive.info");
+        storageCopy(storageNewReadP(storageTest, archiveInfoFileName), storageNewWriteP(storageTest, archiveInfoFileNameCopy));
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -458,6 +476,9 @@ testRun(void)
             "put backup.info files");
         storageCopy(storageNewReadP(storageTest, backupInfoFileName), storageNewWriteP(storageTest, backupInfoFileNameCopy));
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files, WAL files present, no backups");
+
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
         bufUsedSet(walBuffer, bufSize(walBuffer));
@@ -474,15 +495,13 @@ testRun(void)
             storagePathCreateP(storageTest, strNewFmt("%s/11-2/0000000100000000", strPtr(archiveStanzaPath))),
             "create empty timeline path");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt(
-                        "%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4",
-                        strPtr(archiveStanzaPath))),
-                walBuffer),
-            "write WAL for checksum failure");
+        StorageWrite *write = storageNewWriteP(
+            storageTest,
+            strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz",
+            strPtr(archiveStanzaPath)));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressTypeGz, 3));
+        TEST_RESULT_VOID(storagePutP(write, walBuffer), "write first WAL compressed - but checksum failure");
+
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -529,11 +548,45 @@ testRun(void)
                 "P00   WARN: path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' is empty\n"
                 "P01   WARN: invalid checksum: "
-                "<REPO:ARCHIVE>/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4\n"
+                "<REPO:ARCHIVE>/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002")));
 
         harnessLogLevelReset();
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyFile()");
+
+        VerifyFileResult result = {0};
+
+        String *filePathName = strNewFmt(
+            "%s/11-2/0000000200000000/000000020000000700000FFE-%s", STORAGE_REPO_ARCHIVE, walBufferSha1);
+        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), false, 0, NULL), "get results valid WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
+        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), true, bufSize(walBuffer), NULL), "get size results WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), true, 0, NULL), "get size results WAL");
+        TEST_RESULT_UINT(result.fileResult, verifySizeInvalid, "file size invalid");
+
+        filePathName = strNewFmt(
+            "%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz", STORAGE_REPO_ARCHIVE);
+        TEST_ASSIGN(
+            result, verifyFile(
+                filePathName, strNew("a6e1a64f0813352bc2e97f116a1800377e17d2e4"), false, 0, NULL), "get results invalid WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
+
+        filePathName = strNewFmt(
+            "%s/11-2/0000000200000000/000000020000000700000F00-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz", STORAGE_REPO_ARCHIVE);
+        TEST_ASSIGN(
+            result, verifyFile(
+                filePathName, strNew("a6e1a64f0813352bc2e97f116a1800377e17d2e4"), false, 0, NULL), "get results missing WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyFileMissing, "file missing");
+
+
+// CSHANG: Need encryption - and to test what happens if fails
+
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

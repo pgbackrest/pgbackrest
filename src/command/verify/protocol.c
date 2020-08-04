@@ -41,13 +41,11 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
             VerifyFileResult result = verifyFile(
-                varStr(varLstGet(paramList, 0)),                                                    // filename
+                varStr(varLstGet(paramList, 0)),                                                    // full filename
                 varStr(varLstGet(paramList, 1)),                                                    // checksum
                 varBool(varLstGet(paramList, 2)),                                                   // check file size?
                 varUInt64(varLstGet(paramList, 3)),                                                 // file size
-                (CompressType)varUIntForce(varLstGet(paramList, 4)),                                // compression type
-                varStr(varLstGet(paramList, 5)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc,     // cipher type
-                varStr(varLstGet(paramList, 5)));                                                   // cipher pass
+                varStr(varLstGet(paramList, 4)));                                                   // cipher pass
 
             // Return backup result
             VariantList *resultList = varLstNew();
