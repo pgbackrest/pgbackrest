@@ -506,6 +506,7 @@ sub run
                 my $strTestFlags =
                     (($self->{bOptimize} && ($self->{bProfile} || $bPerformance)) ? '-O2' : $strNoOptimizeFlags) .
                     (!$self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
+                    ' -DDEBUG_MEM' .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_NONE ? '' : " -DTEST_CONTAINER_REQUIRED") .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');

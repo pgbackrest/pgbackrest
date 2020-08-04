@@ -982,37 +982,53 @@ manifestNewBuild(
             {
                 RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
                 unsigned int fileIdx = 0;
-                const String *lastRelationFileId = NULL;
+                char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
                 bool lastRelationFileIdUnlogged = false;
+
+#ifdef DEBUG_MEM
+                // Record the temp context size before the loop begins
+                size_t sizeBegin = memContextSize(memContextCurrent());
+#endif
 
                 while (fileIdx < manifestFileTotal(this))
                 {
+                    // If this file looks like a relation.  Note that this never matches on _init forks.
                     const ManifestFile *file = manifestFile(this, fileIdx);
 
-                    // If this file looks like a relation.  Note that this never matches on _init forks.
                     if (regExpMatch(relationExp, file->name))
                     {
-                        String *fileName = strBase(file->name);
-                        String *relationFileId = strNew("");
+                        // Get the filename (without path)
+                        const char *fileName = strBaseZ(file->name);
+                        size_t fileNameSize = strlen(fileName);
 
                         // Strip off the numeric part of the relation
-                        for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
-                        {
-                            char nameChr = strZ(fileName)[nameIdx];
+                        char relationFileId[sizeof(lastRelationFileId)];
+                        unsigned int nameIdx = 0;
 
-                            if (!isdigit(nameChr))
+                        for (; nameIdx < fileNameSize; nameIdx++)
+                        {
+                            if (!isdigit(fileName[nameIdx]))
                                 break;
 
-                            strCatChr(relationFileId, nameChr);
+                            relationFileId[nameIdx] = fileName[nameIdx];
                         }
 
+                        relationFileId[nameIdx] = '\0';
+
+                        // The filename must have characters
+                        ASSERT(relationFileId[0] != '\0');
+
                         // Store the last relation so it does not need to be found everytime
-                        if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
+                        if (strcmp(lastRelationFileId, relationFileId) != 0)
                         {
                             // Determine if the relation is unlogged
-                            const String *relationInit = strNewFmt("%s/%s_init", strZ(strPath(file->name)), strZ(relationFileId));
-                            lastRelationFileId = relationFileId;
+                            String *relationInit = strNewFmt(
+                                "%.*s%s_init", (int)(strSize(file->name) - fileNameSize), strZ(file->name), relationFileId);
                             lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
+                            strFree(relationInit);
+
+                            // Save the file id so we don't need to do the lookup next time if if doesn't change
+                            strcpy(lastRelationFileId, relationFileId);
                         }
 
                         // If relation is unlogged then remove it
@@ -1025,6 +1041,11 @@ manifestNewBuild(
 
                     fileIdx++;
                 }
+
+#ifdef DEBUG_MEM
+                // Make sure that the temp context did not grow too much during the loop
+                ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
+#endif
             }
         }
         MEM_CONTEXT_TEMP_END();
