@@ -38,7 +38,7 @@ testRun(void)
 
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
                 protocolServerHandlerAdd(server, configProtocol);
-                protocolServerProcess(server);
+                protocolServerProcess(server, NULL);
             }
             HARNESS_FORK_CHILD_END();
 

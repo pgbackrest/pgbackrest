@@ -72,7 +72,7 @@ cmdRemote(int handleRead, int handleWrite)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server);
+            protocolServerProcess(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

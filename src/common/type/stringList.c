@@ -19,17 +19,7 @@ StringList *
 strLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(strLstNewParam(lstComparatorStr));
-}
-
-StringList *
-strLstNewParam(ListComparator *comparator)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = comparator));
+    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr));
 }
 
 /***********************************************************************************************************************************
@@ -77,7 +67,7 @@ strLstNewSplit(const String *string, const String *delimiter)
     ASSERT(string != NULL);
     ASSERT(delimiter != NULL);
 
-    FUNCTION_TEST_RETURN(strLstNewSplitZ(string, strPtr(delimiter)));
+    FUNCTION_TEST_RETURN(strLstNewSplitZ(string, strZ(delimiter)));
 }
 
 StringList *
@@ -95,7 +85,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
     StringList *this = strLstNew();
 
     // Base points to the beginning of the string that is being searched
-    const char *stringBase = strPtr(string);
+    const char *stringBase = strZ(string);
 
     // Match points to the next delimiter match that has been found
     const char *stringMatch = NULL;
@@ -137,7 +127,7 @@ strLstNewSplitSize(const String *string, const String *delimiter, size_t size)
     ASSERT(string != NULL);
     ASSERT(delimiter != NULL);
 
-    FUNCTION_TEST_RETURN(strLstNewSplitSizeZ(string, strPtr(delimiter), size));
+    FUNCTION_TEST_RETURN(strLstNewSplitSizeZ(string, strZ(delimiter), size));
 }
 
 StringList *
@@ -156,7 +146,7 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
     StringList *this = strLstNew();
 
     // Base points to the beginning of the string that is being searched
-    const char *stringBase = strPtr(string);
+    const char *stringBase = strZ(string);
 
     // Match points to the next delimiter match that has been found
     const char *stringMatchLast = NULL;
@@ -445,7 +435,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
         if (strLstGet(this, listIdx) == NULL)
             strCatZ(join, "[NULL]");
         else
-            strCatFmt(join, "%s%s%s", quote, strPtr(strLstGet(this, listIdx)), quote);
+            strCatFmt(join, "%s%s%s", quote, strZ(strLstGet(this, listIdx)), quote);
     }
 
     FUNCTION_TEST_RETURN(join);
@@ -545,7 +535,7 @@ strLstPtr(const StringList *this)
         if (strLstGet(this, listIdx) == NULL)
             list[listIdx] = NULL;
         else
-            list[listIdx] = strPtr(strLstGet(this, listIdx));
+            list[listIdx] = strZ(strLstGet(this, listIdx));
     }
 
     list[strLstSize(this)] = NULL;
@@ -628,7 +618,7 @@ strLstComparatorSet(StringList *this, ListComparator *comparator)
 String *
 strLstToLog(const StringList *this)
 {
-    return strNewFmt("{[%s]}", strPtr(strLstJoinQuote(this, ", ", "\"")));
+    return strNewFmt("{[%s]}", strZ(strLstJoinQuote(this, ", ", "\"")));
 }
 
 /**********************************************************************************************************************************/

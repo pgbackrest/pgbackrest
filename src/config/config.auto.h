@@ -99,6 +99,8 @@ Option constants
     STRING_DECLARE(CFGOPT_DRY_RUN_STR);
 #define CFGOPT_EXCLUDE                                              "exclude"
     STRING_DECLARE(CFGOPT_EXCLUDE_STR);
+#define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
+    STRING_DECLARE(CFGOPT_EXPIRE_AUTO_STR);
 #define CFGOPT_FILTER                                               "filter"
     STRING_DECLARE(CFGOPT_FILTER_STR);
 #define CFGOPT_FORCE                                                "force"
@@ -458,7 +460,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            202
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Command enum
@@ -515,6 +517,7 @@ typedef enum
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
     cfgOptHostId,

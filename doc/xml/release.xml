@@ -12,7 +12,67 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.28dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="argdenis"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Suppress errors when closing <cmd>local</cmd>/<cmd>remote</cmd> processes.</p>
+
+                        <p>Since the command has completed it is counterproductive to throw an error but still <b>warn</b> to indicate that something unusual happened.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Fix issue with = character in file or database names."/>
+                        <commit subject="Preserve Variant parsed from JSON in iniLoad()."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brad.nicholson"/>
+                            <release-item-ideator id="bastian.wegge"/>
+                            <release-item-reviewer id="bastian.wegge"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue with <id>=</id> character in file or database names.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="MannerMan"/>
+                            <release-item-ideator id="brad.nicholson"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="brad.nicholson"/>
+                            <release-item-reviewer id="MannerMan"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve memory usage of unlogged relation detection in manifest build.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-reviewer id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that <cmd>expire</cmd> must be run regularly when <br-option>expire-auto</br-option> is disabled.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2020-07-20" version="2.28" title="Azure Repository Storage">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -39,11 +99,39 @@
 
                         <p>Azure support for repository storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>expire-auto</br-option> option.</p>
+
+                        <p>This allows automatic expiration after a successful backup to be disabled.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Asynchronous S3 multipart upload."/>
+                        <commit subject="Rename httpRequest() to httpRequestResponse() and fix comment."/>
+                        <commit subject="Update comment and parameter in HttpRequest."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
                         <p>Asynchronous S3 multipart upload.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatic retry for <cmd>backup</cmd>, <cmd>restore</cmd>, <cmd>archive-get</cmd>, and <cmd>archive-push</cmd>.</p>
                     </release-item>
 
                     <release-item>
@@ -96,6 +184,15 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically determine cipher passphrase in <cmd>repo-get</cmd> command.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="stefan.fercot"/>
@@ -154,24 +251,46 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Update the FAQ page to clarify how a backup set can be expired.</p>
+                        <p>Update <postgres/> versions used to build user guides.</p>
+
+                        <p>Also add version ranges to indicate that a user guide is accurate for a range of <postgres/> versions even if it was built for a specific version.</p>
                     </release-item>
 
                     <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Update the PITR FAQ to clarify the default behavior.</p>
+                        <p>Update FAQ for expiring a specific backup set.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Update FAQ page for expiring a specific backup set."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update FAQ to clarify default PITR behavior.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
 
             <release-test-list>
                 <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove <id>real/all</id> integration tests now covered by unit tests.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -8302,6 +8421,16 @@
             <contributor-id type="github">trinchan</contributor-id>
         </contributor>
 
+        <contributor id="argdenis">
+            <contributor-name-display>argdenis</contributor-name-display>
+            <contributor-id type="github">argdenis</contributor-id>
+        </contributor>
+
+        <contributor id="bastian.wegge">
+            <contributor-name-display>Bastian Wegge</contributor-name-display>
+            <contributor-id type="github">bastianwegge</contributor-id>
+        </contributor>
+
         <contributor id="benoit.lobréau">
             <contributor-name-display>blogh</contributor-name-display>
             <contributor-id type="github">blogh</contributor-id>
@@ -8650,6 +8779,11 @@
         <contributor id="magnus.hagander">
             <contributor-name-display>Magnus Hagander</contributor-name-display>
             <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="MannerMan">
+            <contributor-name-display>Oscar</contributor-name-display>
+            <contributor-id type="github">MannerMan</contributor-id>
         </contributor>
 
         <contributor id="marc.cousin">

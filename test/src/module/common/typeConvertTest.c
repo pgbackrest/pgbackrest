@@ -79,6 +79,28 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cvtInt32ToZigZag(), cvtInt32FromZigZag(), cvtInt64ToZigZag(), and cvtInt64FromZigZag()"))
+    {
+        TEST_TITLE("32-bit zigzag");
+
+        TEST_RESULT_UINT(cvtInt32ToZigZag(-1), 1, "-1 to zigzag");
+        TEST_RESULT_UINT(cvtInt32ToZigZag(INT32_MIN), UINT32_MAX, "INT32_MIN to zigzag");
+        TEST_RESULT_UINT(cvtInt32ToZigZag(INT32_MAX), UINT32_MAX - 1, "INT32_MAX to zigzag");
+        TEST_RESULT_INT(cvtInt32FromZigZag(1), -1, "-1 to zigzag");
+        TEST_RESULT_INT(cvtInt32FromZigZag(UINT32_MAX), INT32_MIN, "zigzag to INT32_MIN");
+        TEST_RESULT_INT(cvtInt32FromZigZag(UINT32_MAX - 1), INT32_MAX, "zigzag to INT32_MAX");
+
+        TEST_TITLE("64-bit zigzag");
+
+        TEST_RESULT_UINT(cvtInt64ToZigZag(-1), 1, "-1 to zigzag");
+        TEST_RESULT_UINT(cvtInt64ToZigZag(INT64_MIN), UINT64_MAX, "INT64_MIN to zigzag");
+        TEST_RESULT_UINT(cvtInt64ToZigZag(INT64_MAX), UINT64_MAX - 1, "INT64_MAX to zigzag");
+        TEST_RESULT_INT(cvtInt64FromZigZag(1), -1, "-1 to zigzag");
+        TEST_RESULT_INT(cvtInt64FromZigZag(UINT64_MAX), INT64_MIN, "zigzag to INT64_MIN");
+        TEST_RESULT_INT(cvtInt64FromZigZag(UINT64_MAX - 1), INT64_MAX, "zigzag to INT64_MAX");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cvtModeToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];

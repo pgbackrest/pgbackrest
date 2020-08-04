@@ -2,7 +2,7 @@
 HTTP Request
 
 Send a request to an HTTP server and get a response. The interface is natively asynchronous, i.e. httpRequestNew() sends a request
-and httpRequest() waits for a response. These can be called together for synchronous behavior or separately for asynchronous
+and httpRequestResponse() waits for a response. These can be called together for synchronous behavior or separately for asynchronous
 behavior.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_REQUEST_H
@@ -71,8 +71,8 @@ HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Send a request to the server
-HttpResponse *httpRequest(HttpRequest *this, bool contentCache);
+// Wait for a response from the request
+HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
 void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribute__((__noreturn__));

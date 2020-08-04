@@ -100,7 +100,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServerNew(strNew("db test server"), strNew("test"), read, write), "create server");
                 TEST_RESULT_VOID(protocolServerHandlerAdd(server, dbProtocol), "add handler");
-                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
+                TEST_RESULT_VOID(protocolServerProcess(server, NULL), "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
             HARNESS_FORK_CHILD_END();

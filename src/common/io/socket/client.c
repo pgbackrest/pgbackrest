@@ -112,10 +112,10 @@ sckClientOpen(SocketClient *this)
                 struct addrinfo *hostAddress;
                 int resultAddr;
 
-                if ((resultAddr = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
+                if ((resultAddr = getaddrinfo(strZ(this->host), port, &hints, &hostAddress)) != 0)
                 {
                     THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), resultAddr,
+                        HostConnectError, "unable to get address for '%s': [%d] %s", strZ(this->host), resultAddr,
                         gai_strerror(resultAddr));
                 }
 
@@ -190,5 +190,5 @@ sckClientStatStr(void)
 String *
 sckClientToLog(const SocketClient *this)
 {
-    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strPtr(this->host), this->port, this->timeout);
+    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
 }

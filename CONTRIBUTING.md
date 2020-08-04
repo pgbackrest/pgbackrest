@@ -46,12 +46,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 66 tests selected
+--> P00   INFO: 67 tests selected
                 
-    P00   INFO: P1-T01/66 - vm=none, module=common, test=error
-           [filtered 63 lines of output]
-    P00   INFO: P1-T65/66 - vm=none, module=performance, test=type
-    P00   INFO: P1-T66/66 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/67 - vm=none, module=common, test=error
+           [filtered 64 lines of output]
+    P00   INFO: P1-T66/67 - vm=none, module=performance, test=type
+    P00   INFO: P1-T67/67 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -101,6 +101,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
         TESTS COMPLETED SUCCESSFULLY
     
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
+    P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
@@ -121,6 +122,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
                 
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
+    P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
@@ -136,7 +138,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 --- output ---
 
     P00   INFO: test begin - log level info
-    P00   INFO: Using cached pgbackrest/test:u18-base-20200521A image (7df9a43ce9b6736e5f8dc797edd0f6326908fd2b) ...
+    P00   INFO: Using cached pgbackrest/test:u18-base-20200626A image (7df9a43ce9b6736e5f8dc797edd0f6326908fd2b) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
 ```
@@ -159,7 +161,6 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
                 
     P00   INFO: P1-T1/1 - vm=u18, module=mock, test=archive, run=2
     P00   INFO: no code modules had all tests run required for coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -299,7 +300,7 @@ If configuration options are required then a string list with the command and op
 ```
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
+strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));       // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
 harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
@@ -325,8 +326,9 @@ Sometimes it is necessary to store a file to the test directory. The following d
 ```
 String *content = strNew("bad content");
 TEST_RESULT_VOID(
-    storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
-        harnessInfoChecksum(content)), "store a corrupt backup.info file");
+    storagePutP(
+        storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strZ(repoPath))), harnessInfoChecksum(content)),
+    "store a corrupt backup.info file");
 ```
 **Testing a log message**
 

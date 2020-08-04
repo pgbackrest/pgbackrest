@@ -32,7 +32,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstNew*(), lstMemContext(), lstToLog(), and lstFree()"))
     {
-        List *list = lstNew(sizeof(void *));
+        List *list = lstNewP(sizeof(void *));
 
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
         TEST_RESULT_UINT(list->listSize, 0, "list size");
@@ -48,7 +48,7 @@ testRun(void)
         TEST_RESULT_STR_Z(lstToLog(list), "{size: 0}", "check log after clear");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
-        TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
+        TEST_RESULT_VOID(lstFree(lstNewP(1)), "free empty list");
         TEST_RESULT_VOID(lstFree(NULL), "free null list");
 
         TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
@@ -77,7 +77,10 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            list = lstNew(sizeof(int));
+            list = lstNewP(sizeof(int));
+
+            TEST_ERROR(lstGetLast(list), AssertError, "cannot get last from list with no values");
+            TEST_ERROR(lstRemoveLast(list), AssertError, "cannot remove last from list with no values");
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
@@ -107,12 +110,13 @@ testRun(void)
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
-            int *item = lstGet(list, listIdx);
+            int *item = listIdx == lstSize(list) - 1 ? lstGetLast(list) : lstGet(list, listIdx);
+
             TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
         }
 
         // Remove last item
-        TEST_RESULT_VOID(lstRemoveIdx(list, lstSize(list) - 1), "remove last item");
+        TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
@@ -128,7 +132,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstSort"))
     {
-        List *list = lstNew(sizeof(int));
+        List *list = lstNewP(sizeof(int));
         lstComparatorSet(list, testComparator);
         int value;
 

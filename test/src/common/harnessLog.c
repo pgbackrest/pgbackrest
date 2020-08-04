@@ -223,7 +223,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(harnessLog.memContext)
         {
-            harnessLog.replaceList = lstNew(sizeof(HarnessLogReplace));
+            harnessLog.replaceList = lstNewP(sizeof(HarnessLogReplace));
         }
         MEM_CONTEXT_END();
     }
@@ -295,18 +295,18 @@ hrnLogReplace(void)
                         {
                             THROW_FMT(
                                 AssertError, "unable to find sub expression '%s' in '%s' extracted with expresion '%s'",
-                                strPtr(logReplace->expressionSub), strPtr(match), strPtr(logReplace->expression));
+                                strZ(logReplace->expressionSub), strZ(match), strZ(logReplace->expression));
                         }
 
                         // Find beginning of match
-                        begin += regExpMatchPtr(logReplace->regExpSub) - strPtr(match);
+                        begin += regExpMatchPtr(logReplace->regExpSub) - strZ(match);
 
                         // Get the match
                         match = regExpMatchStr(logReplace->regExpSub);
                     }
 
                     // Build replacement string.  If versioned then append the version number.
-                    String *replace = strNewFmt("[%s", strPtr(logReplace->replacement));
+                    String *replace = strNewFmt("[%s", strZ(logReplace->replacement));
 
                     if (logReplace->version)
                     {
@@ -332,7 +332,7 @@ hrnLogReplace(void)
 
                     // Move data from end of string enough to make room for the replacement and copy replacement
                     memmove(end + diff, end, strlen(end) + 1);
-                    memcpy(begin, strPtr(replace), strSize(replace));
+                    memcpy(begin, strZ(replace), strSize(replace));
                 }
             }
         }

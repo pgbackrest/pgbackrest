@@ -60,11 +60,11 @@ OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
 Process the request
 ***********************************************************************************************************************************/
 static HttpResponse *
-httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
+httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
-        FUNCTION_LOG_PARAM(BOOL, requestOnly);
+        FUNCTION_LOG_PARAM(BOOL, waitForResponse);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
 
@@ -103,8 +103,8 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         // Format the request
                         String *requestStr =
                             strNewFmt(
-                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strPtr(this->verb), strPtr(httpUriEncode(this->uri, true)),
-                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strPtr(httpQueryRender(this->query)));
+                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strZ(this->verb), strZ(httpUriEncode(this->uri, true)),
+                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
                         const StringList *headerList = httpHeaderList(this->header);
@@ -113,8 +113,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         {
                             const String *headerKey = strLstGet(headerList, headerIdx);
 
-                            strCatFmt(
-                                requestStr, "%s:%s" CRLF_Z, strPtr(headerKey), strPtr(httpHeaderGet(this->header, headerKey)));
+                            strCatFmt(requestStr, "%s:%s" CRLF_Z, strZ(headerKey), strZ(httpHeaderGet(this->header, headerKey)));
                         }
 
                         // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs
@@ -128,13 +127,13 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         // Flush all writes
                         ioWriteFlush(httpSessionIoWrite(session));
 
-                        // If only performing the request then move the session to the object context
-                        if (requestOnly)
+                        // If not waiting for the response then move the session to the object context
+                        if (!waitForResponse)
                             this->session = httpSessionMove(session, this->memContext);
                     }
 
                     // Wait for response
-                    if (!requestOnly)
+                    if (waitForResponse)
                     {
                         result = httpResponseNew(session, this->verb, contentCache);
 
@@ -142,7 +141,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
                         // looks valid. There are a few errors that might be permanently fatal but they are rare and it seems best
                         // not to try and pick and choose errors in this class to retry.
                         if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
-                            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strPtr(httpResponseReason(result)));
+                            THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 
                         // Move response to outer temp context
                         httpResponseMove(result, memContextPrior());
@@ -152,7 +151,7 @@ httpRequestProcess(HttpRequest *this, bool requestOnly, bool contentCache)
             }
             CATCH_ANY()
             {
-                // Retry if wait time has not expired
+                // Sleep and then retry unless the total wait time has expired
                 if (waitMore(wait))
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
@@ -203,13 +202,13 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
             .client = client,
             .verb = strDup(verb),
             .uri = strDup(uri),
-            .query = httpQueryDup(param.query),
+            .query = httpQueryDupP(param.query),
             .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
 
         // Send the request
-        httpRequestProcess(this, true, false);
+        httpRequestProcess(this, false, false);
         httpClientStat.request++;
     }
     MEM_CONTEXT_NEW_END();
@@ -219,7 +218,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
 
 /**********************************************************************************************************************************/
 HttpResponse *
-httpRequest(HttpRequest *this, bool contentCache)
+httpRequestResponse(HttpRequest *this, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
@@ -228,7 +227,7 @@ httpRequest(HttpRequest *this, bool contentCache)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(HTTP_RESPONSE, httpRequestProcess(this, false, contentCache));
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, httpRequestProcess(this, true, contentCache));
 }
 
 /**********************************************************************************************************************************/
@@ -248,15 +247,15 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
     // Add reason when present
     if (strSize(httpResponseReason(response)) > 0)
-        strCatFmt(error, " (%s)", strPtr(httpResponseReason(response)));
+        strCatFmt(error, " (%s)", strZ(httpResponseReason(response)));
 
     // Output uri/query
     strCatZ(error, ":\n*** URI/Query ***:");
 
-    strCatFmt(error, "\n%s", strPtr(httpUriEncode(this->uri, true)));
+    strCatFmt(error, "\n%s", strZ(httpUriEncode(this->uri, true)));
 
     if (this->query != NULL)
-        strCatFmt(error, "?%s", strPtr(httpQueryRender(this->query)));
+        strCatFmt(error, "?%s", strZ(httpQueryRenderP(this->query, .redact = true)));
 
     // Output request headers
     const StringList *requestHeaderList = httpHeaderList(this->header);
@@ -270,8 +269,8 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
             const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
 
             strCatFmt(
-                error, "\n%s: %s", strPtr(key),
-                httpHeaderRedact(this->header, key) ? "<redacted>" : strPtr(httpHeaderGet(this->header, key)));
+                error, "\n%s: %s", strZ(key),
+                httpHeaderRedact(this->header, key) ? "<redacted>" : strZ(httpHeaderGet(this->header, key)));
         }
     }
 
@@ -286,7 +285,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
         {
             const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+            strCatFmt(error, "\n%s: %s", strZ(key), strZ(httpHeaderGet(responseHeader, key)));
         }
     }
 
@@ -297,7 +296,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         strCat(error, strNewBuf(httpResponseContent(response)));
     }
 
-    THROW(ProtocolError, strPtr(error));
+    THROW(ProtocolError, strZ(error));
 }
 
 /**********************************************************************************************************************************/
@@ -305,7 +304,7 @@ String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
-        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}",
-        strPtr(this->verb), strPtr(this->uri), this->query == NULL ? "null" : strPtr(httpQueryToLog(this->query)),
-        strPtr(httpHeaderToLog(this->header)), this->content == NULL ? 0 : bufUsed(this->content));
+        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}", strZ(this->verb), strZ(this->uri),
+        this->query == NULL ? "null" : strZ(httpQueryToLog(this->query)), strZ(httpHeaderToLog(this->header)),
+        this->content == NULL ? 0 : bufUsed(this->content));
 }

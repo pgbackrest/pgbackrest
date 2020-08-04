@@ -104,8 +104,8 @@ helpRenderValue(const Variant *value)
                     strCatZ(resultTemp, ", ");
 
                 strCatFmt(
-                    resultTemp, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
-                    strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
             }
 
             result = resultTemp;
@@ -121,7 +121,7 @@ helpRenderValue(const Variant *value)
                 if (listIdx != 0)
                     strCatZ(resultTemp, ", ");
 
-                strCatFmt(resultTemp, "%s", strPtr(varStr(varLstGet(list, listIdx))));
+                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
             }
 
             result = resultTemp;
@@ -181,7 +181,7 @@ helpRender(void)
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strPtr(
+                    strZ(
                         helpRenderText(
                             STR(cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId))), commandSizeMax + 6, false,
                             CONSOLE_WIDTH)));
@@ -210,8 +210,8 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strPtr(helpRenderText(STR(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
-                    strPtr(helpRenderText(STR(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
@@ -247,7 +247,7 @@ helpRender(void)
                 {
                     const String *section = strLstGet(sectionList, sectionIdx);
 
-                    strCatFmt(result, "\n%s Options:\n\n", strPtr(strFirstUpper(strDup(section))));
+                    strCatFmt(result, "\n%s Options:\n\n", strZ(strFirstUpper(strDup(section))));
 
                     // Output options
                     VariantList *optionList = kvGetList(optionKv, VARSTR(section));
@@ -274,14 +274,14 @@ helpRender(void)
                             strCatZ(summary, " [");
 
                             if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strPtr(value));
+                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strZ(value));
 
                             if (defaultValue != NULL)
                             {
                                 if (value != NULL)
                                     strCatZ(summary, ", ");
 
-                                strCatFmt(summary, "default=%s", strPtr(defaultValue));
+                                strCatFmt(summary, "default=%s", strZ(defaultValue));
                             }
 
                             strCatZ(summary, "]");
@@ -291,7 +291,7 @@ helpRender(void)
                         strCatFmt(
                             result, "  --%s%*s%s\n",
                             cfgDefOptionName(optionDefId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionDefId)) + 2), "",
-                            strPtr(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
+                            strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
 
@@ -307,7 +307,7 @@ helpRender(void)
                     THROW(ParamInvalidError, "only one option allowed for option help");
 
                 // Ensure the option is valid
-                const char *optionName = strPtr(strLstGet(cfgCommandParam(), 0));
+                const char *optionName = strZ(strLstGet(cfgCommandParam(), 0));
                 ConfigOption optionId = cfgOptionId(optionName);
 
                 if (cfgOptionId(optionName) == -1)
@@ -329,8 +329,8 @@ helpRender(void)
                     "\n"
                     "%s\n",
                     optionName,
-                    strPtr(helpRenderText(STR(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
-                    strPtr(helpRenderText(STR(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
@@ -344,10 +344,10 @@ helpRender(void)
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strPtr(value));
+                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
-                        strCatFmt(result, "default: %s\n", strPtr(defaultValue));
+                        strCatFmt(result, "default: %s\n", strZ(defaultValue));
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
@@ -358,7 +358,7 @@ helpRender(void)
 
         // If there is more help available output a message to let the user know
         if (more != NULL)
-            strCatFmt(result, "\nUse '" PROJECT_BIN " help %s' for more information.\n", strPtr(more));
+            strCatFmt(result, "\nUse '" PROJECT_BIN " help %s' for more information.\n", strZ(more));
     }
     MEM_CONTEXT_TEMP_END();
 

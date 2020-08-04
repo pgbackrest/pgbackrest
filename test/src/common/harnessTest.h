@@ -239,13 +239,15 @@ Macros to compare results of common data types
     TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strPtrNull(statement), strPtrNull(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strPtrNull(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__);
+#define TEST_RESULT_STR_KEYRPL(statement, resultExpected, ...)                                                                     \
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__);
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strPtrNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strPtrNull(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
 
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
@@ -373,5 +375,10 @@ Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not 
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)
+
+/***********************************************************************************************************************************
+Is this a big-endian system?
+***********************************************************************************************************************************/
+#define TEST_BIG_ENDIAN() (!*(unsigned char *)&(uint16_t){1})
 
 #endif

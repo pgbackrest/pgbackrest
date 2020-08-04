@@ -71,14 +71,13 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
 
                     if (walSegmentFile != NULL)
                     {
-                        archiveFileActual = strNewFmt("%s/%s", strPtr(strSubN(archiveFile, 0, 16)), strPtr(walSegmentFile));
+                        archiveFileActual = strNewFmt("%s/%s", strZ(strSubN(archiveFile, 0, 16)), strZ(walSegmentFile));
                         break;
                     }
                 }
                 // Else if not a WAL segment, see if it exists in the archive dir
                 else if (
-                    storageExistsP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveFile))))
+                    storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile))))
                 {
                     archiveFileActual = archiveFile;
                     break;
@@ -91,14 +90,14 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
         {
             THROW_FMT(
                 ArchiveMismatchError, "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
-                strPtr(pgVersionToStr(controlInfo.version)), controlInfo.systemId);
+                strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId);
         }
 
         if (archiveFileActual != NULL)
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
+                result.archiveFileActual = strNewFmt("%s/%s", strZ(archiveId), strZ(archiveFileActual));
                 result.cipherPass = strDup(infoArchiveCipherPass(info));
             }
             MEM_CONTEXT_PRIOR_END();
@@ -168,7 +167,7 @@ archiveGetFile(
             // Copy the file
             storageCopyP(
                 storageNewReadP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveGetCheckResult.archiveFileActual)),
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveGetCheckResult.archiveFileActual)),
                     .compressible = compressible),
                 destination);
 

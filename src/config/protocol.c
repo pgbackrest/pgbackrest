@@ -37,7 +37,7 @@ configProtocol(const String *command, const VariantList *paramList, ProtocolServ
             VariantList *optionList = varLstNew();
 
             for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
-                varLstAdd(optionList, varDup(cfgOption(cfgOptionId(strPtr(varStr(varLstGet(paramList, optionIdx)))))));
+                varLstAdd(optionList, varDup(cfgOption(cfgOptionId(strZ(varStr(varLstGet(paramList, optionIdx)))))));
 
             protocolServerResponse(server, varNewVarLst(optionList));
         }

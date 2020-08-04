@@ -9,6 +9,7 @@ stress testing as needed.
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
@@ -25,58 +26,6 @@ stress testing as needed.
 #include "protocol/server.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/protocol.h"
-#include "storage/storage.intern.h"
-
-/***********************************************************************************************************************************
-Dummy functions and interface for constructing test drivers
-***********************************************************************************************************************************/
-static StorageInfo
-storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
-{
-    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
-}
-
-static bool
-storageTestDummyInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
-{
-    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
-}
-
-static StorageRead *
-storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
-{
-    (void)thisVoid; (void)file; (void)ignoreMissing; (void)param; return NULL;
-}
-
-static StorageWrite *
-storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
-{
-    (void)thisVoid; (void)file; (void)param; return NULL;
-}
-
-static bool
-storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
-{
-    (void)thisVoid; (void)path; (void)recurse; (void)param; return false;
-}
-
-static void
-storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
-{
-    (void)thisVoid; (void)file; (void)param;
-}
-
-static const StorageInterface storageInterfaceTestDummy =
-{
-    .info = storageTestDummyInfo,
-    .infoList = storageTestDummyInfoList,
-    .newRead = storageTestDummyNewRead,
-    .newWrite = storageTestDummyNewWrite,
-    .pathRemove = storageTestDummyPathRemove,
-    .remove = storageTestDummyRemove,
-};
 
 /***********************************************************************************************************************************
 Dummy callback functions
@@ -114,7 +63,7 @@ storageTestPerfInfoList(
         {
             for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
-                callback(callbackData, &(StorageInfo){.exists = true});
+                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
         }
@@ -228,7 +177,7 @@ testRun(void)
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
                 protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server);
+                protocolServerProcess(server, NULL);
 
             }
             HARNESS_FORK_CHILD_END();
@@ -247,10 +196,14 @@ testRun(void)
                 Storage *storageRemote = storageRemoteNew(
                     STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
 
+                TimeMSec timeBegin = timeMSec();
+
                 // Storage info list
                 TEST_RESULT_VOID(
                     storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
                     "list %" PRIu64 " remote files", fileTotal);
+
+                TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
                 // Free client
                 protocolClientFree(client);

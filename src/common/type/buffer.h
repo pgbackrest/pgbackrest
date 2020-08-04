@@ -16,7 +16,27 @@ typedef struct Buffer Buffer;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Cosntructors
+Fields that are common between dynamically allocated and constant buffers
+
+There is nothing user-accessible here but this construct allows constant buffers to be created and then handled by the same
+functions that process dynamically allocated buffers.
+***********************************************************************************************************************************/
+#define BUFFER_COMMON                                                                                                              \
+    size_t sizeAlloc;                                               /* Allocated size of the buffer */                             \
+    size_t size;                                                    /* Reported size of the buffer */                              \
+    bool sizeLimit;                                                 /* Is the size limited to make the buffer appear smaller? */   \
+    size_t used;                                                    /* Amount of buffer used */
+
+typedef struct BufferConst
+{
+    BUFFER_COMMON
+
+    // This version of buffer is for const macro assignments because casting can be dangerous
+    const void *buffer;
+} BufferConst;
+
+/***********************************************************************************************************************************
+Constructors
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
 
@@ -28,7 +48,7 @@ Buffer *bufDup(const Buffer *buffer);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-//Append the contents of another buffer
+// Append the contents of another buffer
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
@@ -49,62 +69,75 @@ Buffer *bufMove(Buffer *this, MemContext *parentNew);
 // Resize the buffer
 Buffer *bufResize(Buffer *this, size_t size);
 
-// Is the buffer full?
-bool bufFull(const Buffer *this);
-
 // Manage buffer limits
 void bufLimitClear(Buffer *this);
 void bufLimitSet(Buffer *this, size_t limit);
 
-// Remaining space in the buffer
-size_t bufRemains(const Buffer *this);
-
 // Buffer size
-size_t bufSize(const Buffer *this);
+__attribute__((always_inline)) static inline size_t
+bufSize(const Buffer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const BufferConst *)this)->size;
+}
 
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
-// bufPtr() then the user is responsible for updating the used size.
-size_t bufUsed(const Buffer *this);
+// bufPtr() then the user is responsible for updating used.
+__attribute__((always_inline)) static inline size_t
+bufUsed(const Buffer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const BufferConst *)this)->used;
+}
+
 void bufUsedInc(Buffer *this, size_t inc);
 void bufUsedSet(Buffer *this, size_t used);
 void bufUsedZero(Buffer *this);
+
+// Remaining space in the buffer
+__attribute__((always_inline)) static inline size_t
+bufRemains(const Buffer *this)
+{
+    return bufSize(this) - bufUsed(this);
+}
+
+// Is the buffer full?
+__attribute__((always_inline)) static inline bool
+bufFull(const Buffer *this)
+{
+    return bufUsed(this) == bufSize(this);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Buffer pointer
-unsigned char *bufPtr(Buffer *this);
+__attribute__((always_inline)) static inline unsigned char *
+bufPtr(Buffer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return (void *)((BufferConst *)this)->buffer;
+}
 
 // Const buffer pointer
-const unsigned char *bufPtrConst(const Buffer *this);
+__attribute__((always_inline)) static inline const unsigned char *
+bufPtrConst(const Buffer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const BufferConst *)this)->buffer;
+}
 
 // Pointer to remaining buffer space (after used space)
-unsigned char *bufRemainsPtr(Buffer *this);
+__attribute__((always_inline)) static inline unsigned char *
+bufRemainsPtr(Buffer *this)
+{
+    return bufPtr(this) + bufUsed(this);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 void bufFree(Buffer *this);
-
-/***********************************************************************************************************************************
-Fields that are common between dynamically allocated and constant buffers
-
-There is nothing user-accessible here but this construct allows constant buffers to be created and then handled by the same
-functions that process dynamically allocated buffers.
-***********************************************************************************************************************************/
-#define BUFFER_COMMON                                                                                                              \
-    size_t sizeAlloc;                                               /* Allocated size of the buffer */                             \
-    size_t size;                                                    /* Reported size of the buffer */                              \
-    bool sizeLimit;                                                 /* Is the size limited to make the buffer appear smaller? */   \
-    size_t used;                                                    /* Amount of buffer used */
-
-typedef struct BufferConst
-{
-    BUFFER_COMMON
-
-    // This version of buffer is for const macro assignments because casting can be dangerous
-    const void *buffer;
-} BufferConst;
 
 /***********************************************************************************************************************************
 Macros for constant buffers
@@ -126,7 +159,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Create a buffer constant inline from a String
 #define BUFSTR(string)                                                                                                             \
-    BUF((unsigned char *)strPtr(string), strSize(string))
+    BUF((unsigned char *)strZ(string), strSize(string))
 
 // Create a buffer constant inline from a constant zero-terminated string
 #define BUFSTRDEF(stringdef)                                                                                                       \

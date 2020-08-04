@@ -91,7 +91,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         }
 
         if (info->type == storageTypeLink)
-            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strPtr(jsonFromStr(info->linkDestination))));
+            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromStr(info->linkDestination))));
 
         ioWrite(listData->write, BRACER_BUF);
     }

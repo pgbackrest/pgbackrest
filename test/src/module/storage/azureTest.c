@@ -44,7 +44,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
     // When SAS spit out the query and merge in the SAS key
     if (driver->sasKey != NULL)
     {
-        HttpQuery *query = httpQueryNew();
+        HttpQuery *query = httpQueryNewP();
         StringList *uriQuery = strLstNewSplitZ(STR(uri), "?");
 
         if (strLstSize(uriQuery) == 2)
@@ -54,7 +54,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
 
         strCat(request, strLstGet(uriQuery, 0));
         strCatZ(request, "?");
-        strCat(request, httpQueryRender(query));
+        strCat(request, httpQueryRenderP(query));
     }
     // Else just output URI as is
     else
@@ -83,7 +83,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
         strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
 
     // Add host
-    strCatFmt(request, "host:%s\r\n", strPtr(hrnTlsServerHost()));
+    strCatFmt(request, "host:%s\r\n", strZ(hrnTlsServerHost()));
 
     // Add blob type
     if (param.blobType != NULL)
@@ -235,7 +235,7 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("44"));
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_MD5_STR, STRDEF("b64f49553d5c441652e95697a2c5949e"));
 
-        HttpQuery *query = httpQueryAdd(httpQueryNew(), STRDEF("a"), STRDEF("b"));
+        HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
         TEST_RESULT_STR_Z(
@@ -256,13 +256,13 @@ testRun(void)
                     16, NULL, 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
-        query = httpQueryAdd(httpQueryNew(), STRDEF("a"), STRDEF("b"));
+        query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
         TEST_RESULT_STR_Z(
             httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.windows.net'}", "check headers");
-        TEST_RESULT_STR_Z(httpQueryRender(query), "a=b&sig=key", "check query");
+        TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 
     // *****************************************************************************************************************************
@@ -290,7 +290,7 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_AZURE_TYPE);
                 strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strPtr(hrnTlsServerHost())));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnTlsServerHost())));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort()));
                 strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
@@ -372,7 +372,7 @@ testRun(void)
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
                     "CONTENT",
-                    strPtr(hrnTlsServerHost()));
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
@@ -393,7 +393,7 @@ testRun(void)
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
                     "x-ms-version: 2019-02-02",
-                    strPtr(hrnTlsServerHost()));
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
@@ -741,6 +741,22 @@ testRun(void)
                 testResponseP(.code = 404);
 
                 TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files error to check redacted sig");
+
+                testRequestP(HTTP_VERB_GET, "?comp=list&restype=container");
+                testResponseP(.code = 403);
+
+                TEST_ERROR_FMT(
+                    storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** URI/Query ***:\n"
+                    "/account/container?comp=list&restype=container&sig=<redacted>\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: 0\n"
+                    "host: %s",
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");

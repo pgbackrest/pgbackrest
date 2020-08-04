@@ -75,6 +75,7 @@ typedef enum
     cfgDefOptDelta,
     cfgDefOptDryRun,
     cfgDefOptExclude,
+    cfgDefOptExpireAuto,
     cfgDefOptFilter,
     cfgDefOptForce,
     cfgDefOptHostId,

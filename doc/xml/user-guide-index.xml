@@ -7,9 +7,9 @@
         <title>Available User Guides</title>
 
         <list>
-            <list-item><link url="user-guide.html">{[os-debian-title]} / PostgreSQL {[os-debian-pg-version]}</link></list-item>
-            <list-item><link url="user-guide-centos7.html">{[os-centos7-title]} / PostgreSQL {[os-centos7-pg-version]}</link></list-item>
-            <list-item><link url="user-guide-centos6.html">{[os-centos6-title]} / PostgreSQL {[os-centos6-pg-version]}</link></list-item>
+            <list-item><link url="user-guide.html">{[os-debian-title]} / PostgreSQL {[os-debian-pg-version-min]}-{[os-debian-pg-version-max]}</link></list-item>
+            <list-item><link url="user-guide-centos7.html">{[os-centos7-title]} / PostgreSQL {[os-centos7-pg-version-min]}-{[os-centos7-pg-version-max]}</link></list-item>
+            <list-item><link url="user-guide-centos6.html">{[os-centos6-title]} / PostgreSQL {[os-centos6-pg-version-min]}-{[os-centos6-pg-version-max]}</link></list-item>
         </list>
     </section>
 </doc>

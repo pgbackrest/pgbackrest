@@ -120,7 +120,7 @@ compressTypeEnum(const String *type)
     }
 
     if (result == COMPRESS_LIST_SIZE)
-        THROW_FMT(AssertError, "invalid compression type '%s'", strPtr(type));
+        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(type));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -136,11 +136,7 @@ compressTypePresent(CompressType type)
     ASSERT(type < COMPRESS_LIST_SIZE);
 
     if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
-    {
-        THROW_FMT(
-            OptionInvalidValueError, PROJECT_NAME " not compiled with %s support",
-            strPtr(compressHelperLocal[type].type));
-    }
+        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -298,7 +294,7 @@ compressExtStrip(const String *file, CompressType type)
     ASSERT(file != NULL);
 
     if (!strEndsWith(file, compressExtStr(type)))
-        THROW_FMT(FormatError, "'%s' must have '%s' extension", strPtr(file), strPtr(compressExtStr(type)));
+        THROW_FMT(FormatError, "'%s' must have '%s' extension", strZ(file), strZ(compressExtStr(type)));
 
     FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
 }

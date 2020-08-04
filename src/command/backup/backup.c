@@ -35,11 +35,6 @@ Backup Command
 #include "storage/helper.h"
 #include "version.h"
 
-/***********************************************************************************************************************************
-Backup constants
-***********************************************************************************************************************************/
-#define BACKUP_PATH_HISTORY                                         "backup.history"
-
 /**********************************************************************************************************************************
 Generate a unique backup label that does not contain a timestamp from a previous backup
 ***********************************************************************************************************************************/
@@ -119,11 +114,11 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             const StringList *historyList = strLstSort(
                 storageListP(
                     storageRepo(),
-                    strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strPtr(strLstGet(historyYearList, 0))),
+                    strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
                     .expression = strNewFmt(
                         "%s\\.manifest\\.%s$",
-                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                        strPtr(compressTypeStr(compressTypeGz)))),
+                        strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                        strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
             if (strLstSize(historyList) > 0)
@@ -152,7 +147,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                     "new backup label '%s' is not later than latest backup label '%s'\n"
                     "HINT: has the timezone changed?\n"
                     "HINT: is there clock skew?",
-                    strPtr(result), strPtr(backupLabelLatest));
+                    strZ(result), strZ(backupLabelLatest));
             }
 
             // If adding a second worked then sleep the remainder of the current second so we don't start early
@@ -216,7 +211,7 @@ backupInit(const InfoBackup *infoBackup)
     {
         THROW_FMT(
             ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
-            strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
+            strZ(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
     }
 
     // Don't allow backup from standby when offline
@@ -263,8 +258,8 @@ backupInit(const InfoBackup *infoBackup)
         THROW_FMT(
             BackupMismatchError,
             PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64 "\n"
-            "HINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId,
-            strPtr(pgVersionToStr(infoPg.version)), infoPg.systemId);
+            "HINT: is this the correct stanza?", strZ(pgVersionToStr(pgControl.version)), pgControl.systemId,
+            strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
     }
 
     // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
@@ -387,21 +382,21 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             if (backupLabelPrior != NULL)
             {
                 result = manifestLoadFile(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
                 const ManifestData *manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(
-                    "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
-                    strPtr(manifestData(result)->backrestVersion));
+                    "last backup label = %s, version = %s", strZ(manifestData(result)->backupLabel),
+                    strZ(manifestData(result)->backrestVersion));
 
                 // Warn if compress-type option changed
                 if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
-                        strPtr(cfgOptionStr(cfgOptType)),
-                        strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))), strPtr(backupLabelPrior));
+                        strZ(cfgOptionStr(cfgOptType)), strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                        strZ(backupLabelPrior));
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
@@ -425,8 +420,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                        strPtr(backupLabelPrior));
+                        strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
+                        strZ(backupLabelPrior));
                     cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
 
@@ -447,8 +442,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     {
                         LOG_WARN_FMT(
                             "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
-                            cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(result)->backupLabel));
+                            strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            cvtBoolToConstZ(checksumPagePrior), strZ(manifestData(result)->backupLabel));
                     }
 
                     cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
@@ -458,7 +453,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             }
             else
             {
-                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionStr(cfgOptType)));
                 cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
             }
         }
@@ -549,10 +544,10 @@ void backupResumeCallback(void *data, const StorageInfo *info)
 
     // Build the name used to lookup files in the manifest
     const String *manifestName = resumeData->manifestParentName != NULL ?
-        strNewFmt("%s/%s", strPtr(resumeData->manifestParentName), strPtr(info->name)) : info->name;
+        strNewFmt("%s/%s", strZ(resumeData->manifestParentName), strZ(info->name)) : info->name;
 
     // Build the backup path used to remove files/links/paths that are invalid
-    const String *backupPath = strNewFmt("%s/%s", strPtr(resumeData->backupPath), strPtr(info->name));
+    const String *backupPath = strNewFmt("%s/%s", strZ(resumeData->backupPath), strZ(info->name));
 
     // Process file types
     switch (info->type)
@@ -564,7 +559,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // If the path was not found in the new manifest then remove it
             if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
             {
-                LOG_DETAIL_FMT("remove path '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
                 storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
             }
             // Else recurse into the path
@@ -627,7 +622,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             if (removeReason != NULL)
             {
                 LOG_DETAIL_FMT(
-                    "remove file '%s' from resumed backup (%s)", strPtr(storagePathP(storageRepo(), backupPath)), removeReason);
+                    "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)), removeReason);
                 storageRemoveP(storageRepoWrite(), backupPath);
             }
 
@@ -647,7 +642,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
         {
-            LOG_WARN_FMT("remove special file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+            LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
         }
@@ -681,10 +676,10 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
         if (strLstSize(backupList) > 0)
         {
             const String *backupLabel = strLstGet(backupList, 0);
-            const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+            const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
             // Resumable backups have a copy of the manifest but no main
-            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFile))) &&
+            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))) &&
                 !storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
@@ -695,7 +690,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // then the backup will be considered unusable and a resume will not be attempted.
                 if (cfgOptionBool(cfgOptResume))
                 {
-                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strPtr(manifestFile));
+                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
 
                     TRY_BEGIN()
                     {
@@ -709,31 +704,31 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                         {
                             reason = strNewFmt(
                                 "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                strPtr(manifestData(manifest)->backrestVersion), strPtr(manifestResumeData->backrestVersion));
+                                strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                         }
                         // Check backup type because new backup label must be the same type as resume backup label
                         else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
                         {
                             reason = strNewFmt(
-                                "new backup type '%s' does not match resumable backup type '%s'", strPtr(cfgOptionStr(cfgOptType)),
-                                strPtr(backupTypeStr(manifestResumeData->backupType)));
+                                "new backup type '%s' does not match resumable backup type '%s'", strZ(cfgOptionStr(cfgOptType)),
+                                strZ(backupTypeStr(manifestResumeData->backupType)));
                         }
                         // Check prior backup label ??? Do we really care about the prior backup label?
                         else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
                         {
                             reason = strNewFmt(
                                 "new prior backup label '%s' does not match resumable prior backup label '%s'",
-                                manifestResumeData->backupLabelPrior ? strPtr(manifestResumeData->backupLabelPrior) : "<undef>",
+                                manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
                                 manifestData(manifest)->backupLabelPrior ?
-                                    strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
+                                    strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
                         // Check compression. Compression can't be changed between backups so resume won't work either.
                         else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                         {
                             reason = strNewFmt(
                                 "new compression '%s' does not match resumable compression '%s'",
-                                strPtr(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                                strPtr(compressTypeStr(manifestResumeData->backupOptionCompressType)));
+                                strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                         }
                         else
                             usable = true;
@@ -752,10 +747,10 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Else warn and remove the unusable backup
                 else
                 {
-                    LOG_WARN_FMT("backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
+                    LOG_WARN_FMT("backup '%s' cannot be resumed: %s", strZ(backupLabel), strZ(reason));
 
                     storagePathRemoveP(
-                        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
+                        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel)), .recurse = true);
                 }
             }
         }
@@ -792,7 +787,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
 
             LOG_WARN_FMT(
                 "resumable backup %s of same type exists -- remove invalid files and resume",
-                strPtr(manifestData(manifest)->backupLabel));
+                strZ(manifestData(manifest)->backupLabel));
 
             // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
             if (manifestData(manifest)->backupType == backupTypeFull)
@@ -805,7 +800,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
                 .manifestResume = manifestResume,
                 .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
                 .delta = cfgOptionBool(cfgOptDelta),
-                .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)),
+                .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel)),
             };
 
             storageInfoListP(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
@@ -889,14 +884,14 @@ backupStart(BackupData *backupData)
             }
             MEM_CONTEXT_PRIOR_END();
 
-            LOG_INFO_FMT("backup start archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
+            LOG_INFO_FMT("backup start archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Wait for replay on the standby to catch up
             if (cfgOptionBool(cfgOptBackupStandby))
             {
-                LOG_INFO_FMT("wait for replay on the standby to reach %s", strPtr(result.lsn));
+                LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
                 dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
-                LOG_INFO_FMT("replay on the standby reached %s", strPtr(result.lsn));
+                LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
                 dbFree(backupData->dbStandby);
@@ -932,14 +927,14 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
-            const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(name));
+            const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(name));
             CompressType compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                    strPtr(compressExtStr(compressType))),
+                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
+                    strZ(compressExtStr(compressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -981,12 +976,12 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             };
 
             memcpy(
-                file.checksumSha1, strPtr(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))),
+                file.checksumSha1, strZ(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strPtr(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1036,7 +1031,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
             }
             MEM_CONTEXT_PRIOR_END();
 
-            LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
+            LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
             backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
@@ -1092,32 +1087,32 @@ backupJobResult(
             sizeCopied += copySize;
 
             // Create log file name
-            const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strPtr(host), strPtr(fileName));
+            const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
 
             // Format log strings
             const String *const logProgress =
                 strNewFmt(
-                    "%s, %" PRIu64 "%%", strPtr(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
-            const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strPtr(copyChecksum)) : EMPTY_STR;
+                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
+            const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
 
             // If the file is in a prior backup and nothing changed, just log it
             if (copyResult == backupCopyResultNoOp)
             {
                 LOG_DETAIL_PID_FMT(
-                    processId, "match file from prior backup %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+                    processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
                 LOG_DETAIL_PID_FMT(
-                    processId, "checksum resumed file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+                    processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
             // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
             // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
             // processing.
             else if (copyResult == backupCopyResultSkip)
             {
-                LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strPtr(fileLog));
+                LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
                 strLstAdd(fileRemove, file->name);
             }
             // Else file was copied so update manifest
@@ -1133,11 +1128,10 @@ backupJobResult(
                         " continue but this may be an issue unless the resumed backup path in the repository is known to be"
                         " corrupted.\n"
                         "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                        strPtr(file->name), file->checksumSha1);
+                        strZ(file->name), file->checksumSha1);
                 }
 
-                LOG_INFO_PID_FMT(
-                    processId, "backup file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+                LOG_INFO_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                 // If the file had page checksums calculated during the copy
                 ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
@@ -1159,7 +1153,7 @@ backupJobResult(
                             // ??? Update formatting after migration
                             LOG_WARN_FMT(
                                 "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                strPtr(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
+                                strZ(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
                         }
                         else
                         {
@@ -1204,15 +1198,15 @@ backupJobResult(
 
                             // ??? Update formatting after migration
                             LOG_WARN_FMT(
-                                "invalid page checksum%s found in file %s at page%s %s", strPtr(plural), strPtr(fileLog),
-                                strPtr(plural), strPtr(error));
+                                "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog), strZ(plural),
+                                strZ(error));
                         }
                     }
                 }
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), VARSTR(NULL), file->checksumPage,
+                    manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
                     checksumPageError, checksumPageErrorList);
             }
         }
@@ -1223,7 +1217,7 @@ backupJobResult(
     }
     // Else the job errored
     else
-        THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+        THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
     FUNCTION_LOG_RETURN(UINT64, sizeCopied);
 }
@@ -1248,7 +1242,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
             storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(manifestData(manifest)->backupLabel))));
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
@@ -1303,7 +1297,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create list of process queue
-        *queueList = lstNew(sizeof(List *));
+        *queueList = lstNewP(sizeof(List *));
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
@@ -1314,7 +1308,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strPtr(target->name)));
+                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
         }
 
         // Generate the processing queues (there is always at least one)
@@ -1532,7 +1526,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         // Get backup info
         const BackupType backupType = manifestData(manifest)->backupType;
         const String *const backupLabel = manifestData(manifest)->backupLabel;
-        const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel));
+        const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel));
         bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
@@ -1548,7 +1542,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 {
                     storagePathCreateP(
                         storageRepoWrite(),
-                        strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
+                        strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name)));
                 }
             }
 
@@ -1563,13 +1557,13 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                     {
                         const String *const link = storagePathP(
                             storageRepo(),
-                            strNewFmt("%s/" MANIFEST_TARGET_PGDATA "/%s", strPtr(backupPathExp), strPtr(target->name)));
+                            strNewFmt("%s/" MANIFEST_TARGET_PGDATA "/%s", strZ(backupPathExp), strZ(target->name)));
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
                         THROW_ON_SYS_ERROR_FMT(
-                            symlink(strPtr(linkDestination), strPtr(link)) == -1, FileOpenError,
-                            "unable to create symlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+                            symlink(strZ(linkDestination), strZ(link)) == -1, FileOpenError,
+                            "unable to create symlink '%s' to '%s'", strZ(link), strZ(linkDestination));
                     }
                 }
             }
@@ -1665,7 +1659,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = strPtr(compressExtStr(jobData.compressType));
+        const char *const compressExt = strZ(compressExtStr(jobData.compressType));
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1678,22 +1672,22 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
                 if (hardLink)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s",  strPtr(file->name), strPtr(file->reference));
+                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file->name), strZ(file->reference));
 
                     const String *const linkName = storagePathP(
-                        storageRepo(), strNewFmt("%s/%s%s", strPtr(backupPathExp), strPtr(file->name), compressExt));
+                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file->name), compressExt));
                     const String *const linkDestination =  storagePathP(
                         storageRepo(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(file->reference), strPtr(file->name), compressExt));
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file->reference), strZ(file->name), compressExt));
 
                     THROW_ON_SYS_ERROR_FMT(
-                        link(strPtr(linkDestination), strPtr(linkName)) == -1, FileOpenError,
-                        "unable to create hardlink '%s' to '%s'", strPtr(linkName), strPtr(linkDestination));
+                        link(strZ(linkDestination), strZ(linkName)) == -1, FileOpenError,
+                        "unable to create hardlink '%s' to '%s'", strZ(linkName), strZ(linkDestination));
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
                 else
-                    LOG_DETAIL_FMT("reference %s to %s", strPtr(file->name), strPtr(file->reference));
+                    LOG_DETAIL_FMT("reference %s to %s", strZ(file->name), strZ(file->reference));
             }
         }
 
@@ -1702,14 +1696,14 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         {
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
-                const String *const path = strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name));
+                const String *const path = strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name));
 
                 if (backupType == backupTypeFull || hardLink || storagePathExistsP(storageRepo(), path))
                     storagePathSyncP(storageRepoWrite(), path);
             }
         }
 
-        LOG_INFO_FMT("%s backup size = %s", strPtr(backupTypeStr(backupType)), strPtr(strSizeFormat(sizeTotal)));
+        LOG_INFO_FMT("%s backup size = %s", strZ(backupTypeStr(backupType)), strZ(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1737,13 +1731,13 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
+            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strPtr(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
-                strPtr(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
+                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
+                strZ(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1776,7 +1770,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     // Open the archive file
                     StorageRead *read = storageNewReadP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveFile)));
+                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile)));
                     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
 
                     // Decrypt with archive key if encrypted
@@ -1804,15 +1798,15 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     // Copy the file
                     const String *manifestName = strNewFmt(
-                        MANIFEST_TARGET_PGDATA "/%s/%s", strPtr(pgWalPath(manifestData(manifest)->pgVersion)), strPtr(walSegment));
+                        MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
 
                     storageCopyP(
                         read,
                         storageNewWriteP(
                             storageRepoWrite(),
                             strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
-                                strPtr(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
+                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
+                                strZ(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
 
                     // Add to manifest
                     ManifestFile file =
@@ -1827,7 +1821,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                         .timestamp = manifestData(manifest)->backupTimestampStop,
                     };
 
-                    memcpy(file.checksumSha1, strPtr(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
 
                     manifestFileAdd(manifest, &file);
                 }
@@ -1864,16 +1858,16 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         storageCopy(
             storageNewReadP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(backupLabel))),
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(backupLabel))),
             storageNewWriteP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))));
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))));
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
         // is required.  We can't just do a straight copy since the destination needs to be compressed and that must happen before
         // encryption in order to be efficient. Compression will always be gz for compatibility and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
         StorageRead *manifestRead = storageNewReadP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel)));
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(manifestRead)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
@@ -1882,8 +1876,8 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         StorageWrite *manifestWrite = storageNewWriteP(
                 storageRepoWrite(),
                 strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strPtr(strSubN(backupLabel, 0, 4)),
-                    strPtr(backupLabel), strPtr(compressExtStr(compressTypeGz))));
+                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
+                    strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
 
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 
@@ -2002,7 +1996,7 @@ cmdBackup(void)
         backupArchiveCheckCopy(manifest, backupData->walSegmentSize, cipherPassBackup);
 
         // Complete the backup
-        LOG_INFO_FMT("new backup label = %s", strPtr(manifestData(manifest)->backupLabel));
+        LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
         backupComplete(infoBackup, manifest);
     }
     MEM_CONTEXT_TEMP_END();

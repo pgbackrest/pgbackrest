@@ -234,7 +234,7 @@ testRun(void)
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("spool/archive/test1/in/%s", strPtr(archiveFile))), true, "  check exists");
+            storageExistsP(storageTest, strNewFmt("spool/archive/test1/in/%s", strZ(archiveFile))), true, "  check exists");
 
         bufUsedSet(serverWrite, 0);
 
@@ -378,6 +378,13 @@ testRun(void)
                 NULL),
             "normal WAL segment");
 
+        // Create tmp file to make it look like a prior async get failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")),
+                NULL),
+            "normal WAL segment");
+
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
@@ -386,6 +393,9 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
             "check 000000010000000100000001 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")), false,
+            "check 000000010000000100000001 tmp not in spool");
 
         // Get multiple segments where some are missing or errored
         // -------------------------------------------------------------------------------------------------------------------------
@@ -567,9 +577,9 @@ testRun(void)
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
-                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
+                    strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
+                    strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
+                    strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }
@@ -597,9 +607,9 @@ testRun(void)
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
-                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
+                    strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
+                    strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
+                    strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }
@@ -613,7 +623,7 @@ testRun(void)
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
+        THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         HARNESS_FORK_BEGIN()
         {
@@ -629,8 +639,7 @@ testRun(void)
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
+        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strZ(walSegment))), NULL);
 
         HARNESS_FORK_BEGIN()
         {
@@ -645,13 +654,13 @@ testRun(void)
         harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(
-            storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), false,
+            storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strZ(walSegment))), false,
             "check OK file was removed");
 
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
         HARNESS_FORK_BEGIN()
@@ -667,7 +676,7 @@ testRun(void)
         TEST_RESULT_VOID(harnessLogResult("P01   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(
-            storageExistsP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))), false,
+            storageExistsP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))), false,
             "check WAL segment was removed from source");
         TEST_RESULT_BOOL(storageExistsP(storageTest, walFile), true, "check WAL segment was moved to destination");
         storageRemoveP(storageTest, walFile, .errorOnMissing = true);
@@ -680,10 +689,10 @@ testRun(void)
         String *walSegment2 = strNew("000000010000000100000002");
 
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
         storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment2))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
         HARNESS_FORK_BEGIN()

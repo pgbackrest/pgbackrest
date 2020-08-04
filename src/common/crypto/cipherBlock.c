@@ -203,13 +203,13 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
     if (sourceSize > 0)
     {
         // Process the data
-        size_t destinationUpdateSize = 0;
+        int destinationUpdateSize = 0;
 
         cryptoError(
-            !EVP_CipherUpdate(this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize),
+            !EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, (int)sourceSize),
             "unable to process cipher");
 
-        destinationSize += destinationUpdateSize;
+        destinationSize += (size_t)destinationUpdateSize;
 
         // Note that data has been processed so flush is valid
         this->processDone = true;
@@ -234,18 +234,18 @@ cipherBlockFlush(CipherBlock *this, Buffer *destination)
     ASSERT(destination != NULL);
 
     // Actual destination size
-    size_t destinationSize = 0;
+    int destinationSize = 0;
 
     // If no header was processed then error
     if (!this->saltDone)
         THROW(CryptoError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
-    if (!EVP_CipherFinal(this->cipherContext, bufRemainsPtr(destination), (int *)&destinationSize))
+    if (!EVP_CipherFinal(this->cipherContext, bufRemainsPtr(destination), &destinationSize))
         THROW(CryptoError, "unable to flush");
 
     // Return actual destination size
-    FUNCTION_LOG_RETURN(SIZE, destinationSize);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -399,21 +399,21 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strPtr(cipherTypeName(cipherType)));
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeName(cipherType)));
 
     if (!cipher)
-        THROW_FMT(AssertError, "unable to load cipher '%s'", strPtr(cipherTypeName(cipherType)));
+        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(cipherTypeName(cipherType)));
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
 
     if (digestName)
-        digest = EVP_get_digestbyname(strPtr(digestName));
+        digest = EVP_get_digestbyname(strZ(digestName));
     else
         digest = EVP_sha1();
 
     if (!digest)
-        THROW_FMT(AssertError, "unable to load digest '%s'", strPtr(digestName));
+        THROW_FMT(AssertError, "unable to load digest '%s'", strZ(digestName));
 
     // Allocate memory to hold process state
     IoFilter *this = NULL;

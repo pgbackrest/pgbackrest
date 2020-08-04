@@ -43,9 +43,21 @@ STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
 STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 
 /***********************************************************************************************************************************
-S3 errors
+XML tags
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR,                 "RequestTimeTooSkewed");
+STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
+STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
+STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
+STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
+STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
+STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
+STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
+STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
+STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
+STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
+STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
+STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
+STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 
 /***********************************************************************************************************************************
 Host and URI for automatically fetching the current role and credentials
@@ -89,23 +101,6 @@ Server: EC2ws
 "Token" : "XXX",
 "Expiration" : "2020-07-10T02:00:50Z"
 }
-
-/***********************************************************************************************************************************
-XML tags
-***********************************************************************************************************************************/
-STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
-STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
-STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
-STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
-STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
-STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
-STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
-STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
-STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
-STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
-STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
-STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
-STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 
 /***********************************************************************************************************************************
 AWS authentication v4 constants
@@ -216,7 +211,7 @@ storageS3Auth(
         String *signedHeaders = NULL;
 
         String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strPtr(verb), strPtr(uri), query == NULL ? "" : strPtr(httpQueryRender(query)));
+            "%s\n%s\n%s\n", strZ(verb), strZ(uri), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -227,20 +222,20 @@ storageS3Auth(
             if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
                 continue;
 
-            strCatFmt(canonicalRequest, "%s:%s\n", strPtr(headerKeyLower), strPtr(httpHeaderGet(httpHeader, headerKey)));
+            strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
 
             if (signedHeaders == NULL)
                 signedHeaders = strDup(headerKeyLower);
             else
-                strCatFmt(signedHeaders, ";%s", strPtr(headerKeyLower));
+                strCatFmt(signedHeaders, ";%s", strZ(headerKeyLower));
         }
 
-        strCatFmt(canonicalRequest, "\n%s\n%s", strPtr(signedHeaders), strPtr(payloadHash));
+        strCatFmt(canonicalRequest, "\n%s\n%s", strZ(signedHeaders), strZ(payloadHash));
 
         // Generate string to sign
         const String *stringToSign = strNewFmt(
-            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strPtr(dateTime), strPtr(date), strPtr(this->region),
-            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
+            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
+            strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -248,7 +243,7 @@ storageS3Auth(
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
-                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strPtr(this->secretAccessKey))), BUFSTR(date));
+                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
             const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
@@ -264,8 +259,8 @@ storageS3Auth(
         // Generate authorization header
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
-            strPtr(this->accessKey), strPtr(date), strPtr(this->region), strPtr(signedHeaders),
-            strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
+            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
+            strZ(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
@@ -313,7 +308,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
-            uri = strNewFmt("/%s%s", strPtr(this->bucket), strPtr(uri));
+            uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
 
         // Generate authorization header
         storageS3Auth(
@@ -346,59 +341,20 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
     ASSERT(request != NULL);
 
     HttpResponse *result = NULL;
-    unsigned int retryRemaining = 2;
-    bool done;
 
-    do
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        done = true;
+        // Get response
+        result = httpRequestResponse(request, !param.contentIo);
 
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Process request
-            result = httpRequest(request, !param.contentIo);
+        // Error if the request was not successful
+        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            httpRequestError(request, result);
 
-            // Error if the request was not successful
-            if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
-            {
-                // If there are retries remaining and a response parse it as XML to extract the S3 error code
-                const Buffer *content = httpResponseContent(result);
-
-                if (bufUsed(content) > 0 && retryRemaining > 0)
-                {
-                    // Attempt to parse the XML and extract the S3 error code
-                    TRY_BEGIN()
-                    {
-                        XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(content));
-                        const String *errorCode = xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true));
-
-                        if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
-                        {
-                            LOG_DEBUG_FMT(
-                                "retry %s: %s", strPtr(errorCode),
-                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
-
-                            retryRemaining--;
-                            done = false;
-                        }
-                    }
-                    // On failure just drop through and report the error as usual
-                    CATCH_ANY()
-                    {
-                    }
-                    TRY_END();
-                }
-
-                // If done throw the error
-                if (done)
-                    httpRequestError(request, result);
-            }
-            else
-                httpResponseMove(result, memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
+        // Move response to the prior context
+        httpResponseMove(result, memContextPrior());
     }
-    while (!done);
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
@@ -454,7 +410,7 @@ storageS3ListInternal(
         if (strSize(path) == 1)
             basePrefix = EMPTY_STR;
         else
-            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
+            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
         const String *expressionPrefix = regExpPrefix(expression);
@@ -469,7 +425,7 @@ storageS3ListInternal(
             if (strEmpty(basePrefix))
                 queryPrefix = expressionPrefix;
             else
-                queryPrefix = strNewFmt("%s%s", strPtr(basePrefix), strPtr(expressionPrefix));
+                queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
         // Loop as long as a continuation token returned
@@ -479,7 +435,7 @@ storageS3ListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNew();
+                HttpQuery *query = httpQueryNewP();
 
                 // Add continuation token from the prior loop if any
                 if (continuationToken != NULL)
@@ -577,7 +533,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
         result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.size = cvtZToUInt64(strZ(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
@@ -603,9 +559,9 @@ storageS3CvtTime(const String *time)
 
     FUNCTION_TEST_RETURN(
         epochFromParts(
-            cvtZToInt(strPtr(strSubN(time, 0, 4))), cvtZToInt(strPtr(strSubN(time, 5, 2))),
-            cvtZToInt(strPtr(strSubN(time, 8, 2))), cvtZToInt(strPtr(strSubN(time, 11, 2))),
-            cvtZToInt(strPtr(strSubN(time, 14, 2))), cvtZToInt(strPtr(strSubN(time, 17, 2))), 0));
+            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
+            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
+            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
 }
 
 static void
@@ -641,7 +597,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
         {
             ASSERT(xml != NULL);
 
-            info.size = cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
+            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
             info.timeModified = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true)));
         }
     }
@@ -743,7 +699,7 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
 
     const Buffer *response = httpResponseContent(
         storageS3RequestP(
-            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR),
             .content = xmlDocumentBuf(request)));
 
     // Nothing is returned when there are no errors
@@ -757,9 +713,9 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
 
             THROW_FMT(
                 FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
         }
     }
 
@@ -932,7 +888,7 @@ storageS3New(
             .deleteMax = deleteMax,
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-                strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(endPoint),
+                strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
             .port = port,
 
             // Force the signing key to be generated on the first run

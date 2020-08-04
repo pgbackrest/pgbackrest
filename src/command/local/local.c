@@ -24,6 +24,11 @@ cmdLocal(int handleRead, int handleWrite)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Configure two retries for local commands
+        VariantList *retryInterval = varLstNew();
+        varLstAdd(retryInterval, varNewUInt64(0));
+        varLstAdd(retryInterval, varNewUInt64(15000));
+
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioReadOpen(read);
@@ -35,7 +40,7 @@ cmdLocal(int handleRead, int handleWrite)
         protocolServerHandlerAdd(server, archivePushProtocol);
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
-        protocolServerProcess(server);
+        protocolServerProcess(server, retryInterval);
     }
     MEM_CONTEXT_TEMP_END();
 

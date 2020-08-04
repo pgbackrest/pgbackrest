@@ -51,8 +51,6 @@ int lstComparatorStr(const void *item1, const void *item2);
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-List *lstNew(size_t itemSize);
-
 typedef struct ListParam
 {
     VAR_PARAM_HEADER;
@@ -61,9 +59,9 @@ typedef struct ListParam
 } ListParam;
 
 #define lstNewP(itemSize, ...)                                                                                                     \
-    lstNewParam(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
+    lstNew(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-List *lstNewParam(size_t itemSize, ListParam param);
+List *lstNew(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -76,6 +74,7 @@ List *lstClear(List *this);
 
 // Get an item from the list
 void *lstGet(const List *this, unsigned int listIdx);
+void *lstGetLast(const List *this);
 
 // Does an item exist in the list?
 bool lstExists(const List *this, const void *item);
@@ -100,6 +99,7 @@ List *lstMove(List *this, MemContext *parentNew);
 // Remove an item from the list
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);
+List *lstRemoveLast(List *this);
 
 // Return list size
 unsigned int lstSize(const List *this);
