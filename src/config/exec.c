@@ -96,8 +96,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                             strLstAdd(
                                 valueList,
                                 strNewFmt(
-                                    "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
-                                        strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                    "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
                         }
                     }
                     else if (varType(value) == varTypeVariantList)
@@ -116,10 +116,10 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                     {
                         const String *value = strLstGet(valueList, valueListIdx);
 
-                        if (quote && strchr(strPtr(value), ' ') != NULL)
-                            value = strNewFmt("\"%s\"", strPtr(value));
+                        if (quote && strchr(strZ(value), ' ') != NULL)
+                            value = strNewFmt("\"%s\"", strZ(value));
 
-                        strLstAdd(result, strNewFmt("--%s=%s", cfgOptionName(optionId), strPtr(value)));
+                        strLstAdd(result, strNewFmt("--%s=%s", cfgOptionName(optionId), strZ(value)));
                     }
                 }
             }

@@ -142,7 +142,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 10
+        total: 11
 
         coverage:
           common/type/convert: full
@@ -477,7 +477,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
-        total: 9
+        total: 10
         containerReq: true
         binReq: true
 
@@ -488,6 +488,9 @@ unit:
           protocol/parallel: full
           protocol/parallelJob: full
           protocol/server: full
+
+        include:
+          - common/exec
 
   # ********************************************************************************************************************************
   - name: info

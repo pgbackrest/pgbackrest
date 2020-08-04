@@ -74,6 +74,7 @@ List *lstClear(List *this);
 
 // Get an item from the list
 void *lstGet(const List *this, unsigned int listIdx);
+void *lstGetLast(const List *this);
 
 // Does an item exist in the list?
 bool lstExists(const List *this, const void *item);
@@ -98,6 +99,7 @@ List *lstMove(List *this, MemContext *parentNew);
 // Remove an item from the list
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);
+List *lstRemoveLast(List *this);
 
 // Return list size
 unsigned int lstSize(const List *this);

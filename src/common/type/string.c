@@ -235,7 +235,7 @@ strBeginsWith(const String *this, const String *beginsWith)
     ASSERT(this != NULL);
     ASSERT(beginsWith != NULL);
 
-    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtr(beginsWith)));
+    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strZ(beginsWith)));
 }
 
 bool
@@ -253,7 +253,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
 
     if (this->size >= beginsWithSize)
-        result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
+        result = strncmp(strZ(this), beginsWith, beginsWithSize) == 0;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -303,7 +303,7 @@ strCat(String *this, const String *cat)
     ASSERT(this != NULL);
     ASSERT(cat != NULL);
 
-    FUNCTION_TEST_RETURN(strCatZN(this, strPtr(cat), strSize(cat)));
+    FUNCTION_TEST_RETURN(strCatZN(this, strZ(cat), strSize(cat)));
 }
 
 String *
@@ -422,7 +422,7 @@ strCmp(const String *this, const String *compare)
     FUNCTION_TEST_END();
 
     if (this != NULL && compare != NULL)
-        FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+        FUNCTION_TEST_RETURN(strcmp(strZ(this), strZ(compare)));
     else if (this == NULL)
     {
         if (compare == NULL)
@@ -456,7 +456,7 @@ strDup(const String *this)
     String *result = NULL;
 
     if (this != NULL)
-        result = strNew(strPtr(this));
+        result = strNew(strZ(this));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -484,7 +484,7 @@ strEndsWith(const String *this, const String *endsWith)
     ASSERT(this != NULL);
     ASSERT(endsWith != NULL);
 
-    FUNCTION_TEST_RETURN(strEndsWithZ(this, strPtr(endsWith)));
+    FUNCTION_TEST_RETURN(strEndsWithZ(this, strZ(endsWith)));
 }
 
 bool
@@ -502,7 +502,7 @@ strEndsWithZ(const String *this, const char *endsWith)
     unsigned int endsWithSize = (unsigned int)strlen(endsWith);
 
     if (this->size >= endsWithSize)
-        result = strcmp(strPtr(this) + (this->size - endsWithSize), endsWith) == 0;
+        result = strcmp(strZ(this) + (this->size - endsWithSize), endsWith) == 0;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -524,7 +524,7 @@ strEq(const String *this, const String *compare)
     if (this != NULL && compare != NULL)
     {
         if (this->size == compare->size)
-            result = strcmp(strPtr(this), strPtr(compare)) == 0;
+            result = strcmp(strZ(this), strZ(compare)) == 0;
     }
     else
         result = this == NULL && compare == NULL;
@@ -543,7 +543,7 @@ strEqZ(const String *this, const char *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare) == 0);
+    FUNCTION_TEST_RETURN(strcmp(strZ(this), compare) == 0);
 }
 
 /**********************************************************************************************************************************/
@@ -659,7 +659,7 @@ strPathAbsolute(const String *this, const String *base)
 
         // Base must be absolute to start
         if (!strBeginsWith(base, FSLASH_STR))
-            THROW_FMT(AssertError, "base path '%s' is not absolute", strPtr(base));
+            THROW_FMT(AssertError, "base path '%s' is not absolute", strZ(base));
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -680,7 +680,7 @@ strPathAbsolute(const String *this, const String *base)
                         break;
                     }
 
-                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
                 }
 
                 if (strEq(pathPart, DOTDOT_STR))
@@ -688,10 +688,7 @@ strPathAbsolute(const String *this, const String *base)
                     const String *basePart = strLstGet(baseList, strLstSize(baseList) - 1);
 
                     if (strSize(basePart) == 0)
-                    {
-                        THROW_FMT(
-                            AssertError, "relative path '%s' goes back too far in base path '%s'", strPtr(this), strPtr(base));
-                    }
+                        THROW_FMT(AssertError, "relative path '%s' goes back too far in base path '%s'", strZ(this), strZ(base));
 
                     strLstRemoveIdx(baseList, strLstSize(baseList) - 1);
                 }
@@ -714,15 +711,15 @@ strPathAbsolute(const String *this, const String *base)
     }
 
     // There should not be any stray .. or // in the final result
-    if (strstr(strPtr(result), "/..") != NULL || strstr(strPtr(result), "//") != NULL)
-        THROW_FMT(AssertError, "result path '%s' is not absolute", strPtr(result));
+    if (strstr(strZ(result), "/..") != NULL || strstr(strZ(result), "//") != NULL)
+        THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
 
     FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
 const char *
-strPtrNull(const String *this)
+strZNull(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -743,7 +740,7 @@ strQuote(const String *this, const String *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(strQuoteZ(this, strPtr(quote)));
+    FUNCTION_TEST_RETURN(strQuoteZ(this, strZ(quote)));
 }
 
 String *
@@ -757,7 +754,7 @@ strQuoteZ(const String *this, const char *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(strNewFmt("%s%s%s", quote, strPtr(this), quote));
+    FUNCTION_TEST_RETURN(strNewFmt("%s%s%s", quote, strZ(this), quote));
 }
 
 /**********************************************************************************************************************************/
@@ -925,7 +922,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strZ(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -936,7 +933,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 String *
 strToLog(const String *this)
 {
-    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strPtr(this));
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strZ(this));
 }
 
 /**********************************************************************************************************************************/

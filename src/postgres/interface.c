@@ -589,7 +589,7 @@ pgTablespaceId(unsigned int pgVersion)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
+                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion(pgVersion));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -615,7 +615,7 @@ pgLsnFromStr(const String *lsn)
 
         CHECK(strLstSize(lsnPart) == 2);
 
-        result = (cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 1)), 16);
+        result = (cvtZToUInt64Base(strZ(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strZ(strLstGet(lsnPart, 1)), 16);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -659,8 +659,8 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
     ASSERT(walSegmentSize > 0);
 
     FUNCTION_TEST_RETURN(
-        (cvtZToUInt64Base(strPtr(strSubN(walSegment, 8, 8)), 16) << 32) +
-        (cvtZToUInt64Base(strPtr(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
+        (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
+        (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
 }
 
 /**********************************************************************************************************************************/
@@ -837,7 +837,7 @@ pgVersionFromStr(const String *version)
     {
         // If format is not number.number (9.4) or number only (10) then error
         if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
-            THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
+            THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 
         // If there is a dot set the major and minor versions, else just the major
         int idxStart = strChr(version, '.');
@@ -846,11 +846,11 @@ pgVersionFromStr(const String *version)
 
         if (idxStart != -1)
         {
-            major = cvtZToUInt(strPtr(strSubN(version, 0, (size_t)idxStart)));
-            minor = cvtZToUInt(strPtr(strSub(version, (size_t)idxStart + 1)));
+            major = cvtZToUInt(strZ(strSubN(version, 0, (size_t)idxStart)));
+            minor = cvtZToUInt(strZ(strSub(version, (size_t)idxStart + 1)));
         }
         else
-            major = cvtZToUInt(strPtr(version));
+            major = cvtZToUInt(strZ(version));
 
         // No check to see if valid/supported PG version is on purpose
         result = major * 10000 + minor * 100;

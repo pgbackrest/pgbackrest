@@ -83,7 +83,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
         strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
 
     // Add host
-    strCatFmt(request, "host:%s\r\n", strPtr(hrnTlsServerHost()));
+    strCatFmt(request, "host:%s\r\n", strZ(hrnTlsServerHost()));
 
     // Add blob type
     if (param.blobType != NULL)
@@ -290,7 +290,7 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_AZURE_TYPE);
                 strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strPtr(hrnTlsServerHost())));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnTlsServerHost())));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort()));
                 strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
@@ -372,7 +372,7 @@ testRun(void)
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
                     "CONTENT",
-                    strPtr(hrnTlsServerHost()));
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
@@ -393,7 +393,7 @@ testRun(void)
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
                     "x-ms-version: 2019-02-02",
-                    strPtr(hrnTlsServerHost()));
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
@@ -756,7 +756,7 @@ testRun(void)
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
                     "host: %s",
-                    strPtr(hrnTlsServerHost()));
+                    strZ(hrnTlsServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");

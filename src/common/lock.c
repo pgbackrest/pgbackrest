@@ -59,7 +59,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
         do
         {
             // Attempt to open the file
-            if ((result = open(strPtr(lockFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
+            if ((result = open(strZ(lockFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;
@@ -100,13 +100,12 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?",
-                        strPtr(lockFile));
+                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
                 }
 
                 THROW_FMT(
-                    LockAcquireError, "unable to acquire lock on file '%s': %s%s",
-                    strPtr(lockFile), strerror(errNo), errorHint == NULL ? "" : strPtr(errorHint));
+                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockFile), strerror(errNo),
+                    errorHint == NULL ? "" : strZ(errorHint));
             }
         }
         else
@@ -186,7 +185,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strPtr(lockPath), strPtr(stanza), lockTypeName[lockIdx]);
+            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
 
             lockHandle[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
 

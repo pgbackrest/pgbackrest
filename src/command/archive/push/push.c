@@ -42,7 +42,7 @@ archivePushDropWarning(const String *walFile, uint64_t queueMax)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strPtr(walFile), strPtr(strSizeFormat(queueMax))));
+        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
 }
 
 /***********************************************************************************************************************************
@@ -63,7 +63,7 @@ archivePushDrop(const String *walPath, const StringList *const processList)
     for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
     {
         queueSize += storageInfoP(
-            storagePg(), strNewFmt("%s/%s", strPtr(walPath), strPtr(strLstGet(processList, processIdx)))).size;
+            storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
 
         if (queueSize > queueMax)
         {
@@ -96,7 +96,7 @@ archivePushReadyList(const String *walPath)
         // Read the ready files from the archive_status directory
         StringList *readyListRaw = strLstSort(
             storageListP(
-                storagePg(), strNewFmt("%s/" PG_PATH_ARCHIVE_STATUS, strPtr(walPath)),
+                storagePg(), strNewFmt("%s/" PG_PATH_ARCHIVE_STATUS, strZ(walPath)),
                 .expression = STRDEF("\\" STATUS_EXT_READY "$"), .errorOnMissing = true),
             sortOrderAsc);
 
@@ -154,7 +154,7 @@ archivePushProcessList(const String *walPath)
             else
             {
                 storageRemoveP(
-                    storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s", strPtr(statusFile)), .errorOnMissing = true);
+                    storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s", strZ(statusFile)), .errorOnMissing = true);
             }
         }
 
@@ -168,7 +168,7 @@ archivePushProcessList(const String *walPath)
         {
             storageRemoveP(
                 storageSpoolWrite(),
-                strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_OK, strPtr(strLstGet(okRemoveList, okRemoveIdx))),
+                strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_OK, strZ(strLstGet(okRemoveList, okRemoveIdx))),
                 .errorOnMissing = true);
         }
 
@@ -231,7 +231,7 @@ archivePushCheck(bool pgPathSet, CipherType cipherType, const String *cipherPass
                     ArchiveMismatchError,
                     "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
                     "\nHINT: are you archiving to the correct stanza?",
-                    strPtr(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strPtr(pgVersionToStr(archiveInfo.version)),
+                    strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strZ(pgVersionToStr(archiveInfo.version)),
                     archiveInfo.systemId);
             }
         }
@@ -336,11 +336,11 @@ cmdArchivePush(void)
             {
                 THROW_FMT(
                     ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %lg second(s)",
-                    strPtr(archiveFile), cfgOptionDbl(cfgOptArchiveTimeout));
+                    strZ(archiveFile), cfgOptionDbl(cfgOptArchiveTimeout));
             }
 
             // Log success
-            LOG_INFO_FMT("pushed WAL file '%s' to the archive asynchronously", strPtr(archiveFile));
+            LOG_INFO_FMT("pushed WAL file '%s' to the archive asynchronously", strZ(archiveFile));
         }
         else
         {
@@ -356,7 +356,7 @@ cmdArchivePush(void)
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
                 archivePushDrop(strPath(walFile), archivePushReadyList(strPath(walFile))))
             {
-                LOG_WARN(strPtr(archivePushDropWarning(archiveFile, cfgOptionUInt64(cfgOptArchivePushQueueMax))));
+                LOG_WARN(strZ(archivePushDropWarning(archiveFile, cfgOptionUInt64(cfgOptArchivePushQueueMax))));
             }
             // Else push the file
             else
@@ -369,10 +369,10 @@ cmdArchivePush(void)
 
                 // If a warning was returned then log it
                 if (warning != NULL)
-                    LOG_WARN(strPtr(warning));
+                    LOG_WARN(strZ(warning));
 
                 // Log success
-                LOG_INFO_FMT("pushed WAL file '%s' to the archive", strPtr(archiveFile));
+                LOG_INFO_FMT("pushed WAL file '%s' to the archive", strZ(archiveFile));
             }
         }
     }
@@ -412,7 +412,7 @@ static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int cl
         jobData->walFileIdx++;
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strPtr(jobData->walPath), strPtr(walFile))));
+        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
         protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveId));
         protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
         protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
@@ -466,9 +466,9 @@ cmdArchivePushAsync(void)
                 THROW(AssertError, "no WAL files to process");
 
             LOG_INFO_FMT(
-                "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strPtr(strLstGet(jobData.walFileList, 0)),
+                "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strZ(strLstGet(jobData.walFileList, 0)),
                 strLstSize(jobData.walFileList) == 1 ?
-                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
+                    "" : strZ(strNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
 
             // Drop files if queue max has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))
@@ -479,7 +479,7 @@ cmdArchivePushAsync(void)
                     const String *warning = archivePushDropWarning(walFile, cfgOptionUInt64(cfgOptArchivePushQueueMax));
 
                     archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
-                    LOG_WARN(strPtr(warning));
+                    LOG_WARN(strZ(warning));
                 }
             }
             // Else continue processing
@@ -519,7 +519,7 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strPtr(walFile));
+                            LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
                             archiveAsyncStatusOkWrite(archiveModePush, walFile, varStr(protocolParallelJobResult(job)));
                         }
                         // Else the job errored
@@ -527,8 +527,8 @@ cmdArchivePushAsync(void)
                         {
                             LOG_WARN_PID_FMT(
                                 processId,
-                                "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strPtr(walFile),
-                                protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+                                "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
+                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
                             archiveAsyncStatusErrorWrite(
                                 archiveModePush, walFile, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));

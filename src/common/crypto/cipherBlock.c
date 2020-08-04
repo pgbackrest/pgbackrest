@@ -399,21 +399,21 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strPtr(cipherTypeName(cipherType)));
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeName(cipherType)));
 
     if (!cipher)
-        THROW_FMT(AssertError, "unable to load cipher '%s'", strPtr(cipherTypeName(cipherType)));
+        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(cipherTypeName(cipherType)));
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
 
     if (digestName)
-        digest = EVP_get_digestbyname(strPtr(digestName));
+        digest = EVP_get_digestbyname(strZ(digestName));
     else
         digest = EVP_sha1();
 
     if (!digest)
-        THROW_FMT(AssertError, "unable to load digest '%s'", strPtr(digestName));
+        THROW_FMT(AssertError, "unable to load digest '%s'", strZ(digestName));
 
     // Allocate memory to hold process state
     IoFilter *this = NULL;

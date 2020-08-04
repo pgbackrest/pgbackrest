@@ -90,7 +90,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ASSIGN(
         compressed,
         testCompress(
-            compressFilterVar(strNewFmt("%sCompress", strPtr(compressTypeStr(type))), compressParamList), decompressed, 1024,
+            compressFilterVar(strNewFmt("%sCompress", strZ(compressTypeStr(type))), compressParamList), decompressed, 1024,
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
 
@@ -117,7 +117,7 @@ testSuite(CompressType type, const char *decompressCmd)
         bufEq(
             decompressed,
             testDecompress(
-                compressFilterVar(strNewFmt("%sDecompress", strPtr(compressTypeStr(type))), NULL), compressed, 1024, 1024)),
+                compressFilterVar(strNewFmt("%sDecompress", strZ(compressTypeStr(type))), NULL), compressed, 1024, 1024)),
         true, "simple data - decompress large in/large out buffer");
 
     TEST_RESULT_BOOL(

@@ -186,8 +186,7 @@ testRun(void)
 
         // Create special file
         String *specialFile = strNewFmt("%s/pg/testpipe", testPath());
-        TEST_RESULT_INT(
-            system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(specialFile)))), 0, "create pipe");
+        TEST_RESULT_INT(system(strZ(strNewFmt("mkfifo -m 666 %s", strZ(specialFile)))), 0, "create pipe");
 
         // Files that will always be ignored
         storagePutP(
@@ -356,13 +355,13 @@ testRun(void)
         // Config directory and file links
         storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../config/postgresql.conf", strPtr(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
+            symlink("../config/postgresql.conf", strZ(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
             BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
-            symlink("../config/pg_hba.conf", strPtr(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
+            symlink("../config/pg_hba.conf", strZ(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
@@ -381,7 +380,7 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("ts/1/1"), .mode = 0700);
         storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -480,7 +479,7 @@ testRun(void)
         storagePathRemoveP(storagePgWrite, strNew("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink("../../archivestatus", strPtr(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
+            symlink("../../archivestatus", strZ(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -586,7 +585,7 @@ testRun(void)
 
         // Remove symlinks and directories
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
         storagePathRemoveP(storageTest, STRDEF("ts/1/PG_9.0_201008051"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -682,7 +681,7 @@ testRun(void)
         // create pg_xlog/wal as a link
         storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/wal", testPath())), strPtr(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
+            symlink(strZ(strNewFmt("%s/wal", testPath())), strZ(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
 
         // Files to conditionally ignore before 9.4
@@ -793,7 +792,7 @@ testRun(void)
         // Tablespace 1
         storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -823,7 +822,7 @@ testRun(void)
         // Tablespace 2
         storagePathCreateP(storageTest, STRDEF("ts/2/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../../ts/2", strPtr(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
+            symlink("../../ts/2", strZ(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -931,7 +930,7 @@ testRun(void)
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
         storagePutP(
@@ -1080,7 +1079,7 @@ testRun(void)
         TEST_TITLE("error on link to pg_data");
 
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/pg/base", testPath())), strPtr(strNewFmt("%s/pg/link", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/pg/base", testPath())), strZ(strNewFmt("%s/pg/link", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
@@ -1088,7 +1087,7 @@ testRun(void)
             hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
 
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path in pg_tblspc");
@@ -1116,7 +1115,7 @@ testRun(void)
         TEST_TITLE("error on link that points to nothing");
 
         THROW_ON_SYS_ERROR(
-            symlink("../bogus-link", strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
+            symlink("../bogus-link", strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
 
         TEST_ERROR(
@@ -1124,17 +1123,17 @@ testRun(void)
             hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
 
         THROW_ON_SYS_ERROR(
-            unlink(strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+            unlink(strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to a link");
 
         storagePathCreateP(storageTest, STRDEF("linktestdir"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktestdir", testPath())), strPtr(strNewFmt("%s/linktest", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/linktestdir", testPath())), strZ(strNewFmt("%s/linktest", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktest", testPath())), strPtr(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
+            symlink(strZ(strNewFmt("%s/linktest", testPath())), strZ(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR_FMT(
@@ -1674,6 +1673,7 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
+            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
             "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
@@ -1683,6 +1683,7 @@ testRun(void)
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
+            "pg_data/=equal=more=={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                       \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
@@ -1771,6 +1772,7 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE

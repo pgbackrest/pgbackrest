@@ -121,6 +121,10 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Announce release on Twitter
 
+## Do a press release once per quarter
+
+Start from the press release at https://www.postgresql.org/about/news/2057 (logon required) and update for improvements made in the last quarter. Then convert to text and send to `pgsql-announce` using https://www.postgresql.org/message-id/6b1bbd0f-08a7-bc51-7252-12bd3a645aea%40pgmasters.net as an example of how it looks in text format.
+
 ## Prepare for the next release
 
 Add new release in `doc/xml/release.xml`, e.g.:

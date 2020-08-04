@@ -47,8 +47,7 @@ ioHandleWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     THROW_ON_SYS_ERROR_FMT(
-        write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError,
-        "unable to write to %s", strPtr(this->name));
+        write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strZ(this->name));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -109,7 +108,7 @@ ioHandleWriteOneStr(int handle, const String *string)
 
     ASSERT(string != NULL);
 
-    if (write(handle, strPtr(string), strSize(string)) != (int)strSize(string))
+    if (write(handle, strZ(string), strSize(string)) != (int)strSize(string))
         THROW_SYS_ERROR(FileWriteError, "unable to write to handle");
 
     FUNCTION_LOG_RETURN_VOID();

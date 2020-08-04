@@ -14,6 +14,7 @@ Protocol Parallel Executor
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "protocol/command.h"
+#include "protocol/helper.h"
 #include "protocol/parallel.h"
 
 /***********************************************************************************************************************************
@@ -217,6 +218,9 @@ protocolParallelProcess(ProtocolParallel *this)
                 protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
                 this->clientJobList[clientIdx] = job;
             }
+            // Else no more jobs for this client so free it
+            else
+                protocolLocalFree(clientIdx + 1);
         }
     }
 

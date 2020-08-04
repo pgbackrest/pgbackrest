@@ -456,7 +456,7 @@ testRun(void)
                 session->socketSession->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
-                    "timeout after 100ms waiting for read from '%s:%u'", strPtr(hrnTlsServerHost()), hrnTlsServerPort());
+                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort());
                 session->socketSession->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
