@@ -40,6 +40,22 @@
                         <p>Fix issue with <id>=</id> character in file or database names.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="MannerMan"/>
+                            <release-item-ideator id="brad.nicholson"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="brad.nicholson"/>
+                            <release-item-reviewer id="MannerMan"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve memory usage of unlogged relation detection in manifest build.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
@@ -8763,6 +8779,11 @@
         <contributor id="magnus.hagander">
             <contributor-name-display>Magnus Hagander</contributor-name-display>
             <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="MannerMan">
+            <contributor-name-display>Oscar</contributor-name-display>
+            <contributor-id type="github">MannerMan</contributor-id>
         </contributor>
 
         <contributor id="marc.cousin">
