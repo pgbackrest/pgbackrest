@@ -106,11 +106,12 @@ Returns:
 ***********************************************************************************************************************************/
 // Helper to process error conditions
 static int
-tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool closeOk)
+tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorTlsDetail, int errorSys, bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
         FUNCTION_LOG_PARAM(INT, errorTls);
+        FUNCTION_LOG_PARAM(UINT64, errorTlsDetail);
         FUNCTION_LOG_PARAM(INT, errorSys);
         FUNCTION_LOG_PARAM(BOOL, closeOk);
     FUNCTION_LOG_END();
@@ -155,7 +156,14 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, int errorSys, bool close
 
         // Any other error that we cannot handle
         default:
-            THROW_FMT(ServiceError, "TLS error [%d]", errorTls);
+        {
+            // Get detailed error message when available
+            const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
+
+            THROW_FMT(
+                ServiceError, "TLS error [%d:%lu] %s", errorTls, errorTlsDetail,
+                errorTlsDetailMessage == NULL ? "no details available" : errorTlsDetailMessage);
+        }
     }
 
     FUNCTION_LOG_RETURN(INT, result);
@@ -178,9 +186,10 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
     {
         // Get TLS error and store errno in case of syscall error
         int errorTls = SSL_get_error(this->session, result);
+        long unsigned int errorTlsDetail = ERR_get_error();
         int errorSys = errno;
 
-        result = tlsSessionResultProcess(this, errorTls, errorSys, closeOk);
+        result = tlsSessionResultProcess(this, errorTls, errorTlsDetail, errorSys, closeOk);
     }
 
     FUNCTION_LOG_RETURN(INT, result);

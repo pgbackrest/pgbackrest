@@ -64,6 +64,15 @@
 
                         <p>Proactively close file descriptors after forking async process.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve TLS error reporting.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-core-list>
 

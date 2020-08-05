@@ -415,11 +415,15 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");
 
-                TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
+                TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, 0, false), 0, "write ready");
                 TEST_ERROR(
-                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 336031996, 0, false), ServiceError,
+                    "TLS error [4:336031996] unknown protocol");
                 TEST_ERROR(
-                    tlsSessionResultProcess(tlsSession, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, 0, false), ServiceError,
+                    "TLS error [4:0] no details available");
+                TEST_ERROR(
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_ZERO_RETURN, 0, 0, false), ProtocolError, "unexpected TLS eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("first protocol exchange");
