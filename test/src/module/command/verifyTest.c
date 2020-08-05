@@ -447,6 +447,76 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("verifyFile(), verifyProtocol()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyFile()");
+
+        String *checksum = strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
+        String *filePathName = strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
+        const char *fileContents = "acefile";
+        unsigned int fileSize = 7;
+
+        VerifyFileResult result = {0};
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF(fileContents)), "put file");
+        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, NULL), "get results valid file");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
+        TEST_ASSIGN(result, verifyFile(filePathName, checksum, true, fileSize, NULL), "get size results WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_ASSIGN(result, verifyFile(filePathName, checksum, true, 0, NULL), "get size results WAL");
+        TEST_RESULT_UINT(result.fileResult, verifySizeInvalid, "file size invalid");
+
+        TEST_ASSIGN(result, verifyFile(filePathName, strNew("badchecksum"), false, 0, NULL), "get results invalid file");
+        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
+
+        filePathName = strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile");
+        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, NULL), "get results missing WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyFileMissing, "file missing");
+
+        // Create a compressed encrypted repo file
+        filePathName = strNew(STORAGE_REPO_BACKUP "/testfile.gz");
+        StorageWrite *write = storageNewWriteP(storageRepoWrite(), filePathName);
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        storagePutP(write, BUFSTRDEF("acefile"));
+
+        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, strNew("pass")), "get results encrypted file");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
+
+        TEST_ASSIGN(
+            result, verifyFile(filePathName, strNew("badchecksum"), false, 0, strNew("pass")), "get results encrypted file");
+        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyProtocol()");
+
+        // Start a protocol server to test the protocol directly
+        Buffer *serverWrite = bufNew(8192);
+        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
+        ioWriteOpen(serverWriteIo);
+        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
+        bufUsedSet(serverWrite, 0);
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(filePathName));
+        varLstAdd(paramList, varNewStr(strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770")));
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt64(0));
+        varLstAdd(paramList, varNewStrZ("pass"));
+
+        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,\"<REPO:BACKUP>/testfile.gz\"]}\n", "check result");
+        bufUsedSet(serverWrite, 0);
+
+        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdVerify()"))
     {
         // Load Parameters
@@ -554,77 +624,6 @@ testRun(void)
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002")));
 
         harnessLogLevelReset();
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyFile()");
-
-        VerifyFileResult result = {0};
-
-        String *filePathName = strNewFmt(
-            "%s/11-2/0000000200000000/000000020000000700000FFE-%s", STORAGE_REPO_ARCHIVE, walBufferSha1);
-        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), false, 0, NULL), "get results valid WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), true, bufSize(walBuffer), NULL), "get size results WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_ASSIGN(result, verifyFile(filePathName, strNew(walBufferSha1), true, 0, NULL), "get size results WAL");
-        TEST_RESULT_UINT(result.fileResult, verifySizeInvalid, "file size invalid");
-
-        filePathName = strNewFmt(
-            "%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz", STORAGE_REPO_ARCHIVE);
-        TEST_ASSIGN(
-            result, verifyFile(
-                filePathName, strNew("a6e1a64f0813352bc2e97f116a1800377e17d2e4"), false, 0, NULL), "get results invalid WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-
-        filePathName = strNewFmt(
-            "%s/11-2/0000000200000000/000000020000000700000F00-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz", STORAGE_REPO_ARCHIVE);
-        TEST_ASSIGN(
-            result, verifyFile(
-                filePathName, strNew("a6e1a64f0813352bc2e97f116a1800377e17d2e4"), false, 0, NULL), "get results missing WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyFileMissing, "file missing");
-
-        // Create a compressed encrypted repo file
-        filePathName = strNew(STORAGE_REPO_BACKUP "/20190509F/pg_data/testfile.gz");
-        write = storageNewWriteP(storageRepoWrite(), filePathName);
-        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
-        storagePutP(write, walBuffer);
-
-        TEST_ASSIGN(
-            result, verifyFile(filePathName, strNew(walBufferSha1), false, 0, strNew("pass")), "get results encrypted WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-
-        TEST_ASSIGN(
-            result, verifyFile(filePathName, strNew("badchecksum"), false, 0, strNew("pass")), "get results encrypted WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyProtocol()");
-
-        // Start a protocol server to test the protocol directly
-        Buffer *serverWrite = bufNew(8192);
-        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-        ioWriteOpen(serverWriteIo);
-        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-
-        bufUsedSet(serverWrite, 0); // CSHANG Is this necessary?
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(filePathName));
-        varLstAdd(paramList, varNewStr(strNew(walBufferSha1)));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(0));
-        varLstAdd(paramList, varNewStrZ("pass"));
-
-        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,\"<REPO:BACKUP>/20190509F/pg_data/testfile.gz\"]}\n", "check result");
-        bufUsedSet(serverWrite, 0);
-
-        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
