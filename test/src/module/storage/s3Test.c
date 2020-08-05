@@ -216,7 +216,6 @@ testRun(void)
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
             ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 443, "    check port");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
@@ -241,7 +240,6 @@ testRun(void)
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
             ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 999, "    check port");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
@@ -267,7 +265,6 @@ testRun(void)
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
             ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 7777, "    check port");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
@@ -294,7 +291,6 @@ testRun(void)
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
         TEST_RESULT_STR(
             ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 9001, "    check port");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
         TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");

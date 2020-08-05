@@ -93,7 +93,6 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
-    unsigned int port;                                              // Host port
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -846,15 +845,13 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-            .port = port,
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
 
         // Create the HTTP client used to service requests
-        driver->httpClient = httpClientNew(
-            host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
