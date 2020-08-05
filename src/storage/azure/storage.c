@@ -11,6 +11,7 @@ Azure Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -739,7 +740,8 @@ storageAzureNew(
             driver->sasKey = httpQueryNewStr(key);
 
         // Create the http client used to service requests
-        driver->httpClient = httpClientNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(
+            tlsClientNew(sckClientNew(driver->host, port, timeout), timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

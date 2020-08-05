@@ -12,12 +12,12 @@ Io Client Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoClient
+struct IoClient
 {
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoClientInterface *interface;                             // Driver interface
-} IoClient;
+};
 
 OBJECT_DEFINE_FREE(IO_CLIENT);
 

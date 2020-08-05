@@ -5,6 +5,7 @@ Test HTTP
 
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
+#include "common/io/tls/client.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessTls.h"
@@ -176,7 +177,9 @@ testRun(void)
         TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
 
         TEST_ASSIGN(
-            client, httpClientNew(strNew("localhost"), hrnTlsServerPort(), 500, testContainer(), NULL, NULL),
+            client,
+            httpClientNew(
+                tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(), 500), 500, testContainer(), NULL, NULL), 500),
             "new client");
 
         TEST_ERROR_FMT(
@@ -204,7 +207,10 @@ testRun(void)
                 ioBufferSizeSet(35);
 
                 TEST_ASSIGN(
-                    client, httpClientNew(hrnTlsServerHost(), hrnTlsServerPort(), 5000, testContainer(), NULL, NULL),
+                    client,
+                    httpClientNew(
+                        tlsClientNew(sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(), 5000), 5000, testContainer(), NULL, NULL),
+                        5000),
                     "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------

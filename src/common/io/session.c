@@ -12,12 +12,12 @@ Io Session Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoSession
+struct IoSession
 {
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
-} IoSession;
+};
 
 OBJECT_DEFINE_MOVE(IO_SESSION);
 OBJECT_DEFINE_FREE(IO_SESSION);
