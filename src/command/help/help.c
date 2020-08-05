@@ -8,7 +8,7 @@ Help Command
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
@@ -373,7 +373,7 @@ cmdHelp(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioHandleWriteOneStr(STDOUT_FILENO, helpRender());
+        ioFdWriteOneStr(STDOUT_FILENO, helpRender());
     }
     MEM_CONTEXT_TEMP_END();
 

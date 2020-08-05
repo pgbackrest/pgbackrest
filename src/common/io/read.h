@@ -50,8 +50,8 @@ bool ioReadEof(const IoRead *this);
 // Get filter group if filters need to be added
 IoFilterGroup *ioReadFilterGroup(const IoRead *this);
 
-// Handle (file descriptor) for the read object. Not all read objects have a handle and -1 will be returned in that case.
-int ioReadHandle(const IoRead *this);
+// File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
+int ioReadFd(const IoRead *this);
 
 /***********************************************************************************************************************************
 Destructor

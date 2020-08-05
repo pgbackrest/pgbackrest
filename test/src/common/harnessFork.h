@@ -78,7 +78,7 @@ Is the pipe required for this child process?
     HARNESS_FORK_pipeRequired[processIdx]
 
 /***********************************************************************************************************************************
-Get read/write pipe handles
+Get read/write pipe file descriptors
 ***********************************************************************************************************************************/
 #define HARNESS_FORK_CHILD_READ_PROCESS(processIdx)                                                                                \
     HARNESS_FORK_PIPE(processIdx)[1][0]

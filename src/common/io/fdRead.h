@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
-Handle IO Read
+File Descriptor Read
 
-Read from a handle using the IoRead interface.
+Read from a file descriptor using the IoRead interface.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HANDLEREAD_H
-#define COMMON_IO_HANDLEREAD_H
+#ifndef COMMON_IO_FDREAD_H
+#define COMMON_IO_FDREAD_H
 
 #include "common/io/read.h"
 #include "common/time.h"
@@ -12,6 +12,6 @@ Read from a handle using the IoRead interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoRead *ioHandleReadNew(const String *name, int handle, TimeMSec timeout);
+IoRead *ioFdReadNew(const String *name, int fd, TimeMSec timeout);
 
 #endif

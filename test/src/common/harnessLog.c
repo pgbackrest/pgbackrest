@@ -21,7 +21,7 @@ Log Test Harness
 Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
 extern LogLevel logLevelFile;
-extern int logHandleFile;
+extern int logFdFile;
 extern bool logFileBanner;
 extern unsigned int logProcessId;
 extern void logAnySet(void);
@@ -77,7 +77,7 @@ harnessLogInit(void)
     logFileBanner = true;
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
-    logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 
     FUNCTION_HARNESS_RESULT_VOID();
@@ -149,14 +149,14 @@ harnessLogLoad(const char *logFile)
 
     harnessLogBuffer[0] = 0;
 
-    int handle = harnessLogOpen(logFile, O_RDONLY, 0);
+    int fd = harnessLogOpen(logFile, O_RDONLY, 0);
 
     size_t totalBytes = 0;
     ssize_t actualBytes = 0;
 
     do
     {
-        actualBytes = read(handle, harnessLogBuffer, sizeof(harnessLogBuffer) - totalBytes);
+        actualBytes = read(fd, harnessLogBuffer, sizeof(harnessLogBuffer) - totalBytes);
 
         if (actualBytes == -1)
             THROW_SYS_ERROR_FMT(FileOpenError, "unable to read log file '%s'", logFile);
@@ -165,7 +165,7 @@ harnessLogLoad(const char *logFile)
     }
     while (actualBytes != 0);
 
-    if (close(handle) == -1)
+    if (close(fd) == -1)
         THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
@@ -368,8 +368,8 @@ harnessLogResult(const char *expected)
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
     }
 
-    close(logHandleFile);
-    logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    close(logFdFile);
+    logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -408,8 +408,8 @@ harnessLogResultRegExp(const char *expression)
         if (regexec(&regExp, harnessLogBuffer, 0, NULL, 0) != 0)
             THROW_FMT(AssertError, "\n\nexpected log regexp:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expression, harnessLogBuffer);
 
-        close(logHandleFile);
-        logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        close(logFdFile);
+        logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     }
     FINALLY()
     {

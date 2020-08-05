@@ -12,7 +12,7 @@ Constructors
 typedef struct IoWriteInterface
 {
     void (*close)(void *driver);
-    int (*handle)(const void *driver);
+    int (*fd)(const void *driver);
     void (*open)(void *driver);
     void (*write)(void *driver, const Buffer *buffer);
 } IoWriteInterface;

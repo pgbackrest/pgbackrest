@@ -18,8 +18,8 @@ stress testing as needed.
 #include "common/io/filter/sink.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/type/object.h"
 #include "protocol/client.h"
@@ -170,9 +170,9 @@ testRun(void)
                 storageHelper.storageRepo = storageNew(STRDEF("TEST"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioHandleReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
+                IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("storage server write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("storage server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
@@ -185,9 +185,9 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioHandleReadNew(strNew("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
+                IoRead *read = ioFdReadNew(strNew("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 ProtocolClient *client = protocolClientNew(strNew("storage test client"), strNew("test"), read, write);

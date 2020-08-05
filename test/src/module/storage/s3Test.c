@@ -3,8 +3,8 @@ Test S3 Storage
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -374,14 +374,13 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)),
-                    "s3 server begin");
+                    hrnTlsServerRun(ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)), "s3 server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
 
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,

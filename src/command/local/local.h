@@ -8,6 +8,6 @@ Local Command
 Functions
 ***********************************************************************************************************************************/
 // Local command
-void cmdLocal(int handleRead, int handleWrite);
+void cmdLocal(int fdRead, int fdWrite);
 
 #endif

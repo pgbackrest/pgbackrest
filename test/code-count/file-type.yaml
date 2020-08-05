@@ -739,6 +739,22 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
+src/common/io/fdRead.c:
+  class: core
+  type: c
+
+src/common/io/fdRead.h:
+  class: core
+  type: c/h
+
+src/common/io/fdWrite.c:
+  class: core
+  type: c
+
+src/common/io/fdWrite.h:
+  class: core
+  type: c/h
+
 src/common/io/filter/buffer.c:
   class: core
   type: c
@@ -780,22 +796,6 @@ src/common/io/filter/size.c:
   type: c
 
 src/common/io/filter/size.h:
-  class: core
-  type: c/h
-
-src/common/io/handleRead.c:
-  class: core
-  type: c
-
-src/common/io/handleRead.h:
-  class: core
-  type: c/h
-
-src/common/io/handleWrite.c:
-  class: core
-  type: c
-
-src/common/io/handleWrite.h:
   class: core
   type: c/h
 
