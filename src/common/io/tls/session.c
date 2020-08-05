@@ -11,6 +11,7 @@ TLS Session
 #include "common/io/read.intern.h"
 #include "common/io/session.intern.h"
 #include "common/io/socket/session.h"
+#include "common/io/tls/client.h"
 #include "common/io/tls/session.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
