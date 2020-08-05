@@ -242,7 +242,7 @@ tlsClientOpen(THIS_VOID)
                 // Open the socket session first since this is mostly likely to fail
                 SocketSession *socketSession = sckClientOpen(this->socketClient);
 
-                // Create internal TLS session. If there is a failure before the TLS session object is created there may be a leak
+                // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
                 // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
                 cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
 

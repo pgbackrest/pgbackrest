@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Io Client Interface
 
-Creates sessions for protocol clients. For example, a TLS client can be created with tlsClientNew() and then new TLS sessions can be
+Create sessions for protocol clients. For example, a TLS client can be created with tlsClientNew() and then new TLS sessions can be
 opened with ioClientOpen().
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_CLIENT_H

@@ -240,7 +240,7 @@ Memory context getters
 // Current memory context
 MemContext *memContextCurrent(void);
 
-// Is mem context currently being freed?
+// Is the mem context currently being freed?
 bool memContextFreeing(MemContext *this);
 
 // Prior context, i.e. the context that was current before the last memContextSwitch()
