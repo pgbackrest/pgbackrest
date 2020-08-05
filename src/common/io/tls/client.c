@@ -11,6 +11,7 @@ TLS Client
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/io/client.intern.h"
 #include "common/io/io.h"
 #include "common/io/tls/client.h"
 #include "common/io/tls/session.h"

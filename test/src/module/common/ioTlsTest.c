@@ -390,7 +390,7 @@ testRun(void)
 
                 hrnTlsServerAccept();
 
-                TEST_ASSIGN(session, tlsClientOpen(client), "open client");
+                TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->driver;
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -493,7 +493,7 @@ testRun(void)
                 hrnTlsServerAbort();
 
                 socketLocal.block = true;
-                TEST_ASSIGN(session, tlsClientOpen(client), "open client again (was closed by server)");
+                TEST_ASSIGN(session, ioClientOpen(client), "open client again (was closed by server)");
                 socketLocal.block = false;
 
                 output = bufNew(13);
