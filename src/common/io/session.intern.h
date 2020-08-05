@@ -11,9 +11,20 @@ Interface
 ***********************************************************************************************************************************/
 typedef struct IoSessionInterface
 {
+    // Type used to identify the session
+    const String *const *type;
+
+    // Close the session
     void (*close)(void *driver);
+
+    // IoRead interface for the session
     IoRead *(*ioRead)(void *driver);
+
+    // IoWrite interface for the session
     IoWrite *(*ioWrite)(void *driver);
+
+    // Driver log function
+    String *(*toLog)(const void *driver);
 } IoSessionInterface;
 
 /***********************************************************************************************************************************

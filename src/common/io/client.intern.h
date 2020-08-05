@@ -11,7 +11,14 @@ Interface
 ***********************************************************************************************************************************/
 typedef struct IoClientInterface
 {
+    // Type used to identify the client
+    const String *const *type;
+
+    // Open a session
     IoSession *(*open)(void *driver);
+
+    // Driver log function
+    String *(*toLog)(const void *driver);
 } IoClientInterface;
 
 /***********************************************************************************************************************************

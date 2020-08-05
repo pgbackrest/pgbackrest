@@ -33,6 +33,11 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
+    ASSERT(interface->type != NULL);
+    ASSERT(interface->close != NULL);
+    ASSERT(interface->ioRead != NULL);
+    ASSERT(interface->ioWrite != NULL);
+    ASSERT(interface->toLog != NULL);
 
     IoSession *this = memNew(sizeof(IoSession));
 
@@ -83,4 +88,11 @@ IoWrite *ioSessionIoWrite(IoSession *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface->ioWrite(this->driver));
+}
+
+/**********************************************************************************************************************************/
+String *
+ioSessionToLog(const IoSession *this)
+{
+    return strNewFmt("{type: %s, driver: %s}", strZ(*this->interface->type), strZ(this->interface->toLog(this->driver)));
 }

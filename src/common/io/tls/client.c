@@ -20,6 +20,11 @@ TLS Client
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
+Io client type
+***********************************************************************************************************************************/
+STRING_EXTERN(IO_CLIENT_TLS_TYPE_STR,                               IO_CLIENT_TLS_TYPE);
+
+/***********************************************************************************************************************************
 Statistics
 ***********************************************************************************************************************************/
 static TlsClientStat tlsClientStatLocal;
@@ -43,10 +48,21 @@ typedef struct TlsClient
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+static String *
+tlsClientToLog(const THIS_VOID)
+{
+    const THIS(TlsClient);
+
+    return strNewFmt(
+        "{socketClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
+        memContextFreeing(this->memContext) ? NULL_Z : strZ(sckClientToLog(this->socketClient)), this->timeout,
+        cvtBoolToConstZ(this->verifyPeer));
+}
+
 #define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
     TlsClient *
 #define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "TlsClient", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsClientToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -297,7 +313,9 @@ tlsClientOpen(THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoClientInterface tlsClientInterface =
 {
+    .type = &IO_CLIENT_TLS_TYPE_STR,
     .open = tlsClientOpen,
+    .toLog = tlsClientToLog,
 };
 
 IoClient *

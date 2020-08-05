@@ -32,6 +32,9 @@ ioClientNew(void *driver, const IoClientInterface *interface)
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
+    ASSERT(interface->type != NULL);
+    ASSERT(interface->open != NULL);
+    ASSERT(interface->toLog != NULL);
 
     IoClient *this = memNew(sizeof(IoClient));
 
@@ -56,4 +59,11 @@ ioClientOpen(IoClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(IO_SESSION, this->interface->open(this->driver));
+}
+
+/**********************************************************************************************************************************/
+String *
+ioClientToLog(const IoClient *this)
+{
+    return strNewFmt("{type: %s, driver: %s}", strZ(*this->interface->type), strZ(this->interface->toLog(this->driver)));
 }

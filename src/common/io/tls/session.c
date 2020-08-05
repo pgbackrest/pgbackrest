@@ -38,10 +38,21 @@ typedef struct TlsSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+static String *
+tlsSessionToLog(const THIS_VOID)
+{
+    const THIS(TlsSession);
+
+    return strNewFmt(
+        "{socketSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
+        this->socketSession == NULL || memContextFreeing(this->memContext) ? NULL_Z : strZ(sckSessionToLog(this->socketSession)),
+        this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
+}
+
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
     TlsSession *
 #define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "TlsSession", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -302,9 +313,11 @@ static IoWrite *tlsSessionIoWrite(THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface tlsSessionInterface =
 {
+    .type = &IO_CLIENT_TLS_TYPE_STR,
     .close = tlsSessionClose,
     .ioRead = tlsSessionIoRead,
     .ioWrite = tlsSessionIoWrite,
+    .toLog = tlsSessionToLog,
 };
 
 IoSession *

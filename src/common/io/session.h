@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
 Io Session Interface
 
-!!!
+Provides access to IoRead and IoWrite interfaces for interacting with the session returned by ioClientOpen(). Sessions should always
+be closed when work with them is done but they also contain destructors to do cleanup if there is an error.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_SESSION_H
 #define COMMON_IO_SESSION_H
@@ -43,9 +44,11 @@ void ioSessionFree(IoSession *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_SESSION_TYPE                                                                                                  \
+String *ioSessionToLog(const IoSession *this);
+
+#define FUNCTION_LOG_IO_SESSION_TYPE                                                                                               \
     IoSession *
-#define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoSession", buffer, bufferSize)
+#define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                  \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
 
 #endif
