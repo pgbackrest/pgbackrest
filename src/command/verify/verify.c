@@ -5,6 +5,8 @@ Verify Command
 
 #include <unistd.h>
 
+#include <stdio.h> // CSHANG remove
+
 #include "command/archive/common.h"
 #include "command/check/common.h"
 #include "command/verify/file.h"
@@ -597,17 +599,22 @@ typedef struct VerifyJobData
 } VerifyJobData;
 
 
-/**********************************************************************************************************************************/
-static unsigned int
-createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList)
+/***********************************************************************************************************************************
+Populate the wal ranges from the wal files for an archiveId
+***********************************************************************************************************************************/
+static void
+createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
         FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
     FUNCTION_TEST_END();
 
-    unsigned int result = 0;
+    ASSERT(archiveIdRange != NULL);
+    ASSERT(walFileList != NULL);
+    ASSERT(archiveIdRangeList != NULL);
 
     // Initialize the WAL range
     WalRange walRange =
@@ -622,45 +629,42 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     do
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
-
-        // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist
+// CSHANG remove LOG_WARN_FMT("WALSegment: %s, WALFileId: %u", strPtr(walSegment), walFileIdx);
+        // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
+        // PostgreSQL will ignore it
         if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
         {
-            LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "invalid WAL %s exists, skipping", strPtr(walSegment));
-            result++;
+            LOG_ERROR_FMT(
+                errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strPtr(walSegment),
+                strPtr(archiveIdRange->archiveId));
 
-            // Remove the file from the original list so no attempt is made to verify it - results must fall within a range
+            (*jobErrorTotal)++;
+
+            // Remove the file from the original list so no attempt is made to verify it
             strLstRemoveIdx(walFileList, walFileIdx);
             continue;
         }
 
-        // If the walSegment is a duplicate, adjust the stop in the range, log error and move onto next
-        if (strEq(walRange.stop, walSegment))
+        // Look ahead to see if this is a dulplicate of the next
+        if (walFileIdx + 1 < strLstSize(walFileList))
         {
-            // If the duplicate is also the start of the range, then this range is invalid so clear it
-            if (strEq(walRange.start, walSegment))
+            unsigned int walIdx = walFileIdx + 1;
+            String *walSegmentNext = strSubN(strLstGet(walFileList, walIdx), 0, WAL_SEGMENT_NAME_SIZE);
+            if (strEq(walSegment, walSegmentNext))
             {
-                walRange.start = NULL;
-                walRange.stop = NULL;
+                LOG_ERROR_FMT(
+                    errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strPtr(walSegment),
+                    strPtr(archiveIdRange->archiveId));
 
-                // Remove this and the previous idx from the original list so no attempt is made to verify it - results must fall
-                // within a range
-                strLstRemoveIdx(walFileList, walFileIdx);
-                walFileIdx--;
-                strLstRemoveIdx(walFileList, walFileIdx);
+                (*jobErrorTotal)++;
+
+                // Remove the WAL and all duplicates from the list
+                while (strLstSize(walFileList) > 0 && strLstExists(walFileList, walSegment))
+                {
+                    strLstRemove(walFileList, walSegment);
+                }
+                continue;
             }
-            else
-            {
-                walRange.stop = strSubN(strLstGet(walFileList, walFileIdx - 1), 0, WAL_SEGMENT_NAME_SIZE);
-
-                // Remove the file from the original list so no attempt is made to verify it - results must fall within a range
-                strLstRemoveIdx(walFileList, walFileIdx);
-            }
-
-            LOG_ERROR_FMT(errorTypeCode(&FileInvalidError), "duplicate WAL %s exists, skipping", strPtr(walSegment));
-            result++;
-
-            continue;
         }
 
         // Initialize the range if it has not yet been initialized and continue to next
@@ -708,7 +712,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         lstAdd(archiveIdRangeList, archiveIdRange);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -783,8 +787,8 @@ verifyArchive(void *data)
 
                         archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
 
-                        jobData->jobErrorTotal += createArchiveIdRange(
-                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList);
+                        createArchiveIdRange(
+                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
                     }
                 }
 
