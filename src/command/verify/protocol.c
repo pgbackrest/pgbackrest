@@ -47,7 +47,7 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
                 varUInt64(varLstGet(paramList, 3)),                                                 // file size
                 varStr(varLstGet(paramList, 4)));                                                   // cipher pass
 
-            // Return backup result
+            // Return result
             VariantList *resultList = varLstNew();
             varLstAdd(resultList, varNewUInt(result.fileResult));
             varLstAdd(resultList, varNewStr(result.filePathName));

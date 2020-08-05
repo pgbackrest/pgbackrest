@@ -961,7 +961,9 @@ verifyErrorMsg(VerifyResult verifyResult)
     FUNCTION_TEST_END();
 
     String *result = NULL;
-
+/* CSHANG TODO: Make these better (e.g. actual checksum does not match expected checksum")
+ and maybe LOG_ERROR/WARN if appropriate to do one vs the other.
+ */
     switch (verifyResult)
     {
         case verifyFileMissing:

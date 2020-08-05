@@ -9,6 +9,7 @@ Test Stanza Commands
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
 #include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 
@@ -584,9 +585,46 @@ testRun(void)
                 filePathName, strNew("a6e1a64f0813352bc2e97f116a1800377e17d2e4"), false, 0, NULL), "get results missing WAL");
         TEST_RESULT_UINT(result.fileResult, verifyFileMissing, "file missing");
 
+        // Create a compressed encrypted repo file
+        filePathName = strNew(STORAGE_REPO_BACKUP "/20190509F/pg_data/testfile.gz");
+        write = storageNewWriteP(storageRepoWrite(), filePathName);
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        storagePutP(write, walBuffer);
 
-// CSHANG: Need encryption - and to test what happens if fails
+        TEST_ASSIGN(
+            result, verifyFile(filePathName, strNew(walBufferSha1), false, 0, strNew("pass")), "get results encrypted WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
+        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
 
+        TEST_ASSIGN(
+            result, verifyFile(filePathName, strNew("badchecksum"), false, 0, strNew("pass")), "get results encrypted WAL");
+        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyProtocol()");
+
+        // Start a protocol server to test the protocol directly
+        Buffer *serverWrite = bufNew(8192);
+        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
+        ioWriteOpen(serverWriteIo);
+        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
+
+        bufUsedSet(serverWrite, 0); // CSHANG Is this necessary?
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(filePathName));
+        varLstAdd(paramList, varNewStr(strNew(walBufferSha1)));
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt64(0));
+        varLstAdd(paramList, varNewStrZ("pass"));
+
+        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,\"<REPO:BACKUP>/20190509F/pg_data/testfile.gz\"]}\n", "check result");
+        bufUsedSet(serverWrite, 0);
+
+        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
