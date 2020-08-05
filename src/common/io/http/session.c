@@ -17,7 +17,7 @@ struct HttpSession
 {
     MemContext *memContext;                                         // Mem context
     HttpClient *httpClient;                                         // HTTP client
-    TlsSession *tlsSession;                                         // TLS session
+    IoSession *ioSession;                                           // IO session
 };
 
 OBJECT_DEFINE_MOVE(HTTP_SESSION);
@@ -25,15 +25,15 @@ OBJECT_DEFINE_FREE(HTTP_SESSION);
 
 /**********************************************************************************************************************************/
 HttpSession *
-httpSessionNew(HttpClient *httpClient, TlsSession *tlsSession)
+httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, httpClient);
-        FUNCTION_LOG_PARAM(TLS_SESSION, tlsSession);
+        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
     FUNCTION_LOG_END();
 
     ASSERT(httpClient != NULL);
-    ASSERT(tlsSession != NULL);
+    ASSERT(ioSession != NULL);
 
     HttpSession *this = NULL;
 
@@ -45,7 +45,7 @@ httpSessionNew(HttpClient *httpClient, TlsSession *tlsSession)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .httpClient = httpClient,
-            .tlsSession = tlsSessionMove(tlsSession, memContextCurrent()),
+            .ioSession = ioSessionMove(ioSession, memContextCurrent()),
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -78,7 +78,7 @@ httpSessionIoRead(HttpSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(tlsSessionIoRead(this->tlsSession));
+    FUNCTION_TEST_RETURN(ioSessionIoRead(this->ioSession));
 }
 
 /**********************************************************************************************************************************/
@@ -91,5 +91,5 @@ httpSessionIoWrite(HttpSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(tlsSessionIoWrite(this->tlsSession));
+    FUNCTION_TEST_RETURN(ioSessionIoWrite(this->ioSession));
 }

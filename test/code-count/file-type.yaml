@@ -915,10 +915,6 @@ src/common/io/tls/session.h:
   class: core
   type: c/h
 
-src/common/io/tls/session.intern.h:
-  class: core
-  type: c/h
-
 src/common/io/write.c:
   class: core
   type: c

@@ -10,6 +10,7 @@ S3 Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -851,7 +852,10 @@ storageS3New(
         };
 
         // Create the HTTP client used to service requests
-        driver->httpClient = httpClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(
+            tlsClientNew(
+                sckClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout), timeout, verifyPeer, caFile, caPath),
+            timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
