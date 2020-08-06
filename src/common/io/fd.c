@@ -3,12 +3,7 @@ File Descriptor Functions
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #include <fcntl.h>
-// #include <netinet/in.h>
-// #include <netinet/tcp.h>
 #include <poll.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
 
 #include "common/debug.h"
 #include "common/io/fd.h"

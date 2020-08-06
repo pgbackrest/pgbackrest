@@ -629,7 +629,7 @@ testRun(void)
         TEST_ERROR(fdReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write is not ready to bad socket connection");
+        TEST_TITLE("write is not ready on bad socket connection");
 
         struct addrinfo hints = (struct addrinfo)
         {

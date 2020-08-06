@@ -78,6 +78,7 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Add IoClient and IoSession interfaces."/>
+                        <commit subject="Move file descriptor read/write ready into IoRead/IoWrite."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="stephen.frost"/>
