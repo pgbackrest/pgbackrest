@@ -37,6 +37,7 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
     ASSERT(interface->close != NULL);
     ASSERT(interface->ioRead != NULL);
     ASSERT(interface->ioWrite != NULL);
+    ASSERT(interface->role != NULL);
     ASSERT(interface->toLog != NULL);
 
     IoSession *this = memNew(sizeof(IoSession));
@@ -67,6 +68,19 @@ ioSessionClose(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
+int
+ioSessionFd(IoSession *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface->fd == NULL ? -1 : this->interface->fd(this->driver));
+}
+
+/**********************************************************************************************************************************/
 IoRead *ioSessionIoRead(IoSession *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -91,8 +105,23 @@ IoWrite *ioSessionIoWrite(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
+IoSessionRole ioSessionRole(const IoSession *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface->role(this->driver));
+}
+
+/**********************************************************************************************************************************/
 String *
 ioSessionToLog(const IoSession *this)
 {
-    return strNewFmt("{type: %s, driver: %s}", strZ(*this->interface->type), strZ(this->interface->toLog(this->driver)));
+    return strNewFmt(
+        "{type: %s, role: %s, driver: %s}", strZ(*this->interface->type),
+        this->interface->role(this->driver) == ioSessionRoleClient ? "client" : "server",
+        strZ(this->interface->toLog(this->driver)));
 }

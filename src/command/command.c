@@ -8,6 +8,7 @@ Common Command Routines
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
+#include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"

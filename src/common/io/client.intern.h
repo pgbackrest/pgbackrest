@@ -15,6 +15,9 @@ typedef struct IoClientInterface
     // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
     const String *const *type;
 
+    // Client name, usually host:port or some other unique indentifier
+    const String *(*name)(void *driver);
+
     // Open a session
     IoSession *(*open)(void *driver);
 
