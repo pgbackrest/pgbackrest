@@ -35,8 +35,8 @@ jobs:
 
     # Valgrind is disabled due to some platform-specific issues in getpwuid() and getgrgid() that do not seem to be pgBackRest bugs.
     # Run in a different timezone to check time tests.
-    # - arch: ppc64le
-    - dist: bionic
+    - arch: ppc64le
+      dist: bionic
       env:
         - PGB_CI="test --vm=none --param=no-valgrind --param=tz=America/New_York"
       services:
