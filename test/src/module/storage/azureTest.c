@@ -280,7 +280,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");

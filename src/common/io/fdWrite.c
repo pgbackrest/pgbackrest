@@ -7,6 +7,7 @@ File Descriptor Io Write
 
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
+#include "common/io/socket/common.h" // !!! REMOVE
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -20,6 +21,7 @@ typedef struct IoFdWrite
     MemContext *memContext;                                         // Object memory context
     const String *name;                                             // File descriptor name for error messages
     int fd;                                                         // File descriptor to write to
+    TimeMSec timeout;                                               // Timeout for write operation
 } IoFdWrite;
 
 /***********************************************************************************************************************************
@@ -29,6 +31,37 @@ Macros for function logging
     IoFdWrite *
 #define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "IoFdWrite", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+// Can bytes be written immediately?
+***********************************************************************************************************************************/
+static bool
+ioFdWriteReady(THIS_VOID, bool error)
+{
+    THIS(IoFdWrite);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FD_WRITE, this);
+        FUNCTION_LOG_PARAM(BOOL, error);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = true;
+
+    // Check if the file descriptor is ready to write
+    if (!sckReadyWrite(this->fd, this->timeout))
+    {
+        // Error if requested
+        if (error)
+            THROW_FMT(FileWriteError, "timeout after %" PRIu64 "ms waiting for write to '%s'", this->timeout, strZ(this->name));
+
+        // File descriptor is not ready to write
+        result = false;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
 
 /***********************************************************************************************************************************
 Write to the file descriptor
@@ -71,10 +104,11 @@ ioFdWriteFd(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoWrite *
-ioFdWriteNew(const String *name, int fd)
+ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     IoWrite *this = NULL;
@@ -88,9 +122,10 @@ ioFdWriteNew(const String *name, int fd)
             .memContext = memContextCurrent(),
             .name = strDup(name),
             .fd = fd,
+            .timeout = timeout,
         };
 
-        this = ioWriteNewP(driver, .fd = ioFdWriteFd, .write = ioFdWrite);
+        this = ioWriteNewP(driver, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite);
     }
     MEM_CONTEXT_NEW_END();
 

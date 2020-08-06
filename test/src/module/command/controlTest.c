@@ -152,7 +152,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -175,7 +175,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -209,7 +209,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -232,7 +232,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -261,7 +261,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
@@ -280,7 +280,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -309,7 +309,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -333,7 +333,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock

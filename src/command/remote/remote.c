@@ -28,7 +28,7 @@ cmdRemote(int fdRead, int fdWrite)
         String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioFdReadNew(name, fdRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(name, fdWrite);
+        IoWrite *write = ioFdWriteNew(name, fdWrite, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);

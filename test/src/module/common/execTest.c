@@ -100,7 +100,7 @@ testRun(void)
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");
 
-        TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to select from sleep read: [9] Bad file descriptor");
+        TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to read from sleep read: [9] Bad file descriptor");
         ioWriteStrLine(execIoWrite(exec), strNew(""));
         TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
 

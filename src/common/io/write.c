@@ -144,6 +144,25 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
+bool
+ioWriteReady(IoWrite *this, IoWriteReadyParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(BOOL, param.error);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = true;
+
+    if (this->interface.ready != NULL)
+        result = this->interface.ready(this->driver, param.error);
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
 void
 ioWriteStr(IoWrite *this, const String *string)
 {

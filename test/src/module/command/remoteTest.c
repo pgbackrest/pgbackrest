@@ -45,7 +45,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 ProtocolClient *client = protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write);
@@ -81,7 +81,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 ProtocolClient *client = NULL;
@@ -117,7 +117,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 TEST_ERROR(
@@ -149,7 +149,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 ProtocolClient *client = NULL;
@@ -187,7 +187,7 @@ testRun(void)
             {
                 IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);

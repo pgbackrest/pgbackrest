@@ -26,6 +26,7 @@ Object type
 typedef struct SocketSession SocketSession;
 
 #include "common/io/read.h"
+#include "common/io/write.h"
 #include "common/time.h"
 #include "common/type/string.h"
 
@@ -41,16 +42,13 @@ Getters/Setters
 IoRead *sckSessionIoRead(SocketSession *this);
 
 // Write interface
-// IoWrite *sckSessionIoWrite(IoSession *this);
+IoWrite *sckSessionIoWrite(SocketSession *this);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
-
-// Check if there is data ready to read/write on the socket
-void sckSessionReadyWrite(SocketSession *this);
 
 /***********************************************************************************************************************************
 Getters/Setters
