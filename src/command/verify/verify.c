@@ -5,8 +5,6 @@ Verify Command
 
 #include <unistd.h>
 
-#include <stdio.h> // CSHANG remove
-
 #include "command/archive/common.h"
 #include "command/check/common.h"
 #include "command/verify/file.h"
@@ -219,6 +217,9 @@ Questions/Concerns
 //         THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 // }
 
+/***********************************************************************************************************************************
+Load a file into memory
+***********************************************************************************************************************************/
 static StorageRead *
 verifyFileLoad(const String *fileName, const String *cipherPass)
 {
@@ -320,6 +321,9 @@ verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPa
     FUNCTION_LOG_RETURN(VERIFY_INFO_FILE, result);
 }
 
+/***********************************************************************************************************************************
+Get the archive.info file
+***********************************************************************************************************************************/
 static InfoArchive *
 verifyArchiveInfoFile(void)
 {
@@ -370,6 +374,9 @@ verifyArchiveInfoFile(void)
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, result);
 }
 
+/***********************************************************************************************************************************
+Get the backup.info file
+***********************************************************************************************************************************/
 static InfoBackup *
 verifyBackupInfoFile(void)
 {
@@ -420,6 +427,9 @@ verifyBackupInfoFile(void)
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
+/***********************************************************************************************************************************
+Get the manifest file
+***********************************************************************************************************************************/
 static Manifest *
 verifyManifestFile(const String *backupLabel, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory)
 {
@@ -552,9 +562,8 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-
 /***********************************************************************************************************************************
-Process the job data
+Structures for job data
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_ARCHIVE_ID_RANGE_TYPE                                                                                         \
     ArchiveIdRange
@@ -598,9 +607,8 @@ typedef struct VerifyJobData
     List *archiveIdRangeList;
 } VerifyJobData;
 
-
 /***********************************************************************************************************************************
-Populate the wal ranges from the wal files for an archiveId
+Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
 ***********************************************************************************************************************************/
 static void
 createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
@@ -629,7 +637,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     do
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
-// CSHANG remove LOG_WARN_FMT("WALSegment: %s, WALFileId: %u", strPtr(walSegment), walFileIdx);
+
         // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
         // PostgreSQL will ignore it
         if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
@@ -645,12 +653,10 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
             continue;
         }
 
-        // Look ahead to see if this is a dulplicate of the next
+        // The lists are sorted so look ahead to see if this is a duplicate of the next one in the list
         if (walFileIdx + 1 < strLstSize(walFileList))
         {
-            unsigned int walIdx = walFileIdx + 1;
-            String *walSegmentNext = strSubN(strLstGet(walFileList, walIdx), 0, WAL_SEGMENT_NAME_SIZE);
-            if (strEq(walSegment, walSegmentNext))
+            if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx + 1), 0, WAL_SEGMENT_NAME_SIZE)))
             {
                 LOG_ERROR_FMT(
                     errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strPtr(walSegment),
@@ -658,11 +664,17 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
 
                 (*jobErrorTotal)++;
 
-                // Remove the WAL and all duplicates from the list
-                while (strLstSize(walFileList) > 0 && strLstExists(walFileList, walSegment))
+                bool foundDup = true;
+
+                // Remove all duplicates of this WAL, including this WAL, from the list
+                while (strLstSize(walFileList) > 0 && foundDup)
                 {
-                    strLstRemove(walFileList, walSegment);
+                    if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE)))
+                        strLstRemoveIdx(walFileList, walFileIdx);
+                    else
+                        foundDup = false;
                 }
+
                 continue;
             }
         }
@@ -715,7 +727,9 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Verify the job data archives
+***********************************************************************************************************************************/
 static ProtocolParallelJob *
 verifyArchive(void *data)
 {
@@ -877,7 +891,9 @@ verifyArchive(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Process the job data
+***********************************************************************************************************************************/
 static ProtocolParallelJob *
 verifyJobCallback(void *data, unsigned int clientIdx)
 {
@@ -995,7 +1011,9 @@ verifyErrorMsg(VerifyResult verifyResult)
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Render the results of the verify command
+***********************************************************************************************************************************/
 static String *
 verifyRender(void *data)
 {
@@ -1068,6 +1086,9 @@ verifyRender(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+Helper function to set the currently processing backup label, if any, and check that the archiveIds are in the db history
+***********************************************************************************************************************************/
 static String *
 setBackupCheckArchive(
     const StringList *backupList, const InfoBackup *backupInfo, const StringList *archiveIdList, const InfoPg *pgHistory,
@@ -1131,7 +1152,9 @@ setBackupCheckArchive(
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Process the verify command
+***********************************************************************************************************************************/
 static String *
 verifyProcess(void)
 {
