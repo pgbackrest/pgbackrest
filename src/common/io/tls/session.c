@@ -42,7 +42,7 @@ Macros for function logging
 static String *
 tlsSessionToLog(const THIS_VOID)
 {
-    const THIS(TlsSession);
+    THIS(const TlsSession);
 
     return strNewFmt(
         "{socketSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",

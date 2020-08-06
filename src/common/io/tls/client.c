@@ -51,7 +51,7 @@ Macros for function logging
 static String *
 tlsClientToLog(const THIS_VOID)
 {
-    const THIS(TlsClient);
+    THIS(const TlsClient);
 
     return strNewFmt(
         "{socketClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
