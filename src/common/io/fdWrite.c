@@ -6,8 +6,8 @@ File Descriptor Io Write
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/fd.h"
 #include "common/io/fdWrite.h"
-#include "common/io/socket/common.h" // !!! REMOVE
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -50,7 +50,7 @@ ioFdWriteReady(THIS_VOID, bool error)
     bool result = true;
 
     // Check if the file descriptor is ready to write
-    if (!sckReadyWrite(this->fd, this->timeout))
+    if (!fdReadyWrite(this->fd, this->timeout))
     {
         // Error if requested
         if (error)

@@ -2,6 +2,7 @@
 Test IO
 ***********************************************************************************************************************************/
 #include <fcntl.h>
+#include <netdb.h>
 
 #include "common/type/json.h"
 
@@ -612,6 +613,20 @@ testRun(void)
         int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
         TEST_RESULT_VOID(ioFdWriteOneStr(fd, strNew("test1\ntest2")), "write string to file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fdReadyRetry() edge conditions");
+
+        TimeMSec timeout = 5757;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, true, &timeout, 0), true, "first retry does not modify timeout");
+        TEST_RESULT_UINT(timeout, 5757, "    check timeout");
+
+        timeout = 0;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec() + 10000), true, "retry before timeout");
+        TEST_RESULT_BOOL(timeout > 0, true, "    check timeout");
+
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec()), false, "no retry after timeout");
+        TEST_ERROR(fdReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write is not ready to bad socket connection");

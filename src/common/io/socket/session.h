@@ -3,7 +3,7 @@ Socket Session
 
 A simple socket session intended to allow access to services that are exposed via a socket.
 
-!!! STILL TRUE? Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
+Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_SOCKET_SESSION_H
 #define COMMON_IO_SOCKET_SESSION_H

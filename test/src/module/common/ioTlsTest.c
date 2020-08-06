@@ -143,8 +143,9 @@ testRun(void)
             SocketSession *session = NULL;
             TEST_ASSIGN(session, sckSessionNew(sckSessionTypeClient, fd, strNew(hostBad), 7777, 100), "new socket");
 
-            // TEST_ERROR(
-            //     sckSessionReadyWrite(session), ProtocolError, "timeout after 100ms waiting for write to '172.31.255.255:7777'");
+            TEST_ERROR(
+                ioWriteReadyP(sckSessionIoWrite(session), .error = true), FileWriteError,
+                "timeout after 100ms waiting for write to '172.31.255.255:7777'");
 
             TEST_RESULT_VOID(sckSessionFree(session), "free socket session");
 
@@ -391,25 +392,6 @@ testRun(void)
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->driver;
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("socket read/write ready");
-
-                TimeMSec timeout = 5757;
-                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, true, &timeout, 0), true, "first retry does not modify timeout");
-                TEST_RESULT_UINT(timeout, 5757, "    check timeout");
-
-                timeout = 0;
-                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, false, &timeout, timeMSec() + 10000), true, "retry before timeout");
-                TEST_RESULT_BOOL(timeout > 0, true, "    check timeout");
-
-                TEST_RESULT_BOOL(sckReadyRetry(-1, EINTR, false, &timeout, timeMSec()), false, "no retry after timeout");
-                TEST_ERROR(
-                    sckReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
-
-                TEST_RESULT_BOOL(sckReadyRead(tlsSession->socketSession->fd, 0), false, "socket is not read ready");
-                TEST_RESULT_BOOL(sckReadyWrite(tlsSession->socketSession->fd, 100), true, "socket is write ready");
-                // TEST_RESULT_VOID(sckSessionReadyWrite(tlsSession->socketSession), "socket session is write ready");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");

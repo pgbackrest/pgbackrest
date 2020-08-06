@@ -6,9 +6,9 @@ File Descriptor Io Read
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/fd.h"
 #include "common/io/fdRead.h"
 #include "common/io/read.intern.h"
-#include "common/io/socket/common.h" // !!! REMOVE
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -51,7 +51,7 @@ ioFdReadReady(THIS_VOID, bool error)
     bool result = true;
 
     // Check if the file descriptor is ready to read
-    if (!sckReadyRead(this->fd, this->timeout))
+    if (!fdReadyRead(this->fd, this->timeout))
     {
         // Error if requested
         if (error)

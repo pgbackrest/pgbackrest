@@ -226,6 +226,7 @@ unit:
         coverage:
           common/io/bufferRead: full
           common/io/bufferWrite: full
+          common/io/fd: full
           common/io/fdRead: full
           common/io/fdWrite: full
           common/io/filter/buffer: full
