@@ -250,6 +250,10 @@ unit:
           common/io/socket/common: full
           common/io/socket/session: full
 
+        include:
+          - common/io/fdRead
+          - common/io/read
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
         total: 5

@@ -278,6 +278,7 @@ testRun(void)
             "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
+        TEST_RESULT_BOOL(ioReadReadyP(read), true, "read defaults to ready");
         TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
@@ -575,7 +576,11 @@ testRun(void)
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
 
-                TEST_ERROR(ioRead(read, buffer), FileReadError, "unable to read data from read test after 1000ms");
+                ((IoFdRead *)read->driver)->timeout = 1;
+                TEST_RESULT_BOOL(ioReadReadyP(read), false, "read is not ready (without throwing error)");
+                ((IoFdRead *)read->driver)->timeout = 1000;
+
+                TEST_ERROR(ioRead(read, buffer), FileReadError, "timeout after 1000ms waiting for read from 'read test'");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");
 
                 // Read a buffer that is transmitted in two parts with blocking on the read side

@@ -459,11 +459,11 @@ testRun(void)
                 hrnTlsServerSleep(500);
 
                 output = bufNew(12);
-                tlsSession->socketSession->timeout = 100;
+                ((IoFdRead *)tlsSession->socketSession->read->driver)->timeout = 100;
                 TEST_ERROR_FMT(
-                    ioRead(ioSessionIoRead(session), output), ProtocolError,
+                    ioRead(ioSessionIoRead(session), output), FileReadError,
                     "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort());
-                tlsSession->socketSession->timeout = 5000;
+                ((IoFdRead *)tlsSession->socketSession->read->driver)->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("second protocol exchange");

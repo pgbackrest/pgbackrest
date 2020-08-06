@@ -3,7 +3,7 @@ Socket Session
 
 A simple socket session intended to allow access to services that are exposed via a socket.
 
-Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
+!!! STILL TRUE? Currently this is not a full-featured session and is only intended to isolate socket functionality from the tls code.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_SOCKET_SESSION_H
 #define COMMON_IO_SOCKET_SESSION_H
@@ -25,6 +25,7 @@ Object type
 
 typedef struct SocketSession SocketSession;
 
+#include "common/io/read.h"
 #include "common/time.h"
 #include "common/type/string.h"
 
@@ -34,13 +35,21 @@ Constructors
 SocketSession *sckSessionNew(SocketSessionType type, int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Read interface
+IoRead *sckSessionIoRead(SocketSession *this);
+
+// Write interface
+// IoWrite *sckSessionIoWrite(IoSession *this);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 SocketSession *sckSessionMove(SocketSession *this, MemContext *parentNew);
 
 // Check if there is data ready to read/write on the socket
-void sckSessionReadyRead(SocketSession *this);
 void sckSessionReadyWrite(SocketSession *this);
 
 /***********************************************************************************************************************************
