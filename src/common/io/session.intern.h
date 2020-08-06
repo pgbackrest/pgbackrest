@@ -11,7 +11,8 @@ Interface
 ***********************************************************************************************************************************/
 typedef struct IoSessionInterface
 {
-    // Type used to identify the session
+    // Type used to identify the session. This is stored as a pointer to a String pointer so it can be used with an existing String
+    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
     const String *const *type;
 
     // Close the session
