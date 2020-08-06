@@ -3,7 +3,6 @@ File Descriptor Io Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <sys/select.h>
 #include <unistd.h>
 
 #include "common/debug.h"
