@@ -29,7 +29,7 @@ typedef struct TlsSession
     IoSession *ioSession;                                           // Io session
     SSL *session;                                                   // TLS session on the file descriptor
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-    bool shutdownOnClose;                                           // Shutdown the TLS connection when closing the file descriptor
+    bool shutdownOnClose;                                           // Shutdown the TLS connection when closing the session
 
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
