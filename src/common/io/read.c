@@ -374,7 +374,7 @@ ioReadFilterGroup(const IoRead *this)
 
 /**********************************************************************************************************************************/
 int
-ioReadHandle(const IoRead *this)
+ioReadFd(const IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, this);
@@ -382,7 +382,7 @@ ioReadHandle(const IoRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
 }
 
 /**********************************************************************************************************************************/

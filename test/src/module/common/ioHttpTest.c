@@ -3,8 +3,8 @@ Test HTTP
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/io/tls/client.h"
 
 #include "common/harnessFork.h"
@@ -192,14 +192,14 @@ testRun(void)
             {
                 // Start HTTP test server
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
+                    hrnTlsServerRun(ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
                     "HTTP server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create client");

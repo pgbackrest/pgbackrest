@@ -3,8 +3,8 @@ Test Command Control
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
@@ -150,14 +150,14 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
-                int lockHandle = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
-                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
+                int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
@@ -166,16 +166,16 @@ testRun(void)
                 // Wait for a linefeed from the parent ioWriteLine below
                 ioReadLine(read);
 
-                // Parent remove the file so just close the handle
-                close(lockHandle);
+                // Parent removed the file so just close the file descriptor
+                close(lockFd);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -207,14 +207,14 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
-                int lockHandle = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
-                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
+                int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
@@ -223,16 +223,16 @@ testRun(void)
                 // Wait for a linefeed from the parent ioWriteLine below
                 ioReadLine(read);
 
-                // Parent remove the file so just close the handle
-                close(lockHandle);
+                // Parent removed the file so just close the file descriptor
+                close(lockFd);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -259,9 +259,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
@@ -278,9 +278,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -307,14 +307,14 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
-                int lockHandle = open(strZ(strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
-                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
+                int lockFd = open(strZ(strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
@@ -323,17 +323,17 @@ testRun(void)
                 // Wait for a linefeed from the parent ioWriteLine below
                 ioReadLine(read);
 
-                // Remove the file and close the handle
+                // Remove the file and close the file descriptor
                 storageRemoveP(storageData, strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath)));
-                close(lockHandle);
+                close(lockFd);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock

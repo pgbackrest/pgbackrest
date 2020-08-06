@@ -26,10 +26,10 @@ static LogLevel logLevelStdErr = logLevelError;
 static LogLevel logLevelFile = logLevelOff;
 static LogLevel logLevelAny = logLevelError;
 
-// Log file handles
-static int logHandleStdOut = STDOUT_FILENO;
-static int logHandleStdErr = STDERR_FILENO;
-DEBUG_UNIT_EXTERN int logHandleFile = -1;
+// Log file descriptors
+static int logFdStdOut = STDOUT_FILENO;
+static int logFdStdErr = STDERR_FILENO;
+DEBUG_UNIT_EXTERN int logFdFile = -1;
 
 // Has the log file banner been written yet?
 DEBUG_UNIT_EXTERN bool logFileBanner = false;
@@ -124,7 +124,7 @@ logAnySet(void)
     if (logLevelStdErr > logLevelAny)
         logLevelAny = logLevelStdErr;
 
-    if (logLevelFile > logLevelAny && logHandleFile != -1)
+    if (logLevelFile > logLevelAny && logFdFile != -1)
         logLevelAny = logLevelFile;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -185,11 +185,11 @@ logFileClose(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Close the file handle if it is open
-    if (logHandleFile != -1)
+    // Close the file descriptor if it is open
+    if (logFdFile != -1)
     {
-        close(logHandleFile);
-        logHandleFile = -1;
+        close(logFdFile);
+        logFdFile = -1;
     }
 
     logAnySet();
@@ -216,9 +216,9 @@ logFileSet(const char *logFile)
     if (logLevelFile != logLevelOff)
     {
         // Open the file and handle errors
-        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0640);
+        logFdFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0640);
 
-        if (logHandleFile == -1)
+        if (logFdFile == -1)
         {
             int errNo = errno;
             LOG_WARN_FMT(
@@ -276,21 +276,21 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
 Internal write function that handles errors
 ***********************************************************************************************************************************/
 static void
-logWrite(int handle, const char *message, size_t messageSize, const char *errorDetail)
+logWrite(int fd, const char *message, size_t messageSize, const char *errorDetail)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, handle);
+        FUNCTION_TEST_PARAM(INT, fd);
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, messageSize);
         FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
     FUNCTION_TEST_END();
 
-    ASSERT(handle != -1);
+    ASSERT(fd != -1);
     ASSERT(message != NULL);
     ASSERT(messageSize != 0);
     ASSERT(errorDetail != NULL);
 
-    if ((size_t)write(handle, message, messageSize) != messageSize)
+    if ((size_t)write(fd, message, messageSize) != messageSize)
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %s", errorDetail);
 
     FUNCTION_TEST_RETURN_VOID();
@@ -300,19 +300,19 @@ logWrite(int handle, const char *message, size_t messageSize, const char *errorD
 Write out log message and indent subsequent lines
 ***********************************************************************************************************************************/
 static void
-logWriteIndent(int handle, const char *message, size_t indentSize, const char *errorDetail)
+logWriteIndent(int fd, const char *message, size_t indentSize, const char *errorDetail)
 {
     // Indent buffer -- used to write out indent space without having to loop
     static const char indentBuffer[] = "                                                                                          ";
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, handle);
+        FUNCTION_TEST_PARAM(INT, fd);
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, indentSize);
         FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
     FUNCTION_TEST_END();
 
-    ASSERT(handle != -1);
+    ASSERT(fd != -1);
     ASSERT(message != NULL);
     ASSERT(indentSize > 0 && indentSize < sizeof(indentBuffer));
     ASSERT(errorDetail != NULL);
@@ -324,11 +324,11 @@ logWriteIndent(int handle, const char *message, size_t indentSize, const char *e
     while (linefeedPtr != NULL)
     {
         if (!first)
-            logWrite(handle, indentBuffer, indentSize, errorDetail);
+            logWrite(fd, indentBuffer, indentSize, errorDetail);
         else
             first = false;
 
-        logWrite(handle, message, (size_t)(linefeedPtr - message + 1), errorDetail);
+        logWrite(fd, message, (size_t)(linefeedPtr - message + 1), errorDetail);
         message += (size_t)(linefeedPtr - message + 1);
 
         linefeedPtr = strchr(message, '\n');
@@ -447,33 +447,33 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
         if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
         {
             logWriteIndent(
-                logHandleStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
+                logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
                 "log to stderr");
         }
     }
     else if (logLevel <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax))
-        logWriteIndent(logHandleStdOut, logBuffer, logData->indentSize, "log to stdout");
+        logWriteIndent(logFdStdOut, logBuffer, logData->indentSize, "log to stdout");
 
     // Log to file
-    if (logLevel <= logLevelFile && logHandleFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
+    if (logLevel <= logLevelFile && logFdFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
     {
         // If the banner has not been written
         if (!logFileBanner)
         {
             // Add a blank line if the file already has content
-            if (lseek(logHandleFile, 0, SEEK_END) > 0)
-                logWrite(logHandleFile, "\n", 1, "banner spacing to file");
+            if (lseek(logFdFile, 0, SEEK_END) > 0)
+                logWrite(logFdFile, "\n", 1, "banner spacing to file");
 
             // Write process start banner
             const char *banner = "-------------------PROCESS START-------------------\n";
 
-            logWrite(logHandleFile, banner, strlen(banner), "banner to file");
+            logWrite(logFdFile, banner, strlen(banner), "banner to file");
 
             // Mark banner as written
             logFileBanner = true;
         }
 
-        logWriteIndent(logHandleFile, logBuffer, logData->indentSize, "log to file");
+        logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
     }
 
     FUNCTION_TEST_RETURN_VOID();

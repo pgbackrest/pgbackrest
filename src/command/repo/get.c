@@ -7,7 +7,7 @@ Repository Get Command
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -193,7 +193,7 @@ cmdStorageGet(void)
     {
         TRY_BEGIN()
         {
-            result = storageGetProcess(ioHandleWriteNew(STRDEF("stdout"), STDOUT_FILENO));
+            result = storageGetProcess(ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO));
         }
         // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
         // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken

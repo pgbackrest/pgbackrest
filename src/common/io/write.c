@@ -253,7 +253,7 @@ ioWriteFilterGroup(const IoWrite *this)
 
 /**********************************************************************************************************************************/
 int
-ioWriteHandle(const IoWrite *this)
+ioWriteFd(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -261,5 +261,5 @@ ioWriteHandle(const IoWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
 }

@@ -28,7 +28,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_PTR(execMemContext(exec), exec->memContext, "get mem context");
-        TEST_RESULT_INT(execHandleRead(exec), exec->handleRead, "check read handle");
+        TEST_RESULT_INT(execFdRead(exec), exec->fdRead, "check read file descriptor");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         String *message = strNew("ACKBYACK");
@@ -40,7 +40,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
-        close(exec->handleWrite);
+        close(exec->fdWrite);
 
         TEST_ERROR(strZ(ioReadLine(execIoRead(exec))), UnknownError, "cat terminated unexpectedly [0]");
         TEST_RESULT_VOID(execFree(exec), "free exec");
