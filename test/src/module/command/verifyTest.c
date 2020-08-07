@@ -24,15 +24,15 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     String *stanza = strNew("db");
-    String *backupStanzaPath = strNewFmt("repo/backup/%s", strPtr(stanza));
-    String *backupInfoFileName = strNewFmt("%s/" INFO_BACKUP_FILE, strPtr(backupStanzaPath));
-    String *backupInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName));
-    String *archiveStanzaPath = strNewFmt("repo/archive/%s", strPtr(stanza));
-    String *archiveInfoFileName = strNewFmt("%s/" INFO_ARCHIVE_FILE, strPtr(archiveStanzaPath));
-    String *archiveInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName));
+    String *backupStanzaPath = strNewFmt("repo/backup/%s", strZ(stanza));
+    String *backupInfoFileName = strNewFmt("%s/" INFO_BACKUP_FILE, strZ(backupStanzaPath));
+    String *backupInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName));
+    String *archiveStanzaPath = strNewFmt("repo/archive/%s", strZ(stanza));
+    String *archiveInfoFileName = strNewFmt("%s/" INFO_ARCHIVE_FILE, strZ(archiveStanzaPath));
+    String *archiveInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName));
 
     StringList *argListBase = strLstNew();
-    strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
+    strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
     String *backupInfoContent = strNewFmt(
@@ -57,7 +57,7 @@ testRun(void)
         "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
             "\"db-version\":\"9.4\"}");
 
-    const Buffer *backupInfoBase = harnessInfoChecksumZ(strPtr(backupInfoContent));
+    const Buffer *backupInfoBase = harnessInfoChecksumZ(strZ(backupInfoContent));
 
     String *backupInfoMultiHistoryContent = strNewFmt(
         "[backup:current]\n"
@@ -98,7 +98,7 @@ testRun(void)
         "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"
             "\"db-version\":\"11\"}");
 
-    const Buffer *backupInfoMultiHistoryBase = harnessInfoChecksumZ(strPtr(backupInfoMultiHistoryContent));
+    const Buffer *backupInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(backupInfoMultiHistoryContent));
 
     String *archiveInfoContent = strNewFmt(
         "[db]\n"
@@ -109,7 +109,7 @@ testRun(void)
         "[db:history]\n"
         "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}");
 
-    const Buffer *archiveInfoBase = harnessInfoChecksumZ(strPtr(archiveInfoContent));
+    const Buffer *archiveInfoBase = harnessInfoChecksumZ(strZ(archiveInfoContent));
 
     String *archiveInfoMultiHistoryContent = strNewFmt(
         "[db]\n"
@@ -121,7 +121,7 @@ testRun(void)
         "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
         "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}");
 
-    const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strPtr(archiveInfoMultiHistoryContent));
+    const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
 
 // CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
 //
@@ -420,7 +420,7 @@ testRun(void)
 
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
@@ -440,7 +440,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), contentLoad), "write invalid backup.info");
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
             "<REPO:BACKUP>/backup.info\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
@@ -459,7 +459,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoBase), "write valid backup.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
             " <REPO:BACKUP>/backup.info\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
@@ -508,7 +508,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameCopy), "remove archive.info.copy");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
             "P00   WARN: no archives or backups exist in the repo", testPath(), testPath())));
@@ -522,7 +522,7 @@ testRun(void)
             "write valid and matching archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file", testPath(), testPath())));
@@ -638,20 +638,20 @@ testRun(void)
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
         pgWalTestToBuffer(
             (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
-        const char *walBufferSha1 = strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
+        const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strPtr(archiveStanzaPath))),
+            storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
             "create empty path for old archiveId");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/11-2/0000000100000000", strPtr(archiveStanzaPath))),
+            storagePathCreateP(storageTest, strNewFmt("%s/11-2/0000000100000000", strZ(archiveStanzaPath))),
             "create empty timeline path");
 
         StorageWrite *write = storageNewWriteP(
             storageTest,
             strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz",
-            strPtr(archiveStanzaPath)));
+            strZ(archiveStanzaPath)));
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressTypeGz, 3));
         TEST_RESULT_VOID(storagePutP(write, walBuffer), "write first WAL compressed - but checksum failure");
 
@@ -659,28 +659,28 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-%s", strPtr(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFF-%s", strPtr(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFF-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000000-%s", strPtr(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000002-%s", strPtr(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000002-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL - starts next range");
 
@@ -696,7 +696,7 @@ testRun(void)
             "process results");
 
         harnessLogResult(
-            strPtr(strNewFmt(
+            strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' is empty\n"

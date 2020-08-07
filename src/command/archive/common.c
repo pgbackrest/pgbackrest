@@ -290,8 +290,8 @@ archiveIdComparator(const void *item1, const void *item2)
 {
     StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
     StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
-    int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
-    int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
+    int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
+    int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
 
     return (int1 - int2);
 }

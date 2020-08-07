@@ -12,7 +12,7 @@ Verify Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -206,7 +206,7 @@ Questions/Concerns
 //         {
 //             THISMAYBEASTRUCT result = varSOMETHING(protocolParallelJobResult(job));
 // // CSHANG This is just an example - we need to do logging based on INFO for what we're checking, DETAIL for each files checked, then BACKUP success, WAL success would also be INFO, WARN logLevelWarn or ERROR logLevelError
-//             LOG_PID(logLevelInfo, protocolParallelJobProcessId(job), 0, strPtr(log));
+//             LOG_PID(logLevelInfo, protocolParallelJobProcessId(job), 0, strZ(log));
 //         }
 //         MEM_CONTEXT_TEMP_END();
 //
@@ -214,7 +214,7 @@ Questions/Concerns
 //         protocolParallelJobFree(job);
 //     }
 //     else
-//         THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+//         THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 // }
 
 /***********************************************************************************************************************************
@@ -310,9 +310,9 @@ verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPa
             String *errorMsg = strNew(errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
-                strCat(errorMsg, strNewFmt(" %s", strPtr(pathFileName)));
+                strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
 
-            LOG_WARN(strPtr(errorMsg));
+            LOG_WARN(strZ(errorMsg));
         }
         TRY_END();
     }
@@ -444,7 +444,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+        String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
         // Get the main manifest file
         VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
@@ -457,7 +457,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                strNewFmt("%s%s", strPtr(fileName), INFO_COPY_EXT), false, cipherPass);
+                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
 
             // If the copy loaded successfuly, then check the checksums
             if (verifyManifestInfoCopy.errorCode == 0)
@@ -472,14 +472,14 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
         {
             // Attempt to load the copy
             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                strNewFmt("%s%s", strPtr(fileName), INFO_COPY_EXT), true, cipherPass);
+                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
 
             // If loaded successfully, then return the copy as usable
             if (verifyManifestInfoCopy.errorCode == 0)
             {
                 // Warn if this is not the current backup and the main manifest file was missing
                 if (!currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError))
-                    LOG_WARN_FMT("%s/backup.manifest does not exist, using copy", strPtr(backupLabel));
+                    LOG_WARN_FMT("%s/backup.manifest does not exist, using copy", strZ(backupLabel));
 
                 result = verifyManifestInfoCopy.manifest;
                 manifestMove(result, memContextPrior());
@@ -507,7 +507,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
 
             // If the PG data is not found in the backup.info history, then warn but check all the files anyway
             if (!found)
-                LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strPtr(backupLabel));
+                LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strZ(backupLabel));
         }
 
     }
@@ -541,7 +541,7 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
         String *errMsg = strNew("archive and backup history lists do not match");
 
         if (archiveInfoHistoryTotal != backupInfoHistoryTotal)
-            THROW(FormatError, strPtr(errMsg));
+            THROW(FormatError, strZ(errMsg));
 
         // Confirm the lists are the same
         for (unsigned int infoPgIdx = 0; infoPgIdx < archiveInfoHistoryTotal; infoPgIdx++)
@@ -553,7 +553,7 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
                 archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
                 archiveInfoPgHistory.version != backupInfoPgHistory.version)
             {
-                THROW(FormatError, strPtr(errMsg));
+                THROW(FormatError, strZ(errMsg));
             }
         }
     }
@@ -643,8 +643,8 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
         {
             LOG_ERROR_FMT(
-                errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strPtr(walSegment),
-                strPtr(archiveIdRange->archiveId));
+                errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment),
+                strZ(archiveIdRange->archiveId));
 
             (*jobErrorTotal)++;
 
@@ -659,8 +659,8 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
             if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx + 1), 0, WAL_SEGMENT_NAME_SIZE)))
             {
                 LOG_ERROR_FMT(
-                    errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strPtr(walSegment),
-                    strPtr(archiveIdRange->archiveId));
+                    errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strZ(walSegment),
+                    strZ(archiveIdRange->archiveId));
 
                 (*jobErrorTotal)++;
 
@@ -759,7 +759,7 @@ verifyArchive(void *data)
             jobData->walPathList =
                 strLstSort(
                     storageListP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)),
+                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
                         .expression = WAL_SEGMENT_DIR_REGEXP_STR),
                     sortOrderAsc);
         }
@@ -778,7 +778,7 @@ verifyArchive(void *data)
                         strLstSort(
                             storageListP(
                                 storageRepo(),
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
                                 .expression = WAL_SEGMENT_FILE_REGEXP_STR),
                             sortOrderAsc);
 
@@ -789,8 +789,8 @@ verifyArchive(void *data)
                         {
                             StorageRead *walRead = verifyFileLoad(
                                 strNewFmt(
-                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
-                                    strPtr(strLstGet(jobData->walFileList, 0))),
+                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath),
+                                    strZ(strLstGet(jobData->walFileList, 0))),
                                 jobData->walCipherPass);
 
                             PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
@@ -826,7 +826,7 @@ verifyArchive(void *data)
 
                         // Get the fully qualified file name
                         const String *filePathName = strNewFmt(
-                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath), strPtr(fileName));
+                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath), strZ(fileName));
 
                         // Get the checksum from the file name
                         String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -859,7 +859,7 @@ verifyArchive(void *data)
                 else
                 {
                     // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
-                    LOG_WARN_FMT("path '%s/%s' is empty", strPtr(archiveId), strPtr(walPath));
+                    LOG_WARN_FMT("path '%s/%s' is empty", strZ(archiveId), strZ(walPath));
                     strLstRemoveIdx(jobData->walPathList, 0);
                 }
 
@@ -880,7 +880,7 @@ verifyArchive(void *data)
         else
         {
             // Log that no WAL paths exist in the archive Id dir - remove the archive Id from the list (nothing to process)
-            LOG_WARN_FMT("path '%s' is empty", strPtr(archiveId));
+            LOG_WARN_FMT("path '%s' is empty", strZ(archiveId));
             strLstRemoveIdx(jobData->archiveIdList, 0);
 
             // Ad to the results for completeness
@@ -949,7 +949,7 @@ LOG_WARN("Processing BACKUPS"); // CSHANG Remove
             // If a usable backup.manifest file is not found, then report an error in the log
             if (manifest == NULL)
             {
-                LOG_ERROR_FMT(errorTypeCode(&FormatError), "No usable %s/backup.manifest file", strPtr(backupLabel));
+                LOG_ERROR_FMT(errorTypeCode(&FormatError), "No usable %s/backup.manifest file", strZ(backupLabel));
                 jobData->jobErrorTotal++;
             }
             else
@@ -1030,7 +1030,7 @@ verifyRender(void *data)
     for (unsigned int archiveIdx = 0; archiveIdx < lstSize(jobData->archiveIdRangeList); archiveIdx++)
     {
         ArchiveIdRange *archiveIdRange = lstGet(jobData->archiveIdRangeList, archiveIdx);
-        strCatFmt(result, "  archiveId: %s,  total WAL files: %u\n", strPtr(archiveIdRange->archiveId), archiveIdRange->numWalFile);
+        strCatFmt(result, "  archiveId: %s,  total WAL files: %u\n", strZ(archiveIdRange->archiveId), archiveIdRange->numWalFile);
 
         if (archiveIdRange->numWalFile > 0)
         {
@@ -1043,8 +1043,8 @@ verifyRender(void *data)
                 WalRange *walRange = lstGet(archiveIdRange->walRangeList, walIdx);
 
                 LOG_DETAIL_FMT(
-                    "archiveId: %s, wal start: %s, wal stop: %s", strPtr(archiveIdRange->archiveId), strPtr(walRange->start),
-                    strPtr(walRange->stop));
+                    "archiveId: %s, wal start: %s, wal stop: %s", strZ(archiveIdRange->archiveId), strZ(walRange->start),
+                    strZ(walRange->stop));
 
                 unsigned int invalidIdx = 0;
 
@@ -1141,7 +1141,7 @@ setBackupCheckArchive(
             {
                 LOG_ERROR_FMT(
                     errorTypeCode(&ArchiveMismatchError), "archiveIds '%s' are not in the archive.info history list",
-                    strPtr(missingFromHistory));
+                    strZ(missingFromHistory));
 
                 (*jobErrorTotal)++;
             }
@@ -1288,7 +1288,7 @@ verifyProcess(void)
                             if (verifyResult != verifyOk)
                             {
 // CSHANG Should this be made a LOG_ERROR and the error count incremented? errorTotal is "fatal" error, but if the file went missing, it's not always an error - could be that expire came through and legitimately removed it so maybe only error on other than missing?
-                                LOG_WARN_PID_FMT(processId, "%s: %s", strPtr(verifyErrorMsg(verifyResult)), strPtr(filePathName));
+                                LOG_WARN_PID_FMT(processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
 
                                 StringList *filePathLst = strLstNewSplit(filePathName, FSLASH_STR);
 
@@ -1361,7 +1361,7 @@ verifyProcess(void)
                         // CSHANG I am assuming that there will only be an error if something went horribly wrong and the program needs to exit...
                         // Else the job errored
                         else
-                            THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+                            THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
                         // Free the job
                         protocolParallelJobFree(job);
@@ -1404,7 +1404,7 @@ cmdVerify(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioHandleWriteOneStr(STDOUT_FILENO, verifyProcess());
+        ioFdWriteOneStr(STDOUT_FILENO, verifyProcess());
     }
     MEM_CONTEXT_TEMP_END();
 
