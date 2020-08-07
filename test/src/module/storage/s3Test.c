@@ -154,12 +154,14 @@ testRun(void)
     const String *endPoint = strNew("s3.amazonaws.com");
     const String *host = hrnTlsServerHost();
     const unsigned int port = hrnTlsServerPort();
+    const unsigned int authPort = hrnTlsServerPort(); // !!! ADD ONE;
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
         "AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/q"
         "kPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xV"
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
+    const String *role = STRDEF("authrole");
 
     // *****************************************************************************************************************************
     if (testBegin("storageS3New() and storageRepoGet()"))
@@ -304,8 +306,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageS3 *driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0,
-                0, testContainer(), NULL, NULL));
+                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
+                secretAccessKey, NULL, NULL, 16, 2, NULL, 0, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 0, testContainer(),
+                NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -352,8 +355,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, securityToken, 16, 2,
-                NULL, 0, 0, testContainer(), NULL, NULL));
+                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
+                secretAccessKey, securityToken, NULL, 16, 2, NULL, 0, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 0,
+                testContainer(), NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
@@ -383,8 +387,9 @@ testRun(void)
                 hrnTlsClientBegin(ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 Storage *s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2,
-                    host, port, 5000, testContainer(), NULL, NULL);
+                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
+                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
+                    testContainer(), NULL, NULL);
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -822,8 +827,8 @@ testRun(void)
                 hrnTlsServerClose();
 
                 s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, accessKey, secretAccessKey, NULL, 16, 2,
-                    host, port, 5000, testContainer(), NULL, NULL);
+                    path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, storageS3KeyTypeTemp, accessKey,
+                    secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
 
                 hrnTlsServerAccept();
 
