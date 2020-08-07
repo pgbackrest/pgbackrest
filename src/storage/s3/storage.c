@@ -93,7 +93,6 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
-    unsigned int port;                                              // Host port
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -168,7 +167,7 @@ storageS3Auth(
         String *signedHeaders = NULL;
 
         String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strPtr(verb), strPtr(uri), query == NULL ? "" : strPtr(httpQueryRenderP(query)));
+            "%s\n%s\n%s\n", strZ(verb), strZ(uri), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -179,20 +178,20 @@ storageS3Auth(
             if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
                 continue;
 
-            strCatFmt(canonicalRequest, "%s:%s\n", strPtr(headerKeyLower), strPtr(httpHeaderGet(httpHeader, headerKey)));
+            strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
 
             if (signedHeaders == NULL)
                 signedHeaders = strDup(headerKeyLower);
             else
-                strCatFmt(signedHeaders, ";%s", strPtr(headerKeyLower));
+                strCatFmt(signedHeaders, ";%s", strZ(headerKeyLower));
         }
 
-        strCatFmt(canonicalRequest, "\n%s\n%s", strPtr(signedHeaders), strPtr(payloadHash));
+        strCatFmt(canonicalRequest, "\n%s\n%s", strZ(signedHeaders), strZ(payloadHash));
 
         // Generate string to sign
         const String *stringToSign = strNewFmt(
-            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strPtr(dateTime), strPtr(date), strPtr(this->region),
-            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
+            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
+            strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -200,7 +199,7 @@ storageS3Auth(
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
-                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strPtr(this->secretAccessKey))), BUFSTR(date));
+                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
             const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
@@ -216,8 +215,8 @@ storageS3Auth(
         // Generate authorization header
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
-            strPtr(this->accessKey), strPtr(date), strPtr(this->region), strPtr(signedHeaders),
-            strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
+            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
+            strZ(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
@@ -265,7 +264,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
-            uri = strNewFmt("/%s%s", strPtr(this->bucket), strPtr(uri));
+            uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
 
         // Generate authorization header
         storageS3Auth(
@@ -367,7 +366,7 @@ storageS3ListInternal(
         if (strSize(path) == 1)
             basePrefix = EMPTY_STR;
         else
-            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
+            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
         const String *expressionPrefix = regExpPrefix(expression);
@@ -382,7 +381,7 @@ storageS3ListInternal(
             if (strEmpty(basePrefix))
                 queryPrefix = expressionPrefix;
             else
-                queryPrefix = strNewFmt("%s%s", strPtr(basePrefix), strPtr(expressionPrefix));
+                queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
         // Loop as long as a continuation token returned
@@ -490,7 +489,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
         result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.size = cvtZToUInt64(strZ(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
@@ -516,9 +515,9 @@ storageS3CvtTime(const String *time)
 
     FUNCTION_TEST_RETURN(
         epochFromParts(
-            cvtZToInt(strPtr(strSubN(time, 0, 4))), cvtZToInt(strPtr(strSubN(time, 5, 2))),
-            cvtZToInt(strPtr(strSubN(time, 8, 2))), cvtZToInt(strPtr(strSubN(time, 11, 2))),
-            cvtZToInt(strPtr(strSubN(time, 14, 2))), cvtZToInt(strPtr(strSubN(time, 17, 2))), 0));
+            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
+            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
+            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
 }
 
 static void
@@ -554,7 +553,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
         {
             ASSERT(xml != NULL);
 
-            info.size = cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
+            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
             info.timeModified = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true)));
         }
     }
@@ -670,9 +669,9 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
 
             THROW_FMT(
                 FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
         }
     }
 
@@ -845,16 +844,14 @@ storageS3New(
             .deleteMax = deleteMax,
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-                strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(endPoint),
-            .port = port,
+                strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
 
         // Create the HTTP client used to service requests
-        driver->httpClient = httpClientNew(
-            host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout, verifyPeer, caFile, caPath);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

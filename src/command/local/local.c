@@ -9,8 +9,8 @@ Local Command
 #include "command/restore/protocol.h"
 #include "command/verify/protocol.h"
 #include "common/debug.h"
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "config/protocol.h"
@@ -19,7 +19,7 @@ Local Command
 
 /**********************************************************************************************************************************/
 void
-cmdLocal(int handleRead, int handleWrite)
+cmdLocal(int fdRead, int fdWrite)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
@@ -31,9 +31,9 @@ cmdLocal(int handleRead, int handleWrite)
         varLstAdd(retryInterval, varNewUInt64(15000));
 
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
-        IoRead *read = ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+        IoRead *read = ioFdReadNew(name, fdRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioReadOpen(read);
-        IoWrite *write = ioHandleWriteNew(name, handleWrite);
+        IoWrite *write = ioFdWriteNew(name, fdWrite);
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);

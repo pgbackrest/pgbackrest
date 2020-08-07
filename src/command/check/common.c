@@ -27,14 +27,14 @@ checkArchiveCommand(const String *archiveCommand)
 
     bool result = archiveCommand != NULL;
 
-    if (result && strstr(strPtr(archiveCommand), PROJECT_BIN) == NULL)
+    if (result && strstr(strZ(archiveCommand), PROJECT_BIN) == NULL)
         result = false;
 
     if (!result)
     {
         THROW_FMT(
-            ArchiveCommandInvalidError, "archive_command '%s' must contain %s", (archiveCommand != NULL ? strPtr(archiveCommand)
-            : "[" NULL_Z "]"), PROJECT_BIN);
+            ArchiveCommandInvalidError, "archive_command '%s' must contain %s",
+            archiveCommand != NULL ? strZ(archiveCommand) : "[" NULL_Z "]", PROJECT_BIN);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -66,8 +66,8 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *
             THROW_FMT(
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
                 PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
-                strPtr(pgVersionToStr(dbVersion)), strPtr(dbPath), strPtr(pgVersionToStr(pgVersion)), strPtr(cfgOptionStr(pgPath)),
-                strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
+                strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)), strZ(cfgOptionStr(pgPath)),
+                strZ(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
         }
 
         // Check archive configuration if option is valid for the command and set
@@ -115,8 +115,8 @@ checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
             "archive: id = %u, version = %s, system-id = %" PRIu64 "\n"
             "backup : id = %u, version = %s, system-id = %" PRIu64 "\n"
             "HINT: this may be a symptom of repository corruption!",
-            archiveInfo->id, strPtr(pgVersionToStr(archiveInfo->version)), archiveInfo->systemId, backupInfo->id,
-            strPtr(pgVersionToStr(backupInfo->version)), backupInfo->systemId);
+            archiveInfo->id, strZ(pgVersionToStr(archiveInfo->version)), archiveInfo->systemId, backupInfo->id,
+            strZ(pgVersionToStr(backupInfo->version)), backupInfo->systemId);
     }
 
     FUNCTION_TEST_RETURN_VOID();

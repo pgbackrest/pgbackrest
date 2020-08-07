@@ -9,9 +9,10 @@ Test Ini
 Test callback to accumulate ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
 {
-    strCatFmt((String *)data, "%s:%s:%s\n", strPtr(section), strPtr(key), strPtr(value));
+    ASSERT(strEq(value, jsonFromVar(valueVar)));
+    strCatFmt((String *)data, "%s:%s:%s\n", strZ(section), strZ(key), strZ(value));
 }
 
 /***********************************************************************************************************************************
@@ -51,6 +52,14 @@ testRun(void)
             iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
             "key/value found outside of section at line 1: key=value");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid JSON value");
+
+        iniBuf = BUFSTRZ("[section]\nkey=value\n");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError, "invalid JSON value at line 2: key=value");
+
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
         iniBuf = BUFSTRZ(
@@ -78,14 +87,18 @@ testRun(void)
             "# comment\n"
             "[section1]\n"
             "key1=\"value1\"\n"
-            "key2=\"value2\"\n");
+            "key2=\"value2\"\n"
+            "key=3==\"value3\"\n"
+            "==\"=\"");
         result = strNew("");
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
             result,
             "section1:key1:\"value1\"\n"
-            "section1:key2:\"value2\"\n",
+            "section1:key2:\"value2\"\n"
+            "section1:key=3=:\"value3\"\n"
+            "section1:=:\"=\"\n",
             "    check ini");
 
         // Two sections
@@ -97,7 +110,6 @@ testRun(void)
             "key2=\"value2\"\n"
             "\n"
             "[section2]\n"
-            "key1=\n"
             "\n"
             "key2=\"value2\"");
         result = strNew("");
@@ -107,7 +119,6 @@ testRun(void)
             result,
             "section1:key1:\"value1\"\n"
             "section1:key2:\"value2\"\n"
-            "section2:key1:\n"
             "section2:key2:\"value2\"\n",
             "    check ini");
     }

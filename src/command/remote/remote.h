@@ -8,6 +8,6 @@ Remote Command
 Functions
 ***********************************************************************************************************************************/
 // Remote command
-void cmdRemote(int handleRead, int handleWrite);
+void cmdRemote(int fdRead, int fdWrite);
 
 #endif

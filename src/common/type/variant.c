@@ -351,7 +351,7 @@ varBoolForce(const Variant *this)
             };
 
             // Search for the string
-            const char *string = strPtr(varStr(this));
+            const char *string = strZ(varStr(this));
             unsigned int boolIdx;
 
             for (boolIdx = 0; boolIdx < sizeof(boolString) / sizeof(char *); boolIdx++)
@@ -457,7 +457,7 @@ varDblForce(const Variant *this)
 
         case varTypeString:
         {
-            result = cvtZToDouble(strPtr(varStr(this)));
+            result = cvtZToDouble(strZ(varStr(this)));
             break;
         }
 
@@ -556,7 +556,7 @@ varIntForce(const Variant *this)
 
         case varTypeString:
         {
-            result = cvtZToInt(strPtr(varStr(this)));
+            result = cvtZToInt(strZ(varStr(this)));
             break;
         }
 
@@ -663,7 +663,7 @@ varInt64Force(const Variant *this)
 
         case varTypeString:
         {
-            result = cvtZToInt64(strPtr(varStr(this)));
+            result = cvtZToInt64(strZ(varStr(this)));
             break;
         }
 
@@ -811,7 +811,7 @@ varUIntForce(const Variant *this)
 
         case varTypeString:
         {
-            result = cvtZToUInt(strPtr(varStr(this)));
+            result = cvtZToUInt(strZ(varStr(this)));
             break;
         }
 
@@ -912,7 +912,7 @@ varUInt64Force(const Variant *this)
 
         case varTypeString:
         {
-            result = cvtZToUInt64(strPtr(varStr(this)));
+            result = cvtZToUInt64(strZ(varStr(this)));
             break;
         }
 
@@ -1183,7 +1183,7 @@ varToLog(const Variant *this)
             case varTypeUInt:
             case varTypeUInt64:
             {
-                result = strNewFmt("{%s}", strPtr(varStrForce(this)));
+                result = strNewFmt("{%s}", strZ(varStrForce(this)));
                 break;
             }
         }

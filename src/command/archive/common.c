@@ -62,8 +62,7 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
 
     ASSERT(archiveFile != NULL);
 
-    storageRemoveP(
-        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strPtr(archiveFile)));
+    storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile)));
     storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -90,21 +89,21 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 
         const String *spoolQueue = archiveAsyncSpoolQueue(archiveMode);
 
-        String *okFile = strNewFmt("%s" STATUS_EXT_OK, strPtr(walSegment));
-        bool okFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
+        String *okFile = strNewFmt("%s" STATUS_EXT_OK, strZ(walSegment));
+        bool okFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(okFile)));
 
         // If the ok file does not exist then check to see if a file-specific or global error exists
         if (!okFileExists)
         {
             // Check for a file-specific error first
-            errorFile = strNewFmt("%s" STATUS_EXT_ERROR, strPtr(walSegment));
-            errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+            errorFile = strNewFmt("%s" STATUS_EXT_ERROR, strZ(walSegment));
+            errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(errorFile)));
 
             // If that doesn't exist then check for a global error
             if (!errorFileExists)
             {
                 errorFile = STATUS_FILE_GLOBAL_ERROR_STR;
-                errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+                errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(errorFile)));
             }
         }
 
@@ -115,7 +114,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
             const String *statusFile = okFileExists ? okFile: errorFile;
 
             String *content = strNewBuf(
-                storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(statusFile)))));
+                storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(statusFile)))));
 
             // Get the code and message if the file has content
             int code = 0;
@@ -124,18 +123,18 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
             if (strSize(content) != 0)
             {
                 // Find the line feed after the error code -- should be the first one
-                const char *linefeedPtr = strchr(strPtr(content), '\n');
+                const char *linefeedPtr = strchr(strZ(content), '\n');
 
                 // Error if linefeed not found
                 if (linefeedPtr == NULL)
-                    THROW_FMT(FormatError, "%s content must have at least two lines", strPtr(statusFile));
+                    THROW_FMT(FormatError, "%s content must have at least two lines", strZ(statusFile));
 
                 // Error if message is zero-length
                 if (strlen(linefeedPtr + 1) == 0)
-                    THROW_FMT(FormatError, "%s message must be > 0", strPtr(statusFile));
+                    THROW_FMT(FormatError, "%s message must be > 0", strZ(statusFile));
 
                 // Get contents
-                code = varIntForce(VARSTR(strNewN(strPtr(content), (size_t)(linefeedPtr - strPtr(content)))));
+                code = varIntForce(VARSTR(strNewN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
                 message = strTrim(strNew(linefeedPtr + 1));
             }
 
@@ -149,11 +148,11 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
                     if (code != 0)
                     {
                         message = strNewFmt(
-                            "WAL segment '%s' was not pushed due to error [%d] and was manually skipped: %s", strPtr(walSegment),
-                            code, strPtr(message));
+                            "WAL segment '%s' was not pushed due to error [%d] and was manually skipped: %s", strZ(walSegment),
+                            code, strZ(message));
                     }
 
-                    LOG_WARN(strPtr(message));
+                    LOG_WARN(strZ(message));
                 }
 
                 result = true;
@@ -162,10 +161,10 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
             {
                 // Error status files must have content
                 if (strSize(content) == 0)
-                    THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
+                    THROW_FMT(AssertError, "status file '%s' has no content", strZ(statusFile));
 
                 // Throw error using the code passed in the file
-                THROW_CODE(code, strPtr(message));
+                THROW_CODE(code, strZ(message));
             }
         }
     }
@@ -195,8 +194,8 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
         storagePutP(
             storageNewWriteP(
                 storageSpoolWrite(),
-                strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(errorFile))),
-            BUFSTR(strNewFmt("%d\n%s", code, strPtr(message))));
+                strNewFmt("%s/%s" STATUS_EXT_ERROR, strZ(archiveAsyncSpoolQueue(archiveMode)), strZ(errorFile))),
+            BUFSTR(strNewFmt("%d\n%s", code, strZ(message))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -220,9 +219,8 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
         // Write file
         storagePutP(
             storageNewWriteP(
-                storageSpoolWrite(),
-                strNewFmt("%s/%s" STATUS_EXT_OK, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
-            warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));
+                storageSpoolWrite(), strNewFmt("%s/%s" STATUS_EXT_OK, strZ(archiveAsyncSpoolQueue(archiveMode)), strZ(walSegment))),
+            warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strZ(warning))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -251,9 +249,15 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
         // Detach from parent process
         forkDetach();
 
+        // Close any open file descriptors above the standard three (stdin, stdout, stderr). Don't check the return value since we
+        // don't know which file descriptors are actually open (might be none). It's possible that there are open files >= 1024 but
+        // there is no easy way to detect that and this should give us enough descriptors to do our work.
+        for (int fd = 3; fd < 1024; fd++)
+            close(fd);
+
         // Execute the binary.  This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strPtr(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -331,7 +335,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
                 "option '" CFGOPT_PG1_PATH "' must be specified when relative wal paths are used\n"
                     "HINT: is %%f passed to %s instead of %%p?\n"
                     "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
-                strPtr(command));
+                strZ(command));
         }
 
         // Get the working directory
@@ -342,7 +346,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
         if (!strEqZ(pgPath, currentWorkDir))
         {
             // If not we'll change the working directory to pgPath and see if that equals the working directory we got called with
-            THROW_ON_SYS_ERROR_FMT(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir() to '%s'", strPtr(pgPath));
+            THROW_ON_SYS_ERROR_FMT(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir() to '%s'", strZ(pgPath));
 
             // Get the new working directory
             char newWorkDir[4096];
@@ -351,10 +355,10 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             // Error if the new working directory is not equal to the original current working directory.  This means that
             // PostgreSQL and pgBackrest have a different idea about where the PostgreSQL data directory is located.
             if (strcmp(currentWorkDir, newWorkDir) != 0)
-                THROW_FMT(AssertError, "working path '%s' is not the same path as '%s'", currentWorkDir, strPtr(pgPath));
+                THROW_FMT(AssertError, "working path '%s' is not the same path as '%s'", currentWorkDir, strZ(pgPath));
         }
 
-        result = strNewFmt("%s/%s", strPtr(pgPath), strPtr(walFile));
+        result = strNewFmt("%s/%s", strZ(pgPath), strZ(walFile));
     }
     else
         result = strDup(walFile);
@@ -413,9 +417,11 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
         {
             // Get a list of all WAL segments that match
             StringList *list = storageListP(
-                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt("^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strPtr(strSubN(walSegment, 0, 24)),
-                    walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""), .nullOnMissing = true);
+                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
+                .expression = strNewFmt(
+                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
+                        walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
+                .nullOnMissing = true);
 
             // If there are results
             if (list != NULL && strLstSize(list) > 0)
@@ -427,7 +433,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                         ArchiveDuplicateError,
                         "duplicates found in archive for WAL segment %s: %s\n"
                             "HINT: are multiple primaries archiving to this stanza?",
-                        strPtr(walSegment), strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
+                        strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
                 }
 
                 // Copy file name of WAL segment found into the prior context
@@ -449,7 +455,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
             "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.",
-            strPtr(walSegment), timeout);
+            strZ(walSegment), timeout);
     }
 
     FUNCTION_LOG_RETURN(STRING, result);
@@ -477,9 +483,9 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        timeline = (uint32_t)strtol(strPtr(strSubN(walSegment, 0, 8)), NULL, 16);
-        major = (uint32_t)strtol(strPtr(strSubN(walSegment, 8, 8)), NULL, 16);
-        minor = (uint32_t)strtol(strPtr(strSubN(walSegment, 16, 8)), NULL, 16);
+        timeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
+        major = (uint32_t)strtol(strZ(strSubN(walSegment, 8, 8)), NULL, 16);
+        minor = (uint32_t)strtol(strZ(strSubN(walSegment, 16, 8)), NULL, 16);
 
         // Increment minor and adjust major dir on overflow
         minor++;

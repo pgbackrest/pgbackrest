@@ -49,8 +49,8 @@ Getters/Setters
 // Filter group. Filters must be set before open and cannot be reset
 IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
 
-// Handle (file descriptor) for the write object. Not all write objects have a handle and -1 will be returned in that case.
-int ioWriteHandle(const IoWrite *this);
+// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
+int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor

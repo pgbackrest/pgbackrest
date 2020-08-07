@@ -4,8 +4,8 @@ Test Tls Client
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessTls.h"
@@ -255,7 +255,7 @@ testRun(void)
                 // Start server to test various certificate errors
                 TEST_RESULT_VOID(
                     hrnTlsServerRunParam(
-                        ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000),
+                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000),
                         strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath()),
                         strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath())),
                     "tls alt name server begin");
@@ -264,7 +264,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("certificate error on invalid ca path");
@@ -373,14 +373,13 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)),
-                    "tls server begin");
+                    hrnTlsServerRun(ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)), "tls server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
                 ioBufferSizeSet(12);
 
                 TEST_ASSIGN(
@@ -414,9 +413,15 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");
 
-                TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
-                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError, "TLS error [4]");
-                TEST_ERROR(tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
+                TEST_RESULT_INT(tlsSessionResultProcess(session, SSL_ERROR_WANT_WRITE, 0, 0, false), 0, "write ready");
+                TEST_ERROR(
+                    tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 336031996, 0, false), ServiceError,
+                    "TLS error [4:336031996] unknown protocol");
+                TEST_ERROR(
+                    tlsSessionResultProcess(session, SSL_ERROR_WANT_X509_LOOKUP, 0, 0, false), ServiceError,
+                    "TLS error [4:0] no details available");
+                TEST_ERROR(
+                    tlsSessionResultProcess(session, SSL_ERROR_ZERO_RETURN, 0, 0, false), ProtocolError, "unexpected TLS eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("first protocol exchange");
@@ -456,7 +461,7 @@ testRun(void)
                 session->socketSession->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(tlsSessionIoRead(session), output), ProtocolError,
-                    "timeout after 100ms waiting for read from '%s:%u'", strPtr(hrnTlsServerHost()), hrnTlsServerPort());
+                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort());
                 session->socketSession->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------

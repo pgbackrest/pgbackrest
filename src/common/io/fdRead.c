@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Handle IO Read
+File Descriptor Io Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -7,7 +7,7 @@ Handle IO Read
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/io/handleRead.h"
+#include "common/io/fdRead.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -16,33 +16,33 @@ Handle IO Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoHandleRead
+typedef struct IoFdRead
 {
     MemContext *memContext;                                         // Object memory context
-    const String *name;                                             // Handle name for error messages
-    int handle;                                                     // Handle to read data from
+    const String *name;                                             // File descriptor name for error messages
+    int fd;                                                         // File descriptor to read data from
     TimeMSec timeout;                                               // Timeout for read operation
     bool eof;                                                       // Has the end of the stream been reached?
-} IoHandleRead;
+} IoFdRead;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_HANDLE_READ_TYPE                                                                                           \
-    IoHandleRead *
-#define FUNCTION_LOG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoHandleRead", buffer, bufferSize)
+#define FUNCTION_LOG_IO_FD_READ_TYPE                                                                                               \
+    IoFdRead *
+#define FUNCTION_LOG_IO_FD_READ_FORMAT(value, buffer, bufferSize)                                                                  \
+    objToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Read data from the handle
+Read data from the file descriptor
 ***********************************************************************************************************************************/
 static size_t
-ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
+ioFdRead(THIS_VOID, Buffer *buffer, bool block)
 {
-    THIS(IoHandleRead);
+    THIS(IoFdRead);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+        FUNCTION_LOG_PARAM(IO_FD_READ, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
@@ -62,8 +62,8 @@ ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
             fd_set selectSet;
             FD_ZERO(&selectSet);
 
-            // We know the handle is not negative because it passed error handling, so it is safe to cast to unsigned
-            FD_SET((unsigned int)this->handle, &selectSet);
+            // We know the file descriptor is not negative because it passed error handling, so it is safe to cast to unsigned
+            FD_SET((unsigned int)this->fd, &selectSet);
 
             // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
             struct timeval timeoutSelect;
@@ -71,17 +71,17 @@ ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
             timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
 
             // Determine if there is data to be read
-            int result = select(this->handle + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strPtr(this->name));
+            int result = select(this->fd + 1, &selectSet, NULL, NULL, &timeoutSelect);
+            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strZ(this->name));
 
             // If no data read after time allotted then error
             if (!result)
-                THROW_FMT(FileReadError, "unable to read data from %s after %" PRIu64 "ms", strPtr(this->name), this->timeout);
+                THROW_FMT(FileReadError, "unable to read data from %s after %" PRIu64 "ms", strZ(this->name), this->timeout);
 
             // Read and handle errors
             THROW_ON_SYS_ERROR_FMT(
-                (actualBytes = read(this->handle, bufRemainsPtr(buffer), bufRemains(buffer))) == -1, FileReadError,
-                "unable to read from %s", strPtr(this->name));
+                (actualBytes = read(this->fd, bufRemainsPtr(buffer), bufRemains(buffer))) == -1, FileReadError,
+                "unable to read from %s", strZ(this->name));
 
             // Update amount of buffer used
             bufUsedInc(buffer, (size_t)actualBytes);
@@ -100,12 +100,12 @@ ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
 Have all bytes been read from the buffer?
 ***********************************************************************************************************************************/
 static bool
-ioHandleReadEof(THIS_VOID)
+ioFdReadEof(THIS_VOID)
 {
-    THIS(IoHandleRead);
+    THIS(IoFdRead);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+        FUNCTION_LOG_PARAM(IO_FD_READ, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -114,49 +114,49 @@ ioHandleReadEof(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Get handle (file descriptor)
+Get file descriptor
 ***********************************************************************************************************************************/
 static int
-ioHandleReadHandle(const THIS_VOID)
+ioFdReadFd(const THIS_VOID)
 {
-    THIS(const IoHandleRead);
+    THIS(const IoFdRead);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
+        FUNCTION_TEST_PARAM(IO_FD_READ, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->handle);
+    FUNCTION_TEST_RETURN(this->fd);
 }
 
 /**********************************************************************************************************************************/
 IoRead *
-ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
+ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    ASSERT(handle != -1);
+    ASSERT(fd != -1);
 
     IoRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoHandleRead")
+    MEM_CONTEXT_NEW_BEGIN("IoFdRead")
     {
-        IoHandleRead *driver = memNew(sizeof(IoHandleRead));
+        IoFdRead *driver = memNew(sizeof(IoFdRead));
 
-        *driver = (IoHandleRead)
+        *driver = (IoFdRead)
         {
             .memContext = memContextCurrent(),
             .name = strDup(name),
-            .handle = handle,
+            .fd = fd,
             .timeout = timeout,
         };
 
-        this = ioReadNewP(driver, .block = true, .eof = ioHandleReadEof, .handle = ioHandleReadHandle, .read = ioHandleRead);
+        this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead);
     }
     MEM_CONTEXT_NEW_END();
 

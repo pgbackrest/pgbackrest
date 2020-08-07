@@ -104,7 +104,7 @@ backupType(const String *type)
     else if (strEq(type, BACKUP_TYPE_INCR_STR))
         result = backupTypeIncr;
     else
-        THROW_FMT(AssertError, "invalid backup type '%s'", strPtr(type));
+        THROW_FMT(AssertError, "invalid backup type '%s'", strZ(type));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -164,8 +164,8 @@ backupLinkLatest(const String *backupLabel)
         if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
         {
             THROW_ON_SYS_ERROR_FMT(
-                symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError,
-                "unable to create symlink '%s' to '%s'", strPtr(latestLink), strPtr(backupLabel));
+                symlink(strZ(backupLabel), strZ(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
+                strZ(latestLink), strZ(backupLabel));
         }
 
         // Sync backup path if required

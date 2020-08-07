@@ -83,7 +83,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         {
             .memContext = memContextCurrent(),
             .name = strDup(name),
-            .errorPrefix = strNewFmt("raised from %s", strPtr(name)),
+            .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .read = read,
             .write = write,
             .keepAliveTime = timeMSec(),
@@ -110,16 +110,16 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                 const Variant *actualValue = kvGet(greetingKv, VARSTR(expectedKey));
 
                 if (actualValue == NULL)
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strPtr(expectedKey));
+                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(expectedKey));
 
                 if (varType(actualValue) != varTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strPtr(expectedKey));
+                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(expectedKey));
 
                 if (!strEq(varStr(actualValue), expectedValue))
                 {
                     THROW_FMT(
-                        ProtocolError, "expected value '%s' for greeting key '%s' but got '%s'", strPtr(expectedValue),
-                        strPtr(expectedKey), strPtr(varStr(actualValue)));
+                        ProtocolError, "expected value '%s' for greeting key '%s' but got '%s'", strZ(expectedValue),
+                        strZ(expectedKey), strZ(varStr(actualValue)));
                 }
             }
         }
@@ -161,7 +161,7 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
 
             // Required part of the message
             String *throwMessage = strNewFmt(
-                "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
+                "%s: %s", strZ(this->errorPrefix), message == NULL ? "no details available" : strZ(message));
 
             // Add stack trace if the error is an assertion or debug-level logging is enabled
             if (type == &AssertError || logAny(logLevelDebug))
@@ -172,7 +172,7 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
                 strCat(throwMessage, stack == NULL ? STRDEF("no stack trace available") : stack);
             }
 
-            THROWP(type, strPtr(throwMessage));
+            THROWP(type, strZ(throwMessage));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -300,7 +300,7 @@ protocolClientReadLine(ProtocolClient *this)
         {
             THROW(FormatError, "unexpected empty line");
         }
-        else if (strPtr(result)[0] == '{')
+        else if (strZ(result)[0] == '{')
         {
             KeyValue *responseKv = varKv(jsonToVar(result));
 
@@ -310,8 +310,8 @@ protocolClientReadLine(ProtocolClient *this)
             // If not an error then there is probably a protocol bug
             THROW(FormatError, "expected error but got output");
         }
-        else if (strPtr(result)[0] != '.')
-            THROW_FMT(FormatError, "invalid prefix in '%s'", strPtr(result));
+        else if (strZ(result)[0] != '.')
+            THROW_FMT(FormatError, "invalid prefix in '%s'", strZ(result));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -354,5 +354,5 @@ protocolClientIoWrite(const ProtocolClient *this)
 String *
 protocolClientToLog(const ProtocolClient *this)
 {
-    return strNewFmt("{name: %s}", strPtr(this->name));
+    return strNewFmt("{name: %s}", strZ(this->name));
 }

@@ -182,7 +182,7 @@ storageWriteToLog(const StorageWrite *this)
 {
     return strNewFmt(
         "{type: %s, name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
-        strPtr(storageWriteType(this)), strPtr(strToLog(storageWriteName(this))), storageWriteModeFile(this),
+        strZ(storageWriteType(this)), strZ(strToLog(storageWriteName(this))), storageWriteModeFile(this),
         storageWriteModePath(this), cvtBoolToConstZ(storageWriteCreatePath(this)), cvtBoolToConstZ(storageWriteSyncFile(this)),
         cvtBoolToConstZ(storageWriteSyncPath(this)), cvtBoolToConstZ(storageWriteAtomic(this)));
 }

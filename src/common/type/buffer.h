@@ -48,7 +48,7 @@ Buffer *bufDup(const Buffer *buffer);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-//Append the contents of another buffer
+// Append the contents of another buffer
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
@@ -159,7 +159,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Create a buffer constant inline from a String
 #define BUFSTR(string)                                                                                                             \
-    BUF((unsigned char *)strPtr(string), strSize(string))
+    BUF((unsigned char *)strZ(string), strSize(string))
 
 // Create a buffer constant inline from a constant zero-terminated string
 #define BUFSTRDEF(stringdef)                                                                                                       \

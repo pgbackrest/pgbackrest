@@ -79,6 +79,9 @@ testRun(void)
         {
             list = lstNewP(sizeof(int));
 
+            TEST_ERROR(lstGetLast(list), AssertError, "cannot get last from list with no values");
+            TEST_ERROR(lstRemoveLast(list), AssertError, "cannot remove last from list with no values");
+
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
                 TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
@@ -107,12 +110,13 @@ testRun(void)
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
-            int *item = lstGet(list, listIdx);
+            int *item = listIdx == lstSize(list) - 1 ? lstGetLast(list) : lstGet(list, listIdx);
+
             TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
         }
 
         // Remove last item
-        TEST_RESULT_VOID(lstRemoveIdx(list, lstSize(list) - 1), "remove last item");
+        TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)

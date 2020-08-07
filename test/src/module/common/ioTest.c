@@ -325,7 +325,7 @@ testRun(void)
             "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
-        TEST_RESULT_INT(ioReadHandle(bufferRead), -1, "    handle invalid");
+        TEST_RESULT_INT(ioReadFd(bufferRead), -1, "    fd invalid");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
@@ -507,7 +507,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew("size2")), "    add filter to filter group");
 
         TEST_RESULT_VOID(ioWriteOpen(bufferWrite), "    open buffer write object");
-        TEST_RESULT_INT(ioWriteHandle(bufferWrite), -1, "    handle invalid");
+        TEST_RESULT_INT(ioWriteFd(bufferWrite), -1, "    fd invalid");
         TEST_RESULT_VOID(ioWriteLine(bufferWrite, BUFSTRDEF("AB")), "    write line");
         TEST_RESULT_VOID(ioWrite(bufferWrite, bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(bufferWrite, NULL), "    write 0 bytes");
@@ -528,7 +528,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("IoHandleRead, IoHandleWrite, and ioHandleWriteOneStr()"))
+    if (testBegin("IoFdRead, IoFdWrite, and ioFdWriteOneStr()"))
     {
         ioBufferSizeSet(16);
 
@@ -538,9 +538,9 @@ testRun(void)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioHandleWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
+                TEST_ASSIGN(write, ioFdWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
                 ioWriteOpen(write);
-                TEST_RESULT_INT(ioWriteHandle(write), ((IoHandleWrite *)write->driver)->handle, "check write handle");
+                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("test string 1")), "write test string");
@@ -562,10 +562,10 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
 
                 ioReadOpen(read);
-                TEST_RESULT_INT(ioReadHandle(read), ((IoHandleRead *)ioReadDriver(read))->handle, "check handle");
+                TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
                 TEST_RESULT_PTR(ioReadInterface(read), &read->interface, "check interface");
                 TEST_RESULT_PTR(ioReadDriver(read), read->driver, "check driver");
 
@@ -590,23 +590,21 @@ testRun(void)
                 // Check EOF
                 buffer = bufNew(16);
 
-                TEST_RESULT_UINT(ioHandleRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof");
-                TEST_RESULT_UINT(ioHandleRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof again");
+                TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof");
+                TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof again");
             }
             HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            ioHandleWriteOneStr(999999, strNew("test")), FileWriteError,
-            "unable to write to handle: [9] Bad file descriptor");
+        TEST_ERROR(ioFdWriteOneStr(999999, strNew("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.txt", testPath());
-        int fileHandle = open(strPtr(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
+        int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
-        TEST_RESULT_VOID(ioHandleWriteOneStr(fileHandle, strNew("test1\ntest2")), "write string to file");
+        TEST_RESULT_VOID(ioFdWriteOneStr(fd, strNew("test1\ntest2")), "write string to file");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

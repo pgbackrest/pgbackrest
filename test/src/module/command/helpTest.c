@@ -18,7 +18,7 @@ testRun(void)
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
 
     // General help text is used in more than one test
-    const char *generalHelp = strPtr(strNewFmt(
+    const char *generalHelp = strZ(strNewFmt(
         "%s - General help\n"
         "\n"
         "Usage:\n"
@@ -94,7 +94,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const char *commandHelp = strPtr(strNewFmt(
+        const char *commandHelp = strZ(strNewFmt(
             "%s%s",
             helpVersion,
             " - 'version' command help\n"
@@ -112,7 +112,7 @@ testRun(void)
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
-        commandHelp = strPtr(strNewFmt(
+        commandHelp = strZ(strNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -267,7 +267,7 @@ testRun(void)
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const char *optionHelp = strPtr(strNewFmt(
+        const char *optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
             "\n"
             "Buffer size for file operations.\n"
@@ -299,7 +299,7 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'repo1-s3-host' option help\n"
             "\n"
             "S3 repository host.\n"
@@ -323,7 +323,7 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: s3-host\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
             "\n"
             "Repository cipher passphrase.\n"
@@ -346,7 +346,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'backup' command - 'repo-hardlink' option help\n"
             "\n"
             "Hardlink files between backups in the repository.\n"
@@ -372,7 +372,7 @@ testRun(void)
 
         // Check admonition
         // -------------------------------------------------------------------------------------------------------------------------
-        optionHelp = strPtr(strNewFmt(
+        optionHelp = strZ(strNewFmt(
             "%s - 'backup' command - 'repo-retention-archive' option help\n"
             "\n"
             "Number of backups worth of continuous WAL to retain.\n"
@@ -418,7 +418,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
 
-        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdHelp();

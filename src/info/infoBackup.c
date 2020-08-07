@@ -117,13 +117,13 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherP
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 static void
-infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
+infoBackupLoadCallback(void *data, const String *section, const String *key, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -136,7 +136,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     // Process current backup list
     if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
     {
-        const KeyValue *backupKv = jsonToKv(value);
+        const KeyValue *backupKv = varKv(value);
 
         MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->backup))
         {
@@ -149,7 +149,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                 .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
                 .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
                 .backupLabel = strDup(key),
-                .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
+                .backupPgId = cvtZToUInt(strZ(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
 
                 // When reading timestamps, read as uint64 to ensure always positive value (guarantee no backups before 1970)
                 .backupTimestampStart = (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
@@ -581,7 +581,7 @@ infoBackupLoadFileCallback(void *data, unsigned int try)
     if (try < 2)
     {
         // Construct filename based on try
-        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
+        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
         // Attempt to load the file
         IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
@@ -623,7 +623,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
+        const char *fileNamePath = strZ(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -679,7 +679,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
         {
             String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
-            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
             // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
             // infoBackup object, then remove it and its dependencies
@@ -691,7 +691,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 {
                     String *removeBackup = strLstGet(backupList, backupIdx);
 
-                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(removeBackup));
+                    LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strZ(removeBackup));
 
                     infoBackupDataDelete(infoBackup, removeBackup);
                 }
@@ -709,7 +709,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             // If it does not exist in the list of current backups, then if it is valid, add it
             if (!strLstExists(backupCurrentList, backupLabel))
             {
-                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
                 // Check if a completed backup exists (backup.manifest only - ignore .copy)
                 if (storageExistsP(storage, manifestFileName))
@@ -732,7 +732,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                             (manData->backupLabelPrior == NULL ||
                                 infoBackupDataByLabel(infoBackup, manData->backupLabelPrior) != NULL))
                         {
-                            LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
+                            LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strZ(backupLabel));
                             infoBackupDataAdd(infoBackup, manifest);
                             found = true;
                             break;
@@ -740,7 +740,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                     }
 
                     if (!found)
-                        LOG_WARN_FMT("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
+                        LOG_WARN_FMT("invalid backup '%s' cannot be added to current backups", strZ(manData->backupLabel));
                 }
             }
         }
@@ -776,8 +776,7 @@ infoBackupSaveFile(
         infoBackupSave(infoBackup, write);
 
         // Make a copy of the file
-        storageCopy(
-            storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+        storageCopy(storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -788,5 +787,5 @@ infoBackupSaveFile(
 String *
 infoBackupDataToLog(const InfoBackupData *this)
 {
-    return strNewFmt("{label: %s, pgId: %u}", strPtr(this->backupLabel), this->backupPgId);
+    return strNewFmt("{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);
 }

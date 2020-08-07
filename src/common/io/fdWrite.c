@@ -1,12 +1,12 @@
 /***********************************************************************************************************************************
-Handle IO Write
+File Descriptor Io Write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -15,31 +15,31 @@ Handle IO Write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoHandleWrite
+typedef struct IoFdWrite
 {
     MemContext *memContext;                                         // Object memory context
-    const String *name;                                             // Handle name for error messages
-    int handle;                                                     // Handle to write to
-} IoHandleWrite;
+    const String *name;                                             // File descriptor name for error messages
+    int fd;                                                         // File descriptor to write to
+} IoFdWrite;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_HANDLE_WRITE_TYPE                                                                                          \
-    IoHandleWrite *
-#define FUNCTION_LOG_IO_HANDLE_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "IoHandleWrite", buffer, bufferSize)
+#define FUNCTION_LOG_IO_FD_WRITE_TYPE                                                                                              \
+    IoFdWrite *
+#define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "IoFdWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Write to the handle
+Write to the file descriptor
 ***********************************************************************************************************************************/
 static void
-ioHandleWrite(THIS_VOID, const Buffer *buffer)
+ioFdWrite(THIS_VOID, const Buffer *buffer)
 {
-    THIS(IoHandleWrite);
+    THIS(IoFdWrite);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_HANDLE_WRITE, this);
+        FUNCTION_LOG_PARAM(IO_FD_WRITE, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
     FUNCTION_LOG_END();
 
@@ -47,51 +47,50 @@ ioHandleWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     THROW_ON_SYS_ERROR_FMT(
-        write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError,
-        "unable to write to %s", strPtr(this->name));
+        write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strZ(this->name));
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Get handle (file descriptor)
+Get file descriptor
 ***********************************************************************************************************************************/
 static int
-ioHandleWriteHandle(const THIS_VOID)
+ioFdWriteFd(const THIS_VOID)
 {
-    THIS(const IoHandleWrite);
+    THIS(const IoFdWrite);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
+        FUNCTION_TEST_PARAM(IO_FD_WRITE, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->handle);
+    FUNCTION_TEST_RETURN(this->fd);
 }
 
 /**********************************************************************************************************************************/
 IoWrite *
-ioHandleWriteNew(const String *name, int handle)
+ioFdWriteNew(const String *name, int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
 
     IoWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoHandleWrite")
+    MEM_CONTEXT_NEW_BEGIN("IoFdWrite")
     {
-        IoHandleWrite *driver = memNew(sizeof(IoHandleWrite));
+        IoFdWrite *driver = memNew(sizeof(IoFdWrite));
 
-        *driver = (IoHandleWrite)
+        *driver = (IoFdWrite)
         {
             .memContext = memContextCurrent(),
             .name = strDup(name),
-            .handle = handle,
+            .fd = fd,
         };
 
-        this = ioWriteNewP(driver, .handle = ioHandleWriteHandle, .write = ioHandleWrite);
+        this = ioWriteNewP(driver, .fd = ioFdWriteFd, .write = ioFdWrite);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -100,17 +99,17 @@ ioHandleWriteNew(const String *name, int handle)
 
 /**********************************************************************************************************************************/
 void
-ioHandleWriteOneStr(int handle, const String *string)
+ioFdWriteOneStr(int fd, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, string);
     FUNCTION_LOG_END();
 
     ASSERT(string != NULL);
 
-    if (write(handle, strPtr(string), strSize(string)) != (int)strSize(string))
-        THROW_SYS_ERROR(FileWriteError, "unable to write to handle");
+    if (write(fd, strZ(string), strSize(string)) != (int)strSize(string))
+        THROW_SYS_ERROR(FileWriteError, "unable to write to fd");
 
     FUNCTION_LOG_RETURN_VOID();
 }

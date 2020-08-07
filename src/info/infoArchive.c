@@ -158,7 +158,7 @@ infoArchiveIdHistoryMatch(
         THROW_FMT(
             ArchiveMismatchError,
             "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
-            strPtr(pgVersionToStr(pgVersion)), pgSystemId);
+            strZ(pgVersionToStr(pgVersion)), pgSystemId);
     }
 
     FUNCTION_LOG_RETURN(STRING, archiveId);
@@ -270,7 +270,7 @@ infoArchiveLoadFileCallback(void *data, unsigned int try)
     if (try < 2)
     {
         // Construct filename based on try
-        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
+        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
         // Attempt to load the file
         IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
@@ -312,7 +312,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
+        const char *fileNamePath = strZ(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -364,8 +364,7 @@ infoArchiveSaveFile(
         infoArchiveSave(infoArchive, write);
 
         // Make a copy of the file
-        storageCopy(
-            storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+        storageCopy(storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))));
     }
     MEM_CONTEXT_TEMP_END();
 

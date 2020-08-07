@@ -19,7 +19,7 @@ typedef struct IoReadInterface
     bool (*eof)(void *driver);
     void (*close)(void *driver);
     bool (*open)(void *driver);
-    int (*handle)(const void *driver);
+    int (*fd)(const void *driver);
     size_t (*read)(void *driver, Buffer *buffer, bool block);
 } IoReadInterface;
 

@@ -13,7 +13,7 @@ testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
 
-    TEST_RESULT_INT(this->state, memContextStateFreeing, "state should be freeing before memContextFree() in callback");
+    TEST_RESULT_BOOL(memContextFreeing(this), true, "state should be freeing before memContextFree() in callback");
     memContextFree(this);
     TEST_RESULT_INT(this->state, memContextStateFreeing, "state should still be freeing after memContextFree() in callback");
 
