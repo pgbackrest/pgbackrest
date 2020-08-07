@@ -186,8 +186,14 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
             .write = ioFdWriteNew(name, fd, timeout),
         };
 
-        memContextCallbackSet(driver->memContext, sckSessionFreeResource, driver);
         strFree(name);
+
+        // Open read/write io
+        ioReadOpen(driver->read);
+        ioWriteOpen(driver->write);
+
+        // Ensure file descriptor is close
+        memContextCallbackSet(driver->memContext, sckSessionFreeResource, driver);
 
         this = ioSessionNew(driver, &sckSessionInterface);
     }
