@@ -314,12 +314,12 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 if (testClientSocket < 0)
                     THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
+                serverSession = sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), port, 5000);
+
                 if (protocol == hrnServerProtocolTls)
                 {
                     SSL *testClientSSL = SSL_new(serverContext);
-
-                    serverSession = tlsSessionNew(
-                        testClientSSL, sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
+                    serverSession = tlsSessionNew(testClientSSL, serverSession, 5000);
                 }
 
                 break;
@@ -327,8 +327,8 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
 
             case hrnTlsCmdClose:
             {
-                if (protocol == hrnServerProtocolTls && serverSession == NULL)
-                    THROW(AssertError, "TLS session is already closed");
+                if (serverSession == NULL)
+                    THROW(AssertError, "session is already closed");
 
                 ioSessionClose(serverSession);
                 ioSessionFree(serverSession);
@@ -340,7 +340,6 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
             case hrnTlsCmdDone:
             {
                 done = true;
-
                 break;
             }
 
@@ -423,5 +422,5 @@ unsigned int hrnTlsServerPort(unsigned int portIdx)
 {
     ASSERT(portIdx < HRN_SERVER_PORT_MAX);
 
-    return 44443 + (HRN_SERVER_PORT_MAX * testIdx()) * portIdx;
+    return 44443 + (HRN_SERVER_PORT_MAX * testIdx()) + portIdx;
 }

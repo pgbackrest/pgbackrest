@@ -62,10 +62,10 @@ STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
 STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 
 /***********************************************************************************************************************************
-Host and URI for automatically fetching the current role and credentials
+Constants for automatically fetching the current role and credentials
 ***********************************************************************************************************************************/
-// STRING_STATIC(S3_CREDENTIAL_HOST,                                   "169.254.169.254");
-// STRING_STATIC(S3_CREDENTIAL_URI,                                    "/latest/meta-data/iam/security-credentials");
+#define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
+#define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 /*
 First, get the role:
@@ -143,7 +143,9 @@ struct StorageS3
 
     // For retrieving temporary security credentials
     HttpClient *authHttpClient;                                     // HTTP client to service credential requests
+    const String *authHost;                                         // Authentication host
     const String *authRole;                                         // Role to use for credential requests
+    time_t authExpirationTime;                                      // When the temporary credentials expire
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -317,9 +319,33 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         if (this->uriStyle == storageS3UriStylePath)
             uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
 
+        // If temp crendentials will be expiring soon then renew them
+        time_t currentTime = time(NULL);
+
+        if (this->keyType == storageS3KeyTypeTemp && (currentTime - this->authExpirationTime) > S3_CREDENTIAL_RENEW_SEC)
+        {
+            // Set content-length and host headers
+            HttpHeader *authHeader = httpHeaderNew(NULL);
+            httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+            httpHeaderAdd(authHeader, HTTP_HEADER_HOST_STR, this->authHost);
+
+            // Get the credentials
+            HttpRequest *request = httpRequestNewP(
+                this->authHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(this->authRole)),
+                .header = authHeader);
+            HttpResponse *response = httpRequestResponse(request, true);
+
+            // Error if the request was not successful
+            if (!httpResponseCodeOk(response))
+                httpRequestError(request, response);
+
+            // !!! WELL, THIS IS NOT RIGHT
+            this->authExpirationTime = currentTime + 10000;
+        }
+
         // Generate authorization header
         storageS3Auth(
-            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
+            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(currentTime), requestHeader,
             param.content == NULL || bufUsed(param.content) == 0 ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
@@ -904,6 +930,7 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
+            .authHost = strDup(authHost),
             .authRole = role,
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,

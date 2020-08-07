@@ -31,44 +31,62 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
-    // Add authorization string
-    String *request = strNewFmt(
-        "%s %s HTTP/1.1\r\n"
+    // Add request
+    String *request = strNewFmt("%s %s HTTP/1.1\r\n", verb, uri);
+
+    // Add authorization header when s3 service
+    if (s3 != NULL)
+    {
+        strCatZ(
+            request,
             "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length;",
-        verb, uri);
+                "SignedHeaders=content-length;");
 
-    if (param.content != NULL)
-        strCatZ(request, "content-md5;");
+        if (param.content != NULL)
+            strCatZ(request, "content-md5;");
 
-    strCatFmt(
-        request,
-        "host;x-amz-content-sha256;x-amz-date,Signature=????????????????????????????????????????????????????????????????\r\n"
-        "content-length:%zu\r\n",
-        param.content == NULL ? 0 : strlen(param.content));
+        strCatZ(
+            request,
+            "host;x-amz-content-sha256;x-amz-date,Signature=????????????????????????????????????????????????????????????????\r\n");
+    }
+
+    // Add content-length
+    strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
 
     // Add md5
     if (param.content != NULL)
     {
+
         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
         encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
     // Add host
-    if (((StorageS3 *)storageDriver(s3))->uriStyle == storageS3UriStyleHost)
-        strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+    if (s3 != NULL)
+    {
+        if (((StorageS3 *)storageDriver(s3))->uriStyle == storageS3UriStyleHost)
+            strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+        else
+            strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+    }
     else
-        strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+        strCatFmt(request, "host:%s\r\n", strZ(hrnTlsServerHost()));
 
-    // Add content sha256 and date
-    strCatFmt(
-        request,
-        "x-amz-content-sha256:%s\r\n"
-        "x-amz-date:????????T??????Z" "\r\n"
-        "\r\n",
-        param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
-        BUFSTRZ(param.content)))));
+    // Add content checksum and date if s3 service
+    if (s3 != NULL)
+    {
+        // Add content sha256 and date
+        strCatFmt(
+            request,
+            "x-amz-content-sha256:%s\r\n"
+            "x-amz-date:????????T??????Z" "\r\n",
+            param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
+            BUFSTRZ(param.content)))));
+    }
+
+    // Add final \r\n
+    strCatZ(request, "\r\n");
 
     // Add content
     if (param.content != NULL)
@@ -384,28 +402,66 @@ testRun(void)
             }
             HARNESS_FORK_CHILD_END();
 
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnTlsServerRun(
+                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        authPort),
+                    "auth server begin");
+            }
+            HARNESS_FORK_CHILD_END();
+
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 Storage *s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
-                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
-                    testContainer(), NULL, NULL);
+                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeTemp, accessKey,
+                    secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_RESULT_VOID(storagePathSyncP(s3, strNew("path")), "path sync is a noop");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when retrieving temp credentials");
+
+                hrnServerScriptAccept(auth);
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testResponseP(auth, .code = 300);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "HTTP request failed with 300:\n"
+                        "*** URI/Query ***:\n"
+                        "/latest/meta-data/iam/security-credentials/authrole\n"
+                        "*** Request Headers ***:\n"
+                        "content-length: 0\n"
+                        "host: %s",
+                    strZ(hrnTlsServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
+
+                hrnServerScriptAccept(auth);
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testResponseP(
+                    auth,
+                    .content =
+                        "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"2020-07-10T02:00:50Z\"}");
 
                 hrnServerScriptAccept(service);
                 testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
@@ -838,8 +894,9 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, storageS3KeyTypeTemp, accessKey,
-                    secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
+                    path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, storageS3KeyTypeShared, accessKey,
+                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
+                    testContainer(), NULL, NULL);
 
                 hrnServerScriptAccept(service);
 
