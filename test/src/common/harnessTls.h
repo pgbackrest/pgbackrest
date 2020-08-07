@@ -10,6 +10,20 @@ Simple TLS server for testing TLS client functionality.
 #include "common/io/tls/session.h"
 
 /***********************************************************************************************************************************
+Server protocol type
+***********************************************************************************************************************************/
+typedef enum
+{
+    hrnServerProtocolSocket,
+    hrnServerProtocolTls,
+} HrnServerProtocol;
+
+/***********************************************************************************************************************************
+Maximum number of ports allowed for each test
+***********************************************************************************************************************************/
+#define HRN_SERVER_PORT_MAX                                         4
+
+/***********************************************************************************************************************************
 Path and prefix for test certificates
 ***********************************************************************************************************************************/
 #define TEST_CERTIFICATE_PREFIX                                     "test/certificate/pgbackrest-test"
@@ -28,7 +42,7 @@ void hrnTlsClientBegin(IoWrite *write);
 void hrnTlsClientEnd(void);
 
 // Run server
-void hrnTlsServerRun(IoRead *read);
+void hrnTlsServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port);
 
 // Abort the server session (i.e. don't perform proper TLS shutdown)
 void hrnTlsServerAbort(void);
@@ -56,7 +70,8 @@ Getters/Setters
 // Hostname to use for testing -- this will vary based on whether the test is running in a container
 const String *hrnTlsServerHost(void);
 
-// Port to use for testing. This will be unique for each test running in parallel to avoid conflicts
-unsigned int hrnTlsServerPort(void);
+// Port to use for testing. This will be unique for each test running in parallel to avoid conflicts. And range is allocated to each
+// test so multiple ports can be requested.
+unsigned int hrnTlsServerPort(unsigned int portIdx);
 
 #endif

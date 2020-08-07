@@ -13,7 +13,8 @@ Test Tls Client
 /***********************************************************************************************************************************
 Version that allows custom certs
 ***********************************************************************************************************************************/
-void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String *key);
+void hrnTlsServerRunParam(
+    IoRead *read, HrnServerProtocol protocol, unsigned int port, const String *certificate, const String *key);
 
 /***********************************************************************************************************************************
 Test Run
@@ -184,14 +185,14 @@ testRun(void)
     {
         IoClient *client = NULL;
 
-        TEST_ASSIGN(client, sckClientNew(strNew("localhost"), hrnTlsServerPort(), 100), "new client");
+        TEST_ASSIGN(client, sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 100), "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
-            hrnTlsServerPort());
+            hrnTlsServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
-        TEST_ASSIGN(client, sckClientNew(strNew("172.31.255.255"), hrnTlsServerPort(), 100), "new client");
-        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnTlsServerPort());
+        TEST_ASSIGN(client, sckClientNew(strNew("172.31.255.255"), hrnTlsServerPort(0), 100), "new client");
+        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnTlsServerPort(0));
     }
 
     // Additional coverage not provided by testing with actual certificates
@@ -226,11 +227,11 @@ testRun(void)
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(), 100), strNew("X"), 100, true, NULL, NULL),
+            client, tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 100), strNew("X"), 100, true, NULL, NULL),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
-            hrnTlsServerPort());
+            hrnTlsServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bogus client cert/path");
@@ -239,7 +240,7 @@ testRun(void)
             ioClientOpen(
                 tlsClientNew(
                     sckClientNew(
-                        strNew("localhost"), hrnTlsServerPort(), 5000), strNew("X"), 0, true, strNew("bogus.crt"),
+                        strNew("localhost"), hrnTlsServerPort(0), 5000), strNew("X"), 0, true, strNew("bogus.crt"),
                         strNew("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
 
@@ -261,8 +262,8 @@ testRun(void)
                 // Start server to test various certificate errors
                 TEST_RESULT_VOID(
                     hrnTlsServerRunParam(
-                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000),
-                        strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath()),
+                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        hrnTlsServerPort(0), strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-alt-name.crt", testRepoPath()),
                         strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath())),
                     "tls alt name server begin");
             }
@@ -281,11 +282,11 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), strNew("X"), 0, true, NULL,
+                            sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 5000), strNew("X"), 0, true, NULL,
                             strNew("/bogus"))),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
-                    hrnTlsServerPort());
+                    hrnTlsServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("valid ca file and match common name");
@@ -296,7 +297,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("test.pgbackrest.org"), hrnTlsServerPort(), 5000), strNew("test.pgbackrest.org"),
+                            sckClientNew(strNew("test.pgbackrest.org"), hrnTlsServerPort(0), 5000), strNew("test.pgbackrest.org"),
                             0, true, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                     "open connection");
 
@@ -309,7 +310,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("host.test2.pgbackrest.org"), hrnTlsServerPort(), 5000),
+                            sckClientNew(strNew("host.test2.pgbackrest.org"), hrnTlsServerPort(0), 5000),
                             strNew("host.test2.pgbackrest.org"), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                     "open connection");
@@ -323,7 +324,7 @@ testRun(void)
                 TEST_ERROR(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("test3.pgbackrest.org"), hrnTlsServerPort(), 5000),
+                            sckClientNew(strNew("test3.pgbackrest.org"), hrnTlsServerPort(0), 5000),
                             strNew("test3.pgbackrest.org"), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
                     CryptoError,
@@ -338,12 +339,12 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), strNew("X"), 0, true,
+                            sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 5000), strNew("X"), 0, true,
                             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
                         NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
-                    hrnTlsServerPort());
+                    hrnTlsServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no certificate verify");
@@ -354,7 +355,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(strNew("localhost"), hrnTlsServerPort(), 5000), strNew("X"), 0, false, NULL, NULL)),
+                            sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 5000), strNew("X"), 0, false, NULL, NULL)),
                         "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -383,7 +384,10 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000)), "tls server begin");
+                    hrnTlsServerRun(
+                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        hrnTlsServerPort(0)),
+                    "tls server begin");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -395,7 +399,7 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     tlsClientNew(
-                        sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(), 5000), hrnTlsServerHost(), 0, testContainer(), NULL,
+                        sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(0), 5000), hrnTlsServerHost(), 0, testContainer(), NULL,
                         NULL),
                     "new client");
 
@@ -457,7 +461,7 @@ testRun(void)
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->driver)->read->driver)->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(ioSessionIoRead(session), output), FileReadError,
-                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort());
+                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnTlsServerHost()), hrnTlsServerPort(0));
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->driver)->read->driver)->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------

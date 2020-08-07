@@ -153,8 +153,8 @@ testRun(void)
     const String *region = strNew("us-east-1");
     const String *endPoint = strNew("s3.amazonaws.com");
     const String *host = hrnTlsServerHost();
-    const unsigned int port = hrnTlsServerPort();
-    const unsigned int authPort = hrnTlsServerPort(); // !!! ADD ONE;
+    const unsigned int port = hrnTlsServerPort(0);
+    const unsigned int authPort = hrnTlsServerPort(1);
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
@@ -378,7 +378,9 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)), "s3 server begin");
+                    hrnTlsServerRun(
+                        ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, port),
+                    "s3 server begin");
             }
             HARNESS_FORK_CHILD_END();
 

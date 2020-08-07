@@ -200,10 +200,12 @@ hrnTlsServerSleep(TimeMSec sleepMs)
 }
 
 /**********************************************************************************************************************************/
-void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String *key)
+void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int port, const String *certificate, const String *key)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_READ, read);
+        FUNCTION_HARNESS_PARAM(ENUM, protocol);
+        FUNCTION_HARNESS_PARAM(UINT, port);
         FUNCTION_HARNESS_PARAM(STRING, certificate);
         FUNCTION_HARNESS_PARAM(STRING, key);
     FUNCTION_HARNESS_END();
@@ -223,19 +225,25 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
     }
 
     // Initialize ssl and create a context
-    cryptoInit();
+    SSL_CTX *serverContext = NULL;
 
-    const SSL_METHOD *method = SSLv23_method();
-    cryptoError(method == NULL, "unable to load TLS method");
+    if (protocol == hrnServerProtocolTls)
+    {
+        cryptoInit();
 
-    SSL_CTX *serverContext = SSL_CTX_new(method);
-    cryptoError(serverContext == NULL, "unable to create TLS context");
+        const SSL_METHOD *method = SSLv23_method();
+        cryptoError(method == NULL, "unable to load TLS method");
 
-    // Configure the context by setting key and cert
-    cryptoError(
-        SSL_CTX_use_certificate_file(serverContext, strZ(certificate), SSL_FILETYPE_PEM) <= 0, "unable to load server certificate");
-    cryptoError(
-        SSL_CTX_use_PrivateKey_file(serverContext, strZ(key), SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
+        serverContext = SSL_CTX_new(method);
+        cryptoError(serverContext == NULL, "unable to create TLS context");
+
+        // Configure the context by setting key and cert
+        cryptoError(
+            SSL_CTX_use_certificate_file(serverContext, strZ(certificate), SSL_FILETYPE_PEM) <= 0,
+            "unable to load server certificate");
+        cryptoError(
+            SSL_CTX_use_PrivateKey_file(serverContext, strZ(key), SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
+    }
 
     // Create the socket
     int serverSocket;
@@ -243,7 +251,7 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
     struct sockaddr_in address;
 
     address.sin_family = AF_INET;
-    address.sin_port = htons((uint16_t)hrnTlsServerPort());
+    address.sin_port = htons((uint16_t)port);
     address.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -283,6 +291,9 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
         {
             case hrnTlsCmdAbort:
             {
+                // Only makes since to abort in TLS, otherwise it is just a close
+                ASSERT(protocol == hrnServerProtocolTls);
+
                 ioSessionFree(serverSession);
                 serverSession = NULL;
 
@@ -299,17 +310,20 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
                 if (testClientSocket < 0)
                     THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
-                SSL *testClientSSL = SSL_new(serverContext);
+                if (protocol == hrnServerProtocolTls)
+                {
+                    SSL *testClientSSL = SSL_new(serverContext);
 
-                serverSession = tlsSessionNew(
-                    testClientSSL, sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
+                    serverSession = tlsSessionNew(
+                        testClientSSL, sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
+                }
 
                 break;
             }
 
             case hrnTlsCmdClose:
             {
-                if (serverSession == NULL)
+                if (protocol == hrnServerProtocolTls && serverSession == NULL)
                     THROW(AssertError, "TLS session is already closed");
 
                 ioSessionClose(serverSession);
@@ -368,23 +382,26 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
     while (!done);
 
     // Free TLS context
-    SSL_CTX_free(serverContext);
+    if (protocol == hrnServerProtocolTls)
+        SSL_CTX_free(serverContext);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
-void hrnTlsServerRun(IoRead *read)
+void hrnTlsServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_READ, read);
+        FUNCTION_HARNESS_PARAM(ENUM, protocol);
+        FUNCTION_HARNESS_PARAM(UINT, port);
     FUNCTION_HARNESS_END();
 
     if (testContainer())
-        hrnTlsServerRunParam(read, STRDEF(TLS_CERT_TEST_CERT), STRDEF(TLS_CERT_TEST_KEY));
+        hrnTlsServerRunParam(read, protocol, port, STRDEF(TLS_CERT_TEST_CERT), STRDEF(TLS_CERT_TEST_KEY));
     else
     {
         hrnTlsServerRunParam(
-            read, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
+            read, protocol, port, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
             strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath()));
     }
 
@@ -398,7 +415,9 @@ const String *hrnTlsServerHost(void)
 }
 
 /**********************************************************************************************************************************/
-unsigned int hrnTlsServerPort(void)
+unsigned int hrnTlsServerPort(unsigned int portIdx)
 {
-    return 44443 + testIdx();
+    ASSERT(portIdx < HRN_SERVER_PORT_MAX);
+
+    return 44443 + (HRN_SERVER_PORT_MAX * testIdx()) * portIdx;
 }
