@@ -672,7 +672,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                                             storageListP(
                                                 storageRepo(),
                                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
-                                                .expression = STRDEF("^[0-F]{24}.*$")), // CSHANG This is wrong as it will also pick up 000000010000000000000003.00000028.backup
+                                                .expression = STRDEF("^[0-F]{24}.*$")),
                                             sortOrderAsc);
 
                                     for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
