@@ -271,13 +271,14 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                IoWrite *tls = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("certificate error on invalid ca path");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_ERROR_FMT(
                     ioClientOpen(
@@ -291,8 +292,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("valid ca file and match common name");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_RESULT_VOID(
                     ioClientOpen(
@@ -304,8 +305,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("valid ca file and match alt name");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_RESULT_VOID(
                     ioClientOpen(
@@ -318,8 +319,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("unable to find matching hostname in certificate");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_ERROR(
                     ioClientOpen(
@@ -333,8 +334,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("certificate error");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_ERROR_FMT(
                     ioClientOpen(
@@ -349,8 +350,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no certificate verify");
 
-                hrnTlsServerAccept();
-                hrnTlsServerClose();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
 
                 TEST_RESULT_VOID(
                     ioClientOpen(
@@ -359,7 +360,7 @@ testRun(void)
                         "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnTlsClientEnd();
+                hrnServerScriptEnd(tls);
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -393,7 +394,8 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                IoWrite *tls =
+                    hrnServerScriptBegin(ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
                 ioBufferSizeSet(12);
 
                 TEST_ASSIGN(
@@ -403,7 +405,7 @@ testRun(void)
                         NULL),
                     "new client");
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept(tls);
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->driver;
@@ -426,8 +428,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("first protocol exchange");
 
-                hrnTlsServerExpectZ("some protocol info");
-                hrnTlsServerReplyZ("something:0\n");
+                hrnServerScriptExpectZ(tls, "some protocol info");
+                hrnServerScriptReplyZ(tls, "something:0\n");
 
                 const Buffer *input = BUFSTRDEF("some protocol info");
                 TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(session), input), "write input");
@@ -436,11 +438,11 @@ testRun(void)
                 TEST_RESULT_STR_Z(ioReadLine(ioSessionIoRead(session)), "something:0", "read line");
                 TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
 
-                hrnTlsServerSleep(100);
-                hrnTlsServerReplyZ("some ");
+                hrnServerScriptSleep(tls, 100);
+                hrnServerScriptReplyZ(tls, "some ");
 
-                hrnTlsServerSleep(100);
-                hrnTlsServerReplyZ("contentAND MORE");
+                hrnServerScriptSleep(tls, 100);
+                hrnServerScriptReplyZ(tls, "contentAND MORE");
 
                 Buffer *output = bufNew(12);
                 TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 12, "read output");
@@ -455,7 +457,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("read eof");
 
-                hrnTlsServerSleep(500);
+                hrnServerScriptSleep(tls, 500);
 
                 output = bufNew(12);
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->driver)->read->driver)->timeout = 100;
@@ -467,10 +469,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("second protocol exchange");
 
-                hrnTlsServerExpectZ("more protocol info");
-                hrnTlsServerReplyZ("0123456789AB");
+                hrnServerScriptExpectZ(tls, "more protocol info");
+                hrnServerScriptReplyZ(tls, "0123456789AB");
 
-                hrnTlsServerClose();
+                hrnServerScriptClose(tls);
 
                 input = BUFSTRDEF("more protocol info");
                 TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(session), input), "write input");
@@ -490,9 +492,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("aborted connection before read complete (blocking socket)");
 
-                hrnTlsServerAccept();
-                hrnTlsServerReplyZ("0123456789AB");
-                hrnTlsServerAbort();
+                hrnServerScriptAccept(tls);
+                hrnServerScriptReplyZ(tls, "0123456789AB");
+                hrnServerScriptAbort(tls);
 
                 socketLocal.block = true;
                 TEST_ASSIGN(session, ioClientOpen(client), "open client again (was closed by server)");
@@ -507,7 +509,7 @@ testRun(void)
                 TEST_RESULT_VOID(ioClientFree(client), "free client");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnTlsClientEnd();
+                hrnServerScriptEnd(tls);
             }
             HARNESS_FORK_PARENT_END();
         }

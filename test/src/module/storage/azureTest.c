@@ -100,7 +100,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
     if (param.content != NULL)
         strCatZ(request, param.content);
 
-    hrnTlsServerExpect(request);
+    hrnServerScriptExpect(request);
 }
 
 /***********************************************************************************************************************************
@@ -162,7 +162,7 @@ testResponse(TestResponseParam param)
     else
         strCatZ(response, "\r\n");
 
-    hrnTlsServerReply(response);
+    hrnServerScriptReply(response);
 }
 
 /***********************************************************************************************************************************
@@ -280,7 +280,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                hrnServerScriptBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");
@@ -311,7 +311,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept();
                 testRequestP(HTTP_VERB_GET, "/fi%26le.txt");
                 testResponseP(.code = 404);
 
@@ -713,7 +713,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to SAS auth");
 
-                hrnTlsServerClose();
+                hrnServerScriptClose();
 
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_KEY_TYPE "=" STORAGE_AZURE_KEY_TYPE_SAS);
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SAS, true);
@@ -724,7 +724,7 @@ testRun(void)
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");
@@ -838,7 +838,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnTlsClientEnd();
+                hrnServerScriptEnd();
             }
             HARNESS_FORK_PARENT_END();
         }

@@ -43,158 +43,162 @@ Constants
 #define TLS_CERT_TEST_KEY                                           TLS_CERT_FAKE_PATH "/pgbackrest-test.key"
 
 /***********************************************************************************************************************************
-Local variables
-***********************************************************************************************************************************/
-static struct
-{
-    IoWrite *clientWrite;                                           // Write interface for client to send commands to the server
-} hrnTlsLocal;
-
-/***********************************************************************************************************************************
 Send commands to the server
 ***********************************************************************************************************************************/
 static void
-hrnTlsServerCommand(HrnTlsCmd cmd, const Variant *data)
+hrnServerScriptCommand(IoWrite *write, HrnTlsCmd cmd, const Variant *data)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(ENUM, cmd);
         FUNCTION_HARNESS_PARAM(VARIANT, data);
     FUNCTION_HARNESS_END();
 
-    ASSERT(hrnTlsLocal.clientWrite != NULL);
+    ASSERT(write != NULL);
 
-    ioWriteStrLine(hrnTlsLocal.clientWrite, jsonFromUInt(cmd));
-    ioWriteStrLine(hrnTlsLocal.clientWrite, jsonFromVar(data));
-    ioWriteFlush(hrnTlsLocal.clientWrite);
+    ioWriteStrLine(write, jsonFromUInt(cmd));
+    ioWriteStrLine(write, jsonFromVar(data));
+    ioWriteFlush(write);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /**********************************************************************************************************************************/
-void hrnTlsClientBegin(IoWrite *write)
+IoWrite *hrnServerScriptBegin(IoWrite *write)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
     FUNCTION_HARNESS_END();
 
-    ASSERT(hrnTlsLocal.clientWrite == NULL);
     ASSERT(write != NULL);
 
-    hrnTlsLocal.clientWrite = write;
+    write = write;
     ioWriteOpen(write);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RESULT(IO_WRITE, write);
 }
 
-void hrnTlsClientEnd(void)
+void hrnServerScriptEnd(IoWrite *write)
 {
-    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
+    FUNCTION_HARNESS_END();
 
-    ASSERT(hrnTlsLocal.clientWrite != NULL);
+    ASSERT(write != NULL);
 
-    hrnTlsServerCommand(hrnTlsCmdDone, NULL);
-    hrnTlsLocal.clientWrite = NULL;
+    hrnServerScriptCommand(write, hrnTlsCmdDone, NULL);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-hrnTlsServerAbort(void)
-{
-    FUNCTION_HARNESS_VOID();
-
-    hrnTlsServerCommand(hrnTlsCmdAbort, NULL);
-
-    FUNCTION_HARNESS_RESULT_VOID();
-}
-
-void
-hrnTlsServerAccept(void)
-{
-    FUNCTION_HARNESS_VOID();
-
-    hrnTlsServerCommand(hrnTlsCmdAccept, NULL);
-
-    FUNCTION_HARNESS_RESULT_VOID();
-}
-
-void
-hrnTlsServerClose()
-{
-    FUNCTION_HARNESS_VOID();
-
-    hrnTlsServerCommand(hrnTlsCmdClose, NULL);
-
-    FUNCTION_HARNESS_RESULT_VOID();
-}
-
-void
-hrnTlsServerExpect(const String *data)
+hrnServerScriptAbort(IoWrite *write)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
+    FUNCTION_HARNESS_END();
+
+    hrnServerScriptCommand(write, hrnTlsCmdAbort, NULL);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+void
+hrnServerScriptAccept(IoWrite *write)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
+    FUNCTION_HARNESS_END();
+
+    hrnServerScriptCommand(write, hrnTlsCmdAccept, NULL);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+void
+hrnServerScriptClose(IoWrite *write)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
+    FUNCTION_HARNESS_END();
+
+    hrnServerScriptCommand(write, hrnTlsCmdClose, NULL);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+void
+hrnServerScriptExpect(IoWrite *write, const String *data)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(STRING, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(data != NULL);
 
-    hrnTlsServerCommand(hrnTlsCmdExpect, VARSTR(data));
+    hrnServerScriptCommand(write, hrnTlsCmdExpect, VARSTR(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 void
-hrnTlsServerExpectZ(const char *data)
+hrnServerScriptExpectZ(IoWrite *write, const char *data)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(STRINGZ, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(data != NULL);
 
-    hrnTlsServerCommand(hrnTlsCmdExpect, VARSTRZ(data));
+    hrnServerScriptCommand(write, hrnTlsCmdExpect, VARSTRZ(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 void
-hrnTlsServerReply(const String *data)
+hrnServerScriptReply(IoWrite *write, const String *data)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(STRING, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(data != NULL);
 
-    hrnTlsServerCommand(hrnTlsCmdReply, VARSTR(data));
+    hrnServerScriptCommand(write, hrnTlsCmdReply, VARSTR(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 void
-hrnTlsServerReplyZ(const char *data)
+hrnServerScriptReplyZ(IoWrite *write, const char *data)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(STRINGZ, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(data != NULL);
 
-    hrnTlsServerCommand(hrnTlsCmdReply, VARSTRZ(data));
+    hrnServerScriptCommand(write, hrnTlsCmdReply, VARSTRZ(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 void
-hrnTlsServerSleep(TimeMSec sleepMs)
+hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(IO_WRITE, write);
         FUNCTION_HARNESS_PARAM(TIME_MSEC, sleepMs);
     FUNCTION_HARNESS_END();
 
     ASSERT(sleepMs > 0);
 
-    hrnTlsServerCommand(hrnTlsCmdSleep, VARUINT64(sleepMs));
+    hrnServerScriptCommand(write, hrnTlsCmdSleep, VARUINT64(sleepMs));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

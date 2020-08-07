@@ -74,7 +74,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
     if (param.content != NULL)
         strCatZ(request, param.content);
 
-    hrnTlsServerExpect(request);
+    hrnServerScriptExpect(request);
 }
 
 /***********************************************************************************************************************************
@@ -136,7 +136,7 @@ testResponse(TestResponseParam param)
     else
         strCatZ(response, "\r\n");
 
-    hrnTlsServerReply(response);
+    hrnServerScriptReply(response);
 }
 
 /***********************************************************************************************************************************
@@ -386,7 +386,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                hrnServerScriptBegin(ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
@@ -400,7 +400,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept();
                 testRequestP(s3, HTTP_VERB_GET, "/fi%26le.txt");
                 testResponseP(.code = 404);
 
@@ -826,13 +826,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to path-style URIs");
 
-                hrnTlsServerClose();
+                hrnServerScriptClose();
 
                 s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, storageS3KeyTypeTemp, accessKey,
                     secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when no recurse because there are no paths");
@@ -976,7 +976,7 @@ testRun(void)
                 TEST_RESULT_VOID(storageRemoveP(s3, strNew("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnTlsClientEnd();
+                hrnServerScriptEnd();
             }
             HARNESS_FORK_PARENT_END();
         }

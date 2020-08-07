@@ -37,32 +37,32 @@ TLS test defaults
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Begin/end client
-void hrnTlsClientBegin(IoWrite *write);
-void hrnTlsClientEnd(void);
+// Begin/end server script
+IoWrite *hrnServerScriptBegin(IoWrite *write);
+void hrnServerScriptEnd(IoWrite *write);
 
 // Run server
 void hrnTlsServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port);
 
 // Abort the server session (i.e. don't perform proper TLS shutdown)
-void hrnTlsServerAbort(void);
+void hrnServerScriptAbort(IoWrite *write);
 
 // Accept new TLS connection
-void hrnTlsServerAccept(void);
+void hrnServerScriptAccept(IoWrite *write);
 
 // Close the TLS connection
-void hrnTlsServerClose(void);
+void hrnServerScriptClose(IoWrite *write);
 
 // Expect the specfified string
-void hrnTlsServerExpect(const String *data);
-void hrnTlsServerExpectZ(const char *data);
+void hrnServerScriptExpect(IoWrite *write, const String *data);
+void hrnServerScriptExpectZ(IoWrite *write, const char *data);
 
 // Reply with the specfified string
-void hrnTlsServerReply(const String *data);
-void hrnTlsServerReplyZ(const char *data);
+void hrnServerScriptReply(IoWrite *write, const String *data);
+void hrnServerScriptReplyZ(IoWrite *write, const char *data);
 
 // Sleep specfified milliseconds
-void hrnTlsServerSleep(TimeMSec sleepMs);
+void hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs);
 
 /***********************************************************************************************************************************
 Getters/Setters
