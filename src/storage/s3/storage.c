@@ -10,6 +10,7 @@ S3 Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -909,10 +910,11 @@ storageS3New(
         };
 
         // Create the HTTPS client used to service requests
+        if (host == NULL)
+            host = driver->bucketEndpoint;
+
         driver->httpClient = httpClientNew(
-            tlsClientNew(
-                sckClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout), timeout, verifyPeer, caFile, caPath),
-            timeout);
+            tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create the HTTP client used to retreive temporary security credentials
         if (driver->keyType == storageS3KeyTypeTemp)

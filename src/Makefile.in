@@ -67,13 +67,14 @@ SRCS = \
 	common/io/bufferRead.c \
 	common/io/bufferWrite.c \
 	common/io/client.c \
+	common/io/fd.c \
+	common/io/fdRead.c \
+	common/io/fdWrite.c \
 	common/io/filter/buffer.c \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \
 	common/io/filter/sink.c \
 	common/io/filter/size.c \
-	common/io/handleRead.c \
-	common/io/handleWrite.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
 	common/io/http/header.c \

@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Test Azure Storage
 ***********************************************************************************************************************************/
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -273,14 +273,14 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioHandleReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000)),
+                    hrnTlsServerRun(ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000)),
                     "azure server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioHandleWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                hrnTlsClientBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");

@@ -11,17 +11,24 @@ Interface
 ***********************************************************************************************************************************/
 typedef struct IoSessionInterface
 {
-    // Type used to identify the session
+    // Type used to identify the session. This is stored as a pointer to a String pointer so it can be used with an existing String
+    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
     const String *const *type;
 
     // Close the session
     void (*close)(void *driver);
+
+    // Session file descriptor, if any
+    int (*fd)(void *driver);
 
     // IoRead interface for the session
     IoRead *(*ioRead)(void *driver);
 
     // IoWrite interface for the session
     IoWrite *(*ioWrite)(void *driver);
+
+    // Session role
+    IoSessionRole (*role)(const void *driver);
 
     // Driver log function
     String *(*toLog)(const void *driver);

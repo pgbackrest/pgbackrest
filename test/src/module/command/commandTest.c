@@ -121,7 +121,7 @@ testRun(void)
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
-        httpClientNew(tlsClientNew(sckClientNew(STRDEF("BOGUS"), 443, 1000), 1000, false, NULL, NULL), 1000);
+        httpClientNew(tlsClientNew(sckClientNew(STRDEF("BOGUS"), 443, 1000), STRDEF("BOGUS"), 1000, true, NULL, NULL), 1000);
 
         harnessLogLevelSet(logLevelDetail);
 

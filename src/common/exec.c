@@ -14,8 +14,8 @@ Execute Process
 #include "common/log.h"
 #include "common/exec.h"
 #include "common/fork.h"
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
 #include "common/io/write.intern.h"
@@ -35,15 +35,15 @@ struct Exec
 
     pid_t processId;                                                // Process id of the child process
 
-    int handleRead;                                                 // Read handle
-    int handleWrite;                                                // Write handle
-    int handleError;                                                // Error handle
+    int fdRead;                                                     // Read file descriptor
+    int fdWrite;                                                    // Write file descriptor
+    int fdError;                                                    // Error file descriptor
 
-    IoRead *ioReadHandle;                                           // Handle read interface
-    IoWrite *ioWriteHandle;                                         // Handle write interface
+    IoRead *ioReadFd;                                               // File descriptor read interface
+    IoWrite *ioWriteFd;                                             // File descriptor write interface
 
-    IoRead *ioReadExec;                                             // Wrapper for handle read interface
-    IoWrite *ioWriteExec;                                           // Wrapper for handle write interface
+    IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
+    IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 };
 
 OBJECT_DEFINE_FREE(EXEC);
@@ -72,14 +72,14 @@ other code.
     while (0);
 
 /***********************************************************************************************************************************
-Free exec handles and ensure process is shut down
+Free exec file descriptors and ensure process is shut down
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
 {
-    // Close the io handles
-    close(this->handleRead);
-    close(this->handleWrite);
-    close(this->handleError);
+    // Close file descriptors
+    close(this->fdRead);
+    close(this->fdWrite);
+    close(this->fdError);
 
     // Wait for the child to exit. We don't really care how it exits as long as it does.
     if (this->processId != 0)
@@ -176,7 +176,7 @@ execCheck(Exec *this)
         if (WIFEXITED(processStatus))
         {
             // Get data from stderr to help diagnose the problem
-            IoRead *ioReadError = ioHandleReadNew(strNewFmt("%s error", strZ(this->name)), this->handleError, 0);
+            IoRead *ioReadError = ioFdReadNew(strNewFmt("%s error", strZ(this->name)), this->fdError, 0);
             ioReadOpen(ioReadError);
             String *errorStr = strTrim(strNewBuf(ioReadBuf(ioReadError)));
 
@@ -214,7 +214,7 @@ execRead(THIS_VOID, Buffer *buffer, bool block)
 
     TRY_BEGIN()
     {
-        result = ioReadInterface(this->ioReadHandle)->read(ioReadDriver(this->ioReadHandle), buffer, block);
+        result = ioReadInterface(this->ioReadFd)->read(ioReadDriver(this->ioReadFd), buffer, block);
     }
     CATCH_ANY()
     {
@@ -244,8 +244,8 @@ execWrite(THIS_VOID, const Buffer *buffer)
 
     TRY_BEGIN()
     {
-        ioWrite(this->ioWriteHandle, buffer);
-        ioWriteFlush(this->ioWriteHandle);
+        ioWrite(this->ioWriteFd, buffer);
+        ioWriteFlush(this->ioWriteFd);
     }
     CATCH_ANY()
     {
@@ -272,17 +272,17 @@ execEof(THIS_VOID)
     ASSERT(this != NULL);
 
     // Check if the process is still running on eof
-    if (ioReadInterface(this->ioReadHandle)->eof(ioReadDriver(this->ioReadHandle)))
+    if (ioReadInterface(this->ioReadFd)->eof(ioReadDriver(this->ioReadFd)))
         execCheck(this);
 
     FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /***********************************************************************************************************************************
-Get the read handle
+Get the read file descriptor
 ***********************************************************************************************************************************/
 static int
-execHandleRead(const THIS_VOID)
+execFdRead(const THIS_VOID)
 {
     THIS(const Exec);
 
@@ -292,7 +292,7 @@ execHandleRead(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->handleRead);
+    FUNCTION_TEST_RETURN(this->fdRead);
 }
 
 /**********************************************************************************************************************************/
@@ -342,28 +342,28 @@ execOpen(Exec *this)
         exit(errorTypeCode(&ExecuteError));
     }
 
-    // Close the unused handles
+    // Close the unused file descriptors
     close(pipeRead[1]);
     close(pipeWrite[0]);
     close(pipeError[1]);
 
-    // Store the handles we'll use and need to close when the process terminates
-    this->handleRead = pipeRead[0];
-    this->handleWrite = pipeWrite[1];
-    this->handleError = pipeError[0];
+    // Store the file descriptors we'll use and need to close when the process terminates
+    this->fdRead = pipeRead[0];
+    this->fdWrite = pipeWrite[1];
+    this->fdError = pipeError[0];
 
-    // Assign handles to io interfaces
-    this->ioReadHandle = ioHandleReadNew(strNewFmt("%s read", strZ(this->name)), this->handleRead, this->timeout);
-    this->ioWriteHandle = ioHandleWriteNew(strNewFmt("%s write", strZ(this->name)), this->handleWrite);
-    ioWriteOpen(this->ioWriteHandle);
+    // Assign file descriptors to io interfaces
+    this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
+    this->ioWriteFd = ioFdWriteNew(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
+    ioWriteOpen(this->ioWriteFd);
 
     // Create wrapper interfaces that check process state
-    this->ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .handle = execHandleRead);
+    this->ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
     ioReadOpen(this->ioReadExec);
     this->ioWriteExec = ioWriteNewP(this, .write = execWrite);
     ioWriteOpen(this->ioWriteExec);
 
-    // Set a callback so the handles will get freed
+    // Set a callback so the file descriptors will get freed
     memContextCallbackSet(this->memContext, execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();

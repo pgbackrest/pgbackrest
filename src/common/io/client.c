@@ -19,6 +19,7 @@ struct IoClient
     const IoClientInterface *interface;                             // Driver interface
 };
 
+OBJECT_DEFINE_MOVE(IO_CLIENT);
 OBJECT_DEFINE_FREE(IO_CLIENT);
 
 /**********************************************************************************************************************************/
@@ -33,6 +34,7 @@ ioClientNew(void *driver, const IoClientInterface *interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
     ASSERT(interface->type != NULL);
+    ASSERT(interface->name != NULL);
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
 
@@ -59,6 +61,19 @@ ioClientOpen(IoClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(IO_SESSION, this->interface->open(this->driver));
+}
+
+/**********************************************************************************************************************************/
+const String *
+ioClientName(IoClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN_CONST(STRING, this->interface->name(this->driver));
 }
 
 /**********************************************************************************************************************************/

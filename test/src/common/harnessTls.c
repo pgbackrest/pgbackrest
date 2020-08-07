@@ -302,7 +302,7 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
                 SSL *testClientSSL = SSL_new(serverContext);
 
                 serverSession = tlsSessionNew(
-                    testClientSSL, sckSessionNew(sckSessionTypeServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
+                    testClientSSL, sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), 0, 5000), 5000);
 
                 break;
             }

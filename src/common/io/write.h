@@ -31,6 +31,18 @@ void ioWrite(IoWrite *this, const Buffer *buffer);
 // Write linefeed-terminated buffer
 void ioWriteLine(IoWrite *this, const Buffer *buffer);
 
+// Can bytes be written immediately? There are no guarantees on how much data can be written but it must be at least one byte.
+typedef struct IoWriteReadyParam
+{
+    VAR_PARAM_HEADER;
+    bool error;                                                     // Error when write not ready
+} IoWriteReadyParam;
+
+#define ioWriteReadyP(this, ...)                                                                                                   \
+    ioWriteReady(this, (IoWriteReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool ioWriteReady(IoWrite *this, IoWriteReadyParam param);
+
 // Write string
 void ioWriteStr(IoWrite *this, const String *string);
 
@@ -49,8 +61,8 @@ Getters/Setters
 // Filter group. Filters must be set before open and cannot be reset
 IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
 
-// Handle (file descriptor) for the write object. Not all write objects have a handle and -1 will be returned in that case.
-int ioWriteHandle(const IoWrite *this);
+// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
+int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor

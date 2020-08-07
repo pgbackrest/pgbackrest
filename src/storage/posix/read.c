@@ -27,7 +27,7 @@ typedef struct StorageReadPosix
     StorageReadInterface interface;                                 // Interface
     StoragePosix *storage;                                          // Storage that created this object
 
-    int handle;
+    int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
@@ -42,12 +42,12 @@ Macros for function logging
     objToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Close the file handle
+Close file descriptor
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
 {
-    if (this->handle != -1)
-        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+    if (this->fd != -1)
+        THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -64,15 +64,15 @@ storageReadPosixOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->handle == -1);
+    ASSERT(this->fd == -1);
 
     bool result = false;
 
     // Open the file
-    this->handle = open(strZ(this->interface.name), O_RDONLY, 0);
+    this->fd = open(strZ(this->interface.name), O_RDONLY, 0);
 
     // Handle errors
-    if (this->handle == -1)
+    if (this->fd == -1)
     {
         if (errno == ENOENT)                                                                                        // {vm_covered}
         {
@@ -82,8 +82,8 @@ storageReadPosixOpen(THIS_VOID)
         else
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));                // {vm_covered}
     }
-    // On success set free callback to ensure file handle is freed
-    if (this->handle != -1)
+    // On success set free callback to ensure the file descriptor is freed
+    if (this->fd != -1)
     {
         memContextCallbackSet(this->memContext, storageReadPosixFreeResource, this);
         result = true;
@@ -106,7 +106,7 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->handle != -1);
+    ASSERT(this != NULL && this->fd != -1);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
     // Read if EOF has not been reached
@@ -121,7 +121,7 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
             expectedBytes = (size_t)(this->limit - this->current);
 
         // Read from file
-        actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
+        actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
 
         // Error occurred during read
         if (actualBytes == -1)
@@ -156,7 +156,7 @@ storageReadPosixClose(THIS_VOID)
 
     storageReadPosixFreeResource(this);
     memContextCallbackClear(this->memContext);
-    this->handle = -1;
+    this->fd = -1;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -179,10 +179,10 @@ storageReadPosixEof(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Get handle (file descriptor)
+Get file descriptor
 ***********************************************************************************************************************************/
 static int
-storageReadPosixHandle(const THIS_VOID)
+storageReadPosixFd(const THIS_VOID)
 {
     THIS(const StorageReadPosix);
 
@@ -192,7 +192,7 @@ storageReadPosixHandle(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->handle);
+    FUNCTION_TEST_RETURN(this->fd);
 }
 
 /**********************************************************************************************************************************/
@@ -217,7 +217,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
         {
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
-            .handle = -1,
+            .fd = -1,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
@@ -235,7 +235,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
                 {
                     .close = storageReadPosixClose,
                     .eof = storageReadPosixEof,
-                    .handle = storageReadPosixHandle,
+                    .fd = storageReadPosixFd,
                     .open = storageReadPosixOpen,
                     .read = storageReadPosix,
                 },
