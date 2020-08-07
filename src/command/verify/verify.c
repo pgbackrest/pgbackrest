@@ -781,7 +781,12 @@ verifyArchive(void *data)
                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
                                 .expression = WAL_SEGMENT_FILE_REGEXP_STR),
                             sortOrderAsc);
-
+/* CSHANG because of S3 and because we may want to report on stuff in the directories that shouldn't be there, we should get
+everything and then filter out the WAL via expression for walFileList and any other files we should just call it out in a separate
+list. We'll need to do this for all lists for first get everything and then filter on an expression to get the valid stuff and
+anything else we should put in a separate list (e.g. archiveIdInvalidFileList) to inform the user of "junk" in the directory.
+Note, though, that .partial and .backup should not be considered "junk" in the WAL directory.
+*/
                     if (strLstSize(jobData->walFileList) > 0)
                     {
                         // If the WAL segment size for this archiveId has not been set, get it from the first WAL
@@ -1209,7 +1214,6 @@ verifyProcess(void)
         // If valid info files, then begin process of checking backups and archives in the repo
         if (errorTotal == 0)
         {
-// CSHANG TODO: May need to replace strLstNew() with strLstNewP()
             // Initialize the job data
             VerifyJobData jobData =
             {
@@ -1221,7 +1225,12 @@ verifyProcess(void)
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
             };
-
+/* CSHANG Should we be sorting the backups newest to oldest? That way we can just filter off the first one if it is a current
+"in progress" backup and maybe LOG_WARN or LOG_INFO that skipping? That way we don't need separate logic for backup. BUT the
+problem will still always be that the current backup may complete before we're done checking the archives. I feel like we need to
+draw the line somewhere...or do we feel we need to check that it is not in the backup.info current list AND that it only has a copy
+AND is the newest backup?
+*/
             // Get a list of backups in the repo
             jobData.backupList = strLstSort(
                 storageListP(
