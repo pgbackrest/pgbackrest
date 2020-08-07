@@ -13,6 +13,21 @@ Storage type
     STRING_DECLARE(STORAGE_S3_TYPE_STR);
 
 /***********************************************************************************************************************************
+Key type
+***********************************************************************************************************************************/
+typedef enum
+{
+    storageS3KeyTypeShared,
+    storageS3KeyTypeTemp,
+} StorageS3KeyType;
+
+/***********************************************************************************************************************************
+Host/port settings for retreiving temporary security credentials
+***********************************************************************************************************************************/
+#define STORAGE_S3_AUTH_HOST                                        "169.254.169.254"
+#define STORAGE_S3_AUTH_PORT                                        80
+
+/***********************************************************************************************************************************
 URI style
 ***********************************************************************************************************************************/
 typedef enum
@@ -35,8 +50,9 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
+    const String *secretAccessKey, const String *securityToken, const String *role, size_t partSize, unsigned int deleteMax,
+    const String *host, unsigned int port, const String *authHost, unsigned int authPort, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath);
 
 #endif

@@ -131,6 +131,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
+    StorageS3KeyType keyType;                                       // Key type (shared or temp)
     const String *accessKey;                                        // Access key
     const String *secretAccessKey;                                  // Secret access key
     const String *securityToken;                                    // Security token, if any
@@ -138,6 +139,10 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
+
+    // For retrieving temporary security credentials
+    HttpClient *authHttpClient;                                     // HTTP client to service credential requests
+    const String *authRole;                                         // Role to use for credential requests
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -838,9 +843,10 @@ static const StorageInterface storageInterfaceS3 =
 Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
+    const String *secretAccessKey, const String *securityToken, const String *role, size_t partSize, unsigned int deleteMax,
+    const String *host, unsigned int port, const String *authHost, unsigned int authPort, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -850,12 +856,16 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, endPoint);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
+        FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
+        FUNCTION_TEST_PARAM(STRING, role);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(STRING, authHost);
+        FUNCTION_LOG_PARAM(UINT, authPort);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
@@ -868,6 +878,8 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(accessKey != NULL);
     ASSERT(secretAccessKey != NULL);
+    ASSERT(authHost != NULL);
+    ASSERT(authPort != 0);
     ASSERT(partSize != 0);
 
     Storage *this = NULL;
@@ -882,6 +894,7 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
+            .keyType = keyType,
             .accessKey = strDup(accessKey),
             .secretAccessKey = strDup(secretAccessKey),
             .securityToken = strDup(securityToken),
@@ -890,16 +903,25 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-
+            .authRole = role,
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Create the HTTP client used to service requests
+        // Create the HTTPS client used to service requests
         driver->httpClient = httpClientNew(
             tlsClientNew(
                 sckClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout), timeout, verifyPeer, caFile, caPath),
             timeout);
+
+        // Create the HTTP client used to retreive temporary security credentials
+        if (driver->keyType == storageS3KeyTypeTemp)
+        {
+            driver->authHttpClient = httpClientNew(sckClientNew(authHost, authPort, timeout), timeout);
+
+            // !!! FOR NOW ERROR WHEN NOT SET, LATER WE WILL GO AND GET IT
+            // ASSERT(driver->authRole != NULL);
+        }
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
