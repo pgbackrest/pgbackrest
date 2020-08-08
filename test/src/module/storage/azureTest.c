@@ -33,11 +33,11 @@ typedef struct TestRequestParam
     const char *blobType;
 } TestRequestParam;
 
-#define testRequestP(verb, uri, ...)                                                                                               \
-    testRequest(verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testRequestP(write, verb, uri, ...)                                                                                        \
+    testRequest(write, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testRequest(const char *verb, const char *uri, TestRequestParam param)
+testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam param)
 {
     String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
 
@@ -100,7 +100,7 @@ testRequest(const char *verb, const char *uri, TestRequestParam param)
     if (param.content != NULL)
         strCatZ(request, param.content);
 
-    hrnServerScriptExpect(request);
+    hrnServerScriptExpect(write, request);
 }
 
 /***********************************************************************************************************************************
@@ -114,11 +114,11 @@ typedef struct TestResponseParam
     const char *content;
 } TestResponseParam;
 
-#define testResponseP(...)                                                                                                         \
-    testResponse((TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testResponseP(write, ...)                                                                                                  \
+    testResponse(write, (TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testResponse(TestResponseParam param)
+testResponse(IoWrite *write, TestResponseParam param)
 {
     // Set code to 200 if not specified
     param.code = param.code == 0 ? 200 : param.code;
@@ -162,7 +162,7 @@ testResponse(TestResponseParam param)
     else
         strCatZ(response, "\r\n");
 
-    hrnServerScriptReply(response);
+    hrnServerScriptReply(write, response);
 }
 
 /***********************************************************************************************************************************
@@ -273,14 +273,17 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000)),
+                    hrnTlsServerRun(
+                        ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        hrnTlsServerPort(0)),
                     "azure server begin");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnServerScriptBegin(ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");
@@ -291,7 +294,7 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnTlsServerHost())));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort()));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort(0)));
                 strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
@@ -311,9 +314,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
 
-                hrnServerScriptAccept();
-                testRequestP(HTTP_VERB_GET, "/fi%26le.txt");
-                testResponseP(.code = 404);
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_GET, "/fi%26le.txt");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
@@ -321,8 +324,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
 
-                testRequestP(HTTP_VERB_GET, "/file.txt");
-                testResponseP(.code = 404);
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
@@ -331,8 +334,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
 
-                testRequestP(HTTP_VERB_GET, "/file.txt");
-                testResponseP(.content = "this is a sample file");
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
                     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
@@ -340,8 +343,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
 
-                testRequestP(HTTP_VERB_GET, "/file0.txt");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_GET, "/file0.txt");
+                testResponseP(service);
 
                 TEST_RESULT_STR_Z(
                     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
@@ -349,8 +352,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
 
-                testRequestP(HTTP_VERB_GET, "/file.txt");
-                testResponseP(.code = 303, .content = "CONTENT");
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
                 TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
@@ -377,8 +380,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                testResponseP(.code = 403);
+                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
                     storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
@@ -398,10 +401,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                testResponseP(.code = 503);
-                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP(service, .code = 503);
+                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testResponseP(service);
 
                 StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -420,8 +423,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
+                testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write");
@@ -429,21 +432,23 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
-                testResponseP();
-
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
-                testResponseP();
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
+                testResponseP(service);
 
                 testRequestP(
-                    HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<BlockList>"
                         "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
                         "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
                         "</BlockList>\n");
-                testResponseP();
+                testResponseP(service);
 
                 // Test needs a predictable file id
                 driver->fileId = 0x0AAAAAAACCCCCCCC;
@@ -454,21 +459,23 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
-                testResponseP();
-
-                testRequestP(HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
-                testResponseP();
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
+                testResponseP(service);
 
                 testRequestP(
-                    HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<BlockList>"
                         "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
                         "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
                         "</BlockList>\n");
-                testResponseP();
+                testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
@@ -476,8 +483,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
-                testRequestP(HTTP_VERB_HEAD, "/BOGUS");
-                testResponseP(.code = 404);
+                testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
                     storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
@@ -485,8 +492,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
 
-                testRequestP(HTTP_VERB_HEAD, "/subdir/file1.txt");
-                testResponseP(.header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
+                testRequestP(service, HTTP_VERB_HEAD, "/subdir/file1.txt");
+                testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
 
                 StorageInfo info;
                 TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
@@ -498,8 +505,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
 
-                testRequestP(HTTP_VERB_HEAD, "/subdir/file2.txt");
-                testResponseP(.header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
+                testRequestP(service, HTTP_VERB_HEAD, "/subdir/file2.txt");
+                testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
 
                 TEST_ASSIGN(
                     info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
@@ -511,8 +518,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -551,8 +559,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list exists level");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -583,8 +592,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list a file in root with expression");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -612,8 +622,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with continuation");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -633,8 +644,10 @@ testRun(void)
                         "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
                         "</EnumerationResults>");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
+                testRequestP(
+                    service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -668,8 +681,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with expression");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -713,7 +727,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to SAS auth");
 
-                hrnServerScriptClose();
+                hrnServerScriptClose(service);
 
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_KEY_TYPE "=" STORAGE_AZURE_KEY_TYPE_SAS);
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SAS, true);
@@ -724,29 +738,29 @@ testRun(void)
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
 
-                hrnServerScriptAccept();
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");
 
-                testRequestP(HTTP_VERB_DELETE, "/path/to/test.txt");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_DELETE, "/path/to/test.txt");
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove missing file");
 
-                testRequestP(HTTP_VERB_DELETE, "/path/to/missing.txt");
-                testResponseP(.code = 404);
+                testRequestP(service, HTTP_VERB_DELETE, "/path/to/missing.txt");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files error to check redacted sig");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&restype=container");
-                testResponseP(.code = 403);
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
+                testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
                     storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
@@ -761,8 +775,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -782,19 +797,20 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                testRequestP(HTTP_VERB_DELETE, "/test1.txt");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_DELETE, "/test1.txt");
+                testResponseP(service);
 
-                testRequestP(HTTP_VERB_DELETE, "/path1/xxx.zzz");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -814,19 +830,20 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                testRequestP(HTTP_VERB_DELETE, "/path/test1.txt");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
+                testResponseP(service);
 
-                testRequestP(HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
-                testResponseP();
+                testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
 
-                testRequestP(HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<EnumerationResults>"
@@ -838,7 +855,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnServerScriptEnd();
+                hrnServerScriptEnd(service);
             }
             HARNESS_FORK_PARENT_END();
         }

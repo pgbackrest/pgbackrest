@@ -16,6 +16,7 @@ S3 Storage
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/object.h"
+#include "common/type/json.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
 #include "storage/s3/storage.intern.h"
@@ -66,6 +67,10 @@ Constants for automatically fetching the current role and credentials
 ***********************************************************************************************************************************/
 #define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
+
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_SECRET_ACCESS_KEY_VAR,            "SecretAccessKey");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_TOKEN_VAR,                        "Token");
 
 /*
 First, get the role:
@@ -133,9 +138,9 @@ struct StorageS3
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
     StorageS3KeyType keyType;                                       // Key type (shared or temp)
-    const String *accessKey;                                        // Access key
-    const String *secretAccessKey;                                  // Secret access key
-    const String *securityToken;                                    // Security token, if any
+    String *accessKey;                                              // Access key
+    String *secretAccessKey;                                        // Secret access key
+    String *securityToken;                                          // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
@@ -338,6 +343,32 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             // Error if the request was not successful
             if (!httpResponseCodeOk(response))
                 httpRequestError(request, response);
+
+            // Free old credentials
+            strFree(this->accessKey);
+            strFree(this->secretAccessKey);
+            strFree(this->securityToken);
+
+            // Get credentials from the JSON response
+            KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
+            (void)credential;
+
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                // Make sure the required values are present
+                CHECK(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL);
+                CHECK(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL);
+                CHECK(kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL);
+
+                // Copy credentials
+                this->accessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
+                this->secretAccessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
+                this->securityToken = strDup(varStr(kvGet(credential, S3_JSON_TAG_TOKEN_VAR)));
+            }
+            MEM_CONTEXT_END();
+
+            // Reset the signing key date so the signing key gets regenerated
+            this->signingKeyDate = YYYYMMDD_STR;
 
             // !!! WELL, THIS IS NOT RIGHT
             this->authExpirationTime = currentTime + 10000;

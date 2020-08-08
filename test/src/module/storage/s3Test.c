@@ -23,31 +23,52 @@ typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
     const char *content;
+    const char *accessKey;
+    const char *securityToken;
 } TestRequestParam;
 
-#define testRequestP(write, s3, verb, uri, ...)                                                                                           \
+#define testRequestP(write, s3, verb, uri, ...)                                                                                    \
     testRequest(write, s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
 testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
+    // Get security token from param
+    const char *securityToken = param.securityToken == NULL ? NULL : param.securityToken;
+
+    // If s3 storage is set then get the driver
+    StorageS3 *driver = NULL;
+
+    if (s3 != NULL)
+    {
+        driver = (StorageS3 *)storageDriver(s3);
+
+        // Also update the security token if it is not already set
+        if (param.securityToken == NULL)
+            securityToken = strZNull(driver->securityToken);
+    }
+
     // Add request
     String *request = strNewFmt("%s %s HTTP/1.1\r\n", verb, uri);
 
     // Add authorization header when s3 service
     if (s3 != NULL)
     {
-        strCatZ(
+        strCatFmt(
             request,
-            "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length;");
+            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
+                "SignedHeaders=content-length",
+            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
         if (param.content != NULL)
-            strCatZ(request, "content-md5;");
+            strCatZ(request, ";content-md5");
 
-        strCatZ(
-            request,
-            "host;x-amz-content-sha256;x-amz-date,Signature=????????????????????????????????????????????????????????????????\r\n");
+        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+
+        if (securityToken != NULL)
+            strCatZ(request, ";x-amz-security-token");
+
+        strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
 
     // Add content-length
@@ -65,7 +86,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Add host
     if (s3 != NULL)
     {
-        if (((StorageS3 *)storageDriver(s3))->uriStyle == storageS3UriStyleHost)
+        if (driver->uriStyle == storageS3UriStyleHost)
             strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
         else
             strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
@@ -83,6 +104,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
             "x-amz-date:????????T??????Z" "\r\n",
             param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
             BUFSTRZ(param.content)))));
+
+        if (securityToken != NULL)
+            strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
     }
 
     // Add final \r\n
@@ -106,7 +130,7 @@ typedef struct TestResponseParam
     const char *content;
 } TestResponseParam;
 
-#define testResponseP(write, ...)                                                                                                         \
+#define testResponseP(write, ...)                                                                                                  \
     testResponse(write, (TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
@@ -422,6 +446,7 @@ testRun(void)
                 Storage *s3 = storageS3New(
                     path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeTemp, accessKey,
                     secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
+                StorageS3 *driver = (StorageS3 *)s3->driver;
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -455,13 +480,16 @@ testRun(void)
                         "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"2020-07-10T02:00:50Z\"}");
 
                 hrnServerScriptAccept(service);
-                testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt");
+                testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt", .accessKey = "x", .securityToken = "z");
                 testResponseP(service, .code = 404);
 
+                // !!! Make a copy of the signing key to verify that it gets changed THIS WILL NEED TO BE DONE WHEN IT CHANGES
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
+                // Check that temp credentials were set
+                TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "y", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "z", "check security token");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
@@ -489,6 +517,21 @@ testRun(void)
                 testResponseP(service);
 
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to shared credentials");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
+
+                hrnServerScriptClose(service);
+
+                s3 = storageS3New(
+                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
+                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
+                    testContainer(), NULL, NULL);
+
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
