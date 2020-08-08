@@ -28,7 +28,6 @@ typedef enum
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_S3_PARTSIZE_MIN                                     ((size_t)5 * 1024 * 1024)
-#define STORAGE_S3_DELETE_MAX                                       1000
 
 /***********************************************************************************************************************************
 Constructors
@@ -36,7 +35,7 @@ Constructors
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *secretAccessKey, const String *securityToken, size_t partSize, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif
