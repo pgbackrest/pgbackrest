@@ -69,6 +69,7 @@ Constants for automatically fetching the current role and credentials
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_EXPIRATION_VAR,                   "Expiration");
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_SECRET_ACCESS_KEY_VAR,            "SecretAccessKey");
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_TOKEN_VAR,                        "Token");
 
@@ -286,6 +287,22 @@ storageS3Auth(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
+// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
+// milliseconds which are discarded here.
+static time_t
+storageS3CvtTime(const String *time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, time);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        epochFromParts(
+            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
+            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
+            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
+}
+
 HttpRequest *
 storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
 {
@@ -327,7 +344,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // If temp crendentials will be expiring soon then renew them
         time_t currentTime = time(NULL);
 
-        if (this->keyType == storageS3KeyTypeTemp && (currentTime - this->authExpirationTime) > S3_CREDENTIAL_RENEW_SEC)
+        if (this->keyType == storageS3KeyTypeTemp && (this->authExpirationTime - currentTime) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Set content-length and host headers
             HttpHeader *authHeader = httpHeaderNew(NULL);
@@ -370,8 +387,9 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             // Reset the signing key date so the signing key gets regenerated
             this->signingKeyDate = YYYYMMDD_STR;
 
-            // !!! WELL, THIS IS NOT RIGHT
-            this->authExpirationTime = currentTime + 10000;
+            // Update expiration time
+            CHECK(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL);
+            this->authExpirationTime = storageS3CvtTime(varStr(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR)));
         }
 
         // Generate authorization header
@@ -611,22 +629,6 @@ typedef struct StorageS3InfoListData
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
-
-// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
-// milliseconds which are discarded here.
-static time_t
-storageS3CvtTime(const String *time)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, time);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(
-        epochFromParts(
-            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
-            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
-            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
-}
 
 static void
 storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)

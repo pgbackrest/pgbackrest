@@ -182,6 +182,25 @@ testResponse(IoWrite *write, TestResponseParam param)
 }
 
 /***********************************************************************************************************************************
+Format ISO-8601 date with - and :
+***********************************************************************************************************************************/
+static String *
+testS3DateTime(time_t time)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(TIME, time);
+    FUNCTION_HARNESS_END();
+
+    char buffer[21];
+
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != 20, AssertError,
+        "unable to format date");
+
+    FUNCTION_HARNESS_RESULT(STRING, strNew(buffer));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -476,14 +495,15 @@ testRun(void)
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
                 testResponseP(
                     auth,
-                    .content =
-                        "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"2020-07-10T02:00:50Z\"}");
+                    .content = strZ(
+                        strNewFmt(
+                            "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"%s\"}",
+                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
 
                 hrnServerScriptAccept(service);
                 testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt", .accessKey = "x", .securityToken = "z");
                 testResponseP(service, .code = 404);
 
-                // !!! Make a copy of the signing key to verify that it gets changed THIS WILL NEED TO BE DONE WHEN IT CHANGES
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // Check that temp credentials were set
@@ -494,12 +514,31 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(
+                            "{\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\",\"Expiration\":\"%s\"}",
+                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "xx", .securityToken = "zz");
                 testResponseP(service, .code = 404);
+
+                // Make a copy of the signing key to verify that it gets changed when the keys are updated
+                const Buffer *oldSigningKey = bufDup(driver->signingKey);
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
                     "unable to open '/file.txt': No such file or directory");
+
+                // Check that temp credentials were changed
+                TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "yy", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "zz", "check security token");
+
+                // Check that the signing key changed
+                TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
