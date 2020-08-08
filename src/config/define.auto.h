@@ -149,6 +149,7 @@ typedef enum
     cfgDefOptRepoS3KeyType,
     cfgDefOptRepoS3Port,
     cfgDefOptRepoS3Region,
+    cfgDefOptRepoS3Role,
     cfgDefOptRepoS3Token,
     cfgDefOptRepoS3UriStyle,
     cfgDefOptRepoS3VerifyTls,

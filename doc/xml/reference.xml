@@ -625,6 +625,15 @@
                         <example>9000</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-role" name="S3 Repository Role">
+                        <summary>S3 repository role.</summary>
+
+                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=temp</br-option>.</text>
+
+                        <example>authrole</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>

@@ -234,6 +234,7 @@ use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_RE
 use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_REPO_S3 . '-endpoint';
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
 use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
+use constant CFGOPT_REPO_S3_ROLE                                    => CFGDEF_REPO_S3 . '-role';
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
 use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
@@ -1988,6 +1989,17 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+    },
+
+    &CFGOPT_REPO_S3_ROLE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_S3_KEY_TYPE,
+            &CFGDEF_DEPEND_LIST => ['temp'],
         },
     },
 

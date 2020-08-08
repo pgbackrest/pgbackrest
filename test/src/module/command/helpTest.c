@@ -221,6 +221,7 @@ testRun(void)
             "  --repo-s3-key-type               s3 repository key type [default=shared]\n"
             "  --repo-s3-port                   s3 repository port [default=443]\n"
             "  --repo-s3-region                 s3 repository region\n"
+            "  --repo-s3-role                   s3 repository role\n"
             "  --repo-s3-token                  s3 repository security token\n"
             "  --repo-s3-uri-style              s3 URI Style [default=host]\n"
             "  --repo-s3-verify-tls             verify S3 server certificate [default=y]\n"

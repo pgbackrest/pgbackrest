@@ -464,6 +464,7 @@ STRING_EXTERN(CFGOPT_REPO1_S3_KEY_SECRET_STR,                       CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_S3_KEY_TYPE_STR,                         CFGOPT_REPO1_S3_KEY_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_S3_PORT_STR,                             CFGOPT_REPO1_S3_PORT);
 STRING_EXTERN(CFGOPT_REPO1_S3_REGION_STR,                           CFGOPT_REPO1_S3_REGION);
+STRING_EXTERN(CFGOPT_REPO1_S3_ROLE_STR,                             CFGOPT_REPO1_S3_ROLE);
 STRING_EXTERN(CFGOPT_REPO1_S3_TOKEN_STR,                            CFGOPT_REPO1_S3_TOKEN);
 STRING_EXTERN(CFGOPT_REPO1_S3_URI_STYLE_STR,                        CFGOPT_REPO1_S3_URI_STYLE);
 STRING_EXTERN(CFGOPT_REPO1_S3_VERIFY_TLS_STR,                       CFGOPT_REPO1_S3_VERIFY_TLS);
@@ -1939,6 +1940,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_REGION)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Region)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_ROLE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Role)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
