@@ -2,6 +2,7 @@
 Server Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -11,6 +12,7 @@ Server Test Harness
 
 #include "common/crypto/common.h"
 #include "common/error.h"
+#include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
 #include "common/io/tls/session.h"
 #include "common/log.h"
@@ -340,6 +342,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
                 if (testClientSocket < 0)
                     THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
+                // Create socket session
+                sckOptionSet(testClientSocket);
                 serverSession = sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("localhost"), param.port, 5000);
 
                 // Start TLS if requested
@@ -373,9 +377,21 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             case hrnServerCmdExpect:
             {
                 const String *expected = varStr(data);
+
+                // Read as much as possible
                 Buffer *buffer = bufNew(strSize(expected));
 
-                ioRead(ioSessionIoRead(serverSession), buffer);
+                TRY_BEGIN()
+                {
+                    ioRead(ioSessionIoRead(serverSession), buffer);
+                }
+                CATCH(FileReadError)
+                {
+                    // If nothing was read then throw the original error
+                    if (bufUsed(buffer) == 0)
+                        RETHROW();
+                }
+                TRY_END();
 
                 // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
                 String *actual = strNewBuf(buffer);
