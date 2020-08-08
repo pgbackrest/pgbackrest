@@ -393,7 +393,7 @@ storageRepoGet(const String *type, bool write)
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
-            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(),
+            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
             cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
     }
     else
