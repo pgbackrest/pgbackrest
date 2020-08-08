@@ -212,8 +212,8 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
         TEST_RESULT_STR_Z(
             httpClientToLog(driver->httpClient),
-            "{ioClient: {type: tls, driver: {socketClient: {host: bucket.s3.amazonaws.com, port: 443, timeout: 60000}"
-                ", timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
+                ", timeout: 60000}}, timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -278,8 +278,8 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
         TEST_RESULT_STR_Z(
             httpClientToLog(driver->httpClient),
-            "{ioClient: {type: tls, driver: {socketClient: {host: bucket.custom.endpoint, port: 333, timeout: 60000}"
-                ", timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
+                ", timeout: 60000}}, timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
