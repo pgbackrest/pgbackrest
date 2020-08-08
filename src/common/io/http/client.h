@@ -67,9 +67,11 @@ TimeMSec httpClientTimeout(const HttpClient *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *httpClientToLog(const HttpClient *this);
+
 #define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *
 #define FUNCTION_LOG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "HttpClient", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpClientToLog, buffer, bufferSize)
 
 #endif
