@@ -383,20 +383,83 @@ testRun(void)
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("config with temp credentials");
+                TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
-                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
                 StorageS3 *driver = (StorageS3 *)s3->driver;
 
+                TEST_RESULT_STR(s3->path, path, "check path");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
+
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_RESULT_VOID(storagePathSyncP(s3, strNew("path")), "path sync is a noop");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ignore missing file");
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
+                    "unable to open '/file.txt': No such file or directory");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt")))), "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get zero-length file");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");
+                testResponseP(service);
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to temp credentials");
+
+                hrnServerScriptClose(service);
+
+                argList = strLstDup(commonArgList);
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
+                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                driver = (StorageS3 *)s3->driver;
+
+                TEST_RESULT_STR(s3->path, path, "check path");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
+
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving temp credentials");
@@ -421,7 +484,7 @@ testRun(void)
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("ignore missing file");
+                TEST_TITLE("non-404 error");
 
                 hrnServerScriptAccept(auth);
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
@@ -432,94 +495,7 @@ testRun(void)
                             "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"%s\"}",
                             strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
 
-                hrnServerScriptAccept(service);
-                testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt", .accessKey = "x", .securityToken = "z");
-                testResponseP(service, .code = 404);
-
-                TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-
-                // Check that temp credentials were set
-                TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
-                TEST_RESULT_STR_Z(driver->secretAccessKey, "y", "check secret access key");
-                TEST_RESULT_STR_Z(driver->securityToken, "z", "check security token");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
-                testResponseP(
-                    auth,
-                    .content = strZ(
-                        strNewFmt(
-                            "{\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\",\"Expiration\":\"%s\"}",
-                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "xx", .securityToken = "zz");
-                testResponseP(service, .code = 404);
-
-                // Make a copy of the signing key to verify that it gets changed when the keys are updated
-                const Buffer *oldSigningKey = bufDup(driver->signingKey);
-
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
-
-                // Check that temp credentials were changed
-                TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
-                TEST_RESULT_STR_Z(driver->secretAccessKey, "yy", "check secret access key");
-                TEST_RESULT_STR_Z(driver->securityToken, "zz", "check security token");
-
-                // Check that the signing key changed
-                TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt")))), "this is a sample file", "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get zero-length file");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");
-                testResponseP(service);
-
-                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("switch to shared credentials config with keys, token, and host with custom port");
-
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
-
-                hrnServerScriptClose(service);
-
-                argList = strLstDup(commonArgList);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
-
-                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
-                driver = (StorageS3 *)s3->driver;
-
-                TEST_RESULT_STR(s3->path, path, "check path");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
-
-                // Set partSize to a small value for testing
-                driver->partSize = 16;
-
-                hrnServerScriptAccept(service);
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("non-404 error");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z");
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
@@ -544,11 +520,27 @@ testRun(void)
                     "*** Response Content ***:\n"
                     "CONTENT")
 
+                // Check that temp credentials were set
+                TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "y", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "z", "check security token");
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(
+                            "{\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\",\"Expiration\":\"%s\"}",
+                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz");
                 testResponseP(service);
+
+                // Make a copy of the signing key to verify that it gets changed when the keys are updated
+                const Buffer *oldSigningKey = bufDup(driver->signingKey);
 
                 StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
@@ -563,6 +555,14 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
                 TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+
+                // Check that temp credentials were changed
+                TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "yy", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "zz", "check security token");
+
+                // Check that the signing key changed
+                TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -919,6 +919,9 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to path-style URIs");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 hrnServerScriptClose(service);
 

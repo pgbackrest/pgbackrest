@@ -965,11 +965,12 @@ storageS3New(
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
             .authHost = S3_AUTH_HOST_STR,
             .authRole = role,
+
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Create the HTTPS client used to service requests
+        // Create the HTTP client used to service requests
         if (host == NULL)
             host = driver->bucketEndpoint;
 
