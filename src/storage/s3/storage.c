@@ -358,7 +358,26 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
             httpHeaderAdd(authHeader, HTTP_HEADER_HOST_STR, this->authHost);
 
-            // Get the credentials
+            // If the role was not set explicitly or retrieved previously then retrieve it
+            if (this->authRole == NULL)
+            {
+                // Get the credentials
+                HttpRequest *request = httpRequestNewP(
+                    this->authHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_URI), .header = authHeader);
+                HttpResponse *response = httpRequestResponse(request, true);
+
+                // Error if the request was not successful
+                if (!httpResponseCodeOk(response))
+                    httpRequestError(request, response);
+
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    this->authRole = strNewBuf(httpResponseContent(response));
+                }
+                MEM_CONTEXT_END();
+            }
+
+            // Get the temp credentials
             HttpRequest *request = httpRequestNewP(
                 this->authHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(this->authRole)),
                 .header = authHeader);

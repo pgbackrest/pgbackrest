@@ -446,6 +446,7 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(role)));
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -453,21 +454,45 @@ testRun(void)
                 driver = (StorageS3 *)s3->driver;
 
                 TEST_RESULT_STR(s3->path, path, "check path");
+                TEST_RESULT_STR(driver->authRole, role, "check role");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
 
+                // Testing requires the auth http client to be redirected
+                driver->authHost = hrnServerHost();
+                driver->authHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+
+                // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
+                driver->authRole = NULL;
+
                 hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when retrieving role");
+
+                hrnServerScriptAccept(auth);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .code = 301);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "HTTP request failed with 301:\n"
+                        "*** URI/Query ***:\n"
+                        "/latest/meta-data/iam/security-credentials\n"
+                        "*** Request Headers ***:\n"
+                        "content-length: 0\n"
+                        "host: %s",
+                    strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving temp credentials");
 
-                // !!! HACK IN AUTH SETTINGS
-                driver->authHost = hrnServerHost();
-                driver->authHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
-                driver->authRole = role;
+                hrnServerScriptAccept(auth);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .content = strZ(role));
 
                 hrnServerScriptAccept(auth);
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
@@ -563,6 +588,9 @@ testRun(void)
 
                 // Check that the signing key changed
                 TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -919,9 +947,6 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to path-style URIs");
-
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
 
                 hrnServerScriptClose(service);
 
