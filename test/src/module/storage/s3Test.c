@@ -224,139 +224,21 @@ testRun(void)
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
     const String *role = STRDEF("authrole");
 
-    // *****************************************************************************************************************************
-    if (testBegin("storageS3New() and storageRepoGet()"))
-    {
-        // Only required options
-        // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
-        strLstAddZ(argList, "--repo1-type=s3");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(path)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strZ(bucket)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strZ(endPoint)));
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+    // Config settings that are required for every test (without endpoint for special tests)
+    StringList *commonArgWithoutEndpointList = strLstNew();
+    strLstAddZ(commonArgWithoutEndpointList, "--" CFGOPT_STANZA "=db");
+    strLstAddZ(commonArgWithoutEndpointList, "--" CFGOPT_REPO1_TYPE "=s3");
+    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
+    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
+    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
 
-        Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage");
-        TEST_RESULT_STR(storage->path, path, "    check path");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        TEST_RESULT_STR(
-            ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+    // TLS can only be verified in a container
+    if (!testContainer())
+        strLstAddZ(commonArgWithoutEndpointList, "--no-" CFGOPT_REPO1_S3_VERIFY_TLS);
 
-        // Add default options
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
-        strLstAddZ(argList, "--repo1-type=s3");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(path)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strZ(bucket)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strZ(endPoint)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-host=%s", strZ(host)));
-        strLstAddZ(argList, "--repo1-s3-ca-path=/path/to/cert");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
-
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        TEST_RESULT_STR(
-            ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
-
-        // Add a port to the endpoint
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
-        strLstAddZ(argList, "--repo1-type=s3");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(path)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strZ(bucket)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strZ(endPoint)));
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        TEST_RESULT_STR(
-            ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
-
-        // Also add port to the host
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
-        strLstAddZ(argList, "--repo1-type=s3");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(path)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strZ(bucket)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strZ(endPoint)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strZ(host)));
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        TEST_RESULT_STR(
-            ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
-
-        // Use the port option to override both
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
-        strLstAddZ(argList, "--repo1-type=s3");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(path)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strZ(bucket)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strZ(endPoint)));
-        strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strZ(host)));
-        strLstAddZ(argList, "--repo1-s3-port=9001");
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_S3_TYPE), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->bucket, bucket, "    check bucket");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->region, region, "    check region");
-        TEST_RESULT_STR(
-            ((StorageS3 *)storage->driver)->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "    check host");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->accessKey, accessKey, "    check access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->secretAccessKey, secretAccessKey, "    check secret access key");
-        TEST_RESULT_STR(((StorageS3 *)storage->driver)->securityToken, securityToken, "    check security token");
-    }
+    // Config settings that are required for every test (with endpoint)
+    StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
+    strLstAdd(commonArgList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
 
     // *****************************************************************************************************************************
     if (testBegin("storageS3DateTime() and storageS3Auth()"))
@@ -364,13 +246,31 @@ testRun(void)
         TEST_RESULT_STR_Z(storageS3DateTime(1491267845), "20170404T010405Z", "static date");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageS3 *driver = (StorageS3 *)storageDriver(
-            storageS3New(
-                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
-                secretAccessKey, NULL, NULL, 16, 2, NULL, 0, 0, testContainer(), NULL, NULL));
+        TEST_TITLE("config without token");
+
+        StringList *argList = strLstDup(commonArgList);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+        harnessCfgLoad(cfgCmdArchivePush, argList);
+
+        StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
+
+        TEST_RESULT_STR(driver->bucket, bucket, "check bucket");
+        TEST_RESULT_STR(driver->region, region, "check region");
+        TEST_RESULT_STR(driver->bucketEndpoint, strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)), "check host");
+        TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
+        TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
+        TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
+        TEST_RESULT_STR_Z(
+            httpClientToLog(driver->httpClient),
+            "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
+                ", timeout: 60000}}, timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            "check http client");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("auth with token");
 
         HttpHeader *header = httpHeaderNew(NULL);
-
         HttpQuery *query = httpQueryNewP();
         httpQueryAdd(query, strNew("list-type"), strNew("2"));
 
@@ -382,7 +282,7 @@ testRun(void)
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
-            "    check authorization header");
+            "check authorization header");
 
         // Test again to be sure cache signing key is used
         const Buffer *lastSigningKey = driver->signingKey;
@@ -395,23 +295,47 @@ testRun(void)
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
-            "    check authorization header");
-        TEST_RESULT_BOOL(driver->signingKey == lastSigningKey, true, "    check signing key was reused");
+            "check authorization header");
+        TEST_RESULT_BOOL(driver->signingKey == lastSigningKey, true, "check signing key was reused");
 
-        // Change the date to generate a new signing key
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("change date to generate new signing key");
+
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
-            "    generate authorization");
+            "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, strNew("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=d0fa9c36426eb94cdbaf287a7872c7a3b6c913f523163d0d7debba0758e36f49",
-            "    check authorization header");
-        TEST_RESULT_BOOL(driver->signingKey != lastSigningKey, true, "    check signing key was regenerated");
+            "check authorization header");
+        TEST_RESULT_BOOL(driver->signingKey != lastSigningKey, true, "check signing key was regenerated");
 
-        // Test with security token
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with token, endpoint with custom port, and ca-file/path");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        strLstAddZ(argList, "--" CFGOPT_REPO1_S3_ENDPOINT "=custom.endpoint:333");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_S3_CA_PATH "=/path/to/cert");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
+        harnessCfgLoad(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
+
+        TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
+        TEST_RESULT_STR_Z(
+            httpClientToLog(driver->httpClient),
+            "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
+                ", timeout: 60000}}, timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            "check http client");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("auth with token");
+
         driver = (StorageS3 *)storageDriver(
             storageS3New(
                 path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
@@ -459,23 +383,14 @@ testRun(void)
                 IoWrite *auth = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
-                StringList *argList = strLstNew();
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
-                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
+                StringList *argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
-                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_S3_VERIFY_TLS, testContainer() ? "" : "no-"));
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
                 StorageS3 *driver = (StorageS3 *)s3->driver;
-
-                // TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -573,35 +488,31 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("switch to shared credentials");
+                TEST_TITLE("switch to shared credentials config with keys, token, and host with custom port");
 
                 // Auth service no longer needed
                 hrnServerScriptEnd(auth);
 
                 hrnServerScriptClose(service);
 
-                argList = strLstNew();
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
-                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
-                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_S3_VERIFY_TLS, testContainer() ? "" : "no-"));
-                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-                setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
+                argList = strLstDup(commonArgList);
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
                 driver = (StorageS3 *)s3->driver;
 
-                hrnServerScriptAccept(service);
+                TEST_RESULT_STR(s3->path, path, "check path");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
+
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
@@ -1009,24 +920,20 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                argList = strLstNew();
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
-                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
+                argList = strLstDup(commonArgList);
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_URI_STYLE "=" STORAGE_S3_URI_STYLE_PATH);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
-                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_S3_VERIFY_TLS, testContainer() ? "" : "no-"));
-                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-                unsetenv("PGBACKREST_REPO1_S3_TOKEN");
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+                unsetenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
                 driver = (StorageS3 *)s3->driver;
+
+                // Set deleteMax to a small value for testing
+                driver->deleteMax = 2;
 
                 hrnServerScriptAccept(service);
 
