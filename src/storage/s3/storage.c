@@ -863,6 +863,7 @@ storageS3New(
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
         this = storageNew(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
