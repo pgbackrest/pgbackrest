@@ -349,9 +349,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
 
         // If temp crendentials will be expiring soon then renew them
-        time_t currentTime = time(NULL);
-
-        if (this->keyType == storageS3KeyTypeTemp && (this->authExpirationTime - currentTime) < S3_CREDENTIAL_RENEW_SEC)
+        if (this->keyType == storageS3KeyTypeTemp && (this->authExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Set content-length and host headers
             HttpHeader *authHeader = httpHeaderNew(NULL);
@@ -420,7 +418,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
         // Generate authorization header
         storageS3Auth(
-            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(currentTime), requestHeader,
+            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
             param.content == NULL || bufUsed(param.content) == 0 ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
