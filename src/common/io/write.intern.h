@@ -14,6 +14,11 @@ typedef struct IoWriteInterface
     void (*close)(void *driver);
     int (*fd)(const void *driver);
     void (*open)(void *driver);
+
+    // Can bytes be written immediately? There are no guarantees on how much data can be written but it must be at least one byte.
+    // Optionally error when write is not ready.
+    bool (*ready)(void *driver, bool error);
+
     void (*write)(void *driver, const Buffer *buffer);
 } IoWriteInterface;
 

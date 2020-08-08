@@ -7,11 +7,12 @@ Write to a file descriptor using the IoWrite interface.
 #define COMMON_IO_FDWRITE_H
 
 #include "common/io/write.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoWrite *ioFdWriteNew(const String *name, int fd);
+IoWrite *ioFdWriteNew(const String *name, int fd, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Helper functions

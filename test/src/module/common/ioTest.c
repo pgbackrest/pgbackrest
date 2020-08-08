@@ -2,6 +2,7 @@
 Test IO
 ***********************************************************************************************************************************/
 #include <fcntl.h>
+#include <netdb.h>
 
 #include "common/type/json.h"
 
@@ -278,6 +279,7 @@ testRun(void)
             "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
+        TEST_RESULT_BOOL(ioReadReadyP(read), true, "read defaults to ready");
         TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
@@ -483,6 +485,7 @@ testRun(void)
             "create io write object");
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
+        TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write defaults to ready");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");
         TEST_RESULT_VOID(ioWriteStr(write, STRDEF("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
@@ -538,8 +541,9 @@ testRun(void)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioFdWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
+                TEST_ASSIGN(write, ioFdWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
                 ioWriteOpen(write);
+                TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
                 TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
                 // Write a line to be read
@@ -575,7 +579,11 @@ testRun(void)
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
 
-                TEST_ERROR(ioRead(read, buffer), FileReadError, "unable to read data from read test after 1000ms");
+                ((IoFdRead *)read->driver)->timeout = 1;
+                TEST_RESULT_BOOL(ioReadReadyP(read), false, "read is not ready (without throwing error)");
+                ((IoFdRead *)read->driver)->timeout = 1000;
+
+                TEST_ERROR(ioRead(read, buffer), FileReadError, "timeout after 1000ms waiting for read from 'read test'");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");
 
                 // Read a buffer that is transmitted in two parts with blocking on the read side
@@ -605,6 +613,68 @@ testRun(void)
         int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
         TEST_RESULT_VOID(ioFdWriteOneStr(fd, strNew("test1\ntest2")), "write string to file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fdReadyRetry() edge conditions");
+
+        TimeMSec timeout = 5757;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, true, &timeout, 0), true, "first retry does not modify timeout");
+        TEST_RESULT_UINT(timeout, 5757, "    check timeout");
+
+        timeout = 0;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec() + 10000), true, "retry before timeout");
+        TEST_RESULT_BOOL(timeout > 0, true, "    check timeout");
+
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec()), false, "no retry after timeout");
+        TEST_ERROR(fdReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write is not ready on bad socket connection");
+
+        struct addrinfo hints = (struct addrinfo)
+        {
+            .ai_family = AF_UNSPEC,
+            .ai_socktype = SOCK_STREAM,
+            .ai_protocol = IPPROTO_TCP,
+        };
+
+        int result;
+        const char *hostBad = "172.31.255.255";
+        struct addrinfo *hostBadAddress;
+
+        if ((result = getaddrinfo(hostBad, "7777", &hints, &hostBadAddress)) != 0)
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", hostBad, result, gai_strerror(result));
+        }
+
+        TRY_BEGIN()
+        {
+            int fd = socket(hostBadAddress->ai_family, hostBadAddress->ai_socktype, hostBadAddress->ai_protocol);
+            THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+
+            // Set socket non-blocking
+            int flags;
+            THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
+            THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
+
+            // Attempt connection
+            CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
+
+            // Create file descriptor write and wait for timeout
+            IoWrite *write = NULL;
+            TEST_ASSIGN(write, ioFdWriteNew(STR(hostBad), fd, 100), "new fd write");
+
+            TEST_RESULT_BOOL(ioWriteReadyP(write), false, "write is not ready");
+            TEST_ERROR(
+                ioWriteReadyP(write, .error = true), FileWriteError, "timeout after 100ms waiting for write to '172.31.255.255'");
+        }
+        FINALLY()
+        {
+            // This needs to be freed or valgrind will complain
+            freeaddrinfo(hostBadAddress);
+        }
+        TRY_END();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

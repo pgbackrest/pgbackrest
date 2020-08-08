@@ -226,6 +226,7 @@ unit:
         coverage:
           common/io/bufferRead: full
           common/io/bufferWrite: full
+          common/io/fd: full
           common/io/fdRead: full
           common/io/fdWrite: full
           common/io/filter/buffer: full
@@ -249,6 +250,10 @@ unit:
           common/io/socket/client: full
           common/io/socket/common: full
           common/io/socket/session: full
+
+        include:
+          - common/io/fdRead
+          - common/io/read
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http

@@ -137,7 +137,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
         {
-            sckSessionReadyRead(this->socketSession);
+            ioReadReadyP(sckSessionIoRead(this->socketSession), .error = true);
             result = 0;
             break;
         }
@@ -145,7 +145,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
         // Try again after waiting for write ready
         case SSL_ERROR_WANT_WRITE:
         {
-            sckSessionReadyWrite(this->socketSession);
+            ioWriteReadyP(sckSessionIoWrite(this->socketSession), .error = true);
             result = 0;
             break;
         }
@@ -221,7 +221,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no TLS data pending then check the socket to reduce blocking
         if (!SSL_pending(this->session))
-            sckSessionReadyRead(this->socketSession);
+            ioReadReadyP(sckSessionIoRead(this->socketSession), .error = true);
 
         // Read and handle errors. The error queue must be cleared before this operation.
         ERR_clear_error();

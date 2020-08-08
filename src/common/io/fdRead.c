@@ -3,10 +3,10 @@ File Descriptor Io Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <sys/select.h>
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/fd.h"
 #include "common/io/fdRead.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -34,6 +34,37 @@ Macros for function logging
     objToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
+Are there bytes ready to read immediately?
+***********************************************************************************************************************************/
+static bool
+ioFdReadReady(THIS_VOID, bool error)
+{
+    THIS(IoFdRead);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FD_READ, this);
+        FUNCTION_LOG_PARAM(BOOL, error);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = true;
+
+    // Check if the file descriptor is ready to read
+    if (!fdReadyRead(this->fd, this->timeout))
+    {
+        // Error if requested
+        if (error)
+            THROW_FMT(FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s'", this->timeout, strZ(this->name));
+
+        // File descriptor is not ready to read
+        result = false;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Read data from the file descriptor
 ***********************************************************************************************************************************/
 static size_t
@@ -58,25 +89,8 @@ ioFdRead(THIS_VOID, Buffer *buffer, bool block)
     {
         do
         {
-            // Initialize the file descriptor set used for select
-            fd_set selectSet;
-            FD_ZERO(&selectSet);
-
-            // We know the file descriptor is not negative because it passed error handling, so it is safe to cast to unsigned
-            FD_SET((unsigned int)this->fd, &selectSet);
-
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-            struct timeval timeoutSelect;
-            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-            // Determine if there is data to be read
-            int result = select(this->fd + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strZ(this->name));
-
-            // If no data read after time allotted then error
-            if (!result)
-                THROW_FMT(FileReadError, "unable to read data from %s after %" PRIu64 "ms", strZ(this->name), this->timeout);
+            // Check if there is data to be read and error if not
+            ioFdReadReady(this, true);
 
             // Read and handle errors
             THROW_ON_SYS_ERROR_FMT(
@@ -156,7 +170,7 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
             .timeout = timeout,
         };
 
-        this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead);
+        this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady);
     }
     MEM_CONTEXT_NEW_END();
 
