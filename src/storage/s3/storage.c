@@ -923,7 +923,6 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, securityToken);
         FUNCTION_TEST_PARAM(STRING, role);
         FUNCTION_LOG_PARAM(SIZE, partSize);
-        FUNCTION_LOG_PARAM(SIZE, deleteMax);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -940,7 +939,6 @@ storageS3New(
         (keyType == storageS3KeyTypeShared && accessKey != NULL && secretAccessKey != NULL) ||
         (keyType == storageS3KeyTypeTemp && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
     ASSERT(partSize != 0);
-    ASSERT(deleteMax != 0);
 
     Storage *this = NULL;
 
