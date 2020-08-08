@@ -210,10 +210,12 @@ testRun(void)
         TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
-        TEST_RESULT_STR_Z(
+        TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
-            "{ioClient: {type: tls, driver: {socketClient: {host: bucket.s3.amazonaws.com, port: 443, timeout: 60000}"
-                ", timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            strNewFmt(
+                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.s3.amazonaws.com, port: 443, timeout: 60000}"
+                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                cvtBoolToConstZ(testContainer())),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -276,19 +278,16 @@ testRun(void)
         driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
 
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
-        TEST_RESULT_STR_Z(
+        TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
-            "{ioClient: {type: tls, driver: {socketClient: {host: bucket.custom.endpoint, port: 333, timeout: 60000}"
-                ", timeout: 60000, verifyPeer: true}}, reusable: 0, timeout: 60000}",
+            strNewFmt(
+                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.custom.endpoint, port: 333, timeout: 60000}"
+                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                cvtBoolToConstZ(testContainer())),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("auth with token");
-
-        driver = (StorageS3 *)storageDriver(
-            storageS3New(
-                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, securityToken, 16, 2,
-                NULL, 0, 0, testContainer(), NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
@@ -297,7 +296,7 @@ testRun(void)
             httpHeaderGet(header, strNew("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,"
-                "Signature=c12565bf5d7e0ef623f76d66e09e5431aebef803f6a25a01c586525f17e474a3",
+                "Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
             "    check authorization header");
     }
 
