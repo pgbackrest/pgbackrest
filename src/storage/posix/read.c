@@ -154,8 +154,8 @@ storageReadPosixClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    storageReadPosixFreeResource(this);
     memContextCallbackClear(this->memContext);
+    storageReadPosixFreeResource(this);
     this->fd = -1;
 
     FUNCTION_LOG_RETURN_VOID();
