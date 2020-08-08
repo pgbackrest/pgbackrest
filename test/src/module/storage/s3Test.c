@@ -33,84 +33,44 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
-    // Get security token from param
-    const char *securityToken = param.securityToken == NULL ? NULL : param.securityToken;
+    // Add authorization string
+    String *request = strNewFmt(
+        "%s %s HTTP/1.1\r\n"
+            "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
+                "SignedHeaders=content-length;",
+        verb, uri);
 
-    // If s3 storage is set then get the driver
-    StorageS3 *driver = NULL;
+    if (param.content != NULL)
+        strCatZ(request, "content-md5;");
 
-    if (s3 != NULL)
-    {
-        driver = (StorageS3 *)storageDriver(s3);
-
-        // Also update the security token if it is not already set
-        if (param.securityToken == NULL)
-            securityToken = strZNull(driver->securityToken);
-    }
-
-    // Add request
-    String *request = strNewFmt("%s %s HTTP/1.1\r\n", verb, uri);
-
-    // Add authorization header when s3 service
-    if (s3 != NULL)
-    {
-        strCatFmt(
-            request,
-            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length",
-            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
-
-        if (param.content != NULL)
-            strCatZ(request, ";content-md5");
-
-        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
-
-        if (securityToken != NULL)
-            strCatZ(request, ";x-amz-security-token");
-
-        strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
-    }
-
-    // Add content-length
-    strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
+    strCatFmt(
+        request,
+        "host;x-amz-content-sha256;x-amz-date,Signature=????????????????????????????????????????????????????????????????\r\n"
+        "content-length:%zu\r\n",
+        param.content == NULL ? 0 : strlen(param.content));
 
     // Add md5
     if (param.content != NULL)
     {
-
         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
         encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
     // Add host
-    if (s3 != NULL)
-    {
-        if (driver->uriStyle == storageS3UriStyleHost)
-            strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
-        else
-            strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
-    }
+    if (((StorageS3 *)storageDriver(s3))->uriStyle == storageS3UriStyleHost)
+        strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
     else
-        strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
+        strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
 
-    // Add content checksum and date if s3 service
-    if (s3 != NULL)
-    {
-        // Add content sha256 and date
-        strCatFmt(
-            request,
-            "x-amz-content-sha256:%s\r\n"
-            "x-amz-date:????????T??????Z" "\r\n",
-            param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
-            BUFSTRZ(param.content)))));
-
-        if (securityToken != NULL)
-            strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
-    }
-
-    // Add final \r\n
-    strCatZ(request, "\r\n");
+    // Add content sha256 and date
+    strCatFmt(
+        request,
+        "x-amz-content-sha256:%s\r\n"
+        "x-amz-date:????????T??????Z" "\r\n"
+        "\r\n",
+        param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
+        BUFSTRZ(param.content)))));
 
     // Add content
     if (param.content != NULL)
