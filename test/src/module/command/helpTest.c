@@ -218,6 +218,7 @@ testRun(void)
             "  --repo-s3-host                   s3 repository host\n"
             "  --repo-s3-key                    s3 repository access key\n"
             "  --repo-s3-key-secret             s3 repository secret access key\n"
+            "  --repo-s3-key-type               s3 repository key type [default=shared]\n"
             "  --repo-s3-port                   s3 repository port [default=443]\n"
             "  --repo-s3-region                 s3 repository region\n"
             "  --repo-s3-token                  s3 repository security token\n"
