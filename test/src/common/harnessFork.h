@@ -205,7 +205,11 @@ End the fork block and check exit status for all child processes
                 THROW_SYS_ERROR_FMT(AssertError, "unable to find child process %u", processIdx);                                   \
                                                                                                                                    \
             if (WEXITSTATUS(processStatus) != HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS(processIdx))                                 \
-                THROW_FMT(AssertError, "child %u exited with error %d", processIdx, WEXITSTATUS(processStatus));                   \
+            {                                                                                                                      \
+                THROW_FMT(                                                                                                         \
+                    AssertError, "child %u exited with error %d but expected %d", processIdx, WEXITSTATUS(processStatus),          \
+                    HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS(processIdx));                                                          \
+            }                                                                                                                      \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
