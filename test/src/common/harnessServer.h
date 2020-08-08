@@ -1,13 +1,14 @@
 /***********************************************************************************************************************************
-TLS Test Harness
+Server Test Harness
 
-Simple TLS server for testing TLS client functionality.
+Simple server for testing client functionality using multiple protocols. Server behavior can be scripted from the client using the
+hrnServerScript() functions.
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMON_HARNESS_TLS_H
-#define TEST_COMMON_HARNESS_TLS_H
+#ifndef TEST_COMMON_HARNESS_SERVER_H
+#define TEST_COMMON_HARNESS_SERVER_H
 
-#include "common/debug.h"
-#include "common/io/tls/session.h"
+#include "common/io/read.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Server protocol type
@@ -26,31 +27,36 @@ Maximum number of ports allowed for each test
 /***********************************************************************************************************************************
 Path and prefix for test certificates
 ***********************************************************************************************************************************/
-#define TEST_CERTIFICATE_PREFIX                                     "test/certificate/pgbackrest-test"
-
-/***********************************************************************************************************************************
-TLS test defaults
-***********************************************************************************************************************************/
-#define TLS_CERT_FAKE_PATH                                          "/etc/fake-cert"
-#define TLS_CERT_TEST_CERT                                          TLS_CERT_FAKE_PATH "/pgbackrest-test.crt"
+#define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Run server
+typedef struct HrnServerRunParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int port;                                              // Server port, defaults to hrnServerPort(0)
+    const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
+    const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
+} HrnServerRunParam;
+
+#define hrnServerRunP(read, protocol, ...)                                                                                         \
+    hrnServerRun(read, protocol, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param);
+
 // Begin/end server script
 IoWrite *hrnServerScriptBegin(IoWrite *write);
 void hrnServerScriptEnd(IoWrite *write);
 
-// Run server
-void hrnTlsServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port);
-
 // Abort the server session (i.e. don't perform proper TLS shutdown)
 void hrnServerScriptAbort(IoWrite *write);
 
-// Accept new TLS connection
+// Accept new connection
 void hrnServerScriptAccept(IoWrite *write);
 
-// Close the TLS connection
+// Close the connection
 void hrnServerScriptClose(IoWrite *write);
 
 // Expect the specfified string
@@ -68,10 +74,10 @@ void hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Hostname to use for testing -- this will vary based on whether the test is running in a container
-const String *hrnTlsServerHost(void);
+const String *hrnServerHost(void);
 
-// Port to use for testing. This will be unique for each test running in parallel to avoid conflicts. And range is allocated to each
+// Port to use for testing. This will be unique for each test running in parallel to avoid conflicts. A range is allocated to each
 // test so multiple ports can be requested.
-unsigned int hrnTlsServerPort(unsigned int portIdx);
+unsigned int hrnServerPort(unsigned int portIdx);
 
 #endif

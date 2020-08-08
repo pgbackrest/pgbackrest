@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-TLS Test Harness
+Server Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
 #include <string.h>
@@ -19,34 +19,36 @@ TLS Test Harness
 #include "common/wait.h"
 
 #include "common/harnessDebug.h"
+#include "common/harnessServer.h"
 #include "common/harnessTest.h"
-#include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
 Command enum
 ***********************************************************************************************************************************/
 typedef enum
 {
-    hrnTlsCmdAbort,
-    hrnTlsCmdAccept,
-    hrnTlsCmdClose,
-    hrnTlsCmdDone,
-    hrnTlsCmdExpect,
-    hrnTlsCmdReply,
-    hrnTlsCmdSleep,
-} HrnTlsCmd;
+    hrnServerCmdAbort,
+    hrnServerCmdAccept,
+    hrnServerCmdClose,
+    hrnServerCmdDone,
+    hrnServerCmdExpect,
+    hrnServerCmdReply,
+    hrnServerCmdSleep,
+} HrnServerCmd;
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define TLS_TEST_HOST                                               "tls.test.pgbackrest.org"
-#define TLS_CERT_TEST_KEY                                           TLS_CERT_FAKE_PATH "/pgbackrest-test.key"
+#define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
+#define HRN_SERVER_FAKE_CERT_PATH                                   "/etc/fake-cert"
+#define HRN_SERVER_FAKE_KEY_FILE                                    HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test.key"
+#define HRN_SERVER_FAKE_CERT_FILE                                   HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test.crt"
 
 /***********************************************************************************************************************************
 Send commands to the server
 ***********************************************************************************************************************************/
 static void
-hrnServerScriptCommand(IoWrite *write, HrnTlsCmd cmd, const Variant *data)
+hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
@@ -86,7 +88,7 @@ void hrnServerScriptEnd(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    hrnServerScriptCommand(write, hrnTlsCmdDone, NULL);
+    hrnServerScriptCommand(write, hrnServerCmdDone, NULL);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -99,7 +101,7 @@ hrnServerScriptAbort(IoWrite *write)
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
     FUNCTION_HARNESS_END();
 
-    hrnServerScriptCommand(write, hrnTlsCmdAbort, NULL);
+    hrnServerScriptCommand(write, hrnServerCmdAbort, NULL);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -111,7 +113,7 @@ hrnServerScriptAccept(IoWrite *write)
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
     FUNCTION_HARNESS_END();
 
-    hrnServerScriptCommand(write, hrnTlsCmdAccept, NULL);
+    hrnServerScriptCommand(write, hrnServerCmdAccept, NULL);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -123,7 +125,7 @@ hrnServerScriptClose(IoWrite *write)
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
     FUNCTION_HARNESS_END();
 
-    hrnServerScriptCommand(write, hrnTlsCmdClose, NULL);
+    hrnServerScriptCommand(write, hrnServerCmdClose, NULL);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -138,7 +140,7 @@ hrnServerScriptExpect(IoWrite *write, const String *data)
 
     ASSERT(data != NULL);
 
-    hrnServerScriptCommand(write, hrnTlsCmdExpect, VARSTR(data));
+    hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTR(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -153,7 +155,7 @@ hrnServerScriptExpectZ(IoWrite *write, const char *data)
 
     ASSERT(data != NULL);
 
-    hrnServerScriptCommand(write, hrnTlsCmdExpect, VARSTRZ(data));
+    hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTRZ(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -168,7 +170,7 @@ hrnServerScriptReply(IoWrite *write, const String *data)
 
     ASSERT(data != NULL);
 
-    hrnServerScriptCommand(write, hrnTlsCmdReply, VARSTR(data));
+    hrnServerScriptCommand(write, hrnServerCmdReply, VARSTR(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -183,7 +185,7 @@ hrnServerScriptReplyZ(IoWrite *write, const char *data)
 
     ASSERT(data != NULL);
 
-    hrnServerScriptCommand(write, hrnTlsCmdReply, VARSTRZ(data));
+    hrnServerScriptCommand(write, hrnServerCmdReply, VARSTRZ(data));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -198,25 +200,27 @@ hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 
     ASSERT(sleepMs > 0);
 
-    hrnServerScriptCommand(write, hrnTlsCmdSleep, VARUINT64(sleepMs));
+    hrnServerScriptCommand(write, hrnServerCmdSleep, VARUINT64(sleepMs));
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /**********************************************************************************************************************************/
-void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int port, const String *certificate, const String *key)
+void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_READ, read);
         FUNCTION_HARNESS_PARAM(ENUM, protocol);
-        FUNCTION_HARNESS_PARAM(UINT, port);
-        FUNCTION_HARNESS_PARAM(STRING, certificate);
-        FUNCTION_HARNESS_PARAM(STRING, key);
+        FUNCTION_HARNESS_PARAM(UINT, param.port);
+        FUNCTION_HARNESS_PARAM(STRING, param.certificate);
+        FUNCTION_HARNESS_PARAM(STRING, param.key);
     FUNCTION_HARNESS_END();
 
     ASSERT(read != NULL);
-    ASSERT(certificate != NULL);
-    ASSERT(key != NULL);
+
+    // Set port to index 0 if not specified
+    if (param.port == 0)
+        param.port = hrnServerPort(0);
 
     // Open read connection to client
     ioReadOpen(read);
@@ -224,7 +228,7 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
     // Add test hosts
     if (testContainer())
     {
-        if (system("echo \"127.0.0.1 " TLS_TEST_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
+        if (system("echo \"127.0.0.1 " HRN_SERVER_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
             THROW(AssertError, "unable to add test host to /etc/hosts");
     }
 
@@ -233,6 +237,26 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
 
     if (protocol == hrnServerProtocolTls)
     {
+        ASSERT((param.certificate != NULL && param.key != NULL) || (param.certificate == NULL && param.key == NULL));
+
+        // If certificate and key are not set then use defaults
+        if (param.certificate == NULL)
+        {
+            // If running in a container use the installed certificate
+            if (testContainer())
+            {
+                param.certificate = strNew(HRN_SERVER_FAKE_CERT_FILE);
+                param.key = strNew(HRN_SERVER_FAKE_KEY_FILE);
+            }
+            // Else use a certificate from the test path -- tests will need to disable verify
+            else
+            {
+                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", testRepoPath());
+            }
+        }
+
+        // Initialize TLS
         cryptoInit();
 
         const SSL_METHOD *method = SSLv23_method();
@@ -243,10 +267,11 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
 
         // Configure the context by setting key and cert
         cryptoError(
-            SSL_CTX_use_certificate_file(serverContext, strZ(certificate), SSL_FILETYPE_PEM) <= 0,
+            SSL_CTX_use_certificate_file(serverContext, strZ(param.certificate), SSL_FILETYPE_PEM) <= 0,
             "unable to load server certificate");
         cryptoError(
-            SSL_CTX_use_PrivateKey_file(serverContext, strZ(key), SSL_FILETYPE_PEM) <= 0, "unable to load server private key");
+            SSL_CTX_use_PrivateKey_file(serverContext, strZ(param.key), SSL_FILETYPE_PEM) <= 0,
+            "unable to load server private key");
     }
 
     // Create the socket
@@ -255,7 +280,7 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
     struct sockaddr_in address;
 
     address.sin_family = AF_INET;
-    address.sin_port = htons((uint16_t)port);
+    address.sin_port = htons((uint16_t)param.port);
     address.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -288,12 +313,12 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
 
     do
     {
-        HrnTlsCmd cmd = jsonToUInt(ioReadLine(read));
+        HrnServerCmd cmd = jsonToUInt(ioReadLine(read));
         const Variant *data = jsonToVar(ioReadLine(read));
 
         switch (cmd)
         {
-            case hrnTlsCmdAbort:
+            case hrnServerCmdAbort:
             {
                 // Only makes since to abort in TLS, otherwise it is just a close
                 ASSERT(protocol == hrnServerProtocolTls);
@@ -304,8 +329,9 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 break;
             }
 
-            case hrnTlsCmdAccept:
+            case hrnServerCmdAccept:
             {
+                // Accept the socket connection
                 struct sockaddr_in addr;
                 unsigned int len = sizeof(addr);
 
@@ -314,8 +340,9 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 if (testClientSocket < 0)
                     THROW_SYS_ERROR(AssertError, "unable to accept socket");
 
-                serverSession = sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("client"), port, 5000);
+                serverSession = sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("localhost"), param.port, 5000);
 
+                // Start TLS if requested
                 if (protocol == hrnServerProtocolTls)
                 {
                     SSL *testClientSSL = SSL_new(serverContext);
@@ -325,7 +352,7 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 break;
             }
 
-            case hrnTlsCmdClose:
+            case hrnServerCmdClose:
             {
                 if (serverSession == NULL)
                     THROW(AssertError, "session is already closed");
@@ -337,13 +364,13 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 break;
             }
 
-            case hrnTlsCmdDone:
+            case hrnServerCmdDone:
             {
                 done = true;
                 break;
             }
 
-            case hrnTlsCmdExpect:
+            case hrnServerCmdExpect:
             {
                 const String *expected = varStr(data);
                 Buffer *buffer = bufNew(strSize(expected));
@@ -366,7 +393,7 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 break;
             }
 
-            case hrnTlsCmdReply:
+            case hrnServerCmdReply:
             {
                 ioWrite(ioSessionIoWrite(serverSession), BUFSTR(varStr(data)));
                 ioWriteFlush(ioSessionIoWrite(serverSession));
@@ -374,7 +401,7 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
                 break;
             }
 
-            case hrnTlsCmdSleep:
+            case hrnServerCmdSleep:
             {
                 sleepMSec(varUInt64Force(data));
 
@@ -391,34 +418,14 @@ void hrnTlsServerRunParam(IoRead *read, HrnServerProtocol protocol, unsigned int
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
-void hrnTlsServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port)
+/**********************************************************************************************************************************/
+const String *hrnServerHost(void)
 {
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(IO_READ, read);
-        FUNCTION_HARNESS_PARAM(ENUM, protocol);
-        FUNCTION_HARNESS_PARAM(UINT, port);
-    FUNCTION_HARNESS_END();
-
-    if (testContainer())
-        hrnTlsServerRunParam(read, protocol, port, STRDEF(TLS_CERT_TEST_CERT), STRDEF(TLS_CERT_TEST_KEY));
-    else
-    {
-        hrnTlsServerRunParam(
-            read, protocol, port, strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()),
-            strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath()));
-    }
-
-    FUNCTION_HARNESS_RESULT_VOID();
+    return strNew(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
 }
 
 /**********************************************************************************************************************************/
-const String *hrnTlsServerHost(void)
-{
-    return strNew(testContainer() ? TLS_TEST_HOST : "127.0.0.1");
-}
-
-/**********************************************************************************************************************************/
-unsigned int hrnTlsServerPort(unsigned int portIdx)
+unsigned int hrnServerPort(unsigned int portIdx)
 {
     ASSERT(portIdx < HRN_SERVER_PORT_MAX);
 

@@ -8,8 +8,8 @@ Test S3 Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessServer.h"
 #include "common/harnessStorage.h"
-#include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -92,7 +92,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
             strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
     }
     else
-        strCatFmt(request, "host:%s\r\n", strZ(hrnTlsServerHost()));
+        strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
 
     // Add content checksum and date if s3 service
     if (s3 != NULL)
@@ -213,9 +213,9 @@ testRun(void)
     const String *bucket = strNew("bucket");
     const String *region = strNew("us-east-1");
     const String *endPoint = strNew("s3.amazonaws.com");
-    const String *host = hrnTlsServerHost();
-    const unsigned int port = hrnTlsServerPort(0);
-    const unsigned int authPort = hrnTlsServerPort(1);
+    const String *host = hrnServerHost();
+    const unsigned int port = hrnServerPort(0);
+    const unsigned int authPort = hrnServerPort(1);
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
@@ -265,10 +265,9 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strZ(region)));
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strZ(endPoint)));
         strLstAdd(argList, strNewFmt("--repo1-s3-host=%s", strZ(host)));
-#ifdef TEST_CONTAINER_REQUIRED
-        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
-        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_TEST_CERT);
-#endif
+        strLstAddZ(argList, "--repo1-s3-ca-path=/path/to/cert");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
+
         setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
@@ -439,19 +438,19 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(
-                        ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, port),
-                    "s3 server begin");
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
+                    "s3 server run");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(
+                    hrnServerRunP(
                         ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
-                        authPort),
-                    "auth server begin");
+                        .port = authPort),
+                    "auth server run");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -486,7 +485,7 @@ testRun(void)
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
                         "host: %s",
-                    strZ(hrnTlsServerHost()));
+                    strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");

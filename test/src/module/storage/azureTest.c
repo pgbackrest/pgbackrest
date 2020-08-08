@@ -6,8 +6,8 @@ Test Azure Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessServer.h"
 #include "common/harnessStorage.h"
-#include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -83,7 +83,7 @@ testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam 
         strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
 
     // Add host
-    strCatFmt(request, "host:%s\r\n", strZ(hrnTlsServerHost()));
+    strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
 
     // Add blob type
     if (param.blobType != NULL)
@@ -273,10 +273,8 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(
-                        ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
-                        hrnTlsServerPort(0)),
-                    "azure server begin");
+                    hrnServerRunP(ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
+                    "azure server run");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -293,8 +291,8 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_AZURE_TYPE);
                 strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
                 strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnTlsServerHost())));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnTlsServerPort(0)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnServerHost())));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnServerPort(0)));
                 strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
                 setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
@@ -304,7 +302,7 @@ testRun(void)
                 TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
 
                 driver = (StorageAzure *)storage->driver;
-                TEST_RESULT_STR(driver->host, hrnTlsServerHost(), "    check host");
+                TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
                 TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
 
@@ -375,7 +373,7 @@ testRun(void)
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
                     "CONTENT",
-                    strZ(hrnTlsServerHost()));
+                    strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
@@ -396,7 +394,7 @@ testRun(void)
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
                     "x-ms-version: 2019-02-02",
-                    strZ(hrnTlsServerHost()));
+                    strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
@@ -770,7 +768,7 @@ testRun(void)
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
                     "host: %s",
-                    strZ(hrnTlsServerHost()));
+                    strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");

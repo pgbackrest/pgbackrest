@@ -9,7 +9,7 @@ Test HTTP
 #include "common/io/socket/client.h"
 
 #include "common/harnessFork.h"
-#include "common/harnessTls.h"
+#include "common/harnessServer.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -177,11 +177,11 @@ testRun(void)
 
         TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
 
-        TEST_ASSIGN(client, httpClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(0), 500), 500), "new client");
+        TEST_ASSIGN(client, httpClientNew(sckClientNew(strNew("localhost"), hrnServerPort(0), 500), 500), "new client");
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), HostConnectError,
-            "unable to connect to 'localhost:%u': [111] Connection refused", hrnTlsServerPort(0));
+            "unable to connect to 'localhost:%u': [111] Connection refused", hrnServerPort(0));
 
         HARNESS_FORK_BEGIN()
         {
@@ -189,10 +189,9 @@ testRun(void)
             {
                 // Start HTTP test server
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(
-                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
-                        hrnTlsServerPort(0)),
-                    "HTTP server begin");
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket),
+                    "http server run");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -206,7 +205,7 @@ testRun(void)
 
                 ioBufferSizeSet(35);
 
-                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(0), 5000), 5000), "new client");
+                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), 5000), "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no output from server");
