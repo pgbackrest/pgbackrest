@@ -27,6 +27,11 @@ Storage type
 STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
 
 /***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_S3_DELETE_MAX                                       1000
+
+/***********************************************************************************************************************************
 S3 HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
@@ -796,8 +801,8 @@ Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *secretAccessKey, const String *securityToken, size_t partSize, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -843,7 +848,7 @@ storageS3New(
             .secretAccessKey = strDup(secretAccessKey),
             .securityToken = strDup(securityToken),
             .partSize = partSize,
-            .deleteMax = deleteMax,
+            .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
