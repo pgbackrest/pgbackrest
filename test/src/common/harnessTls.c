@@ -12,7 +12,7 @@ TLS Test Harness
 #include "common/crypto/common.h"
 #include "common/error.h"
 #include "common/io/socket/session.h"
-#include "common/io/tls/session.intern.h"
+#include "common/io/tls/session.h"
 #include "common/log.h"
 #include "common/type/buffer.h"
 #include "common/type/json.h"
@@ -271,7 +271,7 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
         THROW_SYS_ERROR(AssertError, "unable to listen on socket");
 
     // Loop until no more commands
-    TlsSession *serverSession = NULL;
+    IoSession *serverSession = NULL;
     bool done = false;
 
     do
@@ -283,8 +283,7 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
         {
             case hrnTlsCmdAbort:
             {
-                tlsSessionClose(serverSession, false);
-                tlsSessionFree(serverSession);
+                ioSessionFree(serverSession);
                 serverSession = NULL;
 
                 break;
@@ -313,8 +312,8 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
                 if (serverSession == NULL)
                     THROW(AssertError, "TLS session is already closed");
 
-                tlsSessionClose(serverSession, true);
-                tlsSessionFree(serverSession);
+                ioSessionClose(serverSession);
+                ioSessionFree(serverSession);
                 serverSession = NULL;
 
                 break;
@@ -332,7 +331,7 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
                 const String *expected = varStr(data);
                 Buffer *buffer = bufNew(strSize(expected));
 
-                ioRead(tlsSessionIoRead(serverSession), buffer);
+                ioRead(ioSessionIoRead(serverSession), buffer);
 
                 // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
                 String *actual = strNewBuf(buffer);
@@ -352,8 +351,8 @@ void hrnTlsServerRunParam(IoRead *read, const String *certificate, const String 
 
             case hrnTlsCmdReply:
             {
-                ioWrite(tlsSessionIoWrite(serverSession), BUFSTR(varStr(data)));
-                ioWriteFlush(tlsSessionIoWrite(serverSession));
+                ioWrite(ioSessionIoWrite(serverSession), BUFSTR(varStr(data)));
+                ioWriteFlush(ioSessionIoWrite(serverSession));
 
                 break;
             }
