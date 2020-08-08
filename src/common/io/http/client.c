@@ -112,6 +112,15 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 
 /**********************************************************************************************************************************/
 String *
+httpClientToLog(const HttpClient *this)
+{
+    return strNewFmt(
+        "{ioClient: %s, timeout: %" PRIu64"}", memContextFreeing(this->memContext) ? NULL_Z : strZ(ioClientToLog(this->ioClient)),
+        this->timeout);
+}
+
+/**********************************************************************************************************************************/
+String *
 httpClientStatStr(void)
 {
     FUNCTION_TEST_VOID();
