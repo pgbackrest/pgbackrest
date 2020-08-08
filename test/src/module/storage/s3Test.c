@@ -54,11 +54,11 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Add authorization header when s3 service
     if (s3 != NULL)
     {
-    strCatFmt(
-        request,
-            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length",
-            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
+        strCatFmt(
+            request,
+                "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
+                    "SignedHeaders=content-length",
+                param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
         if (param.content != NULL)
             strCatZ(request, ";content-md5");
@@ -77,7 +77,6 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Add md5
     if (param.content != NULL)
     {
-
         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
         encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
@@ -97,14 +96,15 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Add content checksum and date if s3 service
     if (s3 != NULL)
     {
-    // Add content sha256 and date
-    strCatFmt(
-        request,
-        "x-amz-content-sha256:%s\r\n"
-            "x-amz-date:????????T??????Z" "\r\n",
-        param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
-        BUFSTRZ(param.content)))));
+        // Add content sha256 and date
+        strCatFmt(
+            request,
+            "x-amz-content-sha256:%s\r\n"
+                "x-amz-date:????????T??????Z" "\r\n",
+            param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
+            BUFSTRZ(param.content)))));
 
+        // Add security token
         if (securityToken != NULL)
             strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
     }

@@ -2,7 +2,6 @@
 Server Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
