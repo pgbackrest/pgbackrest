@@ -309,7 +309,8 @@ tlsClientOpen(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const String *tlsClientName(THIS_VOID)
+static const String *
+tlsClientName(THIS_VOID)
 {
     THIS(TlsClient);
 

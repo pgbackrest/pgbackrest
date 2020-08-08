@@ -159,7 +159,8 @@ sckClientOpen(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const String *sckClientName(THIS_VOID)
+static const String *
+sckClientName(THIS_VOID)
 {
     THIS(SocketClient);
 

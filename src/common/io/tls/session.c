@@ -291,7 +291,8 @@ tlsSessionEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoRead *tlsSessionIoRead(THIS_VOID)
+static IoRead *
+tlsSessionIoRead(THIS_VOID)
 {
     THIS(TlsSession);
 
@@ -305,7 +306,8 @@ static IoRead *tlsSessionIoRead(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoWrite *tlsSessionIoWrite(THIS_VOID)
+static IoWrite *
+tlsSessionIoWrite(THIS_VOID)
 {
     THIS(TlsSession);
 
@@ -319,7 +321,8 @@ static IoWrite *tlsSessionIoWrite(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoSessionRole tlsSessionRole(const THIS_VOID)
+static IoSessionRole
+tlsSessionRole(const THIS_VOID)
 {
     THIS(const TlsSession);
 
