@@ -200,8 +200,8 @@ testRun(void)
         TEST_TITLE("config without token");
 
         StringList *argList = strLstDup(commonArgList);
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
@@ -270,9 +270,9 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_REPO1_S3_ENDPOINT "=custom.endpoint:333");
         strLstAddZ(argList, "--" CFGOPT_REPO1_S3_CA_PATH "=/path/to/cert");
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
-        setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-        setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+        setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
@@ -327,9 +327,9 @@ testRun(void)
 
                 StringList *argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-                setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
@@ -792,9 +792,9 @@ testRun(void)
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_URI_STYLE "=" STORAGE_S3_URI_STYLE_PATH);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
-                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
-                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
-                unsetenv("PGBACKREST_REPO1_S3_TOKEN");
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
+                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
+                unsetenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
