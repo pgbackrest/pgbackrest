@@ -295,7 +295,7 @@ storageS3Auth(
 Process S3 request
 ***********************************************************************************************************************************/
 // Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
-// milliseconds which are discarded here.
+// milliseconds, which are discarded here.
 static time_t
 storageS3CvtTime(const String *time)
 {
