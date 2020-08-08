@@ -65,6 +65,8 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 /***********************************************************************************************************************************
 Constants for automatically fetching the current role and credentials
 ***********************************************************************************************************************************/
+STRING_STATIC(S3_AUTH_HOST_STR,                                     "169.254.169.254");
+#define S3_AUTH_PORT                                                80
 #define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
@@ -905,8 +907,7 @@ storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *role, size_t partSize, unsigned int deleteMax,
-    const String *host, unsigned int port, const String *authHost, unsigned int authPort, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
+    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -922,10 +923,9 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, securityToken);
         FUNCTION_TEST_PARAM(STRING, role);
         FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(SIZE, deleteMax);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(STRING, authHost);
-        FUNCTION_LOG_PARAM(UINT, authPort);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
@@ -936,11 +936,11 @@ storageS3New(
     ASSERT(bucket != NULL);
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
-    ASSERT(accessKey != NULL);
-    ASSERT(secretAccessKey != NULL);
-    ASSERT(authHost != NULL);
-    ASSERT(authPort != 0);
+    ASSERT(
+        (keyType == storageS3KeyTypeShared && accessKey != NULL && secretAccessKey != NULL) ||
+        (keyType == storageS3KeyTypeTemp && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
     ASSERT(partSize != 0);
+    ASSERT(deleteMax != 0);
 
     Storage *this = NULL;
 
@@ -963,7 +963,7 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-            .authHost = strDup(authHost),
+            .authHost = S3_AUTH_HOST_STR,
             .authRole = role,
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
@@ -978,17 +978,13 @@ storageS3New(
 
         // Create the HTTP client used to retreive temporary security credentials
         if (driver->keyType == storageS3KeyTypeTemp)
-        {
-            driver->authHttpClient = httpClientNew(sckClientNew(authHost, authPort, timeout), timeout);
-
-            // !!! FOR NOW ERROR WHEN NOT SET, LATER WE WILL GO AND GET IT
-            // ASSERT(driver->authRole != NULL);
-        }
+            driver->authHttpClient = httpClientNew(sckClientNew(driver->authHost, S3_AUTH_PORT, timeout), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
         this = storageNew(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);

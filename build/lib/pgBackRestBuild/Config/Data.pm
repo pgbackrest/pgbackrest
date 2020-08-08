@@ -227,6 +227,7 @@ use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_RE
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
 use constant CFGOPT_REPO_S3_KEY_SECRET                              => CFGDEF_REPO_S3 . '-key-secret';
+use constant CFGOPT_REPO_S3_KEY_TYPE                                => CFGDEF_REPO_S3 . '-key-type';
 use constant CFGOPT_REPO_S3_BUCKET                                  => CFGDEF_REPO_S3 . '-bucket';
 use constant CFGOPT_REPO_S3_CA_FILE                                 => CFGDEF_REPO_S3 . '-ca-file';
 use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_REPO_S3 . '-ca-path';
@@ -1886,6 +1887,17 @@ my %hConfigDefine =
         },
     },
 
+    &CFGOPT_REPO_S3_KEY_TYPE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_DEFAULT => 'shared',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'shared',
+            'temp',
+        ],
+    },
+
     &CFGOPT_REPO_S3_KEY =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1896,8 +1908,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
-            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_S3_KEY_TYPE,
+            &CFGDEF_DEPEND_LIST => ['shared'],
         },
         &CFGDEF_NAME_ALT =>
         {

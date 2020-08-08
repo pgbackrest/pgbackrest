@@ -2376,6 +2376,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret,
     },
 
+    // repo-s3-key-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_KEY_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3KeyType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_KEY_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3KeyType,
+    },
+
     // repo-s3-port option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2889,8 +2901,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3CaPath,
     cfgOptRepoS3Endpoint,
     cfgOptRepoS3Host,
-    cfgOptRepoS3Key,
-    cfgOptRepoS3KeySecret,
+    cfgOptRepoS3KeyType,
     cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
@@ -2900,4 +2911,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
+    cfgOptRepoS3Key,
+    cfgOptRepoS3KeySecret,
 };

@@ -392,10 +392,11 @@ storageRepoGet(const String *type, bool write)
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
-            cfgOptionStr(cfgOptRepoS3Region), storageS3KeyTypeShared, cfgOptionStr(cfgOptRepoS3Key),
-            cfgOptionStr(cfgOptRepoS3KeySecret), cfgOptionStrNull(cfgOptRepoS3Token), NULL, STORAGE_S3_PARTSIZE_MIN,
-            STORAGE_S3_DELETE_MAX, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, ioTimeoutMs(),
-            cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
+            cfgOptionStr(cfgOptRepoS3Region),
+            strEqZ(cfgOptionStr(cfgOptRepoS3KeyType), STORAGE_S3_KEY_TYPE_SHARED) ? storageS3KeyTypeShared : storageS3KeyTypeTemp,
+            cfgOptionStrNull(cfgOptRepoS3Key), cfgOptionStrNull(cfgOptRepoS3KeySecret), cfgOptionStrNull(cfgOptRepoS3Token), NULL,
+            STORAGE_S3_PARTSIZE_MIN, STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(), cfgOptionBool(cfgOptRepoS3VerifyTls),
+            cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
     }
     else
         THROW_FMT(AssertError, "invalid storage type '%s'", strZ(type));

@@ -547,6 +547,19 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-key-type" name="S3 Repository Key Type">
+                        <summary>S3 repository key type.</summary>
+
+                        <text>The following types are supported:
+                        <ul>
+                            <li><id>shared</id> - Shared keys</li>
+                            <li><id>temp</id> - Automatically retrieve temp credentials</li>
+                        </ul></text>
+
+                        <example>temp</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
                     <config-key id="repo-s3-token" name="S3 Repository Security Token">
                         <summary>S3 repository security token.</summary>

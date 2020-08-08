@@ -367,8 +367,7 @@ testRun(void)
         StorageS3 *driver = (StorageS3 *)storageDriver(
             storageS3New(
                 path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
-                secretAccessKey, NULL, NULL, 16, 2, NULL, 0, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 0, testContainer(),
-                NULL, NULL));
+                secretAccessKey, NULL, NULL, 16, 2, NULL, 0, 0, testContainer(), NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -416,8 +415,7 @@ testRun(void)
         driver = (StorageS3 *)storageDriver(
             storageS3New(
                 path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
-                secretAccessKey, securityToken, NULL, 16, 2, NULL, 0, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 0,
-                testContainer(), NULL, NULL));
+                secretAccessKey, securityToken, NULL, 16, 2, NULL, 0, 0, testContainer(), NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
@@ -461,10 +459,22 @@ testRun(void)
                 IoWrite *auth = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
-                Storage *s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeTemp, accessKey,
-                    secretAccessKey, NULL, role, 16, 2, host, port, host, authPort, 5000, testContainer(), NULL, NULL);
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
+                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
                 StorageS3 *driver = (StorageS3 *)s3->driver;
+
+                // TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -472,6 +482,11 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving temp credentials");
+
+                // !!! HACK IN AUTH SETTINGS
+                driver->authHost = hrnServerHost();
+                driver->authHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+                driver->authRole = role;
 
                 hrnServerScriptAccept(auth);
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
@@ -564,12 +579,27 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, storageS3KeyTypeShared, accessKey,
-                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
-                    testContainer(), NULL, NULL);
+                argList = strLstNew();
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
+                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
+                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
+                setenv("PGBACKREST_REPO1_S3_TOKEN", strZ(securityToken), true);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                driver = (StorageS3 *)s3->driver;
 
                 hrnServerScriptAccept(service);
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
@@ -593,6 +623,7 @@ testRun(void)
                     "host: bucket." S3_TEST_HOST "\n"
                     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
                     "x-amz-date: <redacted>\n"
+                    "x-amz-security-token: <redacted>\n"
                     "*** Response Headers ***:\n"
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
@@ -757,7 +788,8 @@ testRun(void)
                     "content-length: 0\n"
                     "host: bucket." S3_TEST_HOST "\n"
                     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
-                    "x-amz-date: <redacted>");
+                    "x-amz-date: <redacted>\n"
+                    "x-amz-security-token: <redacted>");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with xml");
@@ -781,6 +813,7 @@ testRun(void)
                     "host: bucket." S3_TEST_HOST "\n"
                     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
                     "x-amz-date: <redacted>\n"
+                    "x-amz-security-token: <redacted>\n"
                     "*** Response Headers ***:\n"
                     "content-length: 79\n"
                     "*** Response Content ***:\n"
@@ -974,12 +1007,29 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                s3 = storageS3New(
-                    path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, storageS3KeyTypeShared, accessKey,
-                    secretAccessKey, NULL, NULL, 16, 2, host, port, STRDEF(STORAGE_S3_AUTH_HOST), STORAGE_S3_AUTH_PORT, 5000,
-                    testContainer(), NULL, NULL);
+                argList = strLstNew();
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
+                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=s3");
+                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_URI_STYLE "=" STORAGE_S3_URI_STYLE_PATH);
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
+                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_S3_VERIFY_TLS, testContainer() ? "no-" : ""));
+                setenv("PGBACKREST_REPO1_S3_KEY", strZ(accessKey), true);
+                setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strZ(secretAccessKey), true);
+                unsetenv("PGBACKREST_REPO1_S3_TOKEN");
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                driver = (StorageS3 *)s3->driver;
 
                 hrnServerScriptAccept(service);
+
+                // Set deleteMax to a small value for testing
+                driver->deleteMax = 2;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when no recurse because there are no paths");

@@ -21,11 +21,8 @@ typedef enum
     storageS3KeyTypeTemp,
 } StorageS3KeyType;
 
-/***********************************************************************************************************************************
-Host/port settings for retreiving temporary security credentials
-***********************************************************************************************************************************/
-#define STORAGE_S3_AUTH_HOST                                        "169.254.169.254"
-#define STORAGE_S3_AUTH_PORT                                        80
+#define STORAGE_S3_KEY_TYPE_SHARED                                  "shared"
+#define STORAGE_S3_KEY_TYPE_TEMP                                    "temp"
 
 /***********************************************************************************************************************************
 URI style
@@ -52,7 +49,6 @@ Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *role, size_t partSize, unsigned int deleteMax,
-    const String *host, unsigned int port, const String *authHost, unsigned int authPort, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath);
+    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif
