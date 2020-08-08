@@ -115,7 +115,8 @@ String *
 httpClientToLog(const HttpClient *this)
 {
     return strNewFmt(
-        "{ioClient: %s, timeout: %" PRIu64"}", memContextFreeing(this->memContext) ? NULL_Z : strZ(ioClientToLog(this->ioClient)),
+        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}",
+        memContextFreeing(this->memContext) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
         this->timeout);
 }
 
