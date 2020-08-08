@@ -81,7 +81,8 @@ ioSessionFd(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
-IoRead *ioSessionIoRead(IoSession *this)
+IoRead *
+ioSessionIoRead(IoSession *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_SESSION, this);
@@ -93,7 +94,8 @@ IoRead *ioSessionIoRead(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *ioSessionIoWrite(IoSession *this)
+IoWrite *
+ioSessionIoWrite(IoSession *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_SESSION, this);
@@ -105,7 +107,8 @@ IoWrite *ioSessionIoWrite(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
-IoSessionRole ioSessionRole(const IoSession *this)
+IoSessionRole
+ioSessionRole(const IoSession *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_SESSION, this);

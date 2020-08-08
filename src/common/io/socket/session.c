@@ -85,7 +85,8 @@ sckSessionClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static int sckSessionFd(THIS_VOID)
+static int
+sckSessionFd(THIS_VOID)
 {
     THIS(SocketSession);
 
@@ -99,7 +100,8 @@ static int sckSessionFd(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoRead *sckSessionIoRead(THIS_VOID)
+static IoRead *
+sckSessionIoRead(THIS_VOID)
 {
     THIS(SocketSession);
 
@@ -113,7 +115,8 @@ static IoRead *sckSessionIoRead(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoWrite *sckSessionIoWrite(THIS_VOID)
+static IoWrite *
+sckSessionIoWrite(THIS_VOID)
 {
     THIS(SocketSession);
 
@@ -127,7 +130,8 @@ static IoWrite *sckSessionIoWrite(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static IoSessionRole sckSessionRole(const THIS_VOID)
+static IoSessionRole
+sckSessionRole(const THIS_VOID)
 {
     THIS(const SocketSession);
 
