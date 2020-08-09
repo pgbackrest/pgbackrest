@@ -388,7 +388,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
                 {
                     // If nothing was read then throw the original error
                     if (bufUsed(buffer) == 0)
-                        RETHROW();
+                        THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
                 }
                 TRY_END();
 
