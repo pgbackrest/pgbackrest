@@ -126,6 +126,7 @@ typedef struct TestResponseParam
 {
     VAR_PARAM_HEADER;
     unsigned int code;
+    const char *http;
     const char *header;
     const char *content;
 } TestResponseParam;
@@ -140,7 +141,7 @@ testResponse(IoWrite *write, TestResponseParam param)
     param.code = param.code == 0 ? 200 : param.code;
 
     // Output header and code
-    String *response = strNewFmt("HTTP/1.1 %u ", param.code);
+    String *response = strNewFmt("HTTP/%s %u ", param.http == NULL ? "1.1" : param.http, param.code);
 
     // Add reason for some codes
     switch (param.code)
@@ -194,7 +195,7 @@ testS3DateTime(time_t time)
     char buffer[21];
 
     THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != 20, AssertError,
+        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
         "unable to format date");
 
     FUNCTION_HARNESS_RESULT(STRING, strNew(buffer));
@@ -222,7 +223,7 @@ testRun(void)
         "AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/q"
         "kPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xV"
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
-    const String *role = STRDEF("authrole");
+    const String *credRole = STRDEF("credrole");
 
     // Config settings that are required for every test (without endpoint for special tests)
     StringList *commonArgWithoutEndpointList = strLstNew();
@@ -446,7 +447,7 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(role)));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(credRole)));
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -454,7 +455,7 @@ testRun(void)
                 driver = (StorageS3 *)s3->driver;
 
                 TEST_RESULT_STR(s3->path, path, "check path");
-                TEST_RESULT_STR(driver->authRole, role, "check role");
+                TEST_RESULT_STR(driver->credRole, credRole, "check role");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
@@ -462,11 +463,11 @@ testRun(void)
                 driver->partSize = 16;
 
                 // Testing requires the auth http client to be redirected
-                driver->authHost = hrnServerHost();
-                driver->authHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+                driver->credHost = hrnServerHost();
+                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
-                driver->authRole = NULL;
+                driver->credRole = NULL;
 
                 hrnServerScriptAccept(service);
 
@@ -475,7 +476,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
                 testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
-                testResponseP(auth, .code = 301);
+                testResponseP(auth, .http = "1.0", .code = 301);
 
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
@@ -492,32 +493,44 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
                 testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
-                testResponseP(auth, .content = strZ(role));
+                testResponseP(auth, .http = "1.0", .content = strZ(credRole));
 
                 hrnServerScriptAccept(auth);
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
-                testResponseP(auth, .code = 300);
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .code = 300);
 
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
                         "*** URI/Query ***:\n"
-                        "/latest/meta-data/iam/security-credentials/authrole\n"
+                        "/latest/meta-data/iam/security-credentials/credrole\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
                         "host: %s",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid code when retrieving temp credentials");
+
+                hrnServerScriptAccept(auth);
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FormatError,
+                    "unable to retrieve temporary credentials: IAM role is not configured");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
 
                 hrnServerScriptAccept(auth);
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
                         strNewFmt(
-                            "{\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\",\"Expiration\":\"%s\"}",
+                            "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
+                                ",\"Expiration\":\"%s\"}",
                             strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z");
@@ -553,12 +566,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part");
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(role))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
                         strNewFmt(
-                            "{\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\",\"Expiration\":\"%s\"}",
+                            "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
+                                ",\"Expiration\":\"%s\"}",
                             strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
 
                 testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz");
