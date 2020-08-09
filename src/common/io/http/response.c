@@ -243,9 +243,9 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (strSize(status) < sizeof(HTTP_VERSION) + 4)
                 THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strZ(strTrim(status)));
 
-            // Check status starts with the correct http version
-             if (!strBeginsWith(status, HTTP_VERSION_STR))
-                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION, strZ(status));
+            // Check status starts with the correct http version. HTTP/1.0 is also accepted but does not change any logic.
+             if (!strBeginsWith(status, HTTP_VERSION_STR) && !strBeginsWith(status, HTTP_VERSION_10_STR))
+                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION " or " HTTP_VERSION_10, strZ(status));
 
             // Read status code
             status = strSub(status, sizeof(HTTP_VERSION));

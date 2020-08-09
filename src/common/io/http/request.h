@@ -25,6 +25,8 @@ HTTP Constants
 ***********************************************************************************************************************************/
 #define HTTP_VERSION                                                "HTTP/1.1"
     STRING_DECLARE(HTTP_VERSION_STR);
+#define HTTP_VERSION_10                                             "HTTP/1.0"
+    STRING_DECLARE(HTTP_VERSION_10_STR);
 
 #define HTTP_VERB_DELETE                                            "DELETE"
     STRING_DECLARE(HTTP_VERB_DELETE_STR);
