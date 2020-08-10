@@ -412,6 +412,8 @@ testRun(void)
                 hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\r\ncontent-length:380\r\n\r\n");
 
+                hrnServerScriptClose(http);
+
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
@@ -422,6 +424,8 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with transfer encoding but no content");
+
+                hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
