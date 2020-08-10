@@ -196,7 +196,7 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
         ioReadOpen(driver->read);
         ioWriteOpen(driver->write);
 
-        // Ensure file descriptor is close
+        // Ensure file descriptor is closed
         memContextCallbackSet(driver->memContext, sckSessionFreeResource, driver);
 
         this = ioSessionNew(driver, &sckSessionInterface);
