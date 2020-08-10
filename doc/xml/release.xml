@@ -67,6 +67,15 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="floris.van.nee"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Delay backup remote connection close until after archive check.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
@@ -8635,6 +8644,11 @@
         <contributor id="evan.benoit">
             <contributor-name-display>Evan Benoit</contributor-name-display>
             <contributor-id type="github">evanbenoit</contributor-id>
+        </contributor>
+
+        <contributor id="floris.van.nee">
+            <contributor-name-display>Floris van Nee</contributor-name-display>
+            <contributor-id type="github">fvannee</contributor-id>
         </contributor>
 
         <contributor id="vidhya.gurumoorthi">
