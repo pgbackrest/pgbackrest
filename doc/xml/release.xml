@@ -79,6 +79,7 @@
                     <release-item>
                         <commit subject="Add IoClient and IoSession interfaces."/>
                         <commit subject="Move file descriptor read/write ready into IoRead/IoWrite."/>
+                        <commit subject="Implement IoClient/IoSession interfaces for SocketClient/SocketSession."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="stephen.frost"/>
