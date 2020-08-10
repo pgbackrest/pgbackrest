@@ -95,6 +95,20 @@ varLstGet(const VariantList *this, unsigned int listIdx)
 }
 
 /**********************************************************************************************************************************/
+VariantList *
+varLstRemoveIdx(VariantList *this, unsigned int listIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN((VariantList *)lstRemoveIdx((List *)this, listIdx));
+}
+
+/**********************************************************************************************************************************/
 unsigned int
 varLstSize(const VariantList *this)
 {

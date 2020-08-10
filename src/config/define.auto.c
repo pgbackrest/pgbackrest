@@ -399,6 +399,41 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("archive-gap-detection")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("archive")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Detect missing archived WAL segments.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Enables archives gap detection in the info command.\n"
+            "\n"
+            "Check if all the archives needed to perform a restore on the current timeline are in the repo. Archives expired by "
+                "the repo-retention-archiveconfiguration will be excluded.\n"
+            "Regardless of the archives retention policy, this check will at least verify for each backup if all the needed WAL "
+                "segments exist."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("archive-get-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -4072,6 +4107,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4079,6 +4115,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 
@@ -4111,6 +4154,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4125,6 +4169,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("full")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive-type")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 
@@ -4152,6 +4203,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4159,6 +4211,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-diff")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 
@@ -4187,6 +4246,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4194,6 +4254,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-full")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 
@@ -4227,6 +4294,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4239,6 +4307,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("count")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 

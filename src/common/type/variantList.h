@@ -35,6 +35,9 @@ Variant *varLstGet(const VariantList *this, unsigned int listIdx);
 // Move to new parent mem context
 VariantList *varLstMove(VariantList *this, MemContext *parentNew);
 
+// Remove an item from the list
+VariantList *varLstRemoveIdx(VariantList *this, unsigned int listIdx);
+
 // List size
 unsigned int varLstSize(const VariantList *this);
 

@@ -819,6 +819,18 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-GAP-DETECTION KEY -->
+                    <config-key id="archive-gap-detection" name="Asynchronous Archiving">
+                        <summary>Detect missing archived WAL segments.</summary>
+
+                        <text>Enables archives gap detection in the <cmd>info</cmd> command.
+
+                        Check if all the archives needed to perform a restore on the current timeline are in the repo. Archives expired by the <setting>repo-retention-archive</setting>configuration will be excluded.
+                        Regardless of the archives retention policy, this check will at least verify for each backup if all the needed WAL segments exist.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-GET-QUEUE-MAX KEY -->
                     <config-key id="archive-get-queue-max" name="Maximum Archive Get Queue Size">
                         <summary>Maximum size of the <backrest/> archive-get queue.</summary>

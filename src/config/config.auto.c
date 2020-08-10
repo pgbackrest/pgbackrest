@@ -286,6 +286,7 @@ Option constants
 STRING_EXTERN(CFGOPT_ARCHIVE_ASYNC_STR,                             CFGOPT_ARCHIVE_ASYNC);
 STRING_EXTERN(CFGOPT_ARCHIVE_CHECK_STR,                             CFGOPT_ARCHIVE_CHECK);
 STRING_EXTERN(CFGOPT_ARCHIVE_COPY_STR,                              CFGOPT_ARCHIVE_COPY);
+STRING_EXTERN(CFGOPT_ARCHIVE_GAP_DETECTION_STR,                     CFGOPT_ARCHIVE_GAP_DETECTION);
 STRING_EXTERN(CFGOPT_ARCHIVE_GET_QUEUE_MAX_STR,                     CFGOPT_ARCHIVE_GET_QUEUE_MAX);
 STRING_EXTERN(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR,                    CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHIVE_TIMEOUT);
@@ -514,6 +515,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_COPY)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveCopy)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_GAP_DETECTION)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveGapDetection)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -7,16 +7,20 @@ Info Command
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "command/archive/common.h"
 #include "command/info/info.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/handleWrite.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "info/info.h"
 #include "info/infoArchive.h"
@@ -34,6 +38,8 @@ STRING_STATIC(CFGOPTVAL_INFO_OUTPUT_TEXT_STR,                       "text");
 // Naming convention: <sectionname>_KEY_<keyname>_VAR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
+VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MISSING_WAL_LIST_VAR,             "missing-list");
+VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MISSING_WAL_NB_VAR,               "missing-nb");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
@@ -80,6 +86,8 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups");
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
+#define INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG                     4
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR,       "missing wal segment(s)");
 
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           "backup/expire running");
 
@@ -96,7 +104,7 @@ stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 3);
+    ASSERT(code >= 0 && code <= 4);
     ASSERT(message != NULL);
     ASSERT(stanzaInfo != NULL);
 
@@ -351,6 +359,271 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 }
 
 /***********************************************************************************************************************************
+Generate the wal archives chain in the given interval and parse .history file if needed.
+***********************************************************************************************************************************/
+static void
+generateNeededArchivesList(
+    StringList *neededArchivesList, const unsigned int pgVersion, const String *stanza, const String *archiveId,
+    const String *archiveStart, const String *archiveStop)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, neededArchivesList);
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(STRING, archiveStart);
+        FUNCTION_TEST_PARAM(STRING, archiveStop);
+    FUNCTION_TEST_END();
+
+    ASSERT(neededArchivesList != NULL);
+    ASSERT(archiveStart != NULL);
+    ASSERT(archiveStop != NULL);
+
+    // Until we find a way to get the WAL segment size from e.g. the archive.info, let's use the PG default size
+    unsigned int PG_WAL_SEGMENT_SIZE_DEFAULT = 16 * 1024 * 1024;
+
+    // Get .history file if timelines don't match
+    uint32_t startTimeline = (uint32_t)strtol(strZ(strSubN(archiveStart, 0, 8)), NULL, 16);
+    uint32_t stopTimeline = (uint32_t)strtol(strZ(strSubN(archiveStop, 0, 8)), NULL, 16);
+
+    // Store history content: WAL segments and target timeline
+    StringList *timelineSwitchWal = strLstNew();
+    KeyValue *targetTimelines = kvNew();
+
+    if(stopTimeline > startTimeline)
+    {
+        String *historyFile = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s/%08X.history", strZ(stanza), strZ(archiveId), stopTimeline);
+        IoRead *source = storageReadIo(storageNewReadP(storageRepo(), historyFile));
+
+        CipherType repoCipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+        if (repoCipherType != cipherTypeNone)
+        {
+            // Get cipher pass from archive.info file
+            InfoArchive *info = infoArchiveLoadFile(
+                storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
+                repoCipherType, cfgOptionStr(cfgOptRepoCipherPass));
+
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, infoArchiveCipherPass(info));
+        }
+
+        Buffer *buffer = bufNew(ioBufferSize());
+        if(ioReadOpen(source))
+        {
+            ioRead(source, buffer);
+            ioReadClose(source);
+        }
+        else
+            THROW_FMT(FileOpenError, "Can't open %s", strZ(historyFile));
+
+        // Extract history file content line by line
+        const StringList *historyFileContentList = strLstNewSplit(strNewBuf(buffer), LF_STR);
+        String *previousBranchWal = NULL;
+
+        for (unsigned int contentIdx = 0; contentIdx < strLstSize(historyFileContentList); contentIdx++)
+        {
+            // Check if the line is correctly formatted
+            const String *historyLine = strLstGet(historyFileContentList, contentIdx);
+            RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9].+[0-9A-F]+/[0-9A-F]+"));
+
+            if (regExpMatch(historyExp, historyLine))
+            {
+                // Parse the line to extract timeline, WAL and segment numbers
+                StringList *tabSplitList = strLstNewSplitZ(strTrim(regExpMatchStr(historyExp)), "\t");
+                StringList *slashSplitList = strLstNewSplit(strLstGet(tabSplitList,1), FSLASH_STR);
+                uint32_t currentTimeline = (uint32_t)strtol(strZ(strLstGet(tabSplitList,0)), NULL, 16);
+
+                String *branchWal = strNewFmt("%08X%08X%08X", currentTimeline,
+                    (uint32_t)strtol(strZ(strLstGet(slashSplitList,0)), NULL, 16),
+                    (uint32_t)strtol(strZ(strLstGet(slashSplitList,1)), NULL, 16)>>24);
+
+                // Store the WAL segment where timeline switch occurred
+                strLstAddIfMissing(timelineSwitchWal, branchWal);
+
+                // Now that we know what was the target timeline, store it for the previous WAL segment
+                if (previousBranchWal != NULL)
+                    kvPut(targetTimelines, VARSTR(previousBranchWal), VARUINT(currentTimeline));
+
+                previousBranchWal = branchWal;
+            }
+        }
+    }
+
+    // Generate the archives list we need for the stopTimeline
+    String *nextWalSegment = strDup(archiveStart);
+    strLstAddIfMissing(neededArchivesList, archiveStart);
+    strLstAddIfMissing(neededArchivesList, archiveStop);
+
+    while(!strEq(nextWalSegment, archiveStop))
+    {
+        nextWalSegment = walSegmentNext(nextWalSegment, PG_WAL_SEGMENT_SIZE_DEFAULT, pgVersion);
+
+        if(strLstExists(timelineSwitchWal, nextWalSegment))
+        {
+            // Timeline switch found at nextWalSegment. Target timeline has to be defined.
+            // If we couldn't define it earlier from the history file, let's assume the target is max wal archive timeline.
+            uint32_t nextTimeline = stopTimeline;
+
+            if(kvKeyExists(targetTimelines, VARSTR(nextWalSegment)))
+                nextTimeline = varUInt(kvGet(targetTimelines, VARSTR(nextWalSegment)));
+
+            nextWalSegment = strNewFmt("%08X%s", nextTimeline, strZ(strSub(nextWalSegment, 8)));
+        }
+
+        strLstAddIfMissing(neededArchivesList, nextWalSegment);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Check if all the archives needed to perform a restore on the current timeline are in the repo.
+***********************************************************************************************************************************/
+static void
+walArchivesGapDetection(
+    const String *stanza, const VariantList *dbSection, VariantList *archiveSection, const VariantList *backupSection,
+    StringList *missingArchiveList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, dbSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, archiveSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);
+        FUNCTION_TEST_PARAM(STRING_LIST, missingArchiveList);
+    FUNCTION_TEST_END();
+
+    ASSERT(stanza != NULL);
+    ASSERT(dbSection != NULL);
+    ASSERT(archiveSection != NULL);
+    ASSERT(backupSection != NULL);
+
+    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+    {
+        KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
+        unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
+        unsigned int pgVersion = pgVersionFromStr(varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR)));
+
+        String *archiveStart = NULL;
+        String *archiveStop = NULL;
+        String *archiveId = NULL;
+        unsigned int archiveSectionIdx = NULL;
+        String *firstStartWal = NULL;
+        StringList *backupStartWalsList = strLstNew();
+        StringList *neededArchivesList = strLstNew();
+
+        // Get the min/max archive information for the database
+        for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
+        {
+            KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
+            KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, KEY_DATABASE_VAR));
+            unsigned int archiveDbId = varUInt(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
+
+            if (archiveDbId == dbId)
+            {
+                archiveStart = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR));
+                archiveStop = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR));
+                archiveId = varStrForce(kvGet(archiveInfo, DB_KEY_ID_VAR));
+                archiveSectionIdx = archiveIdx;
+            }
+        }
+
+        // Get the start/stop archive information for each backup
+        for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+        {
+            KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+            KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+            unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+
+            if (backupDbId == dbId)
+            {
+                KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
+
+                if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
+                    kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
+                {
+                    // Generate the list of required WAL archives for each backup
+                    generateNeededArchivesList(
+                        neededArchivesList, pgVersion, stanza, archiveId,
+                        varStr(kvGet(archiveBackupInfo, KEY_START_VAR)),
+                        varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR)));
+
+                    // Store the first backup start WAL location
+                    if (firstStartWal == NULL)
+                        firstStartWal = varStrForce(kvGet(archiveBackupInfo, KEY_START_VAR));
+
+                    if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_FULL_STR))
+                    {
+                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                    }
+                    else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_DIFF_STR) && (
+                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_DIFF_STR) ||
+                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR)))
+                    {
+                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                    }
+                    else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_INCR_STR) &&
+                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR))
+                    {
+                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                    }
+                }
+            }
+        }
+
+        // Check that the oldest archive in the repo is not older than the first backup start WAL location.
+        // It could indicate an expire problem.
+        if (strCmp(archiveStart,firstStartWal) < 0)
+            LOG_WARN_FMT(
+                "min wal archive ('%s') found in the repo is older than the first backup start WAL location ('%s').\n"
+                "HINT: this might indicate a configuration error in the retention policy.",
+                strZ(archiveStart), strZ(firstStartWal));
+
+        // If repo-retention-archive is set, exclude potentially expired archives
+        if (cfgOptionTest(cfgOptRepoRetentionArchive))
+        {
+            archiveStart = strLstGet(backupStartWalsList,
+                strLstSize(backupStartWalsList) - cfgOptionUInt(cfgOptRepoRetentionArchive));
+        }
+
+        // Generate the complete list of required WAL archives
+        generateNeededArchivesList(neededArchivesList, pgVersion, stanza, archiveId, archiveStart, archiveStop);
+        strLstSort(neededArchivesList, sortOrderAsc);
+
+        // Get the list of all WAL archives in WAL directories in the archive repo
+        StringList *repoArchivesList = strLstNew();
+        String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
+
+        StringList *walDir = strLstSort(
+            storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
+
+        for (unsigned int walDirIdx = 0; walDirIdx < strLstSize(walDir); walDirIdx++)
+        {
+            StringList *list = storageListP(
+                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, walDirIdx))),
+                .expression = WAL_SEGMENT_FILE_REGEXP_STR);
+
+            for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(list); archiveIdx++)
+                strLstAdd(repoArchivesList, strSubN(strLstGet(list, archiveIdx), 0, 24));
+        }
+        strLstSort(repoArchivesList, sortOrderAsc);
+
+        // Find missing archives
+        for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(neededArchivesList); archiveIdx++)
+        {
+            // Look for each needed WAL archive if it exists in the repo
+            if(!strLstExists(repoArchivesList, strLstGet(neededArchivesList, archiveIdx)))
+                strLstAddIfMissing(missingArchiveList, strLstGet(neededArchivesList, archiveIdx));
+        }
+
+        // Add missing archives information to archive section
+        Variant *archiveInfo = varLstGet(archiveSection, archiveSectionIdx);
+        kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_LIST_VAR, VARSTR(strLstJoin(missingArchiveList, ",")));
+        kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_NB_VAR, VARUINT(strLstSize(missingArchiveList)));
+        varLstRemoveIdx(archiveSection, archiveSectionIdx);
+        varLstAdd(archiveSection, archiveInfo);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Set the stanza data for each stanza found in the repo.
 ***********************************************************************************************************************************/
 static VariantList *
@@ -451,6 +724,11 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
             backupList(backupSection, info, backupLabel);
         }
 
+        // WAL archives gap detection
+        StringList *missingArchiveList = strLstNew();
+        if (cfgOptionValid(cfgOptArchiveGapDetection) && cfgOptionBool(cfgOptArchiveGapDetection))
+            walArchivesGapDetection(stanzaListName, dbSection, archiveSection, backupSection, missingArchiveList);
+
         // Add the database history, backup and archive sections to the stanza info
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
@@ -466,6 +744,14 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
 
             // Immediately release the lock acquired
             lockRelease(!backupLockHeld);
+        }
+
+        // Set status in case of missing archives
+        if (strLstSize(missingArchiveList) > 0)
+        {
+            stanzaStatus(
+                INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG, INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR, backupLockHeld,
+                stanzaInfo);
         }
 
         // If a status has not already been set and there are no backups then set status to no backup
@@ -575,6 +861,15 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 }
                 else
                     strCatZ(archiveResult, "none present\n");
+
+                // Show missing archives if any
+                if (varUInt(kvGet(archiveInfo, ARCHIVE_KEY_MISSING_WAL_NB_VAR)) > 0)
+                {
+                    strCatFmt(
+                        archiveResult, "        missing (%u): %s\n",
+                        varUInt(kvGet(archiveInfo, ARCHIVE_KEY_MISSING_WAL_NB_VAR)),
+                        strZ(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MISSING_WAL_LIST_VAR))));
+                }
             }
         }
 
@@ -825,7 +1120,8 @@ infoRender(void)
                                 formatTextDb(stanzaInfo, resultStr, NULL);
                         }
 
-                        continue;
+                        if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG)
+                            continue;
                     }
                     else
                     {
