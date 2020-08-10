@@ -16,13 +16,12 @@ Object type
 #include <openssl/ssl.h>
 
 #include "common/io/session.h"
-#include "common/io/socket/session.h"
 #include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 // Only called by TLS client/server code
-IoSession *tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout);
+IoSession *tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout);
 
 #endif

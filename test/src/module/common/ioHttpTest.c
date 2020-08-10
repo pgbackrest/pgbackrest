@@ -6,6 +6,7 @@ Test HTTP
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/tls/client.h"
+#include "common/io/socket/client.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessTls.h"
@@ -179,7 +180,9 @@ testRun(void)
         TEST_ASSIGN(
             client,
             httpClientNew(
-                tlsClientNew(sckClientNew(strNew("localhost"), hrnTlsServerPort(), 500), 500, testContainer(), NULL, NULL), 500),
+                tlsClientNew(
+                    sckClientNew(strNew("localhost"), hrnTlsServerPort(), 500), strNew("X"), 500, testContainer(), NULL, NULL),
+                500),
             "new client");
 
         TEST_ERROR_FMT(
@@ -209,7 +212,9 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     httpClientNew(
-                        tlsClientNew(sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(), 5000), 5000, testContainer(), NULL, NULL),
+                        tlsClientNew(
+                            sckClientNew(hrnTlsServerHost(), hrnTlsServerPort(), 5000), hrnTlsServerHost(), 5000, testContainer(),
+                            NULL, NULL),
                         5000),
                     "new client");
 

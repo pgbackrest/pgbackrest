@@ -38,9 +38,10 @@ Object type
 typedef struct TlsClient
 {
     MemContext *memContext;                                         // Mem context
+    const String *host;                                             // Host to use for peer verification
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
-    SocketClient *socketClient;                                     // Socket client
+    IoClient *ioClient;                                             // Underlying client (usually a SocketClient)
 
     SSL_CTX *context;                                               // TLS context
 } TlsClient;
@@ -54,8 +55,8 @@ tlsClientToLog(const THIS_VOID)
     THIS(const TlsClient);
 
     return strNewFmt(
-        "{socketClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
-        memContextFreeing(this->memContext) ? NULL_Z : strZ(sckClientToLog(this->socketClient)), this->timeout,
+        "{ioClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
+        memContextFreeing(this->memContext) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeout,
         cvtBoolToConstZ(this->verifyPeer));
 }
 
@@ -239,20 +240,18 @@ tlsClientOpen(THIS_VOID)
 
             TRY_BEGIN()
             {
-                // Open the socket session first since this is mostly likely to fail
-                SocketSession *socketSession = sckClientOpen(this->socketClient);
+                // Open the underlying session first since this is mostly likely to fail
+                IoSession *ioSession = ioClientOpen(this->ioClient);
 
                 // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
                 // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
                 cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
 
                 // Set server host name used for validation
-                cryptoError(
-                    SSL_set_tlsext_host_name(session, strZ(sckClientHost(this->socketClient))) != 1,
-                    "unable to set TLS host name");
+                cryptoError(SSL_set_tlsext_host_name(session, strZ(this->host)) != 1, "unable to set TLS host name");
 
                 // Create the TLS session
-                result = tlsSessionNew(session, socketSession, this->timeout);
+                result = tlsSessionNew(session, ioSession, this->timeout);
             }
             CATCH_ANY()
             {
@@ -288,14 +287,13 @@ tlsClientOpen(THIS_VOID)
         if (verifyResult != X509_V_OK)                                                                              // {vm_covered}
         {
             THROW_FMT(                                                                                              // {vm_covered}
-                CryptoError, "unable to verify certificate presented by '%s:%u': [%ld] %s",                         // {vm_covered}
-                strZ(sckClientHost(this->socketClient)), sckClientPort(this->socketClient), verifyResult,           // {vm_covered}
-                X509_verify_cert_error_string(verifyResult));                                                       // {vm_covered}
+                CryptoError, "unable to verify certificate presented by '%s': [%ld] %s",                            // {vm_covered}
+                strZ(ioClientName(this->ioClient)), verifyResult, X509_verify_cert_error_string(verifyResult));     // {vm_covered}
         }
 
         // Verify that the hostname appears in the certificate
         X509 *certificate = SSL_get_peer_certificate(session);                                                      // {vm_covered}
-        bool nameResult = tlsClientHostVerify(sckClientHost(this->socketClient), certificate);                      // {vm_covered}
+        bool nameResult = tlsClientHostVerify(this->host, certificate);                                             // {vm_covered}
         X509_free(certificate);                                                                                     // {vm_covered}
 
         if (!nameResult)                                                                                            // {vm_covered}
@@ -303,7 +301,7 @@ tlsClientOpen(THIS_VOID)
             THROW_FMT(                                                                                              // {vm_covered}
                 CryptoError,                                                                                        // {vm_covered}
                 "unable to find hostname '%s' in certificate common name or subject alternative names",             // {vm_covered}
-                strZ(sckClientHost(this->socketClient)));                                                           // {vm_covered}
+                strZ(this->host));                                                                                  // {vm_covered}
         }
     }
 
@@ -311,25 +309,42 @@ tlsClientOpen(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const String *
+tlsClientName(THIS_VOID)
+{
+    THIS(TlsClient);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TLS_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(ioClientName(this->ioClient));
+}
+
+/**********************************************************************************************************************************/
 static const IoClientInterface tlsClientInterface =
 {
     .type = &IO_CLIENT_TLS_TYPE_STR,
+    .name = tlsClientName,
     .open = tlsClientOpen,
     .toLog = tlsClientToLog,
 };
 
 IoClient *
-tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+tlsClientNew(IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(SOCKET_CLIENT, socket);
+        FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
+        FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
     FUNCTION_LOG_END();
 
-    ASSERT(socket != NULL);
+    ASSERT(ioClient != NULL);
 
     IoClient *this = NULL;
 
@@ -340,7 +355,8 @@ tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const Stri
         *driver = (TlsClient)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .socketClient = sckClientMove(socket, MEM_CONTEXT_NEW()),
+            .ioClient = ioClientMove(ioClient, MEM_CONTEXT_NEW()),
+            .host = strDup(host),
             .timeout = timeout,
             .verifyPeer = verifyPeer,
         };

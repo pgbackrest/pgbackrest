@@ -213,8 +213,8 @@ testRun(void)
         TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
             strNewFmt(
-                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.s3.amazonaws.com, port: 443, timeout: 60000}"
-                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
+                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(testContainer())),
             "check http client");
 
@@ -281,8 +281,8 @@ testRun(void)
         TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
             strNewFmt(
-                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.custom.endpoint, port: 333, timeout: 60000}"
-                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
+                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(testContainer())),
             "check http client");
 

@@ -10,7 +10,6 @@ This object is intended to be used for multiple TLS sessions so ioClientOpen() c
 #define COMMON_IO_TLS_CLIENT_H
 
 #include "common/io/client.h"
-#include "common/io/socket/client.h"
 
 /***********************************************************************************************************************************
 Io client type
@@ -31,7 +30,8 @@ typedef struct TlsClientStat
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *tlsClientNew(SocketClient *socket, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+IoClient *tlsClientNew(
+    IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 /***********************************************************************************************************************************
 Functions
