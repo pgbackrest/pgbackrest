@@ -475,8 +475,11 @@ testRun(void)
                 TEST_TITLE("error when retrieving role");
 
                 hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
                 testResponseP(auth, .http = "1.0", .code = 301);
+
+                hrnServerScriptClose(auth);
 
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
@@ -492,12 +495,17 @@ testRun(void)
                 TEST_TITLE("error when retrieving temp credentials");
 
                 hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
                 testResponseP(auth, .http = "1.0", .content = strZ(credRole));
 
+                hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 300);
+
+                hrnServerScriptClose(auth);
 
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
@@ -513,8 +521,11 @@ testRun(void)
                 TEST_TITLE("invalid code when retrieving temp credentials");
 
                 hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
+
+                hrnServerScriptClose(auth);
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FormatError,
@@ -524,6 +535,7 @@ testRun(void)
                 TEST_TITLE("non-404 error");
 
                 hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
@@ -532,6 +544,8 @@ testRun(void)
                             "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
                                 ",\"Expiration\":\"%s\"}",
                             strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
+
+                hrnServerScriptClose(auth);
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z");
                 testResponseP(service, .code = 303, .content = "CONTENT");
@@ -566,6 +580,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part");
 
+                hrnServerScriptAccept(auth);
+
                 testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
@@ -574,6 +590,8 @@ testRun(void)
                             "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
                                 ",\"Expiration\":\"%s\"}",
                             strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+
+                hrnServerScriptClose(auth);
 
                 testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz");
                 testResponseP(service);
