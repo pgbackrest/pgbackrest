@@ -661,7 +661,7 @@
                     <config-key id="repo-cipher-type" name="Repository Cipher Type">
                         <summary>Cipher used to encrypt the repository.</summary>
 
-                        <text>The following repository types are supported:
+                        <text>The following cipher types are supported:
                         <ul>
                             <li><id>none</id> - The repository is not encrypted</li>
                             <li><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</li>
