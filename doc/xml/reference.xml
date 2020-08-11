@@ -649,7 +649,6 @@
 
                         <text>The following repository types are supported:
                         <ul>
-                            <li><id>azure</id> - Azure Blob Storage Service</li>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
