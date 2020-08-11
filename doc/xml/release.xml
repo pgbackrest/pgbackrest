@@ -108,6 +108,15 @@
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
+                        <p>Add missing <id>azure</id> type in <br-option>repo-type</br-option> option reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="don.seiler"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
                         <p>Fix typo in <br-option>repo-cipher-type</br-option> option reference.</p>
                     </release-item>
                 </release-bug-list>

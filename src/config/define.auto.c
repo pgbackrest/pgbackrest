@@ -4902,6 +4902,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The following repository types are supported:\n"
             "\n"
+            "* azure - Azure Blob Storage Service\n"
             "* cifs - Like posix, but disables links and directory fsyncs\n"
             "* posix - Posix-compliant file systems\n"
             "* s3 - AWS Simple Storage Service"
