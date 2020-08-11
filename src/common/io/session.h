@@ -19,6 +19,15 @@ typedef struct IoSession IoSession;
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
+Session roles
+***********************************************************************************************************************************/
+typedef enum
+{
+    ioSessionRoleClient,                                            // Client session
+    ioSessionRoleServer,                                            // Server session
+} IoSessionRole;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Close the session
@@ -30,11 +39,17 @@ IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Session file descriptor, -1 if none
+int ioSessionFd(IoSession *this);
+
 // Read interface
 IoRead *ioSessionIoRead(IoSession *this);
 
 // Write interface
 IoWrite *ioSessionIoWrite(IoSession *this);
+
+// Session role
+IoSessionRole ioSessionRole(const IoSession *this);
 
 /***********************************************************************************************************************************
 Destructor

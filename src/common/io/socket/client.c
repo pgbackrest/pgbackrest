@@ -10,12 +10,18 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/io/client.intern.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/wait.h"
+
+/***********************************************************************************************************************************
+Io client type
+***********************************************************************************************************************************/
+STRING_EXTERN(IO_CLIENT_SOCKET_TYPE_STR,                            IO_CLIENT_SOCKET_TYPE);
 
 /***********************************************************************************************************************************
 Statistics
@@ -25,63 +31,47 @@ static SocketClientStat sckClientStatLocal;
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct SocketClient
+#define SOCKET_CLIENT_TYPE                                          SocketClient
+#define SOCKET_CLIENT_PREFIX                                        sckClient
+
+typedef struct SocketClient
 {
     MemContext *memContext;                                         // Mem context
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
+    String *name;                                                   // Socket name (host:port)
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-};
+} SocketClient;
 
-OBJECT_DEFINE_MOVE(SOCKET_CLIENT);
-
-OBJECT_DEFINE_GET(Host, const, SOCKET_CLIENT, const String *, host);
-OBJECT_DEFINE_GET(Port, const, SOCKET_CLIENT, unsigned int, port);
-
-/**********************************************************************************************************************************/
-SocketClient *
-sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+static String *
+sckClientToLog(const THIS_VOID)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
+    THIS(const SocketClient);
 
-    ASSERT(host != NULL);
-
-    SocketClient *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("SocketClient")
-    {
-        this = memNew(sizeof(SocketClient));
-
-        *this = (SocketClient)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-            .host = strDup(host),
-            .port = port,
-            .timeout = timeout,
-        };
-
-        sckClientStatLocal.object++;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(SOCKET_CLIENT, this);
+    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
 }
 
+#define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
+    SocketClient *
+#define FUNCTION_LOG_SOCKET_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
+
 /**********************************************************************************************************************************/
-SocketSession *
-sckClientOpen(SocketClient *this)
+static IoSession *
+sckClientOpen(THIS_VOID)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    THIS(SocketClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SOCKET_CLIENT, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    SocketSession *result = NULL;
+    IoSession *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -137,7 +127,7 @@ sckClientOpen(SocketClient *this)
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = sckSessionNew(sckSessionTypeClient, fd, this->host, this->port, this->timeout);
+                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeout);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -165,7 +155,66 @@ sckClientOpen(SocketClient *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(SOCKET_SESSION, result);
+    FUNCTION_LOG_RETURN(IO_SESSION, result);
+}
+
+/**********************************************************************************************************************************/
+static const String *
+sckClientName(THIS_VOID)
+{
+    THIS(SocketClient);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SOCKET_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->name);
+}
+
+/**********************************************************************************************************************************/
+static const IoClientInterface sckClientInterface =
+{
+    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .name = sckClientName,
+    .open = sckClientOpen,
+    .toLog = sckClientToLog,
+};
+
+IoClient *
+sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+
+    IoClient *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("SocketClient")
+    {
+        SocketClient *driver = memNew(sizeof(SocketClient));
+
+        *driver = (SocketClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .name = strNewFmt("%s:%u", strZ(host), port),
+            .timeout = timeout,
+        };
+
+        sckClientStatLocal.object++;
+
+        this = ioClientNew(driver, &sckClientInterface);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }
 
 /**********************************************************************************************************************************/
@@ -184,11 +233,4 @@ sckClientStatStr(void)
     }
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-String *
-sckClientToLog(const SocketClient *this)
-{
-    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
 }

@@ -18,11 +18,17 @@ typedef struct IoSessionInterface
     // Close the session
     void (*close)(void *driver);
 
+    // Session file descriptor, if any
+    int (*fd)(void *driver);
+
     // IoRead interface for the session
     IoRead *(*ioRead)(void *driver);
 
     // IoWrite interface for the session
     IoWrite *(*ioWrite)(void *driver);
+
+    // Session role
+    IoSessionRole (*role)(const void *driver);
 
     // Driver log function
     String *(*toLog)(const void *driver);

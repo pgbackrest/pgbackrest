@@ -10,7 +10,6 @@ TLS Session
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
 #include "common/io/session.intern.h"
-#include "common/io/socket/session.h"
 #include "common/io/tls/client.h"
 #include "common/io/tls/session.h"
 #include "common/io/write.intern.h"
@@ -27,10 +26,10 @@ Object type
 typedef struct TlsSession
 {
     MemContext *memContext;                                         // Mem context
-    SocketSession *socketSession;                                   // Socket session
-    SSL *session;                                                   // TLS session on the socket
+    IoSession *ioSession;                                           // Io session
+    SSL *session;                                                   // TLS session on the file descriptor
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-    bool shutdownOnClose;                                           // Shutdown the TLS connection when closing the socket
+    bool shutdownOnClose;                                           // Shutdown the TLS connection when closing the session
 
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
@@ -45,9 +44,9 @@ tlsSessionToLog(const THIS_VOID)
     THIS(const TlsSession);
 
     return strNewFmt(
-        "{socketSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
-        this->socketSession == NULL || memContextFreeing(this->memContext) ? NULL_Z : strZ(sckSessionToLog(this->socketSession)),
-        this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
+        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
+        memContextFreeing(this->memContext) ? NULL_Z : strZ(ioSessionToLog(this->ioSession)), this->timeout,
+        cvtBoolToConstZ(this->shutdownOnClose));
 }
 
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
@@ -83,9 +82,8 @@ tlsSessionClose(THIS_VOID)
         if (this->shutdownOnClose)
             SSL_shutdown(this->session);
 
-        // Free the socket session
-        sckSessionFree(this->socketSession);
-        this->socketSession = NULL;
+        // Close the io session
+        ioSessionClose(this->ioSession);
 
         // Free the TLS session
         memContextCallbackClear(this->memContext);
@@ -137,7 +135,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
         {
-            ioReadReadyP(sckSessionIoRead(this->socketSession), .error = true);
+            ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
             result = 0;
             break;
         }
@@ -145,7 +143,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
         // Try again after waiting for write ready
         case SSL_ERROR_WANT_WRITE:
         {
-            ioWriteReadyP(sckSessionIoWrite(this->socketSession), .error = true);
+            ioWriteReadyP(ioSessionIoWrite(this->ioSession), .error = true);
             result = 0;
             break;
         }
@@ -219,9 +217,9 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     // If blocking read keep reading until buffer is full
     do
     {
-        // If no TLS data pending then check the socket to reduce blocking
+        // If no TLS data pending then check the io to reduce blocking
         if (!SSL_pending(this->session))
-            ioReadReadyP(sckSessionIoRead(this->socketSession), .error = true);
+            ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
 
         // Read and handle errors. The error queue must be cleared before this operation.
         ERR_clear_error();
@@ -323,26 +321,42 @@ tlsSessionIoWrite(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static IoSessionRole
+tlsSessionRole(const THIS_VOID)
+{
+    THIS(const TlsSession);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TLS_SESSION, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(ioSessionRole(this->ioSession));
+}
+
+/**********************************************************************************************************************************/
 static const IoSessionInterface tlsSessionInterface =
 {
     .type = &IO_CLIENT_TLS_TYPE_STR,
     .close = tlsSessionClose,
     .ioRead = tlsSessionIoRead,
     .ioWrite = tlsSessionIoWrite,
+    .role = tlsSessionRole,
     .toLog = tlsSessionToLog,
 };
 
 IoSession *
-tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
+tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM_P(VOID, session);
-        FUNCTION_LOG_PARAM(SOCKET_SESSION, socketSession);
+        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(session != NULL);
-    ASSERT(socketSession != NULL);
+    ASSERT(ioSession != NULL);
 
     IoSession *this = NULL;
 
@@ -354,7 +368,7 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .session = session,
-            .socketSession = sckSessionMove(socketSession, MEM_CONTEXT_NEW()),
+            .ioSession = ioSessionMove(ioSession, MEM_CONTEXT_NEW()),
             .timeout = timeout,
             .shutdownOnClose = true,
         };
@@ -362,9 +376,8 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         // Ensure session is freed
         memContextCallbackSet(driver->memContext, tlsSessionFreeResource, driver);
 
-        // Assign socket to TLS session
-        cryptoError(
-            SSL_set_fd(driver->session, sckSessionFd(driver->socketSession)) != 1, "unable to add socket to TLS session");
+        // Assign file descriptor to TLS session
+        cryptoError(SSL_set_fd(driver->session, ioSessionFd(driver->ioSession)) != 1, "unable to add fd to TLS session");
 
         // Negotiate TLS session. The error queue must be cleared before this operation.
         int result = 0;
@@ -373,7 +386,7 @@ tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout)
         {
             ERR_clear_error();
 
-            if (sckSessionType(driver->socketSession) == sckSessionTypeClient)
+            if (ioSessionRole(driver->ioSession) == ioSessionRoleClient)
                 result = tlsSessionResult(driver, SSL_connect(driver->session), false);
             else
                 result = tlsSessionResult(driver, SSL_accept(driver->session), false);

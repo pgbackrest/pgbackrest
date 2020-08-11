@@ -1825,6 +1825,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     manifestFileAdd(manifest, &file);
                 }
+
+                // A keep-alive is required here for the remote holding the backup lock
+                protocolKeepAlive();
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1988,12 +1991,13 @@ cmdBackup(void)
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);
 
-        // The primary protocol connection won't be used anymore so free it.  Any further access to the primary storage object may
-        // result in an error (likely eof).
-        protocolRemoteFree(backupData->pgIdPrimary);
-
         // Check and copy WAL segments required to make the backup consistent
         backupArchiveCheckCopy(manifest, backupData->walSegmentSize, cipherPassBackup);
+
+        // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
+        // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
+        // the primary storage object may result in an error (likely eof).
+        protocolRemoteFree(backupData->pgIdPrimary);
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));

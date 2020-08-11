@@ -8,8 +8,8 @@ Test S3 Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessServer.h"
 #include "common/harnessStorage.h"
-#include "common/harnessTls.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -23,13 +23,15 @@ typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
     const char *content;
+    const char *accessKey;
+    const char *securityToken;
 } TestRequestParam;
 
-#define testRequestP(s3, verb, uri, ...)                                                                                           \
-    testRequest(s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testRequestP(write, s3, verb, uri, ...)                                                                                    \
+    testRequest(write, s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam param)
+testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
     // Get S3 driver
     StorageS3 *driver = (StorageS3 *)storageDriver(s3);
@@ -86,7 +88,7 @@ testRequest(Storage *s3, const char *verb, const char *uri, TestRequestParam par
     if (param.content != NULL)
         strCatZ(request, param.content);
 
-    hrnTlsServerExpect(request);
+    hrnServerScriptExpect(write, request);
 }
 
 /***********************************************************************************************************************************
@@ -100,11 +102,11 @@ typedef struct TestResponseParam
     const char *content;
 } TestResponseParam;
 
-#define testResponseP(...)                                                                                                         \
-    testResponse((TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testResponseP(write, ...)                                                                                                  \
+    testResponse(write, (TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testResponse(TestResponseParam param)
+testResponse(IoWrite *write, TestResponseParam param)
 {
     // Set code to 200 if not specified
     param.code = param.code == 0 ? 200 : param.code;
@@ -148,7 +150,7 @@ testResponse(TestResponseParam param)
     else
         strCatZ(response, "\r\n");
 
-    hrnTlsServerReply(response);
+    hrnServerScriptReply(write, response);
 }
 
 /***********************************************************************************************************************************
@@ -164,8 +166,8 @@ testRun(void)
     const String *bucket = strNew("bucket");
     const String *region = strNew("us-east-1");
     const String *endPoint = strNew("s3.amazonaws.com");
-    const String *host = hrnTlsServerHost();
-    const unsigned int port = hrnTlsServerPort();
+    const String *host = hrnServerHost();
+    const unsigned int port = hrnServerPort(0);
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
@@ -213,8 +215,8 @@ testRun(void)
         TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
             strNewFmt(
-                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.s3.amazonaws.com, port: 443, timeout: 60000}"
-                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
+                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(testContainer())),
             "check http client");
 
@@ -269,7 +271,7 @@ testRun(void)
         argList = strLstDup(commonArgWithoutEndpointList);
         strLstAddZ(argList, "--" CFGOPT_REPO1_S3_ENDPOINT "=custom.endpoint:333");
         strLstAddZ(argList, "--" CFGOPT_REPO1_S3_CA_PATH "=/path/to/cert");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath()));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
         setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
         setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
         setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
@@ -281,8 +283,8 @@ testRun(void)
         TEST_RESULT_STR(
             httpClientToLog(driver->httpClient),
             strNewFmt(
-                "{ioClient: {type: tls, driver: {socketClient: {host: bucket.custom.endpoint, port: 333, timeout: 60000}"
-                    ", timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
+                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(testContainer())),
             "check http client");
 
@@ -308,13 +310,16 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnTlsServerRun(ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000)), "s3 server begin");
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
+                    "s3 server run");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                hrnTlsClientBegin(ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("config with keys, token, and host with custom port");
@@ -343,17 +348,17 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
 
-                hrnTlsServerAccept();
-                testRequestP(s3, HTTP_VERB_GET, "/fi%26le.txt");
-                testResponseP(.code = 404);
+                hrnServerScriptAccept(service);
+                testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
 
-                testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(.code = 404);
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
@@ -362,8 +367,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
 
-                testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(.content = "this is a sample file");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
                     strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt")))), "this is a sample file", "get file");
@@ -371,16 +376,16 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
 
-                testRequestP(s3, HTTP_VERB_GET, "/file0.txt");
-                testResponseP();
+                testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");
+                testResponseP(service);
 
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
 
-                testRequestP(s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(.code = 303, .content = "CONTENT");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
                 TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
@@ -407,8 +412,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
-                testResponseP();
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
+                testResponseP(service);
 
                 StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
@@ -427,8 +432,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt", .content = "");
-                testResponseP();
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "");
+                testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write");
@@ -436,8 +441,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -446,21 +452,21 @@ testRun(void)
                         "<UploadId>WxRt</UploadId>"
                         "</InitiateMultipartUploadResult>");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
-                testResponseP(.header = "etag:WxRt1");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
+                testResponseP(service, .header = "etag:WxRt1");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
-                testResponseP(.header = "eTag:WxRt2");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
+                testResponseP(service, .header = "eTag:WxRt2");
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/file.txt?uploadId=WxRt",
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploadId=WxRt",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<CompleteMultipartUpload>"
                         "<Part><PartNumber>1</PartNumber><ETag>WxRt1</ETag></Part>"
                         "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
                         "</CompleteMultipartUpload>\n");
-                testResponseP();
+                testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
@@ -468,8 +474,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -478,21 +485,21 @@ testRun(void)
                         "<UploadId>RR55</UploadId>"
                         "</InitiateMultipartUploadResult>");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
-                testResponseP(.header = "etag:RR551");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
+                testResponseP(service, .header = "etag:RR551");
 
-                testRequestP(s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
-                testResponseP(.header = "eTag:RR552");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
+                testResponseP(service, .header = "eTag:RR552");
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/file.txt?uploadId=RR55",
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploadId=RR55",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<CompleteMultipartUpload>"
                         "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
                         "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
                         "</CompleteMultipartUpload>\n");
-                testResponseP();
+                testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
@@ -500,8 +507,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("file missing");
 
-                testRequestP(s3, HTTP_VERB_HEAD, "/BOGUS");
-                testResponseP(.code = 404);
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
 
@@ -509,16 +516,16 @@ testRun(void)
                 TEST_TITLE("info for missing file");
 
                 // File missing
-                testRequestP(s3, HTTP_VERB_HEAD, "/BOGUS");
-                testResponseP(.code = 404);
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
+                testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
 
-                testRequestP(s3, HTTP_VERB_HEAD, "/subdir/file1.txt");
-                testResponseP(.header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/subdir/file1.txt");
+                testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
 
                 StorageInfo info;
                 TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file1.txt")), "file exists");
@@ -530,8 +537,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
 
-                testRequestP(s3, HTTP_VERB_HEAD, "/subdir/file2.txt");
-                testResponseP(.header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/subdir/file2.txt");
+                testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
 
                 TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
@@ -549,8 +556,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error without xml");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
-                testResponseP(.code = 344);
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                testResponseP(service, .code = 344);
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
@@ -567,9 +574,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with xml");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(
-                    .code = 344,
+                    service, .code = 344,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<Error>"
@@ -595,8 +602,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -630,8 +638,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list exists level");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -657,8 +666,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list a file in root with expression");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -682,8 +692,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with continuation");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -700,10 +711,11 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    s3, HTTP_VERB_GET,
+                    service, s3, HTTP_VERB_GET,
                     "/?continuation-token=1ueGcxLPRx1Tr%2FXYExHnhbYLgveDs2J%2Fwm36Hy4vbOwM%3D&delimiter=%2F&list-type=2"
                         "&prefix=path%2Fto%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -733,8 +745,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with expression");
 
-                testRequestP(s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -772,7 +785,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to path-style URIs");
 
-                hrnTlsServerClose();
+                hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
                 strLstAddZ(argList, "--" CFGOPT_REPO1_S3_URI_STYLE "=" STORAGE_S3_URI_STYLE_PATH);
@@ -789,7 +802,7 @@ testRun(void)
                 // Set deleteMax to a small value for testing
                 driver->deleteMax = 2;
 
-                hrnTlsServerAccept();
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when no recurse because there are no paths");
@@ -801,8 +814,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");
 
-                testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2");
+                testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -815,22 +829,24 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
                         "<Object><Key>test1.txt</Key></Object>"
                         "<Object><Key>path1/xxx.zzz</Key></Object>"
                         "</Delete>\n");
-                testResponseP(.content = "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>");
+                testResponseP(
+                    service, .content = "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>");
 
                 TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
 
-                testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -841,8 +857,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files with continuation");
 
-                testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -855,8 +872,9 @@ testRun(void)
                         "    </Contents>"
                         "</ListBucketResult>");
 
-                testRequestP(s3, HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -869,31 +887,32 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
                         "<Object><Key>path/to/test1.txt</Key></Object>"
                         "<Object><Key>path/to/test3.txt</Key></Object>"
                         "</Delete>\n");
-                testResponseP();
+                testResponseP(service);
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
                         "<Object><Key>path/to/test2.txt</Key></Object>"
                         "</Delete>\n");
-                testResponseP();
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path/to"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove error");
 
-                testRequestP(s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
+                testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -906,7 +925,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -914,6 +933,7 @@ testRun(void)
                         "<Object><Key>path/sample2.txt</Key></Object>"
                         "</Delete>\n");
                 testResponseP(
+                    service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -927,13 +947,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");
 
-                testRequestP(s3, HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
-                testResponseP(.code = 204);
+                testRequestP(service, s3, HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
+                testResponseP(service, .code = 204);
 
                 TEST_RESULT_VOID(storageRemoveP(s3, strNew("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                hrnTlsClientEnd();
+                hrnServerScriptEnd(service);
             }
             HARNESS_FORK_PARENT_END();
         }
