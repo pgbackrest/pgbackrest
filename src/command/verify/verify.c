@@ -232,6 +232,8 @@ verifyFileLoad(const String *fileName, const String *cipherPass)
 
     // Read the file and error if missing
     StorageRead *result = storageNewReadP(storageRepo(), fileName);
+
+    // *read points to a location within result so update result with contents based on necessary filters
     IoRead *read = storageReadIo(result);
     cipherBlockFilterGroupAdd(
         ioReadFilterGroup(read), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cipherPass);
@@ -296,7 +298,7 @@ verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPa
                 }
             }
             else
-                ioReadDrain(infoRead);
+                ioReadDrain(infoRead);      // Drain the io and close it
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -678,7 +680,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
                 continue;
             }
         }
-
+// CSHANG May also need to skip if it is a timeline switch file which would be at or near the end of the list
         // Initialize the range if it has not yet been initialized and continue to next
         if (walRange.start == NULL)
         {
@@ -717,6 +719,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     if (walRange.start != NULL)
         lstAdd(archiveIdRange->walRangeList, &walRange);
 
+// CSHANG No - now we have a problem because we're going to create a gap when we cross timelines and that might not actually be a gap
     // Now if there are ranges for this archiveId then sort ascending by the stop file add them
     if (lstSize(archiveIdRange->walRangeList) > 0)
     {
@@ -767,6 +770,7 @@ verifyArchive(void *data)
         // If there are WAL paths then get the file lists
         if (strLstSize(jobData->walPathList) > 0)
         {
+// CSHANG Maybe read the last walPathList to get the timeline and then read the XXXXX.history file to create a timelineSwitchList so that the rahe list generate can exclued the file if it is in the list - should not be checking it if it exists in old timeline because it is copied and completed in the next timeline
             do
             {
                 String *walPath = strLstGet(jobData->walPathList, 0);
@@ -1359,6 +1363,47 @@ AND is the newest backup?
 
 
                                     Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this pioint is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
+                                    Let's say we have archives such that walList Ranges are:
+                                    start 000000010000000000000001, stop 000000010000000000000005
+                                    start 000000020000000000000005, stop 000000020000000000000006
+                                    start 000000030000000000000007, stop 000000030000000000000007
+
+                                    PROBLEM: I am generating WAL ranges by timeline so in the above, because we are in a new timeline, it looks like a gap. So how would I determine that the following is OK? Would MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL
+
+        full backup: 20200810-171426F
+            wal start/stop: 000000010000000000000002 / 000000010000000000000002
+
+        diff backup: 20200810-171426F_20200810-171442D
+            wal start/stop: 000000010000000000000003 / 000000010000000000000003
+            backup reference list: 20200810-171426F
+
+        diff backup: 20200810-171426F_20200810-171445D
+            wal start/stop: 000000010000000000000004 / 000000010000000000000004
+            backup reference list: 20200810-171426F
+
+        incr backup: 20200810-171426F_20200810-171459I
+            wal start/stop: 000000020000000000000006 / 000000020000000000000006
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000100000000:
+total 2280
+-rw-r----- 1 postgres postgres 1994249 Aug 10 17:14 000000010000000000000001-da5d050e95663fe95f52dd5059db341b296ae1fa.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000002.00000028.backup
+-rw-r----- 1 postgres postgres   73388 Aug 10 17:14 000000010000000000000002-498acf8c1dc48233f305bdd24cbb7bdc970d1268.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000003.00000028.backup
+-rw-r----- 1 postgres postgres   73365 Aug 10 17:14 000000010000000000000003-b323c5739356590e18aa75c8079ec9ff06cb32b7.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000004.00000028.backup
+-rw-r----- 1 postgres postgres   73382 Aug 10 17:14 000000010000000000000004-0e54893dcff383538d3f6fd93f59b62e2bb42432.gz
+-rw-r----- 1 postgres postgres  105843 Aug 10 17:14 000000010000000000000005-b1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000200000000:
+total 192
+-rw-r----- 1 postgres postgres 115133 Aug 10 17:15 000000020000000000000005-74bd3036721ccfdfec648fe1b6fd2cc7b60fe310.gz
+-rw-r----- 1 postgres postgres    370 Aug 10 17:15 000000020000000000000006.00000028.backup
+-rw-r----- 1 postgres postgres  73368 Aug 10 17:15 000000020000000000000006-c6d2580ccd6fbd2ee83bb4bf5cb445f673eb17ff.gz
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000300000000:
+total 76
+-rw-r----- 1 postgres postgres 74873 Aug 10 17:15 000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
                                 */
 
 
