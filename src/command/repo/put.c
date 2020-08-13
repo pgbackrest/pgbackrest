@@ -7,7 +7,7 @@ Repository Put Command
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/handleRead.h"
+#include "common/io/fdRead.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -88,7 +88,7 @@ cmdStoragePut(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        storagePutProcess(ioHandleReadNew(STRDEF("stdin"), STDIN_FILENO, ioTimeoutMs()));
+        storagePutProcess(ioFdReadNew(STRDEF("stdin"), STDIN_FILENO, ioTimeoutMs()));
     }
     MEM_CONTEXT_TEMP_END();
 

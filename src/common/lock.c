@@ -10,7 +10,7 @@ Lock Handler
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -33,7 +33,7 @@ Mem context and local variables
 ***********************************************************************************************************************************/
 static MemContext *lockMemContext = NULL;
 static String *lockFile[lockTypeAll];
-static int lockHandle[lockTypeAll];
+static int lockFd[lockTypeAll];
 static LockType lockTypeHeld = lockTypeNone;
 
 /***********************************************************************************************************************************
@@ -79,7 +79,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                     // Save the error for reporting outside the loop
                     errNo = errno;
 
-                    // Close the file and reset the handle
+                    // Close the file and reset the file descriptor
                     close(result);
                     result = -1;
                 }
@@ -111,7 +111,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
         else
         {
             // Write pid of the current process
-            ioHandleWriteOneStr(result, strNewFmt("%d\n", getpid()));
+            ioFdWriteOneStr(result, strNewFmt("%d\n", getpid()));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -123,20 +123,20 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
 Release the current lock
 ***********************************************************************************************************************************/
 static void
-lockReleaseFile(int lockHandle, const String *lockFile)
+lockReleaseFile(int lockFd, const String *lockFile)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, lockHandle);
+        FUNCTION_LOG_PARAM(INT, lockFd);
         FUNCTION_LOG_PARAM(STRING, lockFile);
     FUNCTION_LOG_END();
 
     // Can't release lock if there isn't one
-    ASSERT(lockHandle != -1);
+    ASSERT(lockFd != -1);
 
     // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
     // right before the delete which means the file locked by the other process will get deleted.
     storageRemoveP(storageLocalWrite(), lockFile);
-    close(lockHandle);
+    close(lockFd);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -187,9 +187,9 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
         {
             lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
 
-            lockHandle[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
+            lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
 
-            if (lockHandle[lockIdx] == -1)
+            if (lockFd[lockIdx] == -1)
             {
                 error = true;
                 break;
@@ -261,7 +261,7 @@ lockRelease(bool failOnNoLock)
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockReleaseFile(lockHandle[lockIdx], lockFile[lockIdx]);
+            lockReleaseFile(lockFd[lockIdx], lockFile[lockIdx]);
             strFree(lockFile[lockIdx]);
         }
 

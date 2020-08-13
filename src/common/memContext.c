@@ -687,6 +687,19 @@ memContextCurrent(void)
 }
 
 /**********************************************************************************************************************************/
+bool
+memContextFreeing(MemContext *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->state == memContextStateFreeing);
+}
+
+/**********************************************************************************************************************************/
 const char *
 memContextName(MemContext *this)
 {

@@ -127,7 +127,7 @@ restoreFile(
                 if (pgFileZero)
                 {
                     THROW_ON_SYS_ERROR_FMT(
-                        ftruncate(ioWriteHandle(storageWriteIo(pgFileWrite)), (off_t)pgFileSize) == -1, FileWriteError,
+                        ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)pgFileSize) == -1, FileWriteError,
                         "unable to truncate '%s'", strZ(pgFile));
 
                     // Report the file as not copied

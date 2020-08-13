@@ -1,39 +1,41 @@
 /***********************************************************************************************************************************
-Socket Client
-
-A simple socket client intended to allow access to services that are exposed via a socket.
+Io Client Interface Internal
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_SOCKET_CLIENT_H
-#define COMMON_IO_SOCKET_CLIENT_H
+#ifndef COMMON_IO_CLIENT_INTERN_H
+#define COMMON_IO_CLIENT_INTERN_H
 
 #include "common/io/client.h"
-#include "common/time.h"
 
 /***********************************************************************************************************************************
-Io client type
+Interface
 ***********************************************************************************************************************************/
-#define IO_CLIENT_SOCKET_TYPE                                       "socket"
-    STRING_DECLARE(IO_CLIENT_SOCKET_TYPE_STR);
-
-/***********************************************************************************************************************************
-Statistics
-***********************************************************************************************************************************/
-typedef struct SocketClientStat
+typedef struct IoClientInterface
 {
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} SocketClientStat;
+    // Type used to identify the client. This is stored as a pointer to a String pointer so it can be used with an existing String
+    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
+    const String *const *type;
+
+    // Client name, usually host:port or some other unique indentifier
+    const String *(*name)(void *driver);
+
+    // Open a session
+    IoSession *(*open)(void *driver);
+
+    // Driver log function
+    String *(*toLog)(const void *driver);
+} IoClientInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
+IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
 
 /***********************************************************************************************************************************
-Functions
+Macros for function logging
 ***********************************************************************************************************************************/
-// Statistics as a formatted string
-String *sckClientStatStr(void);
+#define FUNCTION_LOG_IO_CLIENT_INTERFACE_TYPE                                                                                      \
+    IoClientInterface *
+#define FUNCTION_LOG_IO_CLIENT_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(&value, "IoClientInterface", buffer, bufferSize)
 
 #endif

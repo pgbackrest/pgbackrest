@@ -493,10 +493,10 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
     ASSERT(path != NULL);
 
     // Open directory and handle errors
-    int handle = open(strZ(path), O_RDONLY, 0);
+    int fd = open(strZ(path), O_RDONLY, 0);
 
     // Handle errors
-    if (handle == -1)
+    if (fd == -1)
     {
         if (errno == ENOENT)                                                                                        // {vm_covered}
             THROW_FMT(PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strZ(path));
@@ -506,17 +506,17 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
     else
     {
         // Attempt to sync the directory
-        if (fsync(handle) == -1)
+        if (fsync(fd) == -1)
         {
             int errNo = errno;
 
-            // Close the handle to free resources but don't check for failure
-            close(handle);
+            // Close the file descriptor to free resources but don't check for failure
+            close(fd);
 
             THROW_SYS_ERROR_CODE_FMT(errNo, PathSyncError, STORAGE_ERROR_PATH_SYNC, strZ(path));
         }
 
-        THROW_ON_SYS_ERROR_FMT(close(handle) == -1, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strZ(path));
+        THROW_ON_SYS_ERROR_FMT(close(fd) == -1, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strZ(path));
     }
 
     FUNCTION_LOG_RETURN_VOID();
