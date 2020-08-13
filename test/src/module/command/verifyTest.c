@@ -154,6 +154,10 @@ testRun(void)
         };
         lstAdd(archiveIdRange.walRangeList, &walRange);
 
+        List *archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator);
+
+        lstAdd(archiveIdRangeList, &archiveIdRange);
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Single WAL");
 
@@ -164,11 +168,14 @@ testRun(void)
 
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 1, "single range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 1, "single range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
@@ -176,22 +183,23 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Duplicate WAL only - no range, all removed from list");
 
-        lstClear(archiveIdRange.walRangeList);
-        walRange.start = NULL;
-        walRange.stop = NULL;
-        lstAdd(archiveIdRange.walRangeList, &walRange);
+        walRangeResult->start = NULL;
+        walRangeResult->stop = NULL;
 
         // Add a duplicate
         strLstAddZ(walFileList, "000000020000000200000000");
 
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL list");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 1, "range same");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 1, "single range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), "get range");
         TEST_RESULT_STR(walRangeResult->start, NULL, "start NULL");
         TEST_RESULT_STR(walRangeResult->stop, NULL, "stop NULL");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
@@ -200,7 +208,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning of list are removed");
 
+        walRangeResult->start = NULL;
+        walRangeResult->stop = NULL;
         errTotal = 0;
+
         strLstAddZ(walFileList, "000000020000000100000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
         strLstAddZ(walFileList, "000000020000000100000000");
         strLstAddZ(walFileList, "000000020000000100000000-aaaaaadba64008db824607940609ba1cd7c6c501");
@@ -211,12 +222,15 @@ testRun(void)
 
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "triplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 1, "single range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 1, "single range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
@@ -226,10 +240,8 @@ testRun(void)
         TEST_TITLE("FF Wal skipped <= 9.2, duplicates in middle of list removed");
 
         // Clear the range lists and rerun the test with PG_VERSION_92 to ensure FF is reported as an error
-        lstClear(archiveIdRange.walRangeList);
-        walRange.start = NULL;
-        walRange.stop = NULL;
-        lstAdd(archiveIdRange.walRangeList, &walRange);
+        walRangeResult->start = NULL;
+        walRangeResult->stop = NULL;
         errTotal = 0;
 
         archiveIdRange.archiveId = strNew("9.2-1");
@@ -241,14 +253,19 @@ testRun(void)
 
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 2, "multiple ranges");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 1),"get second range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 1),
+            "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
@@ -276,14 +293,19 @@ testRun(void)
 
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 2, "multiple ranges");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 1),"get second range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 1),
+            "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
@@ -298,27 +320,66 @@ testRun(void)
         lstAdd(archiveIdRange.walRangeList, &walRange);
         errTotal = 0;
 
-        strLstAddZ(walFileList, "000000020000000200000003-123456");
-        strLstAddZ(walFileList, "000000020000000200000004-123456");
-
         archiveIdRange.archiveId = strNew("9.6-1");
         archiveIdRange.pgWalInfo.version = PG_VERSION_96;
 
+        strLstAddZ(walFileList, "000000020000000200000003-123456");
+        strLstAddZ(walFileList, "000000020000000200000004-123456");
+
         TEST_RESULT_VOID(
             createArchiveIdRange(
-                &archiveIdRange, walFileList, lstGet(archiveIdRange.walRangeList, lstSize(archiveIdRange.walRangeList) - 1),
-                &errTotal), "create archiveId WAL range");
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(archiveIdRange.walRangeList), 3, "multiple ranges");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 0), "get first range");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 3, "multiple ranges");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 0),
+            "get first range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 1), "get second range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 1),
+            "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(walRangeResult, lstGet(archiveIdRange.walRangeList, 2), "get third range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 2),
+            "get thrid range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
+        TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version > 9.2, timeline switch from previous test");
+
+        walFileList = strLstNew();
+        strLstAddZ(walFileList, "000000030000000200000004-123456");
+
+        TEST_RESULT_VOID(
+            createArchiveIdRange(
+                &archiveIdRange, walFileList,
+                (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), &errTotal),
+                "create archiveId WAL range");
+        TEST_RESULT_UINT(errTotal, 0, "no errors");
+        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single archive id");
+        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList), 3, "multiple ranges");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 0),
+            "get first range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 1),
+            "get second range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
+        TEST_ASSIGN(
+            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGetLast(archiveIdRangeList))->walRangeList, 2),
+            "get thrid range");
+        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
+        TEST_RESULT_STR_Z(walRangeResult->stop, "000000030000000200000004", "stop range");
         TEST_RESULT_UINT(lstSize(walRangeResult->invalidFileList), 0, "invalid file list empty");
     }
 

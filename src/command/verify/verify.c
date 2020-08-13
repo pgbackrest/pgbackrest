@@ -4,6 +4,7 @@ Verify Command
 #include "build.auto.h"
 
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "command/archive/common.h"
 #include "command/check/common.h"
@@ -689,9 +690,12 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Wa
             continue;
         }
 
+        bool startNewRange = false;
+
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
         // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
+// CSHANG Can I use walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)?
         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
             pgLsnFromWalSegment(walRange->stop, archiveIdRange->pgWalInfo.size) ==
                 ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange->stop, "FE"))
@@ -701,11 +705,43 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Wa
         }
         else
         {
+            startNewRange = true;
+
+            // Check if there was a timeline change
+            if (strCmp(strSubN(walRange->stop, 0, 8), strSubN(walSegment, 0, 8)) != 0)
+            {
+                uint32_t stopTimeline = (uint32_t)strtol(strZ(strSubN(walRange->stop, 0, 8)), NULL, 16);
+                uint32_t currentTimeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
+
+                if (currentTimeline == stopTimeline + 1)
+                {
+                    String *walTimeline = strSubN(walRange->stop, 0, 8);
+                    strCat(walTimeline, strSubN(walSegment, 8, 16));
+
+                    // If new walSegment is 000000020000000000000005 then walTimeline = 000000010000000000000005 so if
+                    // stop segment equal walTimeline (000000010000000000000005) or is one prior segment distance from it
+                    // (000000010000000000000004) then we can continue the range
+                    //
+                    if (strEq(walTimeline, walRange->stop) ||
+                        (pgLsnFromWalSegment(walTimeline, archiveIdRange->pgWalInfo.size) -
+                         pgLsnFromWalSegment(walRange->stop, archiveIdRange->pgWalInfo.size) ==
+                            ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange->stop, "FE"))
+                            ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size)))
+                    {
+                        walRange->stop = walSegment;
+                        startNewRange = false;
+                    }
+                }
+            }
+
             // A gap was found so add the current range to the list and start a new range
-            lstAdd(archiveIdRange->walRangeList, walRange);
-            walRangeAdded++;
-            walRange->start = strDup(walSegment);
-            walRange->stop = strDup(walSegment);
+            if (startNewRange)
+            {
+                lstAdd(archiveIdRange->walRangeList, walRange);
+                walRangeAdded++;
+                walRange->start = strDup(walSegment);
+                walRange->stop = strDup(walSegment);
+            }
         }
 
         walFileIdx++;
@@ -940,20 +976,24 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                         }
 
                         archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
+
+                        // Add the archiveIdRange to the jobData archiveIdRangeList
+                        lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
+
+
 /* CSHANG Maybe here we check to see if there is alread a WalRangList for this archiveID. If so, we should start with that and pass it to the function.
 */
-unsigned int walRangeListSize = lstSize(archiveIdRange.walRangeList);
-createArchiveIdRange(&archiveIdRange, jobData->walFileList, lstGet(archiveIdRange.walRangeList, walRangeListSize - 1),
+createArchiveIdRange(&archiveIdRange, jobData->walFileList, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(jobData->archiveIdRangeList))->walRangeList),
 &jobData->jobErrorTotal);
 /* CSHANG WAIT!!! This is a problem because the range could have been UPDATED, so what we probably need to do is if the stop file has
 changed for the last one then update the jobData->archiveIdRangeList?
 */
-    // Now if there are new ranges for this archiveId then add them
-    if (lstSize(archiveIdRange.walRangeList) > walRangeListSize)
-    {
-        for (unsigned int rangeIdx = walRangeListSize; rangeIdx < lstSize(archiveIdRange.walRangeList); rangeIdx++)
-            lstAdd(jobData->archiveIdRangeList, lstGet(archiveIdRange.walRangeList, rangeIdx));
-    }
+    // // Now if there are new ranges for this archiveId then add them
+    // if (lstSize(archiveIdRange.walRangeList) > walRangeListSize)
+    // {
+    //     for (unsigned int rangeIdx = walRangeListSize; rangeIdx < lstSize(archiveIdRange.walRangeList); rangeIdx++)
+    //         lstAdd(jobData->archiveIdRangeList, lstGet(archiveIdRange.walRangeList, rangeIdx));
+    // }
                         // createArchiveIdRange(
                         //     &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
 
