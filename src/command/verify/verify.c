@@ -572,6 +572,12 @@ Structures for job data
 #define FUNCTION_LOG_ARCHIVE_ID_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "ArchiveIdRange", buffer, bufferSize)
 
+#define FUNCTION_LOG_WAL_RANGE_TYPE                                                                                                \
+    WalRange
+#define FUNCTION_LOG_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(&value, "WalRange", buffer, bufferSize)
+
+
 typedef struct ArchiveIdRange
 {
     String *archiveId;
@@ -609,32 +615,25 @@ typedef struct VerifyJobData
     List *archiveIdRangeList;
 } VerifyJobData;
 
-/***********************************************************************************************************************************
-Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
-***********************************************************************************************************************************/
+
+
 static void
-createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
+createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, WalRange *walRange, unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
-        FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
+        FUNCTION_TEST_PARAM_P(WAL_RANGE, walRange);
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdRange != NULL);
     ASSERT(walFileList != NULL);
-    ASSERT(archiveIdRangeList != NULL);
-
-    // Initialize the WAL range
-    WalRange walRange =
-    {
-        .start = NULL,
-        .stop = NULL,
-        .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
-    };
+    ASSERT(walRange != NULL);
 
     unsigned int walFileIdx = 0;
+    unsigned int walRangeSizeOrig = lstSize(archiveIdRange->walRangeList);
+    unsigned int walRangeAdded = 0;
 
     do
     {
@@ -682,10 +681,10 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         }
 // CSHANG May also need to skip if it is a timeline switch file which would be at or near the end of the list
         // Initialize the range if it has not yet been initialized and continue to next
-        if (walRange.start == NULL)
+        if (walRange->start == NULL)
         {
-            walRange.start = walSegment;
-            walRange.stop = walSegment;
+            walRange->start = walSegment;
+            walRange->stop = walSegment;
             walFileIdx++;
             continue;
         }
@@ -694,21 +693,19 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
-            pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
-                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
+            pgLsnFromWalSegment(walRange->stop, archiveIdRange->pgWalInfo.size) ==
+                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange->stop, "FE"))
                 ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size))
         {
-            walRange.stop = walSegment;
+            walRange->stop = walSegment;
         }
         else
         {
             // A gap was found so add the current range to the list and start a new range
-            lstAdd(archiveIdRange->walRangeList, &walRange);
-            walRange = (WalRange)
-            {
-                .start = strDup(walSegment),
-                .stop = strDup(walSegment),
-            };
+            lstAdd(archiveIdRange->walRangeList, walRange);
+            walRangeAdded++;
+            walRange->start = strDup(walSegment);
+            walRange->stop = strDup(walSegment);
         }
 
         walFileIdx++;
@@ -716,19 +713,136 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
     while (walFileIdx < strLstSize(walFileList));
 
     // If walRange containes a range, then add the last walRange to the list
-    if (walRange.start != NULL)
-        lstAdd(archiveIdRange->walRangeList, &walRange);
+    if (walRangeAdded > lstSize(archiveIdRange->walRangeList) - walRangeSizeOrig)
+        lstAdd(archiveIdRange->walRangeList, walRange);
 
-// CSHANG No - now we have a problem because we're going to create a gap when we cross timelines and that might not actually be a gap
-    // Now if there are ranges for this archiveId then sort ascending by the stop file add them
-    if (lstSize(archiveIdRange->walRangeList) > 0)
-    {
-        lstSort(archiveIdRange->walRangeList, sortOrderAsc);
-        lstAdd(archiveIdRangeList, archiveIdRange);
-    }
+    // Sort ascending by the stop file
+    lstSort(archiveIdRange->walRangeList, sortOrderAsc);
 
     FUNCTION_TEST_RETURN_VOID();
 }
+
+
+/***********************************************************************************************************************************
+Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
+***********************************************************************************************************************************/
+// static void
+// createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
+//         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
+//         FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
+//         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
+//     FUNCTION_TEST_END();
+//
+//     ASSERT(archiveIdRange != NULL);
+//     ASSERT(walFileList != NULL);
+//     ASSERT(archiveIdRangeList != NULL);
+//
+//     // Initialize the WAL range
+//     WalRange walRange =
+//     {
+//         .start = NULL,
+//         .stop = NULL,
+//         .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
+//     };
+//
+//     unsigned int walFileIdx = 0;
+//
+//     do
+//     {
+//         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
+//
+//         // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
+//         // PostgreSQL will ignore it
+//         if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
+//         {
+//             LOG_ERROR_FMT(
+//                 errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment),
+//                 strZ(archiveIdRange->archiveId));
+//
+//             (*jobErrorTotal)++;
+//
+//             // Remove the file from the original list so no attempt is made to verify it
+//             strLstRemoveIdx(walFileList, walFileIdx);
+//             continue;
+//         }
+//
+//         // The lists are sorted so look ahead to see if this is a duplicate of the next one in the list
+//         if (walFileIdx + 1 < strLstSize(walFileList))
+//         {
+//             if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx + 1), 0, WAL_SEGMENT_NAME_SIZE)))
+//             {
+//                 LOG_ERROR_FMT(
+//                     errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strZ(walSegment),
+//                     strZ(archiveIdRange->archiveId));
+//
+//                 (*jobErrorTotal)++;
+//
+//                 bool foundDup = true;
+//
+//                 // Remove all duplicates of this WAL, including this WAL, from the list
+//                 while (strLstSize(walFileList) > 0 && foundDup)
+//                 {
+//                     if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE)))
+//                         strLstRemoveIdx(walFileList, walFileIdx);
+//                     else
+//                         foundDup = false;
+//                 }
+//
+//                 continue;
+//             }
+//         }
+// // CSHANG May also need to skip if it is a timeline switch file which would be at or near the end of the list
+//         // Initialize the range if it has not yet been initialized and continue to next
+//         if (walRange.start == NULL)
+//         {
+//             walRange.start = walSegment;
+//             walRange.stop = walSegment;
+//             walFileIdx++;
+//             continue;
+//         }
+//
+//         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
+//         // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
+//         // the next WAL is 2 times the distance (WAL segment size) away, not one.
+//         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
+//             pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
+//                 ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
+//                 ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size))
+//         {
+//             walRange.stop = walSegment;
+//         }
+//         else
+//         {
+//             // A gap was found so add the current range to the list and start a new range
+//             lstAdd(archiveIdRange->walRangeList, &walRange);
+//             walRange = (WalRange)
+//             {
+//                 .start = strDup(walSegment),
+//                 .stop = strDup(walSegment),
+//             };
+//         }
+//
+//         walFileIdx++;
+//     }
+//     while (walFileIdx < strLstSize(walFileList));
+//
+//     // If walRange containes a range, then add the last walRange to the list
+//     if (walRange.start != NULL)
+//         lstAdd(archiveIdRange->walRangeList, &walRange);
+//
+// // CSHANG No - now we have a problem because we're going to create a gap when we cross timelines and that might not actually be a gap
+//     // Now if there are ranges for this archiveId then sort ascending by the stop file add them
+//     if (lstSize(archiveIdRange->walRangeList) > 0)
+//     {
+//         lstSort(archiveIdRange->walRangeList, sortOrderAsc);
+//         lstAdd(archiveIdRangeList, archiveIdRange);
+//     }
+//
+//     FUNCTION_TEST_RETURN_VOID();
+// }
 
 /***********************************************************************************************************************************
 Verify the job data archives
@@ -756,6 +870,15 @@ verifyArchive(void *data)
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
         };
 
+        // Initialize the WAL range
+        WalRange walRange =
+        {
+            .start = NULL,
+            .stop = NULL,
+            .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
+        };
+        lstAdd(archiveIdRange.walRangeList, &walRange);
+
         if (strLstSize(jobData->walPathList) == 0)
         {
             // Get the WAL paths for the first item in the archive Id list
@@ -770,7 +893,15 @@ verifyArchive(void *data)
         // If there are WAL paths then get the file lists
         if (strLstSize(jobData->walPathList) > 0)
         {
-// CSHANG Maybe read the last walPathList to get the timeline and then read the XXXXX.history file to create a timelineSwitchList so that the rahe list generate can exclued the file if it is in the list - should not be checking it if it exists in old timeline because it is copied and completed in the next timeline
+/* CSHANG Maybe read the last walPathList to get the timeline and then read the XXXXX.history file to create a timelineSwitchList so that the rahe list generate can exclued the file if it is in the list - should not be checking it if it exists in old timeline because it is copied and completed in the next timeline
+
+NOTE!!! The timeline history file format is changed in version 9.3. Formats of versions 9.3 or later and earlier both are shown below but not in detail.
+
+Later version 9.3:
+timelineId	LSN	"reason"
+Until version 9.2:
+timelineId	WAL_segment	"reason"
+*/
             do
             {
                 String *walPath = strLstGet(jobData->walPathList, 0);
@@ -809,9 +940,26 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                         }
 
                         archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
+/* CSHANG Maybe here we check to see if there is alread a WalRangList for this archiveID. If so, we should start with that and pass it to the function.
+*/
+unsigned int walRangeListSize = lstSize(archiveIdRange.walRangeList);
+createArchiveIdRange(&archiveIdRange, jobData->walFileList, lstGet(archiveIdRange.walRangeList, walRangeListSize - 1),
+&jobData->jobErrorTotal);
+/* CSHANG WAIT!!! This is a problem because the range could have been UPDATED, so what we probably need to do is if the stop file has
+changed for the last one then update the jobData->archiveIdRangeList?
+*/
+    // Now if there are new ranges for this archiveId then add them
+    if (lstSize(archiveIdRange.walRangeList) > walRangeListSize)
+    {
+        for (unsigned int rangeIdx = walRangeListSize; rangeIdx < lstSize(archiveIdRange.walRangeList); rangeIdx++)
+            lstAdd(jobData->archiveIdRangeList, lstGet(archiveIdRange.walRangeList, rangeIdx));
+    }
+                        // createArchiveIdRange(
+                        //     &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
 
-                        createArchiveIdRange(
-                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
+/* CSHANG If the last stop file is in the timeline history OR it is 1 minus the timeline history, then check the first file in the
+next timeline. If the first file in the next timeline is the next expected history file then continue the range. WAIT! what if it is a duplicate? OR meets some other "skip" condition?
+*/
                     }
                 }
 
