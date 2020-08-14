@@ -103,6 +103,14 @@
 
                         <p>Allow <code>HttpClient</code>/<code>HttpSession</code> to work on plain sockets.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for <id>HTTP/1.0</id>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
