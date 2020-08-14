@@ -257,13 +257,13 @@ testRun(void)
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1 200 OK\r\n");
 
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
                     httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
-                    "HTTP version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
+                    "HTTP version of response 'HTTP/1 200 OK' must be HTTP/1.1 or HTTP/1.0");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no space in status");
@@ -410,7 +410,9 @@ testRun(void)
                 TEST_TITLE("head request with content-length but no content");
 
                 hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:380\r\n\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\r\ncontent-length:380\r\n\r\n");
+
+                hrnServerScriptClose(http);
 
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
@@ -422,6 +424,8 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with transfer encoding but no content");
+
+                hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
