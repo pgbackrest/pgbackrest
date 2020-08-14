@@ -43,6 +43,12 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <p><postgres/> 13 beta3 support.</p>
+
+                        <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="MannerMan"/>
                             <release-item-ideator id="brad.nicholson"/>
