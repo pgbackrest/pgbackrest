@@ -14,6 +14,7 @@ HTTP Request
 HTTP constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(HTTP_VERSION_STR,                                     HTTP_VERSION);
+STRING_EXTERN(HTTP_VERSION_10_STR,                                  HTTP_VERSION_10);
 
 STRING_EXTERN(HTTP_VERB_DELETE_STR,                                 HTTP_VERB_DELETE);
 STRING_EXTERN(HTTP_VERB_GET_STR,                                    HTTP_VERB_GET);
