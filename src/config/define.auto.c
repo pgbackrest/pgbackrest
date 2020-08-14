@@ -3476,7 +3476,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Cipher used to encrypt the repository.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "The following repository types are supported:\n"
+            "The following cipher types are supported:\n"
             "\n"
             "* none - The repository is not encrypted\n"
             "* aes-256-cbc - Advanced Encryption Standard with 256 bit key length\n"
@@ -5016,6 +5016,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The following repository types are supported:\n"
             "\n"
+            "* azure - Azure Blob Storage Service\n"
             "* cifs - Like posix, but disables links and directory fsyncs\n"
             "* posix - Posix-compliant file systems\n"
             "* s3 - AWS Simple Storage Service"
