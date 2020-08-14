@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Server Test Harness
 
-Simple server for testing client functionality using multiple protocols. Server behavior can be scripted from the client using the
-hrnServerScript() functions.
+Simple server for testing client functionality using multiple protocols and connections. Server behavior can be scripted from the
+client using the hrnServerScript() functions.
 ***********************************************************************************************************************************/
 #ifndef TEST_COMMON_HARNESS_SERVER_H
 #define TEST_COMMON_HARNESS_SERVER_H
