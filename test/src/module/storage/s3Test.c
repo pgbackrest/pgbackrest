@@ -492,6 +492,21 @@ testRun(void)
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("missing role");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .http = "1.0", .code = 404);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "role to retrieve temporary credentials not found\n"
+                        "HINT: is a valid IAM role associated with this instance?");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving temp credentials");
 
                 hrnServerScriptAccept(auth);
@@ -516,6 +531,22 @@ testRun(void)
                         "content-length: 0\n"
                         "host: %s",
                     strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid temp credentials role");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .code = 404);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "role '%s' not found\n"
+                        "HINT: is '%s' a valid IAM role associated with this instance?",
+                    strZ(credRole), strZ(credRole));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid code when retrieving temp credentials");

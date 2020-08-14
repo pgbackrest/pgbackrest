@@ -331,8 +331,16 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
                     this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_URI), .header = credHeader);
                 HttpResponse *response = httpRequestResponse(request, true);
 
-                // Error if the request was not successful
-                if (!httpResponseCodeOk(response))
+                // Not found likely means no role is associated with this instance
+                if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+                {
+                    THROW(
+                        ProtocolError,
+                        "role to retrieve temporary credentials not found\n"
+                            "HINT: is a valid IAM role associated with this instance?");
+                }
+                // Else an error that we can't handle
+                else if (!httpResponseCodeOk(response))
                     httpRequestError(request, response);
 
                 // Get role from the text response
@@ -349,8 +357,17 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
                 .header = credHeader);
             HttpResponse *response = httpRequestResponse(request, true);
 
-            // Error if the request was not successful
-            if (!httpResponseCodeOk(response))
+            // Not found likely means the role is not valid
+            if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+            {
+                THROW_FMT(
+                    ProtocolError,
+                    "role '%s' not found\n"
+                        "HINT: is '%s' a valid IAM role associated with this instance?",
+                    strZ(this->credRole), strZ(this->credRole));
+            }
+            // Else an error that we can't handle
+            else if (!httpResponseCodeOk(response))
                 httpRequestError(request, response);
 
             // Free old credentials
