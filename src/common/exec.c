@@ -354,7 +354,7 @@ execOpen(Exec *this)
 
     // Assign file descriptors to io interfaces
     this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
-    this->ioWriteFd = ioFdWriteNew(strNewFmt("%s write", strZ(this->name)), this->fdWrite);
+    this->ioWriteFd = ioFdWriteNew(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
     ioWriteOpen(this->ioWriteFd);
 
     // Create wrapper interfaces that check process state

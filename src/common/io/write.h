@@ -31,6 +31,18 @@ void ioWrite(IoWrite *this, const Buffer *buffer);
 // Write linefeed-terminated buffer
 void ioWriteLine(IoWrite *this, const Buffer *buffer);
 
+// Can bytes be written immediately? There are no guarantees on how much data can be written but it must be at least one byte.
+typedef struct IoWriteReadyParam
+{
+    VAR_PARAM_HEADER;
+    bool error;                                                     // Error when write not ready
+} IoWriteReadyParam;
+
+#define ioWriteReadyP(this, ...)                                                                                                   \
+    ioWriteReady(this, (IoWriteReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool ioWriteReady(IoWrite *this, IoWriteReadyParam param);
+
 // Write string
 void ioWriteStr(IoWrite *this, const String *string);
 

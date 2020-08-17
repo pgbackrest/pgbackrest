@@ -43,6 +43,12 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <p><postgres/> 13 beta3 support.</p>
+
+                        <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="MannerMan"/>
                             <release-item-ideator id="brad.nicholson"/>
@@ -67,6 +73,15 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="floris.van.nee"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Delay backup remote connection close until after archive check.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
@@ -74,9 +89,52 @@
                         <p>Improve TLS error reporting.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Add IoClient and IoSession interfaces."/>
+                        <commit subject="Move file descriptor read/write ready into IoRead/IoWrite."/>
+                        <commit subject="Implement IoClient/IoSession interfaces for SocketClient/SocketSession."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>HttpClient</code>/<code>HttpSession</code> to work on plain sockets.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for <id>HTTP/1.0</id>.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="don.seiler"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add missing <id>azure</id> type in <br-option>repo-type</br-option> option reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="don.seiler"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typo in <br-option>repo-cipher-type</br-option> option reference.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -8620,6 +8678,11 @@
         <contributor id="evan.benoit">
             <contributor-name-display>Evan Benoit</contributor-name-display>
             <contributor-id type="github">evanbenoit</contributor-id>
+        </contributor>
+
+        <contributor id="floris.van.nee">
+            <contributor-name-display>Floris van Nee</contributor-name-display>
+            <contributor-id type="github">fvannee</contributor-id>
         </contributor>
 
         <contributor id="vidhya.gurumoorthi">

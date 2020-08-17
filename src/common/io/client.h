@@ -1,58 +1,50 @@
 /***********************************************************************************************************************************
-HTTP Session
+Io Client Interface
 
-HTTP sessions are created by calling httpClientOpen(), which is currently done exclusively by the HttpRequest object.
+Create sessions for protocol clients. For example, a TLS client can be created with tlsClientNew() and then new TLS sessions can be
+opened with ioClientOpen().
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HTTP_SESSION_H
-#define COMMON_IO_HTTP_SESSION_H
+#ifndef COMMON_IO_CLIENT_H
+#define COMMON_IO_CLIENT_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_SESSION_TYPE                                           HttpSession
-#define HTTP_SESSION_PREFIX                                         httpSession
+#define IO_CLIENT_TYPE                                             IoClient
+#define IO_CLIENT_PREFIX                                           ioClient
 
-typedef struct HttpSession HttpSession;
+typedef struct IoClient IoClient;
 
-#include "common/io/read.h"
-#include "common/io/http/client.h"
 #include "common/io/session.h"
-#include "common/io/write.h"
-
-/***********************************************************************************************************************************
-Constructors
-***********************************************************************************************************************************/
-HttpSession *httpSessionNew(HttpClient *client, IoSession *session);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-HttpSession *httpSessionMove(HttpSession *this, MemContext *parentNew);
+IoClient *ioClientMove(IoClient *this, MemContext *parentNew);
 
-// Work with the session has finished cleanly and it can be reused
-void httpSessionDone(HttpSession *this);
+// Open session
+IoSession *ioClientOpen(IoClient *this);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Read interface
-IoRead *httpSessionIoRead(HttpSession *this);
-
-// Write interface
-IoWrite *httpSessionIoWrite(HttpSession *this);
+// Name that identifies the client
+const String *ioClientName(IoClient *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpSessionFree(HttpSession *this);
+void ioClientFree(IoClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_HTTP_SESSION_TYPE                                                                                             \
-    HttpSession *
-#define FUNCTION_LOG_HTTP_SESSION_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "HttpSession", buffer, bufferSize)
+String *ioClientToLog(const IoClient *this);
+
+#define FUNCTION_LOG_IO_CLIENT_TYPE                                                                                                \
+    IoClient *
+#define FUNCTION_LOG_IO_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioClientToLog, buffer, bufferSize)
 
 #endif

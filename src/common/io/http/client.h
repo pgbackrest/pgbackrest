@@ -24,6 +24,7 @@ Object type
 
 typedef struct HttpClient HttpClient;
 
+#include "common/io/client.h"
 #include "common/io/http/session.h"
 #include "common/time.h"
 
@@ -33,7 +34,7 @@ Statistics
 typedef struct HttpClientStat
 {
     uint64_t object;                                                // Objects created
-    uint64_t session;                                               // TLS sessions created
+    uint64_t session;                                               // Sessions created
     uint64_t request;                                               // Requests (i.e. calls to httpRequestNew())
     uint64_t retry;                                                 // Request retries
     uint64_t close;                                                 // Closes forced by server
@@ -44,8 +45,7 @@ extern HttpClientStat httpClientStat;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpClient *httpClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+HttpClient *httpClientNew(IoClient *ioClient, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
@@ -67,9 +67,11 @@ TimeMSec httpClientTimeout(const HttpClient *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *httpClientToLog(const HttpClient *this);
+
 #define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *
 #define FUNCTION_LOG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "HttpClient", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpClientToLog, buffer, bufferSize)
 
 #endif

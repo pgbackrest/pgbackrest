@@ -1,58 +1,69 @@
 /***********************************************************************************************************************************
-HTTP Session
+Io Session Interface
 
-HTTP sessions are created by calling httpClientOpen(), which is currently done exclusively by the HttpRequest object.
+Provides access to IoRead and IoWrite interfaces for interacting with the session returned by ioClientOpen(). Sessions should always
+be closed when work with them is done but they also contain destructors to do cleanup if there is an error.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HTTP_SESSION_H
-#define COMMON_IO_HTTP_SESSION_H
+#ifndef COMMON_IO_SESSION_H
+#define COMMON_IO_SESSION_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_SESSION_TYPE                                           HttpSession
-#define HTTP_SESSION_PREFIX                                         httpSession
+#define IO_SESSION_TYPE                                             IoSession
+#define IO_SESSION_PREFIX                                           ioSession
 
-typedef struct HttpSession HttpSession;
+typedef struct IoSession IoSession;
 
 #include "common/io/read.h"
-#include "common/io/http/client.h"
-#include "common/io/session.h"
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
-Constructors
+Session roles
 ***********************************************************************************************************************************/
-HttpSession *httpSessionNew(HttpClient *client, IoSession *session);
+typedef enum
+{
+    ioSessionRoleClient,                                            // Client session
+    ioSessionRoleServer,                                            // Server session
+} IoSessionRole;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Move to a new parent mem context
-HttpSession *httpSessionMove(HttpSession *this, MemContext *parentNew);
+// Close the session
+void ioSessionClose(IoSession *this);
 
-// Work with the session has finished cleanly and it can be reused
-void httpSessionDone(HttpSession *this);
+// Move to a new parent mem context
+IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Session file descriptor, -1 if none
+int ioSessionFd(IoSession *this);
+
 // Read interface
-IoRead *httpSessionIoRead(HttpSession *this);
+IoRead *ioSessionIoRead(IoSession *this);
 
 // Write interface
-IoWrite *httpSessionIoWrite(HttpSession *this);
+IoWrite *ioSessionIoWrite(IoSession *this);
+
+// Session role
+IoSessionRole ioSessionRole(const IoSession *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpSessionFree(HttpSession *this);
+void ioSessionFree(IoSession *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_HTTP_SESSION_TYPE                                                                                             \
-    HttpSession *
-#define FUNCTION_LOG_HTTP_SESSION_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "HttpSession", buffer, bufferSize)
+String *ioSessionToLog(const IoSession *this);
+
+#define FUNCTION_LOG_IO_SESSION_TYPE                                                                                               \
+    IoSession *
+#define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                  \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
 
 #endif

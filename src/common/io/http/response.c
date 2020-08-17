@@ -10,7 +10,6 @@ HTTP Response
 #include "common/io/http/response.h"
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
-#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -244,9 +243,14 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (strSize(status) < sizeof(HTTP_VERSION) + 4)
                 THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strZ(strTrim(status)));
 
-            // Check status starts with the correct http version
-             if (!strBeginsWith(status, HTTP_VERSION_STR))
-                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION, strZ(status));
+            // If HTTP/1.0 then the connection will be closed on content eof since connections are not reused by default
+            if (strBeginsWith(status, HTTP_VERSION_10_STR))
+            {
+                this->closeOnContentEof = true;
+            }
+            // Else check that the version is the default (1.1)
+            else if (!strBeginsWith(status, HTTP_VERSION_STR))
+                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION " or " HTTP_VERSION_10, strZ(status));
 
             // Read status code
             status = strSub(status, sizeof(HTTP_VERSION));
@@ -311,7 +315,6 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 // prevents doing a retry on the next request when using the closed connection.
                 if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
                     this->closeOnContentEof = true;
-
             }
             while (1);
 

@@ -10,6 +10,8 @@ S3 Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -23,6 +25,11 @@ S3 Storage
 Storage type
 ***********************************************************************************************************************************/
 STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
+
+/***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_S3_DELETE_MAX                                       1000
 
 /***********************************************************************************************************************************
 S3 HTTP headers
@@ -794,8 +801,8 @@ Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *secretAccessKey, const String *securityToken, size_t partSize, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -841,7 +848,7 @@ storageS3New(
             .secretAccessKey = strDup(secretAccessKey),
             .securityToken = strDup(securityToken),
             .partSize = partSize,
-            .deleteMax = deleteMax,
+            .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
@@ -851,12 +858,17 @@ storageS3New(
         };
 
         // Create the HTTP client used to service requests
-        driver->httpClient = httpClientNew(host == NULL ? driver->bucketEndpoint : host, port, timeout, verifyPeer, caFile, caPath);
+        if (host == NULL)
+            host = driver->bucketEndpoint;
+
+        driver->httpClient = httpClientNew(
+            tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
         this = storageNew(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
