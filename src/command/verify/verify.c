@@ -826,18 +826,10 @@ verifyArchive(void *data)
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
         };
 
-        // Initialize the WAL range
-        WalRange walRange =
-        {
-            .start = NULL,
-            .stop = NULL,
-            .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
-        };
-        lstAdd(archiveIdRange.walRangeList, &walRange);
-
         if (strLstSize(jobData->walPathList) == 0)
         {
-/* CSHANG Here I should pobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" and then
+/* CSHANG Here I should pobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (actually,
+given the note below on S3 maybe we get everything and then create lists: history, WALpaths, junk) and then
  Create the stringlist files based on what last history file has: I only need the latest history file since history is continually
  copied from each to the next.
 
@@ -861,7 +853,6 @@ verifyArchive(void *data)
         // If there are WAL paths then get the file lists
         if (strLstSize(jobData->walPathList) > 0)
         {
-
             do
             {
                 String *walPath = strLstGet(jobData->walPathList, 0);
@@ -901,14 +892,8 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
 
                         archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
 
-                        // Add the archiveIdRange to the jobData archiveIdRangeList
-                        lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
-
-
-/* CSHANG Maybe here we check to see if there is alread a WalRangList for this archiveID. If so, we should start with that and pass it to the function.
-*/
-createArchiveIdRange(&archiveIdRange, jobData->walFileList, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(jobData->archiveIdRangeList))->walRangeList),
-&jobData->jobErrorTotal);
+                        createArchiveIdRange(
+                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
                     }
                 }
 
