@@ -217,6 +217,67 @@ Questions/Concerns
 //     else
 //         THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 // }
+//***********************************************************************************************************************************
+/* CSHANG NOTES for PITR, For example:
+postgres@pg-primary:~$ more /var/lib/pgbackrest/archive/demo/12-1/00000002.history
+1	0/501C4D0	before 2020-08-10 17:14:51.275288+00
+
+postgres@pg-primary:~$ more /var/lib/pgbackrest/archive/demo/12-1/00000003.history
+1	0/501C4D0	before 2020-08-10 17:14:51.275288+00
+
+
+2	0/7000000	before 2000-01-01 00:00:00+00
+
+And archive has:
+var/lib/pgbackrest/archive/demo/12-1/0000000100000000:
+000000010000000000000001-da5d050e95663fe95f52dd5059db341b296ae1fa.gz
+000000010000000000000002.00000028.backup
+000000010000000000000002-498acf8c1dc48233f305bdd24cbb7bdc970d1268.gz
+000000010000000000000003.00000028.backup
+000000010000000000000003-b323c5739356590e18aa75c8079ec9ff06cb32b7.gz
+000000010000000000000004.00000028.backup
+000000010000000000000004-0e54893dcff383538d3f6fd93f59b62e2bb42432.gz
+000000010000000000000005-b1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz  <-- timeline switch
+000000010000000000000006-a1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000200000000:
+000000020000000000000005-74bd3036721ccfdfec648fe1b6fd2cc7b60fe310.gz
+000000020000000000000006.00000028.backup
+000000020000000000000006-c6d2580ccd6fbd2ee83bb4bf5cb445f673eb17ff.gz <-- timeline switch at 2 0/7 but nothing after this so it won't
+                                                            be found but that's OK -or- can't play on timeline 1 to the WAL switch?
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000300000000:
+000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
+
+So if we had a list of timelineWalSwitch:
+000000010000000000000005
+000000020000000000000007
+
+And created another list of expectedTimelineWal (each switch file but timeline incremented)
+000000020000000000000005
+000000030000000000000007
+
+So we can check each backup for consistency and when we say that we mean the backup and all of the prior backups it relies on. For
+example, if full backup has
+start 000000010000000000000001, stop 000000010000000000000004   FULL
+start 000000020000000000000005, stop 000000020000000000000006   INCR depends on FULL
+The if 000000010000000000000003 is missing/corrupt then FULL and then everything that depends on it must be marked invalid.
+
+Once we know a backup is "consistent" then we need to check how far it can play forward. So, technically, the FULL could play through
+the timeline 1 to 000000010000000000000006 (although it is not clear to me how this can be since PG would skip it because PG will be
+following the progression through the history file) or through to the current 000000030000000000000007 is we follow the timeline
+switches and there are no gaps.
+
+    // Check if there was a timeline change
+    if (strCmp(strSubN(range[x]->stop, 0, 8), strSubN(range[x+1], 0, 8)) != 0)
+    {
+        uint32_t stopTimeline = (uint32_t)strtol(strZ(strSubN(range[x]stop, 0, 8)), NULL, 16);
+        uint32_t currentTimeline = (uint32_t)strtol(strZ(strSubN(range[x+1], 0, 8)), NULL, 16);
+
+But the timeline+1 true? Could we skip to timeline 3 if there was a problem with timeline 2? But shouldn't that be in the history file?
+        if (currentTimeline == stopTimeline + 1)
+        {
+*/
 
 /***********************************************************************************************************************************
 Load a file into memory
@@ -618,23 +679,33 @@ typedef struct VerifyJobData
 
 
 
+
+/***********************************************************************************************************************************
+Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
+***********************************************************************************************************************************/
 static void
-createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, WalRange *walRange, unsigned int *jobErrorTotal)
+createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
-        FUNCTION_TEST_PARAM_P(WAL_RANGE, walRange);
+        FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdRange != NULL);
     ASSERT(walFileList != NULL);
-    ASSERT(walRange != NULL);
+    ASSERT(archiveIdRangeList != NULL);
+
+    // Initialize the WAL range
+    WalRange walRange =
+    {
+        .start = NULL,
+        .stop = NULL,
+        .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
+    };
 
     unsigned int walFileIdx = 0;
-    unsigned int walRangeSizeOrig = lstSize(archiveIdRange->walRangeList);
-    unsigned int walRangeAdded = 0;
 
     do
     {
@@ -680,129 +751,35 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Wa
                 continue;
             }
         }
-/* CSHANG Here we should probable remove and skip the rest of the WAL file if the switch WAL is found. For example:
-postgres@pg-primary:~$ more /var/lib/pgbackrest/archive/demo/12-1/00000002.history
-1	0/501C4D0	before 2020-08-10 17:14:51.275288+00
 
-postgres@pg-primary:~$ more /var/lib/pgbackrest/archive/demo/12-1/00000003.history
-1	0/501C4D0	before 2020-08-10 17:14:51.275288+00
-
-
-2	0/7000000	before 2000-01-01 00:00:00+00
-
-And archive has:
-var/lib/pgbackrest/archive/demo/12-1/0000000100000000:
-000000010000000000000001-da5d050e95663fe95f52dd5059db341b296ae1fa.gz
-000000010000000000000002.00000028.backup
-000000010000000000000002-498acf8c1dc48233f305bdd24cbb7bdc970d1268.gz
-000000010000000000000003.00000028.backup
-000000010000000000000003-b323c5739356590e18aa75c8079ec9ff06cb32b7.gz
-000000010000000000000004.00000028.backup
-000000010000000000000004-0e54893dcff383538d3f6fd93f59b62e2bb42432.gz
-000000010000000000000005-b1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz  <-- timeline switch
-000000010000000000000006-a1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz
-
-/var/lib/pgbackrest/archive/demo/12-1/0000000200000000:
-000000020000000000000005-74bd3036721ccfdfec648fe1b6fd2cc7b60fe310.gz
-000000020000000000000006.00000028.backup
-000000020000000000000006-c6d2580ccd6fbd2ee83bb4bf5cb445f673eb17ff.gz <-- timeline switch at 2 0/7 but nothing after this so it won't be found but that's OK
-
-/var/lib/pgbackrest/archive/demo/12-1/0000000300000000:
-000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
-
-So if we had a list of timelineWalSwitch:
-000000010000000000000005
-000000020000000000000007
-
-And created another list of expectedTimelineWal (each switch file but timeline incremented)
-000000020000000000000005
-000000030000000000000007
-
-So if walSegment exists in the timelineWalSwitch, then remove it and everything after it from the walFileList and we're done, then
-
-range[last].start = 000000010000000000000001
-range[last].stop = 000000010000000000000004
-
-Then when the last timeline is provided to this function on the next timeline Wal path, the first file will fall through to the
-distance check list and it will fail that, so then we would check in the expectedTimelineWal for it - and we'll find it, but then we
-must also check that the stop file is walSegment - 1 timeline - one distance
-000000020000000000000005 minus 1 timeline = 000000010000000000000005 then this must be one segment distance from stop file, meaning
-000000010000000000000005 - stop 000000010000000000000004 = one wal segment size distance so we can use it.
-will update the range to be
-range[last].start = 000000010000000000000001
-range[last].stop = 000000020000000000000005
-
-Then we'll continue on and 000000020000000000000006 is not in the timelineWalSwitch list, and it will pass the distance test so
-we will then update the stop to be  range[last].stop = 000000020000000000000006  and since it's the last file in that timeline we're
-done for now until the next timeline.
-
-Finally, in the last timeline 00000003, the 000000030000000000000007 file is not in the timelineWalSwitch but it will fail the
-distance check for .stop = 000000020000000000000006 distance from 000000030000000000000007 so we'll check the expectedTimelineWal and
-it will be in there, so we will update the .stop file again to be 000000030000000000000007.
-
-*/
         // Initialize the range if it has not yet been initialized and continue to next
-        if (walRange->start == NULL)
+        if (walRange.start == NULL)
         {
-            walRange->start = walSegment;
-            walRange->stop = walSegment;
+            walRange.start = walSegment;
+            walRange.stop = walSegment;
             walFileIdx++;
             continue;
         }
 
-        bool startNewRange = false;
-
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
         // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
-// CSHANG Can I use walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)?
         if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
-            pgLsnFromWalSegment(walRange->stop, archiveIdRange->pgWalInfo.size) ==
-                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange->stop, "FE"))
+            pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
+                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
                 ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size))
         {
-            walRange->stop = walSegment;
+            walRange.stop = walSegment;
         }
         else
         {
-            startNewRange = true;
-
-            // Check if there was a timeline change
-            if (strCmp(strSubN(walRange->stop, 0, 8), strSubN(walSegment, 0, 8)) != 0)
-            {
-                uint32_t stopTimeline = (uint32_t)strtol(strZ(strSubN(walRange->stop, 0, 8)), NULL, 16);
-                uint32_t currentTimeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
-
-                if (currentTimeline == stopTimeline + 1)
-                {
-                    String *walTimeline = strSubN(walRange->stop, 0, 8);
-                    strCat(walTimeline, strSubN(walSegment, 8, 16));
-/* CSHANG NO - we need to use the history file because we can have any number of WAL after a timeline switch.
-*/
-                    // If new walSegment is 000000020000000000000005 then walTimeline = 000000010000000000000005 so if
-                    // stop segment equal walTimeline (000000010000000000000005) or is one prior segment distance from it
-                    // (000000010000000000000004) then we can continue the range
-                    //
-                    if (strEq(walTimeline, walRange->stop) ||
-                        (pgLsnFromWalSegment(walTimeline, archiveIdRange->pgWalInfo.size) -
-                         pgLsnFromWalSegment(walRange->stop, archiveIdRange->pgWalInfo.size) ==
-                            ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange->stop, "FE"))
-                            ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size)))
-                    {
-                        walRange->stop = walSegment;
-                        startNewRange = false;
-                    }
-                }
-            }
-
             // A gap was found so add the current range to the list and start a new range
-            if (startNewRange)
+            lstAdd(archiveIdRange->walRangeList, &walRange);
+            walRange = (WalRange)
             {
-                lstAdd(archiveIdRange->walRangeList, walRange);
-                walRangeAdded++;
-                walRange->start = strDup(walSegment);
-                walRange->stop = strDup(walSegment);
-            }
+                .start = strDup(walSegment),
+                .stop = strDup(walSegment),
+            };
         }
 
         walFileIdx++;
@@ -810,11 +787,15 @@ it will be in there, so we will update the .stop file again to be 00000003000000
     while (walFileIdx < strLstSize(walFileList));
 
     // If walRange containes a range, then add the last walRange to the list
-    if (walRangeAdded > lstSize(archiveIdRange->walRangeList) - walRangeSizeOrig)
-        lstAdd(archiveIdRange->walRangeList, walRange);
+    if (walRange.start != NULL)
+        lstAdd(archiveIdRange->walRangeList, &walRange);
 
-    // Sort ascending by the stop file
-    lstSort(archiveIdRange->walRangeList, sortOrderAsc);
+    // Now if there are ranges for this archiveId then sort ascending by the stop file add them
+    if (lstSize(archiveIdRange->walRangeList) > 0)
+    {
+        lstSort(archiveIdRange->walRangeList, sortOrderAsc);
+        lstAdd(archiveIdRangeList, archiveIdRange);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -857,11 +838,11 @@ verifyArchive(void *data)
         if (strLstSize(jobData->walPathList) == 0)
         {
 /* CSHANG Here I should pobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" and then
- Create the stringlist files based on what hast history in is. I only need the latest history file since history is continually
+ Create the stringlist files based on what last history file has: I only need the latest history file since history is continually
  copied from each to the next.
-OR Maybe read the last walPathList to get the timeline and then read the XXXXX.history file to create a timelineSwitchList so that the rahe list generate can exclued the file if it is in the list - should not be checking it if it exists in old timeline because it is copied and completed in the next timeline
 
- NOTE!!! The timeline history file format is changed in version 9.3. Formats of versions 9.3 or later and earlier both are shown below but not in detail.
+ NOTE!!! The timeline history file format is changed in version 9.3. Formats of versions 9.3 or later and earlier both are shown
+ below but not in detail - so need to confirm this.
 
  Later version 9.3:
  timelineId	LSN	"reason"
@@ -928,21 +909,6 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
 */
 createArchiveIdRange(&archiveIdRange, jobData->walFileList, (WalRange *)lstGetLast(((ArchiveIdRange *)lstGetLast(jobData->archiveIdRangeList))->walRangeList),
 &jobData->jobErrorTotal);
-/* CSHANG WAIT!!! This is a problem because the range could have been UPDATED, so what we probably need to do is if the stop file has
-changed for the last one then update the jobData->archiveIdRangeList?
-*/
-    // // Now if there are new ranges for this archiveId then add them
-    // if (lstSize(archiveIdRange.walRangeList) > walRangeListSize)
-    // {
-    //     for (unsigned int rangeIdx = walRangeListSize; rangeIdx < lstSize(archiveIdRange.walRangeList); rangeIdx++)
-    //         lstAdd(jobData->archiveIdRangeList, lstGet(archiveIdRange.walRangeList, rangeIdx));
-    // }
-                        // createArchiveIdRange(
-                        //     &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
-
-/* CSHANG If the last stop file is in the timeline history OR it is 1 minus the timeline history, then check the first file in the
-next timeline. If the first file in the next timeline is the next expected history file then continue the range. WAIT! what if it is a duplicate? OR meets some other "skip" condition?
-*/
                     }
                 }
 
