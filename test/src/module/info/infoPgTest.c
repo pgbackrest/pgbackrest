@@ -18,10 +18,10 @@ testInfoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *info
         infoSaveValue(infoSaveData, STRDEF("backup:current"), STRDEF("20161219-212741F"), STRDEF("{}"));
 
     if (infoSaveSection(infoSaveData, STRDEF("db:backup"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("db:backup"), STRDEF("key"), STRDEF("value"));
+        infoSaveValue(infoSaveData, STRDEF("db:backup"), STRDEF("key"), STRDEF("\"value\""));
 
     if (infoSaveSection(infoSaveData, STRDEF("later"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("later"), STRDEF("key"), STRDEF("value"));
+        infoSaveValue(infoSaveData, STRDEF("later"), STRDEF("key"), STRDEF("\"value\""));
 }
 
 /***********************************************************************************************************************************
@@ -94,13 +94,13 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:backup]\n"
-            "key=value\n"
+            "key=\"value\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
             "\n"
             "[later]\n"
-            "key=value\n");
+            "key=\"value\"\n");
 
         String *callbackContent = strNew("");
         InfoPg *infoPg = NULL;
@@ -111,8 +111,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             callbackContent,
             "[backup:current] 20161219-212741F={}\n"
-                "[db:backup] key=value\n"
-                "[later] key=value\n",
+                "[db:backup] key=\"value\"\n"
+                "[later] key=\"value\"\n",
             "    check callback content");
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 

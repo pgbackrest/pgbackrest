@@ -1202,8 +1202,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Automatically run the expire command after a successful backup.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "The setting is enabled by default. Use caution when disabling this option; doing so will result in retaining all "
-                "backups and archives indefinitely which could cause your repository to run out of space."
+            "The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all "
+                "backups and archives indefinitely, which could cause your repository to run out of space. The expire command will "
+                "need to be run regularly to prevent this from happening."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3475,7 +3476,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Cipher used to encrypt the repository.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "The following repository types are supported:\n"
+            "The following cipher types are supported:\n"
             "\n"
             "* none - The repository is not encrypted\n"
             "* aes-256-cbc - Advanced Encryption Standard with 256 bit key length\n"
@@ -4901,6 +4902,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The following repository types are supported:\n"
             "\n"
+            "* azure - Azure Blob Storage Service\n"
             "* cifs - Like posix, but disables links and directory fsyncs\n"
             "* posix - Posix-compliant file systems\n"
             "* s3 - AWS Simple Storage Service"

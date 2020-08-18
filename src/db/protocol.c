@@ -52,7 +52,7 @@ dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *
             {
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    dbProtocolLocal.pgClientList = lstNew(sizeof(PgClient *));
+                    dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

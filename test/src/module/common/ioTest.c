@@ -2,6 +2,7 @@
 Test IO
 ***********************************************************************************************************************************/
 #include <fcntl.h>
+#include <netdb.h>
 
 #include "common/type/json.h"
 
@@ -278,6 +279,7 @@ testRun(void)
             "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
+        TEST_RESULT_BOOL(ioReadReadyP(read), true, "read defaults to ready");
         TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
@@ -325,7 +327,7 @@ testRun(void)
             "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
-        TEST_RESULT_INT(ioReadHandle(bufferRead), -1, "    handle invalid");
+        TEST_RESULT_INT(ioReadFd(bufferRead), -1, "    fd invalid");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
@@ -483,6 +485,7 @@ testRun(void)
             "create io write object");
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
+        TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write defaults to ready");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");
         TEST_RESULT_VOID(ioWriteStr(write, STRDEF("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
@@ -507,7 +510,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew("size2")), "    add filter to filter group");
 
         TEST_RESULT_VOID(ioWriteOpen(bufferWrite), "    open buffer write object");
-        TEST_RESULT_INT(ioWriteHandle(bufferWrite), -1, "    handle invalid");
+        TEST_RESULT_INT(ioWriteFd(bufferWrite), -1, "    fd invalid");
         TEST_RESULT_VOID(ioWriteLine(bufferWrite, BUFSTRDEF("AB")), "    write line");
         TEST_RESULT_VOID(ioWrite(bufferWrite, bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(bufferWrite, NULL), "    write 0 bytes");
@@ -528,7 +531,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("IoHandleRead, IoHandleWrite, and ioHandleWriteOneStr()"))
+    if (testBegin("IoFdRead, IoFdWrite, and ioFdWriteOneStr()"))
     {
         ioBufferSizeSet(16);
 
@@ -538,9 +541,10 @@ testRun(void)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioHandleWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), "move write");
+                TEST_ASSIGN(write, ioFdWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
                 ioWriteOpen(write);
-                TEST_RESULT_INT(ioWriteHandle(write), ((IoHandleWrite *)write->driver)->handle, "check write handle");
+                TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
+                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("test string 1")), "write test string");
@@ -562,10 +566,10 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
 
                 ioReadOpen(read);
-                TEST_RESULT_INT(ioReadHandle(read), ((IoHandleRead *)ioReadDriver(read))->handle, "check handle");
+                TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
                 TEST_RESULT_PTR(ioReadInterface(read), &read->interface, "check interface");
                 TEST_RESULT_PTR(ioReadDriver(read), read->driver, "check driver");
 
@@ -575,7 +579,11 @@ testRun(void)
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
 
-                TEST_ERROR(ioRead(read, buffer), FileReadError, "unable to read data from read test after 1000ms");
+                ((IoFdRead *)read->driver)->timeout = 1;
+                TEST_RESULT_BOOL(ioReadReadyP(read), false, "read is not ready (without throwing error)");
+                ((IoFdRead *)read->driver)->timeout = 1000;
+
+                TEST_ERROR(ioRead(read, buffer), FileReadError, "timeout after 1000ms waiting for read from 'read test'");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");
 
                 // Read a buffer that is transmitted in two parts with blocking on the read side
@@ -590,23 +598,83 @@ testRun(void)
                 // Check EOF
                 buffer = bufNew(16);
 
-                TEST_RESULT_UINT(ioHandleRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof");
-                TEST_RESULT_UINT(ioHandleRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof again");
+                TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof");
+                TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof again");
             }
             HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            ioHandleWriteOneStr(999999, strNew("test")), FileWriteError,
-            "unable to write to handle: [9] Bad file descriptor");
+        TEST_ERROR(ioFdWriteOneStr(999999, strNew("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.txt", testPath());
-        int fileHandle = open(strPtr(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
+        int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
-        TEST_RESULT_VOID(ioHandleWriteOneStr(fileHandle, strNew("test1\ntest2")), "write string to file");
+        TEST_RESULT_VOID(ioFdWriteOneStr(fd, strNew("test1\ntest2")), "write string to file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fdReadyRetry() edge conditions");
+
+        TimeMSec timeout = 5757;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, true, &timeout, 0), true, "first retry does not modify timeout");
+        TEST_RESULT_UINT(timeout, 5757, "    check timeout");
+
+        timeout = 0;
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec() + 10000), true, "retry before timeout");
+        TEST_RESULT_BOOL(timeout > 0, true, "    check timeout");
+
+        TEST_RESULT_BOOL(fdReadyRetry(-1, EINTR, false, &timeout, timeMSec()), false, "no retry after timeout");
+        TEST_ERROR(fdReadyRetry(-1, EINVAL, true, &timeout, 0), KernelError, "unable to poll socket: [22] Invalid argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write is not ready on bad socket connection");
+
+        struct addrinfo hints = (struct addrinfo)
+        {
+            .ai_family = AF_UNSPEC,
+            .ai_socktype = SOCK_STREAM,
+            .ai_protocol = IPPROTO_TCP,
+        };
+
+        int result;
+        const char *hostBad = "172.31.255.255";
+        struct addrinfo *hostBadAddress;
+
+        if ((result = getaddrinfo(hostBad, "7777", &hints, &hostBadAddress)) != 0)
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", hostBad, result, gai_strerror(result));
+        }
+
+        TRY_BEGIN()
+        {
+            int fd = socket(hostBadAddress->ai_family, hostBadAddress->ai_socktype, hostBadAddress->ai_protocol);
+            THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+
+            // Set socket non-blocking
+            int flags;
+            THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
+            THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
+
+            // Attempt connection
+            CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
+
+            // Create file descriptor write and wait for timeout
+            IoWrite *write = NULL;
+            TEST_ASSIGN(write, ioFdWriteNew(STR(hostBad), fd, 100), "new fd write");
+
+            TEST_RESULT_BOOL(ioWriteReadyP(write), false, "write is not ready");
+            TEST_ERROR(
+                ioWriteReadyP(write, .error = true), FileWriteError, "timeout after 100ms waiting for write to '172.31.255.255'");
+        }
+        FINALLY()
+        {
+            // This needs to be freed or valgrind will complain
+            freeaddrinfo(hostBadAddress);
+        }
+        TRY_END();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

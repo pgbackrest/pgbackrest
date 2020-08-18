@@ -32,7 +32,7 @@ typedef struct StorageWritePosix
 
     const String *nameTmp;
     const String *path;
-    int handle;
+    int fd;                                                         // File descriptor
 } StorageWritePosix;
 
 /***********************************************************************************************************************************
@@ -52,11 +52,11 @@ Since open is called more than once use constants to make sure these parameters 
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
-Close file handle
+Close file descriptor
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
 {
-    THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
+    THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -73,31 +73,31 @@ storageWritePosixOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->handle == -1);
+    ASSERT(this->fd == -1);
 
     // Open the file
-    this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
 
     // Attempt to create the path if it is missing
-    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)                                        // {vm_covered}
+    if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
     }
 
     // Handle errors
-    if (this->handle == -1)
+    if (this->fd == -1)
     {
         if (errno == ENOENT)                                                                                        // {vm_covered}
-            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strPtr(this->interface.name));
+            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strPtr(this->interface.name));             // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));               // {vm_covered}
     }
 
-    // Set free callback to ensure file handle is freed
+    // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
 
     // Update user/group owner
@@ -114,8 +114,8 @@ storageWritePosixOpen(THIS_VOID)
             updateGroupId = (gid_t)-1;
 
         THROW_ON_SYS_ERROR_FMT(
-            chown(strPtr(this->nameTmp), updateUserId, updateGroupId) == -1,
-            FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
+            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
+            strZ(this->nameTmp));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -136,11 +136,11 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    ASSERT(this->handle != -1);
+    ASSERT(this->fd != -1);
 
     // Write the data
-    if (write(this->handle, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
+    if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -160,35 +160,32 @@ storageWritePosixClose(THIS_VOID)
     ASSERT(this != NULL);
 
     // Close if the file has not already been closed
-    if (this->handle != -1)
+    if (this->fd != -1)
     {
         // Sync the file
         if (this->interface.syncFile)
-            THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strPtr(this->nameTmp));
+            THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
 
         // Close the file
         memContextCallbackClear(this->memContext);
-        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
-        this->handle = -1;
+        THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+        this->fd = -1;
 
         // Update modified time
         if (this->interface.timeModified != 0)
         {
             THROW_ON_SYS_ERROR_FMT(
                 utime(
-                    strPtr(this->nameTmp),
+                    strZ(this->nameTmp),
                     &((struct utimbuf){.actime = this->interface.timeModified, .modtime = this->interface.timeModified})) == -1,
-                FileInfoError, "unable to set time for '%s'", strPtr(this->nameTmp));
+                FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
         }
 
         // Rename from temp file
         if (this->interface.atomic)
         {
-            if (rename(strPtr(this->nameTmp), strPtr(this->interface.name)) == -1)
-            {
-                THROW_SYS_ERROR_FMT(
-                    FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->interface.name));
-            }
+            if (rename(strZ(this->nameTmp), strZ(this->interface.name)) == -1)
+                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         }
 
         // Sync the path
@@ -200,10 +197,10 @@ storageWritePosixClose(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Get handle (file descriptor)
+Get file descriptor
 ***********************************************************************************************************************************/
 static int
-storageWritePosixHandle(const THIS_VOID)
+storageWritePosixFd(const THIS_VOID)
 {
     THIS(const StorageWritePosix);
 
@@ -213,7 +210,7 @@ storageWritePosixHandle(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->handle);
+    FUNCTION_TEST_RETURN(this->fd);
 }
 
 /**********************************************************************************************************************************/
@@ -252,7 +249,7 @@ storageWritePosixNew(
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .path = strPath(name),
-            .handle = -1,
+            .fd = -1,
 
             .interface = (StorageWriteInterface)
             {
@@ -271,7 +268,7 @@ storageWritePosixNew(
                 .ioInterface = (IoWriteInterface)
                 {
                     .close = storageWritePosixClose,
-                    .handle = storageWritePosixHandle,
+                    .fd = storageWritePosixFd,
                     .open = storageWritePosixOpen,
                     .write = storageWritePosix,
                 },
@@ -279,7 +276,7 @@ storageWritePosixNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : driver->interface.name;
+        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
 
         this = storageWriteNew(driver, &driver->interface);
     }

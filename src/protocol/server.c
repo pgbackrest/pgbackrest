@@ -61,7 +61,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             .name = strDup(name),
             .read = read,
             .write = write,
-            .handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
+            .handlerList = lstNewP(sizeof(ProtocolServerProcessHandler)),
         };
 
         // Send the protocol greeting
@@ -217,7 +217,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                     else if (strEq(command, PROTOCOL_COMMAND_EXIT_STR))
                         exit = true;
                     else
-                        THROW_FMT(ProtocolError, "invalid command '%s'", strPtr(command));
+                        THROW_FMT(ProtocolError, "invalid command '%s'", strZ(command));
                 }
 
                 // Send keep alives to remotes.  When a local process is doing work that does not involve the remote it is important
@@ -313,5 +313,5 @@ protocolServerIoWrite(const ProtocolServer *this)
 String *
 protocolServerToLog(const ProtocolServer *this)
 {
-    return strNewFmt("{name: %s}", strPtr(this->name));
+    return strNewFmt("{name: %s}", strZ(this->name));
 }

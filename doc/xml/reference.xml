@@ -649,6 +649,7 @@
 
                         <text>The following repository types are supported:
                         <ul>
+                            <li><id>azure</id> - Azure Blob Storage Service</li>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
@@ -661,7 +662,7 @@
                     <config-key id="repo-cipher-type" name="Repository Cipher Type">
                         <summary>Cipher used to encrypt the repository.</summary>
 
-                        <text>The following repository types are supported:
+                        <text>The following cipher types are supported:
                         <ul>
                             <li><id>none</id> - The repository is not encrypted</li>
                             <li><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</li>
@@ -761,7 +762,7 @@
                     <config-key id="expire-auto" name="Expire Auto">
                         <summary>Automatically run the <cmd>expire</cmd> command after a successful backup.</summary>
 
-                        <text>The setting is enabled by default. Use caution when disabling this option; doing so will result in retaining all backups and archives indefinitely which could cause your repository to run out of space.</text>
+                        <text>The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all backups and archives indefinitely, which could cause your repository to run out of space. The <cmd>expire</cmd> command will need to be run regularly to prevent this from happening.</text>
 
                         <example>y</example>
                     </config-key>

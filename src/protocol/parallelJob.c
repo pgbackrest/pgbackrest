@@ -267,6 +267,6 @@ protocolParallelJobToLog(const ProtocolParallelJob *this)
 {
     return strNewFmt(
         "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}", protocolParallelJobToConstZ(this->state),
-        strPtr(varToLog(this->key)), strPtr(protocolCommandToLog(this->command)), this->code, strPtr(strToLog(this->message)),
-        strPtr(varToLog(this->result)));
+        strZ(varToLog(this->key)), strZ(protocolCommandToLog(this->command)), this->code, strZ(strToLog(this->message)),
+        strZ(varToLog(this->result)));
 }

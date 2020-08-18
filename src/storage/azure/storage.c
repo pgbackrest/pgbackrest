@@ -11,6 +11,8 @@ Azure Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -132,7 +134,7 @@ storageAzureAuth(
                 if (!strBeginsWithZ(headerKey, "x-ms-"))
                     continue;
 
-                strCatFmt(headerCanonical, "%s:%s\n", strPtr(headerKey), strPtr(httpHeaderGet(httpHeader, headerKey)));
+                strCatFmt(headerCanonical, "%s:%s\n", strZ(headerKey), strZ(httpHeaderGet(httpHeader, headerKey)));
             }
 
             // Generate canonical query
@@ -147,7 +149,7 @@ storageAzureAuth(
                 {
                     const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
 
-                    strCatFmt(queryCanonical, "\n%s:%s", strPtr(queryKey), strPtr(httpQueryGet(query, queryKey)));
+                    strCatFmt(queryCanonical, "\n%s:%s", strZ(queryKey), strZ(httpQueryGet(query, queryKey)));
                 }
             }
 
@@ -171,12 +173,12 @@ storageAzureAuth(
                 "%s"                                                    // Canonicalized headers
                 "/%s%s"                                                 // Canonicalized account/uri
                 "%s",                                                   // Canonicalized query
-                strPtr(verb), strEq(contentLength, ZERO_STR) ? "" : strPtr(contentLength), contentMd5 == NULL ? "" : strPtr(contentMd5),
-                strPtr(dateTime), strPtr(headerCanonical), strPtr(this->account), strPtr(uri), strPtr(queryCanonical));
+                strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
+                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
 
             // Generate authorization header
-            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strPtr(this->sharedKey)));
-            decodeToBin(encodeBase64, strPtr(this->sharedKey), bufPtr(keyBin));
+            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
+            decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
             bufUsedSet(keyBin, bufSize(keyBin));
 
             char authHmacBase64[45];
@@ -185,7 +187,7 @@ storageAzureAuth(
                 HASH_TYPE_SHA256_SIZE, authHmacBase64);
 
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strPtr(this->account), authHmacBase64));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
         }
         // SAS authentication
         else
@@ -219,7 +221,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepend uri prefix
-        param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strPtr(this->uriPrefix), strPtr(param.uri));
+        param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strZ(this->uriPrefix), strZ(param.uri));
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -343,7 +345,7 @@ storageAzureListInternal(
         if (strSize(path) == 1)
             basePrefix = EMPTY_STR;
         else
-            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
+            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
         const String *expressionPrefix = regExpPrefix(expression);
@@ -358,7 +360,7 @@ storageAzureListInternal(
             if (strEmpty(basePrefix))
                 queryPrefix = expressionPrefix;
             else
-                queryPrefix = strNewFmt("%s%s", strPtr(basePrefix), strPtr(expressionPrefix));
+                queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
         // Loop as long as a continuation token returned
@@ -469,7 +471,7 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.size = cvtZToUInt64(strZ(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
@@ -517,7 +519,7 @@ storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const Strin
         {
             ASSERT(xml != NULL);
 
-            info.size =  cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
+            info.size =  cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
             info.timeModified = httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
         }
     }
@@ -623,7 +625,7 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     if (type == storageTypeFile)
     {
         StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
-        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strPtr(data->path), strPtr(name)));
+        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -728,9 +730,8 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
-            .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strPtr(account)) : host,
-            .uriPrefix = host == NULL ?
-                strNewFmt("/%s", strPtr(container)) : strNewFmt("/%s/%s", strPtr(account), strPtr(container)),
+            .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strZ(account)) : host,
+            .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
         // Store shared key or parse sas query
@@ -740,7 +741,8 @@ storageAzureNew(
             driver->sasKey = httpQueryNewStr(key);
 
         // Create the http client used to service requests
-        driver->httpClient = httpClientNew(driver->host, port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(
+            tlsClientNew(sckClientNew(driver->host, port, timeout), driver->host, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

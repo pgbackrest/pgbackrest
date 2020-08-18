@@ -739,6 +739,22 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
+src/common/io/fdRead.c:
+  class: core
+  type: c
+
+src/common/io/fdRead.h:
+  class: core
+  type: c/h
+
+src/common/io/fdWrite.c:
+  class: core
+  type: c
+
+src/common/io/fdWrite.h:
+  class: core
+  type: c/h
+
 src/common/io/filter/buffer.c:
   class: core
   type: c
@@ -783,30 +799,6 @@ src/common/io/filter/size.h:
   class: core
   type: c/h
 
-src/common/io/handleRead.c:
-  class: core
-  type: c
-
-src/common/io/handleRead.h:
-  class: core
-  type: c/h
-
-src/common/io/handleWrite.c:
-  class: core
-  type: c
-
-src/common/io/handleWrite.h:
-  class: core
-  type: c/h
-
-src/common/io/http/cache.c:
-  class: core
-  type: c
-
-src/common/io/http/cache.h:
-  class: core
-  type: c/h
-
 src/common/io/http/client.c:
   class: core
   type: c
@@ -836,6 +828,30 @@ src/common/io/http/query.c:
   type: c
 
 src/common/io/http/query.h:
+  class: core
+  type: c/h
+
+src/common/io/http/request.c:
+  class: core
+  type: c
+
+src/common/io/http/request.h:
+  class: core
+  type: c/h
+
+src/common/io/http/response.c:
+  class: core
+  type: c
+
+src/common/io/http/response.h:
+  class: core
+  type: c/h
+
+src/common/io/http/session.c:
+  class: core
+  type: c
+
+src/common/io/http/session.h:
   class: core
   type: c/h
 
@@ -896,10 +912,6 @@ src/common/io/tls/session.c:
   type: c
 
 src/common/io/tls/session.h:
-  class: core
-  type: c/h
-
-src/common/io/tls/session.intern.h:
   class: core
   type: c/h
 
@@ -1371,6 +1383,34 @@ src/protocol/server.h:
   class: core
   type: c/h
 
+src/storage/azure/read.c:
+  class: core
+  type: c
+
+src/storage/azure/read.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.c:
+  class: core
+  type: c
+
+src/storage/azure/storage.h:
+  class: core
+  type: c/h
+
+src/storage/azure/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/azure/write.c:
+  class: core
+  type: c
+
+src/storage/azure/write.h:
+  class: core
+  type: c/h
+
 src/storage/cifs/storage.c:
   class: core
   type: c
@@ -1651,6 +1691,10 @@ test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Env/Host/HostAzureTest.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Env/Host/HostBackupTest.pm:
   class: test/harness
   type: perl
@@ -1755,6 +1799,14 @@ test/src/common/harnessPq.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessServer.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessServer.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessStorage.c:
   class: test/harness
   type: c
@@ -1772,14 +1824,6 @@ test/src/common/harnessTest.h:
   type: c/h
 
 test/src/common/harnessTest.intern.h:
-  class: test/harness
-  type: c/h
-
-test/src/common/harnessTls.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessTls.h:
   class: test/harness
   type: c/h
 
@@ -2048,6 +2092,10 @@ test/src/module/postgres/interfaceTest.c:
   type: c
 
 test/src/module/protocol/protocolTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/azureTest.c:
   class: test/module
   type: c
 

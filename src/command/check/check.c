@@ -136,9 +136,8 @@ checkPrimary(const DbGetResult dbGroup)
         const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
 
         LOG_INFO_FMT(
-            "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-            strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-            strPtr(walSegmentFile)))));
+            "WAL segment %s successfully archived to '%s'", strZ(walSegment),
+            strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walSegmentFile)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();

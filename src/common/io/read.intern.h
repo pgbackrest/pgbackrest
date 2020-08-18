@@ -19,8 +19,12 @@ typedef struct IoReadInterface
     bool (*eof)(void *driver);
     void (*close)(void *driver);
     bool (*open)(void *driver);
-    int (*handle)(const void *driver);
+    int (*fd)(const void *driver);
     size_t (*read)(void *driver, Buffer *buffer, bool block);
+
+    // Are there bytes ready to read immediately? There are no guarantees on how much data is available to read but it must be at
+    // least one byte. Optionally error when read is not ready.
+    bool (*ready)(void *driver, bool error);
 } IoReadInterface;
 
 #define ioReadNewP(driver, ...)                                                                                                    \

@@ -240,6 +240,9 @@ Memory context getters
 // Current memory context
 MemContext *memContextCurrent(void);
 
+// Is the mem context currently being freed?
+bool memContextFreeing(MemContext *this);
+
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 MemContext *memContextPrior(void);
 
@@ -249,6 +252,9 @@ MemContext *memContextTop(void);
 
 // Mem context name
 const char *memContextName(MemContext *this);
+
+// Get total size of mem context and all children
+size_t memContextSize(const MemContext *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

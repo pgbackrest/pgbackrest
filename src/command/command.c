@@ -8,6 +8,7 @@ Common Command Routines
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
+#include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -47,7 +48,7 @@ cmdBegin(bool logOption)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strNewFmt("%s command begin", strPtr(cfgCommandRoleName()));
+            String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
 
             if (logOption)
             {
@@ -70,8 +71,8 @@ cmdBegin(bool logOption)
                         if (commandParamIdx != 0)
                             strCatFmt(info, ", ");
 
-                        if (strchr(strPtr(commandParam), ' ') != NULL)
-                            commandParam = strNewFmt("\"%s\"", strPtr(commandParam));
+                        if (strchr(strZ(commandParam), ' ') != NULL)
+                            commandParam = strNewFmt("\"%s\"", strZ(commandParam));
 
                         strCat(info, commandParam);
                     }
@@ -123,8 +124,8 @@ cmdBegin(bool logOption)
                                     strLstAdd(
                                         valueList,
                                         strNewFmt(
-                                            "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
-                                                strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                            "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
                                 }
                             }
                             // Generate values for list options
@@ -146,17 +147,17 @@ cmdBegin(bool logOption)
 
                                 strCatFmt(info, " --%s", cfgOptionName(optionId));
 
-                                if (strchr(strPtr(value), ' ') != NULL)
-                                    value = strNewFmt("\"%s\"", strPtr(value));
+                                if (strchr(strZ(value), ' ') != NULL)
+                                    value = strNewFmt("\"%s\"", strZ(value));
 
-                                strCatFmt(info, "=%s", strPtr(value));
+                                strCatFmt(info, "=%s", strZ(value));
                             }
                         }
                     }
                 }
             }
 
-            LOG(cfgLogLevelDefault(), 0, strPtr(info));
+            LOG(cfgLogLevelDefault(), 0, strZ(info));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -184,22 +185,22 @@ cmdEnd(int code, const String *errorMessage)
             String *sckClientStat = sckClientStatStr();
 
             if (sckClientStat != NULL)
-                LOG_DETAIL(strPtr(sckClientStat));
+                LOG_DETAIL(strZ(sckClientStat));
 
             // Log tls statistics
             String *tlsClientStat = tlsClientStatStr();
 
             if (tlsClientStat != NULL)
-                LOG_DETAIL(strPtr(tlsClientStat));
+                LOG_DETAIL(strZ(tlsClientStat));
 
             // Log http statistics
             String *httpClientStat = httpClientStatStr();
 
             if (httpClientStat != NULL)
-                LOG_INFO(strPtr(httpClientStat));
+                LOG_INFO(strZ(httpClientStat));
 
             // Basic info on command end
-            String *info = strNewFmt("%s command end: ", strPtr(cfgCommandRoleName()));
+            String *info = strNewFmt("%s command end: ", strZ(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {
@@ -211,7 +212,7 @@ cmdEnd(int code, const String *errorMessage)
             else
                 strCat(info, errorMessage);
 
-            LOG(cfgLogLevelDefault(), 0, strPtr(info));
+            LOG(cfgLogLevelDefault(), 0, strZ(info));
         }
         MEM_CONTEXT_TEMP_END();
     }

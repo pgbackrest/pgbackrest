@@ -128,6 +128,6 @@ String *
 storageReadToLog(const StorageRead *this)
 {
     return strNewFmt(
-        "{type: %s, name: %s, ignoreMissing: %s}", strPtr(this->interface->type), strPtr(strToLog(this->interface->name)),
+        "{type: %s, name: %s, ignoreMissing: %s}", strZ(this->interface->type), strZ(strToLog(this->interface->name)),
         cvtBoolToConstZ(this->interface->ignoreMissing));
 }

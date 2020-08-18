@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Test Protocol
 ***********************************************************************************************************************************/
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/regExp.h"
@@ -193,6 +193,27 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(7), false, "pg is remote");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("protocolHelperClientFree()"))
+    {
+        TEST_TITLE("free with errors output as warnings");
+
+        // Create and free a mem context to give us an error to use
+        MemContext *memContext = memContextNew("test");
+        memContextFree(memContext);
+
+        // Create bogus client and exec with the freed memcontext to generate errors
+        ProtocolClient client = {.memContext = memContext, .name = STRDEF("test")};
+        Exec exec = {.memContext = memContext, .name = STRDEF("test"), .command = strNew("test")};
+        ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
+
+        TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
+
+        harnessLogResult(
+            "P00   WARN: cannot free inactive context\n"
+            "P00   WARN: cannot free inactive context");
     }
 
     // *****************************************************************************************************************************
@@ -395,9 +416,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -469,9 +490,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -575,9 +596,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Check greeting
@@ -637,9 +658,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Send greeting
@@ -714,9 +735,9 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -740,9 +761,9 @@ testRun(void)
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
+                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -771,7 +792,7 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
-                TestParallelJobCallback data = {.jobList = lstNew(sizeof(ProtocolParallelJob *))};
+                TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
                 TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
@@ -782,11 +803,11 @@ testRun(void)
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
-                    IoRead *read = ioHandleReadNew(
+                    IoRead *read = ioFdReadNew(
                         strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
                     ioReadOpen(read);
-                    IoWrite *write = ioHandleWriteNew(
-                        strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx));
+                    IoWrite *write = ioFdWriteNew(
+                        strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
                     ioWriteOpen(write);
 
                     TEST_ASSIGN(
@@ -796,7 +817,7 @@ testRun(void)
                     TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[clientIdx]), "add client %u", clientIdx);
                 }
 
-                // Attempt to add client without handle io
+                // Attempt to add client without an fd
                 String *protocolString = strNew(
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
@@ -807,7 +828,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 ProtocolClient *clientError = protocolClientNew(strNew("error"), strNew("error"), read, write);
-                TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read handle is required");
+                TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read fd is required");
                 protocolClientFree(clientError);
 
                 // Add jobs
@@ -889,6 +910,11 @@ testRun(void)
         // Call remote free before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free local that does not exist");
+
+        TEST_RESULT_VOID(protocolLocalFree(2), "free");
 
         // Call keep alive before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------

@@ -4,8 +4,8 @@ HTTP Client
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/client.h"
 #include "common/io/http/client.h"
-#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
 
@@ -21,7 +21,7 @@ struct HttpClient
 {
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Request timeout
-    TlsClient *tlsClient;                                           // TLS client
+    IoClient *ioClient;                                             // Io client (e.g. TLS or socket client)
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
@@ -30,19 +30,14 @@ OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);
 
 /**********************************************************************************************************************************/
 HttpClient *
-httpClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+httpClientNew(IoClient *ioClient, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
-        FUNCTION_LOG_PARAM(STRING, caFile);
-        FUNCTION_LOG_PARAM(STRING, caPath);
     FUNCTION_LOG_END();
 
-    ASSERT(host != NULL);
+    ASSERT(ioClient != NULL);
 
     HttpClient *this = NULL;
 
@@ -54,8 +49,8 @@ httpClientNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
-            .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
-            .sessionReuseList = lstNew(sizeof(HttpSession *)),
+            .ioClient = ioClient,
+            .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
         httpClientStat.object++;
@@ -90,7 +85,7 @@ httpClientOpen(HttpClient *this)
     // Else create a new session
     else
     {
-        result = httpSessionNew(this, tlsClientOpen(this->tlsClient));
+        result = httpSessionNew(this, ioClientOpen(this->ioClient));
         httpClientStat.session++;
     }
 
@@ -113,6 +108,15 @@ httpClientReuse(HttpClient *this, HttpSession *session)
     lstAdd(this->sessionReuseList, &session);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+String *
+httpClientToLog(const HttpClient *this)
+{
+    return strNewFmt(
+        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
+        this->timeout);
 }
 
 /**********************************************************************************************************************************/

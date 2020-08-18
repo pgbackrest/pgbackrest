@@ -33,7 +33,7 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[ignore-section]\n"
-            "key1=value1\n"
+            "key1=\"value1\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"

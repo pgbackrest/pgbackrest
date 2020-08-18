@@ -144,6 +144,25 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
+bool
+ioWriteReady(IoWrite *this, IoWriteReadyParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(BOOL, param.error);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = true;
+
+    if (this->interface.ready != NULL)
+        result = this->interface.ready(this->driver, param.error);
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
 void
 ioWriteStr(IoWrite *this, const String *string)
 {
@@ -253,7 +272,7 @@ ioWriteFilterGroup(const IoWrite *this)
 
 /**********************************************************************************************************************************/
 int
-ioWriteHandle(const IoWrite *this)
+ioWriteFd(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -261,5 +280,5 @@ ioWriteHandle(const IoWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
 }

@@ -77,8 +77,10 @@ String *strDup(const String *this);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Return the file part of a string (i.e. everything after the last / or the entire string if there is no /)
+// Return the file part of a string (i.e. everything after the last / or the entire string if there is no /). strBaseZ() does not
+// make a copy of the string so it may be more appropriate for large loops where saving memory is important.
 String *strBase(const String *this);
+const char *strBaseZ(const String *this);
 
 // Does the string begin with the specified string?
 bool strBeginsWith(const String *this, const String *beginsWith);
@@ -134,15 +136,15 @@ String *strPath(const String *this);
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
 
-// Pointer to zero-terminated string. strPtrNull() returns NULL when the String is NULL.
+// Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
 __attribute__((always_inline)) static inline const char *
-strPtr(const String *this)
+strZ(const String *this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const StringConst *)this)->buffer;
 }
 
-const char *strPtrNull(const String *this);
+const char *strZNull(const String *this);
 
 // Quote a string
 String *strQuote(const String *this, const String *quote);

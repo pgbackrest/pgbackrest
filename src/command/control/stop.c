@@ -35,13 +35,13 @@ cmdStop(void)
             storagePathCreateP(storageLocalWrite(), strPath(stopFile), .mode = 0770);
 
             // Create the stop file with Read/Write and Create only - do not use Truncate
-            int fileHandle = -1;
+            int fd = -1;
             THROW_ON_SYS_ERROR_FMT(
-                ((fileHandle = open(strPtr(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1), FileOpenError,
-                "unable to open stop file '%s'", strPtr(stopFile));
+                ((fd = open(strZ(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1), FileOpenError,
+                "unable to open stop file '%s'", strZ(stopFile));
 
             // Close the file
-            close(fileHandle);
+            close(fd);
 
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
@@ -53,45 +53,45 @@ cmdStop(void)
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
-                    String *lockFile = strNewFmt("%s/%s", strPtr(lockPath), strPtr(strLstGet(lockPathFileList, lockPathFileIdx)));
+                    String *lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(strLstGet(lockPathFileList, lockPathFileIdx)));
 
                     // Skip any file that is not a lock file
                     if (!strEndsWithZ(lockFile, LOCK_FILE_EXT))
                         continue;
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
-                    if ((fileHandle = open(strPtr(lockFile), O_RDONLY, 0)) == -1)
+                    if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
                     {
-                        LOG_WARN_FMT( "unable to open lock file %s", strPtr(lockFile));
+                        LOG_WARN_FMT( "unable to open lock file %s", strZ(lockFile));
                         continue;
                     }
 
                     // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing
                     // the lock file so remove it now
-                    if (flock(fileHandle, LOCK_EX | LOCK_NB) == 0)
+                    if (flock(fd, LOCK_EX | LOCK_NB) == 0)
                     {
-                        unlink(strPtr(lockFile));
-                        close(fileHandle);
+                        unlink(strZ(lockFile));
+                        close(fd);
                         continue;
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
                     char contents[64];
-                    ssize_t actualBytes = read(fileHandle, contents, sizeof(contents));
+                    ssize_t actualBytes = read(fd, contents, sizeof(contents));
                     String *processId = actualBytes > 0 ? strTrim(strNewN(contents, (size_t)actualBytes)) : NULL;
 
                     // If the process id is defined then assume this is a valid lock file
                     if (processId != NULL && strSize(processId) > 0)
                     {
-                        if (kill(cvtZToInt(strPtr(processId)), SIGTERM) != 0)
-                            LOG_WARN_FMT("unable to send term signal to process %s", strPtr(processId));
+                        if (kill(cvtZToInt(strZ(processId)), SIGTERM) != 0)
+                            LOG_WARN_FMT("unable to send term signal to process %s", strZ(processId));
                         else
-                            LOG_INFO_FMT("sent term signal to process %s", strPtr(processId));
+                            LOG_INFO_FMT("sent term signal to process %s", strZ(processId));
                     }
                     else
                     {
-                        unlink(strPtr(lockFile));
-                        close(fileHandle);
+                        unlink(strZ(lockFile));
+                        close(fd);
                     }
                 }
             }
@@ -100,7 +100,7 @@ cmdStop(void)
         {
             LOG_WARN_FMT(
                 "stop file already exists for %s",
-                cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt("stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) : "all stanzas");
+                cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt("stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : "all stanzas");
         }
     }
     MEM_CONTEXT_TEMP_END();

@@ -10,7 +10,6 @@ HTTP Response
 #include "common/io/http/response.h"
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
-#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -132,7 +131,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     if (this->contentChunked && this->contentRemaining == 0)
                     {
                         // Read length of next chunk
-                        this->contentRemaining = cvtZToUInt64Base(strPtr(strTrim(ioReadLine(rawRead))), 16);
+                        this->contentRemaining = cvtZToUInt64Base(strZ(strTrim(ioReadLine(rawRead))), 16);
 
                         // If content remaining is still zero then eof
                         if (this->contentRemaining == 0)
@@ -236,17 +235,22 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
             // Check status ends with a CR and remove it to make error formatting easier and more accurate
             if (!strEndsWith(status, CR_STR))
-                THROW_FMT(FormatError, "HTTP response status '%s' should be CR-terminated", strPtr(status));
+                THROW_FMT(FormatError, "HTTP response status '%s' should be CR-terminated", strZ(status));
 
             status = strSubN(status, 0, strSize(status) - 1);
 
             // Check status is at least the minimum required length to avoid harder to interpret errors later on
             if (strSize(status) < sizeof(HTTP_VERSION) + 4)
-                THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strPtr(strTrim(status)));
+                THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strZ(strTrim(status)));
 
-            // Check status starts with the correct http version
-             if (!strBeginsWith(status, HTTP_VERSION_STR))
-                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION, strPtr(status));
+            // If HTTP/1.0 then the connection will be closed on content eof since connections are not reused by default
+            if (strBeginsWith(status, HTTP_VERSION_10_STR))
+            {
+                this->closeOnContentEof = true;
+            }
+            // Else check that the version is the default (1.1)
+            else if (!strBeginsWith(status, HTTP_VERSION_STR))
+                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION " or " HTTP_VERSION_10, strZ(status));
 
             // Read status code
             status = strSub(status, sizeof(HTTP_VERSION));
@@ -254,9 +258,9 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             int spacePos = strChr(status, ' ');
 
             if (spacePos != 3)
-                THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strPtr(status));
+                THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
 
-            this->code = cvtZToUInt(strPtr(strSubN(status, 0, (size_t)spacePos)));
+            this->code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
             MEM_CONTEXT_BEGIN(this->memContext)
@@ -279,7 +283,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 int colonPos = strChr(header, ':');
 
                 if (colonPos < 0)
-                    THROW_FMT(FormatError, "header '%s' missing colon", strPtr(strTrim(header)));
+                    THROW_FMT(FormatError, "header '%s' missing colon", strZ(strTrim(header)));
 
                 String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
                 String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
@@ -303,7 +307,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 // Read content size
                 if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
                 {
-                    this->contentSize = cvtZToUInt64(strPtr(headerValue));
+                    this->contentSize = cvtZToUInt64(strZ(headerValue));
                     this->contentRemaining = this->contentSize;
                 }
 
@@ -311,7 +315,6 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 // prevents doing a retry on the next request when using the closed connection.
                 if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
                     this->closeOnContentEof = true;
-
             }
             while (1);
 
@@ -409,7 +412,7 @@ httpResponseToLog(const HttpResponse *this)
     return strNewFmt(
         "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
             ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s}",
-        this->code, strPtr(this->reason), strPtr(httpHeaderToLog(this->header)),
-        cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
-        cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+        this->code, strZ(this->reason), strZ(httpHeaderToLog(this->header)), cvtBoolToConstZ(this->contentChunked),
+        this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
+        cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
 }

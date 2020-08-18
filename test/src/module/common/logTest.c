@@ -44,7 +44,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 
     buffer[0] = 0;
 
-    int handle = testLogOpen(logFile, O_RDONLY, 0);
+    int fd = testLogOpen(logFile, O_RDONLY, 0);
 
     size_t totalBytes = 0;
     ssize_t actualBytes = 0;
@@ -52,14 +52,14 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
     do
     {
         THROW_ON_SYS_ERROR_FMT(
-            (actualBytes = read(handle, buffer, bufferSize - totalBytes)) == -1, FileOpenError, "unable to read log file '%s'",
+            (actualBytes = read(fd, buffer, bufferSize - totalBytes)) == -1, FileOpenError, "unable to read log file '%s'",
             logFile);
 
         totalBytes += (size_t)actualBytes;
     }
     while (actualBytes != 0);
 
-    THROW_ON_SYS_ERROR_FMT(close(handle) == -1, FileOpenError, "unable to close log file '%s'", logFile);
+    THROW_ON_SYS_ERROR_FMT(close(fd) == -1, FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;
@@ -138,7 +138,7 @@ testRun(void)
         logLevelStdOut = logLevelOff;
         logLevelStdErr = logLevelOff;
         logLevelFile = logLevelOff;
-        logHandleFile = -1;
+        logFdFile = -1;
         TEST_RESULT_VOID(logAnySet(), "set log any");
         TEST_RESULT_BOOL(logAny(logLevelError), false, "will not log");
 
@@ -150,10 +150,10 @@ testRun(void)
         TEST_RESULT_VOID(logAnySet(), "set log any");
         TEST_RESULT_BOOL(logAny(logLevelWarn), false, "will not log");
 
-        logHandleFile = 1;
+        logFdFile = 1;
         TEST_RESULT_VOID(logAnySet(), "set log any");
         TEST_RESULT_BOOL(logAny(logLevelWarn), true, "will log");
-        logHandleFile = -1;
+        logFdFile = -1;
     }
 
     // *****************************************************************************************************************************
@@ -161,8 +161,8 @@ testRun(void)
     {
         // Just test the error here -- success is well tested elsewhere
         TEST_ERROR(
-            logWrite(-999, "message", 7, "invalid handle"), FileWriteError,
-            "unable to write invalid handle: [9] Bad file descriptor");
+            logWrite(-999, "message", 7, "invalid file descriptor"), FileWriteError,
+            "unable to write invalid file descriptor: [9] Bad file descriptor");
     }
 
     // *****************************************************************************************************************************
@@ -182,16 +182,16 @@ testRun(void)
         TEST_RESULT_BOOL(
             regExpMatchOne(
                 strNew("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
-            true, "check timestamp format: %s", strPtr(logTime));
+            true, "check timestamp format: %s", strZ(logTime));
 
         // Redirect output to files
         char stdoutFile[1024];
         snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
-        logHandleStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        logFdStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
         char stderrFile[1024];
         snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
-        logHandleStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        logFdStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
         TEST_RESULT_VOID(
             logInit(logLevelWarn, logLevelOff, logLevelOff, false, 44, 1, false), "init logging to warn (timestamp off)");
@@ -255,18 +255,18 @@ testRun(void)
 
         // Reopen invalid log file
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
-        TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
+        TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
         // Close logging again
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
-        TEST_RESULT_BOOL(logHandleFile != -1, true, "log file is open");
+        TEST_RESULT_BOOL(logFdFile != -1, true, "log file is open");
 
         logClose();
         TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
         TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
-        TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
+        TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
         // Check stdout
         testLogResult(

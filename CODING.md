@@ -12,10 +12,10 @@ With the exception of documentation code, no line of any code or test file shall
 ```
 // CORRECT - location of line break after first function parenthesis if line length is greater than 132
 StringList *removeList = infoBackupDataLabelList(
-    infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+    infoBackup, strNewFmt("^%s.*", strZ(strLstGet(currentBackupList, fullIdx))));
 
 // INCORRECT
-StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList,
+StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strZ(strLstGet(currentBackupList,
     fullIdx))));
 ```
 If a conditional, then after a completed conditional, for example:

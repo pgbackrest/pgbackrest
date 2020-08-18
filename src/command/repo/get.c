@@ -7,7 +7,7 @@ Repository Get Command
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -47,8 +47,8 @@ storageGetProcess(IoWrite *destination)
             if (!strBeginsWith(file, cfgOptionStr(cfgOptRepoPath)))
             {
                 THROW_FMT(
-                    OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strPtr(file),
-                    strPtr(cfgOptionStr(cfgOptRepoPath)));
+                    OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strZ(file),
+                    strZ(cfgOptionStr(cfgOptRepoPath)));
             }
 
             // Get the relative part of the file
@@ -95,7 +95,7 @@ storageGetProcess(IoWrite *destination)
                         {
                             THROW_FMT(
                                 OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
-                                strPtr(cfgOptionStr(cfgOptStanza)));
+                                strZ(cfgOptionStr(cfgOptStanza)));
                         }
 
                         // Archive path
@@ -107,7 +107,7 @@ storageGetProcess(IoWrite *destination)
                             if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                             {
                                 InfoArchive *info = infoArchiveLoadFile(
-                                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), INFO_ARCHIVE_FILE),
+                                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoArchiveCipherPass(info);
                             }
@@ -122,7 +122,7 @@ storageGetProcess(IoWrite *destination)
                             {
                                 // Find the backup passphrase
                                 InfoBackup *info = infoBackupLoadFile(
-                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanza), INFO_BACKUP_FILE),
+                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoBackupCipherPass(info);
 
@@ -132,8 +132,8 @@ storageGetProcess(IoWrite *destination)
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
-                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strPtr(stanza),
-                                        strPtr(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
+                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza),
+                                        strZ(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
@@ -143,7 +143,7 @@ storageGetProcess(IoWrite *destination)
 
                 // Error when unable to determine cipher passphrase
                 if (cipherPass == NULL)
-                    THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strPtr(file));
+                    THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, cipherPass);
@@ -193,7 +193,8 @@ cmdStorageGet(void)
     {
         TRY_BEGIN()
         {
-            result = storageGetProcess(ioHandleWriteNew(STRDEF("stdout"), STDOUT_FILENO));
+            result = storageGetProcess(
+                ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, (TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * 1000)));
         }
         // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
         // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken

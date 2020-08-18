@@ -63,10 +63,10 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     // Stat the file to check if it exists
     struct stat statFile;
 
-    if ((param.followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
+    if ((param.followLink ? stat(strZ(file), &statFile) : lstat(strZ(file), &statFile)) == -1)
     {
         if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strPtr(file));                                   // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                                     // {vm_covered}
     }
     // On success the file exists
     else
@@ -106,8 +106,8 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
                 ssize_t linkDestinationSize = 0;
 
                 THROW_ON_SYS_ERROR_FMT(
-                    (linkDestinationSize = readlink(strPtr(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
-                    FileReadError, "unable to get destination for link '%s'", strPtr(file));
+                    (linkDestinationSize = readlink(strZ(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
+                    FileReadError, "unable to get destination for link '%s'", strZ(file));
 
                 result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
             }
@@ -141,7 +141,7 @@ storagePosixInfoListEntry(
     ASSERT(callback != NULL);
 
     StorageInfo storageInfo = storageInterfaceInfoP(
-        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name)), level);
+        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strZ(path), strZ(name)), level);
 
     if (storageInfo.exists)
     {
@@ -175,13 +175,13 @@ storagePosixInfoList(
     bool result = false;
 
     // Open the directory for read
-    DIR *dir = opendir(strPtr(path));
+    DIR *dir = opendir(strZ(path));
 
     // If the directory could not be opened process errors and report missing directories
     if (dir == NULL)
     {
         if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strPtr(path));                              // {vm_covered}
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));                                // {vm_covered}
     }
     else
     {
@@ -258,19 +258,19 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
         const String *destinationPath = strPath(destinationFile);
 
         // Attempt to move the file
-        if (rename(strPtr(sourceFile), strPtr(destinationFile)) == -1)
+        if (rename(strZ(sourceFile), strZ(destinationFile)) == -1)
         {
             // Determine which file/path is missing
             if (errno == ENOENT)
             {
                 // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
                 if (!storageInterfaceInfoP(this, sourceFile, storageInfoLevelExists).exists)
-                    THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing source '%s'", strPtr(sourceFile));
+                    THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing source '%s'", strZ(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
                 {
                     THROW_SYS_ERROR_FMT(
-                        PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
+                        PathMissingError, "unable to move '%s' to missing path '%s'", strZ(sourceFile), strZ(destinationPath));
                 }
 
                 storageInterfacePathCreateP(this, destinationPath, false, false, storageWriteModePath(destination));
@@ -284,7 +284,7 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
             else
             {
                 THROW_SYS_ERROR_FMT(                                                                                // {vm_covered}
-                    FileMoveError, "unable to move '%s' to '%s'", strPtr(sourceFile), strPtr(destinationFile));     // {vm_covered}
+                    FileMoveError, "unable to move '%s' to '%s'", strZ(sourceFile), strZ(destinationFile));         // {vm_covered}
             }
         }
         // Sync paths on success
@@ -374,7 +374,7 @@ storagePosixPathCreate(
     ASSERT(path != NULL);
 
     // Attempt to create the directory
-    if (mkdir(strPtr(path), mode) == -1)
+    if (mkdir(strZ(path), mode) == -1)
     {
         // If the parent path does not exist then create it if allowed
         if (errno == ENOENT && !noParentCreate)
@@ -384,7 +384,7 @@ storagePosixPathCreate(
         }
         // Ignore path exists if allowed
         else if (errno != EEXIST || errorOnExists)
-            THROW_SYS_ERROR_FMT(PathCreateError, "unable to create path '%s'", strPtr(path));
+            THROW_SYS_ERROR_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -411,10 +411,10 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
     if (!strEqZ(info->name, "."))
     {
         StoragePosixPathRemoveData *data = callbackData;
-        String *file = strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name));
+        String *file = strNewFmt("%s/%s", strZ(data->path), strZ(info->name));
 
         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
-        if (unlink(strPtr(file)) == -1)                                                                             // {vm_covered}
+        if (unlink(strZ(file)) == -1)                                                                               // {vm_covered}
         {
             // These errors indicate that the entry is actually a path so we'll try to delete it that way
             if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
@@ -423,7 +423,7 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
             }
             // Else error
             else
-                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));                 // {vm_covered}
+                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));                   // {vm_covered}
         }
     }
 
@@ -463,10 +463,10 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         }
 
         // Delete the path
-        if (rmdir(strPtr(path)) == -1)
+        if (rmdir(strZ(path)) == -1)
         {
             if (errno != ENOENT)                                                                                    // {vm_covered}
-                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strPtr(path));                      // {vm_covered}
+                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                        // {vm_covered}
 
             // Path does not exist
             result = false;
@@ -493,30 +493,30 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
     ASSERT(path != NULL);
 
     // Open directory and handle errors
-    int handle = open(strPtr(path), O_RDONLY, 0);
+    int fd = open(strZ(path), O_RDONLY, 0);
 
     // Handle errors
-    if (handle == -1)
+    if (fd == -1)
     {
         if (errno == ENOENT)                                                                                        // {vm_covered}
-            THROW_FMT(PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strPtr(path));
+            THROW_FMT(PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strZ(path));
         else
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN, strPtr(path));                         // {vm_covered}
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN, strZ(path));                           // {vm_covered}
     }
     else
     {
         // Attempt to sync the directory
-        if (fsync(handle) == -1)
+        if (fsync(fd) == -1)
         {
             int errNo = errno;
 
-            // Close the handle to free resources but don't check for failure
-            close(handle);
+            // Close the file descriptor to free resources but don't check for failure
+            close(fd);
 
-            THROW_SYS_ERROR_CODE_FMT(errNo, PathSyncError, STORAGE_ERROR_PATH_SYNC, strPtr(path));
+            THROW_SYS_ERROR_CODE_FMT(errNo, PathSyncError, STORAGE_ERROR_PATH_SYNC, strZ(path));
         }
 
-        THROW_ON_SYS_ERROR_FMT(close(handle) == -1, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strPtr(path));
+        THROW_ON_SYS_ERROR_FMT(close(fd) == -1, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strZ(path));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -538,10 +538,10 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     ASSERT(file != NULL);
 
     // Attempt to unlink the file
-    if (unlink(strPtr(file)) == -1)
+    if (unlink(strZ(file)) == -1)
     {
         if (param.errorOnMissing || errno != ENOENT)                                                                // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strPtr(file));                            // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));                              // {vm_covered}
     }
 
     FUNCTION_LOG_RETURN_VOID();

@@ -103,7 +103,7 @@ pgClientEscape(const String *string)
     // Iterate all characters in the string
     for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
     {
-        char stringChar = strPtr(string)[stringIdx];
+        char stringChar = strZ(string)[stringIdx];
 
         // These characters are escaped
         if (stringChar == '\'' || stringChar == '\\')
@@ -131,18 +131,18 @@ pgClientOpen(PgClient *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Base connection string
-        String *connInfo = strNewFmt("dbname=%s port=%u", strPtr(pgClientEscape(this->database)), this->port);
+        String *connInfo = strNewFmt("dbname=%s port=%u", strZ(pgClientEscape(this->database)), this->port);
 
         // Add user if specified
         if (this->user != NULL)
-            strCatFmt(connInfo, " user=%s", strPtr(pgClientEscape(this->user)));
+            strCatFmt(connInfo, " user=%s", strZ(pgClientEscape(this->user)));
 
         // Add host if specified
         if (this->host != NULL)
-            strCatFmt(connInfo, " host=%s", strPtr(pgClientEscape(this->host)));
+            strCatFmt(connInfo, " host=%s", strZ(pgClientEscape(this->host)));
 
         // Make the connection
-        this->connection = PQconnectdb(strPtr(connInfo));
+        this->connection = PQconnectdb(strZ(connInfo));
 
         // Set a callback to shutdown the connection
         memContextCallbackSet(this->memContext, pgClientFreeResource, this);
@@ -151,8 +151,8 @@ pgClientOpen(PgClient *this)
         if (PQstatus(this->connection) != CONNECTION_OK)
         {
             THROW_FMT(
-                DbConnectError, "unable to connect to '%s': %s", strPtr(connInfo),
-                strPtr(strTrim(strNew(PQerrorMessage(this->connection)))));
+                DbConnectError, "unable to connect to '%s': %s", strZ(connInfo),
+                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
         }
 
         // Set notice and warning processor
@@ -181,11 +181,11 @@ pgClientQuery(PgClient *this, const String *query)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Send the query without waiting for results so we can timeout if needed
-        if (!PQsendQuery(this->connection, strPtr(query)))
+        if (!PQsendQuery(this->connection, strZ(query)))
         {
             THROW_FMT(
-                DbQueryError, "unable to send query '%s': %s", strPtr(query),
-                strPtr(strTrim(strNew(PQerrorMessage(this->connection)))));
+                DbQueryError, "unable to send query '%s': %s", strZ(query),
+                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
         }
 
         // Wait for a result
@@ -210,7 +210,7 @@ pgClientQuery(PgClient *this, const String *query)
                 char error[256];
 
                 if (!PQcancel(cancel, error, sizeof(error)))
-                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strPtr(query), strPtr(strTrim(strNew(error))));
+                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strZ(query), strZ(strTrim(strNew(error))));
             }
             FINALLY()
             {
@@ -226,7 +226,7 @@ pgClientQuery(PgClient *this, const String *query)
         {
             // Throw timeout error if cancelled
             if (busy)
-                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strPtr(query), this->queryTimeout);
+                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), this->queryTimeout);
 
             // If this was a command that returned no results then we are done
             int resultStatus = PQresultStatus(pgResult);
@@ -237,8 +237,8 @@ pgClientQuery(PgClient *this, const String *query)
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
-                        DbQueryError, "unable to execute query '%s': %s", strPtr(query),
-                        strPtr(strTrim(strNew(PQresultErrorMessage(pgResult)))));
+                        DbQueryError, "unable to execute query '%s': %s", strZ(query),
+                        strZ(strTrim(strNew(PQresultErrorMessage(pgResult)))));
                 }
 
                 // Fetch row and column values
@@ -305,7 +305,7 @@ pgClientQuery(PgClient *this, const String *query)
                                     {
                                         THROW_FMT(
                                             FormatError, "unable to parse type %u in column %d for query '%s'",
-                                            columnType[columnIdx], columnIdx, strPtr(query));
+                                            columnType[columnIdx], columnIdx, strZ(query));
                                     }
                                 }
                             }
@@ -359,6 +359,6 @@ String *
 pgClientToLog(const PgClient *this)
 {
     return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strPtr(strToLog(this->host)), this->port,
-        strPtr(strToLog(this->database)), strPtr(strToLog(this->user)), this->queryTimeout);
+        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(this->host)), this->port,
+        strZ(strToLog(this->database)), strZ(strToLog(this->user)), this->queryTimeout);
 }
