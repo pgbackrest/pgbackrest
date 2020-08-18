@@ -9,6 +9,7 @@ HTTP Request
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/wait.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 HTTP constants
@@ -29,6 +30,7 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_DATE_STR,                                 HTTP_HEADER_DATE);
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
+#define HTTP_HEADER_USER_AGENT                                      "user-agent"
 
 // 5xx errors that should always be retried
 #define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
@@ -101,11 +103,12 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     {
                         session = httpClientOpen(this->client);
 
-                        // Format the request
+                        // Format the request and user agent
                         String *requestStr =
                             strNewFmt(
-                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strZ(this->verb), strZ(httpUriEncode(this->uri, true)),
-                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
+                                "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
+                                strZ(this->verb), strZ(httpUriEncode(this->uri, true)), this->query == NULL ? "" : "?",
+                                this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
                         const StringList *headerList = httpHeaderList(this->header);

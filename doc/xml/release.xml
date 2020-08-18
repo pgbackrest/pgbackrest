@@ -111,6 +111,14 @@
 
                         <p>Add support for <id>HTTP/1.0</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>user-agent</id> to <proper>HTTP</proper> requests.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
