@@ -664,43 +664,57 @@ typedef struct StorageS3PathRemoveData
 {
     MemContext *memContext;                                         // Mem context to create xml document in
     unsigned int size;                                              // Size of delete request
-    XmlDocument *xml;                                               // Delete request
+    HttpRequest *request;                                           // Delete request
+    XmlDocument *xml;                                               // Delete xml
 } StorageS3PathRemoveData;
 
-static void
-storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
+static HttpRequest *
+storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *xml)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM(XML_DOCUMENT, request);
+        FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
+        FUNCTION_TEST_PARAM(XML_DOCUMENT, xml);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(request != NULL);
 
-    const Buffer *response = httpResponseContent(
-        storageS3RequestP(
-            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR),
-            .content = xmlDocumentBuf(request)));
-
-    // Nothing is returned when there are no errors
-    if (bufSize(response) > 0)
+    // Get response for async request
+    if (request != NULL)
     {
-        XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+        const Buffer *response = httpResponseContent(storageS3ResponseP(request));
 
-        if (xmlNodeLstSize(errorList) > 0)
+        // Nothing is returned when there are no errors
+        if (bufSize(response) > 0)
         {
-            XmlNode *error = xmlNodeLstGet(errorList, 0);
+            XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 
-            THROW_FMT(
-                FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+            if (xmlNodeLstSize(errorList) > 0)
+            {
+                XmlNode *error = xmlNodeLstGet(errorList, 0);
+
+                THROW_FMT(
+                    FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
+                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+            }
         }
+
+        httpRequestFree(request);
     }
 
-    FUNCTION_TEST_RETURN_VOID();
+    // Send new async request if there is more to remove
+    HttpRequest *result = NULL;
+
+    if (xml != NULL)
+    {
+        result = storageS3RequestAsyncP(
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR),
+            .content = xmlDocumentBuf(xml));
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 static void
@@ -744,7 +758,11 @@ storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *n
         // Delete list when it is full
         if (data->size == this->deleteMax)
         {
-            storageS3PathRemoveInternal(this, data->xml);
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->request = storageS3PathRemoveInternal(this, data->request, data->xml);
+            }
+            MEM_CONTEXT_END();
 
             xmlDocumentFree(data->xml);
             data->xml = NULL;
@@ -775,8 +793,12 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfac
         StorageS3PathRemoveData data = {.memContext = memContextCurrent()};
         storageS3ListInternal(this, path, NULL, true, storageS3PathRemoveCallback, &data);
 
+        // Call if there is more to be removed
         if (data.xml != NULL)
-            storageS3PathRemoveInternal(this, data.xml);
+            data.request = storageS3PathRemoveInternal(this, data.request, data.xml);
+
+        // And once more to check async request response
+        storageS3PathRemoveInternal(this, data.request, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
