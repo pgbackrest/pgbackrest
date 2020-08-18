@@ -7,12 +7,17 @@ HTTP Client
 #include "common/io/client.h"
 #include "common/io/http/client.h"
 #include "common/log.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-HttpClientStat httpClientStat;
+STRING_EXTERN(HTTP_STAT_CLIENT_STR,                                 HTTP_STAT_CLIENT);
+STRING_EXTERN(HTTP_STAT_CLOSE_STR,                                  HTTP_STAT_CLOSE);
+STRING_EXTERN(HTTP_STAT_REQUEST_STR,                                HTTP_STAT_REQUEST);
+STRING_EXTERN(HTTP_STAT_RETRY_STR,                                  HTTP_STAT_RETRY);
+STRING_EXTERN(HTTP_STAT_SESSION_STR,                                HTTP_STAT_SESSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -53,7 +58,7 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
-        httpClientStat.object++;
+        statInc(HTTP_STAT_CLIENT_STR);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -86,7 +91,7 @@ httpClientOpen(HttpClient *this)
     else
     {
         result = httpSessionNew(this, ioClientOpen(this->ioClient));
-        httpClientStat.session++;
+        statInc(HTTP_STAT_SESSION_STR);
     }
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, result);
@@ -117,23 +122,4 @@ httpClientToLog(const HttpClient *this)
     return strNewFmt(
         "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
         this->timeout);
-}
-
-/**********************************************************************************************************************************/
-String *
-httpClientStatStr(void)
-{
-    FUNCTION_TEST_VOID();
-
-    String *result = NULL;
-
-    if (httpClientStat.object > 0)
-    {
-        result = strNewFmt(
-            "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
-                ", closes %" PRIu64,
-            httpClientStat.object, httpClientStat.session, httpClientStat.request, httpClientStat.retry, httpClientStat.close);
-    }
-
-    FUNCTION_TEST_RETURN(result);
 }

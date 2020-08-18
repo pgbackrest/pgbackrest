@@ -366,12 +366,6 @@ testRun(void)
         IoClient *client = NULL;
         IoSession *session = NULL;
 
-        // Reset statistics
-        sckClientStatLocal = (SocketClientStat){0};
-        TEST_RESULT_STR(sckClientStatStr(), NULL, "no stats yet");
-        tlsClientStatLocal = (TlsClientStat){0};
-        TEST_RESULT_STR(tlsClientStatStr(), NULL, "no stats yet");
-
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -509,8 +503,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stastistics exist");
 
-        TEST_RESULT_BOOL(sckClientStatStr() != NULL, true, "check socket");
-        TEST_RESULT_BOOL(tlsClientStatStr() != NULL, true, "check tls");
+        TEST_RESULT_BOOL(varLstSize(kvKeyList(statToKv())) > 0, true, "check");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

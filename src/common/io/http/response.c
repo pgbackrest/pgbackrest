@@ -11,6 +11,7 @@ HTTP Response
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
 
@@ -77,7 +78,7 @@ httpResponseDone(HttpResponse *this)
         httpSessionFree(this->session);
 
         // Only update the close stats after a successful response so it is not counted if there was an error/retry
-        httpClientStat.close++;
+        statInc(HTTP_STAT_CLOSE_STR);
     }
     // Else return it to the client so it can be reused
     else

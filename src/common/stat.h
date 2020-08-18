@@ -5,6 +5,13 @@ Statistics Collector
 #define COMMON_STAT_H
 
 #include "common/type/string.h"
+#include "common/type/variant.h"
+
+/***********************************************************************************************************************************
+Stat output constants
+***********************************************************************************************************************************/
+#define STAT_VALUE_TOTAL                                            "total"
+    VARIANT_DECLARE(STAT_VALUE_TOTAL_VAR);
 
 /***********************************************************************************************************************************
 Functions
@@ -14,5 +21,8 @@ void statInit(void);
 
 // Increment stat by one
 void statInc(const String *key);
+
+// Output stats to a KeyValue
+KeyValue *statToKv(void);
 
 #endif
