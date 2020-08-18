@@ -61,11 +61,11 @@ jobs:
     - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
 
     # Basic unit tests only. Coverage testing is also disabled to save time.
-    # - arch: s390x
-    #   dist: bionic
-    #   env:
-    #     - PGB_CI="test --vm=none --param=no-coverage --param=module=command --param=module=storage"
-    #   services:
+    - arch: s390x
+      dist: bionic
+      env:
+        - PGB_CI="test --vm=none --param=no-coverage --param=module=command --param=module=storage"
+      services:
 
 install:
   - umask 0022 && cd ~ && pwd && whoami && umask && groups

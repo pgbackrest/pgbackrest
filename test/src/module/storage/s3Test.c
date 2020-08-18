@@ -5,6 +5,7 @@ Test S3 Storage
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "version.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -36,9 +37,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Get S3 driver
     StorageS3 *driver = (StorageS3 *)storageDriver(s3);
 
-    // Add authorization string
+    // Add verb, uri, version, user-agent, and authorization string
     String *request = strNewFmt(
         "%s %s HTTP/1.1\r\n"
+            "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
             "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
                 "SignedHeaders=content-length",
         verb, uri);
