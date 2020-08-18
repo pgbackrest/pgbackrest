@@ -377,7 +377,6 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
             // Get credentials from the JSON response
             KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
-            (void)credential;
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
