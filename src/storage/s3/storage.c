@@ -365,8 +365,6 @@ storageS3ListInternal(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *continuationToken = NULL;
-
         // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
@@ -391,32 +389,60 @@ storageS3ListInternal(
                 queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
+        // Create query
+        HttpQuery *query = httpQueryNewP();
+
+        // Add the delimiter to not recurse
+        if (!recurse)
+            httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
+
+        // Use list type 2
+        httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
+
+        // Don't specify empty prefix because it is the default
+        if (!strEmpty(queryPrefix))
+            httpQueryAdd(query, S3_QUERY_PREFIX_STR, queryPrefix);
+
         // Loop as long as a continuation token returned
+        HttpRequest *request = NULL;
+
         do
         {
             // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNewP();
+                // Get sync response on first request or async response on continuation
+                HttpResponse *response = NULL;
 
-                // Add continuation token from the prior loop if any
+                if (request == NULL)
+                    response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
+                else
+                {
+                    response = storageS3ResponseP(request);
+
+                    httpRequestFree(request);
+                    request = NULL;
+                }
+
+                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
+
+                // If a continuation token exists then send an async request to get more data
+                const String *continuationToken = xmlNodeContent(
+                    xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+
                 if (continuationToken != NULL)
-                    httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+                {
+                    HttpQuery *queryContinuation = httpQueryDupP(query);
+                    httpQueryAdd(queryContinuation, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
 
-                // Add the delimiter to not recurse
-                if (!recurse)
-                    httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
-
-                // Use list type 2
-                httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
-
-                // Don't specify empty prefix because it is the default
-                if (!strEmpty(queryPrefix))
-                    httpQueryAdd(query, S3_QUERY_PREFIX_STR, queryPrefix);
-
-                XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(httpResponseContent(storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query))));
+                    // Store request in the outer temp context
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, queryContinuation);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
 
                 // Get subpath list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
@@ -451,17 +477,10 @@ storageS3ListInternal(
                     // Add to list
                     callback(this, callbackData, file, storageTypeFile, fileNode);
                 }
-
-                // Get the continuation token and store it in the outer temp context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-                }
-                MEM_CONTEXT_PRIOR_END();
             }
             MEM_CONTEXT_TEMP_END();
         }
-        while (continuationToken != NULL);
+        while (request != NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
