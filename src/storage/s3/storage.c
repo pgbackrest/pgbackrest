@@ -664,7 +664,7 @@ typedef struct StorageS3PathRemoveData
 {
     MemContext *memContext;                                         // Mem context to create xml document in
     unsigned int size;                                              // Size of delete request
-    HttpRequest *request;                                           // Delete request
+    HttpRequest *request;                                           // Async delete request
     XmlDocument *xml;                                               // Delete xml
 } StorageS3PathRemoveData;
 
@@ -797,7 +797,7 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfac
         if (data.xml != NULL)
             data.request = storageS3PathRemoveInternal(this, data.request, data.xml);
 
-        // And once more to check async request response
+        // Check response on last async request
         storageS3PathRemoveInternal(this, data.request, NULL);
     }
     MEM_CONTEXT_TEMP_END();

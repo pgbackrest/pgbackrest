@@ -620,7 +620,9 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 typedef struct StorageAzurePathRemoveData
 {
-    const String *path;
+    MemContext *memContext;                                         // Mem context to create requests in
+    HttpRequest *request;                                           // Async remove request
+    const String *path;                                             // Root path of remove
 } StorageAzurePathRemoveData;
 
 static void
@@ -638,11 +640,26 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
 
+    StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
+
+    // Get response from prior async request
+    if (data->request != NULL)
+    {
+        storageAzureResponseP(data->request, .allowMissing = true);
+
+        httpRequestFree(data->request);
+        data->request = NULL;
+    }
+
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
     {
-        StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
-        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageAzureRequestAsyncP(
+                this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+        }
+        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -665,8 +682,12 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageAzurePathRemoveData data = {.path = path};
+        StorageAzurePathRemoveData data = {.memContext = memContextCurrent(), .path = path};
         storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
+
+        // Check response on last async request
+        if (data.request != NULL)
+            storageAzureResponseP(data.request, .allowMissing = true);
     }
     MEM_CONTEXT_TEMP_END();
 
