@@ -337,8 +337,6 @@ storageAzureListInternal(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *marker = NULL;
-
         // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
@@ -363,35 +361,61 @@ storageAzureListInternal(
                 queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
-        // Loop as long as a continuation token returned
+        // Create query
+        HttpQuery *query = httpQueryNewP();
+
+        // Add the delimiter to not recurse
+        if (!recurse)
+            httpQueryAdd(query, AZURE_QUERY_DELIMITER_STR, FSLASH_STR);
+
+        // Add resource type
+        httpQueryAdd(query, AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR);
+
+        // Add list comp
+        httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_LIST_STR);
+
+        // Don't specify empty prefix because it is the default
+        if (!strEmpty(queryPrefix))
+            httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
+
+        // Loop as long as a continuation marker returned
+        HttpRequest *request = NULL;
+
         do
         {
             // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNewP();
+                // Get sync response on first request or async response on continuation
+                HttpResponse *response = NULL;
 
-                // Add continuation token from the prior loop if any
-                if (marker != NULL)
-                    httpQueryAdd(query, AZURE_QUERY_MARKER_STR, marker);
+                if (request == NULL)
+                    response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
+                else
+                {
+                    response = storageAzureResponseP(request);
 
-                // Add the delimiter to not recurse
-                if (!recurse)
-                    httpQueryAdd(query, AZURE_QUERY_DELIMITER_STR, FSLASH_STR);
+                    httpRequestFree(request);
+                    request = NULL;
+                }
 
-                // Add resource type
-                httpQueryAdd(query, AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR);
+                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
-                // Add list comp
-                httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_LIST_STR);
+                // If a continuation marker exists then send an async request to get more data
+                const String *continuationMarker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
 
-                // Don't specify empty prefix because it is the default
-                if (!strEmpty(queryPrefix))
-                    httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
+                if (!strEq(continuationMarker, EMPTY_STR))
+                {
+                    httpQueryPut(query, AZURE_QUERY_MARKER_STR, continuationMarker);
 
-                XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(httpResponseContent(storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query))));
+                    // Store request in the outer temp context
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        request = storageAzureRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
 
                 // Get subpath list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
@@ -428,17 +452,10 @@ storageAzureListInternal(
                     callback(
                         this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
                 }
-
-                // Get the continuation token and store it in the outer temp context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    marker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
-                }
-                MEM_CONTEXT_PRIOR_END();
             }
             MEM_CONTEXT_TEMP_END();
         }
-        while (!strEq(marker, EMPTY_STR));
+        while (request != NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

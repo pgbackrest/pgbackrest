@@ -433,13 +433,12 @@ storageS3ListInternal(
 
                 if (continuationToken != NULL)
                 {
-                    HttpQuery *queryContinuation = httpQueryDupP(query);
-                    httpQueryAdd(queryContinuation, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, queryContinuation);
+                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
