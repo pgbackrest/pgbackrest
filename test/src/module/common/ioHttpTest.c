@@ -11,6 +11,9 @@ Test HTTP
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 
+/***********************************************************************************************************************************
+HTTP user agent header
+***********************************************************************************************************************************/
 #define TEST_USER_AGENT                                                                                                            \
     HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
 
