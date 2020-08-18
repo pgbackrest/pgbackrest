@@ -56,7 +56,9 @@ Add a command to verify the contents of the repository. By the default the comma
         - The filename always include the WAL segment (timeline?) so all I need is the filename. BUT if I have to verify the checksums, so should I do it in the verifyFile function
 
     * Verify all manifests/copies are valid
-        - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback)
+        - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback).
+         If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing
+         BUT should we skip because backup reconstruct would remove it from current backup.info or should we use it to verify the backups? Meaning go with the copy if not the latest backup and warn?
 
     * Verify the checksum of all WAL/backup files
         - Pass the checksum to verifyFile - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
@@ -280,6 +282,90 @@ But the timeline+1 true? Could we skip to timeline 3 if there was a problem with
 */
 
 /***********************************************************************************************************************************
+Data Types and Structures
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_ARCHIVE_RESULT_TYPE                                                                                           \
+    ArchiveResult
+#define FUNCTION_LOG_ARCHIVE_RESULT_FORMAT(value, buffer, bufferSize)                                                              \
+    objToLog(&value, "ArchiveResult", buffer, bufferSize)
+
+#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
+    VerifyInfoFile
+#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
+    objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
+
+#define FUNCTION_LOG_WAL_RANGE_TYPE                                                                                                \
+    WalRange
+#define FUNCTION_LOG_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(&value, "WalRange", buffer, bufferSize)
+
+// Structure for verifying archive, backup and manifest info files
+typedef struct VerifyInfoFile
+{
+    InfoBackup *backup;                                             // Backup.info file contents
+    InfoArchive *archive;                                           // Archive.info file contents
+    Manifest *manifest;                                             // Manifest file contents
+    const String *checksum;                                         // File checksum
+    int errorCode;                                                  // Error code else 0 for no error
+} VerifyInfoFile;
+
+// Job data results structures for archive and backup
+typedef struct ArchiveResult
+{
+    String *archiveId;
+    unsigned int numWalFile;
+    PgWal pgWalInfo;
+    List *walRangeList;
+} ArchiveResult;
+
+typedef struct WalRange
+{
+    String *stop;
+    String *start;
+    List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
+} WalRange;
+
+typedef struct InvalidFile      // this structure can be used for backup file stuff as well
+{
+    String *fileName;
+    VerifyResult reason;            // this enum is the reason
+} InvalidFile;
+
+// Status result of a backup
+typedef enum
+{
+    backupConsistent,
+    backupConsistentWithPITR,
+    backupMissingManifest,
+    backupInProgress,
+} BackupResultStatus;
+
+typedef struct BackupResult
+{
+    String *backupLabel;
+    BackupResultStatus status;
+    List *invalidFileList;
+} BackupResult;
+
+// Job data stucture for processing and results collection
+typedef struct VerifyJobData
+{
+    StringList *archiveIdList;                                      // List of archive ids to verify
+    StringList *walPathList;                                        // WAL path list for a single archive id
+    StringList *walFileList;                                        // WAL file list for a single WAL path
+    StringList *backupList;                                         // List of backups to verify
+    StringList *backupFileList;                                     // List of files in a single backup directory
+    String *currentBackup;                                          // In progress backup, if any
+    const InfoPg *pgHistory;                                        // Database history list
+    bool backupProcessing;                                          // Are we processing WAL or are we processing backups
+    const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
+    const String *walCipherPass;                                    // Cipher pass for reading WAL files
+    unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
+    List *archiveIdResultList;                                      // Archive results
+    List *backupResultList;                                         // Backup results
+} VerifyJobData;
+
+/***********************************************************************************************************************************
 Load a file into memory
 ***********************************************************************************************************************************/
 static StorageRead *
@@ -311,20 +397,6 @@ verifyFileLoad(const String *fileName, const String *cipherPass)
 /***********************************************************************************************************************************
 Get status of info files in repository
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
-    VerifyInfoFile
-#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
-
-typedef struct VerifyInfoFile
-{
-    InfoBackup *backup;                                             // Backup.info file contents
-    InfoArchive *archive;                                           // Archive.info file contents
-    Manifest *manifest;                                             // Manifest file contents
-    const String *checksum;                                         // File checksum
-    int errorCode;                                                  // Error code else 0 for no error
-} VerifyInfoFile;
-
 static VerifyInfoFile
 verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPass)
 {
@@ -495,12 +567,12 @@ verifyBackupInfoFile(void)
 Get the manifest file
 ***********************************************************************************************************************************/
 static Manifest *
-verifyManifestFile(const String *backupLabel, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory)
+verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *currentBackup, const InfoPg *pgHistory)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, backupLabel);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM(BOOL, currentBackup);
+        FUNCTION_LOG_PARAM_P(BOOL, currentBackup);
         FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
     FUNCTION_LOG_END();
 
@@ -527,26 +599,32 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool cur
             if (verifyManifestInfoCopy.errorCode == 0)
             {
                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
-                // corrupt so log a warning but must trust main
+                // corrupt so log a warning but trust main
                 if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
                     LOG_WARN("backup.manifest.copy does not match backup.manifest");
             }
         }
         else
         {
-            // Attempt to load the copy
-            VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
-
-            // If loaded successfully, then return the copy as usable
-            if (verifyManifestInfoCopy.errorCode == 0)
+            // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
+            // currentBackup is only notional until the main file is checked - if it was simply missing, it is assumed the backup is
+            // an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress backup
+            // and an attempt will be made to load the manifest copy
+            if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
             {
-                // Warn if this is not the current backup and the main manifest file was missing
-                if (!currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError))
-                    LOG_WARN_FMT("%s/backup.manifest does not exist, using copy", strZ(backupLabel));
+                *currentBackup = false;
 
-                result = verifyManifestInfoCopy.manifest;
-                manifestMove(result, memContextPrior());
+                VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
+
+                // If loaded successfully, then return the copy as usable
+                if (verifyManifestInfoCopy.errorCode == 0)
+                {
+                    LOG_WARN_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupLabel));
+
+                    result = verifyManifestInfoCopy.manifest;
+                    manifestMove(result, memContextPrior());
+                }
             }
         }
 
@@ -627,75 +705,22 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 }
 
 /***********************************************************************************************************************************
-Structures for job data
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_ID_RANGE_TYPE                                                                                         \
-    ArchiveIdRange
-#define FUNCTION_LOG_ARCHIVE_ID_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "ArchiveIdRange", buffer, bufferSize)
-
-#define FUNCTION_LOG_WAL_RANGE_TYPE                                                                                                \
-    WalRange
-#define FUNCTION_LOG_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(&value, "WalRange", buffer, bufferSize)
-
-
-typedef struct ArchiveIdRange
-{
-    String *archiveId;
-    unsigned int numWalFile;
-    PgWal pgWalInfo;
-    List *walRangeList;
-} ArchiveIdRange;
-
-typedef struct WalRange
-{
-    String *stop;
-    String *start;
-    List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
-} WalRange;
-
-typedef struct InvalidFile      // this structure can be used for backup file stuff as well
-{
-    String *fileName;
-    VerifyResult reason;            // this enum is the reason
-} InvalidFile;
-
-typedef struct VerifyJobData
-{
-    StringList *archiveIdList;                                      // List of archive ids to verify
-    StringList *walPathList;                                        // WAL path list for a single archive id
-    StringList *walFileList;                                        // WAL file list for a single WAL path
-    StringList *backupList;                                         // List of backups to verify
-    StringList *backupFileList;                                     // List of files in a single backup directory
-    String *currentBackup;                                          // In progress backup, if any
-    const InfoPg *pgHistory;                                        // Database history list
-    bool backupProcessing;                                          // Are we processing WAL or are we processing backups
-    const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
-    const String *walCipherPass;                                    // Cipher pass for reading WAL files
-    unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
-    List *archiveIdRangeList;
-} VerifyJobData;
-
-
-
-
-/***********************************************************************************************************************************
 Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
 ***********************************************************************************************************************************/
 static void
-createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, List *archiveIdRangeList, unsigned int *jobErrorTotal)
+createArchiveIdRange(
+    ArchiveResult *archiveIdResult, StringList *walFileList, List *archiveIdResultList, unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(ARCHIVE_ID_RANGE, archiveIdRange);
+        FUNCTION_TEST_PARAM_P(ARCHIVE_RESULT, archiveIdResult);
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
-        FUNCTION_TEST_PARAM(LIST, archiveIdRangeList);
+        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
     FUNCTION_TEST_END();
 
-    ASSERT(archiveIdRange != NULL);
+    ASSERT(archiveIdResult != NULL);
     ASSERT(walFileList != NULL);
-    ASSERT(archiveIdRangeList != NULL);
+    ASSERT(archiveIdResultList != NULL);
 
     // Initialize the WAL range
     WalRange walRange =
@@ -713,11 +738,11 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
 
         // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
         // PostgreSQL will ignore it
-        if (archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
+        if (archiveIdResult->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
         {
             LOG_ERROR_FMT(
                 errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment),
-                strZ(archiveIdRange->archiveId));
+                strZ(archiveIdResult->archiveId));
 
             (*jobErrorTotal)++;
 
@@ -733,7 +758,7 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
             {
                 LOG_ERROR_FMT(
                     errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strZ(walSegment),
-                    strZ(archiveIdRange->archiveId));
+                    strZ(archiveIdResult->archiveId));
 
                 (*jobErrorTotal)++;
 
@@ -764,17 +789,17 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
         // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
         // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
-        if (pgLsnFromWalSegment(walSegment, archiveIdRange->pgWalInfo.size) -
-            pgLsnFromWalSegment(walRange.stop, archiveIdRange->pgWalInfo.size) ==
-                ((archiveIdRange->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
-                ? archiveIdRange->pgWalInfo.size * 2 : archiveIdRange->pgWalInfo.size))
+        if (pgLsnFromWalSegment(walSegment, archiveIdResult->pgWalInfo.size) -
+            pgLsnFromWalSegment(walRange.stop, archiveIdResult->pgWalInfo.size) ==
+                ((archiveIdResult->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walRange.stop, "FE"))
+                ? archiveIdResult->pgWalInfo.size * 2 : archiveIdResult->pgWalInfo.size))
         {
             walRange.stop = walSegment;
         }
         else
         {
             // A gap was found so add the current range to the list and start a new range
-            lstAdd(archiveIdRange->walRangeList, &walRange);
+            lstAdd(archiveIdResult->walRangeList, &walRange);
             walRange = (WalRange)
             {
                 .start = strDup(walSegment),
@@ -788,13 +813,13 @@ createArchiveIdRange(ArchiveIdRange *archiveIdRange, StringList *walFileList, Li
 
     // If walRange containes a range, then add the last walRange to the list
     if (walRange.start != NULL)
-        lstAdd(archiveIdRange->walRangeList, &walRange);
+        lstAdd(archiveIdResult->walRangeList, &walRange);
 
     // Now if there are ranges for this archiveId then sort ascending by the stop file add them
-    if (lstSize(archiveIdRange->walRangeList) > 0)
+    if (lstSize(archiveIdResult->walRangeList) > 0)
     {
-        lstSort(archiveIdRange->walRangeList, sortOrderAsc);
-        lstAdd(archiveIdRangeList, archiveIdRange);
+        lstSort(archiveIdResult->walRangeList, sortOrderAsc);
+        lstAdd(archiveIdResultList, archiveIdResult);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -820,7 +845,7 @@ verifyArchive(void *data)
         String *archiveId = strLstGet(jobData->archiveIdList, 0);
         result = NULL;
 
-        ArchiveIdRange archiveIdRange =
+        ArchiveResult archiveIdResult =
         {
             .archiveId = strDup(archiveId),
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
@@ -876,7 +901,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                     if (strLstSize(jobData->walFileList) > 0)
                     {
                         // If the WAL segment size for this archiveId has not been set, get it from the first WAL
-                        if (archiveIdRange.pgWalInfo.size == 0)
+                        if (archiveIdResult.pgWalInfo.size == 0)
                         {
                             StorageRead *walRead = verifyFileLoad(
                                 strNewFmt(
@@ -886,14 +911,14 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
 
                             PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
 
-                            archiveIdRange.pgWalInfo.size = walInfo.size;
-                            archiveIdRange.pgWalInfo.version = walInfo.version;
+                            archiveIdResult.pgWalInfo.size = walInfo.size;
+                            archiveIdResult.pgWalInfo.version = walInfo.version;
                         }
 
-                        archiveIdRange.numWalFile += strLstSize(jobData->walFileList);
+                        archiveIdResult.numWalFile += strLstSize(jobData->walFileList);
 
                         createArchiveIdRange(
-                            &archiveIdRange, jobData->walFileList, jobData->archiveIdRangeList, &jobData->jobErrorTotal);
+                            &archiveIdResult, jobData->walFileList, jobData->archiveIdResultList, &jobData->jobErrorTotal);
                     }
                 }
 
@@ -974,8 +999,8 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
             LOG_WARN_FMT("path '%s' is empty", strZ(archiveId));
             strLstRemoveIdx(jobData->archiveIdList, 0);
 
-            // Ad to the results for completeness
-            lstAdd(jobData->archiveIdRangeList, &archiveIdRange);
+            // Add to the results for completeness
+            lstAdd(jobData->archiveIdResultList, &archiveIdResult);
         }
     }
 
@@ -1022,30 +1047,43 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         // Process backup files, if any
         while (strLstSize(jobData->backupList) > 0)
         {
-            String *backupLabel = strLstGet(jobData->backupList, 0);
-
-LOG_WARN("Processing BACKUPS"); // CSHANG Remove
+            BackupResult backupResult =
+            {
+                .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
+            };
             // result == NULL;
 
+            bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
 
-/* CSHANG:
- If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing and skip BUT because backup reconstruct would remove it from current (what do we mean "skip" - shouldn't we use it to verify the backups?). So if in backup.info
-
- go with the copy if not the latest backup and warn?
-*/
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
-                backupLabel, jobData->manifestCipherPass, strEq(jobData->currentBackup, backupLabel), jobData->pgHistory);
+                backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
 
-            // If a usable backup.manifest file is not found, then report an error in the log
+            // If a usable backup.manifest file is not found
             if (manifest == NULL)
             {
-                LOG_ERROR_FMT(errorTypeCode(&FormatError), "No usable %s/backup.manifest file", strZ(backupLabel));
-                jobData->jobErrorTotal++;
+                // Warn if it is not the current in-progress backup
+                if (!inProgressBackup)
+                {
+                    backupResult.status = backupMissingManifest;
+
+                    LOG_WARN_FMT("Manifest files missing for '%s' - backup may be expired", strZ(backupResult.backupLabel));
+                }
+                else
+                {
+                    backupResult.status = backupInProgress;
+                }
+
+                // Update the result status and skip
+                lstAdd(jobData->backupResultList, &backupResult);
+
+                // Remove this backup from the processing list
+                strLstRemoveIdx(jobData->backupList, 0);
             }
             else
             {
-// CSHANG so here, I'm wondering if I should be checking the history or if that should be done in verifyManifestFile? If the db-id is not in, say, the backup.info history section, then do I skip verifying this manifest and report the error? Then if I get a valid manifest, I just read the, what, files only? Or do I check paths/links, etc? I can only read the manifest and send files to the parallel processor and it will decide if the file is missing or "corrupt". So then what do I need for reporting - I believe the backupLabel and then a list of invalid files with the reason.
+                // process the files
+LOG_WARN("Processing MANIFEST"); // CSHANG Remove
             }
         }
 
@@ -1118,23 +1156,25 @@ verifyRender(void *data)
 
     String *result = strNew("Results:\n");
 
-    for (unsigned int archiveIdx = 0; archiveIdx < lstSize(jobData->archiveIdRangeList); archiveIdx++)
+    for (unsigned int archiveIdx = 0; archiveIdx < lstSize(jobData->archiveIdResultList); archiveIdx++)
     {
-        ArchiveIdRange *archiveIdRange = lstGet(jobData->archiveIdRangeList, archiveIdx);
-        strCatFmt(result, "  archiveId: %s,  total WAL files: %u\n", strZ(archiveIdRange->archiveId), archiveIdRange->numWalFile);
+        ArchiveResult *archiveIdResult = lstGet(jobData->archiveIdResultList, archiveIdx);
+        strCatFmt(
+            result, "  archiveId: %s, total WAL files checked: %u\n", strZ(archiveIdResult->archiveId),
+            archiveIdResult->numWalFile);
 
-        if (archiveIdRange->numWalFile > 0)
+        if (archiveIdResult->numWalFile > 0)
         {
             unsigned int errMissing = 0;
             unsigned int errChecksum = 0;
             unsigned int errSize = 0;
 
-            for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdRange->walRangeList); walIdx++)
+            for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
             {
-                WalRange *walRange = lstGet(archiveIdRange->walRangeList, walIdx);
+                WalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
 
                 LOG_DETAIL_FMT(
-                    "archiveId: %s, wal start: %s, wal stop: %s", strZ(archiveIdRange->archiveId), strZ(walRange->start),
+                    "archiveId: %s, wal start: %s, wal stop: %s", strZ(archiveIdResult->archiveId), strZ(walRange->start),
                     strZ(walRange->stop));
 
                 unsigned int invalidIdx = 0;
@@ -1197,7 +1237,9 @@ setBackupCheckArchive(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If there are backups, set the last backup as current if it is not in backup.info (if it is, then it is complete)
+        // If there are backups, set the last backup as current if it is not in backup.info - if it is, then it is complete, else
+        // it will be checked later and if there is only a copy of the manifest, then verification will be skipped as it will assume
+        // it is the in-progress backup
         if (strLstSize(backupList) > 0)
         {
             String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
@@ -1309,7 +1351,7 @@ verifyProcess(void)
                 .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
-                .archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator),
+                .archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator),
             };
 /* CSHANG Should we be sorting the backups newest to oldest? That way we can just filter off the first one if it is a current
 "in progress" backup and maybe LOG_WARN or LOG_INFO that skipping? That way we don't need separate logic for backup. BUT the
@@ -1390,11 +1432,11 @@ AND is the newest backup?
                                 if (strEq(strLstGet(filePathLst, 0), STORAGE_REPO_ARCHIVE_STR))
                                 {
                                     String *archiveId = strLstGet(filePathLst, 1);
-                                    unsigned int index = lstFindIdx((List *)jobData.archiveIdRangeList, &archiveId);
+                                    unsigned int index = lstFindIdx((List *)jobData.archiveIdResultList, &archiveId);
 
                                     if (index != LIST_NOT_FOUND)
                                     {
-                                        ArchiveIdRange *archiveIdRange = lstGet(jobData.archiveIdRangeList, index);
+                                        ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
 
                                         // Get the WAL segment from the file name
                                         String *walSegment = strSubN(
@@ -1402,9 +1444,9 @@ AND is the newest backup?
 
 // CSHANG Might need a check for walRangeList > 0? If we get a file for this archiveId but we didn't have a walRange - no that can't happen. We're going from the list of filenames so if we get a result for a filename the corresponding archivId must have a range.
 
-                                        for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdRange->walRangeList); walIdx++)
+                                        for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
                                         {
-                                            WalRange *walRange = lstGet(archiveIdRange->walRangeList, walIdx);
+                                            WalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
 
                                             // If the file is less/equal to the stop file then it falls in this range since ranges
                                             // are sorted by stop file in ascending order, therefore first one found is the range.
@@ -1435,7 +1477,7 @@ AND is the newest backup?
 
                                     If archive file
                                         Get the archiveId from the filePathName (stringList[1] - is there a better way?)
-                                        Loop through verifyResultData.archiveIdRangeList and find the archiveId
+                                        Loop through verifyResultData.archiveIdResultList and find the archiveId
                                         If found, find the range in which this file falls into and add the file name and the reason to the invalidFileList
 
                                     If backup file
@@ -1508,7 +1550,7 @@ total 76
                 // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
 
                 // Report results
-                if (lstSize(jobData.archiveIdRangeList) > 0)
+                if (lstSize(jobData.archiveIdResultList) > 0)
                     resultStr = verifyRender(&jobData);
             }
             else

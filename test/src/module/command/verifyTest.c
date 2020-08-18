@@ -140,12 +140,12 @@ testRun(void)
         unsigned int errTotal = 0;
         StringList *walFileList = strLstNew();
 
-        ArchiveIdRange archiveIdRange =
+        ArchiveResult archiveIdRange =
         {
             .archiveId = strNew("9.4-1"),
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
         };
-        List *archiveIdRangeList = lstNewP(sizeof(ArchiveIdRange), .comparator =  archiveIdComparator);
+        List *archiveIdRangeList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Single WAL");
@@ -158,9 +158,9 @@ testRun(void)
         TEST_RESULT_VOID(
             createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 1, "single range");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
 
@@ -198,7 +198,7 @@ testRun(void)
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
         TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         harnessLogResult("P00  ERROR: [028]: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping");
@@ -221,13 +221,13 @@ testRun(void)
         TEST_RESULT_VOID(
             createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -254,13 +254,13 @@ testRun(void)
         TEST_RESULT_VOID(
             createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -282,19 +282,19 @@ testRun(void)
         TEST_RESULT_VOID(
             createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList), 3, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 3, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 0),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0),
             "get first range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveIdRange *)lstGet(archiveIdRangeList, 0))->walRangeList, 2),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 2),
             "get third range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
@@ -689,8 +689,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyProcess(),
             "Results:\n"
-            "  archiveId: 9.4-1,  total WAL files: 0\n"
-            "  archiveId: 11-2,  total WAL files: 5\n"
+            "  archiveId: 9.4-1, total WAL files checked: 0\n"
+            "  archiveId: 11-2, total WAL files checked: 5\n"
             "    missing: 0, checksum invalid: 1, size invalid: 0\n",
             "process results");
 
