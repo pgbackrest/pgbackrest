@@ -180,7 +180,7 @@ cmdEnd(int code, const String *errorMessage)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Output statistic if there are any
+            // Output statistics if there are any
             const KeyValue *statKv = statToKv();
 
             if (varLstSize(kvKeyList(statKv)) > 0)

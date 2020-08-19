@@ -5,7 +5,6 @@ Test Common Command Routines
 #include <unistd.h>
 
 #include "common/stat.h"
-// #include "storage/storage.h"
 #include "version.h"
 
 /***********************************************************************************************************************************

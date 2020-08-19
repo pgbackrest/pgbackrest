@@ -22,20 +22,10 @@ Statistics constants
 ***********************************************************************************************************************************/
 #define TLS_STAT_CLIENT                                             "tls.client"        // Clients created
     STRING_DECLARE(TLS_STAT_CLIENT_STR);
-#define TLS_STAT_RETRY                                              "tls.retry"        // Connection retries
+#define TLS_STAT_RETRY                                              "tls.retry"         // Connection retries
     STRING_DECLARE(TLS_STAT_RETRY_STR);
-#define TLS_STAT_SESSION                                            "tls.session"      // Sessions created
+#define TLS_STAT_SESSION                                            "tls.session"       // Sessions created
     STRING_DECLARE(TLS_STAT_SESSION_STR);
-
-/***********************************************************************************************************************************
-Statistics
-***********************************************************************************************************************************/
-typedef struct TlsClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} TlsClientStat;
 
 /***********************************************************************************************************************************
 Constructors

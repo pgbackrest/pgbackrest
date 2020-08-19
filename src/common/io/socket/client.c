@@ -27,9 +27,9 @@ STRING_EXTERN(IO_CLIENT_SOCKET_TYPE_STR,                            IO_CLIENT_SO
 /***********************************************************************************************************************************
 Statistics constants
 ***********************************************************************************************************************************/
-STRING_STATIC(SOCKET_STAT_CLIENT,                                   "socket.client");   // Clients created
-STRING_STATIC(SOCKET_STAT_RETRY,                                    "socket.retry");    // Connection retries
-STRING_STATIC(SOCKET_STAT_SESSION,                                  "socket.session");  // Sessions created
+STRING_EXTERN(SOCKET_STAT_CLIENT_STR,                               SOCKET_STAT_CLIENT);
+STRING_EXTERN(SOCKET_STAT_RETRY_STR,                                SOCKET_STAT_RETRY);
+STRING_EXTERN(SOCKET_STAT_SESSION_STR,                              SOCKET_STAT_SESSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -145,7 +145,7 @@ sckClientOpen(THIS_VOID)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    statInc(SOCKET_STAT_RETRY);
+                    statInc(SOCKET_STAT_RETRY_STR);
                 }
                 else
                     RETHROW();
@@ -154,7 +154,7 @@ sckClientOpen(THIS_VOID)
         }
         while (retry);
 
-        statInc(SOCKET_STAT_SESSION);
+        statInc(SOCKET_STAT_SESSION_STR);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -211,7 +211,7 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .timeout = timeout,
         };
 
-        statInc(SOCKET_STAT_CLIENT);
+        statInc(SOCKET_STAT_CLIENT_STR);
 
         this = ioClientNew(driver, &sckClientInterface);
     }
