@@ -412,18 +412,19 @@ storageS3ListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Get sync response on first request or async response on continuation
                 HttpResponse *response = NULL;
 
-                if (request == NULL)
-                    response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
-                else
+                // If there is an outstanding async request then wait for the response
+                if (request != NULL)
                 {
                     response = storageS3ResponseP(request);
 
                     httpRequestFree(request);
                     request = NULL;
                 }
+                // Else get the response immediately from a sync request
+                else
+                    response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 

@@ -387,18 +387,19 @@ storageAzureListInternal(
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Get sync response on first request or async response on continuation
                 HttpResponse *response = NULL;
 
-                if (request == NULL)
-                    response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
-                else
+                // If there is an outstanding async request then wait for the response
+                if (request != NULL)
                 {
                     response = storageAzureResponseP(request);
 
                     httpRequestFree(request);
                     request = NULL;
                 }
+                // Else get the response immediately from a sync request
+                else
+                    response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
