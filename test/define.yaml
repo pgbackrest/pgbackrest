@@ -73,7 +73,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
         total: 7
-        define-test: -DNO_MEM_CONTEXT -DNO_LOG
+        define-test: -DNO_MEM_CONTEXT -DNO_LOG -DNO_STAT
 
         coverage:
           common/memContext: full

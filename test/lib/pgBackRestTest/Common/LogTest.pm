@@ -390,7 +390,10 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace(
         $strLine, 'BACKUP-EXPR', 'strExpression \= \_[0-9]{8}\-[0-9]{6}', '\_[0-9]{8}\-[0-9]{6}$', false);
 
-    $strLine = $self->regExpReplace($strLine, 'STATISTICS', 'statistics\:.*$', '[^\:]+$', false);
+    if ($strLine =~ /^P00 DETAIL\: statistics\: /)
+    {
+        $strLine = 'P00 DETAIL: statistics: STATISTICS'
+    }
 
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'unknown group in backup manifest mapped to \'[^\']+', '[^\']+$');
