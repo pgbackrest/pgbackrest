@@ -58,7 +58,7 @@ Add a command to verify the contents of the repository. By the default the comma
     * Verify all manifests/copies are valid
         - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback).
          If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing
-         BUT should we skip because backup reconstruct would remove it from current backup.info or should we use it to verify the backups? Meaning go with the copy if not the latest backup and warn?
+         BUT should we skip because backup reconstruct would remove it from current backup.info or should we use it to verify the backups? Meaning go with the copy if not the latest backup and warn? cmdRestore does not reconstruct the backup.info when it loads it.
 
     * Verify the checksum of all WAL/backup files
         - Pass the checksum to verifyFile - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
@@ -360,6 +360,7 @@ typedef struct VerifyJobData
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
+    const String *backupCipherPass;                                 // Cipher pass for reading backup files referenced in a manifest
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
@@ -842,12 +843,11 @@ verifyArchive(void *data)
     // Process archive files, if any
     while (strLstSize(jobData->archiveIdList) > 0)
     {
-        String *archiveId = strLstGet(jobData->archiveIdList, 0);
         result = NULL;
 
         ArchiveResult archiveIdResult =
         {
-            .archiveId = strDup(archiveId),
+            .archiveId = strDup(strLstGet(jobData->archiveIdList, 0)),
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
         };
 
@@ -870,7 +870,7 @@ given the note below on S3 maybe we get everything and then create lists: histor
             jobData->walPathList =
                 strLstSort(
                     storageListP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
+                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveIdResult.archiveId)),
                         .expression = WAL_SEGMENT_DIR_REGEXP_STR),
                     sortOrderAsc);
         }
@@ -889,7 +889,7 @@ given the note below on S3 maybe we get everything and then create lists: histor
                         strLstSort(
                             storageListP(
                                 storageRepo(),
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveIdResult.archiveId), strZ(walPath)),
                                 .expression = WAL_SEGMENT_FILE_REGEXP_STR),
                             sortOrderAsc);
 /* CSHANG because of S3 and because we may want to report on stuff in the directories that shouldn't be there, we should get
@@ -905,7 +905,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                         {
                             StorageRead *walRead = verifyFileLoad(
                                 strNewFmt(
-                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath),
+                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveIdResult.archiveId), strZ(walPath),
                                     strZ(strLstGet(jobData->walFileList, 0))),
                                 jobData->walCipherPass);
 
@@ -942,7 +942,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
 
                         // Get the fully qualified file name
                         const String *filePathName = strNewFmt(
-                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath), strZ(fileName));
+                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveIdResult.archiveId), strZ(walPath), strZ(fileName));
 
                         // Get the checksum from the file name
                         String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -975,7 +975,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                 else
                 {
                     // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
-                    LOG_WARN_FMT("path '%s/%s' is empty", strZ(archiveId), strZ(walPath));
+                    LOG_WARN_FMT("path '%s/%s' is empty", strZ(archiveIdResult.archiveId), strZ(walPath));
                     strLstRemoveIdx(jobData->walPathList, 0);
                 }
 
@@ -996,11 +996,116 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
         else
         {
             // Log that no WAL paths exist in the archive Id dir - remove the archive Id from the list (nothing to process)
-            LOG_WARN_FMT("path '%s' is empty", strZ(archiveId));
+            LOG_WARN_FMT("path '%s' is empty", strZ(archiveIdResult.archiveId));
             strLstRemoveIdx(jobData->archiveIdList, 0);
 
             // Add to the results for completeness
             lstAdd(jobData->archiveIdResultList, &archiveIdResult);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Verify the job data backups
+***********************************************************************************************************************************/
+static ProtocolParallelJob *
+verifyBackup(void *data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    ProtocolParallelJob *result = NULL;
+
+    VerifyJobData *jobData = data;
+
+    // Process backup files, if any
+    while (strLstSize(jobData->backupList) > 0)
+    {
+        result == NULL;
+
+        BackupResult backupResult =
+        {
+            .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
+        };
+
+        bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
+
+        // Get a usable backup manifest file
+        Manifest *manifest = verifyManifestFile(
+            backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
+
+        // If a usable backup.manifest file is not found
+        if (manifest == NULL)
+        {
+            // Warn if it is not actually the current in-progress backup
+            if (!inProgressBackup)
+            {
+                backupResult.status = backupMissingManifest;
+
+                LOG_WARN_FMT("Manifest files missing for '%s' - backup may be expired", strZ(backupResult.backupLabel));
+            }
+            else
+            {
+                backupResult.status = backupInProgress;
+
+                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
+            }
+
+            // Update the result status and skip
+            lstAdd(jobData->backupResultList, &backupResult);
+
+            // Remove this backup from the processing list
+            strLstRemoveIdx(jobData->backupList, 0);
+        }
+        else
+        {
+/* CSHANG questions:
+1) What sections of the manifest can we really verify? I don't want to read the manifest again if I can help it so now that we have it,
+what sections can we check?
+    [backrest] - NO
+    [backup] - maybe we should save all or a subset of this information in the result to check later? Definitely archive-start/stop but is anything else important?
+        backup-archive-start="000000010000000000000002"
+        backup-archive-stop="000000010000000000000002"
+        backup-label="20191112-173146F"
+        backup-lsn-start="0/2000028"
+        backup-lsn-stop="0/2000130"
+        backup-timestamp-copy-start=1573579908
+        backup-timestamp-start=1573579906
+        backup-timestamp-stop=1573579919
+        backup-type="full"
+    [backup:option] - is there anything here we can/should check? If so, how?
+    [backup:target] - NO (on the db so we can't check that)
+    [db] - NO (on the db so we can't check that)
+    [target:file] - definitely - this is the crux
+        pg_data/PG_VERSION={"checksum":"ad552e6dc057d1d825bf49df79d6b98eba846ebe","master":true,"reference":"20200810-171426F","repo-size":23,"size":3,"timestamp":1597079647}
+        pg_data/global/6100_vm={"checksum-page":true,"repo-size":20,"size":0,"timestamp":1574780487}
+        pg_data/global/6114={"checksum":"348b9fc06b2db1b0e547bcf51ec7c7715143cd93","checksum-page":true,"repo-size":78,"size":8192,"timestamp":1574780487}
+        pg_data/global/6115={"checksum":"0a1eda482229f7dfec6ec7083362ad2e80ce2262","checksum-page":true,"repo-size":76,"size":8192,"timestamp":1574780487}
+        pg_data/global/pg_control={"checksum":"edb8d7e62358c8a0538d2a209da8ae76f289a7e0","master":true,"repo-size":213,"size":8192,"timestamp":1574780832}
+        pg_data/global/pg_filenode.map={"checksum":"1b85310413a1541d7a326c2dbc3d0283b7da0f60","repo-size":136,"size":512,"timestamp":1574780487}
+        pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"repo-size":28,"size":8,"timestamp":1574780832}
+        pg_data/pg_multixact/members/0000={"checksum":"0631457264ff7f8d5fb1edc2c0211992a67c73e6","repo-size":43,"size":8192,"timestamp":1574780487}
+        pg_data/pg_multixact/offsets/0000={"checksum":"0631457264ff7f8d5fb1edc2c0211992a67c73e6","repo-size":43,"size":8192,"timestamp":1574780703}
+        pg_data/pg_xact/0000={"checksum":"535bf8d445838537821cb3cb60c89e814a6287e6","repo-size":49,"size":8192,"timestamp":1574780824}
+        pg_data/postgresql.auto.conf={"checksum":"c6b93d1c2880daea891c8879c86d167c6678facf","master":true,"repo-size":103,"size":88,"timestamp":1574780487}
+        pg_data/tablespace_map={"checksum":"e71a909fe617319cff5c4463e0a65e056054d94b","master":true,"size":30,"timestamp":1574780855}
+        pg_tblspc/16385/PG_10_201707211/16386/112={"checksum":"c0330e005f13857f54da25099ef919ca0c143cb6","checksum-page":true,"repo-size":74,"size":8192,"timestamp":1574780704}
+    [target:file:default] - NO unless it is necessary for checking permissions?
+    [target:link] - NO
+    [target:link:default] - NO
+    [target:path] - NO
+    [target:path:default] - NO
+
+2) If there are "reference" to prior backup, we should be able to skip checking them, no?
+*/
+            // process the files
+LOG_WARN("Processing MANIFEST"); // CSHANG Remove
+
+            // Get the cipher subpass used to decrypt files in the backup
+            jobData->backupCipherPass = manifestCipherSubPass(jobData->manifest);
         }
     }
 
@@ -1044,55 +1149,11 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
     if (jobData->backupProcessing)
     {
-        // Process backup files, if any
-        while (strLstSize(jobData->backupList) > 0)
-        {
-            BackupResult backupResult =
-            {
-                .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
-            };
-            // result == NULL;
-
-            bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
-
-            // Get a usable backup manifest file
-            Manifest *manifest = verifyManifestFile(
-                backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
-
-            // If a usable backup.manifest file is not found
-            if (manifest == NULL)
-            {
-                // Warn if it is not the current in-progress backup
-                if (!inProgressBackup)
-                {
-                    backupResult.status = backupMissingManifest;
-
-                    LOG_WARN_FMT("Manifest files missing for '%s' - backup may be expired", strZ(backupResult.backupLabel));
-                }
-                else
-                {
-                    backupResult.status = backupInProgress;
-                }
-
-                // Update the result status and skip
-                lstAdd(jobData->backupResultList, &backupResult);
-
-                // Remove this backup from the processing list
-                strLstRemoveIdx(jobData->backupList, 0);
-            }
-            else
-            {
-                // process the files
-LOG_WARN("Processing MANIFEST"); // CSHANG Remove
-            }
-        }
+        result = verifyBackup(data);
 
         // If there is a result from backups, then return it
         if (result != NULL)
-        {
-LOG_WARN("BACKUP RESULT != NULL"); // CSHANG Remove
             FUNCTION_TEST_RETURN(result);
-        }
     }
 
     // }
