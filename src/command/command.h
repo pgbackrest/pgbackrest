@@ -19,10 +19,6 @@ void cmdBegin(void);
 // debugging or error reporting later on.
 const String *cmdOption(void);
 
-// Get the command options as a string. This is output in cmdBegin() if the log level is high enough but can also be used for
-// debugging or error reporting later on.
-const String *cmdOption(void);
-
 // End the command
 void cmdEnd(int code, const String *errorMessage);
 
