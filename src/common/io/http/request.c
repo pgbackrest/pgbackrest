@@ -7,6 +7,7 @@ HTTP Request
 #include "common/io/http/common.h"
 #include "common/io/http/request.h"
 #include "common/log.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
 #include "version.h"
@@ -161,7 +162,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    httpClientStat.retry++;
+                    statInc(HTTP_STAT_RETRY_STR);
                 }
                 else
                     RETHROW();
@@ -213,7 +214,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
 
         // Send the request
         httpRequestProcess(this, false, false);
-        httpClientStat.request++;
+        statInc(HTTP_STAT_REQUEST_STR);
     }
     MEM_CONTEXT_NEW_END();
 

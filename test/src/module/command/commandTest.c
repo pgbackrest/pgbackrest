@@ -4,7 +4,7 @@ Test Common Command Routines
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "storage/storage.h"
+#include "common/stat.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -121,16 +121,15 @@ testRun(void)
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
-        httpClientNew(tlsClientNew(sckClientNew(STRDEF("BOGUS"), 443, 1000), STRDEF("BOGUS"), 1000, true, NULL, NULL), 1000);
+        // Add one stat to make sure it gets output
+        statInc(STRDEF("test"));
 
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
         hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
         TEST_RESULT_LOG(
-            "P00 DETAIL: socket statistics: objects 1, sessions 0, retries 0\n"
-            "P00 DETAIL: tls statistics: objects 1, sessions 0, retries 0\n"
-            "P00   INFO: http statistics: objects 1, sessions 0, requests 0, retries 0, closes 0\n"
+            "P00 DETAIL: statistics: {\"test\":{\"total\":1}}\n"
             "P00   INFO: archive-get command end: completed successfully ([TIME]ms)");
 
         harnessLogLevelReset();

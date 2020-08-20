@@ -11,6 +11,7 @@ running out of memory on the test systems or taking an undue amount of time.  It
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/stat.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
@@ -289,6 +290,47 @@ testRun(void)
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+    }
+
+    // Make sure statistics collector performs well
+    // *****************************************************************************************************************************
+    if (testBegin("statistics collector"))
+    {
+        CHECK(testScale() <= 1000000);
+
+        // Setup a list of stats to use for testing
+        #define TEST_STAT_TOTAL 100
+        String *statList[TEST_STAT_TOTAL];
+
+        for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
+            statList[statIdx] = strNewFmt("STAT%u", statIdx);
+
+        uint64_t runTotal = (uint64_t)testScale() * (uint64_t)100000;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE_FMT("update %d stats %" PRIu64 " times", TEST_STAT_TOTAL, runTotal);
+
+        TimeMSec timeBegin = timeMSec();
+
+        for (uint64_t runIdx = 0; runIdx < runTotal; runIdx++)
+        {
+            for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
+                statInc(statList[statIdx]);
+        }
+
+        TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check stats have correct values");
+
+        KeyValue *statKv = statToKv();
+
+        for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
+        {
+            TEST_RESULT_UINT(
+                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal, "check stat %u",
+                statIdx);
+        }
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
