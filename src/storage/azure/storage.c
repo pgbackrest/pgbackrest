@@ -337,8 +337,6 @@ storageAzureListInternal(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *marker = NULL;
-
         // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
@@ -363,35 +361,62 @@ storageAzureListInternal(
                 queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
         }
 
-        // Loop as long as a continuation token returned
+        // Create query
+        HttpQuery *query = httpQueryNewP();
+
+        // Add the delimiter to not recurse
+        if (!recurse)
+            httpQueryAdd(query, AZURE_QUERY_DELIMITER_STR, FSLASH_STR);
+
+        // Add resource type
+        httpQueryAdd(query, AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR);
+
+        // Add list comp
+        httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_LIST_STR);
+
+        // Don't specify empty prefix because it is the default
+        if (!strEmpty(queryPrefix))
+            httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
+
+        // Loop as long as a continuation marker returned
+        HttpRequest *request = NULL;
+
         do
         {
             // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
             // free memory at regular intervals
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                HttpQuery *query = httpQueryNewP();
+                HttpResponse *response = NULL;
 
-                // Add continuation token from the prior loop if any
-                if (marker != NULL)
-                    httpQueryAdd(query, AZURE_QUERY_MARKER_STR, marker);
+                // If there is an outstanding async request then wait for the response
+                if (request != NULL)
+                {
+                    response = storageAzureResponseP(request);
 
-                // Add the delimiter to not recurse
-                if (!recurse)
-                    httpQueryAdd(query, AZURE_QUERY_DELIMITER_STR, FSLASH_STR);
+                    httpRequestFree(request);
+                    request = NULL;
+                }
+                // Else get the response immediately from a sync request
+                else
+                    response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                // Add resource type
-                httpQueryAdd(query, AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR);
+                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
-                // Add list comp
-                httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_LIST_STR);
+                // If a continuation marker exists then send an async request to get more data
+                const String *continuationMarker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
 
-                // Don't specify empty prefix because it is the default
-                if (!strEmpty(queryPrefix))
-                    httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
+                if (!strEq(continuationMarker, EMPTY_STR))
+                {
+                    httpQueryPut(query, AZURE_QUERY_MARKER_STR, continuationMarker);
 
-                XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(httpResponseContent(storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query))));
+                    // Store request in the outer temp context
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        request = storageAzureRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
 
                 // Get subpath list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
@@ -428,17 +453,10 @@ storageAzureListInternal(
                     callback(
                         this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
                 }
-
-                // Get the continuation token and store it in the outer temp context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    marker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
-                }
-                MEM_CONTEXT_PRIOR_END();
             }
             MEM_CONTEXT_TEMP_END();
         }
-        while (!strEq(marker, EMPTY_STR));
+        while (request != NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -603,7 +621,9 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 typedef struct StorageAzurePathRemoveData
 {
-    const String *path;
+    MemContext *memContext;                                         // Mem context to create requests in
+    HttpRequest *request;                                           // Async remove request
+    const String *path;                                             // Root path of remove
 } StorageAzurePathRemoveData;
 
 static void
@@ -621,11 +641,26 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
 
+    StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
+
+    // Get response from prior async request
+    if (data->request != NULL)
+    {
+        storageAzureResponseP(data->request, .allowMissing = true);
+
+        httpRequestFree(data->request);
+        data->request = NULL;
+    }
+
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
     {
-        StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
-        storageInterfaceRemoveP(this, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageAzureRequestAsyncP(
+                this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+        }
+        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -648,8 +683,12 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageAzurePathRemoveData data = {.path = path};
+        StorageAzurePathRemoveData data = {.memContext = memContextCurrent(), .path = path};
         storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
+
+        // Check response on last async request
+        if (data.request != NULL)
+            storageAzureResponseP(data.request, .allowMissing = true);
     }
     MEM_CONTEXT_TEMP_END();
 
