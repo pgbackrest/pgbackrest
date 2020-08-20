@@ -56,11 +56,14 @@ statInit(void)
 /***********************************************************************************************************************************
 Get the specified stat. If it doesn't already exist it will be created.
 ***********************************************************************************************************************************/
-static Stat *statGetOrCreate(const String *key)
+static Stat *
+statGetOrCreate(const String *key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
+
+    ASSERT(key != NULL);
 
     // Attempt to find the stat
     Stat *stat = lstFind(statLocalData.stat, &key);
@@ -87,13 +90,15 @@ static Stat *statGetOrCreate(const String *key)
 }
 
 /**********************************************************************************************************************************/
-void statInc(const String *key)
+void
+statInc(const String *key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
     ASSERT(statLocalData.memContext != NULL);
+    ASSERT(key != NULL);
 
     statGetOrCreate(key)->total++;
 
@@ -101,7 +106,8 @@ void statInc(const String *key)
 }
 
 /**********************************************************************************************************************************/
-KeyValue *statToKv(void)
+KeyValue *
+statToKv(void)
 {
     FUNCTION_TEST_VOID();
 
