@@ -128,7 +128,7 @@ main(int argListSize, const char *argList[])
                         cmdEnd(0, NULL);
                         cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
                         cfgLoadLogFile();
-                        cmdBegin(true);
+                        cmdBegin();
 
                         // Run expire
                         cmdExpire();

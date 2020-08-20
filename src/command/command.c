@@ -158,11 +158,9 @@ cmdOption(void)
 
 /**********************************************************************************************************************************/
 void
-cmdBegin(bool logOption)
+cmdBegin(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, logOption);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     ASSERT(cfgCommand() != cfgCmdNone);
 
@@ -174,15 +172,13 @@ cmdBegin(bool logOption)
             // Basic info on command start
             String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
 
-            if (logOption)
-            {
-                // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
-                // string gets created for the new command.
-                strFree(cmdOptionStr);
-                cmdOptionStr = NULL;
+            // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
+            // string gets created for the new command.
+            strFree(cmdOptionStr);
+            cmdOptionStr = NULL;
 
-                strCatFmt(info, " %s:%s", PROJECT_VERSION, strZ(cmdOption()));
-            }
+            // Add version and options
+            strCatFmt(info, " %s:%s", PROJECT_VERSION, strZ(cmdOption()));
 
             LOG(cfgLogLevelDefault(), 0, strZ(info));
         }
