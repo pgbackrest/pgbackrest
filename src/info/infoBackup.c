@@ -344,7 +344,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *(InfoBackupData *)lstGet(this->backup, backupDataIdx));
 }
 
 /**********************************************************************************************************************************/
