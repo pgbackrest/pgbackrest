@@ -87,6 +87,26 @@ exitInit(void)
 }
 
 /**********************************************************************************************************************************/
+// Helper to provide details for error logging
+static String *
+exitErrorDetail(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(
+        strNewFmt(
+            "--------------------------------------------------------------------\n"
+            "If SUBMITTING AN ISSUE please provide the following information:\n"
+            "\n"
+            "version: " PROJECT_VERSION "\n"
+            "command: %s\n"
+            "options:%s\n"
+            "\n"
+            "stack trace:\n%s\n"
+            "--------------------------------------------------------------------",
+            strZ(cfgCommandRoleName()), strZ(cmdOption()), errorStackTrace()));
+}
+
 int
 exitSafe(int result, bool error, SignalType signalType)
 {
@@ -99,19 +119,23 @@ exitSafe(int result, bool error, SignalType signalType)
     // Report error if one was thrown
     if (error)
     {
-        LOG_ERROR_FMT(
-            errorCode(),
-            "%s\n"
-            "--------------------------------------------------------------------\n"
-            "If SUBMITTING AN ISSUE please provide the following information:\n"
-            "\n"
-            "version: " PROJECT_VERSION "\n"
-            "command: %s\n"
-            "options:%s\n"
-            "\n"
-            "stack trace:\n%s\n"
-            "--------------------------------------------------------------------",
-            errorMessage(), strZ(cfgCommandRoleName()), strZ(cmdOption()), errorStackTrace());
+        LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
+
+        // Assert errors always output a stack trace
+        if (logLevel == logLevelAssert)
+            LOG_FMT(logLevel, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
+        else
+        {
+            // Log just the error to non-debug levels
+            LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
+
+            // Log the stack trace debug levels
+            if (logAny(logLevelDebug))
+            {
+                LOG_INTERNAL_FMT(
+                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
+            }
+        }
 
         result = errorCode();
     }
