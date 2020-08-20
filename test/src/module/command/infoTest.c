@@ -30,6 +30,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         StringList *argListText = strLstDup(argList);
 
         strLstAddZ(argList, "--output=json");
@@ -1249,6 +1250,1056 @@ testRun(void)
             strZ(backupStanza2Path), strZ(backupStanza2Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza2Path))));
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("walArchivesGapDetection()"))
+    {
+        StringList *argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
+        strLstAddZ(argList, "--archive-gap-detection");
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345", true);
+        strLstAddZ(argList, "--repo-cipher-type=aes-256-cbc");
+        StringList *argListText = strLstDup(argList);
+        strLstAddZ(argList, "--output=json");
+
+        // Create stanza1 paths
+        String *archiveStanza1Path = strNewFmt("%s/stanza1", strZ(archivePath));
+        String *backupStanza1Path = strNewFmt("%s/stanza1", strZ(backupPath));
+        storagePathCreateP(storageLocalWrite(), archiveStanza1Path);
+        storagePathCreateP(storageLocalWrite(), backupStanza1Path);
+
+        // Put backup.info, archive.info and 00000003.history files
+        String *backupInfoContent = strNew(
+            "[cipher]\n"
+            "cipher-pass=\"sub12345\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20200817-111046F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.28\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":2931163,\"backup-info-repo-size-delta\":2931163,"
+            "\"backup-info-size\":24534588,\"backup-info-size-delta\":24534588,"
+            "\"backup-timestamp-start\":1597655446,\"backup-timestamp-stop\":1597655450,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20200817-111046F_20200817-111051D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.28\",\"backup-archive-start\":\"000000010000000000000006\","
+            "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2931218,"
+            "\"backup-info-repo-size-delta\":938,\"backup-info-size\":24534808,\"backup-info-size-delta\":9894,"
+            "\"backup-prior\":\"20200817-111046F\",\"backup-reference\":[\"20200817-111046F\"],"
+            "\"backup-timestamp-start\":1597655451,\"backup-timestamp-stop\":1597655453,\"backup-type\":\"diff\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20200817-111046F_20200817-111054I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.28\",\"backup-archive-start\":\"000000010000000000000008\","
+            "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2931237,"
+            "\"backup-info-repo-size-delta\":957,\"backup-info-size\":24535027,\"backup-info-size-delta\":10113,"
+            "\"backup-prior\":\"20200817-111046F_20200817-111051D\","
+            "\"backup-reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+            "\"backup-timestamp-start\":1597655454,\"backup-timestamp-stop\":1597655456,\"backup-type\":\"incr\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20200817-111046F_20200817-111103I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.28\",\"backup-archive-start\":\"00000002000000000000000C\","
+            "\"backup-archive-stop\":\"00000002000000000000000C\",\"backup-info-repo-size\":2931615,"
+            "\"backup-info-repo-size-delta\":1518,\"backup-info-size\":24536651,\"backup-info-size-delta\":11956,"
+            "\"backup-prior\":\"20200817-111046F_20200817-111054I\","
+            "\"backup-reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+            "\"backup-timestamp-start\":1597655463,\"backup-timestamp-stop\":1597655465,\"backup-type\":\"incr\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=2\n"
+            "db-system-id=6861877834002393398\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6861877834002393398,"
+                "\"db-version\":\"12\"}"
+        );
+
+        StorageWrite *backupInfoWrite = storageNewWriteP(
+            storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path)));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(backupInfoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("12345"), NULL));
+
+        TEST_RESULT_VOID(storagePutP(backupInfoWrite, harnessInfoChecksum(backupInfoContent)), "put backup info to file");
+
+        String *archiveInfoContent = strNew(
+            "[cipher]\n"
+            "cipher-pass=\"sub12345\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6861877834002393398\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
+            "2={\"db-id\":6861877834002393398,\"db-version\":\"12\"}\n"
+        );
+
+        StorageWrite *archiveInfoWrite = storageNewWriteP(
+            storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path)));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(archiveInfoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("12345"), NULL));
+
+        TEST_RESULT_VOID(storagePutP(archiveInfoWrite, harnessInfoChecksum(archiveInfoContent)), "put archive info to file");
+
+        // Simulate wrong line in history file to test the history RegExp
+        const Buffer *historyContentBuffer = BUFSTRDEF(
+            "1	0/B000000	before 2000-01-01 01:00:00+01\n"
+            "\n"
+            "\n"
+            "2	0/E000000	no recovery target specified\n"
+            "\n"
+            "\n"
+            "2	0123/012345789ABCDEF	no recovery target specified\n"
+        );
+
+        StorageWrite *historyWrite = storageNewWriteP(
+            storageLocalWrite(), strNewFmt("%s/12-2/00000003.history", strZ(archiveStanza1Path)));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(historyWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("sub12345"), NULL));
+
+        TEST_RESULT_VOID(storagePutP(historyWrite, historyContentBuffer), "put 00000003.history to file");
+
+        // Add WAL segments
+        String *archiveDb1_1 = strNewFmt("%s/12-2/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-d72eddc39b75a32e791e2c55ec54b0b4a818b44c.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-5d30de2b3969472587948fb88ad19ca57c3b660f.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000006-db21643e5863d872db73fb38f0e616023baaf090.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000007-0ec3fc389a62d3b1dc28ef1fea02a49ab70fd6b1.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000008-60259c0a71f841ffcaa68aa7a071c7cc6404ab3c.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000009-8c7e9da8a9bd92b2a30800e2406a775b2a9d6f10.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000001000000000000000A-503151655f5391c418d9a9b0c56ed52b47a8706e.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+
+        String *archiveDb1_2 = strNewFmt("%s/12-2/0000000200000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000B-1b9ca307baced1b848a0cdd4a59b921153165800.gz",
+            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000C-7f38e1f587295bd65ddff35032e80ff785183b1b.gz",
+            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
+            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+
+        String *archiveDb1_3 = strNewFmt("%s/12-2/0000000300000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000003000000000000000E-bd8a4171ecab59a6dc559b88b98f92a6737ce480.gz",
+            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000003000000000000000F-877867b41e3c31c34513f846c3921ff039e1bd6c.gz",
+            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000030000000000000010-974c8e2de6594c7ba9422af515993334648f0862.gz",
+            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Everything is fine
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"12-2\","
+                            "\"max\":\"000000030000000000000010\","
+                            "\"min\":\"000000010000000000000002\","
+                            "\"missing-list\":\"\","
+                            "\"missing-nb\":0"
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000004\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":24534588,"
+                                "\"repository\":{"
+                                    "\"delta\":2931163,"
+                                    "\"size\":2931163"
+                                "},"
+                                "\"size\":24534588"
+                            "},"
+                            "\"label\":\"20200817-111046F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1597655446,"
+                                "\"stop\":1597655450"
+                            "},"
+                            "\"type\":\"full\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000006\","
+                                "\"stop\":\"000000010000000000000006\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":9894,"
+                                "\"repository\":{"
+                                    "\"delta\":938,"
+                                    "\"size\":2931218"
+                                "},"
+                                "\"size\":24534808"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111051D\","
+                            "\"prior\":\"20200817-111046F\","
+                            "\"reference\":[\"20200817-111046F\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655451,"
+                                "\"stop\":1597655453"
+                            "},"
+                            "\"type\":\"diff\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000008\","
+                                "\"stop\":\"000000010000000000000008\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":10113,"
+                                "\"repository\":{"
+                                    "\"delta\":957,"
+                                    "\"size\":2931237"
+                                "},"
+                                "\"size\":24535027"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111054I\","
+                            "\"prior\":\"20200817-111046F_20200817-111051D\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655454,"
+                                "\"stop\":1597655456"
+                            "},"
+                            "\"type\":\"incr\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"00000002000000000000000C\","
+                                "\"stop\":\"00000002000000000000000C\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":11956,"
+                                "\"repository\":{"
+                                    "\"delta\":1518,"
+                                    "\"size\":2931615"
+                                "},"
+                                "\"size\":24536651"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111103I\","
+                            "\"prior\":\"20200817-111046F_20200817-111054I\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655463,"
+                                "\"stop\":1597655465"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}],"
+                    "\"cipher\":\"aes-256-cbc\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "},{"
+                            "\"id\":2,"
+                            "\"system-id\":6861877834002393398,"
+                            "\"version\":\"12\""
+                        "}],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":0,"
+                        "\"lock\":{"
+                            "\"backup\":{"
+                                "\"held\":false"
+                            "}"
+                        "},"
+                        "\"message\":\"ok\""
+                    "}"
+                "}"
+            "]",
+            "json - archive-gap-detection - everything is fine");
+
+        harnessCfgLoad(cfgCmdInfo, argListText);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
+            "\n"
+            "        full backup: 20200817-111046F\n"
+            "            timestamp start/stop: 2020-08-17 09:10:46 / 2020-08-17 09:10:50\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000004\n"
+            "            database size: 23.4MB, backup size: 23.4MB\n"
+            "            repository size: 2.8MB, repository backup size: 2.8MB\n"
+            "\n"
+            "        diff backup: 20200817-111046F_20200817-111051D\n"
+            "            timestamp start/stop: 2020-08-17 09:10:51 / 2020-08-17 09:10:53\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 23.4MB, backup size: 9.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 938B\n"
+            "            backup reference list: 20200817-111046F\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111054I\n"
+            "            timestamp start/stop: 2020-08-17 09:10:54 / 2020-08-17 09:10:56\n"
+            "            wal start/stop: 000000010000000000000008 / 000000010000000000000008\n"
+            "            database size: 23.4MB, backup size: 9.9KB\n"
+            "            repository size: 2.8MB, repository backup size: 957B\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111103I\n"
+            "            timestamp start/stop: 2020-08-17 09:11:03 / 2020-08-17 09:11:05\n"
+            "            wal start/stop: 00000002000000000000000C / 00000002000000000000000C\n"
+            "            database size: 23.4MB, backup size: 11.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 1.5KB\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n",
+            "text - archive-gap-detection - everything is fine");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // 1 missing archive with retention-archive-type=incr and retention-archive=5
+        // 000000010000000000000001 will be older than the 1st backup start wal location
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-33099f27f375f42f3aab8c9d644ed24dba7071d7.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        // Remove 000000010000000000000005, so it will be reported missing
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/000000010000000000000007-0ec3fc389a62d3b1dc28ef1fea02a49ab70fd6b1.gz",
+            strZ(archiveDb1_1)));
+
+        StringList *argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=5");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"12-2\","
+                            "\"max\":\"000000030000000000000010\","
+                            "\"min\":\"000000010000000000000001\","
+                            "\"missing-list\":\"000000010000000000000007\","
+                            "\"missing-nb\":1"
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000004\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":24534588,"
+                                "\"repository\":{"
+                                    "\"delta\":2931163,"
+                                    "\"size\":2931163"
+                                "},"
+                                "\"size\":24534588"
+                            "},"
+                            "\"label\":\"20200817-111046F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1597655446,"
+                                "\"stop\":1597655450"
+                            "},"
+                            "\"type\":\"full\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000006\","
+                                "\"stop\":\"000000010000000000000006\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":9894,"
+                                "\"repository\":{"
+                                    "\"delta\":938,"
+                                    "\"size\":2931218"
+                                "},"
+                                "\"size\":24534808"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111051D\","
+                            "\"prior\":\"20200817-111046F\","
+                            "\"reference\":[\"20200817-111046F\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655451,"
+                                "\"stop\":1597655453"
+                            "},"
+                            "\"type\":\"diff\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000008\","
+                                "\"stop\":\"000000010000000000000008\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":10113,"
+                                "\"repository\":{"
+                                    "\"delta\":957,"
+                                    "\"size\":2931237"
+                                "},"
+                                "\"size\":24535027"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111054I\","
+                            "\"prior\":\"20200817-111046F_20200817-111051D\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655454,"
+                                "\"stop\":1597655456"
+                            "},"
+                            "\"type\":\"incr\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"00000002000000000000000C\","
+                                "\"stop\":\"00000002000000000000000C\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":11956,"
+                                "\"repository\":{"
+                                    "\"delta\":1518,"
+                                    "\"size\":2931615"
+                                "},"
+                                "\"size\":24536651"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111103I\","
+                            "\"prior\":\"20200817-111046F_20200817-111054I\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655463,"
+                                "\"stop\":1597655465"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}],"
+                    "\"cipher\":\"aes-256-cbc\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "},{"
+                            "\"id\":2,"
+                            "\"system-id\":6861877834002393398,"
+                            "\"version\":\"12\""
+                        "}],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":4,"
+                        "\"lock\":{"
+                            "\"backup\":{"
+                                "\"held\":false"
+                            "}"
+                        "},"
+                        "\"message\":\"missing wal segment(s)\""
+                    "}"
+                "}"
+            "]",
+            "json - archive-gap-detection - 1 missing archive");
+
+        harnessLogResult(
+        "P00   WARN: min wal archive ('000000010000000000000001') found in the repo is older than the first backup start WAL"
+        " location ('000000010000000000000002').\n"
+        "            HINT: this might indicate a configuration error in the retention policy.");
+
+        argListTmp = strLstDup(argListText);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=5");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing wal segment(s))\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (12-2): 000000010000000000000001/000000030000000000000010\n"
+            "        missing (1): 000000010000000000000007\n"
+            "\n"
+            "        full backup: 20200817-111046F\n"
+            "            timestamp start/stop: 2020-08-17 09:10:46 / 2020-08-17 09:10:50\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000004\n"
+            "            database size: 23.4MB, backup size: 23.4MB\n"
+            "            repository size: 2.8MB, repository backup size: 2.8MB\n"
+            "\n"
+            "        diff backup: 20200817-111046F_20200817-111051D\n"
+            "            timestamp start/stop: 2020-08-17 09:10:51 / 2020-08-17 09:10:53\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 23.4MB, backup size: 9.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 938B\n"
+            "            backup reference list: 20200817-111046F\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111054I\n"
+            "            timestamp start/stop: 2020-08-17 09:10:54 / 2020-08-17 09:10:56\n"
+            "            wal start/stop: 000000010000000000000008 / 000000010000000000000008\n"
+            "            database size: 23.4MB, backup size: 9.9KB\n"
+            "            repository size: 2.8MB, repository backup size: 957B\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111103I\n"
+            "            timestamp start/stop: 2020-08-17 09:11:03 / 2020-08-17 09:11:05\n"
+            "            wal start/stop: 00000002000000000000000C / 00000002000000000000000C\n"
+            "            database size: 23.4MB, backup size: 11.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 1.5KB\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n",
+            "text - archive-gap-detection - 1 missing archive");
+
+        harnessLogResult(
+        "P00   WARN: min wal archive ('000000010000000000000001') found in the repo is older than the first backup start WAL"
+        " location ('000000010000000000000002').\n"
+        "            HINT: this might indicate a configuration error in the retention policy.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // 2 missing archives with retention-archive-type=incr and retention-archive=1
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/000000010000000000000001-33099f27f375f42f3aab8c9d644ed24dba7071d7.gz",
+            strZ(archiveDb1_1)));
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/000000010000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
+            strZ(archiveDb1_1)));
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/000000010000000000000009-8c7e9da8a9bd92b2a30800e2406a775b2a9d6f10.gz",
+            strZ(archiveDb1_1)));
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/00000001000000000000000A-503151655f5391c418d9a9b0c56ed52b47a8706e.gz",
+            strZ(archiveDb1_1)));
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/00000002000000000000000B-e26735cd123aa5ebc263e3cfc6118acf23930486.gz",
+            strZ(archiveDb1_2)));
+        // Remove 00000002000000000000000D and 00000003000000000000000F so they will be reported missing
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
+            strZ(archiveDb1_2)));
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/00000003000000000000000F-877867b41e3c31c34513f846c3921ff039e1bd6c.gz",
+            strZ(archiveDb1_3)));
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=1");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"12-2\","
+                            "\"max\":\"000000030000000000000010\","
+                            "\"min\":\"000000010000000000000002\","
+                            "\"missing-list\":\"00000002000000000000000D,00000003000000000000000F\","
+                            "\"missing-nb\":2"
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000004\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":24534588,"
+                                "\"repository\":{"
+                                    "\"delta\":2931163,"
+                                    "\"size\":2931163"
+                                "},"
+                                "\"size\":24534588"
+                            "},"
+                            "\"label\":\"20200817-111046F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1597655446,"
+                                "\"stop\":1597655450"
+                            "},"
+                            "\"type\":\"full\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000006\","
+                                "\"stop\":\"000000010000000000000006\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":9894,"
+                                "\"repository\":{"
+                                    "\"delta\":938,"
+                                    "\"size\":2931218"
+                                "},"
+                                "\"size\":24534808"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111051D\","
+                            "\"prior\":\"20200817-111046F\","
+                            "\"reference\":[\"20200817-111046F\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655451,"
+                                "\"stop\":1597655453"
+                            "},"
+                            "\"type\":\"diff\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000008\","
+                                "\"stop\":\"000000010000000000000008\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":10113,"
+                                "\"repository\":{"
+                                    "\"delta\":957,"
+                                    "\"size\":2931237"
+                                "},"
+                                "\"size\":24535027"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111054I\","
+                            "\"prior\":\"20200817-111046F_20200817-111051D\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655454,"
+                                "\"stop\":1597655456"
+                            "},"
+                            "\"type\":\"incr\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"00000002000000000000000C\","
+                                "\"stop\":\"00000002000000000000000C\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":11956,"
+                                "\"repository\":{"
+                                    "\"delta\":1518,"
+                                    "\"size\":2931615"
+                                "},"
+                                "\"size\":24536651"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111103I\","
+                            "\"prior\":\"20200817-111046F_20200817-111054I\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655463,"
+                                "\"stop\":1597655465"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}],"
+                    "\"cipher\":\"aes-256-cbc\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "},{"
+                            "\"id\":2,"
+                            "\"system-id\":6861877834002393398,"
+                            "\"version\":\"12\""
+                        "}],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":4,"
+                        "\"lock\":{"
+                            "\"backup\":{"
+                                "\"held\":false"
+                            "}"
+                        "},"
+                        "\"message\":\"missing wal segment(s)\""
+                    "}"
+                "}"
+            "]",
+            "json - archive-gap-detection - retention-archive-type=incr and retention-archive=1, 2 missing archives");
+
+        argListTmp = strLstDup(argListText);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=1");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing wal segment(s))\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
+            "        missing (2): 00000002000000000000000D,00000003000000000000000F\n"
+            "\n"
+            "        full backup: 20200817-111046F\n"
+            "            timestamp start/stop: 2020-08-17 09:10:46 / 2020-08-17 09:10:50\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000004\n"
+            "            database size: 23.4MB, backup size: 23.4MB\n"
+            "            repository size: 2.8MB, repository backup size: 2.8MB\n"
+            "\n"
+            "        diff backup: 20200817-111046F_20200817-111051D\n"
+            "            timestamp start/stop: 2020-08-17 09:10:51 / 2020-08-17 09:10:53\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 23.4MB, backup size: 9.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 938B\n"
+            "            backup reference list: 20200817-111046F\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111054I\n"
+            "            timestamp start/stop: 2020-08-17 09:10:54 / 2020-08-17 09:10:56\n"
+            "            wal start/stop: 000000010000000000000008 / 000000010000000000000008\n"
+            "            database size: 23.4MB, backup size: 9.9KB\n"
+            "            repository size: 2.8MB, repository backup size: 957B\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111103I\n"
+            "            timestamp start/stop: 2020-08-17 09:11:03 / 2020-08-17 09:11:05\n"
+            "            wal start/stop: 00000002000000000000000C / 00000002000000000000000C\n"
+            "            database size: 23.4MB, backup size: 11.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 1.5KB\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n",
+            "text - archive-gap-detection - retention-archive-type=incr and retention-archive=1, 2 missing archives");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // retention-full-type=time, 2 missing archives with one needed for the backup consistency
+
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt("%s/000000010000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
+            strZ(archiveDb1_1)));
+
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
+            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=1");
+        strLstAddZ(argListTmp, "--repo1-retention-full-type=time");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"12-2\","
+                            "\"max\":\"000000030000000000000010\","
+                            "\"min\":\"000000010000000000000002\","
+                            "\"missing-list\":\"000000010000000000000003,00000003000000000000000F\","
+                            "\"missing-nb\":2"
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000004\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":24534588,"
+                                "\"repository\":{"
+                                    "\"delta\":2931163,"
+                                    "\"size\":2931163"
+                                "},"
+                                "\"size\":24534588"
+                            "},"
+                            "\"label\":\"20200817-111046F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1597655446,"
+                                "\"stop\":1597655450"
+                            "},"
+                            "\"type\":\"full\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000006\","
+                                "\"stop\":\"000000010000000000000006\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":9894,"
+                                "\"repository\":{"
+                                    "\"delta\":938,"
+                                    "\"size\":2931218"
+                                "},"
+                                "\"size\":24534808"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111051D\","
+                            "\"prior\":\"20200817-111046F\","
+                            "\"reference\":[\"20200817-111046F\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655451,"
+                                "\"stop\":1597655453"
+                            "},"
+                            "\"type\":\"diff\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000008\","
+                                "\"stop\":\"000000010000000000000008\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":10113,"
+                                "\"repository\":{"
+                                    "\"delta\":957,"
+                                    "\"size\":2931237"
+                                "},"
+                                "\"size\":24535027"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111054I\","
+                            "\"prior\":\"20200817-111046F_20200817-111051D\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655454,"
+                                "\"stop\":1597655456"
+                            "},"
+                            "\"type\":\"incr\""
+                        "},{"
+                            "\"archive\":{"
+                                "\"start\":\"00000002000000000000000C\","
+                                "\"stop\":\"00000002000000000000000C\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.28\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":11956,"
+                                "\"repository\":{"
+                                    "\"delta\":1518,"
+                                    "\"size\":2931615"
+                                "},"
+                                "\"size\":24536651"
+                            "},"
+                            "\"label\":\"20200817-111046F_20200817-111103I\","
+                            "\"prior\":\"20200817-111046F_20200817-111054I\","
+                            "\"reference\":[\"20200817-111046F\",\"20200817-111046F_20200817-111051D\"],"
+                            "\"timestamp\":{"
+                                "\"start\":1597655463,"
+                                "\"stop\":1597655465"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}],"
+                    "\"cipher\":\"aes-256-cbc\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "},{"
+                            "\"id\":2,"
+                            "\"system-id\":6861877834002393398,"
+                            "\"version\":\"12\""
+                        "}],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":4,"
+                        "\"lock\":{"
+                            "\"backup\":{"
+                                "\"held\":false"
+                            "}"
+                        "},"
+                        "\"message\":\"missing wal segment(s)\""
+                    "}"
+                "}"
+            "]",
+            "json - archive-gap-detection - retention-full-type=time, 2 missing archives");
+
+        argListTmp = strLstDup(argListText);
+        strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
+        strLstAddZ(argListTmp, "--repo1-retention-archive=1");
+        strLstAddZ(argListTmp, "--repo1-retention-full-type=time");
+        harnessCfgLoad(cfgCmdInfo, argListTmp);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing wal segment(s))\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
+            "        missing (2): 000000010000000000000003,00000003000000000000000F\n"
+            "\n"
+            "        full backup: 20200817-111046F\n"
+            "            timestamp start/stop: 2020-08-17 09:10:46 / 2020-08-17 09:10:50\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000004\n"
+            "            database size: 23.4MB, backup size: 23.4MB\n"
+            "            repository size: 2.8MB, repository backup size: 2.8MB\n"
+            "\n"
+            "        diff backup: 20200817-111046F_20200817-111051D\n"
+            "            timestamp start/stop: 2020-08-17 09:10:51 / 2020-08-17 09:10:53\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 23.4MB, backup size: 9.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 938B\n"
+            "            backup reference list: 20200817-111046F\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111054I\n"
+            "            timestamp start/stop: 2020-08-17 09:10:54 / 2020-08-17 09:10:56\n"
+            "            wal start/stop: 000000010000000000000008 / 000000010000000000000008\n"
+            "            database size: 23.4MB, backup size: 9.9KB\n"
+            "            repository size: 2.8MB, repository backup size: 957B\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n"
+            "\n"
+            "        incr backup: 20200817-111046F_20200817-111103I\n"
+            "            timestamp start/stop: 2020-08-17 09:11:03 / 2020-08-17 09:11:05\n"
+            "            wal start/stop: 00000002000000000000000C / 00000002000000000000000C\n"
+            "            database size: 23.4MB, backup size: 11.7KB\n"
+            "            repository size: 2.8MB, repository backup size: 1.5KB\n"
+            "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n",
+            "text - archive-gap-detection - retention-full-type=time, 2 missing archives");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Reset env
+        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+    }
+
     //******************************************************************************************************************************
     if (testBegin("formatTextDb()"))
     {
@@ -1308,6 +2359,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         harnessCfgLoad(cfgCmdInfo, argList);
 
         storagePathCreateP(storageLocalWrite(), archivePath);

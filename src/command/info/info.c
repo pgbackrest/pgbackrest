@@ -410,8 +410,6 @@ generateNeededArchivesList(
             ioRead(source, buffer);
             ioReadClose(source);
         }
-        else
-            THROW_FMT(FileOpenError, "Can't open %s", strZ(historyFile));
 
         // Extract history file content line by line
         const StringList *historyFileContentList = strLstNewSplit(strNewBuf(buffer), LF_STR);
@@ -421,7 +419,7 @@ generateNeededArchivesList(
         {
             // Check if the line is correctly formatted
             const String *historyLine = strLstGet(historyFileContentList, contentIdx);
-            RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9].+[0-9A-F]+/[0-9A-F]+"));
+            RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9A-F]{1,8}[\t][0-9A-F]{1,8}/[0-9A-F]{1,8}[\t].*$"));
 
             if (regExpMatch(historyExp, historyLine))
             {
@@ -503,7 +501,7 @@ walArchivesGapDetection(
         String *archiveStart = NULL;
         String *archiveStop = NULL;
         String *archiveId = NULL;
-        unsigned int archiveSectionIdx = NULL;
+        unsigned int archiveSectionIdx = 0;
         String *firstStartWal = NULL;
         StringList *backupStartWalsList = strLstNew();
         StringList *neededArchivesList = strLstNew();
@@ -515,7 +513,7 @@ walArchivesGapDetection(
             KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, KEY_DATABASE_VAR));
             unsigned int archiveDbId = varUInt(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
 
-            if (archiveDbId == dbId)
+            if (archiveDbId == dbId && kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR) != NULL)
             {
                 archiveStart = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR));
                 archiveStop = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR));
@@ -524,100 +522,105 @@ walArchivesGapDetection(
             }
         }
 
-        // Get the start/stop archive information for each backup
-        for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+        // Don't run gapDetection if there's no archive found in the repo for that specific db-id
+        if (archiveStart != NULL)
         {
-            KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
-            KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
-            unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
-
-            if (backupDbId == dbId)
+            // Get the start/stop archive information for each backup
+            for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
             {
-                KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
+                KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+                KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+                unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
 
-                if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
-                    kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
+                if (backupDbId == dbId)
                 {
-                    // Generate the list of required WAL archives for each backup
-                    generateNeededArchivesList(
-                        neededArchivesList, pgVersion, stanza, archiveId,
-                        varStr(kvGet(archiveBackupInfo, KEY_START_VAR)),
-                        varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR)));
+                    KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
-                    // Store the first backup start WAL location
-                    if (firstStartWal == NULL)
-                        firstStartWal = varStrForce(kvGet(archiveBackupInfo, KEY_START_VAR));
+                    if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
+                        kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
+                    {
+                        // Generate the list of required WAL archives for each backup
+                        generateNeededArchivesList(
+                            neededArchivesList, pgVersion, stanza, archiveId,
+                            varStr(kvGet(archiveBackupInfo, KEY_START_VAR)),
+                            varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR)));
 
-                    if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_FULL_STR))
-                    {
-                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
-                    }
-                    else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_DIFF_STR) && (
-                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_DIFF_STR) ||
-                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR)))
-                    {
-                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
-                    }
-                    else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_INCR_STR) &&
-                            strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR))
-                    {
-                        strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                        // Store the first backup start WAL location
+                        if (firstStartWal == NULL)
+                            firstStartWal = varStrForce(kvGet(archiveBackupInfo, KEY_START_VAR));
+
+                        if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_FULL_STR))
+                        {
+                            strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                        }
+                        else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_DIFF_STR) && (
+                                strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_DIFF_STR) ||
+                                strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR)))
+                        {
+                            strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                        }
+                        else if(strEq(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)), BACKUP_TYPE_INCR_STR) &&
+                                strEq(cfgOptionStr(cfgOptRepoRetentionArchiveType), BACKUP_TYPE_INCR_STR))
+                        {
+                            strLstAdd(backupStartWalsList, varStr(kvGet(archiveBackupInfo, KEY_START_VAR)));
+                        }
                     }
                 }
             }
+
+            // Check that the oldest archive in the repo is not older than the first backup start WAL location.
+            // It could indicate an expire problem.
+            if (strCmp(archiveStart,firstStartWal) < 0)
+                LOG_WARN_FMT(
+                    "min wal archive ('%s') found in the repo is older than the first backup start WAL location ('%s').\n"
+                    "HINT: this might indicate a configuration error in the retention policy.",
+                    strZ(archiveStart), strZ(firstStartWal));
+
+            // If repo-retention-archive is set, exclude aggressively expired archives.
+            // Works the same way with repo-retention-full-type = count or time.
+            if (cfgOptionTest(cfgOptRepoRetentionArchive) && strLstSize(backupStartWalsList) >= cfgOptionUInt(cfgOptRepoRetentionArchive))
+            {
+                archiveStart = strLstGet(backupStartWalsList,
+                    strLstSize(backupStartWalsList) - cfgOptionUInt(cfgOptRepoRetentionArchive));
+            }
+
+            // Generate the complete list of required WAL archives
+            generateNeededArchivesList(neededArchivesList, pgVersion, stanza, archiveId, archiveStart, archiveStop);
+            strLstSort(neededArchivesList, sortOrderAsc);
+
+            // Get the list of all WAL archives in WAL directories in the archive repo
+            StringList *repoArchivesList = strLstNew();
+            String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
+
+            StringList *walDir = strLstSort(
+                storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
+
+            for (unsigned int walDirIdx = 0; walDirIdx < strLstSize(walDir); walDirIdx++)
+            {
+                StringList *list = storageListP(
+                    storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, walDirIdx))),
+                    .expression = WAL_SEGMENT_FILE_REGEXP_STR);
+
+                for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(list); archiveIdx++)
+                    strLstAdd(repoArchivesList, strSubN(strLstGet(list, archiveIdx), 0, 24));
+            }
+            strLstSort(repoArchivesList, sortOrderAsc);
+
+            // Find missing archives
+            for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(neededArchivesList); archiveIdx++)
+            {
+                // Look for each needed WAL archive if it exists in the repo
+                if(!strLstExists(repoArchivesList, strLstGet(neededArchivesList, archiveIdx)))
+                    strLstAddIfMissing(missingArchiveList, strLstGet(neededArchivesList, archiveIdx));
+            }
+
+            // Add missing archives information to archive section
+            Variant *archiveInfo = varLstGet(archiveSection, archiveSectionIdx);
+            kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_LIST_VAR, VARSTR(strLstJoin(missingArchiveList, ",")));
+            kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_NB_VAR, VARUINT(strLstSize(missingArchiveList)));
+            varLstRemoveIdx(archiveSection, archiveSectionIdx);
+            varLstAdd(archiveSection, archiveInfo);
         }
-
-        // Check that the oldest archive in the repo is not older than the first backup start WAL location.
-        // It could indicate an expire problem.
-        if (strCmp(archiveStart,firstStartWal) < 0)
-            LOG_WARN_FMT(
-                "min wal archive ('%s') found in the repo is older than the first backup start WAL location ('%s').\n"
-                "HINT: this might indicate a configuration error in the retention policy.",
-                strZ(archiveStart), strZ(firstStartWal));
-
-        // If repo-retention-archive is set, exclude potentially expired archives
-        if (cfgOptionTest(cfgOptRepoRetentionArchive))
-        {
-            archiveStart = strLstGet(backupStartWalsList,
-                strLstSize(backupStartWalsList) - cfgOptionUInt(cfgOptRepoRetentionArchive));
-        }
-
-        // Generate the complete list of required WAL archives
-        generateNeededArchivesList(neededArchivesList, pgVersion, stanza, archiveId, archiveStart, archiveStop);
-        strLstSort(neededArchivesList, sortOrderAsc);
-
-        // Get the list of all WAL archives in WAL directories in the archive repo
-        StringList *repoArchivesList = strLstNew();
-        String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
-
-        StringList *walDir = strLstSort(
-            storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
-
-        for (unsigned int walDirIdx = 0; walDirIdx < strLstSize(walDir); walDirIdx++)
-        {
-            StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, walDirIdx))),
-                .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-
-            for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(list); archiveIdx++)
-                strLstAdd(repoArchivesList, strSubN(strLstGet(list, archiveIdx), 0, 24));
-        }
-        strLstSort(repoArchivesList, sortOrderAsc);
-
-        // Find missing archives
-        for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(neededArchivesList); archiveIdx++)
-        {
-            // Look for each needed WAL archive if it exists in the repo
-            if(!strLstExists(repoArchivesList, strLstGet(neededArchivesList, archiveIdx)))
-                strLstAddIfMissing(missingArchiveList, strLstGet(neededArchivesList, archiveIdx));
-        }
-
-        // Add missing archives information to archive section
-        Variant *archiveInfo = varLstGet(archiveSection, archiveSectionIdx);
-        kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_LIST_VAR, VARSTR(strLstJoin(missingArchiveList, ",")));
-        kvPut(varKv(archiveInfo), ARCHIVE_KEY_MISSING_WAL_NB_VAR, VARUINT(strLstSize(missingArchiveList)));
-        varLstRemoveIdx(archiveSection, archiveSectionIdx);
-        varLstAdd(archiveSection, archiveInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -733,7 +736,6 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
         kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
-
         // If a status has not already been set, check if there's a local backup running
         static bool backupLockHeld = false;
 
@@ -863,7 +865,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                     strCatZ(archiveResult, "none present\n");
 
                 // Show missing archives if any
-                if (varUInt(kvGet(archiveInfo, ARCHIVE_KEY_MISSING_WAL_NB_VAR)) > 0)
+                if (kvKeyExists(archiveInfo, ARCHIVE_KEY_MISSING_WAL_NB_VAR) &&
+                    varUInt(kvGet(archiveInfo, ARCHIVE_KEY_MISSING_WAL_NB_VAR)) > 0)
                 {
                     strCatFmt(
                         archiveResult, "        missing (%u): %s\n",
