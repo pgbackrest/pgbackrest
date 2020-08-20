@@ -50,6 +50,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Asynchronous <id>list</id>/<id>remove</id> for <proper>S3</proper>/<proper>Azure</proper> storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="MannerMan"/>
                             <release-item-ideator id="brad.nicholson"/>
                             <release-item-reviewer id="cynthia.shang"/>
