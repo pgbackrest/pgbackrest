@@ -97,6 +97,7 @@ SRCS = \
 	common/memContext.c \
 	common/regExp.c \
 	common/stackTrace.c \
+	common/stat.c \
 	common/time.c \
 	common/type/buffer.c \
 	common/type/convert.c \

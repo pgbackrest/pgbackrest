@@ -7,12 +7,11 @@ Common Command Routines
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/io/http/client.h"
-#include "common/io/socket/client.h"
-#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/stat.h"
 #include "common/time.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "version.h"
 
@@ -159,11 +158,9 @@ cmdOption(void)
 
 /**********************************************************************************************************************************/
 void
-cmdBegin(bool logOption)
+cmdBegin(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, logOption);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     ASSERT(cfgCommand() != cfgCmdNone);
 
@@ -175,13 +172,13 @@ cmdBegin(bool logOption)
             // Basic info on command start
             String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
 
-            if (logOption)
-            {
-                strFree(cmdOptionStr);
-                cmdOptionStr = NULL;
+            // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
+            // string gets created for the new command.
+            strFree(cmdOptionStr);
+            cmdOptionStr = NULL;
 
-                strCatFmt(info, " %s:%s", PROJECT_VERSION, strZ(cmdOption()));
-            }
+            // Add version and options
+            strCatFmt(info, " %s:%s", PROJECT_VERSION, strZ(cmdOption()));
 
             LOG(cfgLogLevelDefault(), 0, strZ(info));
         }
@@ -207,23 +204,11 @@ cmdEnd(int code, const String *errorMessage)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Log socket statistics
-            String *sckClientStat = sckClientStatStr();
+            // Output statistics if there are any
+            const KeyValue *statKv = statToKv();
 
-            if (sckClientStat != NULL)
-                LOG_DETAIL(strZ(sckClientStat));
-
-            // Log tls statistics
-            String *tlsClientStat = tlsClientStatStr();
-
-            if (tlsClientStat != NULL)
-                LOG_DETAIL(strZ(tlsClientStat));
-
-            // Log http statistics
-            String *httpClientStat = httpClientStatStr();
-
-            if (httpClientStat != NULL)
-                LOG_INFO(strZ(httpClientStat));
+            if (varLstSize(kvKeyList(statKv)) > 0)
+                LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
 
             // Basic info on command end
             String *info = strNewFmt("%s command end: ", strZ(cfgCommandRoleName()));

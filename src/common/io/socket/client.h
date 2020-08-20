@@ -16,24 +16,18 @@ Io client type
     STRING_DECLARE(IO_CLIENT_SOCKET_TYPE_STR);
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-typedef struct SocketClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} SocketClientStat;
+#define SOCKET_STAT_CLIENT                                          "socket.client"         // Clients created
+    STRING_DECLARE(SOCKET_STAT_CLIENT_STR);
+#define SOCKET_STAT_RETRY                                           "socket.retry"          // Connection retries
+    STRING_DECLARE(SOCKET_STAT_RETRY_STR);
+#define SOCKET_STAT_SESSION                                         "socket.session"        // Sessions created
+    STRING_DECLARE(SOCKET_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Statistics as a formatted string
-String *sckClientStatStr(void);
 
 #endif

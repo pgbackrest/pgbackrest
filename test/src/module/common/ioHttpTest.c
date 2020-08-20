@@ -178,11 +178,6 @@ testRun(void)
     {
         HttpClient *client = NULL;
 
-        // Reset statistics
-        httpClientStat = (HttpClientStat){0};
-
-        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
-
         TEST_ASSIGN(client, httpClientNew(sckClientNew(strNew("localhost"), hrnServerPort(0), 500), 500), "new client");
 
         TEST_ERROR_FMT(
@@ -630,7 +625,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("statistics exist");
 
-        TEST_RESULT_BOOL(httpClientStatStr() != NULL, true, "check");
+        TEST_RESULT_BOOL(varLstSize(kvKeyList(statToKv())) > 0, true, "check");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
