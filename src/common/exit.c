@@ -111,7 +111,7 @@ exitSafe(int result, bool error, SignalType signalType)
             "\n"
             "stack trace:\n%s\n"
             "--------------------------------------------------------------------",
-            errorMessage(), strPtr(cfgCommandRoleName()), strPtr(cmdOption()), errorStackTrace());
+            errorMessage(), strZ(cfgCommandRoleName()), strZ(cmdOption()), errorStackTrace());
 
         result = errorCode();
     }

@@ -193,8 +193,8 @@ cryptoHashNew(const String *type)
         else
         {
             // Lookup digest
-            if ((driver->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)
-                THROW_FMT(AssertError, "unable to load hash '%s'", strPtr(type));
+            if ((driver->hashType = EVP_get_digestbyname(strZ(type))) == NULL)
+                THROW_FMT(AssertError, "unable to load hash '%s'", strZ(type));
 
             // Create context
             cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
@@ -275,7 +275,7 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     // Init crypto subsystem
     cryptoInit();
 
-    const EVP_MD *hashType = EVP_get_digestbyname(strPtr(type));
+    const EVP_MD *hashType = EVP_get_digestbyname(strZ(type));
     ASSERT(hashType != NULL);
 
     // Allocate a buffer to hold the hmac

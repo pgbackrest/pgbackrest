@@ -295,7 +295,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
             result = strNew(STORAGE_PATH_ARCHIVE);
 
@@ -306,25 +306,25 @@ storageRepoPathExpression(const String *expression, const String *path)
             String *file = strLstSize(pathSplit) == 2 ? strLstGet(pathSplit, 1) : NULL;
 
             if (file != NULL && regExpMatch(storageHelper.walRegExp, file))
-                strCatFmt(result, "/%s/%s/%s", strPtr(strLstGet(pathSplit, 0)), strPtr(strSubN(file, 0, 16)), strPtr(file));
+                strCatFmt(result, "/%s/%s/%s", strZ(strLstGet(pathSplit, 0)), strZ(strSubN(file, 0, 16)), strZ(file));
             else
-                strCatFmt(result, "/%s", strPtr(path));
+                strCatFmt(result, "/%s", strZ(path));
         }
     }
     else if (strEq(expression, STORAGE_REPO_BACKUP_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
             result = strNew(STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)
-            strCatFmt(result, "/%s", strPtr(path));
+            strCatFmt(result, "/%s", strZ(path));
     }
     else
-        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -393,11 +393,11 @@ storageRepoGet(const String *type, bool write)
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
-            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, STORAGE_S3_DELETE_MAX, host, port, ioTimeoutMs(),
+            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
             cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
     }
     else
-        THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));
+        THROW_FMT(AssertError, "invalid storage type '%s'", strZ(type));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -468,19 +468,19 @@ storageSpoolPathExpression(const String *expression, const String *path)
     if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strZ(storageHelper.stanza));
         else
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in/%s", strZ(storageHelper.stanza), strZ(path));
     }
     else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_OUT))
     {
         if (path == NULL)
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out", strZ(storageHelper.stanza));
         else
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out/%s", strZ(storageHelper.stanza), strZ(path));
     }
     else
-        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
     FUNCTION_TEST_RETURN(result);
 }

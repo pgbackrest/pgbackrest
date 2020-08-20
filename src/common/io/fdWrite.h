@@ -1,22 +1,23 @@
 /***********************************************************************************************************************************
-Handle IO Write
+File Descriptor Io Write
 
-Write to a handle using the IoWrite interface.
+Write to a file descriptor using the IoWrite interface.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HANDLEWRITE_H
-#define COMMON_IO_HANDLEWRITE_H
+#ifndef COMMON_IO_FDWRITE_H
+#define COMMON_IO_FDWRITE_H
 
 #include "common/io/write.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoWrite *ioHandleWriteNew(const String *name, int handle);
+IoWrite *ioFdWriteNew(const String *name, int fd, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-// Write a string to the specified handle
-void ioHandleWriteOneStr(int handle, const String *string);
+// Write a string to the specified file descriptor
+void ioFdWriteOneStr(int fd, const String *string);
 
 #endif

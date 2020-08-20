@@ -16,13 +16,13 @@ typedef struct HttpSession HttpSession;
 
 #include "common/io/read.h"
 #include "common/io/http/client.h"
-#include "common/io/tls/session.h"
+#include "common/io/session.h"
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpSession *httpSessionNew(HttpClient *client, TlsSession *session);
+HttpSession *httpSessionNew(HttpClient *client, IoSession *session);
 
 /***********************************************************************************************************************************
 Functions

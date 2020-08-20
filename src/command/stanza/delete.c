@@ -41,10 +41,10 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
     {
         storageRemoveP(
-            storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+            storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, idx))));
         storageRemoveP(
             storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(strLstGet(backupList, idx))));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -79,7 +79,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 THROW_FMT(
                     FileMissingError, "stop file does not exist for stanza '%s'\n"
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
-                    strPtr(cfgOptionStr(cfgOptStanza)));
+                    strZ(cfgOptionStr(cfgOptStanza)));
             }
 
             // If a force has not been issued and Postgres is running, then error
@@ -88,7 +88,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 THROW_FMT(
                     PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
                     "To delete stanza '%s', shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
-                    strPtr(cfgOptionStr(cfgOptStanza)), strPtr(cfgOptionStr(cfgOptStanza)));
+                    strZ(cfgOptionStr(cfgOptStanza)), strZ(cfgOptionStr(cfgOptStanza)));
             }
 
             // Delete the archive info files

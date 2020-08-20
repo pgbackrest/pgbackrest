@@ -28,7 +28,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_PTR(execMemContext(exec), exec->memContext, "get mem context");
-        TEST_RESULT_INT(execHandleRead(exec), exec->handleRead, "check read handle");
+        TEST_RESULT_INT(execFdRead(exec), exec->fdRead, "check read file descriptor");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         String *message = strNew("ACKBYACK");
@@ -40,9 +40,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
-        close(exec->handleWrite);
+        close(exec->fdWrite);
 
-        TEST_ERROR(strPtr(ioReadLine(execIoRead(exec))), UnknownError, "cat terminated unexpectedly [0]");
+        TEST_ERROR(strZ(ioReadLine(execIoRead(exec))), UnknownError, "cat terminated unexpectedly [0]");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
-        TEST_ERROR(strPtr(ioReadLine(execIoRead(exec))), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_ERROR(strZ(ioReadLine(execIoRead(exec))), ExecuteError, "cat terminated unexpectedly on signal 9");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ testRun(void)
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");
 
-        TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to select from sleep read: [9] Bad file descriptor");
+        TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to read from sleep read: [9] Bad file descriptor");
         ioWriteStrLine(execIoWrite(exec), strNew(""));
         TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
 

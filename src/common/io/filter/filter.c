@@ -226,5 +226,5 @@ ioFilterType(const IoFilter *this)
 String *
 ioFilterToLog(const IoFilter *this)
 {
-    return strNewFmt("{type: %s}", strPtr(this->type));
+    return strNewFmt("{type: %s}", strZ(this->type));
 }

@@ -7,8 +7,8 @@ Remote Command
 
 #include "command/control/common.h"
 #include "common/debug.h"
-#include "common/io/handleRead.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "config/protocol.h"
@@ -19,16 +19,16 @@ Remote Command
 
 /**********************************************************************************************************************************/
 void
-cmdRemote(int handleRead, int handleWrite)
+cmdRemote(int fdRead, int fdWrite)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u", cfgOptionUInt(cfgOptProcess));
-        IoRead *read = ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+        IoRead *read = ioFdReadNew(name, fdRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioReadOpen(read);
-        IoWrite *write = ioHandleWriteNew(name, handleWrite);
+        IoWrite *write = ioFdWriteNew(name, fdWrite, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);

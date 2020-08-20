@@ -101,13 +101,13 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *data, const String *section, const String *key, const String *value)
+infoPgLoadCallback(void *data, const String *section, const String *key, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -121,18 +121,17 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const S
     if (strEq(section, INFO_SECTION_DB_STR))
     {
         if (strEq(key, INFO_KEY_DB_ID_STR))
-            loadData->currentId = jsonToUInt(value);
+            loadData->currentId = varUIntForce(value);
     }
     // Process db:history section
     else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
     {
-        // Load JSON loadData into a KeyValue
-        const KeyValue *pgDataKv = jsonToKv(value);
-
         // Get db values that are common to all info files
+        const KeyValue *pgDataKv = varKv(value);
+
         InfoPgData infoPgData =
         {
-            .id = cvtZToUInt(strPtr(key)),
+            .id = cvtZToUInt(strZ(key)),
             .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
@@ -386,7 +385,7 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
 
     InfoPgData pgData = infoPgData(this, pgDataIdx);
 
-    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strZ(pgVersionToStr(pgData.version)), pgData.id));
 }
 
 /**********************************************************************************************************************************/
@@ -413,7 +412,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, pgDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, *(InfoPgData *)lstGet(this->history, pgDataIdx));
 }
 
 /**********************************************************************************************************************************/
