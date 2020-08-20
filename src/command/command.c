@@ -19,6 +19,7 @@ Common Command Routines
 Track time command started
 ***********************************************************************************************************************************/
 static TimeMSec timeBegin;
+static String *cmdOptionStr;
 
 /**********************************************************************************************************************************/
 void
@@ -32,27 +33,19 @@ cmdInit(void)
 }
 
 /**********************************************************************************************************************************/
-void
-cmdBegin(bool logOption)
+const String *
+cmdOption(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, logOption);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_VOID();
 
-    ASSERT(cfgCommand() != cfgCmdNone);
-
-    // This is fairly expensive log message to generate so skip it if it won't be output
-    if (logAny(cfgLogLevelDefault()))
+    if (cmdOptionStr == NULL)
     {
-        MEM_CONTEXT_TEMP_BEGIN()
+        MEM_CONTEXT_BEGIN(memContextTop())
         {
-            // Basic info on command start
-            String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
+            cmdOptionStr = strNew("");
 
-            if (logOption)
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                strCatFmt(info, " %s:", PROJECT_VERSION);
-
                 // Get command define id used to determine which options are valid for this command
                 ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
@@ -61,22 +54,22 @@ cmdBegin(bool logOption)
 
                 if (strLstSize(commandParamList) != 0)
                 {
-                    strCatFmt(info, " [");
+                    strCatFmt(cmdOptionStr, " [");
 
                     for (unsigned int commandParamIdx = 0; commandParamIdx < strLstSize(commandParamList); commandParamIdx++)
                     {
                         const String *commandParam = strLstGet(commandParamList, commandParamIdx);
 
                         if (commandParamIdx != 0)
-                            strCatFmt(info, ", ");
+                            strCatFmt(cmdOptionStr, ", ");
 
                         if (strchr(strZ(commandParam), ' ') != NULL)
                             commandParam = strNewFmt("\"%s\"", strZ(commandParam));
 
-                        strCat(info, commandParam);
+                        strCat(cmdOptionStr, commandParam);
                     }
 
-                    strCatFmt(info, "]");
+                    strCatFmt(cmdOptionStr, "]");
                 }
 
                 // Loop though options and add the ones that are interesting
@@ -90,10 +83,10 @@ cmdBegin(bool logOption)
 
                     // If option was negated
                     if (cfgOptionNegate(optionId))
-                        strCatFmt(info, " --no-%s", cfgOptionName(optionId));
+                        strCatFmt(cmdOptionStr, " --no-%s", cfgOptionName(optionId));
                     // If option was reset
                     else if (cfgOptionReset(optionId))
-                        strCatFmt(info, " --reset-%s", cfgOptionName(optionId));
+                        strCatFmt(cmdOptionStr, " --reset-%s", cfgOptionName(optionId));
                     // Else set and not default
                     else if (cfgOptionSource(optionId) != cfgSourceDefault && cfgOptionTest(optionId))
                     {
@@ -101,10 +94,10 @@ cmdBegin(bool logOption)
 
                         // Don't show redacted options
                         if (cfgDefOptionSecure(optionDefId))
-                            strCatFmt(info, " --%s=<redacted>", cfgOptionName(optionId));
+                            strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionName(optionId));
                         // Output boolean option
                         else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
-                            strCatFmt(info, " --%s", cfgOptionName(optionId));
+                            strCatFmt(cmdOptionStr, " --%s", cfgOptionName(optionId));
                         // Output other options
                         else
                         {
@@ -144,16 +137,51 @@ cmdBegin(bool logOption)
                             {
                                 const String *value = strLstGet(valueList, valueListIdx);
 
-                                strCatFmt(info, " --%s", cfgOptionName(optionId));
+                                strCatFmt(cmdOptionStr, " --%s", cfgOptionName(optionId));
 
                                 if (strchr(strZ(value), ' ') != NULL)
                                     value = strNewFmt("\"%s\"", strZ(value));
 
-                                strCatFmt(info, "=%s", strZ(value));
+                                strCatFmt(cmdOptionStr, "=%s", strZ(value));
                             }
                         }
                     }
                 }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(cmdOptionStr);
+}
+
+/**********************************************************************************************************************************/
+void
+cmdBegin(bool logOption)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, logOption);
+    FUNCTION_LOG_END();
+
+    ASSERT(cfgCommand() != cfgCmdNone);
+
+    // This is fairly expensive log message to generate so skip it if it won't be output
+    if (logAny(cfgLogLevelDefault()))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Basic info on command start
+            String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
+
+            if (logOption)
+            {
+                // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
+                // string gets created for the new command.
+                strFree(cmdOptionStr);
+                cmdOptionStr = NULL;
+
+                strCatFmt(info, " %s:%s", PROJECT_VERSION, strZ(cmdOption()));
             }
 
             LOG(cfgLogLevelDefault(), 0, strZ(info));

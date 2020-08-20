@@ -93,6 +93,13 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: archive-get command begin");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check options in cache");
+
+        TEST_RESULT_STR_Z(
+            cmdOption(), " --no-config --reset-repo1-host --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>",
+            "command options");
+
         // Nothing should be logged for command begin when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
         harnessLogLevelSet(logLevelWarn);
