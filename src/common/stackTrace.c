@@ -34,10 +34,10 @@ typedef struct StackTraceData
     LogLevel functionLogLevel;
     unsigned int tryDepth;
 
-    char *param;
-    size_t paramSize;
     bool paramOverflow;
     bool paramLog;
+    char *param;
+    size_t paramSize;
 } StackTraceData;
 
 static StackTraceData stackTrace[STACK_TRACE_MAX];
