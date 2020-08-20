@@ -816,7 +816,7 @@ createArchiveIdRange(
     if (walRange.start != NULL)
         lstAdd(archiveIdResult->walRangeList, &walRange);
 
-    // Now if there are ranges for this archiveId then sort ascending by the stop file add them
+    // Now if there are ranges for this archiveId then sort ascending by the stop file and add them
     if (lstSize(archiveIdResult->walRangeList) > 0)
     {
         lstSort(archiveIdResult->walRangeList, sortOrderAsc);
