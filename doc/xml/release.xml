@@ -51,6 +51,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Asynchronous <id>list</id>/<id>remove</id> for <proper>S3</proper>/<proper>Azure</proper> storage.</p>
