@@ -312,23 +312,25 @@ typedef struct VerifyInfoFile
 // Job data results structures for archive and backup
 typedef struct ArchiveResult
 {
-    String *archiveId;
-    unsigned int numWalFile;
-    PgWal pgWalInfo;
-    List *walRangeList;
+    String *archiveId;                                              // Archive Id (e.g. 9.6-1, 10-2)
+    unsigned int totalWalFile;                                      // Total number of WAL files listed in directory on first read
+    PgWal pgWalInfo;                                                // PG version, WAL size, system id
+    List *walRangeList;                                             // List of WAL file ranges - new item is when WAL is missing
 } ArchiveResult;
 
+// WAL range includes the start/stop of sequential WAL and start/stop includes the timeline (e.g. 000000020000000100000005)
 typedef struct WalRange
 {
-    String *stop;
-    String *start;
-    List *invalidFileList;    // After all jobs complete: If not NULL (or maybe size > 0) then there is a problem in this range
+    String *stop;                                                   // Last WAL segment in this sequential range
+    String *start;                                                  // First WAL segment in this sequential range
+    List *invalidFileList;                                          // After all jobs complete, list of InvalidFile
 } WalRange;
 
-typedef struct InvalidFile      // this structure can be used for backup file stuff as well
+// Invalid file information (not missing but files failing verification) - for archive and backup
+typedef struct InvalidFile
 {
-    String *fileName;
-    VerifyResult reason;            // this enum is the reason
+    String *fileName;                                               // Filename  - CSHANG Sshould maybe be filePathName
+    VerifyResult reason;                                            // Reason file is invalid (e.g. incorrect checksum)
 } InvalidFile;
 
 // Status result of a backup
@@ -343,6 +345,9 @@ typedef enum
 typedef struct BackupResult
 {
     String *backupLabel;
+    String *backupPrior;
+    String *archiveStart;                                           // First WAL segment in the backup
+    String *archiveStop;                                            // Last WAL segment in the backup
     BackupResultStatus status;
     List *invalidFileList;
 } BackupResult;
@@ -608,9 +613,10 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
         else
         {
             // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
-            // currentBackup is only notional until the main file is checked - if it was simply missing, it is assumed the backup is
-            // an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress backup
-            // and an attempt will be made to load the manifest copy
+            // currentBackup is only notional until the main file is checked because the backup.info file may not have existed or
+            // the backup may have completed by the time we get here. If the main manifest is simply missing, it is assumed
+            // the backup is an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress
+            // backup and an attempt will be made to load the manifest copy.
             if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
             {
                 *currentBackup = false;
@@ -915,7 +921,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                             archiveIdResult.pgWalInfo.version = walInfo.version;
                         }
 
-                        archiveIdResult.numWalFile += strLstSize(jobData->walFileList);
+                        archiveIdResult.totalWalFile += strLstSize(jobData->walFileList);
 
                         createArchiveIdRange(
                             &archiveIdResult, jobData->walFileList, jobData->archiveIdResultList, &jobData->jobErrorTotal);
@@ -1045,7 +1051,7 @@ verifyBackup(void *data)
             {
                 backupResult.status = backupMissingManifest;
 
-                LOG_WARN_FMT("Manifest files missing for '%s' - backup may be expired", strZ(backupResult.backupLabel));
+                LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
             }
             else
             {
@@ -1060,6 +1066,7 @@ verifyBackup(void *data)
             // Remove this backup from the processing list
             strLstRemoveIdx(jobData->backupList, 0);
         }
+        // Else process the files in the manifest
         else
         {
 /* CSHANG questions:
@@ -1067,6 +1074,7 @@ verifyBackup(void *data)
 what sections can we check?
     [backrest] - NO
     [backup] - maybe we should save all or a subset of this information in the result to check later? Definitely archive-start/stop but is anything else important?
+                ==> No, start/stop all we need, at least for now
         backup-archive-start="000000010000000000000002"
         backup-archive-stop="000000010000000000000002"
         backup-label="20191112-173146F"
@@ -1077,6 +1085,20 @@ what sections can we check?
         backup-timestamp-stop=1573579919
         backup-type="full"
     [backup:option] - is there anything here we can/should check? If so, how?
+                ==> No. Most of these are informational, and if something important like compress-type is wrong we’ll know it when we check the files.
+        option-archive-check=true
+        option-archive-copy=false
+        option-backup-standby=false
+        option-buffer-size=1048576
+        option-checksum-page=true
+        option-compress=true
+        option-compress-level=6
+        option-compress-level-network=3
+        option-compress-type="gz"
+        option-delta=false
+        option-hardlink=false
+        option-online=true
+        option-process-max=1
     [backup:target] - NO (on the db so we can't check that)
     [db] - NO (on the db so we can't check that)
     [target:file] - definitely - this is the crux
@@ -1100,12 +1122,20 @@ what sections can we check?
     [target:path:default] - NO
 
 2) If there are "reference" to prior backup, we should be able to skip checking them, no?
+    ==> Yes, definitely skip them or we’ll just be doing the same work over and over.
 */
-            // process the files
 LOG_WARN("Processing MANIFEST"); // CSHANG Remove
+
+            const ManifestData *manData = manifestData(const Manifest *this);
+            backupResult.archiveStart = strDup(manData->archiveStart);
+            backupResult.archiveStop = strDup(manData->archiveStop); // May not have this?
 
             // Get the cipher subpass used to decrypt files in the backup
             jobData->backupCipherPass = manifestCipherSubPass(jobData->manifest);
+// CSHANG Do I need something like compress-type or level from the backup:option? Maybe compress-type is something we pass to verifyFile
+// CSHANG It is possible to have a backup without all the WAL if option-archive-check=true is not set but in this is not on then all bets are off
+
+// CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
         }
     }
 
@@ -1222,9 +1252,9 @@ verifyRender(void *data)
         ArchiveResult *archiveIdResult = lstGet(jobData->archiveIdResultList, archiveIdx);
         strCatFmt(
             result, "  archiveId: %s, total WAL files checked: %u\n", strZ(archiveIdResult->archiveId),
-            archiveIdResult->numWalFile);
+            archiveIdResult->totalWalFile);
 
-        if (archiveIdResult->numWalFile > 0)
+        if (archiveIdResult->totalWalFile > 0)
         {
             unsigned int errMissing = 0;
             unsigned int errChecksum = 0;
@@ -1299,10 +1329,10 @@ setBackupCheckArchive(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If there are backups, set the last backup as current if it is not in backup.info - if it is, then it is complete, else
-        // it will be checked later and if there is only a copy of the manifest, then verification will be skipped as it will assume
-        // it is the in-progress backup
+        // it will be checked later
         if (strLstSize(backupList) > 0)
         {
+            // Get the last backup as current if it is not in backup.info current list
             String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
 
             if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
@@ -1419,6 +1449,12 @@ verifyProcess(void)
 problem will still always be that the current backup may complete before we're done checking the archives. I feel like we need to
 draw the line somewhere...or do we feel we need to check that it is not in the backup.info current list AND that it only has a copy
 AND is the newest backup?
+
+CSHANG maybe backu.info should be the ground truth. David says problems with backup.info reconstruct and that restore does not use
+so it's why we're not doing it here but we keep going around whether we should and whether backup.info should be the ground truth.
+I was thinking maybe we figure out what backups to check (pare down the list) BEFORE we start processing. Specifically, if we were
+able to determine if the list has holes in any dependency chain. Does reconstruct do this? If originally had F1 D1 I1 then dependency
+chain is F1 D1 I1 but when I go to check, the D1 is gone, then the I1 is no loner valid.
 */
             // Get a list of backups in the repo
             jobData.backupList = strLstSort(
@@ -1515,7 +1551,7 @@ AND is the newest backup?
                                             {
                                                 InvalidFile invalidFile =
                                                 {
-                                                    .fileName = strDup(fileName),
+                                                    .fileName = strDup(fileName),  // CSHANG Should this be filePathName?
                                                     .reason = verifyResult,
                                                 };
 
@@ -1552,7 +1588,7 @@ AND is the newest backup?
                                     start 000000010000000000000001, stop 000000010000000000000005
                                     start 000000020000000000000005, stop 000000020000000000000006
                                     start 000000030000000000000007, stop 000000030000000000000007
-
+NOTE After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range
                                     PROBLEM: I am generating WAL ranges by timeline so in the above, because we are in a new timeline, it looks like a gap. So how would I determine that the following is OK? Would MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL
 
         full backup: 20200810-171426F
