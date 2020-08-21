@@ -28,6 +28,7 @@ Info Command
 #include "info/infoPg.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -417,31 +418,57 @@ generateNeededArchivesList(
 
         for (unsigned int contentIdx = 0; contentIdx < strLstSize(historyFileContentList); contentIdx++)
         {
-            // Check if the line is correctly formatted
-            const String *historyLine = strLstGet(historyFileContentList, contentIdx);
-            RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9A-F]{1,8}[\t][0-9A-F]{1,8}/[0-9A-F]{1,8}[\t].*$"));
-
-            if (regExpMatch(historyExp, historyLine))
+            if (pgVersion < PG_VERSION_93)
             {
-                // Parse the line to extract timeline, WAL and segment numbers
-                StringList *tabSplitList = strLstNewSplitZ(strTrim(regExpMatchStr(historyExp)), "\t");
-                StringList *slashSplitList = strLstNewSplit(strLstGet(tabSplitList,1), FSLASH_STR);
-                uint32_t currentTimeline = (uint32_t)strtol(strZ(strLstGet(tabSplitList,0)), NULL, 16);
+                // History files format changed after PG 9.3
+                const String *historyLine = strLstGet(historyFileContentList, contentIdx);
+                RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9A-F]{1,8}[\t][0-9A-F]{24}[\t].*$"));
 
-                String *branchWal = strNewFmt("%08X%08X%08X", currentTimeline,
-                    (uint32_t)strtol(strZ(strLstGet(slashSplitList,0)), NULL, 16),
-                    (uint32_t)strtol(strZ(strLstGet(slashSplitList,1)), NULL, 16)>>24);
+                if (regExpMatch(historyExp, historyLine))
+                {
+                    // Parse the line to extract timeline and WAL segment
+                    StringList *tabSplitList = strLstNewSplitZ(strTrim(regExpMatchStr(historyExp)), "\t");
+                    uint32_t currentTimeline = (uint32_t)strtol(strZ(strLstGet(tabSplitList,0)), NULL, 16);
+                    String *branchWal = strLstGet(tabSplitList,1);
 
-                // Store the WAL segment where timeline switch occurred
-                strLstAddIfMissing(timelineSwitchWal, branchWal);
+                    // Store the WAL segment where timeline switch occurred and the target timeline
+                    strLstAddIfMissing(timelineSwitchWal, branchWal);
+                    kvPut(targetTimelines, VARSTR(branchWal), VARUINT(currentTimeline));
 
-                // Now that we know what was the target timeline, store it for the previous WAL segment
-                if (previousBranchWal != NULL)
-                    kvPut(targetTimelines, VARSTR(previousBranchWal), VARUINT(currentTimeline));
+                }
+            }
+            else
+            {
+                const String *historyLine = strLstGet(historyFileContentList, contentIdx);
+                RegExp *historyExp = regExpNew(STRDEF("^[ ]*[0-9A-F]{1,8}[\t][0-9A-F]{1,8}/[0-9A-F]{1,8}[\t].*$"));
 
-                previousBranchWal = branchWal;
+                if (regExpMatch(historyExp, historyLine))
+                {
+                    // Parse the line to extract timeline, WAL and segment numbers
+                    StringList *tabSplitList = strLstNewSplitZ(strTrim(regExpMatchStr(historyExp)), "\t");
+                    StringList *slashSplitList = strLstNewSplit(strLstGet(tabSplitList,1), FSLASH_STR);
+                    uint32_t currentTimeline = (uint32_t)strtol(strZ(strLstGet(tabSplitList,0)), NULL, 16);
+
+                    String *branchWal = strNewFmt("%08X%08X%08X", currentTimeline,
+                        (uint32_t)strtol(strZ(strLstGet(slashSplitList,0)), NULL, 16),
+                        (uint32_t)strtol(strZ(strLstGet(slashSplitList,1)), NULL, 16)>>24);
+
+                    // Store the WAL segment where timeline switch occurred
+                    strLstAddIfMissing(timelineSwitchWal, branchWal);
+
+                    // Now that we know what was the target timeline, store it for the previous WAL segment
+                    if (previousBranchWal != NULL)
+                        kvPut(targetTimelines, VARSTR(previousBranchWal), VARUINT(currentTimeline));
+
+                    previousBranchWal = branchWal;
+                }
             }
         }
+
+        // What if there should be a timeline switch but we don't find any target in the history file?
+        // Throw an error to avoid infinite loop later
+        if (strLstSize(timelineSwitchWal) == 0)
+            THROW(AssertError, "no target WAL have been found in the history file(s)");
     }
 
     // Generate the archives list we need for the stopTimeline

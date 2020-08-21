@@ -1318,7 +1318,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n"
+                "\"db-version\":\"9.2\"}\n"
             "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6861877834002393398,"
                 "\"db-version\":\"12\"}"
         );
@@ -1342,7 +1342,7 @@ testRun(void)
             "db-version=\"12\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.2\"}\n"
             "2={\"db-id\":6861877834002393398,\"db-version\":\"12\"}\n"
         );
 
@@ -1354,6 +1354,22 @@ testRun(void)
             BUFSTRDEF("12345"), NULL));
 
         TEST_RESULT_VOID(storagePutP(archiveInfoWrite, harnessInfoChecksum(archiveInfoContent)), "put archive info to file");
+
+        const Buffer *historyContentBuffer1 = BUFSTRDEF(
+            "2	000000010000000000000003	no recovery target specified\n"
+            "\n"
+            "\n"
+            "3	000000020000000000000005	no recovery target specified\n"
+        );
+
+        StorageWrite *historyWrite1 = storageNewWriteP(
+            storageLocalWrite(), strNewFmt("%s/9.2-1/00000003.history", strZ(archiveStanza1Path)));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(historyWrite1)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("sub12345"), NULL));
+
+        TEST_RESULT_VOID(storagePutP(historyWrite1, historyContentBuffer1), "put db1 00000003.history to file");
 
         // Simulate wrong line in history file to test the history RegExp
         const Buffer *historyContentBuffer = BUFSTRDEF(
@@ -1373,62 +1389,89 @@ testRun(void)
             ioWriteFilterGroup(storageWriteIo(historyWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
             BUFSTRDEF("sub12345"), NULL));
 
-        TEST_RESULT_VOID(storagePutP(historyWrite, historyContentBuffer), "put 00000003.history to file");
+        TEST_RESULT_VOID(storagePutP(historyWrite, historyContentBuffer), "put db2 00000003.history to file");
 
         // Add WAL segments
-        String *archiveDb1_1 = strNewFmt("%s/12-2/0000000100000000", strZ(archiveStanza1Path));
+        String *archiveDb1_1 = strNewFmt("%s/9.2-1/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-33099f27f375f42f3aab8c9d644ed24dba7071d7.gz",
+            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-d72eddc39b75a32e791e2c55ec54b0b4a818b44c.gz",
             strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-5d30de2b3969472587948fb88ad19ca57c3b660f.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000006-db21643e5863d872db73fb38f0e616023baaf090.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000007-0ec3fc389a62d3b1dc28ef1fea02a49ab70fd6b1.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000008-60259c0a71f841ffcaa68aa7a071c7cc6404ab3c.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000009-8c7e9da8a9bd92b2a30800e2406a775b2a9d6f10.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000001000000000000000A-503151655f5391c418d9a9b0c56ed52b47a8706e.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
 
-        String *archiveDb1_2 = strNewFmt("%s/12-2/0000000200000000", strZ(archiveStanza1Path));
+        String *archiveDb1_2 = strNewFmt("%s/9.2-1/0000000200000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
         TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000B-1b9ca307baced1b848a0cdd4a59b921153165800.gz",
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000020000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
             strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
         TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000C-7f38e1f587295bd65ddff35032e80ff785183b1b.gz",
-            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000020000000000000004-5d30de2b3969472587948fb88ad19ca57c3b660f.gz",
             strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
 
-        String *archiveDb1_3 = strNewFmt("%s/12-2/0000000300000000", strZ(archiveStanza1Path));
+        String *archiveDb1_3 = strNewFmt("%s/9.2-1/0000000300000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
         TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000003000000000000000E-bd8a4171ecab59a6dc559b88b98f92a6737ce480.gz",
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000030000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
             strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000030000000000000006-db21643e5863d872db73fb38f0e616023baaf090.gz",
+            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+
+        String *archiveDb2_1 = strNewFmt("%s/12-2/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_1), "create db2 archive WAL1 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-d72eddc39b75a32e791e2c55ec54b0b4a818b44c.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-5d30de2b3969472587948fb88ad19ca57c3b660f.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000006-db21643e5863d872db73fb38f0e616023baaf090.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000007-0ec3fc389a62d3b1dc28ef1fea02a49ab70fd6b1.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000008-60259c0a71f841ffcaa68aa7a071c7cc6404ab3c.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000009-8c7e9da8a9bd92b2a30800e2406a775b2a9d6f10.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000001000000000000000A-503151655f5391c418d9a9b0c56ed52b47a8706e.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
+
+        String *archiveDb2_2 = strNewFmt("%s/12-2/0000000200000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_2), "create db2 archive WAL2 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000B-1b9ca307baced1b848a0cdd4a59b921153165800.gz",
+            strZ(archiveDb2_2)))))), 0, "touch WAL2 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000C-7f38e1f587295bd65ddff35032e80ff785183b1b.gz",
+            strZ(archiveDb2_2)))))), 0, "touch WAL2 file");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
+            strZ(archiveDb2_2)))))), 0, "touch WAL2 file");
+
+        String *archiveDb2_3 = strNewFmt("%s/12-2/0000000300000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_3), "create db2 archive WAL3 directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000003000000000000000E-bd8a4171ecab59a6dc559b88b98f92a6737ce480.gz",
+            strZ(archiveDb2_3)))))), 0, "touch WAL3 file");
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000003000000000000000F-877867b41e3c31c34513f846c3921ff039e1bd6c.gz",
-            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+            strZ(archiveDb2_3)))))), 0, "touch WAL3 file");
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000030000000000000010-974c8e2de6594c7ba9422af515993334648f0862.gz",
-            strZ(archiveDb1_3)))))), 0, "touch WAL3 file");
+            strZ(archiveDb2_3)))))), 0, "touch WAL3 file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Everything is fine
@@ -1440,6 +1483,15 @@ testRun(void)
                 "{"
                     "\"archive\":["
                         "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.2-1\","
+                            "\"max\":\"000000030000000000000006\","
+                            "\"min\":\"000000010000000000000001\","
+                            "\"missing-list\":\"\","
+                            "\"missing-nb\":0"
+                        "},{"
                             "\"database\":{"
                                 "\"id\":2"
                             "},"
@@ -1569,7 +1621,7 @@ testRun(void)
                         "{"
                             "\"id\":1,"
                             "\"system-id\":6626363367545678089,"
-                            "\"version\":\"9.5\""
+                            "\"version\":\"9.2\""
                         "},{"
                             "\"id\":2,"
                             "\"system-id\":6861877834002393398,"
@@ -1595,6 +1647,9 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.2-1): 000000010000000000000001/000000030000000000000006\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
@@ -1632,11 +1687,11 @@ testRun(void)
         // 000000010000000000000001 will be older than the 1st backup start wal location
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-33099f27f375f42f3aab8c9d644ed24dba7071d7.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file");
         // Remove 000000010000000000000005, so it will be reported missing
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/000000010000000000000007-0ec3fc389a62d3b1dc28ef1fea02a49ab70fd6b1.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
 
         StringList *argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
@@ -1649,6 +1704,15 @@ testRun(void)
                 "{"
                     "\"archive\":["
                         "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.2-1\","
+                            "\"max\":\"000000030000000000000006\","
+                            "\"min\":\"000000010000000000000001\","
+                            "\"missing-list\":\"\","
+                            "\"missing-nb\":0"
+                        "},{"
                             "\"database\":{"
                                 "\"id\":2"
                             "},"
@@ -1778,7 +1842,7 @@ testRun(void)
                         "{"
                             "\"id\":1,"
                             "\"system-id\":6626363367545678089,"
-                            "\"version\":\"9.5\""
+                            "\"version\":\"9.2\""
                         "},{"
                             "\"id\":2,"
                             "\"system-id\":6861877834002393398,"
@@ -1813,6 +1877,9 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: error (missing wal segment(s))\n"
             "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.2-1): 000000010000000000000001/000000030000000000000006\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (12-2): 000000010000000000000001/000000030000000000000010\n"
@@ -1855,26 +1922,26 @@ testRun(void)
         // 2 missing archives with retention-archive-type=incr and retention-archive=1
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/000000010000000000000001-33099f27f375f42f3aab8c9d644ed24dba7071d7.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/000000010000000000000005-c623389b95105f12f9559cc369c5d0fad5ea8c38.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/000000010000000000000009-8c7e9da8a9bd92b2a30800e2406a775b2a9d6f10.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/00000001000000000000000A-503151655f5391c418d9a9b0c56ed52b47a8706e.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/00000002000000000000000B-e26735cd123aa5ebc263e3cfc6118acf23930486.gz",
-            strZ(archiveDb1_2)));
+            strZ(archiveDb2_2)));
         // Remove 00000002000000000000000D and 00000003000000000000000F so they will be reported missing
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
-            strZ(archiveDb1_2)));
+            strZ(archiveDb2_2)));
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/00000003000000000000000F-877867b41e3c31c34513f846c3921ff039e1bd6c.gz",
-            strZ(archiveDb1_3)));
+            strZ(archiveDb2_3)));
 
         argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
@@ -1887,6 +1954,15 @@ testRun(void)
                 "{"
                     "\"archive\":["
                         "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.2-1\","
+                            "\"max\":\"000000030000000000000006\","
+                            "\"min\":\"000000010000000000000001\","
+                            "\"missing-list\":\"\","
+                            "\"missing-nb\":0"
+                        "},{"
                             "\"database\":{"
                                 "\"id\":2"
                             "},"
@@ -2016,7 +2092,7 @@ testRun(void)
                         "{"
                             "\"id\":1,"
                             "\"system-id\":6626363367545678089,"
-                            "\"version\":\"9.5\""
+                            "\"version\":\"9.2\""
                         "},{"
                             "\"id\":2,"
                             "\"system-id\":6861877834002393398,"
@@ -2046,6 +2122,9 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: error (missing wal segment(s))\n"
             "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.2-1): 000000010000000000000001/000000030000000000000006\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
@@ -2084,11 +2163,11 @@ testRun(void)
 
         storageRemoveP(
             storageRepoWrite(), strNewFmt("%s/000000010000000000000003-07bf320a2c0a2705cbe045bd48a9b0f1b44a40c4.gz",
-            strZ(archiveDb1_1)));
+            strZ(archiveDb2_1)));
 
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/00000002000000000000000D-953543645a27e72582730cb36677469be3e92860.gz",
-            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+            strZ(archiveDb2_2)))))), 0, "touch WAL2 file");
 
         argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "--repo1-retention-archive-type=incr");
@@ -2102,6 +2181,15 @@ testRun(void)
                 "{"
                     "\"archive\":["
                         "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.2-1\","
+                            "\"max\":\"000000030000000000000006\","
+                            "\"min\":\"000000010000000000000001\","
+                            "\"missing-list\":\"\","
+                            "\"missing-nb\":0"
+                        "},{"
                             "\"database\":{"
                                 "\"id\":2"
                             "},"
@@ -2231,7 +2319,7 @@ testRun(void)
                         "{"
                             "\"id\":1,"
                             "\"system-id\":6626363367545678089,"
-                            "\"version\":\"9.5\""
+                            "\"version\":\"9.2\""
                         "},{"
                             "\"id\":2,"
                             "\"system-id\":6861877834002393398,"
@@ -2262,6 +2350,9 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: error (missing wal segment(s))\n"
             "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.2-1): 000000010000000000000001/000000030000000000000006\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (12-2): 000000010000000000000002/000000030000000000000010\n"
@@ -2294,6 +2385,20 @@ testRun(void)
             "            repository size: 2.8MB, repository backup size: 1.5KB\n"
             "            backup reference list: 20200817-111046F, 20200817-111046F_20200817-111051D\n",
             "text - archive-gap-detection - retention-full-type=time, 2 missing archives");
+
+        // Assert error if no timeline switch can be found in history file(s)
+        //--------------------------------------------------------------------------------------------------------------------------
+
+        StorageWrite *historyWriteCorrupt = storageNewWriteP(
+            storageLocalWrite(), strNewFmt("%s/9.2-1/00000003.history", strZ(archiveStanza1Path)));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(historyWriteCorrupt)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("sub12345"), NULL));
+
+        TEST_RESULT_VOID(storagePutP(historyWriteCorrupt, BUFSTRDEF("ooops\n")), "corrupt db1 00000003.history file");
+
+        TEST_ERROR_FMT(infoRender(), AssertError, "no target WAL have been found in the history file(s)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Reset env
