@@ -47,10 +47,10 @@ Buffer to hold function parameters
 ***********************************************************************************************************************************/
 static char functionParamBuffer[32 * 1024];
 
-struct backtrace_state *backTraceState = NULL;
-
 /**********************************************************************************************************************************/
 #ifdef WITH_BACKTRACE
+
+struct backtrace_state *backTraceState = NULL;
 
 void
 stackTraceInit(const char *exe)
