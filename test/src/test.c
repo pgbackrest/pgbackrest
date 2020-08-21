@@ -48,6 +48,10 @@ Includes that are not generally used by tests
 
 #include "common/io/socket/common.h"
 
+#ifndef NO_STAT
+    #include "common/stat.h"
+#endif
+
 /***********************************************************************************************************************************
 main - run the tests
 ***********************************************************************************************************************************/
@@ -71,6 +75,11 @@ main(int argListSize, const char *argList[])
     FUNCTION_HARNESS_END();
 
     int result = 0;
+
+    // Initialize statistics
+#ifndef NO_STAT
+    statInit();
+#endif
 
     // Use aggressive keep-alive settings for testing
     sckInit(false, true, 2, 5, 5);

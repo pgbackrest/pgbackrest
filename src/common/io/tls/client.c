@@ -16,6 +16,7 @@ TLS Client
 #include "common/io/tls/client.h"
 #include "common/io/tls/session.h"
 #include "common/memContext.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
 
@@ -25,9 +26,11 @@ Io client type
 STRING_EXTERN(IO_CLIENT_TLS_TYPE_STR,                               IO_CLIENT_TLS_TYPE);
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-static TlsClientStat tlsClientStatLocal;
+STRING_EXTERN(TLS_STAT_CLIENT_STR,                                  TLS_STAT_CLIENT);
+STRING_EXTERN(TLS_STAT_RETRY_STR,                                   TLS_STAT_RETRY);
+STRING_EXTERN(TLS_STAT_SESSION_STR,                                 TLS_STAT_SESSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -263,7 +266,7 @@ tlsClientOpen(THIS_VOID)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    tlsClientStatLocal.retry++;
+                    statInc(TLS_STAT_RETRY_STR);
                 }
                 else
                     RETHROW();
@@ -276,7 +279,7 @@ tlsClientOpen(THIS_VOID)
     }
     MEM_CONTEXT_TEMP_END();
 
-    tlsClientStatLocal.session++;
+    statInc(TLS_STAT_SESSION_STR);
 
     // Verify that the certificate presented by the server is valid
     if (this->verifyPeer)                                                                                           // {vm_covered}
@@ -401,7 +404,7 @@ tlsClientNew(IoClient *ioClient, const String *host, TimeMSec timeout, bool veri
             }
         }
 
-        tlsClientStatLocal.object++;
+        statInc(TLS_STAT_CLIENT_STR);
 
         // Create client interface
         this = ioClientNew(driver, &tlsClientInterface);
@@ -409,22 +412,4 @@ tlsClientNew(IoClient *ioClient, const String *host, TimeMSec timeout, bool veri
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
-}
-
-/**********************************************************************************************************************************/
-String *
-tlsClientStatStr(void)
-{
-    FUNCTION_TEST_VOID();
-
-    String *result = NULL;
-
-    if (tlsClientStatLocal.object > 0)
-    {
-        result = strNewFmt(
-            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", retries %" PRIu64, tlsClientStatLocal.object,
-            tlsClientStatLocal.session, tlsClientStatLocal.retry);
-    }
-
-    FUNCTION_TEST_RETURN(result);
 }

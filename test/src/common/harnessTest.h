@@ -92,7 +92,7 @@ Test that an expected error is actually thrown and error when it isn't
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
     /* Set the line number for the current function in the stack trace */                                                          \
-    stackTraceTestFileLineSet(__LINE__);                                                                                           \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(__LINE__);                                                                               \
                                                                                                                                    \
     hrnTestLogPrefix(__LINE__, true);                                                                                              \
     printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
@@ -118,7 +118,7 @@ Test that an expected error is actually thrown and error when it isn't
             TestError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected),   \
             errorMessageExpected);                                                                                                 \
                                                                                                                                    \
-    stackTraceTestFileLineSet(0);                                                                                                  \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(0);                                                                                      \
 }
 
 /***********************************************************************************************************************************
@@ -132,8 +132,6 @@ Test error with a formatted expected message
         THROW_FMT(AssertError, "error message needs more than the %zu characters available", sizeof(TEST_ERROR_FMT_buffer));       \
                                                                                                                                    \
     TEST_ERROR(statement, errorTypeExpected, TEST_ERROR_FMT_buffer);                                                               \
-                                                                                                                                   \
-    stackTraceTestFileLineSet(0);                                                                                                  \
 }
 
 /***********************************************************************************************************************************

@@ -412,7 +412,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, pgDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, *(InfoPgData *)lstGet(this->history, pgDataIdx));
 }
 
 /**********************************************************************************************************************************/

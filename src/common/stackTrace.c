@@ -34,10 +34,10 @@ typedef struct StackTraceData
     LogLevel functionLogLevel;
     unsigned int tryDepth;
 
-    char *param;
-    size_t paramSize;
     bool paramOverflow;
     bool paramLog;
+    char *param;
+    size_t paramSize;
 } StackTraceData;
 
 static StackTraceData stackTrace[STACK_TRACE_MAX];
@@ -47,10 +47,10 @@ Buffer to hold function parameters
 ***********************************************************************************************************************************/
 static char functionParamBuffer[32 * 1024];
 
-struct backtrace_state *backTraceState = NULL;
-
 /**********************************************************************************************************************************/
 #ifdef WITH_BACKTRACE
+
+struct backtrace_state *backTraceState = NULL;
 
 void
 stackTraceInit(const char *exe)
@@ -109,6 +109,8 @@ stackTraceTest(void)
 void
 stackTraceTestFileLineSet(unsigned int fileLine)
 {
+    ASSERT(stackSize > 0);
+
     stackTrace[stackSize - 1].fileLine = fileLine;
 }
 

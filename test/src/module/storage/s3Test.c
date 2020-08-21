@@ -5,6 +5,7 @@ Test S3 Storage
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "version.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -49,7 +50,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     }
 
     // Add request
-    String *request = strNewFmt("%s %s HTTP/1.1\r\n", verb, uri);
+    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, uri);
 
     // Add authorization header when s3 service
     if (s3 != NULL)

@@ -68,6 +68,10 @@ testRun(void)
 #ifdef WITH_BACKTRACE
         stackTraceInit(testExe());
 #endif
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check size of StackTraceData");
+
+        TEST_RESULT_UINT(sizeof(StackTraceData), TEST_64BIT() ? 48 : 32, "check");
 
         TEST_ERROR(stackTracePop("file1", "function1", false), AssertError, "assertion 'stackSize > 0' failed");
 
