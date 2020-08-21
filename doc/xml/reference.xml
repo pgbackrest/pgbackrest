@@ -554,10 +554,10 @@
                         <text>The following types are supported:
                         <ul>
                             <li><id>shared</id> - Shared keys</li>
-                            <li><id>temp</id> - Automatically retrieve temp credentials</li>
+                            <li><id>auto</id> - Automatically retrieve temporary credentials</li>
                         </ul></text>
 
-                        <example>temp</example>
+                        <example>auto</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
@@ -629,7 +629,7 @@
                     <config-key id="repo-s3-role" name="S3 Repository Role">
                         <summary>S3 repository role.</summary>
 
-                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=temp</br-option>.</text>
+                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
 
                         <example>authrole</example>
                     </config-key>

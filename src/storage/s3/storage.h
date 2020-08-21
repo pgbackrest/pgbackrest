@@ -18,11 +18,11 @@ Key type
 typedef enum
 {
     storageS3KeyTypeShared,
-    storageS3KeyTypeTemp,
+    storageS3KeyTypeAuto,
 } StorageS3KeyType;
 
 #define STORAGE_S3_KEY_TYPE_SHARED                                  "shared"
-#define STORAGE_S3_KEY_TYPE_TEMP                                    "temp"
+#define STORAGE_S3_KEY_TYPE_AUTO                                    "auto"
 
 /***********************************************************************************************************************************
 URI style

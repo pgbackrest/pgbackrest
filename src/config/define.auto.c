@@ -4628,7 +4628,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "The following types are supported:\n"
             "\n"
             "* shared - Shared keys\n"
-            "* temp - Automatically retrieve temp credentials"
+            "* auto - Automatically retrieve temporary credentials"
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -4657,7 +4657,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
             (
                 "shared",
-                "temp"
+                "auto"
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -4793,7 +4793,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository role.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "AWS role used to retrieve temporary credentials when repo-s3-key-type=temp."
+            "AWS role used to retrieve temporary credentials when repo-s3-key-type=auto."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -4822,7 +4822,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
                 cfgDefOptRepoS3KeyType,
-                "temp"
+                "auto"
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")

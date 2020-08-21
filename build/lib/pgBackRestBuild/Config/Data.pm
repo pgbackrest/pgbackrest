@@ -1895,7 +1895,7 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_LIST =>
         [
             'shared',
-            'temp',
+            'auto',
         ],
     },
 
@@ -1999,7 +1999,7 @@ my %hConfigDefine =
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_S3_KEY_TYPE,
-            &CFGDEF_DEPEND_LIST => ['temp'],
+            &CFGDEF_DEPEND_LIST => ['auto'],
         },
     },
 

@@ -316,7 +316,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
 
         // If temp crendentials will be expiring soon then renew them
-        if (this->keyType == storageS3KeyTypeTemp && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
+        if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Set content-length and host headers
             HttpHeader *credHeader = httpHeaderNew(NULL);
@@ -991,7 +991,7 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(
         (keyType == storageS3KeyTypeShared && accessKey != NULL && secretAccessKey != NULL) ||
-        (keyType == storageS3KeyTypeTemp && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
+        (keyType == storageS3KeyTypeAuto && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
     ASSERT(partSize != 0);
 
     Storage *this = NULL;
@@ -1030,7 +1030,7 @@ storageS3New(
             tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create the HTTP client used to retreive temporary security credentials
-        if (driver->keyType == storageS3KeyTypeTemp)
+        if (driver->keyType == storageS3KeyTypeAuto)
             driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
 
         // Create list of redacted headers

@@ -449,7 +449,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(credRole)));
-                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_TEMP);
+                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
