@@ -1454,7 +1454,7 @@ CSHANG maybe backu.info should be the ground truth. David says problems with bac
 so it's why we're not doing it here but we keep going around whether we should and whether backup.info should be the ground truth.
 I was thinking maybe we figure out what backups to check (pare down the list) BEFORE we start processing. Specifically, if we were
 able to determine if the list has holes in any dependency chain. Does reconstruct do this? If originally had F1 D1 I1 then dependency
-chain is F1 D1 I1 but when I go to check, the D1 is gone, then the I1 is no loner valid.
+chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no loner valid.
 */
             // Get a list of backups in the repo
             jobData.backupList = strLstSort(
