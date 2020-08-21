@@ -109,6 +109,8 @@ stackTraceTest(void)
 void
 stackTraceTestFileLineSet(unsigned int fileLine)
 {
+    ASSERT(stackSize > 0);
+
     stackTrace[stackSize - 1].fileLine = fileLine;
 }
 
