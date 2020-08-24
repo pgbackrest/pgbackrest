@@ -14,6 +14,7 @@ Exit Routines
 #include "common/log.h"
 #include "config/config.h"
 #include "protocol/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Return signal names
@@ -86,6 +87,26 @@ exitInit(void)
 }
 
 /**********************************************************************************************************************************/
+// Helper to provide details for error logging
+static String *
+exitErrorDetail(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(
+        strNewFmt(
+            "--------------------------------------------------------------------\n"
+            "If SUBMITTING AN ISSUE please provide the following information:\n"
+            "\n"
+            "version: " PROJECT_VERSION "\n"
+            "command: %s\n"
+            "options:%s\n"
+            "\n"
+            "stack trace:\n%s\n"
+            "--------------------------------------------------------------------",
+            strZ(cfgCommandRoleName()), strZ(cmdOption()), errorStackTrace()));
+}
+
 int
 exitSafe(int result, bool error, SignalType signalType)
 {
@@ -102,7 +123,7 @@ exitSafe(int result, bool error, SignalType signalType)
 
         // Assert errors always output a stack trace
         if (logLevel == logLevelAssert)
-            LOG_FMT(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
+            LOG_FMT(logLevel, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
         else
         {
             // Log just the error to non-debug levels
@@ -112,8 +133,7 @@ exitSafe(int result, bool error, SignalType signalType)
             if (logAny(logLevelDebug))
             {
                 LOG_INTERNAL_FMT(
-                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
-                    errorStackTrace());
+                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
             }
         }
 
