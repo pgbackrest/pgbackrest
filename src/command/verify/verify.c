@@ -1116,6 +1116,7 @@ what sections can we check?
         pg_data/tablespace_map={"checksum":"e71a909fe617319cff5c4463e0a65e056054d94b","master":true,"size":30,"timestamp":1574780855}
         pg_tblspc/16385/PG_10_201707211/16386/112={"checksum":"c0330e005f13857f54da25099ef919ca0c143cb6","checksum-page":true,"repo-size":74,"size":8192,"timestamp":1574780704}
     [target:file:default] - NO unless it is necessary for checking permissions?
+                ==> No way to check anything in here — it would depend the system where the backup is restored.
     [target:link] - NO
     [target:link:default] - NO
     [target:path] - NO
@@ -1132,8 +1133,8 @@ LOG_WARN("Processing MANIFEST"); // CSHANG Remove
 
             // Get the cipher subpass used to decrypt files in the backup
             jobData->backupCipherPass = manifestCipherSubPass(jobData->manifest);
-// CSHANG Do I need something like compress-type or level from the backup:option? Maybe compress-type is something we pass to verifyFile
-// CSHANG It is possible to have a backup without all the WAL if option-archive-check=true is not set but in this is not on then all bets are off
+// CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reds the file off disk)
+// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
 
 // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
         }
@@ -1200,33 +1201,37 @@ verifyErrorMsg(VerifyResult verifyResult)
         FUNCTION_TEST_PARAM(UINT, verifyResult);
     FUNCTION_TEST_END();
 
-    String *result = NULL;
+    String *result = strNew("");
 /* CSHANG TODO: Make these better (e.g. actual checksum does not match expected checksum")
  and maybe LOG_ERROR/WARN if appropriate to do one vs the other.
  */
-    switch (verifyResult)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        case verifyFileMissing:
+        switch (verifyResult)
         {
-            result = strNew("file missing");
-            break;
-        }
-        case verifyChecksumMismatch:
-        {
-            result = strNew("invalid checksum");
-            break;
-        }
-        case verifySizeInvalid:
-        {
-            result = strNew("invalid size");
-            break;
-        }
-        default:
-        {
-            result = strNew("unknown error");
-            break;
+            case verifyFileMissing:
+            {
+                result = strCatZ(result, "file missing");
+                break;
+            }
+            case verifyChecksumMismatch:
+            {
+                result = strCatZ(result, "invalid checksum");
+                break;
+            }
+            case verifySizeInvalid:
+            {
+                result = strCatZ(result, "invalid size");
+                break;
+            }
+            default:
+            {
+                result = strCatZ(result, "unknown error");
+                break;
+            }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
