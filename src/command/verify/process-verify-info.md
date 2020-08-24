@@ -1,37 +1,96 @@
-# Reference
-https://github.com/pgbackrest/pgbackrest/issues/1032
-
 # Overview
 Add a command to verify the contents of the repository in order to alert users to missing WAL or inconsistent/non-PITR backups that would invalidate a restore.
+
+# References
+https://github.com/pgbackrest/pgbackrest/issues/1032
 
 # Requirements
 By the default the command will:
 
-1.	Verify that backup/archive.info and their copies are valid
+1. Verify that backup/archive.info and their copies are valid
+    1. Files exist
+    2. Checksums match
+    3. PG histories match
+2. Verify all manifests/copies are valid
+3. Verify WAL by reporting:
+    1. Checksum mismatches
+    2. Missing WAL
+    3. Skipped duplicates
+    4. Additional WAL skipped
+4. Verify all manifests/copies are valid
+    1. Files exist
+    2. Checksums match
+5. Verify backup files using manifest
+    1. Files exist
+    2. Checksums and size match
+    3. Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked.
+6. Verify whether a backup is consistent or can be played through PITR
+    * Consistent = no gaps (missing or invalid) in the WAL from the backup start to backup end
+    * PITR = no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
+7. The command can be modified with the following options:
+    * --set - only verify the specified backup and associated WAL (including PITR)
+    * --no-pitr only verify the WAL required to make the backup consistent.
+    * --fast - check only that the file is present and has the correct size.
+8. Additional features (which may not be in the initially released version):
+    1. WARN on extra files
+    2. Check that history files exist for timelines after the first (the first timeline will not have a history file if it is the oldest timeline ever written to the repo)
+    3. Check that copies of the manifests exist in backup.history
 
+## Assumptions
+
+The following must be assumed to be true:
+1. There is no access to the PostgreSQL cluster
+2. Only the ability to read from the pgBackRest repository exists - no write capability
+3. No lock will be taken therefore archiving, backups and expiration will continue and may cause archives or backups to be added or removed during the verification process
+4. Archive and Backup info files are required to exist in order for archives and backups to be verified
+5. A valid manifest file will be required to verify backup files
+
+# Design
+Referencing the [Requirements](#requirements) section, the following sections detail the design
+
+## Requirement 1. Verify backup/archive info files
 
 ```mermaid
 graph TD
-archiveinfo[Read archive.info]-->archiveinfoexist{Exists?}
-archiveinfoexist-->|no|logarchiveinfoerr[Log Error]
-archiveinfoexist-->|yes|archiveinfovalid{Valid?}
-archiveinfovalid-->|no|logarchiveinfoerr
-archiveinfovalid-->|yes|loadarchiveinfo[Load jobdata->archiveInfo]
-logarchiveinfoerr-->backupinfo[Read backup.info]
-loadarchiveinfo-->backupinfo
-backupinfo-->backupinfoexist{Exists?}
-backupinfoexist-->|no|logbackupinfoerr[Log Error]
-backupinfoexist-->|yes|backupinfovalid{Valid?}
-backupinfovalid-->|no|logbackupinfoerr
-loadbackupinfo-->process(-process-)
-backupinfovalid-->|yes|loadbackupinfo[Load jobdata->backupInfo]
-logbackupinfoerr --> done(-END-)
+subgraph "Verify Info Files"
+errtotal[errorTotal = 0]-->loadarchiveinfo
+loadarchiveinfo[Load Archive Info]-->archiveloaded{infoPtr != NULL?}
+archiveloaded-->|no|archivemissing[errorTotal++]
+archivemissing-->loadbackupinfo
+archiveloaded-->|yes|archiveinfoptr[archiveInfoPtr = infoPtr]
+archiveinfoptr-->loadbackupinfo[Load Backup Info]
+loadbackupinfo-->backuploaded{infoPtr != NULL?}
+backuploaded-->|yes|backupinfoptr[backupInfoPtr = infoPtr]
+backuploaded-->|no|backupmissing[errorTotal++]
+backupmissing-->ptrcheck
+backupinfoptr-->ptrcheck{archiveInfoPtr AND backupInfoPtr set?}
+ptrcheck-->|yes|dbhistorymatch{db AND history match?}
+dbhistorymatch-->|no|dbhistoryerr[errorTotal++]
+dbhistoryerr-->endinfo(-END-)
+dbhistorymatch-->|yes|noerror{errorTotal == 0?}
+noerror-->|yes|verifyprocess(-Verify Process-)
+end
+loadarchiveinfo-->infoset
+subgraph "Load Info File"
+infoset[infoPtr = NULL]-->info
+info[Load main info file]-->infoload{Load Success?}
+infoload-->|no|infoerr[Log WARN]
+infoload-->|yes|infoptr[infoPtr = main]
+infoerr-->copy
+infoptr-->copy[Load info.copy]
+copy-->copyload{Load Success?}
+copyload-->|no|copyerr[Log WARN]
+copyerr-->done
+copyload-->|yes|ptrnull{infoPtr == NULL?}
+ptrnull-->|no|done
+ptrnull-->|yes|infoptrcopy[infoPtr = copy]
+infoptrcopy-->done(-END-)
+end
 ```
 
-By the default the command will:
-
-1.	Verify that backup/archive.info and their copies are valid
-        - May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
+In order to verify that backup/archive.info and their copies are valid, each file will be loaded and checked for the following:
+<!--
+- May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
         - want to WARN if only one exists
         - If backup.info/copy AND/OR archive.info/copy is missing then do not abort. ONLY error and abort if encrypted since we can't read the archive dir or backup dirs
         - checkStanzaInfoPg() makes sure the archive and backup info files (not copies just that one or the other) exist and are valid for the database version - BUT the db being available is not allowed because restore doesn't require it - so maybe just check archive and backup info DB sections match each other. BUT this throws an error if can't open one or the other - so would need to catch this and do LOG_ERROR() - maybe prefix with VERIFY-ERROR - or just take out the conditions and check for what we need OR maybe call checkStanzaInfo
@@ -280,12 +339,4 @@ switches and there are no gaps.
 But the timeline+1 true? Could we skip to timeline 3 if there was a problem with timeline 2? But shouldn't that be in the history file?
         if (currentTimeline == stopTimeline + 1)
         {
-*/
-
-2	Design
-
-
-ARCHIVE RESULT
-
-archiveId - archive id
-numWalFile - original number of WAL read from disk
+*/ -->

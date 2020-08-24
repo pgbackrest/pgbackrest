@@ -690,8 +690,8 @@ testRun(void)
             verifyProcess(),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL files checked: 0\n"
-            "  archiveId: 11-2, total WAL files checked: 5\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 0\n",
+            "  archiveId: 11-2, total WAL files checked: 5\n" // cshang  add total valid file
+            "    missing: 0, checksum invalid: 1, size invalid: 0\n",   // CSHANG Need to report total errors
             "process results");
 
         harnessLogResult(

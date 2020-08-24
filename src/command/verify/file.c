@@ -41,7 +41,7 @@ verifyFile(
         // Add decryption filter
         if (cipherPass != NULL)
             ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
-// CSHANG How do I tell if file could not decompress? And what about errors that could be thrown - do I need to catch all those here and try to return something?
+
         // Add decompression filter
         if (compressTypeFromName(filePathName) != compressTypeNone)
             ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeFromName(filePathName)));
@@ -54,7 +54,7 @@ verifyFile(
 
         // Add IoSink so the file data is not transmitted from the remote
         ioFilterGroupAdd(filterGroup, ioSinkNew());
-// CSHANG So if it is a WAL file and we get here, it is because at the time the verify command started, we read the archive DIR and found the file - but an expire could run and delete it out from under us, so it's not a problem but we need to indicate it is missing
+
         // If the file exists check the checksum/size
         if (ioReadDrain(read))
         {

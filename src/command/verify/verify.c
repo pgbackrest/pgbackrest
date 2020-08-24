@@ -369,6 +369,7 @@ typedef struct VerifyJobData
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
+    Manifest *manifest;                                             // Manifest currently being processed
 } VerifyJobData;
 
 /***********************************************************************************************************************************
@@ -770,7 +771,7 @@ createArchiveIdRange(
                 (*jobErrorTotal)++;
 
                 bool foundDup = true;
-
+// CSHANG In archiveIdResult have a duplicate error count
                 // Remove all duplicates of this WAL, including this WAL, from the list
                 while (strLstSize(walFileList) > 0 && foundDup)
                 {
@@ -822,12 +823,9 @@ createArchiveIdRange(
     if (walRange.start != NULL)
         lstAdd(archiveIdResult->walRangeList, &walRange);
 
-    // Now if there are ranges for this archiveId then sort ascending by the stop file and add them
+    // Now if there are ranges for this archiveId then add them
     if (lstSize(archiveIdResult->walRangeList) > 0)
-    {
-        lstSort(archiveIdResult->walRangeList, sortOrderAsc);
         lstAdd(archiveIdResultList, archiveIdResult);
-    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1040,7 +1038,7 @@ verifyBackup(void *data)
         bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
 
         // Get a usable backup manifest file
-        Manifest *manifest = verifyManifestFile(
+        const Manifest *manifest = verifyManifestFile(
             backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
 
         // If a usable backup.manifest file is not found
@@ -1127,12 +1125,14 @@ what sections can we check?
 */
 LOG_WARN("Processing MANIFEST"); // CSHANG Remove
 
-            const ManifestData *manData = manifestData(const Manifest *this);
+// CSHANG Problem here because the manifest poiinter is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
+
+            const ManifestData *manData = manifestData(manifest);
             backupResult.archiveStart = strDup(manData->archiveStart);
-            backupResult.archiveStop = strDup(manData->archiveStop); // May not have this?
+            backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
 
             // Get the cipher subpass used to decrypt files in the backup
-            jobData->backupCipherPass = manifestCipherSubPass(jobData->manifest);
+            jobData->backupCipherPass = manifestCipherSubPass(manifest);
 // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reds the file off disk)
 // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
 
@@ -1380,6 +1380,41 @@ setBackupCheckArchive(
 
     FUNCTION_TEST_RETURN(result);
 }
+/***********************************************************************************************************************************
+ Add the file to the invalid file list for the range in which it exists
+***********************************************************************************************************************************/
+static void
+addInvalidFile(List *walRangeList, VerifyResult fileResult, String *fileName, String *walSegment)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, walRangeList);
+        FUNCTION_TEST_PARAM(UINT, fileResult);
+        FUNCTION_TEST_PARAM(STRING, fileName);
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+    FUNCTION_TEST_END();
+
+    for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
+    {
+        WalRange *walRange = lstGet(walRangeList, walIdx);
+
+        // If the file is less/equal to the stop file then it falls in this range since ranges
+        // are sorted by stop file in ascending order, therefore first one found is the range.
+        if (strCmp(walRange->stop, walSegment) >= 0)
+        {
+            InvalidFile invalidFile =
+            {
+                .fileName = strDup(fileName),  // CSHANG Should this be filePathName?
+                .reason = fileResult,
+            };
+
+            // Add the file to the range where it was found and exit the loop
+            lstAdd(walRange->invalidFileList, &invalidFile);
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Process the verify command
@@ -1510,7 +1545,7 @@ chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no lone
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
                         const String *fileName = varStr(protocolParallelJobKey(job)); // CSHANG Actually, can probably make this the full filename again bcause we can just split the string on the forward slashes
-
+// CSHANG PROBLEM!!! Need to change the result to just be the enum and pass the full file path name to the job in the callback because if the verifyFile() function throws an error I won't be able to get at the results but I will have access to the JobKey
                         // CSHANG The key will tell us what we just processed
                         // const VerifyResult verifyResult = (VerifyResult)varUIntForce(varLstGet(jobResult, 0))
                         // const String *filename = varStr(varLstGet(varVarLst(protocolParallelJobKey(job)), 1);
@@ -1536,42 +1571,15 @@ chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no lone
                                     String *archiveId = strLstGet(filePathLst, 1);
                                     unsigned int index = lstFindIdx((List *)jobData.archiveIdResultList, &archiveId);
 
-                                    if (index != LIST_NOT_FOUND)
-                                    {
-                                        ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
+                                    ASSERT(index != LIST_NOT_FOUND);
 
-                                        // Get the WAL segment from the file name
-                                        String *walSegment = strSubN(
-                                            strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
+                                    ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
 
-// CSHANG Might need a check for walRangeList > 0? If we get a file for this archiveId but we didn't have a walRange - no that can't happen. We're going from the list of filenames so if we get a result for a filename the corresponding archivId must have a range.
+                                    // Get the WAL segment from the file name
+                                    String *walSegment = strSubN(
+                                        strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
 
-                                        for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
-                                        {
-                                            WalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
-
-                                            // If the file is less/equal to the stop file then it falls in this range since ranges
-                                            // are sorted by stop file in ascending order, therefore first one found is the range.
-                                            if (strCmp(walRange->stop, walSegment) >= 0)
-                                            {
-                                                InvalidFile invalidFile =
-                                                {
-                                                    .fileName = strDup(fileName),  // CSHANG Should this be filePathName?
-                                                    .reason = verifyResult,
-                                                };
-
-                                                // Add the file to the range where it was found and exit the loop
-                                                lstAdd(walRange->invalidFileList, &invalidFile);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-// CSHANG If the archive Id doesn't exist, it then log an error (this should never happen) so do we really need this and if so, then maybe break out as a fatal error?
-                                        LOG_ERROR(errorTypeCode(&PathNotEmptyError), "NOT SURE IF SHOULD BE CHECKING FOR THIS...");
-                                        errorTotal++;
-                                    }
+                                    addInvalidFile(archiveIdResult->walRangeList, verifyResult, fileName, walSegment);
                                 }
 
                                 /* CSHANG pseudo code:
@@ -1638,11 +1646,33 @@ total 76
 
                             }
                         }
-                        // CSHANG I am assuming that there will only be an error if something went horribly wrong and the program needs to exit...
                         // Else the job errored
                         else
-                            THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
+                        {
+                            LOG_ERROR_PID_FMT(
+                                processId,
+                                "could not verify %s: [%d] %s", strZ(filePathName),
+                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
+                            // If this is a WAL file, then add the file to the invalid file list for WAL range of the archiveId
+                            if (strEq(strLstGet(filePathLst, 0), STORAGE_REPO_ARCHIVE_STR))
+                            {
+                                String *archiveId = strLstGet(filePathLst, 1);
+                                unsigned int index = lstFindIdx((List *)jobData.archiveIdResultList, &archiveId);
+
+                                ASSERT(index != LIST_NOT_FOUND);
+
+                                ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
+
+                                // Get the WAL segment from the file name
+                                String *walSegment = strSubN(
+                                    strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
+
+                                addInvalidFile(archiveIdResult->walRangeList, verifyOtherError, fileName, walSegment);
+                            }
+
+                            jobData.jobErrorTotal++;
+                        }
                         // Free the job
                         protocolParallelJobFree(job);
                     }
