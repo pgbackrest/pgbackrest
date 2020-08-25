@@ -41,6 +41,22 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="david.youatt"/>
+                            <release-item-reviewer id="ales.zeleny"/>
+                            <release-item-reviewer id="jeanette.bromage"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically retrieve temporary <proper>S3</proper> credentials on <proper>AWS</proper> instances.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p><postgres/> 13 beta3 support.</p>
@@ -8838,6 +8854,11 @@
         <contributor id="huseyin.sonmez">
             <contributor-name-display>H&amp;ouml;seyin S&amp;ouml;nmez</contributor-name-display>
             <contributor-id type="github">huseynsnmz</contributor-id>
+        </contributor>
+
+        <contributor id="jeanette.bromage">
+            <contributor-name-display>Jeanette Bromage</contributor-name-display>
+            <contributor-id type="github">JBromage</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
