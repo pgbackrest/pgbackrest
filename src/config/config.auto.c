@@ -287,6 +287,7 @@ STRING_EXTERN(CFGOPT_ARCHIVE_ASYNC_STR,                             CFGOPT_ARCHI
 STRING_EXTERN(CFGOPT_ARCHIVE_CHECK_STR,                             CFGOPT_ARCHIVE_CHECK);
 STRING_EXTERN(CFGOPT_ARCHIVE_COPY_STR,                              CFGOPT_ARCHIVE_COPY);
 STRING_EXTERN(CFGOPT_ARCHIVE_GET_QUEUE_MAX_STR,                     CFGOPT_ARCHIVE_GET_QUEUE_MAX);
+STRING_EXTERN(CFGOPT_ARCHIVE_MODE_STR,                              CFGOPT_ARCHIVE_MODE);
 STRING_EXTERN(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR,                    CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHIVE_TIMEOUT);
 STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKUP_STANDBY);
@@ -524,6 +525,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_GET_QUEUE_MAX)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveGetQueueMax)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_MODE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveMode)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

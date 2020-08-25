@@ -56,6 +56,7 @@ typedef enum
     cfgDefOptArchiveCheck,
     cfgDefOptArchiveCopy,
     cfgDefOptArchiveGetQueueMax,
+    cfgDefOptArchiveMode,
     cfgDefOptArchivePushQueueMax,
     cfgDefOptArchiveTimeout,
     cfgDefOptBackupStandby,
