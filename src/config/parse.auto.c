@@ -66,6 +66,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveGetQueueMax,
     },
 
+    // archive-mode option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_ARCHIVE_MODE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptArchiveMode,
+    },
+    {
+        .name = "reset-" CFGOPT_ARCHIVE_MODE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveMode,
+    },
+
     // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2724,6 +2736,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStanza,
     cfgOptArchiveAsync,
     cfgOptArchiveGetQueueMax,
+    cfgOptArchiveMode,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,

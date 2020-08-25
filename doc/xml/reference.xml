@@ -889,6 +889,21 @@
                 <text>The <setting>restore</setting> section defines settings used for restoring backups.</text>
 
                 <config-key-list>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-mode" name="Archive Mode">
+                        <summary>Preserve or disable archiving on restored cluster.</summary>
+
+                        <text>This option allows archiving to be preserved or disabled on a restored cluster. This is useful when the cluster must be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to push WAL from the cluster into the repository.
+
+                        The following modes are supported:
+                        <ul>
+                            <li><id>off</id> - disable archiving by setting <setting>archive_mode=off</setting>.</li>
+                            <li><id>preserve</id> - preserve current <setting>archive_mode</setting> setting.</li>
+                        </ul><b>NOTE</b>: This option is not available on <postgres/> &amp;lt; 12.</text>
+
+                        <example>off</example>
+                    </config-key>
+
                     <!-- CONFIG - RESTORE SECTION - DB-INCLUDE KEY -->
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>

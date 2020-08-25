@@ -433,6 +433,51 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("archive-mode")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("restore")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Preserve or disable archiving on restored cluster.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "This option allows archiving to be preserved or disabled on a restored cluster. This is useful when the cluster must "
+                "be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to "
+                "push WAL from the cluster into the repository.\n"
+            "\n"
+            "The following modes are supported:\n"
+            "\n"
+            "* off - disable archiving by setting archive_mode=off.\n"
+            "* preserve - preserve current archive_mode setting.\n"
+            "\n"
+            "NOTE: This option is not available on PostgreSQL < 12."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "off",
+                "preserve"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("preserve")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("archive-push-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)

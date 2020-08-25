@@ -261,6 +261,7 @@ use constant CFGOPT_STOP_AUTO                                       => 'stop-aut
 
 # Restore options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_ARCHIVE_MODE                                    => 'archive-mode';
 use constant CFGOPT_DB_INCLUDE                                      => 'db-include';
 use constant CFGOPT_LINK_ALL                                        => 'link-all';
 use constant CFGOPT_LINK_MAP                                        => 'link-map';
@@ -2428,6 +2429,22 @@ my %hConfigDefine =
 
     # Restore options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_ARCHIVE_MODE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'preserve',
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_RESTORE => {},
+        },
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'off',
+            'preserve',
+        ],
+    },
+
     &CFGOPT_DB_INCLUDE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,

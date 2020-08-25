@@ -62,6 +62,11 @@ Recovery constants
 #define RECOVERY_TYPE_TIME                                          "time"
     STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
+#define ARCHIVE_MODE                                                "archive_mode"
+#define ARCHIVE_MODE_OFF                                            "off"
+    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
+STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
+
 /***********************************************************************************************************************************
 Validate restore path
 ***********************************************************************************************************************************/
@@ -1327,6 +1332,26 @@ restoreRecoveryOption(unsigned int pgVersion)
             }
 
             strLstSort(recoveryOptionKey, sortOrderAsc);
+        }
+
+        // If archive-mode is not preserve
+        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
+
+        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        {
+            if (pgVersion < PG_VERSION_12)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                        "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+            }
+
+            // The only other valid option is off
+            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+
+            // If archive-mode=off then set archive_mode=off
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
         }
 
         // Write restore_command

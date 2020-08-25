@@ -61,6 +61,8 @@ Option constants
     STRING_DECLARE(CFGOPT_ARCHIVE_COPY_STR);
 #define CFGOPT_ARCHIVE_GET_QUEUE_MAX                                "archive-get-queue-max"
     STRING_DECLARE(CFGOPT_ARCHIVE_GET_QUEUE_MAX_STR);
+#define CFGOPT_ARCHIVE_MODE                                         "archive-mode"
+    STRING_DECLARE(CFGOPT_ARCHIVE_MODE_STR);
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
     STRING_DECLARE(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR);
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
@@ -464,7 +466,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            205
+#define CFG_OPTION_TOTAL                                            206
 
 /***********************************************************************************************************************************
 Command enum
@@ -502,6 +504,7 @@ typedef enum
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
     cfgOptArchiveGetQueueMax,
+    cfgOptArchiveMode,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
