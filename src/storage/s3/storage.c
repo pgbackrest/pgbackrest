@@ -16,6 +16,7 @@ S3 Storage
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/object.h"
+#include "common/type/json.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
 #include "storage/s3/storage.intern.h"
@@ -67,6 +68,24 @@ STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
 STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 
 /***********************************************************************************************************************************
+Constants for automatically fetching the current role and credentials
+
+Documentation for the response format is found at: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+***********************************************************************************************************************************/
+STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
+#define S3_CREDENTIAL_PORT                                          80
+#define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
+#define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
+
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_CODE_VAR,                         "Code");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_EXPIRATION_VAR,                   "Expiration");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_SECRET_ACCESS_KEY_VAR,            "SecretAccessKey");
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_TOKEN_VAR,                        "Token");
+
+VARIANT_STRDEF_STATIC(S3_JSON_VALUE_SUCCESS_VAR,                    "Success");
+
+/***********************************************************************************************************************************
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
@@ -93,13 +112,20 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
-    const String *accessKey;                                        // Access key
-    const String *secretAccessKey;                                  // Secret access key
-    const String *securityToken;                                    // Security token, if any
+    StorageS3KeyType keyType;                                       // Key type (shared or temp)
+    String *accessKey;                                              // Access key
+    String *secretAccessKey;                                        // Secret access key
+    String *securityToken;                                          // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
+
+    // For retrieving temporary security credentials
+    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
+    const String *credHost;                                         // Credentials host
+    const String *credRole;                                         // Role to use for credential requests
+    time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -235,6 +261,22 @@ storageS3Auth(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
+// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
+// milliseconds, which are discarded here.
+static time_t
+storageS3CvtTime(const String *time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, time);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        epochFromParts(
+            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
+            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
+            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
+}
+
 HttpRequest *
 storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
 {
@@ -272,6 +314,98 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
             uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
+
+        // If temp crendentials will be expiring soon then renew them
+        if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
+        {
+            // Set content-length and host headers
+            HttpHeader *credHeader = httpHeaderNew(NULL);
+            httpHeaderAdd(credHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+            httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
+
+            // If the role was not set explicitly or retrieved previously then retrieve it
+            if (this->credRole == NULL)
+            {
+                // Request the role
+                HttpRequest *request = httpRequestNewP(
+                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_URI), .header = credHeader);
+                HttpResponse *response = httpRequestResponse(request, true);
+
+                // Not found likely means no role is associated with this instance
+                if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+                {
+                    THROW(
+                        ProtocolError,
+                        "role to retrieve temporary credentials not found\n"
+                            "HINT: is a valid IAM role associated with this instance?");
+                }
+                // Else an error that we can't handle
+                else if (!httpResponseCodeOk(response))
+                    httpRequestError(request, response);
+
+                // Get role from the text response
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    this->credRole = strNewBuf(httpResponseContent(response));
+                }
+                MEM_CONTEXT_END();
+            }
+
+            // Retrieve the temp credentials
+            HttpRequest *request = httpRequestNewP(
+                this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(this->credRole)),
+                .header = credHeader);
+            HttpResponse *response = httpRequestResponse(request, true);
+
+            // Not found likely means the role is not valid
+            if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+            {
+                THROW_FMT(
+                    ProtocolError,
+                    "role '%s' not found\n"
+                        "HINT: is '%s' a valid IAM role associated with this instance?",
+                    strZ(this->credRole), strZ(this->credRole));
+            }
+            // Else an error that we can't handle
+            else if (!httpResponseCodeOk(response))
+                httpRequestError(request, response);
+
+            // Free old credentials
+            strFree(this->accessKey);
+            strFree(this->secretAccessKey);
+            strFree(this->securityToken);
+
+            // Get credentials from the JSON response
+            KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
+
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                // Check the code field for errors
+                const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
+                CHECK(code != NULL);
+
+                if (!varEq(code, S3_JSON_VALUE_SUCCESS_VAR))
+                    THROW_FMT(FormatError, "unable to retrieve temporary credentials: %s", strZ(varStr(code)));
+
+                // Make sure the required values are present
+                CHECK(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL);
+                CHECK(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL);
+                CHECK(kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL);
+
+                // Copy credentials
+                this->accessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
+                this->secretAccessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
+                this->securityToken = strDup(varStr(kvGet(credential, S3_JSON_TAG_TOKEN_VAR)));
+            }
+            MEM_CONTEXT_END();
+
+            // Update expiration time
+            CHECK(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL);
+            this->credExpirationTime = storageS3CvtTime(varStr(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR)));
+
+            // Reset the signing key date so the signing key gets regenerated
+            this->signingKeyDate = YYYYMMDD_STR;
+        }
 
         // Generate authorization header
         storageS3Auth(
@@ -529,22 +663,6 @@ typedef struct StorageS3InfoListData
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
-
-// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
-// milliseconds which are discarded here.
-static time_t
-storageS3CvtTime(const String *time)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, time);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(
-        epochFromParts(
-            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
-            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
-            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
-}
 
 static void
 storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
@@ -841,9 +959,9 @@ static const StorageInterface storageInterfaceS3 =
 Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, size_t partSize, const String *host, unsigned int port,
-    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
+    const String *secretAccessKey, const String *securityToken, const String *credRole, size_t partSize, const String *host,
+    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -853,9 +971,11 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, endPoint);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
+        FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
+        FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
@@ -869,8 +989,9 @@ storageS3New(
     ASSERT(bucket != NULL);
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
-    ASSERT(accessKey != NULL);
-    ASSERT(secretAccessKey != NULL);
+    ASSERT(
+        (keyType == storageS3KeyTypeShared && accessKey != NULL && secretAccessKey != NULL) ||
+        (keyType == storageS3KeyTypeAuto && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
     ASSERT(partSize != 0);
 
     Storage *this = NULL;
@@ -885,6 +1006,7 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
+            .keyType = keyType,
             .accessKey = strDup(accessKey),
             .secretAccessKey = strDup(secretAccessKey),
             .securityToken = strDup(securityToken),
@@ -893,6 +1015,8 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
+            .credHost = S3_CREDENTIAL_HOST_STR,
+            .credRole = strDup(credRole),
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
@@ -904,6 +1028,10 @@ storageS3New(
 
         driver->httpClient = httpClientNew(
             tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
+
+        // Create the HTTP client used to retreive temporary security credentials
+        if (driver->keyType == storageS3KeyTypeAuto)
+            driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

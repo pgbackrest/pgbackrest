@@ -547,6 +547,19 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-key-type" name="S3 Repository Key Type">
+                        <summary>S3 repository key type.</summary>
+
+                        <text>The following types are supported:
+                        <ul>
+                            <li><id>shared</id> - Shared keys</li>
+                            <li><id>auto</id> - Automatically retrieve temporary credentials</li>
+                        </ul></text>
+
+                        <example>auto</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
                     <config-key id="repo-s3-token" name="S3 Repository Security Token">
                         <summary>S3 repository security token.</summary>
@@ -610,6 +623,15 @@
                         <text>Port to use when connecting to the endpoint (or host if specified).</text>
 
                         <example>9000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-role" name="S3 Repository Role">
+                        <summary>S3 repository role.</summary>
+
+                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
+
+                        <example>authrole</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->

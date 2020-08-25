@@ -392,8 +392,10 @@ storageRepoGet(const String *type, bool write)
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
-            cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
-            cfgOptionStrNull(cfgOptRepoS3Token), STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
+            cfgOptionStr(cfgOptRepoS3Region),
+            strEqZ(cfgOptionStr(cfgOptRepoS3KeyType), STORAGE_S3_KEY_TYPE_SHARED) ? storageS3KeyTypeShared : storageS3KeyTypeAuto,
+            cfgOptionStrNull(cfgOptRepoS3Key), cfgOptionStrNull(cfgOptRepoS3KeySecret), cfgOptionStrNull(cfgOptRepoS3Token),
+            cfgOptionStrNull(cfgOptRepoS3Role), STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
             cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
     }
     else
