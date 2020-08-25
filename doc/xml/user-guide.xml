@@ -2788,6 +2788,8 @@
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
 
+            <admonition type="important">If this cluster is intended to be promoted without becoming the new primary (e.g. for reporting or testing), use <br-option>--archive-mode=off</br-option> or set <setting>archive_mode=off</setting> in <file>postgresql.conf</file> to disable archiving. If archiving is not disabled then the repository may be polluted with WAL that can make restores more difficult.</admonition>
+
             <execute-list host="{[host-pg2]}">
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 

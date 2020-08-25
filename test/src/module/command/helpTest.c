@@ -124,6 +124,8 @@ testRun(void)
             "\n"
             "Command Options:\n"
             "\n"
+            "  --archive-mode                   disable archiving on restored cluster\n"
+            "                                   [default=preserve]\n"
             "  --db-include                     restore only specified databases\n"
             "                                   [current=db1, db2]\n"
             "  --force                          force a restore [default=n]\n"
