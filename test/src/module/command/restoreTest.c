@@ -1496,7 +1496,7 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_12, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
-                "archive_mode = 'off'\n",
+            "archive_mode = 'off'\n",
             "check recovery options");
     }
 
