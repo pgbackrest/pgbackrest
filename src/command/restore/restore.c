@@ -1333,7 +1333,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
             // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
