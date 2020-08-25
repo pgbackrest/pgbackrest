@@ -52,26 +52,31 @@ Referencing the [Requirements](#requirements) section, the following sections de
 
 ```mermaid
 graph TD
-subgraph "Verify Info Files"
+subgraph Verify Info Files
 errtotal[errorTotal = 0]-->loadarchiveinfo
 loadarchiveinfo[Load Archive Info]-->archiveloaded{infoPtr != NULL?}
-archiveloaded-->|no|archivemissing[errorTotal++]
+archiveloaded-->|no|archivelogerr[Log ERROR]
+archivelogerr-->archivemissing[errorTotal++]
 archivemissing-->loadbackupinfo
 archiveloaded-->|yes|archiveinfoptr[archiveInfoPtr = infoPtr]
 archiveinfoptr-->loadbackupinfo[Load Backup Info]
 loadbackupinfo-->backuploaded{infoPtr != NULL?}
 backuploaded-->|yes|backupinfoptr[backupInfoPtr = infoPtr]
-backuploaded-->|no|backupmissing[errorTotal++]
+backuploaded-->|no|backuplogerr[Log ERROR]
+backuplogerr-->backupmissing[errorTotal++]
 backupmissing-->ptrcheck
 backupinfoptr-->ptrcheck{archiveInfoPtr AND backupInfoPtr set?}
 ptrcheck-->|yes|dbhistorymatch{db AND history match?}
-dbhistorymatch-->|no|dbhistoryerr[errorTotal++]
+dbhistorymatch-->|no|dbhistorylogerror[Log ERROR]
+dbhistorylogerror-->dbhistoryerr[errorTotal++]
 dbhistoryerr-->endinfo(-END-)
 dbhistorymatch-->|yes|noerror{errorTotal == 0?}
 noerror-->|yes|verifyprocess(-Verify Process-)
 end
+
 loadarchiveinfo-->infoset
-subgraph "Load Info File"
+
+subgraph Load Info File
 infoset[infoPtr = NULL]-->info
 info[Load main info file]-->infoload{Load Success?}
 infoload-->|no|infoerr[Log WARN]
