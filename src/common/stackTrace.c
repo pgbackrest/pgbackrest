@@ -22,10 +22,9 @@ Max call stack depth
 #define STACK_TRACE_MAX                                             128
 
 /***********************************************************************************************************************************
-Track stack trace
+Local variables
 ***********************************************************************************************************************************/
-static int stackSize = 0;
-
+// Stack trace function data
 typedef struct StackTraceData
 {
     const char *fileName;
@@ -40,23 +39,26 @@ typedef struct StackTraceData
     size_t paramSize;
 } StackTraceData;
 
-static StackTraceData stackTrace[STACK_TRACE_MAX];
-
-/***********************************************************************************************************************************
-Buffer to hold function parameters
-***********************************************************************************************************************************/
-static char functionParamBuffer[32 * 1024];
+static struct StackTraceLocal
+{
+    int stackSize;                                                  // Stack size
+    StackTraceData stack[STACK_TRACE_MAX];                          // Stack data
+    char functionParamBuffer[32 * 1024];                            // Buffer to hold function parameters
+} stackTraceLocal;
 
 /**********************************************************************************************************************************/
 #ifdef WITH_BACKTRACE
 
-struct backtrace_state *backTraceState = NULL;
+static struct StackTraceBackLocal
+{
+    struct backtrace_state *backTraceState;                         // Backtrace state struct
+} stackTraceBackLocal
 
 void
 stackTraceInit(const char *exe)
 {
-    if (backTraceState == NULL)
-        backTraceState = backtrace_create_state(exe, false, NULL, NULL);
+    if (stackTraceBackLocal.backTraceState == NULL)
+        stackTraceBackLocal.backTraceState = backtrace_create_state(exe, false, NULL, NULL);
 }
 
 static int
@@ -67,8 +69,8 @@ backTraceCallback(void *data, uintptr_t pc, const char *filename, int lineno, co
     (void)(filename);
     (void)(function);
 
-    if (stackSize > 0)
-        stackTrace[stackSize - 1].fileLine = (unsigned int)lineno;
+    if (stackTraceLocal.stackSize > 0)
+        stackTraceLocal.stack[stackTraceLocal.stackSize - 1].fileLine = (unsigned int)lineno;
 
     return 1;
 }
@@ -86,32 +88,35 @@ backTraceCallbackError(void *data, const char *msg, int errnum)
 /**********************************************************************************************************************************/
 #ifndef NDEBUG
 
-bool stackTraceTestFlag = true;
+static struct StackTraceTestLocal
+{
+    bool testFlag;                                        // Don't log in parameter logging functions to avoid recursion
+} stackTraceTestLocal = {.testFlag = true};
 
 void
 stackTraceTestStart(void)
 {
-    stackTraceTestFlag = true;
+    stackTraceTestLocal.testFlag = true;
 }
 
 void
 stackTraceTestStop(void)
 {
-    stackTraceTestFlag = false;
+    stackTraceTestLocal.testFlag = false;
 }
 
 bool
 stackTraceTest(void)
 {
-    return stackTraceTestFlag;
+    return stackTraceTestLocal.testFlag;
 }
 
 void
 stackTraceTestFileLineSet(unsigned int fileLine)
 {
-    ASSERT(stackSize > 0);
+    ASSERT(stackTraceLocal.stackSize > 0);
 
-    stackTrace[stackSize - 1].fileLine = fileLine;
+    stackTraceLocal.stack[stackTraceLocal.stackSize - 1].fileLine = fileLine;
 }
 
 #endif
@@ -120,15 +125,15 @@ stackTraceTestFileLineSet(unsigned int fileLine)
 LogLevel
 stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel)
 {
-    ASSERT(stackSize < STACK_TRACE_MAX - 1);
+    ASSERT(stackTraceLocal.stackSize < STACK_TRACE_MAX - 1);
 
     // Get line number from backtrace if available
 #ifdef WITH_BACKTRACE
-    backtrace_full(backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
+    backtrace_full(stackTraceBackLocal.backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
 #endif
 
     // Set function info
-    StackTraceData *data = &stackTrace[stackSize];
+    StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize];
 
     *data = (StackTraceData)
     {
@@ -138,14 +143,14 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
     };
 
     // Set param pointer
-    if (stackSize == 0)
+    if (stackTraceLocal.stackSize == 0)
     {
-        data->param = functionParamBuffer;
+        data->param = stackTraceLocal.functionParamBuffer;
         data->functionLogLevel = functionLogLevel;
     }
     else
     {
-        StackTraceData *dataPrior = &stackTrace[stackSize - 1];
+        StackTraceData *dataPrior = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
 
         data->param = dataPrior->param + dataPrior->paramSize + 1;
 
@@ -156,7 +161,7 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
             data->functionLogLevel = functionLogLevel;
     }
 
-    stackSize++;
+    stackTraceLocal.stackSize++;
 
     return data->functionLogLevel;
 }
@@ -165,10 +170,10 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
 static const char *
 stackTraceParamIdx(int stackIdx)
 {
-    ASSERT(stackSize > 0);
-    ASSERT(stackIdx < stackSize);
+    ASSERT(stackTraceLocal.stackSize > 0);
+    ASSERT(stackIdx < stackTraceLocal.stackSize);
 
-    StackTraceData *data = &stackTrace[stackIdx];
+    StackTraceData *data = &stackTraceLocal.stack[stackIdx];
 
     if (data->paramLog)
     {
@@ -189,21 +194,21 @@ stackTraceParamIdx(int stackIdx)
 const char *
 stackTraceParam()
 {
-    return stackTraceParamIdx(stackSize - 1);
+    return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
 
 /**********************************************************************************************************************************/
 char *
 stackTraceParamBuffer(const char *paramName)
 {
-    ASSERT(stackSize > 0);
+    ASSERT(stackTraceLocal.stackSize > 0);
 
-    StackTraceData *data = &stackTrace[stackSize - 1];
+    StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
     size_t paramNameSize = strlen(paramName);
 
     // Make sure that adding this parameter will not overflow the buffer
-    if ((size_t)(data->param - functionParamBuffer) + data->paramSize + paramNameSize + 4 >
-        sizeof(functionParamBuffer) - (STACK_TRACE_PARAM_MAX * 2))
+    if ((size_t)(data->param - stackTraceLocal.functionParamBuffer) + data->paramSize + paramNameSize + 4 >
+        sizeof(stackTraceLocal.functionParamBuffer) - (STACK_TRACE_PARAM_MAX * 2))
     {
         // Set overflow to true
         data->paramOverflow = true;
@@ -211,7 +216,7 @@ stackTraceParamBuffer(const char *paramName)
         // There's no way to stop the parameter from being formatted so we reserve a space at the end where the format can safely
         // take place and not disturb the rest of the buffer.  Hopefully overflows just won't happen but we need to be prepared in
         // case of runaway recursion or some other issue that fills the buffer because we don't want a segfault.
-        return functionParamBuffer + sizeof(functionParamBuffer) - STACK_TRACE_PARAM_MAX;
+        return stackTraceLocal.functionParamBuffer + sizeof(stackTraceLocal.functionParamBuffer) - STACK_TRACE_PARAM_MAX;
     }
 
     // Add a comma if a parameter is already in the list
@@ -236,9 +241,9 @@ stackTraceParamBuffer(const char *paramName)
 void
 stackTraceParamAdd(size_t bufferSize)
 {
-    ASSERT(stackSize > 0);
+    ASSERT(stackTraceLocal.stackSize > 0);
 
-    StackTraceData *data = &stackTrace[stackSize - 1];
+    StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
 
     if (!data->paramOverflow)
         data->paramSize += bufferSize;
@@ -248,9 +253,9 @@ stackTraceParamAdd(size_t bufferSize)
 void
 stackTraceParamLog(void)
 {
-    ASSERT(stackSize > 0);
+    ASSERT(stackTraceLocal.stackSize > 0);
 
-    stackTrace[stackSize - 1].paramLog = true;
+    stackTraceLocal.stack[stackTraceLocal.stackSize - 1].paramLog = true;
 }
 
 /**********************************************************************************************************************************/
@@ -259,7 +264,7 @@ stackTraceParamLog(void)
 void
 stackTracePop(void)
 {
-    stackSize--;
+    stackTraceLocal.stackSize--;
 }
 
 #else
@@ -267,13 +272,13 @@ stackTracePop(void)
 void
 stackTracePop(const char *fileName, const char *functionName, bool test)
 {
-    ASSERT(stackSize > 0);
+    ASSERT(stackTraceLocal.stackSize > 0);
 
     if (!test || stackTraceTest())
     {
-        stackSize--;
+        stackTraceLocal.stackSize--;
 
-        StackTraceData *data = &stackTrace[stackSize];
+        StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize];
 
         if (strcmp(data->fileName, fileName) != 0 || strcmp(data->functionName, functionName) != 0)
             THROW_FMT(AssertError, "popping %s:%s but expected %s:%s", fileName, functionName, data->fileName, data->functionName);
@@ -303,13 +308,13 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
 {
     size_t result = 0;
     const char *param = "test build required for parameters";
-    int stackIdx = stackSize - 1;
+    int stackIdx = stackTraceLocal.stackSize - 1;
 
     // If the current function passed in is the same as the top function on the stack then use the parameters for that function
-    if (stackSize > 0 && strcmp(fileName, stackTrace[stackIdx].fileName) == 0 &&
-        strcmp(functionName, stackTrace[stackIdx].functionName) == 0)
+    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 &&
+        strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
     {
-        param = stackTraceParamIdx(stackSize - 1);
+        param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
         stackIdx--;
     }
 
@@ -321,13 +326,13 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
     if (stackIdx >= 0)
     {
         // If the function passed in was not at the top of the stack then some functions are missing
-        if (stackIdx == stackSize - 1)
+        if (stackIdx == stackTraceLocal.stackSize - 1)
             result += stackTraceFmt(buffer, bufferSize, result, "\n    ... function(s) omitted ...");
 
         // Output the rest of the stack
         for (; stackIdx >= 0; stackIdx--)
         {
-            StackTraceData *data = &stackTrace[stackIdx];
+            StackTraceData *data = &stackTraceLocal.stack[stackIdx];
 
             result += stackTraceFmt(
                 buffer, bufferSize, result, "\n%.*s:%s", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName);
@@ -346,6 +351,6 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
 void
 stackTraceClean(unsigned int tryDepth)
 {
-    while (stackSize > 0 && stackTrace[stackSize - 1].tryDepth >= tryDepth)
-        stackSize--;
+    while (stackTraceLocal.stackSize > 0 && stackTraceLocal.stack[stackTraceLocal.stackSize - 1].tryDepth >= tryDepth)
+        stackTraceLocal.stackSize--;
 }
