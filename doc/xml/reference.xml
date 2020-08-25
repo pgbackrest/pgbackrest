@@ -891,9 +891,9 @@
                 <config-key-list>
                     <!-- ======================================================================================================= -->
                     <config-key id="archive-mode" name="Archive Mode">
-                        <summary>Disable archiving on restored cluster.</summary>
+                        <summary>Preserve or disable archiving on restored cluster.</summary>
 
-                        <text>This option allows archiving to be disabled on a restored cluster. This is useful when the cluster must be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to push WAL from the cluster into the repository.
+                        <text>This option allows archiving to be preserved or disabled on a restored cluster. This is useful when the cluster must be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to push WAL from the cluster into the repository.
 
                         The following modes are supported:
                         <ul>

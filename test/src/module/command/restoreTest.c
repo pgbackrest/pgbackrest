@@ -1482,7 +1482,7 @@ testRun(void)
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel), OptionInvalidError,
             "option 'archive-mode' is not supported on PostgreSQL < 12\n"
-                "HINT: archive_mode should be set manually in postgresql.conf.");
+                "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery type = standby with recovery GUCs and archive-mode=off");
