@@ -62,6 +62,11 @@ Recovery constants
 #define RECOVERY_TYPE_TIME                                          "time"
     STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
+#define ARCHIVE_MODE                                                "archive_mode"
+#define ARCHIVE_MODE_OFF                                            "off"
+    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
+STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
+
 /***********************************************************************************************************************************
 Validate restore path
 ***********************************************************************************************************************************/
@@ -1329,11 +1334,31 @@ restoreRecoveryOption(unsigned int pgVersion)
             strLstSort(recoveryOptionKey, sortOrderAsc);
         }
 
+        // If archive-mode is not preserve
+        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
+
+        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        {
+            if (pgVersion < PG_VERSION_12)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                        "HINT: archive_mode should be set manually in postgresql.conf.");
+            }
+
+            // The only other valid option is off
+            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+
+            // If archive-mode=off then set archive_mode=off
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
+        }
+
         // Write restore_command
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
             // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 

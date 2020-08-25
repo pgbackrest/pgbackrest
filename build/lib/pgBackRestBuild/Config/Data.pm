@@ -2441,7 +2441,6 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_LIST =>
         [
             'off',
-            'on',
             'preserve',
         ],
     },
