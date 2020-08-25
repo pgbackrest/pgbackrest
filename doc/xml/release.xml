@@ -55,6 +55,16 @@
 
                         <p>Automatically retrieve temporary <proper>S3</proper> credentials on <proper>AWS</proper> instances.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-mode</br-option> option to disable archiving on restore.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
