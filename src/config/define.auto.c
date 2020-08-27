@@ -877,6 +877,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The following compression types are supported:\n"
             "\n"
+            "* none - no compression\n"
             "* bz2 - bzip2 compression format\n"
             "* gz - gzip compression format\n"
             "* lz4 - lz4 compression format (not available on all platforms)\n"

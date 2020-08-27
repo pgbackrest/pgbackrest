@@ -177,6 +177,16 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="ugo.bellavance"/>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>none</id> to <br-option>compress-type</br-option> option reference and fix example.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="don.seiler"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
@@ -9124,6 +9134,10 @@
         <contributor id="ucando">
             <contributor-name-display>ucando</contributor-name-display>
             <contributor-id type="github">ucando</contributor-id>
+        </contributor>
+
+        <contributor id="ugo.bellavance">
+            <contributor-name-display>Ugo Bellavance</contributor-name-display>
         </contributor>
 
         <contributor id="urs.kramer">
