@@ -1,5 +1,10 @@
 [
     {
+        "commit": "1df7d3eee5baa38504478fafa27de2b1b0fce724",
+        "date": "2020-08-31 07:28:22 -0400",
+        "subject": "v2.29: Auto S3 Credentials on AWS"
+    },
+    {
         "commit": "14e1fd10ca74ff9c6cdf32c66d374efb09067919",
         "date": "2020-08-27 10:59:04 -0400",
         "subject": "Add none to compress-type option reference and fix example."

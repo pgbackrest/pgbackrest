@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-08-31" version="2.29" title="Auto S3 Credentials on AWS">
             <release-core-list>
                 <release-bug-list>
