@@ -40,20 +40,14 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         // Process any commands received that are for this handler
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
-            VerifyFileResult result = verifyFile(
+            VerifyResult result = verifyFile(
                 varStr(varLstGet(paramList, 0)),                                                    // full filename
                 varStr(varLstGet(paramList, 1)),                                                    // checksum
                 varBool(varLstGet(paramList, 2)),                                                   // check file size?
                 varUInt64(varLstGet(paramList, 3)),                                                 // file size
                 varStr(varLstGet(paramList, 4)));                                                   // cipher pass
 
-            // Return result
-            VariantList *resultList = varLstNew();
-            varLstAdd(resultList, varNewUInt(result.fileResult));
-            varLstAdd(resultList, varNewStr(result.filePathName));
-            // varLstAdd(resultList, varNewUInt(result.fileType));  // CSHANG Don't think we need
-
-            protocolServerResponse(server, varNewVarLst(resultList));
+            protocolServerResponse(server, varNewInt(result));
         }
         else
             found = false;

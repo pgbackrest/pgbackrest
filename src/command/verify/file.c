@@ -14,7 +14,7 @@ Verify File
 #include "common/log.h"
 #include "storage/helper.h"
 
-VerifyFileResult
+VerifyResult
 verifyFile(
     const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass)
 {
@@ -30,7 +30,7 @@ verifyFile(
     ASSERT(fileChecksum != NULL);
 
     // Is the file valid?
-    VerifyFileResult result = {.filePathName = strDup(filePathName)};
+    VerifyResult result = verifyOk;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -61,19 +61,19 @@ verifyFile(
             // Validate checksum
             if (!strEq(fileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
             {
-                result.fileResult = verifyChecksumMismatch;
+                result = verifyChecksumMismatch;
             }
             // CSHANG does size filter return 0 if file size is 0? Assume it does...but just in case...
             // If the size can be checked, do so
             else if (sizeCheck && fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
             {
-                result.fileResult = verifySizeInvalid;
+                result = verifySizeInvalid;
             }
         }
         else
-            result.fileResult = verifyFileMissing;
+            result = verifyFileMissing;
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VERIFY_FILE_RESULT, result);
+    FUNCTION_LOG_RETURN(ENUM, result);
 }

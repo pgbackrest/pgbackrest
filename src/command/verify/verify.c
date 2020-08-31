@@ -959,7 +959,7 @@ Note, though, that .partial and .backup should not be considered "junk" in the W
                         protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
                         // Assign job to result
-                        result = protocolParallelJobNew(VARSTR(fileName), command);
+                        result = protocolParallelJobNew(VARSTR(filePathName), command);
                         // CSHANG for now, since no temp context then no move
                         // result = protocolParallelJobMove(
                         //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
@@ -1028,7 +1028,7 @@ verifyBackup(void *data)
     // Process backup files, if any
     while (strLstSize(jobData->backupList) > 0)
     {
-        result == NULL;
+        result = NULL;
 
         BackupResult backupResult =
         {
@@ -1205,33 +1205,12 @@ verifyErrorMsg(VerifyResult verifyResult)
 /* CSHANG TODO: Make these better (e.g. actual checksum does not match expected checksum")
  and maybe LOG_ERROR/WARN if appropriate to do one vs the other.
  */
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        switch (verifyResult)
-        {
-            case verifyFileMissing:
-            {
-                result = strCatZ(result, "file missing");
-                break;
-            }
-            case verifyChecksumMismatch:
-            {
-                result = strCatZ(result, "invalid checksum");
-                break;
-            }
-            case verifySizeInvalid:
-            {
-                result = strCatZ(result, "invalid size");
-                break;
-            }
-            default:
-            {
-                result = strCatZ(result, "unknown error");
-                break;
-            }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
+    if (verifyResult == verifyFileMissing)
+        result = strCatZ(result, "file missing");
+    else if (verifyResult == verifyChecksumMismatch)
+        result = strCatZ(result, "invalid checksum");
+    else if (verifyResult == verifySizeInvalid)
+        result = strCatZ(result, "invalid size");
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1264,6 +1243,7 @@ verifyRender(void *data)
             unsigned int errMissing = 0;
             unsigned int errChecksum = 0;
             unsigned int errSize = 0;
+            unsigned int errOther = 0;
 
             for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
             {
@@ -1296,6 +1276,11 @@ verifyRender(void *data)
                             errSize++;
                             break;
                         }
+                        case verifyOtherError:
+                        {
+                            errOther++;
+                            break;
+                        }
                         case verifyOk:
                         {
                             break;
@@ -1306,7 +1291,10 @@ verifyRender(void *data)
                 }
             }
 
-            strCatFmt(result, "    missing: %u, checksum invalid: %u, size invalid: %u\n", errMissing, errChecksum, errSize);
+            strCatFmt(
+                result,
+                "    missing: %u, checksum invalid: %u, size invalid: %u, other: %u\n",
+                errMissing, errChecksum, errSize, errOther);
         }
     }
 
@@ -1384,20 +1372,31 @@ setBackupCheckArchive(
  Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
 static void
-addInvalidFile(List *walRangeList, VerifyResult fileResult, String *fileName, String *walSegment)
+addInvalidWalFile(String *archiveId, List *archiveIdResultList, VerifyResult fileResult, String *fileName, String *walSegment)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, walRangeList);
+        FUNCTION_TEST_PARAM(STRING, archiveId);
+        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);
         FUNCTION_TEST_PARAM(UINT, fileResult);
         FUNCTION_TEST_PARAM(STRING, fileName);
         FUNCTION_TEST_PARAM(STRING, walSegment);
     FUNCTION_TEST_END();
 
-    for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
-    {
-        WalRange *walRange = lstGet(walRangeList, walIdx);
+    ASSERT(archiveId != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(walSegment != NULL);
 
-        // If the file is less/equal to the stop file then it falls in this range since ranges
+    // Find the archiveId in the list - ASSERT if not found
+    unsigned int index = lstFindIdx(archiveIdResultList, &archiveId);
+    ASSERT(index != LIST_NOT_FOUND);
+
+    ArchiveResult *archiveIdResult = lstGet(archiveIdResultList, index);
+
+    for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
+    {
+        WalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
+
+        // If the WAL segment is less/equal to the stop file then it falls in this range since ranges
         // are sorted by stop file in ascending order, therefore first one found is the range.
         if (strCmp(walRange->stop, walSegment) >= 0)
         {
@@ -1544,7 +1543,11 @@ chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no lone
                         // Get the job and job key
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
-                        const String *fileName = varStr(protocolParallelJobKey(job)); // CSHANG Actually, can probably make this the full filename again bcause we can just split the string on the forward slashes
+//                        const String *filePathName = varStr(protocolParallelJobKey(job));
+                        StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
+                        String *fileType = strLstGet(filePathLst, 0);
+                        String *filePathName = strLstJoin(filePathLst, "/");
+
 // CSHANG PROBLEM!!! Need to change the result to just be the enum and pass the full file path name to the job in the callback because if the verifyFile() function throws an error I won't be able to get at the results but I will have access to the JobKey
                         // CSHANG The key will tell us what we just processed
                         // const VerifyResult verifyResult = (VerifyResult)varUIntForce(varLstGet(jobResult, 0))
@@ -1555,123 +1558,44 @@ chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no lone
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
-                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(varLstGet(jobResult, 0));
-                            const String *const filePathName = varStr(varLstGet(jobResult, 1));
+                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
 
                             if (verifyResult != verifyOk)
                             {
-// CSHANG Should this be made a LOG_ERROR and the error count incremented? errorTotal is "fatal" error, but if the file went missing, it's not always an error - could be that expire came through and legitimately removed it so maybe only error on other than missing?
+                                // Log a warning because the WAL may have gone missing if expire came through and removed it
+                                // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
                                 LOG_WARN_PID_FMT(processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
 
-                                StringList *filePathLst = strLstNewSplit(filePathName, FSLASH_STR);
-
-                                if (strEq(strLstGet(filePathLst, 0), STORAGE_REPO_ARCHIVE_STR))
+                                // If this is a WAL file
+                                if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                                 {
-                                    String *archiveId = strLstGet(filePathLst, 1);
-                                    unsigned int index = lstFindIdx((List *)jobData.archiveIdResultList, &archiveId);
-
-                                    ASSERT(index != LIST_NOT_FOUND);
-
-                                    ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
-
-                                    // Get the WAL segment from the file name
-                                    String *walSegment = strSubN(
-                                        strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
-
-                                    addInvalidFile(archiveIdResult->walRangeList, verifyResult, fileName, walSegment);
+                                    // Add invalid file with reason from result of verifyFile to range list
+                                    addInvalidWalFile(
+                                        strLstGet(filePathLst, 1), jobData.archiveIdResultList, verifyResult, filePathName,
+                                        strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                 }
-
-                                /* CSHANG pseudo code:
-                                    Get the type of file this is (e.g. backup or archive file - probably just split the string into a stringlist by "/" and check that stringlist[0] = STORAGE_REPO_ARCHIVE or STORAGE_REPO_BACKUP)
-
-                                    If archive file
-                                        Get the archiveId from the filePathName (stringList[1] - is there a better way?)
-                                        Loop through verifyResultData.archiveIdResultList and find the archiveId
-                                        If found, find the range in which this file falls into and add the file name and the reason to the invalidFileList
-
-                                    If backup file
-                                        Get the backup label from the filePathName (stringList[1] - is there a better way?)
-                                        Loop through verifyResultData.backupList and find the backup label - NO we are removing the labels as we go along, so we will need to build the result
-                                        If found, add the file name and the reason to the invalidFileList
-
-
-                                    Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this pioint is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
-                                    Let's say we have archives such that walList Ranges are:
-                                    start 000000010000000000000001, stop 000000010000000000000005
-                                    start 000000020000000000000005, stop 000000020000000000000006
-                                    start 000000030000000000000007, stop 000000030000000000000007
-NOTE After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range
-                                    PROBLEM: I am generating WAL ranges by timeline so in the above, because we are in a new timeline, it looks like a gap. So how would I determine that the following is OK? Would MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL
-
-        full backup: 20200810-171426F
-            wal start/stop: 000000010000000000000002 / 000000010000000000000002
-
-        diff backup: 20200810-171426F_20200810-171442D
-            wal start/stop: 000000010000000000000003 / 000000010000000000000003
-            backup reference list: 20200810-171426F
-
-        diff backup: 20200810-171426F_20200810-171445D
-            wal start/stop: 000000010000000000000004 / 000000010000000000000004
-            backup reference list: 20200810-171426F
-
-        incr backup: 20200810-171426F_20200810-171459I
-            wal start/stop: 000000020000000000000006 / 000000020000000000000006
-
-/var/lib/pgbackrest/archive/demo/12-1/0000000100000000:
-total 2280
--rw-r----- 1 postgres postgres 1994249 Aug 10 17:14 000000010000000000000001-da5d050e95663fe95f52dd5059db341b296ae1fa.gz
--rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000002.00000028.backup
--rw-r----- 1 postgres postgres   73388 Aug 10 17:14 000000010000000000000002-498acf8c1dc48233f305bdd24cbb7bdc970d1268.gz
--rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000003.00000028.backup
--rw-r----- 1 postgres postgres   73365 Aug 10 17:14 000000010000000000000003-b323c5739356590e18aa75c8079ec9ff06cb32b7.gz
--rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000004.00000028.backup
--rw-r----- 1 postgres postgres   73382 Aug 10 17:14 000000010000000000000004-0e54893dcff383538d3f6fd93f59b62e2bb42432.gz
--rw-r----- 1 postgres postgres  105843 Aug 10 17:14 000000010000000000000005-b1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz
-
-/var/lib/pgbackrest/archive/demo/12-1/0000000200000000:
-total 192
--rw-r----- 1 postgres postgres 115133 Aug 10 17:15 000000020000000000000005-74bd3036721ccfdfec648fe1b6fd2cc7b60fe310.gz
--rw-r----- 1 postgres postgres    370 Aug 10 17:15 000000020000000000000006.00000028.backup
--rw-r----- 1 postgres postgres  73368 Aug 10 17:15 000000020000000000000006-c6d2580ccd6fbd2ee83bb4bf5cb445f673eb17ff.gz
-
-/var/lib/pgbackrest/archive/demo/12-1/0000000300000000:
-total 76
--rw-r----- 1 postgres postgres 74873 Aug 10 17:15 000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
-                                */
-
-
-                                // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup data (from the manifest file) A: David says we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
-                                // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
-
                             }
                         }
                         // Else the job errored
                         else
                         {
+                            // Log a protocol error and increment the jobErrorTotal
                             LOG_ERROR_PID_FMT(
-                                processId,
+                                processId, errorTypeCode(&ProtocolError),
                                 "could not verify %s: [%d] %s", strZ(filePathName),
                                 protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
+                            jobData.jobErrorTotal++;
+
                             // If this is a WAL file, then add the file to the invalid file list for WAL range of the archiveId
-                            if (strEq(strLstGet(filePathLst, 0), STORAGE_REPO_ARCHIVE_STR))
+                            if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
-                                String *archiveId = strLstGet(filePathLst, 1);
-                                unsigned int index = lstFindIdx((List *)jobData.archiveIdResultList, &archiveId);
-
-                                ASSERT(index != LIST_NOT_FOUND);
-
-                                ArchiveResult *archiveIdResult = lstGet(jobData.archiveIdResultList, index);
-
-                                // Get the WAL segment from the file name
-                                String *walSegment = strSubN(
-                                    strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
-
-                                addInvalidFile(archiveIdResult->walRangeList, verifyOtherError, fileName, walSegment);
+                                // Add invalid file with "OtherError" reason to range list
+                                addInvalidWalFile(
+                                    strLstGet(filePathLst, 1), jobData.archiveIdResultList, verifyOtherError, filePathName,
+                                    strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                             }
 
-                            jobData.jobErrorTotal++;
                         }
                         // Free the job
                         protocolParallelJobFree(job);

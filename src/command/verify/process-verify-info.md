@@ -24,9 +24,10 @@ By the default the command will:
     1. Files exist
     2. Checksums and size match
     3. Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked.
-6. Verify whether a backup is consistent or can be played through PITR
-    * Consistent = no gaps (missing or invalid) in the WAL from the backup start to backup end
-    * PITR = no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
+6. Verify whether a backup is consistent, valid and can be played through PITR
+    * Consistent = no gaps (missing or invalid) in the WAL from the backup start to backup end for a single backup (not backup set)
+    * Valid = Consistent and all backed up PG files it references (including ones in a prior backup for DIFF and INCR backups) are verified as OK
+    * PITR = Consistent, Valid and no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
 7. The command can be modified with the following options:
     * --set - only verify the specified backup and associated WAL (including PITR)
     * --no-pitr only verify the WAL required to make the backup consistent.
@@ -44,6 +45,8 @@ The following must be assumed to be true:
 3. No lock will be taken therefore archiving, backups and expiration will continue and may cause archives or backups to be added or removed during the verification process
 4. Archive and Backup info files are required to exist in order for archives and backups to be verified
 5. A valid manifest file will be required to verify backup files
+6. The archive-start and archive-stop for a single backup (not a set) will never cross a timeline
+
 
 # Design
 Referencing the [Requirements](#requirements) section, the following sections detail the design
@@ -344,4 +347,144 @@ switches and there are no gaps.
 But the timeline+1 true? Could we skip to timeline 3 if there was a problem with timeline 2? But shouldn't that be in the history file?
         if (currentTimeline == stopTimeline + 1)
         {
+
+PER SLACK CONVERSATION 8/31/20
+OK, so 3 steps: 1) if WAL is exists for the backup, say the DIFF, then it is consistent and MAY be PITR-able. 2) if a backed up PG file in the FULL backup is invalid, then as long as that file is NOT referenced in the DIFF backup, the DIFF is valid but if it does reference a file in the FULL and that PG file was bad, then the DIFF is completely invalid. 3) If WAL for the backup is consistent and all WAL after exists, is valid and can play through any timeline change then it is consistent, valid and PITR-able.
+
+If we were missing some WAL in the backup (say the FULL) but all the PG files in the FULL backup exist and are valid - what does that make the backup?
+
+david.steele  1:18 PM
+It makes that backup invalid because of missing wal, but dependent backups may be ok.
 */ -->
+
+<!--
+/* CSHANG manifest questions:
+1) What sections of the manifest can we really verify? I don't want to read the manifest again if I can help it so now that we have it,
+what sections can we check?
+    [backrest] - NO
+    [backup] - maybe we should save all or a subset of this information in the result to check later? Definitely archive-start/stop but is anything else important?
+                ==> No, start/stop all we need, at least for now
+        backup-archive-start="000000010000000000000002"
+        backup-archive-stop="000000010000000000000002"
+        backup-label="20191112-173146F"
+        backup-lsn-start="0/2000028"
+        backup-lsn-stop="0/2000130"
+        backup-timestamp-copy-start=1573579908
+        backup-timestamp-start=1573579906
+        backup-timestamp-stop=1573579919
+        backup-type="full"
+    [backup:option] - is there anything here we can/should check? If so, how?
+                ==> No. Most of these are informational, and if something important like compress-type is wrong we’ll know it when we check the files.
+        option-archive-check=true
+        option-archive-copy=false
+        option-backup-standby=false
+        option-buffer-size=1048576
+        option-checksum-page=true
+        option-compress=true
+        option-compress-level=6
+        option-compress-level-network=3
+        option-compress-type="gz"
+        option-delta=false
+        option-hardlink=false
+        option-online=true
+        option-process-max=1
+    [backup:target] - NO (on the db so we can't check that)
+    [db] - NO (on the db so we can't check that)
+    [target:file] - definitely - this is the crux
+        pg_data/PG_VERSION={"checksum":"ad552e6dc057d1d825bf49df79d6b98eba846ebe","master":true,"reference":"20200810-171426F","repo-size":23,"size":3,"timestamp":1597079647}
+        pg_data/global/6100_vm={"checksum-page":true,"repo-size":20,"size":0,"timestamp":1574780487}
+        pg_data/global/6114={"checksum":"348b9fc06b2db1b0e547bcf51ec7c7715143cd93","checksum-page":true,"repo-size":78,"size":8192,"timestamp":1574780487}
+        pg_data/global/6115={"checksum":"0a1eda482229f7dfec6ec7083362ad2e80ce2262","checksum-page":true,"repo-size":76,"size":8192,"timestamp":1574780487}
+        pg_data/global/pg_control={"checksum":"edb8d7e62358c8a0538d2a209da8ae76f289a7e0","master":true,"repo-size":213,"size":8192,"timestamp":1574780832}
+        pg_data/global/pg_filenode.map={"checksum":"1b85310413a1541d7a326c2dbc3d0283b7da0f60","repo-size":136,"size":512,"timestamp":1574780487}
+        pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"repo-size":28,"size":8,"timestamp":1574780832}
+        pg_data/pg_multixact/members/0000={"checksum":"0631457264ff7f8d5fb1edc2c0211992a67c73e6","repo-size":43,"size":8192,"timestamp":1574780487}
+        pg_data/pg_multixact/offsets/0000={"checksum":"0631457264ff7f8d5fb1edc2c0211992a67c73e6","repo-size":43,"size":8192,"timestamp":1574780703}
+        pg_data/pg_xact/0000={"checksum":"535bf8d445838537821cb3cb60c89e814a6287e6","repo-size":49,"size":8192,"timestamp":1574780824}
+        pg_data/postgresql.auto.conf={"checksum":"c6b93d1c2880daea891c8879c86d167c6678facf","master":true,"repo-size":103,"size":88,"timestamp":1574780487}
+        pg_data/tablespace_map={"checksum":"e71a909fe617319cff5c4463e0a65e056054d94b","master":true,"size":30,"timestamp":1574780855}
+        pg_tblspc/16385/PG_10_201707211/16386/112={"checksum":"c0330e005f13857f54da25099ef919ca0c143cb6","checksum-page":true,"repo-size":74,"size":8192,"timestamp":1574780704}
+    [target:file:default] - NO unless it is necessary for checking permissions?
+                ==> No way to check anything in here — it would depend the system where the backup is restored.
+    [target:link] - NO
+    [target:link:default] - NO
+    [target:path] - NO
+    [target:path:default] - NO
+
+2) If there are "reference" to prior backup, we should be able to skip checking them, no?
+    ==> Yes, definitely skip them or we’ll just be doing the same work over and over.
+-->
+<!--
+CSHANG pseudo code if job successful:
+
+    If archive file
+        Get the archiveId from the filePathName (stringList[1] - is there a better way?)
+        Loop through verifyResultData.archiveIdResultList and find the archiveId
+        If found, find the range in which this file falls into and add the file name and the reason to the invalidFileList
+
+    If backup file
+        Get the backup label from the filePathName (stringList[1] - is there a better way?)
+        Loop through verifyResultData.backupList and find the backup label - NO we are removing the labels as we go along, so we will need to build the result
+        If found, add the file name and the reason to the invalidFileList
+
+
+Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this pioint is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
+Let's say we have archives such that walList Ranges are:
+start 000000010000000000000001, stop 000000010000000000000005
+start 000000020000000000000005, stop 000000020000000000000006
+start 000000030000000000000007, stop 000000030000000000000007
+
+After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range
+        PROBLEM: I am generating WAL ranges by timeline so in the above, because we are in a new timeline, it looks like a gap. So how would I determine that the following is OK? Would MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL
+
+        full backup: 20200810-171426F
+            wal start/stop: 000000010000000000000002 / 000000010000000000000002
+
+        diff backup: 20200810-171426F_20200810-171442D
+            wal start/stop: 000000010000000000000003 / 000000010000000000000003
+            backup reference list: 20200810-171426F
+
+        diff backup: 20200810-171426F_20200810-171445D
+            wal start/stop: 000000010000000000000004 / 000000010000000000000004
+            backup reference list: 20200810-171426F
+
+        incr backup: 20200810-171426F_20200810-171459I
+            wal start/stop: 000000020000000000000006 / 000000020000000000000006
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000100000000:
+total 2280
+-rw-r----- 1 postgres postgres 1994249 Aug 10 17:14 000000010000000000000001-da5d050e95663fe95f52dd5059db341b296ae1fa.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000002.00000028.backup
+-rw-r----- 1 postgres postgres   73388 Aug 10 17:14 000000010000000000000002-498acf8c1dc48233f305bdd24cbb7bdc970d1268.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000003.00000028.backup
+-rw-r----- 1 postgres postgres   73365 Aug 10 17:14 000000010000000000000003-b323c5739356590e18aa75c8079ec9ff06cb32b7.gz
+-rw-r----- 1 postgres postgres     370 Aug 10 17:14 000000010000000000000004.00000028.backup
+-rw-r----- 1 postgres postgres   73382 Aug 10 17:14 000000010000000000000004-0e54893dcff383538d3f6fd93f59b62e2bb42432.gz
+-rw-r----- 1 postgres postgres  105843 Aug 10 17:14 000000010000000000000005-b1cc92d58afd5d6bf3a4a530f72bb9e3d3f2e8f6.gz
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000200000000:
+total 192
+-rw-r----- 1 postgres postgres 115133 Aug 10 17:15 000000020000000000000005-74bd3036721ccfdfec648fe1b6fd2cc7b60fe310.gz
+-rw-r----- 1 postgres postgres    370 Aug 10 17:15 000000020000000000000006.00000028.backup
+-rw-r----- 1 postgres postgres  73368 Aug 10 17:15 000000020000000000000006-c6d2580ccd6fbd2ee83bb4bf5cb445f673eb17ff.gz
+
+/var/lib/pgbackrest/archive/demo/12-1/0000000300000000:
+total 76
+-rw-r----- 1 postgres postgres 74873 Aug 10 17:15 000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
+
+
+    // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup data (from the manifest file) A: David says we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
+    // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
+
+To tie the backup back to the archive, we need to be able to search for the db-id - so maybe we need an strEndsWith?
+-->
+
+After all WAL have been checked, check the backups
+
+Find the WAL range where walRange.stop >= backup stop.
+IF walRange.start <= backup start
+THEN
+    Range is found
+    IF walRange has an invalid file
+    THEN
+        backup is not consistent

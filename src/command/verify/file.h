@@ -39,7 +39,7 @@ typedef struct VerifyFileResult
     // VerifyFileType fileType;  // CSHANG Don't think we need
 } VerifyFileResult;
 
-VerifyFileResult verifyFile(
+VerifyResult verifyFile(
     const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass);
 
 /***********************************************************************************************************************************

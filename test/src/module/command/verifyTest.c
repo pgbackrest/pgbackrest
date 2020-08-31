@@ -530,6 +530,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("verifyFile(), verifyProtocol()"))
     {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyFile()");
 
@@ -538,24 +542,16 @@ testRun(void)
         const char *fileContents = "acefile";
         unsigned int fileSize = 7;
 
-        VerifyFileResult result = {0};
-
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF(fileContents)), "put file");
-        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, NULL), "get results valid file");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-        TEST_ASSIGN(result, verifyFile(filePathName, checksum, true, fileSize, NULL), "get size results WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_ASSIGN(result, verifyFile(filePathName, checksum, true, 0, NULL), "get size results WAL");
-        TEST_RESULT_UINT(result.fileResult, verifySizeInvalid, "file size invalid");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, NULL), verifyOk, "file ok");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, fileSize, NULL), verifyOk, "file size ok");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, 0, NULL), verifySizeInvalid, "file size invalid");
+        TEST_RESULT_UINT(
+            verifyFile(filePathName, strNew("badchecksum"), false, 0, NULL), verifyChecksumMismatch, "file checksum mismatch");
+        TEST_RESULT_UINT(
+            verifyFile(
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), checksum, false, 0, NULL), verifyFileMissing, "file missing");
 
-        TEST_ASSIGN(result, verifyFile(filePathName, strNew("badchecksum"), false, 0, NULL), "get results invalid file");
-        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-
-        filePathName = strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile");
-        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, NULL), "get results missing WAL");
-        TEST_RESULT_UINT(result.fileResult, verifyFileMissing, "file missing");
 
         // Create a compressed encrypted repo file
         filePathName = strNew(STORAGE_REPO_BACKUP "/testfile.gz");
@@ -565,13 +561,11 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
         storagePutP(write, BUFSTRDEF("acefile"));
 
-        TEST_ASSIGN(result, verifyFile(filePathName, checksum, false, 0, strNew("pass")), "get results encrypted file");
-        TEST_RESULT_UINT(result.fileResult, verifyOk, "file ok");
-        TEST_RESULT_STR(result.filePathName, filePathName, "file path name correct");
-
-        TEST_ASSIGN(
-            result, verifyFile(filePathName, strNew("badchecksum"), false, 0, strNew("pass")), "get results encrypted file");
-        TEST_RESULT_UINT(result.fileResult, verifyChecksumMismatch, "file checksum mismatch");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, strNew("pass")), verifyOk, "file encrypted compressed ok");
+        TEST_RESULT_UINT(
+            verifyFile(
+                filePathName, strNew("badchecksum"), false, 0, strNew("pass")), verifyChecksumMismatch,
+                "file encrypted compressed checksum mismatch");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyProtocol()");
@@ -591,7 +585,7 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ("pass"));
 
         TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,\"<REPO:BACKUP>/testfile.gz\"]}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         bufUsedSet(serverWrite, 0);
 
         TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
