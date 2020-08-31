@@ -739,6 +739,26 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
+src/common/io/client.c:
+  class: core
+  type: c
+
+src/common/io/client.h:
+  class: core
+  type: c/h
+
+src/common/io/client.intern.h:
+  class: core
+  type: c/h
+
+src/common/io/fd.c:
+  class: core
+  type: c
+
+src/common/io/fd.h:
+  class: core
+  type: c/h
+
 src/common/io/fdRead.c:
   class: core
   type: c
@@ -875,6 +895,18 @@ src/common/io/read.intern.h:
   class: core
   type: c/h
 
+src/common/io/session.c:
+  class: core
+  type: c
+
+src/common/io/session.h:
+  class: core
+  type: c/h
+
+src/common/io/session.intern.h:
+  class: core
+  type: c/h
+
 src/common/io/socket/client.c:
   class: core
   type: c
@@ -972,6 +1004,14 @@ src/common/stackTrace.c:
   type: c
 
 src/common/stackTrace.h:
+  class: core
+  type: c/h
+
+src/common/stat.c:
+  class: core
+  type: c
+
+src/common/stat.h:
   class: core
   type: c/h
 
@@ -1968,6 +2008,10 @@ test/src/module/common/regExpTest.c:
   type: c
 
 test/src/module/common/stackTraceTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/statTest.c:
   class: test/module
   type: c
 
