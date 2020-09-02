@@ -14,6 +14,17 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint about starting the stanza when WAL segment not found.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -8707,6 +8718,11 @@
         <contributor id="daniel.westermann">
             <contributor-name-display>Daniel Westermann</contributor-name-display>
             <contributor-id type="github">danielwestermann</contributor-id>
+        </contributor>
+
+        <contributor id="david.christensen">
+            <contributor-name-display>David Christensen</contributor-name-display>
+            <contributor-id type="github">machack666</contributor-id>
         </contributor>
 
         <contributor id="david.raftis">
