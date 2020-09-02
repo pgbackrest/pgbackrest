@@ -253,20 +253,23 @@ protocolParallelResult(ProtocolParallel *this)
         }
     }
 
-    // If all jobs have been returned then we are done
-    if (lstSize(this->jobList) == 0)
-        this->state = protocolParallelJobStateDone;
-
     FUNCTION_LOG_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /**********************************************************************************************************************************/
 bool
-protocolParallelDone(const ProtocolParallel *this)
+protocolParallelDone(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->state != protocolParallelJobStatePending);
+
+    // If there are no jobs left then we are done
+    if (this->state != protocolParallelJobStateDone && lstSize(this->jobList) == 0)
+        this->state = protocolParallelJobStateDone;
 
     FUNCTION_LOG_RETURN(BOOL, this->state == protocolParallelJobStateDone);
 }
