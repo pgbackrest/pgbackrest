@@ -123,16 +123,6 @@ testRun(void)
 
     const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
 
-// CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
-//
-// 1) Backup.info:
-//     - only backup.info exists (WARN) and is OK
-//     - only backup.info exists (WARN) and is NOT OK (ERROR):
-//         - checksum in file (corrupt it) does not match generated checksum
-//     - only backup.info.copy exists (WARN) and is OK
-//     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
-// 2) Local and remote tests
-// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
     // *****************************************************************************************************************************
     if (testBegin("createArchiveIdRange()"))
     {
@@ -371,8 +361,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("setBackupCheckArchive()"))
+    if (testBegin("setBackupCheckArchive(), verifyErrorMsg(), verifyRender()"))
     {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("setBackupCheckArchive()");
+
         InfoBackup *backupInfo = NULL;
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info");
@@ -405,6 +398,57 @@ testRun(void)
             "20181119-153000F", "current backup, missing archive");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
         harnessLogResult("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
+
+        errTotal = 0;
+        strLstAddZ(archiveIdList, "13-4");
+        TEST_RESULT_STR_Z(
+            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
+            "20181119-153000F", "test multiple archiveIds on disk not in archive.info");
+        TEST_RESULT_UINT(errTotal, 1, "error logged");
+        harnessLogResult("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyErrorMsg() - missing file");
+
+        TEST_RESULT_STR_Z(verifyErrorMsg(verifyFileMissing), "file missing", "file missing message");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyRender() - missing file, empty invalidList");
+
+        List *archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
+        ArchiveResult archiveIdResult =
+        {
+            .archiveId = strNew("9.6-1"),
+            .totalWalFile = 1,
+            .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+        };
+        WalRange walRange =
+        {
+            .start = strNew("0"),
+            .stop = strNew("2"),
+            .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
+        };
+
+        lstAdd(archiveIdResult.walRangeList, &walRange);
+        lstAdd(archiveIdResultList, &archiveIdResult);
+        TEST_RESULT_STR_Z(
+            verifyRender(archiveIdResultList),
+            "Results:\n"
+            "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n", "no invalid file list");
+
+        InvalidFile invalidFile =
+        {
+            .fileName = strNew("file"),
+            .reason = verifyFileMissing,
+        };
+
+        lstAdd(walRange.invalidFileList, &invalidFile);
+        TEST_RESULT_STR_Z(
+            verifyRender(archiveIdResultList),
+            "Results:\n"
+            "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
+            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n", "file missing");
     }
 
     // *****************************************************************************************************************************
@@ -669,6 +713,40 @@ testRun(void)
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
         TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                walBuffer),
+            "write WAL");
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+                    strZ(archiveStanzaPath))),
+                walBuffer),
+            "write duplicate WAL");
+
+        // Set log detail level to capture ranges (there should be none)
+        harnessLogLevelSet(logLevelDetail);
+
+        TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P00   WARN: no backups exist in the repo\n"
+                "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
+                "P00   WARN: path '11-2/0000000200000000' does not contain any valid WAL to be processed")));
+
+        harnessLogLevelReset();
+
+        TEST_RESULT_VOID(
+            storageRemoveP(
+                storageTest, strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+                strZ(archiveStanzaPath))),
+            "remove duplicate WAL");
+
+        TEST_RESULT_VOID(
             storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
             "create empty path for old archiveId");
 
@@ -683,13 +761,6 @@ testRun(void)
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressTypeGz, 3));
         TEST_RESULT_VOID(storagePutP(write, walBuffer), "write first WAL compressed - but checksum failure");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
-                walBuffer),
-            "write WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -729,7 +800,7 @@ testRun(void)
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
-                "P00   WARN: path '11-2/0000000100000000' is empty\n"
+                "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01   WARN: invalid checksum: "
                     "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
                 "P01   WARN: invalid size: "
@@ -757,7 +828,7 @@ testRun(void)
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
-                "P00   WARN: path '11-2/0000000100000000' is empty\n"
+                "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01   WARN: invalid checksum: "
                     "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
                 "P01   WARN: invalid size: "

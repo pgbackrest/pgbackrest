@@ -530,6 +530,18 @@ I was thinking maybe we figure out what backups to check (pare down the list) BE
 able to determine if the list has holes in any dependency chain. Does reconstruct do this? If originally had F1 D1 I1 then dependency
 chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no loner valid.
 */
+ ------------------------------------------------------------------------------------
+TESTING
+// CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
+//
+// 1) Backup.info:
+//     - only backup.info exists (WARN) and is OK
+//     - only backup.info exists (WARN) and is NOT OK (ERROR):
+//         - checksum in file (corrupt it) does not match generated checksum
+//     - only backup.info.copy exists (WARN) and is OK
+//     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
+// 2) Local and remote tests
+// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 -->
 
 After all WAL have been checked, check the backups

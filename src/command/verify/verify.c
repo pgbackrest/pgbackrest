@@ -635,20 +635,17 @@ verifyArchive(void *data)
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
-                        // If the WAL segment size for this archiveId has not been set, get it from the first WAL
-                        if (archiveIdResult.pgWalInfo.size == 0)
-                        {
-                            StorageRead *walRead = verifyFileLoad(
-                                strNewFmt(
-                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveIdResult.archiveId), strZ(walPath),
-                                    strZ(strLstGet(jobData->walFileList, 0))),
-                                jobData->walCipherPass);
+                        // Initialize the WAL segment size from the first WAL
+                        StorageRead *walRead = verifyFileLoad(
+                            strNewFmt(
+                                STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveIdResult.archiveId), strZ(walPath),
+                                strZ(strLstGet(jobData->walFileList, 0))),
+                            jobData->walCipherPass);
 
-                            PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
+                        PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
 
-                            archiveIdResult.pgWalInfo.size = walInfo.size;
-                            archiveIdResult.pgWalInfo.version = walInfo.version;
-                        }
+                        archiveIdResult.pgWalInfo.size = walInfo.size;
+                        archiveIdResult.pgWalInfo.version = walInfo.version;
 
                         // Add total number of WAL file in the directory to the total WAL - this number will include duplicates,
                         // if any, that will be filtered out and not checked but will be reported as errors in the log
@@ -701,8 +698,10 @@ verifyArchive(void *data)
                 }
                 else
                 {
-                    // Log no WAL exists in the WAL path and remove the WAL path from the list (nothing to process)
-                    LOG_WARN_FMT("path '%s/%s' is empty", strZ(archiveIdResult.archiveId), strZ(walPath));
+                    // No valid WAL to process (may be only duplicates or nothing in WAL path) - remove the WAL path from the list
+                    LOG_WARN_FMT(
+                        "path '%s/%s' does not contain any valid WAL to be processed", strZ(archiveIdResult.archiveId),
+                        strZ(walPath));
                     strLstRemoveIdx(jobData->walPathList, 0);
                 }
 
@@ -859,7 +858,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 }
 
 /***********************************************************************************************************************************
-Return a string corresponding to the result code
+Helper function for returning a string corresponding to the result code
 ***********************************************************************************************************************************/
 static String *
 verifyErrorMsg(VerifyResult verifyResult)
@@ -869,14 +868,12 @@ verifyErrorMsg(VerifyResult verifyResult)
     FUNCTION_TEST_END();
 
     String *result = strNew("");
-/* CSHANG TODO: Make these better (e.g. actual checksum does not match expected checksum")
- and maybe LOG_ERROR/WARN if appropriate to do one vs the other.
- */
+
     if (verifyResult == verifyFileMissing)
         result = strCatZ(result, "file missing");
     else if (verifyResult == verifyChecksumMismatch)
         result = strCatZ(result, "invalid checksum");
-    else (verifyResult == verifySizeInvalid)
+    else
         result = strCatZ(result, "invalid size");
 
     FUNCTION_TEST_RETURN(result);
@@ -925,15 +922,23 @@ setBackupCheckArchive(
         {
             StringList *archiveIdHistoryList = strLstNew();
 
-            for (unsigned int histIdx = 0;  histIdx < infoPgDataTotal(pgHistory); histIdx++)
+            for (unsigned int histIdx = 0; histIdx < infoPgDataTotal(pgHistory); histIdx++)
             {
                 strLstAdd(archiveIdHistoryList, infoPgArchiveId(pgHistory, histIdx));
             }
 
-            // Get all archiveIds on disk that are not in the history list
-            String *missingFromHistory = strLstJoin(
-                strLstMergeAnti(archiveIdList,
-                    strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc)), ", ");
+            // Sort the history list
+            strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc);
+
+            String *missingFromHistory = strNew("");
+
+            // Check if the archiveId on disk exists in the archive.info history list and report it if not
+            for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(archiveIdList); archiveIdx++)
+            {
+                String *archiveId = strLstGet(archiveIdList, archiveIdx);
+                if (!strLstExists(archiveIdHistoryList, archiveId))
+                    strCat(missingFromHistory, (strEmpty(missingFromHistory) ? archiveId : strNewFmt(", %s", strZ(archiveId))));
+            }
 
             if (!strEmpty(missingFromHistory))
             {
@@ -954,22 +959,22 @@ setBackupCheckArchive(
  Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
 static void
-addInvalidWalFile(ArchiveResult *archiveIdResult, VerifyResult fileResult, String *fileName, String *walSegment)
+addInvalidWalFile(List *walRangeList, VerifyResult fileResult, String *fileName, String *walSegment)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(ARCHIVE_RESULT, archiveIdResult);
+        FUNCTION_TEST_PARAM(LIST, walRangeList);
         FUNCTION_TEST_PARAM(UINT, fileResult);
         FUNCTION_TEST_PARAM(STRING, fileName);
         FUNCTION_TEST_PARAM(STRING, walSegment);
     FUNCTION_TEST_END();
 
-    ASSERT(archiveIdResult != NULL);
+    ASSERT(walRangeList != NULL);
     ASSERT(fileName != NULL);
     ASSERT(walSegment != NULL);
 
-    for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
+    for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
     {
-        WalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
+        WalRange *walRange = lstGet(walRangeList, walIdx);
 
         // If the WAL segment is less/equal to the stop file then it falls in this range since ranges
         // are sorted by stop file in ascending order, therefore first one found is the range.
@@ -994,21 +999,19 @@ addInvalidWalFile(ArchiveResult *archiveIdResult, VerifyResult fileResult, Strin
 Render the results of the verify command
 ***********************************************************************************************************************************/
 static String *
-verifyRender(void *data)
+verifyRender(List *archiveIdResultList)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
-
-    VerifyJobData *jobData = data;
+    ASSERT(archiveIdResultList != NULL);
 
     String *result = strNew("Results:\n");
 
-    for (unsigned int archiveIdx = 0; archiveIdx < lstSize(jobData->archiveIdResultList); archiveIdx++)
+    for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
     {
-        ArchiveResult *archiveIdResult = lstGet(jobData->archiveIdResultList, archiveIdx);
+        ArchiveResult *archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
         strCatFmt(
             result, "  archiveId: %s, total WAL checked: %u, total valid WAL: %u\n", strZ(archiveIdResult->archiveId),
             archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
@@ -1030,7 +1033,7 @@ verifyRender(void *data)
 
                 unsigned int invalidIdx = 0;
 
-                while (walRange->invalidFileList != NULL && invalidIdx < lstSize(walRange->invalidFileList))
+                while (invalidIdx < lstSize(walRange->invalidFileList))
                 {
                     InvalidFile *invalidFile = lstGet(walRange->invalidFileList, invalidIdx);
 
@@ -1205,6 +1208,7 @@ verifyProcess(unsigned int *errorTotal)
                                     // Log a warning because the WAL may have gone missing if expire came through and removed it
                                     // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
                                     // !!! Maybe filter on missing and report an error and increment error if something else?
+                                    // meaning shouldn't a checksum or invalid size be reported as an ERROR in the log and not WARN?
                                     LOG_WARN_PID_FMT(processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
 
                                     // If this is a WAL file
@@ -1212,7 +1216,7 @@ verifyProcess(unsigned int *errorTotal)
                                     {
                                         // Add invalid file with reason from result of verifyFile to range list
                                         addInvalidWalFile(
-                                            archiveIdResult, verifyResult, filePathName,
+                                            archiveIdResult->walRangeList, verifyResult, filePathName,
                                             strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                     }
                                 }
@@ -1237,7 +1241,7 @@ verifyProcess(unsigned int *errorTotal)
                             {
                                 // Add invalid file with "OtherError" reason to range list
                                 addInvalidWalFile(
-                                    archiveIdResult, verifyOtherError, filePathName,
+                                    archiveIdResult->walRangeList, verifyOtherError, filePathName,
                                     strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                             }
 
@@ -1252,7 +1256,7 @@ verifyProcess(unsigned int *errorTotal)
 
                 // Report results
                 if (lstSize(jobData.archiveIdResultList) > 0)
-                    resultStr = verifyRender(&jobData);
+                    resultStr = verifyRender(jobData.archiveIdResultList);
             }
             else
                 LOG_WARN("no archives or backups exist in the repo");
