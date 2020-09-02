@@ -420,12 +420,13 @@ testRun(void)
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         harnessLogResult(
             strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/backup.info' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath(), testPath(), testPath(), testPath())));
+            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
+            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(backupStanzaPath), testPath(),
+            strZ(backupStanzaPath), testPath(), strZ(archiveStanzaPath), testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
@@ -442,11 +443,12 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath(), testPath(), testPath())));
+            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
+            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(backupStanzaPath), testPath(),
+            strZ(archiveStanzaPath), testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
@@ -460,10 +462,10 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info.copy\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath())));
+            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(archiveStanzaPath))));
 
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -507,9 +509,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         harnessLogResult(
             strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
-            "P00   WARN: no archives or backups exist in the repo", testPath(), testPath())));
+            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
+            "P00   WARN: no archives or backups exist in the repo", testPath(), strZ(backupStanzaPath), testPath(),
+            strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy missing, archive.info and copy valid");
@@ -521,9 +524,10 @@ testRun(void)
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
             strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable backup.info file", testPath(), testPath())));
+            "P00   WARN: unable to open missing file '%s/%s/backup.info' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
+            "P00  ERROR: [029]: No usable backup.info file", testPath(), strZ(backupStanzaPath), testPath(),
+            strZ(backupStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup");
@@ -546,11 +550,15 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
             "create empty path for archiveId");
+
+        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(),
+            verifyProcess(&errorTotal),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n",
             "no jobs - empty archive id and backup label paths");
+        TEST_RESULT_UINT(errorTotal, 0, "no errors");
+
         harnessLogResult("P00   WARN: archive path '9.4-1' is empty");
     }
 
@@ -708,14 +716,15 @@ testRun(void)
         // Set log detail level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
+        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(),
+            verifyProcess(&errorTotal),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
             "process results");
-
+        TEST_RESULT_UINT(errorTotal, 0, "no errors");
         harnessLogResult(
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
@@ -742,13 +751,22 @@ testRun(void)
                 walBuffer),
             "write WAL - file not readable");
 
-        TEST_RESULT_STR_Z(
-            verifyProcess(),
-            "Results:\n"
-            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
-            "process results");
+        TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
+
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P00   WARN: no backups exist in the repo\n"
+                "P00   WARN: archive path '9.4-1' is empty\n"
+                "P00   WARN: path '11-2/0000000100000000' is empty\n"
+                "P01   WARN: invalid checksum: "
+                    "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01   WARN: invalid size: "
+                    "11-2/0000000200000000/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P01  ERROR: [039]: could not verify "
+                    "11-2/0000000200000000/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+                    "local-1 protocol: unable to open file "
+                    "'%s/%s/11-2/0000000200000000/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
+                    "[13] Permission denied", testPath(), strZ(archiveStanzaPath))));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
