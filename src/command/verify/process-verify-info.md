@@ -188,6 +188,46 @@ Questions/Concerns
     * Will we be verifying links? Does the cmd_verify need to be in Data.pm CFGOPT_LINK_ALL, CFGOPT_LINK_MAP
     * Same question for tablespaces
 - How to check WAL for PITR (e.g. after end of last backup?)? ==> If doing async archive and process max = 8 then could be 8 missing. But we don't have access to process-max and we don't know if they had asynch archiving, so if we see gaps in the last 5 minutes of the WAL stream and the last backup stop WAL is there, then we'll just ignore that PITR has gaps. MUST always assume is we don't have access to the configuration.
+
+MAY WANT TO ALLOW RETENTION SETTINGS TO BE PASSED SO GAPS BEFORE CAN BE CONSIDERED LEGIT.
+IF LOG-LEVEL SET TO WARN, WE DO NOT WANT A SUMMARY - ONLY WANT IT FROM NFO LEVEL. ALSO IF NO BACKUPS HAVE PITR, ESP LATEST, THE WE NEED TO REPORT AS ERROR/WARN
+IF FAST VERIFY WE CAN'T CHECK THE COMPRESSED SIZE OF THE WAL (BACKUP IS DIFFERENT) BUT FOR FULL VERIFY CAN'T CHECK
+
+    // CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.  If WAL segment size is reset, then can't do PITR.
+    /* CSHANG per David:
+    16MB is the whole segment.
+    The header is like 40 bytes.
+    What we need is for pgWalFromFile() to look more like pgControlFromFile().
+    i.e. takes a storage object and reads the first few bytes from the file.
+    But, if you just want to read the first 512 bytes for now and use pgWalFromBuffer() then that's fine. We can improve that later.
+    But people do use pg_resetwal just to change the WAL size. You won't lose data if you do a clean shutdown and then pg_resetwal.
+    So, for our purposes the size should never change for a db-id.
+    We'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case. (<- in archive push/get)
+    So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
+    */
+
+I should pobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (actually,
+given the note below on S3 maybe we get everything and then create lists: history, WALpaths, junk) and then
+ Create the stringlist files based on what last history file has: I only need the latest history file since history is continually
+ copied from each to the next.
+
+ NOTE!!! The timeline history file format is changed in version 9.3. Formats of versions 9.3 or later and earlier both are shown
+ below but not in detail - so need to confirm this.
+
+ Later version 9.3:
+ timelineId	LSN	"reason"
+ 2	0/7000000	before 2000-01-01 00:00:00+00
+ Until version 9.2:
+ timelineId	WAL_segment	"reason"
+ 1	000000010000000000000009	before 2000-01-01 01:00:00+01
+ 2	00000002000000000000000C	no recovery target specified
+
+/* CSHANG because of S3 and because we may want to report on stuff in the directories that shouldn't be there, we should get
+everything and then filter out the WAL via expression for walFileList and any other files we should just call it out in a separate
+list. We'll need to do this for all lists for first get everything and then filter on an expression to get the valid stuff and
+anything else we should put in a separate list (e.g. archiveIdInvalidFileList) to inform the user of "junk" in the directory.
+Note, though, that .partial and .backup should not be considered "junk" in the WAL directory.
+*/
 */
 /**********************************************************************************************************************************/
 // typedef enum // CSHANG Don't think I will need
@@ -477,6 +517,19 @@ total 76
     // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
 
 To tie the backup back to the archive, we need to be able to search for the db-id - so maybe we need an strEndsWith?
+
+/* CSHANG When getting the initial backuplist should we be sorting the backups newest to oldest? That way we can just filter off the first one if it is a current
+"in progress" backup and maybe LOG_WARN or LOG_INFO that skipping? That way we don't need separate logic for backup. BUT the
+problem will still always be that the current backup may complete before we're done checking the archives. I feel like we need to
+draw the line somewhere...or do we feel we need to check that it is not in the backup.info current list AND that it only has a copy
+AND is the newest backup?
+
+CSHANG maybe backu.info should be the ground truth. David says problems with backup.info reconstruct is that restore does not use
+so it's why we're not doing it here but we keep going around whether we should and whether backup.info should be the ground truth.
+I was thinking maybe we figure out what backups to check (pare down the list) BEFORE we start processing. Specifically, if we were
+able to determine if the list has holes in any dependency chain. Does reconstruct do this? If originally had F1 D1 I1 then dependency
+chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no loner valid.
+*/
 -->
 
 After all WAL have been checked, check the backups

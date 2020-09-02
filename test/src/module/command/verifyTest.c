@@ -408,7 +408,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdVerify()- info files"))
+    if (testBegin("cmdVerify(), verifyProcess() - info files"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -441,13 +441,12 @@ testRun(void)
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-            "<REPO:BACKUP>/backup.info\n"
+                "<REPO:BACKUP>/backup.info\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info.copy' for read\n"
             "P00  ERROR: [029]: No usable archive.info file", testPath(), testPath(), testPath())));
-
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
@@ -460,10 +459,10 @@ testRun(void)
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-            " <REPO:BACKUP>/backup.info\n"
+                " <REPO:BACKUP>/backup.info\n"
             "P00   WARN: unable to open missing file '%s/repo/archive/db/archive.info' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-            " <REPO:ARCHIVE>/archive.info.copy\n"
+                " <REPO:ARCHIVE>/archive.info.copy\n"
             "P00  ERROR: [029]: No usable archive.info file", testPath())));
 
 
@@ -480,7 +479,7 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: backup.info.copy does not match backup.info\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-            " <REPO:ARCHIVE>/archive.info\n"
+                " <REPO:ARCHIVE>/archive.info\n"
             "P00  ERROR: [029]: backup info file and archive info file do not match\n"
             "            archive: id = 1, version = 9.4, system-id = 6625592122879095702\n"
             "            backup : id = 2, version = 11, system-id = 6626363367545678089\n"
@@ -525,6 +524,34 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info' for read\n"
             "P00   WARN: unable to open missing file '%s/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file", testPath(), testPath())));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoMultiHistoryBase),
+            "write valid backup.info");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoMultiHistoryBase),
+            "write valid backup.info.copy");
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageTest, strNewFmt("%s/20200810-171426F", strZ(backupStanzaPath))),
+            "create empty backup label path");
+        TEST_RESULT_VOID(cmdVerify(), "no archives, empty backup label path");
+        harnessLogResult("P00   WARN: no archives exist in the repo");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup, empty archive");
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
+            "create empty path for archiveId");
+        TEST_RESULT_STR_Z(
+            verifyProcess(),
+            "Results:\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n",
+            "no jobs - empty archive id and backup label paths");
+        harnessLogResult("P00   WARN: archive path '9.4-1' is empty");
     }
 
     // *****************************************************************************************************************************
@@ -659,9 +686,10 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFF-%s", strZ(archiveStanzaPath), walBufferSha1)),
-                walBuffer),
-            "write WAL");
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFF-%s", strZ(archiveStanzaPath),
+                    strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, BUFSTRDEF("invalidsize")))))),
+                BUFSTRDEF("invalidsize")),
+            "write WAL - invalid size");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -683,22 +711,44 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyProcess(),
             "Results:\n"
-            "  archiveId: 9.4-1, total WAL files checked: 0\n"
-            "  archiveId: 11-2, total WAL files checked: 5\n" // cshang  add total valid file
-            "    missing: 0, checksum invalid: 1, size invalid: 0\n",   // CSHANG Need to report total errors
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
             "process results");
 
         harnessLogResult(
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
-                "P00   WARN: path '9.4-1' is empty\n"
+                "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' is empty\n"
                 "P01   WARN: invalid checksum: "
-                "<REPO:ARCHIVE>/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                    "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01   WARN: invalid size: "
+                    "11-2/0000000200000000/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002")));
 
         harnessLogLevelReset();
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files, unreadable WAL file");
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000003-%s", strZ(archiveStanzaPath), walBufferSha1),
+                .modeFile = 0200),
+                walBuffer),
+            "write WAL - file not readable");
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(),
+            "Results:\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
+            "process results");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
