@@ -130,48 +130,47 @@ testRun(void)
         unsigned int errTotal = 0;
         StringList *walFileList = strLstNew();
 
-        ArchiveResult archiveIdRange =
+        ArchiveResult archiveResult =
         {
             .archiveId = strNew("9.4-1"),
             .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
         };
-        List *archiveIdRangeList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
+        lstAdd(archiveIdResultList, &archiveResult);
+        ArchiveResult *archiveIdResult = lstGetLast(archiveIdResultList);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Single WAL");
 
-        archiveIdRange.pgWalInfo.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
-        archiveIdRange.pgWalInfo.version = PG_VERSION_94;
+        archiveIdResult->pgWalInfo.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+        archiveIdResult->pgWalInfo.version = PG_VERSION_94;
 
         strLstAddZ(walFileList, "000000020000000200000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
 
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 1, "single range");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Duplicate WAL only - no range, all removed from list");
 
-        lstClear(archiveIdRangeList);
-        lstClear(archiveIdRange.walRangeList);
+        lstClear(archiveIdResult->walRangeList);
 
         // Add a duplicate
         strLstAddZ(walFileList, "000000020000000200000000");
 
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
-        TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL list");
-        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 0, "no range");
+        TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
+        TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
         harnessLogResult("P00  ERROR: [028]: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning of list are removed");
+        TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning and end of list are removed");
 
         errTotal = 0;
         strLstAddZ(walFileList, "000000020000000100000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
@@ -181,43 +180,44 @@ testRun(void)
         strLstAddZ(walFileList, "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz");
         strLstAddZ(walFileList, "0000000200000001000000FF-daa497dba64008db824607940609ba1cd7c6c501");
         strLstAddZ(walFileList, "000000020000000200000000");
+        strLstAddZ(walFileList, "000000020000000200000001");
+        strLstAddZ(walFileList, "000000020000000200000001");
 
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "triplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
-        TEST_RESULT_UINT(lstSize(archiveIdRangeList), 1, "single range");
+        TEST_RESULT_UINT(lstSize(archiveIdResultList), 1, "single archiveId result");
+        TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        harnessLogResult("P00  ERROR: [028]: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping");
+        harnessLogResult(
+            "P00  ERROR: [028]: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
+            "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("FF Wal skipped <= 9.2, duplicates in middle of list removed");
 
         // Clear the range lists and rerun the test with PG_VERSION_92 to ensure FF is reported as an error
-        lstClear(archiveIdRangeList);
-        lstClear(archiveIdRange.walRangeList);
+        lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
-
-        archiveIdRange.archiveId = strNew("9.2-1");
-        archiveIdRange.pgWalInfo.version = PG_VERSION_92;
+        archiveIdResult->archiveId = strNew("9.2-1");
+        archiveIdResult->pgWalInfo.version = PG_VERSION_92;
 
         strLstAddZ(walFileList, "000000020000000200000001");
         strLstAddZ(walFileList, "000000020000000200000001");
         strLstAddZ(walFileList, "000000020000000200000002");
 
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -237,20 +237,18 @@ testRun(void)
         TEST_TITLE("Rerun <= 9.2, missing FF not a gap");
 
         // Clear the range lists, rerun the PG_VERSION_92 test to ensure the missing FF is not considered a gap
-        lstClear(archiveIdRangeList);
-        lstClear(archiveIdRange.walRangeList);
+        lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
 
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -259,32 +257,29 @@ testRun(void)
         TEST_TITLE("version > 9.2, missing FF is a gap");
 
         // Clear the range lists and update the version > 9.2 so missing FF is considered a gap in the WAL ranges
-        lstClear(archiveIdRangeList);
-        lstClear(archiveIdRange.walRangeList);
+        lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
+        archiveIdResult->archiveId = strNew("9.6-1");
+        archiveIdResult->pgWalInfo.version = PG_VERSION_96;
 
         strLstAddZ(walFileList, "000000020000000200000003-123456");
         strLstAddZ(walFileList, "000000020000000200000004-123456");
 
-        archiveIdRange.archiveId = strNew("9.6-1");
-        archiveIdRange.pgWalInfo.version = PG_VERSION_96;
-
-        TEST_RESULT_VOID(
-            createArchiveIdRange(&archiveIdRange, walFileList, archiveIdRangeList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList), 3, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 3, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 0),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
             "get first range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 1),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdRangeList, 0))->walRangeList, 2),
+            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 2),
             "get third range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
@@ -720,14 +715,14 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
-            "write WAL");
+            "write valid WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+                    strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
                     strZ(archiveStanzaPath))),
                 walBuffer),
             "write duplicate WAL");
@@ -740,13 +735,13 @@ testRun(void)
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
-                "P00   WARN: path '11-2/0000000200000000' does not contain any valid WAL to be processed")));
+                "P00   WARN: path '11-2/0000000200000007' does not contain any valid WAL to be processed")));
 
         harnessLogLevelReset();
 
         TEST_RESULT_VOID(
             storageRemoveP(
-                storageTest, strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+                storageTest, strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
                 strZ(archiveStanzaPath))),
             "remove duplicate WAL");
 
@@ -760,7 +755,7 @@ testRun(void)
 
         StorageWrite *write = storageNewWriteP(
             storageTest,
-            strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz",
+            strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz",
             strZ(archiveStanzaPath)));
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressTypeGz, 3));
         TEST_RESULT_VOID(storagePutP(write, walBuffer), "write first WAL compressed - but checksum failure");
@@ -769,7 +764,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000700000FFF-%s", strZ(archiveStanzaPath),
+                    strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFF-%s", strZ(archiveStanzaPath),
                     strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, BUFSTRDEF("invalidsize")))))),
                 BUFSTRDEF("invalidsize")),
             "write WAL - invalid size");
@@ -777,14 +772,14 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL");
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000002-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000002-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL - starts next range");
 
@@ -799,20 +794,47 @@ testRun(void)
             "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
             "process results");
-        TEST_RESULT_UINT(errorTotal, 0, "no errors");
+        TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01   WARN: invalid checksum: "
-                    "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-                "P01   WARN: invalid size: "
-                    "11-2/0000000200000000/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P01  ERROR: [028]: invalid checksum 11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002")));
 
-        harnessLogLevelReset();
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files, start next timeline");
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000300000000/000000030000000000000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                walBuffer),
+            "write WAL - starts next timeline");
+
+        errorTotal = 0;
+        TEST_RESULT_STR_Z(
+            verifyProcess(&errorTotal),
+            "Results:\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 11-2, total WAL checked: 6, total valid WAL: 4\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
+            "process new timeline results");
+        TEST_RESULT_UINT(errorTotal, 2, "errors");
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P00   WARN: no backups exist in the repo\n"
+                "P00   WARN: archive path '9.4-1' is empty\n"
+                "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
+                "P01  ERROR: [028]: invalid checksum 11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000000")));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, unreadable WAL file");
@@ -821,27 +843,33 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000000/000000020000000800000003-%s", strZ(archiveStanzaPath), walBufferSha1),
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-%s", strZ(archiveStanzaPath), walBufferSha1),
                 .modeFile = 0200),
                 walBuffer),
             "write WAL - file not readable");
 
-        TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
+        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
 
         harnessLogResult(
             strZ(strNewFmt(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01   WARN: invalid checksum: "
-                    "11-2/0000000200000000/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-                "P01   WARN: invalid size: "
-                    "11-2/0000000200000000/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
-                "P01  ERROR: [039]: could not verify "
-                    "11-2/0000000200000000/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+                "P01  ERROR: [028]: invalid checksum "
+                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01  ERROR: [028]: invalid size "
+                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P01  ERROR: [039]: invalid verify "
+                    "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
                     "local-1 protocol: unable to open file "
-                    "'%s/%s/11-2/0000000200000000/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
-                    "[13] Permission denied", testPath(), strZ(archiveStanzaPath))));
+                    "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
+                    "[13] Permission denied\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000000",
+                 testPath(), strZ(archiveStanzaPath))));
+
+        harnessLogLevelReset();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
