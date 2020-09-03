@@ -754,8 +754,7 @@ testRun(void)
         TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileName)))), 0, "create read file");
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "    open file");
-        TEST_RESULT_INT(
-            ioReadHandle(storageReadIo(file)), ((StorageReadPosix *)file->driver)->handle, "check read handle");
+        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), ((StorageReadPosix *)file->driver)->fd, "check read fd");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
     }
 
@@ -780,8 +779,7 @@ testRun(void)
             storageNewWriteP(storageTest, fileName, .user = strNew(testUser()), .group = strNew(testGroup()), .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
-        TEST_RESULT_INT(
-            ioWriteHandle(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->handle, "check write handle");
+        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->fd, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
@@ -943,14 +941,14 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "   open file");
 
-        // Close the file handle so operations will fail
-        close(((StorageReadPosix *)file->driver)->handle);
+        // Close the file descriptor so operations will fail
+        close(((StorageReadPosix *)file->driver)->fd);
 
         TEST_ERROR_FMT(
             ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': [9] Bad file descriptor", strZ(fileName));
 
-        // Set file handle to -1 so the close on free will not fail
-        ((StorageReadPosix *)file->driver)->handle = -1;
+        // Set file descriptor to -1 so the close on free will not fail
+        ((StorageReadPosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(0);
@@ -1049,8 +1047,8 @@ testRun(void)
         TEST_RESULT_STR(storageWriteName(file), fileName, "    check file name");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
 
-        // Close the file handle so operations will fail
-        close(((StorageWritePosix *)file->driver)->handle);
+        // Close the file descriptor so operations will fail
+        close(((StorageWritePosix *)file->driver)->fd);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
@@ -1067,8 +1065,8 @@ testRun(void)
             storageWritePosixClose(file->driver), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
             strZ(fileTmp));
 
-        // Set file handle to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->handle = -1;
+        // Set file descriptor to -1 so the close on free with not fail
+        ((StorageWritePosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
@@ -1082,8 +1080,8 @@ testRun(void)
             ioWriteClose(storageWriteIo(file)), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
             strZ(fileTmp), strZ(fileName));
 
-        // Set file handle to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->handle = -1;
+        // Set file descriptor to -1 so the close on free with not fail
+        ((StorageWritePosix *)file->driver)->fd = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 

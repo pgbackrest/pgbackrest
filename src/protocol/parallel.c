@@ -85,8 +85,8 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
     ASSERT(client != NULL);
     ASSERT(this->state == protocolParallelJobStatePending);
 
-    if (ioReadHandle(protocolClientIoRead(client)) == -1)
-        THROW(AssertError, "client with read handle is required");
+    if (ioReadFd(protocolClientIoRead(client)) == -1)
+        THROW(AssertError, "client with read fd is required");
 
     lstAdd(this->clientList, &client);
 
@@ -121,7 +121,7 @@ protocolParallelProcess(ProtocolParallel *this)
     // Initialize the file descriptor set used for select
     fd_set selectSet;
     FD_ZERO(&selectSet);
-    int handleMax = -1;
+    int fdMax = -1;
 
     // Find clients that are running jobs
     unsigned int clientRunningTotal = 0;
@@ -130,11 +130,11 @@ protocolParallelProcess(ProtocolParallel *this)
     {
         if (this->clientJobList[clientIdx] != NULL)
         {
-            int handle = ioReadHandle(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
-            FD_SET((unsigned int)handle, &selectSet);
+            int fd = ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
+            FD_SET((unsigned int)fd, &selectSet);
 
-            // Find the max file handle needed for select()
-            MAX_ASSIGN(handleMax, handle);
+            // Find the max file descriptor needed for select()
+            MAX_ASSIGN(fdMax, fd);
 
             clientRunningTotal++;
         }
@@ -149,7 +149,7 @@ protocolParallelProcess(ProtocolParallel *this)
         timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
 
         // Determine if there is data to be read
-        int completed = select(handleMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
+        int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
         THROW_ON_SYS_ERROR(completed == -1, AssertError, "unable to select from parallel client(s)");
 
         // If any jobs have completed then get the results
@@ -161,7 +161,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
                 if (job != NULL &&
                     FD_ISSET(
-                        (unsigned int)ioReadHandle(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx))),
+                        (unsigned int)ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx))),
                         &selectSet))
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
@@ -253,20 +253,23 @@ protocolParallelResult(ProtocolParallel *this)
         }
     }
 
-    // If all jobs have been returned then we are done
-    if (lstSize(this->jobList) == 0)
-        this->state = protocolParallelJobStateDone;
-
     FUNCTION_LOG_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /**********************************************************************************************************************************/
 bool
-protocolParallelDone(const ProtocolParallel *this)
+protocolParallelDone(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->state != protocolParallelJobStatePending);
+
+    // If there are no jobs left then we are done
+    if (this->state != protocolParallelJobStateDone && lstSize(this->jobList) == 0)
+        this->state = protocolParallelJobStateDone;
 
     FUNCTION_LOG_RETURN(BOOL, this->state == protocolParallelJobStateDone);
 }

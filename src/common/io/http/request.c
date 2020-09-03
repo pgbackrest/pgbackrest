@@ -7,13 +7,16 @@ HTTP Request
 #include "common/io/http/common.h"
 #include "common/io/http/request.h"
 #include "common/log.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 HTTP constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(HTTP_VERSION_STR,                                     HTTP_VERSION);
+STRING_EXTERN(HTTP_VERSION_10_STR,                                  HTTP_VERSION_10);
 
 STRING_EXTERN(HTTP_VERB_DELETE_STR,                                 HTTP_VERB_DELETE);
 STRING_EXTERN(HTTP_VERB_GET_STR,                                    HTTP_VERB_GET);
@@ -28,6 +31,7 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_DATE_STR,                                 HTTP_HEADER_DATE);
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
+#define HTTP_HEADER_USER_AGENT                                      "user-agent"
 
 // 5xx errors that should always be retried
 #define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
@@ -100,11 +104,12 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     {
                         session = httpClientOpen(this->client);
 
-                        // Format the request
+                        // Format the request and user agent
                         String *requestStr =
                             strNewFmt(
-                                "%s %s%s%s " HTTP_VERSION CRLF_Z, strZ(this->verb), strZ(httpUriEncode(this->uri, true)),
-                                this->query == NULL ? "" : "?", this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
+                                "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
+                                strZ(this->verb), strZ(httpUriEncode(this->uri, true)), this->query == NULL ? "" : "?",
+                                this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
                         const StringList *headerList = httpHeaderList(this->header);
@@ -157,7 +162,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    httpClientStat.retry++;
+                    statInc(HTTP_STAT_RETRY_STR);
                 }
                 else
                     RETHROW();
@@ -209,7 +214,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
 
         // Send the request
         httpRequestProcess(this, false, false);
-        httpClientStat.request++;
+        statInc(HTTP_STAT_REQUEST_STR);
     }
     MEM_CONTEXT_NEW_END();
 

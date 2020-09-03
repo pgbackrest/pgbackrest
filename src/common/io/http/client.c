@@ -4,15 +4,20 @@ HTTP Client
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/client.h"
 #include "common/io/http/client.h"
-#include "common/io/tls/client.h"
 #include "common/log.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-HttpClientStat httpClientStat;
+STRING_EXTERN(HTTP_STAT_CLIENT_STR,                                 HTTP_STAT_CLIENT);
+STRING_EXTERN(HTTP_STAT_CLOSE_STR,                                  HTTP_STAT_CLOSE);
+STRING_EXTERN(HTTP_STAT_REQUEST_STR,                                HTTP_STAT_REQUEST);
+STRING_EXTERN(HTTP_STAT_RETRY_STR,                                  HTTP_STAT_RETRY);
+STRING_EXTERN(HTTP_STAT_SESSION_STR,                                HTTP_STAT_SESSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -21,7 +26,7 @@ struct HttpClient
 {
     MemContext *memContext;                                         // Mem context
     TimeMSec timeout;                                               // Request timeout
-    TlsClient *tlsClient;                                           // TLS client
+    IoClient *ioClient;                                             // Io client (e.g. TLS or socket client)
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
@@ -30,19 +35,14 @@ OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);
 
 /**********************************************************************************************************************************/
 HttpClient *
-httpClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+httpClientNew(IoClient *ioClient, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
-        FUNCTION_LOG_PARAM(STRING, caFile);
-        FUNCTION_LOG_PARAM(STRING, caPath);
     FUNCTION_LOG_END();
 
-    ASSERT(host != NULL);
+    ASSERT(ioClient != NULL);
 
     HttpClient *this = NULL;
 
@@ -54,11 +54,11 @@ httpClientNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
-            .tlsClient = tlsClientNew(sckClientNew(host, port, timeout), timeout, verifyPeer, caFile, caPath),
+            .ioClient = ioClient,
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
-        httpClientStat.object++;
+        statInc(HTTP_STAT_CLIENT_STR);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -90,8 +90,8 @@ httpClientOpen(HttpClient *this)
     // Else create a new session
     else
     {
-        result = httpSessionNew(this, tlsClientOpen(this->tlsClient));
-        httpClientStat.session++;
+        result = httpSessionNew(this, ioClientOpen(this->ioClient));
+        statInc(HTTP_STAT_SESSION_STR);
     }
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, result);
@@ -117,19 +117,9 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 
 /**********************************************************************************************************************************/
 String *
-httpClientStatStr(void)
+httpClientToLog(const HttpClient *this)
 {
-    FUNCTION_TEST_VOID();
-
-    String *result = NULL;
-
-    if (httpClientStat.object > 0)
-    {
-        result = strNewFmt(
-            "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
-                ", closes %" PRIu64,
-            httpClientStat.object, httpClientStat.session, httpClientStat.request, httpClientStat.retry, httpClientStat.close);
-    }
-
-    FUNCTION_TEST_RETURN(result);
+    return strNewFmt(
+        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
+        this->timeout);
 }

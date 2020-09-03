@@ -288,6 +288,7 @@ STRING_EXTERN(CFGOPT_ARCHIVE_CHECK_STR,                             CFGOPT_ARCHI
 STRING_EXTERN(CFGOPT_ARCHIVE_COPY_STR,                              CFGOPT_ARCHIVE_COPY);
 STRING_EXTERN(CFGOPT_ARCHIVE_GAP_DETECTION_STR,                     CFGOPT_ARCHIVE_GAP_DETECTION);
 STRING_EXTERN(CFGOPT_ARCHIVE_GET_QUEUE_MAX_STR,                     CFGOPT_ARCHIVE_GET_QUEUE_MAX);
+STRING_EXTERN(CFGOPT_ARCHIVE_MODE_STR,                              CFGOPT_ARCHIVE_MODE);
 STRING_EXTERN(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR,                    CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHIVE_TIMEOUT);
 STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKUP_STANDBY);
@@ -462,8 +463,10 @@ STRING_EXTERN(CFGOPT_REPO1_S3_ENDPOINT_STR,                         CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_S3_HOST_STR,                             CFGOPT_REPO1_S3_HOST);
 STRING_EXTERN(CFGOPT_REPO1_S3_KEY_STR,                              CFGOPT_REPO1_S3_KEY);
 STRING_EXTERN(CFGOPT_REPO1_S3_KEY_SECRET_STR,                       CFGOPT_REPO1_S3_KEY_SECRET);
+STRING_EXTERN(CFGOPT_REPO1_S3_KEY_TYPE_STR,                         CFGOPT_REPO1_S3_KEY_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_S3_PORT_STR,                             CFGOPT_REPO1_S3_PORT);
 STRING_EXTERN(CFGOPT_REPO1_S3_REGION_STR,                           CFGOPT_REPO1_S3_REGION);
+STRING_EXTERN(CFGOPT_REPO1_S3_ROLE_STR,                             CFGOPT_REPO1_S3_ROLE);
 STRING_EXTERN(CFGOPT_REPO1_S3_TOKEN_STR,                            CFGOPT_REPO1_S3_TOKEN);
 STRING_EXTERN(CFGOPT_REPO1_S3_URI_STYLE_STR,                        CFGOPT_REPO1_S3_URI_STYLE);
 STRING_EXTERN(CFGOPT_REPO1_S3_VERIFY_TLS_STR,                       CFGOPT_REPO1_S3_VERIFY_TLS);
@@ -531,6 +534,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_GET_QUEUE_MAX)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveGetQueueMax)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_MODE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveMode)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1928,6 +1939,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_KEY_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3KeyType)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_PORT)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Port)
@@ -1939,6 +1958,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_REGION)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Region)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_ROLE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Role)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

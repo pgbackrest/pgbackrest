@@ -364,7 +364,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             cfgLoadLogFile();
 
             // Begin the command
-            cmdBegin(true);
+            cmdBegin();
 
             // Acquire a lock if this command requires a lock
             if (cfgLockRequired() && !cfgCommandHelp())

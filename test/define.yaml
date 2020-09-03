@@ -73,7 +73,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
         total: 7
-        define-test: -DNO_MEM_CONTEXT -DNO_LOG
+        define-test: -DNO_MEM_CONTEXT -DNO_LOG -DNO_STAT
 
         coverage:
           common/memContext: full
@@ -142,7 +142,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 10
+        total: 11
 
         coverage:
           common/type/convert: full
@@ -213,6 +213,13 @@ unit:
           common/type/xml: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: stat
+        total: 1
+
+        coverage:
+          common/stat: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: user
         total: 1
 
@@ -226,13 +233,14 @@ unit:
         coverage:
           common/io/bufferRead: full
           common/io/bufferWrite: full
+          common/io/fd: full
+          common/io/fdRead: full
+          common/io/fdWrite: full
           common/io/filter/buffer: full
           common/io/filter/filter: full
           common/io/filter/group: full
           common/io/filter/sink: full
           common/io/filter/size: full
-          common/io/handleRead: full
-          common/io/handleWrite: full
           common/io/io: full
           common/io/read: full
           common/io/write: full
@@ -242,11 +250,17 @@ unit:
         total: 5
 
         coverage:
+          common/io/client: full
+          common/io/session: full
           common/io/tls/client: full
           common/io/tls/session: full
           common/io/socket/client: full
           common/io/socket/common: full
           common/io/socket/session: full
+
+        include:
+          - common/io/fdRead
+          - common/io/read
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
@@ -459,7 +473,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
-        total: 3
+        total: 2
 
         coverage:
           storage/s3/read: full
@@ -767,7 +781,7 @@ performance:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type
-        total: 3
+        total: 4
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: storage

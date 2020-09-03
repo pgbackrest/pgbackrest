@@ -1,5 +1,425 @@
 [
     {
+        "commit": "1df7d3eee5baa38504478fafa27de2b1b0fce724",
+        "date": "2020-08-31 07:28:22 -0400",
+        "subject": "v2.29: Auto S3 Credentials on AWS"
+    },
+    {
+        "commit": "14e1fd10ca74ff9c6cdf32c66d374efb09067919",
+        "date": "2020-08-27 10:59:04 -0400",
+        "subject": "Add none to compress-type option reference and fix example."
+    },
+    {
+        "commit": "8c2960fab39e3eda96f791d8a7b1f88f8dedd4f9",
+        "date": "2020-08-25 15:05:41 -0400",
+        "subject": "Add archive-mode option to disable archiving on restore.",
+        "body": "When restoring a cluster that will be promoted but is not intended to be the new primary, it is important to disable archiving to avoid polluting the repository with useless WAL. This option makes disabling archiving a bit easier."
+    },
+    {
+        "commit": "1812725c8e0cdd7335efdd9909c204e11c01c200",
+        "date": "2020-08-25 12:50:06 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "851f2e814e1d733989c0330e7efef3def2cace80",
+        "date": "2020-08-25 10:38:49 -0400",
+        "subject": "Automatically retrieve temporary S3 credentials on AWS instances.",
+        "body": "Automatically retrieve the role and temporary credentials for S3 when the AWS instance is associated with an IAM role. Credentials are automatically updated when they are <= 5 minutes from expiring.\r\n\r\nBasic configuration is to set repo1-s3-key-type=auto. repo1-s3-role can be used to set a specific role, otherwise it will be retrieved automatically."
+    },
+    {
+        "commit": "1d2b8ae7bb1ff0621229514acff587793276a123",
+        "date": "2020-08-24 14:51:08 -0400",
+        "subject": "Improve detailed error output.",
+        "body": "Add more info (command, version, options) to asserts, and errors when debug logging is enabled. This won't cover all cases but might mean we get more info in some circumstances."
+    },
+    {
+        "commit": "7fba1f0bbef7072964eb4ad00275fbff00f94d50",
+        "date": "2020-08-21 16:12:44 -0400",
+        "subject": "Consolidate variables into structs in common/stackTrace module.",
+        "body": "This makes it easier to determine which variables are used in which parts of the module and reduces the chance of name conflicts while unit testing."
+    },
+    {
+        "commit": "2a73bd6cbf89135d652d5cff1c63095858068a6d",
+        "date": "2020-08-21 11:45:54 -0400",
+        "subject": "Move backTraceState variable inside #ifdef WITH_BACKTRACE.",
+        "body": "This variable is only used when WITH_BACKTRACE is defined so there's no need to declare it otherwise."
+    },
+    {
+        "commit": "0e8e5881d8859945760aa873b53a4b39ac26dfc3",
+        "date": "2020-08-21 11:43:26 -0400",
+        "subject": "Remove invalid call to stackTraceTestFileLineSet().",
+        "body": "When testing the common/stack-trace module it is important not to call this test function since the trace stack is empty and it will cause a buffer under run.\n\nInstead use a macro that is only defined under the correct circumstances and add an assert() to catch future regressions."
+    },
+    {
+        "commit": "25ee913932a9de1ca2a57d0b7c37309504af8a1f",
+        "date": "2020-08-20 15:53:01 -0400",
+        "subject": "Rearrange members in StackTraceData struct to save memory.",
+        "body": "This arrangement is more efficient on 64-bit systems due to alignment. There is no difference on 32-bit systems."
+    },
+    {
+        "commit": "859b8a50fdacad0ffa92210e0e8a3c98a2eba1b7",
+        "date": "2020-08-20 14:16:36 -0400",
+        "subject": "Remove unused parameter from cmdBegin()."
+    },
+    {
+        "commit": "fccca0d716de2be92ddd5c7d8f532dcad41fd828",
+        "date": "2020-08-20 14:11:40 -0400",
+        "subject": "Refactor option logging into a general-purpose function."
+    },
+    {
+        "commit": "959f77cd6a3be9dffa049d9b25901c72a7c947bb",
+        "date": "2020-08-20 14:04:26 -0400",
+        "subject": "Add general-purpose statistics collector.",
+        "body": "Currently each module that needs to collect statistics implements custom code to do so. This is cumbersome.\r\n\r\nCreate a general purpose module for collecting and reporting statistics. Statistics are output in the log at detail level, but there are other uses they could be put to eventually.\r\n\r\nNo new functionality is added. This is just a drop-in replacement for the current statistics, with the advantage of being more flexible.\r\n\r\nThe new stats are slower because they involve a list lookup, but performance testing shows stats can be updated at about 40,000/ms which seems fast enough for our purposes."
+    },
+    {
+        "commit": "53f8e7a9cf842745282cde66b99268b500073776",
+        "date": "2020-08-20 12:12:21 -0400",
+        "subject": "Asynchronous list/remove for S3/Azure storage.",
+        "body": "Improve the performance of list/delete operations by using async requests.\r\n\r\nIt's questionable whether this will have any impact on Azure deletes since they are sent one at a time with little work done in between, but it doesn't hurt to try."
+    },
+    {
+        "commit": "9876d7096d35496226fdbab788af9499f1b085d3",
+        "date": "2020-08-20 11:24:27 -0400",
+        "subject": "Disable s390x builds on Travis-CI (again).",
+        "body": "s390x currently is too unreliable to be part of required CI builds. They can sometimes take hours or days to get queued which makes getting commits through our workflow very time-consuming."
+    },
+    {
+        "commit": "de0f8c2654ce5a924e3b93959a26c39930f02b60",
+        "date": "2020-08-18 10:01:24 -0400",
+        "subject": "Add user-agent to HTTP requests."
+    },
+    {
+        "commit": "4391497a05b0d645c5ed472f0b139ce545ece5e9",
+        "date": "2020-08-18 08:17:13 -0400",
+        "subject": "Enable s390x builds on Travis-CI.",
+        "body": "These were disabled in 6fc25c7a because s390x builds were not being queued. It looks like they are working again."
+    },
+    {
+        "commit": "d935af5e598e27f0bff58f34f60a81d432d0491e",
+        "date": "2020-08-18 07:26:02 -0400",
+        "subject": "Update *((Type *)lstGet()) pattern to *(Type *)lstGet().",
+        "body": "This pattern has extra parens and was only used in a few places so replace it with the general *(Type *)lstGet() pattern."
+    },
+    {
+        "commit": "fbee6ec170a5f4629fa0d40494cc89c40cfa934c",
+        "date": "2020-08-14 13:11:33 -0400",
+        "subject": "Add support for HTTP/1.0.",
+        "body": "HTTP/1.0 connections are closed by default after a single response. Other than that, treat 1.0 the same as 1.1.\r\n\r\nHTTP/1.0 allows different date formats that we can't parse but for now, at least, we don't need any date headers from 1.0 requests."
+    },
+    {
+        "commit": "6bb111c1700d34bed23ca65518d4b10970aa8554",
+        "date": "2020-08-14 10:08:25 -0400",
+        "subject": "PostgreSQL 13 beta3 support."
+    },
+    {
+        "commit": "afcc4d193dea3dfa13b56035e49fbc55a259e936",
+        "date": "2020-08-11 14:38:38 -0400",
+        "subject": "Add missing azure type in repo-type option reference."
+    },
+    {
+        "commit": "f40c7b65fa4e9b10eaad687300007a4510766a4b",
+        "date": "2020-08-11 10:41:06 -0400",
+        "subject": "Fix typo in repo-cipher-type option reference."
+    },
+    {
+        "commit": "65858d12dd67f3bf6983ad5c8521edb168da004b",
+        "date": "2020-08-10 16:16:11 -0400",
+        "subject": "Improve server test harness to support multiple protocols/connections.",
+        "body": "The prior implementation only supported a single connection on TLS. This is not flexible enough for complex testing scenarios which might require multiple simultaneous connections on different protocols.\n\nAllow multiple simultaneous connections and add plain sockets as a protocol option. Rename the functions used for server scripting to hrnServerScript*() to make it clear they are related. Improve error messages when less input is received by the server than expected.\n\nAlso, do a bit of cleanup and add more comments."
+    },
+    {
+        "commit": "7fdbd94e39ff6a97d00f1aa4a40c02c0b7b2ef4c",
+        "date": "2020-08-10 16:03:38 -0400",
+        "subject": "Implement IoClient/IoSession interfaces for SocketClient/SocketSession.",
+        "body": "Following up on 111d33c, implement the new interfaces for socket client/session. Now HTTP objects can be used over TLS or plain sockets.\r\n\r\nThis required adding ioSessionFd() and ioSessionRole() to provide the functionality of sckSessionFd() and sckSessionType(). sckClientHost() and sckClientPort don't make sense in a generic interface so they were replaced with ioSessionName()."
+    },
+    {
+        "commit": "54c3c39645b84867c3e4bc04c6ad07a2da7f5f2d",
+        "date": "2020-08-10 11:35:09 -0400",
+        "subject": "Delay backup remote connection close until after archive check.",
+        "body": "Only close the remote connection after verifying that the WAL files have been received. This is necessary if the archive_command on the PostgreSQL host is conditional, i.e. archiving only happens while a backup lock is held, to ensure all WAL segments are archived."
+    },
+    {
+        "commit": "63ad4786af704cf20670f67271444c04a3cc0e32",
+        "date": "2020-08-08 16:06:05 -0400",
+        "subject": "Remove deleteMax parameter from storageS3New().",
+        "body": "This was included primarily for testing but now that storageS3New() is not called directly in the tests the value needs to be modified after configuring storage anyway.\n\nSince there is no need to make this parameter user-configurable just remove it."
+    },
+    {
+        "commit": "8b34f854f3b88fb8c361d5b9d559f8b00295b894",
+        "date": "2020-08-08 15:52:33 -0400",
+        "subject": "Simplify S3 configuration tests and add security token tests.",
+        "body": "Rather than calling storageS3New() directly, create the storage by loading a configuration and calling repoStorageGet(). This is a better end-to-end test and cuts down on a lot of redundant tests.\n\nAdd tests that include security tokens in error messages to ensure they are redacted."
+    },
+    {
+        "commit": "38f66d4bd390ee0994559951b09298d700d02533",
+        "date": "2020-08-08 14:32:21 -0400",
+        "subject": "Add debug log function for HttpClient."
+    },
+    {
+        "commit": "426e6933daec2ee71619bb14e7082983049de9d5",
+        "date": "2020-08-08 14:18:03 -0400",
+        "subject": "Redact x-amz-security-token header in errors.",
+        "body": "This header should not be displayed to the user in error output, even if it is useless by itself."
+    },
+    {
+        "commit": "4d22d6eeca23aef038b85dc1c4c3a69fb79f1942",
+        "date": "2020-08-08 11:23:37 -0400",
+        "subject": "Move file descriptor read/write ready into IoRead/IoWrite.",
+        "body": "Move sckSessionReadyRead()/Write() into the IoRead/IoWrite interfaces. This is a more logical place for them and the alternative would be to add them to the IoSession interface, which does not seem like a good idea.\r\n\r\nThis is mostly a refactor, but a big change is the select() logic in fdRead.c has been replaced by ioReadReady(). This was duplicated code that was being used by our protocol but not TLS. Since we have not had any problems with requiring poll() in the field this seems like a good time to remove our dependence on select().\r\n\r\nAlso, IoFdWrite now requires a timeout so update where required, mostly in the tests."
+    },
+    {
+        "commit": "111d33c12324a27e68cc3a1349f0566a319eef42",
+        "date": "2020-08-08 10:39:39 -0400",
+        "subject": "Add IoClient and IoSession interfaces.",
+        "body": "These interfaces allow the HttpClient and HttpSession objects to work with protocols other than TLS, .e.g. plain sockets. This is necessary to allow standard HTTP -- right now only HTTPS is allowed, i.e. HTTP over TLS.\r\n\r\nFor now only TlsClient and TlsSession have been converted to the new interfaces. SocketClient and SocketSession will also need to be converted but first sckSessionReadyRead() and sckSessionReadyWrite() need to be moved into the IoRead and IoWrite interfaces, since they are not a good fit for IoSession."
+    },
+    {
+        "commit": "9b7fd1a894ad9fb9cb443458e2296337750b963f",
+        "date": "2020-08-08 10:02:04 -0400",
+        "subject": "Improve error message in HARNESS_FORK_END().",
+        "body": "Also include expected exit status to make debugging easier."
+    },
+    {
+        "commit": "0b349c0f2f54d1e45beaa604dba40c2cf9efc15e",
+        "date": "2020-08-07 13:44:01 -0400",
+        "subject": "Clear the callback before calling storageReadPosixFreeResource().",
+        "body": "If storageReadPosixFreeResource() errors then it will be called again when the object is freed, which is not ideal since it might error in a different way and lose the original error."
+    },
+    {
+        "commit": "cde2c756ea8ae32663e0a817098fc9f5d4f2a1f2",
+        "date": "2020-08-05 18:25:07 -0400",
+        "subject": "Rename handle to fd.",
+        "body": "Pretty much everywhere handle is used what is really meant is file descriptor (fd). This terminology got migrated over from Perl and is just not quite correct, or at least not as correct as fd.\n\nThere were also plenty of places fd was used so now all uses are consistent.\n\nThe Perl code was not updated but might be in a future commit."
+    },
+    {
+        "commit": "a1d7d50223510eda06d68234a03e3c19f972dc47",
+        "date": "2020-08-05 17:30:38 -0400",
+        "subject": "Fix macro spacing."
+    },
+    {
+        "commit": "d5edc3fe371e16d5612e841861ae9c10ae69cca7",
+        "date": "2020-08-05 15:24:13 -0400",
+        "subject": "Remove unused port struct member.",
+        "body": "This does not appear to have been used in quite some time and the tests are equally useless because they don't prove the correct port was passed to httpClientNew()."
+    },
+    {
+        "commit": "d74c8f4b5813f3b0ce5df246c36469257a549e4d",
+        "date": "2020-08-05 14:07:04 -0400",
+        "subject": "Add memContextFreeing().",
+        "body": "This can be used to determine if functions are running in a callback from memContextFree(). In this case, data in child mem contexts is not valid."
+    },
+    {
+        "commit": "6fc25c7a69a09f105f9fdd41ddb33c700d983a2e",
+        "date": "2020-08-05 13:38:44 -0400",
+        "subject": "Disable s390x builds on Travis-CI.",
+        "body": "s390x has not been building for about a day which is clogging the integration branch."
+    },
+    {
+        "commit": "847e61ce21710cc0cb7baa9af9b3740d9250b4fa",
+        "date": "2020-08-04 15:15:24 -0400",
+        "subject": "Improve TLS error reporting.",
+        "body": "Before 9f2d647 TLS errors included additional details in at least some cases. After 9f2d647 a connection to an HTTP server threw `TLS error [1]` instead of `unable to negotiate TLS connection: [336031996] unknown protocol`.\r\n\r\nBring back the detailed messages to make debugging TLS errors easier. Since the error routine is now generic the `unable to negotiate TLS connection context` is not available so the error looks like `TLS error [1:336031996] unknown protocol`."
+    },
+    {
+        "commit": "94d3a01f7368a547dfecaafce67995e24738be78",
+        "date": "2020-08-04 13:20:01 -0400",
+        "subject": "Proactively close file descriptors after forking async process.",
+        "body": "PostgreSQL may be using most of the available file descriptors when it executes the the archive-get/archive-push commands (especially archive-get). This can lead to problems depending on how many file descriptors are needed for parallelism in the async process.\r\n\r\nProactively free file descriptors between 3 and 1023 to help ensure there are enough available for reasonable values of process-max, i.e. <= 300."
+    },
+    {
+        "commit": "e81533bbabb2e4f809596c0a88671b2b6616da01",
+        "date": "2020-08-04 10:16:51 -0400",
+        "subject": "Improve memory usage of unlogged relation detection in manifest build.",
+        "body": "This loop was using a lot of memory without freeing it at intervals.\r\n\r\nRewrite to use char arrays when possible to reduce memory that needs to be allocated and freed."
+    },
+    {
+        "commit": "e044eaf55faf102d84389b04ff79a7a00fef0965",
+        "date": "2020-08-04 09:23:59 -0400",
+        "subject": "Use forkSafe() in common/exec module.",
+        "body": "forkSafe() will throw an exception if the fork fails. This is a pretty unlikely scenario but the function is already there so may as well use it."
+    },
+    {
+        "commit": "5a9856c2f9aeb6efccada86c229713665100eba0",
+        "date": "2020-08-01 09:42:03 -0400",
+        "subject": "Add functions for Zigzag encoding/decoding.",
+        "body": "Zigzag encoding places the sign bit in the least significant bit so that -1 is encoded as 1, 1 as 2, etc. This moves as many bits as possible into the low order bits which is good for other types of encoding, e.g. base-128.\n\nSee https://en.wikipedia.org/wiki/Variable-length_quantity#Zigzag_encoding."
+    },
+    {
+        "commit": "f6d22ccb6fab7d7308d26c11c770362e312e600f",
+        "date": "2020-07-31 17:33:15 -0400",
+        "subject": "Improve comment locations."
+    },
+    {
+        "commit": "caef2ba482a887113d08fd926a582ff68786a39f",
+        "date": "2020-07-31 16:35:58 -0400",
+        "subject": "Accept NULL filenames in hrnStorageInfoListCallback().",
+        "body": "This allows it to be used with StorageInfo objects returned from storageInfo(), which do not contain a filename."
+    },
+    {
+        "commit": "a8e47c38c6d70c202070fa585d4096592a9961cf",
+        "date": "2020-07-31 16:27:57 -0400",
+        "subject": "Add lstGetLast() and lstRemoveLast().",
+        "body": "When a list is being treated as a stack it is useful to get/remove the last (top) item."
+    },
+    {
+        "commit": "bfb489a82d7451830abec45e3d8a79f4d8580827",
+        "date": "2020-07-31 16:18:56 -0400",
+        "subject": "Add file name to make performance/storage test more realistic.",
+        "body": "Also add timing information."
+    },
+    {
+        "commit": "9f1e7d88da845083a1e45d99c123b1718af9808d",
+        "date": "2020-07-31 16:13:05 -0400",
+        "subject": "Remove special protocol encoding for StorageType.",
+        "body": "It seems like overkill to encode this when other enums (e.g. StorageInfoLevel) are passed as integers.\n\nInstead note that StorageType values should not be changed and remove the special encoding."
+    },
+    {
+        "commit": "afe1568bb1713c3520618bac87ba15e4374274bb",
+        "date": "2020-07-31 15:55:17 -0400",
+        "subject": "Fix missing space."
+    },
+    {
+        "commit": "ac72e1f193d8d4a9de7d8877528e78e317c135e2",
+        "date": "2020-07-30 10:59:50 -0400",
+        "subject": "Preserve Variant parsed from JSON in iniLoad().",
+        "body": "The fix for = characters in info files (039d314) added JSON validation but discarded the resulting Variant which means the JSON is being parsed twice. This nearly doubles the time to load a manifest since a lot of complex JSON is involved.\r\n\r\nTime to load a million file manifest:\r\nBefore 039d314: 7.8s\r\n039d314: 15.5s\r\nThis patch: 7.5s\r\n\r\nTo fix this regression return the Variant in the callback so the caller does not have to parse it again. The new code appears slightly more efficient overall, probably because there are fewer operations against Strings."
+    },
+    {
+        "commit": "3e9dce0d7615f0f56f3eff754095c57c6d56fd6b",
+        "date": "2020-07-30 07:49:06 -0400",
+        "subject": "Rename strPtr()/strPtrNull() to strZ()/strZNull().",
+        "body": "We use the Z suffix in many functions to indicate that we are expecting a zero-terminated string so make this function conform to the pattern.\n\nAs a bonus the new name is a bit shorter, which is a good quality in a commonly-used function."
+    },
+    {
+        "commit": "039d314438f7881e7c7062d645f7800ee2dd8872",
+        "date": "2020-07-28 14:00:23 -0400",
+        "subject": "Fix issue with = character in file or database names.",
+        "body": "The manifest uses the = character as the key/value separator so = characters in the key cause parsing errors and lead to an error or segfault.\r\n\r\nSince the value must be valid JSON we can keep checking the value on the right side of the = and stop building the key when the value is valid. It's a bit hackish but it does seem to do the job without breaking the manifest format.\r\n\r\nUnsurprisingly this makes parsing about 50% slower but it's still more than fast enough. Parsing 10 million key/values takes about 6.5s for the old code and 10s for the new code. Since the value is used as JSON downstream we can reclaim most of this time by just passing the JSON value rather than making the callback reparse it. We'll save that for another commit, though."
+    },
+    {
+        "commit": "63a93db6fd97c6e8e22478ee69b05487fa3db69d",
+        "date": "2020-07-28 12:15:33 -0400",
+        "subject": "Suppress errors when closing local/remote processes.",
+        "body": "Since the command has completed it is counterproductive to throw an error but still warn to indicate that something unusual happened.\r\n\r\nAlso fix the related issue that the local processes were not being shut down when they completed, which meant that they might timeout before being closed when pgbackrest terminated."
+    },
+    {
+        "commit": "d9309f13a4c7b962b401832881a593b92f29c438",
+        "date": "2020-07-28 11:20:07 -0400",
+        "subject": "Add quarterly press release instructions to doc/RELEASE.md."
+    },
+    {
+        "commit": "a260d4a53b68e40f8ebbdc9129143ac61d0ac88b",
+        "date": "2020-07-28 08:09:10 -0400",
+        "subject": "Add zstd to CentOS/RHEL 6 test container.",
+        "body": "Zstd is now required by the upstream yum package."
+    },
+    {
+        "commit": "aa37a21084f75c7af8d8ca047be0376057a86bb6",
+        "date": "2020-07-25 13:37:39 -0400",
+        "subject": "Add strBaseZ().",
+        "body": "Since the base name is at the end of the filename it is possible to return the char pointer without making a copy, which is preferred in some cases."
+    },
+    {
+        "commit": "8e140ad7e06f7e4abdd2c6fa32018ff463d63a6f",
+        "date": "2020-07-25 11:39:24 -0400",
+        "subject": "Build new manifest inside a temporary context.",
+        "body": "There is a fair amount of temporary data that is created during the build and it should not end up as a permanent part of the manifest."
+    },
+    {
+        "commit": "8e776cc537117292504bc17a1691481fce9bae3d",
+        "date": "2020-07-25 11:26:14 -0400",
+        "subject": "Add manifestNewBuild() to performance/type test.",
+        "body": "Use a test storage driver to allow manifestNewBuild() to be run against a test cluster at any scale without having to write files to disk.\n\nSimplify the test by using the output of manifestNewBuild() to feed manifestSave() and manifestNewLoad().\n\nAlso add manifest size to the output."
+    },
+    {
+        "commit": "f9d923ca3b2c7b2d3eacb3a3cd4fba347cef701e",
+        "date": "2020-07-25 11:06:25 -0400",
+        "subject": "Add memContextSize().",
+        "body": "Calculates the memory used by the context and all child contexts.\n\nThis is primarily useful for debugging but it is not conditional on DEBUG because it is useful for profile/performance tests."
+    },
+    {
+        "commit": "216a61d93626683acdcd0fbf2e145c8751aa7064",
+        "date": "2020-07-25 08:44:41 -0400",
+        "subject": "Move dummy storage driver to test harness.",
+        "body": "The dummy driver is the basis for creating test storage drivers so it makes sense to locate it in the harness where all tests can access it."
+    },
+    {
+        "commit": "cbf5dd19c2e273ce8ec65eab256bde9591fb0760",
+        "date": "2020-07-24 11:05:09 -0400",
+        "subject": "Fix non-JSON ini values in tests.",
+        "body": "A number of tests used invalid JSON values where an error was expected or the value would be ignored.\n\nUpdate these tests to use valid JSON values so all values in the file can be validated even if they are not used."
+    },
+    {
+        "commit": "9d8f6d9fc2a91f20dfc1d3c531459f37fa642a49",
+        "date": "2020-07-24 10:47:51 -0400",
+        "subject": "Error in jsonToVar() when input not entirely consumed.",
+        "body": "Something like 3=\"string\" would return an Int64 variant and ignore the invalid portion after the integer. Other JSON interface functions have this check but it was forgotten here.\n\nThere are no current issues because of this but we want to be able to validate arbitrary JSON strings and this function was not working correctly for that usage."
+    },
+    {
+        "commit": "78ef442a18d62368f4bd05d946660bdcfb7ea40b",
+        "date": "2020-07-21 16:28:05 -0400",
+        "subject": "Add storage parameter to pgWalFromFile()."
+    },
+    {
+        "commit": "ed8829386103b27053c4a1d9e29f1d767d0238ce",
+        "date": "2020-07-21 10:57:47 -0400",
+        "subject": "Clarify that expire must be run regularly when expire-auto is disabled."
+    },
+    {
+        "commit": "d1ac2f7637866c2044f0d40068dcae2de373aa3b",
+        "date": "2020-07-21 07:34:02 -0400",
+        "subject": "Rearrange Travis CI jobs based on current runtimes.",
+        "body": "In general it is better to have slower jobs run earlier."
+    },
+    {
+        "commit": "90ffde8881f50ba8b91d9d9e881bf59c6488052e",
+        "date": "2020-07-20 18:09:32 -0400",
+        "subject": "Remove unused constructor strLstNewParam().",
+        "body": "This function is not used in the core code so remove it and update the test where it was used.\n\nThere may eventually be a need for a strLstNewP() function but it doesn't seem worth the code churn until there is an actual requirement."
+    },
+    {
+        "commit": "1783e0490abe266233e65ba1904670a7adde48bb",
+        "date": "2020-07-20 15:22:33 -0400",
+        "subject": "Remove lstNew() constructor in favor of lstNewP().",
+        "body": "The old constructor was left around to reduce code churn during the migration but it just makes the code harder to read and search.\n\nRemove the old constructor and rename all remaining instances to lstNewP(), which by default has the same semantics."
+    },
+    {
+        "commit": "a92b1f9776acea52627d59fc734707ec90d78b4e",
+        "date": "2020-07-20 13:44:11 -0400",
+        "subject": "Small wording change in website index / Github readme."
+    },
+    {
+        "commit": "738900a3a9e9fb7d63fbc5e4e4642977b8b65e2e",
+        "date": "2020-07-20 11:08:18 -0400",
+        "subject": "Update config.guess and config.sub to latest versions.",
+        "body": "Also update the policy in doc/RELEASE.md to get the latest versions at the beginning of the release cycle. The older policy was created when we were getting new versions right before the release."
+    },
+    {
+        "commit": "3f0b41eb9c1137b0b19138d22d2c26009d477602",
+        "date": "2020-07-20 09:59:16 -0400",
+        "subject": "Add support for testing on 64-bit big-endian architectures.",
+        "body": "In particular add support for s390x but we hope this will work for other 64-bit big-endian architectures.\n\nRun basic unit tests on Travis CI for 390x."
+    },
+    {
+        "commit": "55277357b8457e3a215bc00e8e97de523949eba6",
+        "date": "2020-07-20 09:47:43 -0400",
+        "subject": "Reduce reliance on static checksums in unit tests.",
+        "body": "Testing against static checksums is valuable but it can be become burdensome when supporting multiple architectures.\n\nReduce the number of tests we are doing against static checksums when the architecture can cause the checksum to vary."
+    },
+    {
+        "commit": "f8c1957127c148e36843d77ef0bd26a8c8c78fd1",
+        "date": "2020-07-20 09:22:53 -0400",
+        "subject": "Fix ill-advised cast in CipherBlock.",
+        "body": "Little-endian architectures store the low-order bytes in the lowest memory location so this worked even in the case that size_t and int had different byte representations. Since buffer sizes are constrained there was no chance of the integer becoming negative and causing a problem that way.\n\nOn big-endian architectures this cast caused the low-order bytes to get loaded into the high-order bytes resulting in a huge buffer size that immediately triggered an assertion (and without the assertion would have certainly segfaulted).\n\nInstead use a temporary int variable and cast that to size_t after the function call. This is the correct way to do it regardless of architecture.\n\nThis issue was detected while testing on the s390x architecture."
+    },
+    {
+        "commit": "615c41e52564a8629e57b9892fd3361c92ae22f6",
+        "date": "2020-07-20 09:08:59 -0400",
+        "subject": "Begin v2.29 development."
+    },
+    {
         "commit": "5a4b91f90a81019e456a50c0f7311824f7e61475",
         "date": "2020-07-20 08:57:22 -0400",
         "subject": "v2.28: Azure Repository Storage"

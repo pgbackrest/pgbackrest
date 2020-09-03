@@ -35,6 +35,19 @@ String *ioReadLine(IoRead *this);
 // Read linefeed-terminated string and optionally error on eof
 String *ioReadLineParam(IoRead *this, bool allowEof);
 
+// Are there bytes ready to read immediately? There are no guarantees on how much data is available to read but it must be at least
+// one byte.
+typedef struct IoReadReadyParam
+{
+    VAR_PARAM_HEADER;
+    bool error;                                                     // Error when read not ready
+} IoReadReadyParam;
+
+#define ioReadReadyP(this, ...)                                                                                                    \
+    ioReadReady(this, (IoReadReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+bool ioReadReady(IoRead *this, IoReadReadyParam param);
+
 // Close the IO
 void ioReadClose(IoRead *this);
 
@@ -50,8 +63,8 @@ bool ioReadEof(const IoRead *this);
 // Get filter group if filters need to be added
 IoFilterGroup *ioReadFilterGroup(const IoRead *this);
 
-// Handle (file descriptor) for the read object. Not all read objects have a handle and -1 will be returned in that case.
-int ioReadHandle(const IoRead *this);
+// File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
+int ioReadFd(const IoRead *this);
 
 /***********************************************************************************************************************************
 Destructor

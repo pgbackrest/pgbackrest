@@ -81,6 +81,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveGetQueueMax,
     },
 
+    // archive-mode option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_ARCHIVE_MODE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptArchiveMode,
+    },
+    {
+        .name = "reset-" CFGOPT_ARCHIVE_MODE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveMode,
+    },
+
     // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2391,6 +2403,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret,
     },
 
+    // repo-s3-key-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_KEY_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3KeyType,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_KEY_TYPE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3KeyType,
+    },
+
     // repo-s3-port option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2418,6 +2442,18 @@ static const struct option optionList[] =
         .name = "repo-s3-region",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3Region,
+    },
+
+    // repo-s3-role option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_ROLE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3Role,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_ROLE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Role,
     },
 
     // repo-s3-token option
@@ -2716,6 +2752,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveAsync,
     cfgOptArchiveGapDetection,
     cfgOptArchiveGetQueueMax,
+    cfgOptArchiveMode,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
@@ -2905,10 +2942,10 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3CaPath,
     cfgOptRepoS3Endpoint,
     cfgOptRepoS3Host,
-    cfgOptRepoS3Key,
-    cfgOptRepoS3KeySecret,
+    cfgOptRepoS3KeyType,
     cfgOptRepoS3Port,
     cfgOptRepoS3Region,
+    cfgOptRepoS3Role,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoS3VerifyTls,
@@ -2916,4 +2953,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
+    cfgOptRepoS3Key,
+    cfgOptRepoS3KeySecret,
 };

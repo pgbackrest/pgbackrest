@@ -227,12 +227,14 @@ use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_RE
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
 use constant CFGOPT_REPO_S3_KEY_SECRET                              => CFGDEF_REPO_S3 . '-key-secret';
+use constant CFGOPT_REPO_S3_KEY_TYPE                                => CFGDEF_REPO_S3 . '-key-type';
 use constant CFGOPT_REPO_S3_BUCKET                                  => CFGDEF_REPO_S3 . '-bucket';
 use constant CFGOPT_REPO_S3_CA_FILE                                 => CFGDEF_REPO_S3 . '-ca-file';
 use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_REPO_S3 . '-ca-path';
 use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_REPO_S3 . '-endpoint';
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
 use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
+use constant CFGOPT_REPO_S3_ROLE                                    => CFGDEF_REPO_S3 . '-role';
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
 use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
@@ -260,6 +262,7 @@ use constant CFGOPT_STOP_AUTO                                       => 'stop-aut
 
 # Restore options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_ARCHIVE_MODE                                    => 'archive-mode';
 use constant CFGOPT_DB_INCLUDE                                      => 'db-include';
 use constant CFGOPT_LINK_ALL                                        => 'link-all';
 use constant CFGOPT_LINK_MAP                                        => 'link-map';
@@ -1903,6 +1906,17 @@ my %hConfigDefine =
         },
     },
 
+    &CFGOPT_REPO_S3_KEY_TYPE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_DEFAULT => 'shared',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'shared',
+            'auto',
+        ],
+    },
+
     &CFGOPT_REPO_S3_KEY =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1913,8 +1927,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
-            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_S3_KEY_TYPE,
+            &CFGDEF_DEPEND_LIST => ['shared'],
         },
         &CFGDEF_NAME_ALT =>
         {
@@ -1993,6 +2007,17 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+    },
+
+    &CFGOPT_REPO_S3_ROLE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_S3_KEY_TYPE,
+            &CFGDEF_DEPEND_LIST => ['auto'],
         },
     },
 
@@ -2432,6 +2457,22 @@ my %hConfigDefine =
 
     # Restore options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_ARCHIVE_MODE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'preserve',
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_RESTORE => {},
+        },
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'off',
+            'preserve',
+        ],
+    },
+
     &CFGOPT_DB_INCLUDE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,

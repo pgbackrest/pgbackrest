@@ -92,7 +92,7 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_INT(*((int *)lstInsert(list, 0, &insertIdx)), 0, "insert item %d", insertIdx);
+        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, "insert item %d", insertIdx);
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
@@ -143,24 +143,24 @@ testRun(void)
 
         TEST_RESULT_PTR(lstSort(list, sortOrderNone), list, "list sort none");
 
-        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 3, "sort value 0");
-        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 5, "sort value 1");
-        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
-        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
+        TEST_RESULT_INT(*(int *)lstGet(list, 0), 3, "sort value 0");
+        TEST_RESULT_INT(*(int *)lstGet(list, 1), 5, "sort value 1");
+        TEST_RESULT_INT(*(int *)lstGet(list, 2), 3, "sort value 2");
+        TEST_RESULT_INT(*(int *)lstGet(list, 3), 2, "sort value 3");
 
         TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
 
-        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 2, "sort value 0");
-        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
-        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
-        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 5, "sort value 3");
+        TEST_RESULT_INT(*(int *)lstGet(list, 0), 2, "sort value 0");
+        TEST_RESULT_INT(*(int *)lstGet(list, 1), 3, "sort value 1");
+        TEST_RESULT_INT(*(int *)lstGet(list, 2), 3, "sort value 2");
+        TEST_RESULT_INT(*(int *)lstGet(list, 3), 5, "sort value 3");
 
         TEST_RESULT_PTR(lstSort(list, sortOrderDesc), list, "list sort desc");
 
-        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 5, "sort value 0");
-        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
-        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
-        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
+        TEST_RESULT_INT(*(int *)lstGet(list, 0), 5, "sort value 0");
+        TEST_RESULT_INT(*(int *)lstGet(list, 1), 3, "sort value 1");
+        TEST_RESULT_INT(*(int *)lstGet(list, 2), 3, "sort value 2");
+        TEST_RESULT_INT(*(int *)lstGet(list, 3), 2, "sort value 3");
     }
 
     // *****************************************************************************************************************************

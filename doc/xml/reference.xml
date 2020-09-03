@@ -141,13 +141,14 @@
 
                         <text>The following compression types are supported:
                         <ul>
+                            <li><id>none</id> - no compression</li>
                             <li><id>bz2</id> - bzip2 compression format</li>
                             <li><id>gz</id> - gzip compression format</li>
                             <li><id>lz4</id> - lz4 compression format (not available on all platforms)</li>
                             <li><id>zst</id> - Zstandard compression format (not available on all platforms)</li>
                         </ul></text>
 
-                        <example>n</example>
+                        <example>none</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL KEY -->
@@ -547,6 +548,19 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-key-type" name="S3 Repository Key Type">
+                        <summary>S3 repository key type.</summary>
+
+                        <text>The following types are supported:
+                        <ul>
+                            <li><id>shared</id> - Shared keys</li>
+                            <li><id>auto</id> - Automatically retrieve temporary credentials</li>
+                        </ul></text>
+
+                        <example>auto</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
                     <config-key id="repo-s3-token" name="S3 Repository Security Token">
                         <summary>S3 repository security token.</summary>
@@ -612,6 +626,15 @@
                         <example>9000</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-s3-role" name="S3 Repository Role">
+                        <summary>S3 repository role.</summary>
+
+                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
+
+                        <example>authrole</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>
@@ -649,6 +672,7 @@
 
                         <text>The following repository types are supported:
                         <ul>
+                            <li><id>azure</id> - Azure Blob Storage Service</li>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
@@ -661,7 +685,7 @@
                     <config-key id="repo-cipher-type" name="Repository Cipher Type">
                         <summary>Cipher used to encrypt the repository.</summary>
 
-                        <text>The following repository types are supported:
+                        <text>The following cipher types are supported:
                         <ul>
                             <li><id>none</id> - The repository is not encrypted</li>
                             <li><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</li>
@@ -878,6 +902,21 @@
                 <text>The <setting>restore</setting> section defines settings used for restoring backups.</text>
 
                 <config-key-list>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-mode" name="Archive Mode">
+                        <summary>Preserve or disable archiving on restored cluster.</summary>
+
+                        <text>This option allows archiving to be preserved or disabled on a restored cluster. This is useful when the cluster must be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to push WAL from the cluster into the repository.
+
+                        The following modes are supported:
+                        <ul>
+                            <li><id>off</id> - disable archiving by setting <setting>archive_mode=off</setting>.</li>
+                            <li><id>preserve</id> - preserve current <setting>archive_mode</setting> setting.</li>
+                        </ul><b>NOTE</b>: This option is not available on <postgres/> &amp;lt; 12.</text>
+
+                        <example>off</example>
+                    </config-key>
+
                     <!-- CONFIG - RESTORE SECTION - DB-INCLUDE KEY -->
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>

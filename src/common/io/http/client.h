@@ -24,28 +24,28 @@ Object type
 
 typedef struct HttpClient HttpClient;
 
+#include "common/io/client.h"
 #include "common/io/http/session.h"
 #include "common/time.h"
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-typedef struct HttpClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // TLS sessions created
-    uint64_t request;                                               // Requests (i.e. calls to httpRequestNew())
-    uint64_t retry;                                                 // Request retries
-    uint64_t close;                                                 // Closes forced by server
-} HttpClientStat;
-
-extern HttpClientStat httpClientStat;
+#define HTTP_STAT_CLIENT                                            "http.client"       // Clients created
+    STRING_DECLARE(HTTP_STAT_CLIENT_STR);
+#define HTTP_STAT_CLOSE                                             "http.close"        // Closes forced by server
+    STRING_DECLARE(HTTP_STAT_CLOSE_STR);
+#define HTTP_STAT_REQUEST                                           "http.request"      // Requests (i.e. calls to httpRequestNew())
+    STRING_DECLARE(HTTP_STAT_REQUEST_STR);
+#define HTTP_STAT_RETRY                                             "http.retry"        // Request retries
+    STRING_DECLARE(HTTP_STAT_RETRY_STR);
+#define HTTP_STAT_SESSION                                           "http.session"      // Sessions created
+    STRING_DECLARE(HTTP_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpClient *httpClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+HttpClient *httpClientNew(IoClient *ioClient, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
@@ -56,9 +56,6 @@ HttpSession *httpClientOpen(HttpClient *this);
 // Request/response finished cleanly so session can be reused
 void httpClientReuse(HttpClient *this, HttpSession *session);
 
-// Format statistics to a string
-String *httpClientStatStr(void);
-
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
@@ -67,9 +64,11 @@ TimeMSec httpClientTimeout(const HttpClient *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *httpClientToLog(const HttpClient *this);
+
 #define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *
 #define FUNCTION_LOG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "HttpClient", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpClientToLog, buffer, bufferSize)
 
 #endif

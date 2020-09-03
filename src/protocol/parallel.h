@@ -42,7 +42,7 @@ unsigned int protocolParallelProcess(ProtocolParallel *this);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Are all jobs done?
-bool protocolParallelDone(const ProtocolParallel *this);
+bool protocolParallelDone(ProtocolParallel *this);
 
 // Completed job result
 ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);

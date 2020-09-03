@@ -448,9 +448,8 @@ hrnTestResultBegin(const char *statement, int lineNo, bool result)
     ASSERT(!harnessTestLocal.result.running);
 
     // Set the line number for the current function in the stack trace
-#ifndef NDEBUG
-    stackTraceTestFileLineSet((unsigned int)lineNo);
-#endif
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo);
+
     // Set info to report if an error is thrown
     harnessTestLocal.result =
         (struct HarnessTestResult){.running = true, .statement = statement, .lineNo = lineNo, .result = result};
@@ -483,9 +482,7 @@ hrnTestResultEnd(void)
     ASSERT(harnessTestLocal.result.running);
 
     // Set the line number for the current function back to unknown
-#ifndef NDEBUG
-    stackTraceTestFileLineSet(0);
-#endif
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(0);
 
     harnessTestLocal.result.running = false;
 }

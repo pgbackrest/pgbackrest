@@ -1,17 +1,17 @@
 /***********************************************************************************************************************************
-TLS Session Internal
+File Descriptor Read
+
+Read from a file descriptor using the IoRead interface.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_TLS_SESSION_INTERN_H
-#define COMMON_IO_TLS_SESSION_INTERN_H
+#ifndef COMMON_IO_FDREAD_H
+#define COMMON_IO_FDREAD_H
 
-#include <openssl/ssl.h>
-
-#include "common/io/tls/session.h"
+#include "common/io/read.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// Only called by TLS client/server code
-TlsSession *tlsSessionNew(SSL *session, SocketSession *socketSession, TimeMSec timeout);
+IoRead *ioFdReadNew(const String *name, int fd, TimeMSec timeout);
 
 #endif

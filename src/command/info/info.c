@@ -13,7 +13,7 @@ Info Command
 #include "command/info/info.h"
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/handleWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -1198,7 +1198,7 @@ cmdInfo(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
+        ioFdWriteOneStr(STDOUT_FILENO, infoRender());
     }
     MEM_CONTEXT_TEMP_END();
 

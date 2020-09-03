@@ -31,6 +31,7 @@ Main
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
+#include "common/stat.h"
 #include "config/config.h"
 #include "config/load.h"
 #include "postgres/interface.h"
@@ -51,6 +52,9 @@ main(int argListSize, const char *argList[])
 
     // Initialize command with the start time
     cmdInit();
+
+    // Initialize statistics collector
+    statInit();
 
     volatile bool result = 0;
     volatile bool error = false;
@@ -124,7 +128,7 @@ main(int argListSize, const char *argList[])
                         cmdEnd(0, NULL);
                         cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
                         cfgLoadLogFile();
-                        cmdBegin(true);
+                        cmdBegin();
 
                         // Run expire
                         cmdExpire();

@@ -12,7 +12,21 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>ProtocolParallel</code> to complete with no jobs.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2020-08-31" version="2.29" title="Auto S3 Credentials on AWS">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -40,9 +54,170 @@
                         <p>Fix issue with <id>=</id> character in file or database names.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="david.youatt"/>
+                            <release-item-reviewer id="ales.zeleny"/>
+                            <release-item-reviewer id="jeanette.bromage"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically retrieve temporary <proper>S3</proper> credentials on <proper>AWS</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-mode</br-option> option to disable archiving on restore.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <p><postgres/> 13 beta3 support.</p>
+
+                        <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Asynchronous <id>list</id>/<id>remove</id> for <proper>S3</proper>/<proper>Azure</proper> storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="MannerMan"/>
+                            <release-item-ideator id="brad.nicholson"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="brad.nicholson"/>
+                            <release-item-reviewer id="MannerMan"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve memory usage of unlogged relation detection in manifest build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Proactively close file descriptors after forking async process.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="floris.van.nee"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Delay backup remote connection close until after archive check.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve detailed error output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve TLS error reporting.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Add IoClient and IoSession interfaces."/>
+                        <commit subject="Move file descriptor read/write ready into IoRead/IoWrite."/>
+                        <commit subject="Implement IoClient/IoSession interfaces for SocketClient/SocketSession."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>HttpClient</code>/<code>HttpSession</code> to work on plain sockets.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for <id>HTTP/1.0</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add general-purpose statistics collector.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>user-agent</id> to <proper>HTTP</proper> requests.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ugo.bellavance"/>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>none</id> to <br-option>compress-type</br-option> option reference and fix example.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="don.seiler"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add missing <id>azure</id> type in <br-option>repo-type</br-option> option reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="don.seiler"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typo in <br-option>repo-cipher-type</br-option> option reference.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -8588,6 +8763,11 @@
             <contributor-id type="github">evanbenoit</contributor-id>
         </contributor>
 
+        <contributor id="floris.van.nee">
+            <contributor-name-display>Floris van Nee</contributor-name-display>
+            <contributor-id type="github">fvannee</contributor-id>
+        </contributor>
+
         <contributor id="vidhya.gurumoorthi">
             <contributor-name-display>Vidhya Gurumoorthi</contributor-name-display>
             <contributor-id type="github">fpa-postgres</contributor-id>
@@ -8692,7 +8872,7 @@
         </contributor>
 
         <contributor id="john.kelly">
-            <contributor-name-display>John Kelley</contributor-name-display>
+            <contributor-name-display>John Kelly</contributor-name-display>
         </contributor>
 
         <contributor id="julian.zhang">
@@ -8708,6 +8888,11 @@
         <contributor id="huseyin.sonmez">
             <contributor-name-display>H&amp;ouml;seyin S&amp;ouml;nmez</contributor-name-display>
             <contributor-id type="github">huseynsnmz</contributor-id>
+        </contributor>
+
+        <contributor id="jeanette.bromage">
+            <contributor-name-display>Jeanette Bromage</contributor-name-display>
+            <contributor-id type="github">JBromage</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
@@ -8763,6 +8948,11 @@
         <contributor id="magnus.hagander">
             <contributor-name-display>Magnus Hagander</contributor-name-display>
             <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="MannerMan">
+            <contributor-name-display>Oscar</contributor-name-display>
+            <contributor-id type="github">MannerMan</contributor-id>
         </contributor>
 
         <contributor id="marc.cousin">
@@ -8958,6 +9148,10 @@
         <contributor id="ucando">
             <contributor-name-display>ucando</contributor-name-display>
             <contributor-id type="github">ucando</contributor-id>
+        </contributor>
+
+        <contributor id="ugo.bellavance">
+            <contributor-name-display>Ugo Bellavance</contributor-name-display>
         </contributor>
 
         <contributor id="urs.kramer">
