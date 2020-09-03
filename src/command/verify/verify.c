@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Verify Command
+Verify Command to verify the contents of the repository
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -124,17 +124,19 @@ typedef struct VerifyJobData
 Load a file into memory
 ***********************************************************************************************************************************/
 static StorageRead *
-verifyFileLoad(const String *fileName, const String *cipherPass)
+verifyFileLoad(const String *pathFileName, const String *cipherPass)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, fileName);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, pathFileName);                  // Fully qualified path/file name
+        FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to open file if encrypted
     FUNCTION_TEST_END();
+
+    ASSERT(pathFileName != NULL);
 
 // CSHANG But how does this type of reading help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
 
     // Read the file and error if missing
-    StorageRead *result = storageNewReadP(storageRepo(), fileName);
+    StorageRead *result = storageNewReadP(storageRepo(), pathFileName);
 
     // *read points to a location within result so update result with contents based on necessary filters
     IoRead *read = storageReadIo(result);
@@ -143,22 +145,22 @@ verifyFileLoad(const String *fileName, const String *cipherPass)
     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
     // If the file is compressed, add a decompression filter
-    if (compressTypeFromName(fileName) != compressTypeNone)
-        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(fileName)));
+    if (compressTypeFromName(pathFileName) != compressTypeNone)
+        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(pathFileName)));
 
     FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
-Get status of info files in repository
+Get status of info files in the repository
 ***********************************************************************************************************************************/
 static VerifyInfoFile
-verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPass)
+verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, pathFileName);
-        FUNCTION_LOG_PARAM(BOOL, loadFile);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(STRING, pathFileName);                   // Fully qualified path/file name
+        FUNCTION_LOG_PARAM(BOOL, keepFile);                         // Should the file be kept in memory?
+        FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to open file if encrypted
     FUNCTION_LOG_END();
 
     ASSERT(pathFileName != NULL);
@@ -171,23 +173,18 @@ verifyInfoFile(const String *pathFileName, bool loadFile, const String *cipherPa
         {
             IoRead *infoRead = storageReadIo(verifyFileLoad(pathFileName, cipherPass));
 
-            if (loadFile)
+            // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close it
+            if (keepFile)
             {
                 if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR))
-                {
                     result.backup = infoBackupMove(infoBackupNewLoad(infoRead), memContextPrior());
-                }
                 else if (strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
-                {
                     result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
-                }
                 else
-                {
                     result.manifest = manifestMove(manifestNewLoad(infoRead), memContextPrior());
-                }
             }
             else
-                ioReadDrain(infoRead);      // Drain the io and close it
+                ioReadDrain(infoRead);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -421,8 +418,8 @@ void
 verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);
-        FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);
+        FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);                // Postgres information from the archive.info file
+        FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);                 // Postgres information from the backup.info file
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -468,10 +465,10 @@ createArchiveIdRange(
     ArchiveResult *archiveIdResult, StringList *walFileList, List *archiveIdResultList, unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(ARCHIVE_RESULT, archiveIdResult);
-        FUNCTION_TEST_PARAM(STRING_LIST, walFileList);
-        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);
-        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
+        FUNCTION_TEST_PARAM_P(ARCHIVE_RESULT, archiveIdResult);     // The result set for the archive Id being processed
+        FUNCTION_TEST_PARAM(STRING_LIST, walFileList);              // Sorted (ascending) list of WAL files in a timeline
+        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // The list of archive Id results to add archiveIdResult to
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to the overall job error total
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdResult != NULL);
@@ -580,13 +577,13 @@ createArchiveIdRange(
 }
 
 /***********************************************************************************************************************************
-Verify the job data archives
+Verify the job data for the archives
 ***********************************************************************************************************************************/
 static ProtocolParallelJob *
 verifyArchive(void *data)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM_P(VOID, data);                          // Pointer to the job data
     FUNCTION_TEST_END();
 
     ProtocolParallelJob *result = NULL;
@@ -814,8 +811,8 @@ static ProtocolParallelJob *
 verifyJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(UINT, clientIdx);
+        FUNCTION_TEST_PARAM_P(VOID, data);                          // Pointer to the job data
+        FUNCTION_TEST_PARAM(UINT, clientIdx);                       // Client index (not used for this process)
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -864,7 +861,7 @@ static String *
 verifyErrorMsg(VerifyResult verifyResult)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, verifyResult);
+        FUNCTION_TEST_PARAM(UINT, verifyResult);                    // Result code from the verifyFile() function
     FUNCTION_TEST_END();
 
     String *result = strNew("");
@@ -888,11 +885,11 @@ setBackupCheckArchive(
     unsigned int *jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, backupList);
-        FUNCTION_TEST_PARAM(INFO_BACKUP, backupInfo);
-        FUNCTION_TEST_PARAM(STRING_LIST, archiveIdList);
-        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);
-        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);
+        FUNCTION_TEST_PARAM(STRING_LIST, backupList);               // List of backup labels in the backup directory
+        FUNCTION_TEST_PARAM(INFO_BACKUP, backupInfo);               // Contents of the backup.info file
+        FUNCTION_TEST_PARAM(STRING_LIST, archiveIdList);            // List of archiveIds in the archive directory
+        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Pointer to InfoPg of archive.info for accesing PG history
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to overall job error total
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -962,10 +959,10 @@ static void
 addInvalidWalFile(List *walRangeList, VerifyResult fileResult, String *fileName, String *walSegment)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, walRangeList);
-        FUNCTION_TEST_PARAM(UINT, fileResult);
-        FUNCTION_TEST_PARAM(STRING, fileName);
-        FUNCTION_TEST_PARAM(STRING, walSegment);
+        FUNCTION_TEST_PARAM(LIST, walRangeList);                    // List of WAL ranges for an archive Id
+        FUNCTION_TEST_PARAM(UINT, fileResult);                      // Result of verifyFile()
+        FUNCTION_TEST_PARAM(STRING, fileName);                      // File name (without the REPO prefix)
+        FUNCTION_TEST_PARAM(STRING, walSegment);                    // WAL segment, i.e. 000000010000000000000005
     FUNCTION_TEST_END();
 
     ASSERT(walRangeList != NULL);
@@ -1002,7 +999,7 @@ static String *
 verifyRender(List *archiveIdResultList)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);
+        FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // Result list for all archive Ids in the repo
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdResultList != NULL);
@@ -1067,7 +1064,7 @@ static String *
 verifyProcess(unsigned int *errorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM_P(UINT, errorTotal);
+        FUNCTION_TEST_PARAM_P(UINT, errorTotal);                    // Pointer to overall job error total
     FUNCTION_LOG_END();
 
     String *result = NULL;
