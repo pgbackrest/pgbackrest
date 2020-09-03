@@ -18,3 +18,7 @@
 
 - Store default sections before file/link/path sections to avoid two passes on load.
 - Format backup labels using gmtime().
+
+## Options
+
+- Disable symlinks by default on `posix` repos. This is a convenience feature for manual access to the repo and it makes more sense to make it optional.

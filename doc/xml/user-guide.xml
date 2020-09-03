@@ -2204,7 +2204,9 @@
             <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
         </block>
 
-        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo1-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
+
+        <p>This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
         <code-block title="Sample Amazon S3 Policy">
             {
@@ -2785,6 +2787,8 @@
             </execute-list>
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
+
+            <admonition type="important">If the cluster is intended to be promoted without becoming the new primary (e.g. for reporting or testing), use <br-option>--archive-mode=off</br-option> or set <pg-option>archive_mode=off</pg-option> in <file>postgresql.conf</file> to disable archiving. If archiving is not disabled then the repository may be polluted with WAL that can make restores more difficult.</admonition>
 
             <execute-list host="{[host-pg2]}">
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>

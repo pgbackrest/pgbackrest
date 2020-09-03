@@ -4,7 +4,7 @@ Test Common Command Routines
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "storage/storage.h"
+#include "common/stat.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -33,14 +33,14 @@ testRun(void)
 
         harnessLogLevelSet(logLevelInfo);
 
-        TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
+        TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         harnessLogResult(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async");
 
         strLstAddZ(commandParamList, "param 2");
         cfgCommandParamSet(commandParamList);
 
-        TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameters");
+        TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
         harnessLogResult(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async");
 
@@ -77,26 +77,29 @@ testRun(void)
         cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, recoveryVar);
 
         cfgCommandSet(cfgCmdRestore, cfgCmdRoleDefault);
-        TEST_RESULT_VOID(cmdBegin(true), "command begin with option logging");
+        TEST_RESULT_VOID(cmdBegin(), "command begin with option logging");
         harnessLogResult(
             "P00   INFO: restore command begin " PROJECT_VERSION ": --no-config --db-include=db1 --db-include=db2"
                 " --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
                 " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 
         cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
-        TEST_RESULT_VOID(cmdBegin(true), "command begin with limited option logging");
+        TEST_RESULT_VOID(cmdBegin(), "command begin with limited option logging");
         harnessLogResult(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --reset-repo1-host"
                 " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 
-        TEST_RESULT_VOID(cmdBegin(false), "command begin no option logging");
-        harnessLogResult(
-            "P00   INFO: archive-get command begin");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check options in cache");
+
+        TEST_RESULT_STR_Z(
+            cmdOption(), " --no-config --reset-repo1-host --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>",
+            "command options");
 
         // Nothing should be logged for command begin when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(cmdBegin(true), "command begin no logging");
+        TEST_RESULT_VOID(cmdBegin(), "command begin no logging");
 
         // Nothing should be logged for command end when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
@@ -121,16 +124,15 @@ testRun(void)
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
-        httpClientNew(tlsClientNew(sckClientNew(STRDEF("BOGUS"), 443, 1000), STRDEF("BOGUS"), 1000, true, NULL, NULL), 1000);
+        // Add one stat to make sure it gets output
+        statInc(STRDEF("test"));
 
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
         hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
         TEST_RESULT_LOG(
-            "P00 DETAIL: socket statistics: objects 1, sessions 0, retries 0\n"
-            "P00 DETAIL: tls statistics: objects 1, sessions 0, retries 0\n"
-            "P00   INFO: http statistics: objects 1, sessions 0, requests 0, retries 0, closes 0\n"
+            "P00 DETAIL: statistics: {\"test\":{\"total\":1}}\n"
             "P00   INFO: archive-get command end: completed successfully ([TIME]ms)");
 
         harnessLogLevelReset();

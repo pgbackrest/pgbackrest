@@ -34,26 +34,43 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
 {
-    // Get S3 driver
-    StorageS3 *driver = (StorageS3 *)storageDriver(s3);
+    // Get security token from param
+    const char *securityToken = param.securityToken == NULL ? NULL : param.securityToken;
 
-    // Add verb, uri, version, user-agent, and authorization string
-    String *request = strNewFmt(
-        "%s %s HTTP/1.1\r\n"
-            "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
-            "authorization:AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                "SignedHeaders=content-length",
-        verb, uri);
+    // If s3 storage is set then get the driver
+    StorageS3 *driver = NULL;
 
-    if (param.content != NULL)
-        strCatZ(request, ";content-md5");
+    if (s3 != NULL)
+    {
+        driver = (StorageS3 *)storageDriver(s3);
 
-    strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+        // Also update the security token if it is not already set
+        if (param.securityToken == NULL)
+            securityToken = strZNull(driver->securityToken);
+    }
 
-    if (driver->securityToken != NULL)
-        strCatZ(request, ";x-amz-security-token");
+    // Add request
+    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, uri);
 
-    strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
+    // Add authorization header when s3 service
+    if (s3 != NULL)
+    {
+        strCatFmt(
+            request,
+                "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
+                    "SignedHeaders=content-length",
+                param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
+
+        if (param.content != NULL)
+            strCatZ(request, ";content-md5");
+
+        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+
+        if (securityToken != NULL)
+            strCatZ(request, ";x-amz-security-token");
+
+        strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
+    }
 
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
@@ -67,21 +84,31 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     }
 
     // Add host
-    if (driver->uriStyle == storageS3UriStyleHost)
+    if (s3 != NULL)
+    {
+        if (driver->uriStyle == storageS3UriStyleHost)
         strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
     else
         strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+    }
+    else
+        strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
 
-    // Add content sha256 and date
-    strCatFmt(
-        request,
-        "x-amz-content-sha256:%s\r\n"
-        "x-amz-date:????????T??????Z" "\r\n",
-        param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
-        BUFSTRZ(param.content)))));
+    // Add content checksum and date if s3 service
+    if (s3 != NULL)
+    {
+        // Add content sha256 and date
+        strCatFmt(
+            request,
+            "x-amz-content-sha256:%s\r\n"
+                "x-amz-date:????????T??????Z" "\r\n",
+            param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR,
+            BUFSTRZ(param.content)))));
 
-    if (driver->securityToken != NULL)
-        strCatFmt(request, "x-amz-security-token:%s\r\n", strZ(driver->securityToken));
+        // Add security token
+        if (securityToken != NULL)
+            strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
+    }
 
     // Add final \r\n
     strCatZ(request, "\r\n");
@@ -100,6 +127,7 @@ typedef struct TestResponseParam
 {
     VAR_PARAM_HEADER;
     unsigned int code;
+    const char *http;
     const char *header;
     const char *content;
 } TestResponseParam;
@@ -114,7 +142,7 @@ testResponse(IoWrite *write, TestResponseParam param)
     param.code = param.code == 0 ? 200 : param.code;
 
     // Output header and code
-    String *response = strNewFmt("HTTP/1.1 %u ", param.code);
+    String *response = strNewFmt("HTTP/%s %u ", param.http == NULL ? "1.1" : param.http, param.code);
 
     // Add reason for some codes
     switch (param.code)
@@ -156,6 +184,25 @@ testResponse(IoWrite *write, TestResponseParam param)
 }
 
 /***********************************************************************************************************************************
+Format ISO-8601 date with - and :
+***********************************************************************************************************************************/
+static String *
+testS3DateTime(time_t time)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(TIME, time);
+    FUNCTION_HARNESS_END();
+
+    char buffer[21];
+
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
+        "unable to format date");
+
+    FUNCTION_HARNESS_RESULT(STRING, strNew(buffer));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -170,12 +217,14 @@ testRun(void)
     const String *endPoint = strNew("s3.amazonaws.com");
     const String *host = hrnServerHost();
     const unsigned int port = hrnServerPort(0);
+    const unsigned int authPort = hrnServerPort(1);
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
         "AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/q"
         "kPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xV"
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
+    const String *credRole = STRDEF("credrole");
 
     // Config settings that are required for every test (without endpoint for special tests)
     StringList *commonArgWithoutEndpointList = strLstNew();
@@ -318,10 +367,22 @@ testRun(void)
             }
             HARNESS_FORK_CHILD_END();
 
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        .port = authPort),
+                    "auth server run");
+            }
+            HARNESS_FORK_CHILD_END();
+
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("config with keys, token, and host with custom port");
@@ -339,9 +400,6 @@ testRun(void)
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
-
-                // Set partSize to a small value for testing
-                driver->partSize = 16;
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
@@ -384,9 +442,144 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to temp credentials");
+
+                hrnServerScriptClose(service);
+
+                argList = strLstDup(commonArgList);
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
+                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(credRole)));
+                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_AUTO);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                driver = (StorageS3 *)s3->driver;
+
+                TEST_RESULT_STR(s3->path, path, "check path");
+                TEST_RESULT_STR(driver->credRole, credRole, "check role");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
+                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
+
+                // Testing requires the auth http client to be redirected
+                driver->credHost = hrnServerHost();
+                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+
+                // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
+                driver->credRole = NULL;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when retrieving role");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .http = "1.0", .code = 301);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "HTTP request failed with 301:\n"
+                        "*** URI/Query ***:\n"
+                        "/latest/meta-data/iam/security-credentials\n"
+                        "*** Request Headers ***:\n"
+                        "content-length: 0\n"
+                        "host: %s",
+                    strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("missing role");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .http = "1.0", .code = 404);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "role to retrieve temporary credentials not found\n"
+                        "HINT: is a valid IAM role associated with this instance?");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when retrieving temp credentials");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testResponseP(auth, .http = "1.0", .content = strZ(credRole));
+
+                hrnServerScriptClose(auth);
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .code = 300);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "HTTP request failed with 300:\n"
+                        "*** URI/Query ***:\n"
+                        "/latest/meta-data/iam/security-credentials/credrole\n"
+                        "*** Request Headers ***:\n"
+                        "content-length: 0\n"
+                        "host: %s",
+                    strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid temp credentials role");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .code = 404);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    "role '%s' not found\n"
+                        "HINT: is '%s' a valid IAM role associated with this instance?",
+                    strZ(credRole), strZ(credRole));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid code when retrieving temp credentials");
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FormatError,
+                    "unable to retrieve temporary credentials: IAM role is not configured");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(
+                            "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
+                                ",\"Expiration\":\"%s\"}",
+                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
+
+                hrnServerScriptClose(auth);
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z");
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
@@ -411,11 +604,32 @@ testRun(void)
                     "*** Response Content ***:\n"
                     "CONTENT")
 
+                // Check that temp credentials were set
+                TEST_RESULT_STR_Z(driver->accessKey, "x", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "y", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "z", "check security token");
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD");
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(
+                            "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
+                                ",\"Expiration\":\"%s\"}",
+                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+
+                hrnServerScriptClose(auth);
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz");
                 testResponseP(service);
+
+                // Make a copy of the signing key to verify that it gets changed when the keys are updated
+                const Buffer *oldSigningKey = bufDup(driver->signingKey);
 
                 StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
@@ -430,6 +644,17 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
                 TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+
+                // Check that temp credentials were changed
+                TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
+                TEST_RESULT_STR_Z(driver->secretAccessKey, "yy", "check secret access key");
+                TEST_RESULT_STR_Z(driver->securityToken, "zz", "check security token");
+
+                // Check that the signing key changed
+                TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");

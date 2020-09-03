@@ -12,7 +12,32 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.29dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint about starting the stanza when WAL segment not found.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>ProtocolParallel</code> to complete with no jobs.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2020-08-31" version="2.29" title="Auto S3 Credentials on AWS">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -41,11 +66,46 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="david.youatt"/>
+                            <release-item-reviewer id="ales.zeleny"/>
+                            <release-item-reviewer id="jeanette.bromage"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically retrieve temporary <proper>S3</proper> credentials on <proper>AWS</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-mode</br-option> option to disable archiving on restore.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p><postgres/> 13 beta3 support.</p>
 
                         <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Asynchronous <id>list</id>/<id>remove</id> for <proper>S3</proper>/<proper>Azure</proper> storage.</p>
                     </release-item>
 
                     <release-item>
@@ -83,6 +143,14 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve detailed error output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
@@ -114,6 +182,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add general-purpose statistics collector.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
@@ -124,6 +200,16 @@
 
             <release-doc-list>
                 <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ugo.bellavance"/>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>none</id> to <br-option>compress-type</br-option> option reference and fix example.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="don.seiler"/>
@@ -8634,6 +8720,11 @@
             <contributor-id type="github">danielwestermann</contributor-id>
         </contributor>
 
+        <contributor id="david.christensen">
+            <contributor-name-display>David Christensen</contributor-name-display>
+            <contributor-id type="github">machack666</contributor-id>
+        </contributor>
+
         <contributor id="david.raftis">
             <contributor-name-display>David Raftis</contributor-name-display>
             <contributor-id type="github">dpr11</contributor-id>
@@ -8797,7 +8888,7 @@
         </contributor>
 
         <contributor id="john.kelly">
-            <contributor-name-display>John Kelley</contributor-name-display>
+            <contributor-name-display>John Kelly</contributor-name-display>
         </contributor>
 
         <contributor id="julian.zhang">
@@ -8813,6 +8904,11 @@
         <contributor id="huseyin.sonmez">
             <contributor-name-display>H&amp;ouml;seyin S&amp;ouml;nmez</contributor-name-display>
             <contributor-id type="github">huseynsnmz</contributor-id>
+        </contributor>
+
+        <contributor id="jeanette.bromage">
+            <contributor-name-display>Jeanette Bromage</contributor-name-display>
+            <contributor-id type="github">JBromage</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
@@ -9068,6 +9164,10 @@
         <contributor id="ucando">
             <contributor-name-display>ucando</contributor-name-display>
             <contributor-id type="github">ucando</contributor-id>
+        </contributor>
+
+        <contributor id="ugo.bellavance">
+            <contributor-name-display>Ugo Bellavance</contributor-name-display>
         </contributor>
 
         <contributor id="urs.kramer">

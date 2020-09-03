@@ -46,12 +46,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 67 tests selected
+--> P00   INFO: 68 tests selected
                 
-    P00   INFO: P1-T01/67 - vm=none, module=common, test=error
-           [filtered 64 lines of output]
-    P00   INFO: P1-T66/67 - vm=none, module=performance, test=type
-    P00   INFO: P1-T67/67 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
+           [filtered 65 lines of output]
+    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
+    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -138,7 +138,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 --- output ---
 
     P00   INFO: test begin - log level info
-    P00   INFO: Using cached pgbackrest/test:u18-base-20200626A image (7df9a43ce9b6736e5f8dc797edd0f6326908fd2b) ...
+    P00   INFO: Using cached pgbackrest/test:u18-base-20200814A image (7df9a43ce9b6736e5f8dc797edd0f6326908fd2b) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
 ```
