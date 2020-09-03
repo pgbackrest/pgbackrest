@@ -449,6 +449,10 @@ testRun(void)
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n", "file missing");
+
+        // Coverage test
+        TEST_RESULT_VOID(
+            addInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, strNew("test"), strNew("3")), "coverage test");
     }
 
     // *****************************************************************************************************************************
