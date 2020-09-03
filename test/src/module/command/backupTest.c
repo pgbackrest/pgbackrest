@@ -2122,7 +2122,8 @@ testRun(void)
                 cmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                "HINT: check the PostgreSQL server log for errors.");
+                "HINT: check the PostgreSQL server log for errors.\n"
+                "HINT: run the 'start' command if the stanza was previously stopped.");
 
             // Remove halted backup so there's no resume
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
