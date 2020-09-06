@@ -178,10 +178,8 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
             {
                 if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR))
                     result.backup = infoBackupMove(infoBackupNewLoad(infoRead), memContextPrior());
-                else if (strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
-                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
                 else
-                    result.manifest = manifestMove(manifestNewLoad(infoRead), memContextPrior());
+                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
             }
             else
                 ioReadDrain(infoRead);
@@ -314,102 +312,6 @@ verifyBackupInfoFile(void)
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
-
-// /***********************************************************************************************************************************
-// Get the manifest file
-// ***********************************************************************************************************************************/
-// static Manifest *
-// verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *currentBackup, const InfoPg *pgHistory)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STRING, backupLabel);
-//         FUNCTION_TEST_PARAM(STRING, cipherPass);
-//         FUNCTION_LOG_PARAM_P(BOOL, currentBackup);
-//         FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
-//     FUNCTION_LOG_END();
-//
-//     Manifest *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
-//
-//         // Get the main manifest file
-//         VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
-//
-//         // If the main file did not error, then report on the copy's status and check checksums
-//         if (verifyManifestInfo.errorCode == 0)
-//         {
-//             result = verifyManifestInfo.manifest;
-//             manifestMove(result, memContextPrior());
-//
-//             // Attempt to load the copy and report on it's status but don't keep it in memory
-//             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-//                 strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
-//
-//             // If the copy loaded successfuly, then check the checksums
-//             if (verifyManifestInfoCopy.errorCode == 0)
-//             {
-//                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
-//                 // corrupt so log a warning but trust main
-//                 if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-//                     LOG_WARN("backup.manifest.copy does not match backup.manifest");
-//             }
-//         }
-//         else
-//         {
-//             // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
-//             // currentBackup is only notional until the main file is checked because the backup.info file may not have existed or
-//             // the backup may have completed by the time we get here. If the main manifest is simply missing, it is assumed
-//             // the backup is an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress
-//             // backup and an attempt will be made to load the manifest copy.
-//             if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
-//             {
-//                 *currentBackup = false;
-//
-//                 VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-//                     strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
-//
-//                 // If loaded successfully, then return the copy as usable
-//                 if (verifyManifestInfoCopy.errorCode == 0)
-//                 {
-//                     LOG_WARN_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupLabel));
-//
-//                     result = verifyManifestInfoCopy.manifest;
-//                     manifestMove(result, memContextPrior());
-//                 }
-//             }
-//         }
-//
-//         // If found a usable manifest then check that the database it was based on is in the history
-//         if (result != NULL)
-//         {
-//             bool found = false;
-//             const ManifestData *manData = manifestData(result);
-//
-//             // Confirm the PG database information from the manifest is in the history list
-//             for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(pgHistory); infoPgIdx++)
-//             {
-//                 InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
-//
-//                 if (pgHistoryData.id == manData->pgId && pgHistoryData.systemId == manData->pgSystemId &&
-//                     pgHistoryData.version == manData->pgVersion)
-//                 {
-//                     found = true;
-//                     break;
-//                 }
-//             }
-//
-//             // If the PG data is not found in the backup.info history, then warn but check all the files anyway
-//             if (!found)
-//                 LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strZ(backupLabel));
-//         }
-//
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN(MANIFEST, result);
-// }
 
 /***********************************************************************************************************************************
 Check the history in the info files
@@ -762,80 +664,6 @@ verifyArchive(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
-// /***********************************************************************************************************************************
-// Verify the job data backups
-// ***********************************************************************************************************************************/
-// static ProtocolParallelJob *
-// verifyBackup(void *data)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM_P(VOID, data);
-//     FUNCTION_TEST_END();
-//
-//     ProtocolParallelJob *result = NULL;
-//
-//     VerifyJobData *jobData = data;
-//
-//     // Process backup files, if any
-//     while (strLstSize(jobData->backupList) > 0)
-//     {
-//         result = NULL;
-//
-//         BackupResult backupResult =
-//         {
-//             .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
-//         };
-//
-//         bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
-//
-//         // Get a usable backup manifest file
-//         const Manifest *manifest = verifyManifestFile(
-//             backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
-//
-//         // If a usable backup.manifest file is not found
-//         if (manifest == NULL)
-//         {
-//             // Warn if it is not actually the current in-progress backup
-//             if (!inProgressBackup)
-//             {
-//                 backupResult.status = backupMissingManifest;
-//
-//                 LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
-//             }
-//             else
-//             {
-//                 backupResult.status = backupInProgress;
-//
-//                 LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
-//             }
-//
-//             // Update the result status and skip
-//             lstAdd(jobData->backupResultList, &backupResult);
-//
-//             // Remove this backup from the processing list
-//             strLstRemoveIdx(jobData->backupList, 0);
-//         }
-//         // Else process the files in the manifest
-//         else
-//         {
-// // CSHANG Problem here because the manifest poiinter is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
-//
-//             const ManifestData *manData = manifestData(manifest);
-//             backupResult.archiveStart = strDup(manData->archiveStart);
-//             backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
-//
-//             // Get the cipher subpass used to decrypt files in the backup
-//             jobData->backupCipherPass = manifestCipherSubPass(manifest);
-// // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reds the file off disk)
-// // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
-//
-// // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
-//         }
-//     }
-//
-//     FUNCTION_TEST_RETURN(result);
-// }
-
 /***********************************************************************************************************************************
 Process the job data
 ***********************************************************************************************************************************/
@@ -855,8 +683,6 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // Initialize the result
     ProtocolParallelJob *result = NULL;
 
-    // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW - will later have a memContext management
-    // {
     // Get a new job if there are any left
     VerifyJobData *jobData = data;
 
@@ -869,19 +695,6 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         if (result != NULL)
             FUNCTION_TEST_RETURN(result);  // CSHANG can only do if don't have a temp mem context
     }
-    //
-    // // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
-    // if (jobData->backupProcessing)
-    // {
-    //     result = verifyBackup(data);
-    //
-    //     // If there is a result from backups, then return it
-    //     if (result != NULL)
-    //         FUNCTION_TEST_RETURN(result);
-    // }
-
-    // }
-    // MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1210,57 +1023,49 @@ verifyProcess(unsigned int *errorTotal)
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
                         StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
-                        String *fileType = strLstGet(filePathLst, 0);
+                        // String *fileType = strLstGet(filePathLst, 0);
                         strLstRemoveIdx(filePathLst, 0);
                         String *filePathName = strLstJoin(filePathLst, "/");
 
                         ArchiveResult *archiveIdResult;
 
-                        // Get archiveId result data
-                        if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
-                        {
-                            // Find the archiveId in the list - ASSERT if not found since this should never happen
-                            String *archiveId = strLstGet(filePathLst, 0);
-                            unsigned int index = lstFindIdx(jobData.archiveIdResultList, &archiveId);
-                            ASSERT(index != LIST_NOT_FOUND);
+                        // Find the archiveId in the list - ASSERT if not found since this should never happen
+                        String *archiveId = strLstGet(filePathLst, 0);
+                        unsigned int index = lstFindIdx(jobData.archiveIdResultList, &archiveId);
+                        ASSERT(index != LIST_NOT_FOUND);
 
-                            archiveIdResult = lstGet(jobData.archiveIdResultList, index);
-                        }
+                        archiveIdResult = lstGet(jobData.archiveIdResultList, index);
 
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
                             const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
 
-                            // If this is an archive file
-                            if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
+                            if (verifyResult == verifyOk)
+                                archiveIdResult->totalValidWal++;
+                            else
                             {
-                                if (verifyResult == verifyOk)
-                                    archiveIdResult->totalValidWal++;
+                                // Log a warning because the WAL may have gone missing if expire came through and removed it
+                                // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
+                                if (verifyResult == verifyFileMissing)  // {uncovered - unable to cover in test harness}
+                                {
+                                    LOG_WARN_PID_FMT(                   // {+uncovered}
+                                        processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)),
+                                        strZ(filePathName));
+                                }
                                 else
                                 {
-                                    // Log a warning because the WAL may have gone missing if expire came through and removed it
-                                    // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
-                                    if (verifyResult == verifyFileMissing)  // {uncovered - unable to cover in test harness}
-                                    {
-                                        LOG_WARN_PID_FMT(                   // {+uncovered}
-                                            processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)),
-                                            strZ(filePathName));
-                                    }
-                                    else
-                                    {
-                                        LOG_ERROR_PID_FMT(
-                                            processId, errorTypeCode(&FileInvalidError),
-                                            "%s %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
+                                    LOG_ERROR_PID_FMT(
+                                        processId, errorTypeCode(&FileInvalidError),
+                                        "%s %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
 
-                                        jobData.jobErrorTotal++;
-                                    }
-
-                                    // Add invalid file with reason from result of verifyFile to range list
-                                    addInvalidWalFile(
-                                        archiveIdResult->walRangeList, verifyResult, filePathName,
-                                        strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
+                                    jobData.jobErrorTotal++;
                                 }
+
+                                // Add invalid file with reason from result of verifyFile to range list
+                                addInvalidWalFile(
+                                    archiveIdResult->walRangeList, verifyResult, filePathName,
+                                    strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                             }
                         }
                         // Else the job errored
@@ -1274,15 +1079,10 @@ verifyProcess(unsigned int *errorTotal)
 
                             jobData.jobErrorTotal++;
 
-                            // If this is a WAL file, then add the file to the invalid file list for WAL range of the archiveId
-                            if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
-                            {
-                                // Add invalid file with "OtherError" reason to range list
-                                addInvalidWalFile(
-                                    archiveIdResult->walRangeList, verifyOtherError, filePathName,
-                                    strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
-                            }
-
+                            // Add invalid file with "OtherError" reason to range list
+                            addInvalidWalFile(
+                                archiveIdResult->walRangeList, verifyOtherError, filePathName,
+                                strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                         }
                         // Free the job
                         protocolParallelJobFree(job);
