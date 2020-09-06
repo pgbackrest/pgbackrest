@@ -878,5 +878,11 @@ testRun(void)
         harnessLogLevelReset();
     }
 
+    TEST_RESULT_VOID(
+        storageRemoveP(
+            storageTest, strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-%s", strZ(archiveStanzaPath),
+            walBufferSha1)),
+        "remove unreadable WAL");
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
