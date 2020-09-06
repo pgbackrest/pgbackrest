@@ -496,6 +496,7 @@ printf("WAL START %s, STOP %s\n", strZ(walRange.start), strZ(walRange.stop)); ff
 
     do
     {
+printf("START LOOP INDX: %u, WALLISTSIZE %u\n", walFileIdx, strLstSize(walFileList)); fflush(stdout);
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
         // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
@@ -527,10 +528,13 @@ printf("WAL START %s, STOP %s\n", strZ(walRange.start), strZ(walRange.stop)); ff
                 bool foundDup = true;
 
                 // Remove all duplicates of this WAL, including this WAL, from the list
-                while (strLstSize(walFileList) > 0 && foundDup)
+                while (walFileIdx < strLstSize(walFileList) && foundDup)
                 {
                     if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE)))
+{
                         strLstRemoveIdx(walFileList, walFileIdx);
+printf("REMOVE DUP %s at INDX: %u, REMAINING %u\n", strZ(walSegment), walFileIdx, strLstSize(walFileList)); fflush(stdout);
+}
                     else
                         foundDup = false;
                 }
@@ -545,6 +549,7 @@ printf("WAL START %s, STOP %s\n", strZ(walRange.start), strZ(walRange.stop)); ff
             walRange.start = walSegment;
             walRange.stop = walSegment;
             walFileIdx++;
+printf("START WAL RANGE %s, WALIDX %u\n", strZ(walSegment), walFileIdx); fflush(stdout);
             continue;
         }
 
@@ -553,17 +558,28 @@ printf("WAL START %s, STOP %s\n", strZ(walRange.start), strZ(walRange.stop)); ff
         // the next WAL is 2 times the distance (WAL segment size) away, not one.
         if (strEq(
             walSegmentNext(walRange.stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
-        {
+{
+printf("UPDATE STOP %s, WALIDX %u\n", strZ(walSegment), walFileIdx); fflush(stdout);
             walRange.stop = walSegment;
-        }
+}
         else
         {
             // A gap was found and if not updating the current wal range then add the current range to the list
             // else update the current range.
             if (addWal)
+{
                 lstAdd(archiveIdResult->walRangeList, &walRange);
+printf("ADD RANGE START %s, STOP %s, WALIDX %u, SIZE %u\n", strZ(walRange.start), strZ(walRange.stop), walFileIdx, lstSize(archiveIdResult->walRangeList)); fflush(stdout);
+}
             else
-                ((WalRange *)lstGetLast(archiveIdResult->walRangeList))->stop = walRange.stop;
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
+                {
+                    ((WalRange *)lstGetLast(archiveIdResult->walRangeList))->stop = strDup(walRange.stop);
+                }
+                MEM_CONTEXT_END();
+printf("UPDATE LAST, STOP %s, WALIDX %u, SIZE %u\n", strZ(walRange.stop), walFileIdx, lstSize(archiveIdResult->walRangeList)); fflush(stdout);
+            }
 
             // Start a new range
             walRange = (WalRange)
@@ -576,6 +592,8 @@ printf("WAL START %s, STOP %s\n", strZ(walRange.start), strZ(walRange.stop)); ff
         }
 
         walFileIdx++;
+printf("INCR WALIDX TO %u, SIZE WALLIST %u, SIZE RANGE %u\n", walFileIdx, strLstSize(walFileList), lstSize(archiveIdResult->walRangeList)); fflush(stdout);
+
     }
     while (walFileIdx < strLstSize(walFileList));
 

@@ -184,7 +184,7 @@ testRun(void)
         strLstAddZ(walFileList, "000000020000000200000001");
 
         TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 1, "triplicate WAL error");
+        TEST_RESULT_UINT(errTotal, 2, "triplicate WAL error at beginning, duplicate WAL at end");
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
         TEST_RESULT_UINT(lstSize(archiveIdResultList), 1, "single archiveId result");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 1, "single range");
@@ -774,14 +774,7 @@ testRun(void)
                     storageTest,
                     strNewFmt("%s/11-2/0000000200000008/000000020000000800000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
-            "write WAL");
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000002-%s", strZ(archiveStanzaPath), walBufferSha1)),
-                walBuffer),
-            "write WAL - starts next range");
+            "write WAL - continue range");
 
         // Set log detail level to capture ranges
         harnessLogLevelSet(logLevelDetail);
@@ -791,7 +784,7 @@ testRun(void)
             verifyProcess(&errorTotal),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "  archiveId: 11-2, total WAL checked: 5, total valid WAL: 3\n"
+            "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
             "process results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
@@ -802,8 +795,7 @@ testRun(void)
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum 11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
                 "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002")));
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
@@ -812,16 +804,30 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000002-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                walBuffer),
+            "write WAL - starts next range");
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
                     strNewFmt("%s/11-2/0000000300000000/000000030000000000000000-%s", strZ(archiveStanzaPath), walBufferSha1)),
                 walBuffer),
             "write WAL - starts next timeline");
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000300000000/000000030000000000000001-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                walBuffer),
+            "write WAL - end next timeline");
 
         errorTotal = 0;
         TEST_RESULT_STR_Z(
             verifyProcess(&errorTotal),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "  archiveId: 11-2, total WAL checked: 6, total valid WAL: 4\n"
+            "  archiveId: 11-2, total WAL checked: 7, total valid WAL: 5\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
             "process new timeline results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
@@ -834,7 +840,7 @@ testRun(void)
                 "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000000")));
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001")));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, unreadable WAL file");
@@ -866,7 +872,7 @@ testRun(void)
                     "[13] Permission denied\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000000",
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001",
                  testPath(), strZ(archiveStanzaPath))));
 
         harnessLogLevelReset();
