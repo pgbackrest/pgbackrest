@@ -547,13 +547,13 @@ createArchiveIdRange(ArchiveResult *archiveIdResult, StringList *walFileList, un
             continue;
         }
 
-        // If the next WAL is the appropriate distance away, then there is no gap. For versions less than or equal to 9.2,
-        // the WAL size is static at 16MB but (for some unknown reason) WAL ending in FF is skipped so it should never exist, so
-        // the next WAL is 2 times the distance (WAL segment size) away, not one.
+        // If the next WAL is the appropriate distance away, then there is no gap
         if (strEq(
             walSegmentNext(walRange.stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
         {
             walRange.stop = walSegment;
+
+            // Update the archiveId range if WAL range is already added to the archiveId
             if (!addWal)
             {
                 MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
@@ -1232,18 +1232,20 @@ verifyProcess(unsigned int *errorTotal)
                         {
                             const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
 
+                            // If this is an archive file
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
-                                if (verifyResult != verifyOk)
+                                if (verifyResult == verifyOk)
+                                    archiveIdResult->totalValidWal++;
+                                else
                                 {
                                     // Log a warning because the WAL may have gone missing if expire came through and removed it
                                     // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
-                                    // !!! Maybe filter on missing and report an error and increment error if something else?
-                                    // meaning shouldn't a checksum or invalid size be reported as an ERROR in the log and not WARN?
-                                    if (verifyResult == verifyFileMissing)
+                                    if (verifyResult == verifyFileMissing)  // {uncovered - unable to cover in test harness}
                                     {
-                                        LOG_WARN_PID_FMT(
-                                            processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
+                                        LOG_WARN_PID_FMT(                   // {+uncovered}
+                                            processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)),
+                                            strZ(filePathName));
                                     }
                                     else
                                     {
@@ -1254,18 +1256,11 @@ verifyProcess(unsigned int *errorTotal)
                                         jobData.jobErrorTotal++;
                                     }
 
-                                    // If this is a WAL file
-                                    if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
-                                    {
-                                        // Add invalid file with reason from result of verifyFile to range list
-                                        addInvalidWalFile(
-                                            archiveIdResult->walRangeList, verifyResult, filePathName,
-                                            strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
-                                    }
+                                    // Add invalid file with reason from result of verifyFile to range list
+                                    addInvalidWalFile(
+                                        archiveIdResult->walRangeList, verifyResult, filePathName,
+                                        strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                 }
-                                else
-                                    archiveIdResult->totalValidWal++;
-
                             }
                         }
                         // Else the job errored
