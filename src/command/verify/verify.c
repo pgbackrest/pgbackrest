@@ -1214,7 +1214,7 @@ verifyProcess(unsigned int *errorTotal)
                         strLstRemoveIdx(filePathLst, 0);
                         String *filePathName = strLstJoin(filePathLst, "/");
 
-                        ArchiveResult *archiveIdResult;
+                        ArchiveResult *archiveIdResult = NULL;
 
                         // Get archiveId result data
                         if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
@@ -1284,6 +1284,7 @@ verifyProcess(unsigned int *errorTotal)
                             }
 
                         }
+
                         // Free the job
                         protocolParallelJobFree(job);
                     }

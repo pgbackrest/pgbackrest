@@ -615,12 +615,17 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyFile()");
 
-        String *checksum = strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
         String *filePathName = strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
         const char *fileContents = "acefile";
-        unsigned int fileSize = 7;
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF(fileContents)), "put file");
+
+        // Must read the file back to get the size and checksum because different OS report different checksums and sizes
+        StorageRead *read = storageNewReadP(storageRepo(), filePathName);
+        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
+        uint64_t fileSize = bufUsed(storageGetP(read));
+        const String *checksum = varStr(
+            ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR));
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, NULL), verifyOk, "file ok");
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, fileSize, NULL), verifyOk, "file size ok");
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, 0, NULL), verifySizeInvalid, "file size invalid");
@@ -630,16 +635,16 @@ testRun(void)
             verifyFile(
                 strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), checksum, false, 0, NULL), verifyFileMissing, "file missing");
 
-
         // Create a compressed encrypted repo file
         filePathName = strNew(STORAGE_REPO_BACKUP "/testfile.gz");
         StorageWrite *write = storageNewWriteP(storageRepoWrite(), filePathName);
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
-        storagePutP(write, BUFSTRDEF("acefile"));
+        TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF(fileContents)), "write encrypted, compressed file");
 
-        TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, strNew("pass")), verifyOk, "file encrypted compressed ok");
+        TEST_RESULT_UINT(
+            verifyFile(filePathName, checksum, true, fileSize, strNew("pass")), verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
                 filePathName, strNew("badchecksum"), false, 0, strNew("pass")), verifyChecksumMismatch,
@@ -657,7 +662,7 @@ testRun(void)
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(filePathName));
-        varLstAdd(paramList, varNewStr(strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770")));
+        varLstAdd(paramList, varNewStr(checksum));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewUInt64(0));
         varLstAdd(paramList, varNewStrZ("pass"));
@@ -849,7 +854,8 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-%s", strZ(archiveStanzaPath), walBufferSha1),
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9",
+                        strZ(archiveStanzaPath)),
                 .modeFile = 0200),
                 walBuffer),
             "write WAL - file not readable");
@@ -876,13 +882,14 @@ testRun(void)
                  testPath(), strZ(archiveStanzaPath))));
 
         harnessLogLevelReset();
-    }
 
-    TEST_RESULT_VOID(
-        storageRemoveP(
-            storageTest, strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-%s", strZ(archiveStanzaPath),
-            walBufferSha1)),
-        "remove unreadable WAL");
+        TEST_RESULT_VOID(
+            storageRemoveP(
+                storageTest,
+                strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9",
+                    strZ(archiveStanzaPath))),
+            "remove unreadable WAL");
+    }
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
