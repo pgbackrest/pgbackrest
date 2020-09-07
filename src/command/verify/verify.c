@@ -77,7 +77,7 @@ typedef struct WalRange
 // Invalid file information (not missing but files failing verification) - for archive and backup
 typedef struct InvalidFile
 {
-    String *fileName;                                               // Filename  - CSHANG Sshould maybe be filePathName
+    String *fileName;                                               // Name of the file (includes path within the stanza)
     VerifyResult reason;                                            // Reason file is invalid (e.g. incorrect checksum)
 } InvalidFile;
 

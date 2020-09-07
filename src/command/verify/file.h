@@ -8,15 +8,6 @@ Verify File
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
-Verify file types
-***********************************************************************************************************************************/
-// typedef enum  // CSHANG don't think we need
-// {
-//     verifyFileArchive,
-//     verifyFileBackup,
-// } VerifyFileType;
-
-/***********************************************************************************************************************************
 File result
 ***********************************************************************************************************************************/
 typedef enum
@@ -31,14 +22,13 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Verify a file in the pgBackRest repository
 typedef struct VerifyFileResult
 {
     VerifyResult fileResult;
     String *filePathName;
-    // VerifyFileType fileType;  // CSHANG Don't think we need
 } VerifyFileResult;
 
+// Verify a file in the pgBackRest repository
 VerifyResult verifyFile(
     const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass);
 

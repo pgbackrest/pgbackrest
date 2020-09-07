@@ -1558,7 +1558,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR))
     {
-        MEM_CONTEXT_BEGIN(loadData->memContext)  // cshang
+        MEM_CONTEXT_BEGIN(loadData->memContext)
         {
             if (strEq(key, MANIFEST_KEY_GROUP_STR))
                 loadData->fileGroupDefault = manifestOwnerDefaultGet(value);
@@ -1742,7 +1742,7 @@ manifestNewLoad(IoRead *read)
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNew("load"),   // cshang
+            .memContext = memContextNew("load"),
             .manifest = this,
         };
 

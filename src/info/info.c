@@ -285,7 +285,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
                 .callbackFunction = callbackFunction,
                 .callbackData = callbackData,
                 .info = this,
-                .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),  // CSHANG So this creates CryptoHash SHA1 driver object and then creates an IoFilter interface object, type = CRYPTO_HASH_FILTER_TYPE_STR, and attaches the SHA1 driver to it.
+                .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
             };
 
             INFO_CHECKSUM_BEGIN(data.checksumActual);
