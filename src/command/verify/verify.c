@@ -1027,7 +1027,7 @@ verifyProcess(unsigned int *errorTotal)
                         strLstRemoveIdx(filePathLst, 0);
                         String *filePathName = strLstJoin(filePathLst, "/");
 
-                        ArchiveResult *archiveIdResult;
+                        ArchiveResult *archiveIdResult = NULL;
 
                         // Find the archiveId in the list - ASSERT if not found since this should never happen
                         String *archiveId = strLstGet(filePathLst, 0);
@@ -1084,6 +1084,7 @@ verifyProcess(unsigned int *errorTotal)
                                 archiveIdResult->walRangeList, verifyOtherError, filePathName,
                                 strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                         }
+
                         // Free the job
                         protocolParallelJobFree(job);
                     }
