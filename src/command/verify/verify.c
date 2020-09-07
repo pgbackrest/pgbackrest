@@ -26,8 +26,6 @@ Verify Command to verify the contents of the repository
 #include "protocol/parallel.h"
 #include "storage/helper.h"
 
-#include <stdio.h> // CSHANG Remove
-
 /***********************************************************************************************************************************
 Data Types and Structures
 ***********************************************************************************************************************************/
@@ -132,8 +130,6 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
     FUNCTION_TEST_END();
 
     ASSERT(pathFileName != NULL);
-
-// CSHANG But how does this type of reading help with manifest? Won't we still be pulling in the entire file into memory to get the checksum or will I need to chunk it up and add all the checksums together?
 
     // Read the file and error if missing
     StorageRead *result = storageNewReadP(storageRepo(), pathFileName);
@@ -614,9 +610,6 @@ verifyArchive(void *data)
 
                         // Assign job to result
                         result = protocolParallelJobNew(VARSTR(filePathName), command);
-                        // CSHANG for now, since no temp context then no move
-                        // result = protocolParallelJobMove(
-                        //     protocolParallelJobNew(VARSTR(filePathName), command), memContextPrior());
 
                         // Remove the file to process from the list
                         strLstRemoveIdx(jobData->walFileList, 0);
@@ -693,7 +686,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
         // If there is a result from archiving, then return it
         if (result != NULL)
-            FUNCTION_TEST_RETURN(result);  // CSHANG can only do if don't have a temp mem context
+            FUNCTION_TEST_RETURN(result);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -965,7 +958,7 @@ verifyProcess(unsigned int *errorTotal)
             // Initialize the job data
             VerifyJobData jobData =
             {
-                .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
+                .walPathList = strLstNew(),
                 .walFileList = strLstNew(),
                 .backupFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
@@ -1003,10 +996,6 @@ verifyProcess(unsigned int *errorTotal)
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
                     (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
-
-                // CSHANG Add this option
-                // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
-                // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));

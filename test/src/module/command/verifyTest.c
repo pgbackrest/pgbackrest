@@ -3,8 +3,6 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include <stdio.h> // CSHANG remove
-
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
