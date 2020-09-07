@@ -945,7 +945,6 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             // Add compression
             if (compressType != compressTypeNone)
             {
-// CSHANG SHOULD REPLACE ioWriteFilterGroup(storageWriteIo(write)) with filterGroup
                 ioFilterGroupAdd(
                     ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
             }
