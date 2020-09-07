@@ -615,7 +615,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyFile()");
 
-        String *filePathName = strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
+        String *filePathName =  strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF("")), "put zero-sized file");
+        TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), true, 0, NULL), verifyOk, "file ok");
+
         const char *fileContents = "acefile";
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF(fileContents)), "put file");

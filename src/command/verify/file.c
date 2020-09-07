@@ -63,7 +63,6 @@ verifyFile(
             {
                 result = verifyChecksumMismatch;
             }
-            // CSHANG does size filter return 0 if file size is 0? Assume it does...but just in case...
             // If the size can be checked, do so
             else if (sizeCheck && fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
             {
