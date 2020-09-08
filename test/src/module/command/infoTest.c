@@ -30,7 +30,6 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
-        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         StringList *argListText = strLstDup(argList);
 
         strLstAddZ(argList, "--output=json");
@@ -2464,7 +2463,6 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
-        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         harnessCfgLoad(cfgCmdInfo, argList);
 
         storagePathCreateP(storageLocalWrite(), archivePath);

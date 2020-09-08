@@ -140,7 +140,8 @@ cfgLoadUpdateOption(void)
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
             // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)))
+            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)) &&
+                cfgCommand() != cfgCmdInfo)
             {
                 LOG_WARN_FMT(
                     "option '%s' is not set for '%s=%s', the repository may run out of space"
@@ -210,7 +211,7 @@ cfgLoadUpdateOption(void)
                 // corresponding setting is UNDEF since UNDEF means backups will not be expired but they should be in the
                 // practice of setting this value even though expiring the archive itself is OK and will be performed.
                 if ((strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) &&
-                    (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)))
+                    (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)) && cfgCommand() != cfgCmdInfo)
                 {
                     LOG_WARN_FMT("option '%s' is not set for '%s=%s'\n"
                         "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
