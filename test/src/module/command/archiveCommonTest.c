@@ -333,5 +333,23 @@ testRun(void)
             "get range >= 11/1MB");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("archiveIdComparator()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveId comparator sorting");
+
+        StringList *list = strLstComparatorSet(strLstNew(), archiveIdComparator);
+
+        strLstAddZ(list, "10-4");
+        strLstAddZ(list, "11-10");
+        strLstAddZ(list, "9.6-1");
+
+        TEST_RESULT_STR_Z(strLstJoin(strLstSort(list, sortOrderAsc), ", "), "9.6-1, 10-4, 11-10", "sort ascending");
+
+        strLstAddZ(list, "9.4-2");
+        TEST_RESULT_STR_Z(strLstJoin(strLstSort(list, sortOrderDesc), ", "), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

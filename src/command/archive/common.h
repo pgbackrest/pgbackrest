@@ -75,6 +75,9 @@ void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegm
 // Execute the async process.  This function will only return in the calling process and the implementation is platform depedent.
 void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
 
+// Comparator function for sorting archive ids by the database history id (the number after the dash) e.g. 9.4-1, 10-2
+int archiveIdComparator(const void *item1, const void *item2);
+
 // Is the segment partial?
 bool walIsPartial(const String *walSegment);
 
