@@ -35,7 +35,14 @@ testRun(void)
 
         InfoArchive *info = NULL;
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "    load new archive info");
+        // Load and test move function
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "load new archive info");
+            TEST_RESULT_VOID(infoArchiveMove(info, memContextPrior()), "    move info");
+        }
+        MEM_CONTEXT_TEMP_END();
+
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "    no cipher sub");

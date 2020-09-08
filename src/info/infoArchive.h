@@ -43,6 +43,9 @@ Functions
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 
+// Move to a new parent mem context
+InfoArchive *infoArchiveMove(InfoArchive *this, MemContext *parentNew);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/

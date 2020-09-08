@@ -40,9 +40,15 @@ testRun(void)
                 "\"db-version\":\"9.4\"}\n"
         );
 
-        // Load to make sure ignore-section is ignored
-        InfoBackup *infoBackup;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "    new backup info");
+        InfoBackup *infoBackup = NULL;
+
+        // Load and test move function then make sure ignore-section is ignored
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "new backup info");
+            TEST_RESULT_VOID(infoBackupMove(infoBackup, memContextPrior()), "    move info");
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Save to verify with new created info backup
         Buffer *contentSave = bufNew(0);

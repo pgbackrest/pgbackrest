@@ -35,6 +35,7 @@ struct InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
 };
 
+OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
