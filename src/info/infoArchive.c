@@ -82,10 +82,8 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
-/***********************************************************************************************************************************
-Create new object and load contents from a file
-***********************************************************************************************************************************/
-static InfoArchive *
+/**********************************************************************************************************************************/
+InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
