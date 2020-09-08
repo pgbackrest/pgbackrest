@@ -43,25 +43,11 @@ STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
 /***********************************************************************************************************************************
-Define default wal segment size
-
-Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
-WAL segment size is supported for versions below 11.
-***********************************************************************************************************************************/
-#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
-
-/***********************************************************************************************************************************
 Control file size.  The control file is actually 8192 bytes but only the first 512 bytes are used to prevent torn pages even on
 really old storage with 512-byte sectors.  This is true across all versions of PostgreSQL.
 ***********************************************************************************************************************************/
 #define PG_CONTROL_SIZE                                             ((unsigned int)(8 * 1024))
 #define PG_CONTROL_DATA_SIZE                                        ((unsigned int)(512))
-
-/***********************************************************************************************************************************
-WAL header size.  It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
-something far larger needed but <= the minimum read size on just about any system.
-***********************************************************************************************************************************/
-#define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
 
 /***********************************************************************************************************************************
 Name of default PostgreSQL database used for running all queries and commands
