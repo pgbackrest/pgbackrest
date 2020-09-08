@@ -87,7 +87,7 @@ Segment size can only be changed at compile time and is not known to be well-tes
 #define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
-WAL header size.  It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
+WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
 something far larger needed but <= the minimum read size on just about any system.
 ***********************************************************************************************************************************/
 #define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))

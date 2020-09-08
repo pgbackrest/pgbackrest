@@ -1735,7 +1735,7 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Manifest")  // object context
+    MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
         this = manifestNewInternal();
 

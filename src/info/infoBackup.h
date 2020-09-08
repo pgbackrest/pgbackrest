@@ -61,6 +61,8 @@ typedef struct InfoBackupData
 Constructors
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
+
+// Create new object and load contents from IoRead
 InfoBackup *infoBackupNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************

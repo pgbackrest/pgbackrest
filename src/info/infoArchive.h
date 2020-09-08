@@ -32,6 +32,8 @@ Archive info filename
 Constructors
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
+
+// Create new object and load contents from IoRead
 InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
