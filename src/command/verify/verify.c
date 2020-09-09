@@ -315,101 +315,101 @@ verifyBackupInfoFile(void)
     FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
-// /***********************************************************************************************************************************
-// Get the manifest file
-// ***********************************************************************************************************************************/
-// static Manifest *
-// verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *currentBackup, const InfoPg *pgHistory)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STRING, backupLabel);
-//         FUNCTION_TEST_PARAM(STRING, cipherPass);
-//         FUNCTION_LOG_PARAM_P(BOOL, currentBackup);
-//         FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
-//     FUNCTION_LOG_END();
-//
-//     Manifest *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
-//
-//         // Get the main manifest file
-//         VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
-//
-//         // If the main file did not error, then report on the copy's status and check checksums
-//         if (verifyManifestInfo.errorCode == 0)
-//         {
-//             result = verifyManifestInfo.manifest;
-//             manifestMove(result, memContextPrior());
-//
-//             // Attempt to load the copy and report on it's status but don't keep it in memory
-//             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-//                 strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
-//
-//             // If the copy loaded successfuly, then check the checksums
-//             if (verifyManifestInfoCopy.errorCode == 0)
-//             {
-//                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
-//                 // corrupt so log a warning but trust main
-//                 if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-//                     LOG_WARN("backup.manifest.copy does not match backup.manifest");
-//             }
-//         }
-//         else
-//         {
-//             // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
-//             // currentBackup is only notional until the main file is checked because the backup.info file may not have existed or
-//             // the backup may have completed by the time we get here. If the main manifest is simply missing, it is assumed
-//             // the backup is an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress
-//             // backup and an attempt will be made to load the manifest copy.
-//             if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
-//             {
-//                 *currentBackup = false;
-//
-//                 VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-//                     strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
-//
-//                 // If loaded successfully, then return the copy as usable
-//                 if (verifyManifestInfoCopy.errorCode == 0)
-//                 {
-//                     LOG_WARN_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupLabel));
-//
-//                     result = verifyManifestInfoCopy.manifest;
-//                     manifestMove(result, memContextPrior());
-//                 }
-//             }
-//         }
-//
-//         // If found a usable manifest then check that the database it was based on is in the history
-//         if (result != NULL)
-//         {
-//             bool found = false;
-//             const ManifestData *manData = manifestData(result);
-//
-//             // Confirm the PG database information from the manifest is in the history list
-//             for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(pgHistory); infoPgIdx++)
-//             {
-//                 InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
-//
-//                 if (pgHistoryData.id == manData->pgId && pgHistoryData.systemId == manData->pgSystemId &&
-//                     pgHistoryData.version == manData->pgVersion)
-//                 {
-//                     found = true;
-//                     break;
-//                 }
-//             }
-//
-//             // If the PG data is not found in the backup.info history, then warn but check all the files anyway
-//             if (!found)
-//                 LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strZ(backupLabel));
-//         }
-//
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN(MANIFEST, result);
-// }
+/***********************************************************************************************************************************
+Get the manifest file
+***********************************************************************************************************************************/
+static Manifest *
+verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *currentBackup, const InfoPg *pgHistory)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM_P(BOOL, currentBackup);
+        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
+    FUNCTION_LOG_END();
+
+    Manifest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+
+        // Get the main manifest file
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
+
+        // If the main file did not error, then report on the copy's status and check checksums
+        if (verifyManifestInfo.errorCode == 0)
+        {
+            result = verifyManifestInfo.manifest;
+            manifestMove(result, memContextPrior());
+
+            // Attempt to load the copy and report on it's status but don't keep it in memory
+            VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
+
+            // If the copy loaded successfuly, then check the checksums
+            if (verifyManifestInfoCopy.errorCode == 0)
+            {
+                // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
+                // corrupt so log a warning but trust main
+                if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
+                    LOG_WARN("backup.manifest.copy does not match backup.manifest");
+            }
+        }
+        else
+        {
+            // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
+            // currentBackup is only notional until the main file is checked because the backup.info file may not have existed or
+            // the backup may have completed by the time we get here. If the main manifest is simply missing, it is assumed
+            // the backup is an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress
+            // backup and an attempt will be made to load the manifest copy.
+            if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
+            {
+                *currentBackup = false;
+
+                VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
+
+                // If loaded successfully, then return the copy as usable
+                if (verifyManifestInfoCopy.errorCode == 0)
+                {
+                    LOG_WARN_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupLabel));
+
+                    result = verifyManifestInfoCopy.manifest;
+                    manifestMove(result, memContextPrior());
+                }
+            }
+        }
+
+        // If found a usable manifest then check that the database it was based on is in the history
+        if (result != NULL)
+        {
+            bool found = false;
+            const ManifestData *manData = manifestData(result);
+
+            // Confirm the PG database information from the manifest is in the history list
+            for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(pgHistory); infoPgIdx++)
+            {
+                InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
+
+                if (pgHistoryData.id == manData->pgId && pgHistoryData.systemId == manData->pgSystemId &&
+                    pgHistoryData.version == manData->pgVersion)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            // If the PG data is not found in the backup.info history, then warn but check all the files anyway
+            if (!found)
+                LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strZ(backupLabel));
+        }
+
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, result);
+}
 
 /***********************************************************************************************************************************
 Check the history in the info files
@@ -693,9 +693,6 @@ verifyArchive(void *data)
                 {
                     do
                     {
-                        // // Get the archive id info for the current (last) archive id being processed
-                        // ArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
-
                         // Get the fully qualified file name and checksum
                         const String *fileName = strLstGet(jobData->walFileList, 0);
                         const String *filePathName = strNewFmt(
@@ -762,79 +759,79 @@ verifyArchive(void *data)
     FUNCTION_TEST_RETURN(result);
 }
 
-// /***********************************************************************************************************************************
-// Verify the job data backups
-// ***********************************************************************************************************************************/
-// static ProtocolParallelJob *
-// verifyBackup(void *data)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM_P(VOID, data);
-//     FUNCTION_TEST_END();
-//
-//     ProtocolParallelJob *result = NULL;
-//
-//     VerifyJobData *jobData = data;
-//
-//     // Process backup files, if any
-//     while (strLstSize(jobData->backupList) > 0)
-//     {
-//         result = NULL;
-//
-//         BackupResult backupResult =
-//         {
-//             .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
-//         };
-//
-//         bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
-//
-//         // Get a usable backup manifest file
-//         const Manifest *manifest = verifyManifestFile(
-//             backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
-//
-//         // If a usable backup.manifest file is not found
-//         if (manifest == NULL)
-//         {
-//             // Warn if it is not actually the current in-progress backup
-//             if (!inProgressBackup)
-//             {
-//                 backupResult.status = backupMissingManifest;
-//
-//                 LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
-//             }
-//             else
-//             {
-//                 backupResult.status = backupInProgress;
-//
-//                 LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
-//             }
-//
-//             // Update the result status and skip
-//             lstAdd(jobData->backupResultList, &backupResult);
-//
-//             // Remove this backup from the processing list
-//             strLstRemoveIdx(jobData->backupList, 0);
-//         }
-//         // Else process the files in the manifest
-//         else
-//         {
-// // CSHANG Problem here because the manifest poiinter is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
-//
-//             const ManifestData *manData = manifestData(manifest);
-//             backupResult.archiveStart = strDup(manData->archiveStart);
-//             backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
-//
-//             // Get the cipher subpass used to decrypt files in the backup
-//             jobData->backupCipherPass = manifestCipherSubPass(manifest);
-// // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reds the file off disk)
-// // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
-//
-// // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
-//         }
-//     }
-//
-//     FUNCTION_TEST_RETURN(result);
-// }
+/***********************************************************************************************************************************
+Verify the job data backups
+***********************************************************************************************************************************/
+static ProtocolParallelJob *
+verifyBackup(void *data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    ProtocolParallelJob *result = NULL;
+
+    VerifyJobData *jobData = data;
+
+    // Process backup files, if any
+    while (strLstSize(jobData->backupList) > 0)
+    {
+        result = NULL;
+
+        BackupResult backupResult =
+        {
+            .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
+        };
+
+        bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
+
+        // Get a usable backup manifest file
+        const Manifest *manifest = verifyManifestFile(
+            backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
+
+        // If a usable backup.manifest file is not found
+        if (manifest == NULL)
+        {
+            // Warn if it is not actually the current in-progress backup
+            if (!inProgressBackup)
+            {
+                backupResult.status = backupMissingManifest;
+
+                LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
+            }
+            else
+            {
+                backupResult.status = backupInProgress;
+
+                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
+            }
+
+            // Update the result status and skip
+            lstAdd(jobData->backupResultList, &backupResult);
+
+            // Remove this backup from the processing list
+            strLstRemoveIdx(jobData->backupList, 0);
+        }
+        // Else process the files in the manifest
+        else
+        {
+// CSHANG Problem here because the manifest poiinter is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
+
+            const ManifestData *manData = manifestData(manifest);
+            backupResult.archiveStart = strDup(manData->archiveStart);
+            backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
+
+            // Get the cipher subpass used to decrypt files in the backup
+            jobData->backupCipherPass = manifestCipherSubPass(manifest);
+// CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reads the file off disk)
+// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
+
+// CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 /***********************************************************************************************************************************
 Process the job data
@@ -869,16 +866,16 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         if (result != NULL)
             FUNCTION_TEST_RETURN(result);  // CSHANG can only do if don't have a temp mem context
     }
-    //
-    // // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
-    // if (jobData->backupProcessing)
-    // {
-    //     result = verifyBackup(data);
-    //
-    //     // If there is a result from backups, then return it
-    //     if (result != NULL)
-    //         FUNCTION_TEST_RETURN(result);
-    // }
+
+    // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
+    if (jobData->backupProcessing)
+    {
+        result = verifyBackup(data);
+
+        // If there is a result from backups, then return it
+        if (result != NULL)
+            FUNCTION_TEST_RETURN(result);
+    }
 
     // }
     // MEM_CONTEXT_TEMP_END();
@@ -1159,6 +1156,7 @@ verifyProcess(unsigned int *errorTotal)
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator),
+                .backupResultList = lstNewP(sizeof(BackupResult), .comparator =  lstComparatorStr),
             };
 
             // Get a list of backups in the repo

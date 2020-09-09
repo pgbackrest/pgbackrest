@@ -585,7 +585,11 @@ testRun(void)
             storagePathCreateP(storageTest, strNewFmt("%s/20200810-171426F", strZ(backupStanzaPath))),
             "create empty backup label path");
         TEST_RESULT_VOID(cmdVerify(), "no archives, empty backup label path");
-        harnessLogResult("P00   WARN: no archives exist in the repo");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: no archives exist in the repo\n"
+            "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
+            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping", testPath(), strZ(backupStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup, empty archive");
@@ -602,7 +606,11 @@ testRun(void)
             "no jobs - empty archive id and backup label paths");
         TEST_RESULT_UINT(errorTotal, 0, "no errors");
 
-        harnessLogResult("P00   WARN: archive path '9.4-1' is empty");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: archive path '9.4-1' is empty\n"
+            "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
+            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping", testPath(), strZ(backupStanzaPath))));
     }
 
     // *****************************************************************************************************************************
