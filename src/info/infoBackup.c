@@ -64,6 +64,7 @@ struct InfoBackup
     List *backup;                                                   // List of current backups and their associated data
 };
 
+OBJECT_DEFINE_MOVE(INFO_BACKUP);
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 OBJECT_DEFINE_MOVE(INFO_BACKUP);
 
