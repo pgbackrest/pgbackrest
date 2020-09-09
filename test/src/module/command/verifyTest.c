@@ -620,15 +620,11 @@ testRun(void)
         TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), true, 0, NULL), verifyOk, "file ok");
 
         const char *fileContents = "acefile";
+        uint64_t fileSize = 7;
+        const String *checksum = STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF(fileContents)), "put file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put file");
 
-        // Must read the file back to get the size and checksum because different OS report different checksums and sizes
-        StorageRead *read = storageNewReadP(storageRepo(), filePathName);
-        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
-        uint64_t fileSize = bufUsed(storageGetP(read));
-        const String *checksum = varStr(
-            ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR));
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, NULL), verifyOk, "file ok");
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, fileSize, NULL), verifyOk, "file size ok");
         TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, 0, NULL), verifySizeInvalid, "file size invalid");
@@ -644,7 +640,7 @@ testRun(void)
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
-        TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF(fileContents)), "write encrypted, compressed file");
+        TEST_RESULT_VOID(storagePutP(write, BUFSTRZ(fileContents)), "write encrypted, compressed file");
 
         TEST_RESULT_UINT(
             verifyFile(filePathName, checksum, true, fileSize, strNew("pass")), verifyOk, "file encrypted compressed ok");
