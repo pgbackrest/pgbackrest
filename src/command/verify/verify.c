@@ -824,7 +824,8 @@ verifyBackup(void *data)
             // Get the cipher subpass used to decrypt files in the backup
             jobData->backupCipherPass = manifestCipherSubPass(manifest);
 // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reads the file off disk)
-// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but in this is not on then all bets are off
+// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
+// CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
 
 // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
         }
