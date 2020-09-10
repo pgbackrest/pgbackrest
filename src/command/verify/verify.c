@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
-Verify Command to verify the contents of the repository
+Verify Command
+
+Verify the contents of the repository.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -46,7 +48,7 @@ Data Types and Structures
 #define FUNCTION_LOG_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                                   \
     objToLog(&value, "WalRange", buffer, bufferSize)
 
-// Structure for verifying archive, backup and manifest info files
+// Structure for verifying archive, backup, and manifest info files
 typedef struct VerifyInfoFile
 {
     InfoBackup *backup;                                             // Backup.info file contents
@@ -461,7 +463,7 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 }
 
 /***********************************************************************************************************************************
-Populate the wal ranges from the provided, sorted, wal files list for a given archiveId
+Populate the WAL ranges from the provided, sorted, WAL files list for a given archiveId
 ***********************************************************************************************************************************/
 static void
 createArchiveIdRange(ArchiveResult *archiveIdResult, StringList *walFileList, unsigned int *jobErrorTotal)
@@ -489,7 +491,8 @@ createArchiveIdRange(ArchiveResult *archiveIdResult, StringList *walFileList, un
     // If there is a WAL range for this archiveID, get the last one. If there is no timeline change then continue updating the last
     // WAL range.
     if (lstSize(archiveIdResult->walRangeList) != 0 &&
-        strEq(strSubN(((WalRange *)lstGetLast(archiveIdResult->walRangeList))->stop, 0, 8),
+        strEq(
+            strSubN(((WalRange *)lstGetLast(archiveIdResult->walRangeList))->stop, 0, 8),
             strSubN(strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE), 0, 8)))
     {
         walRange = *(WalRange *)lstGetLast(archiveIdResult->walRangeList);
@@ -568,7 +571,7 @@ createArchiveIdRange(ArchiveResult *archiveIdResult, StringList *walFileList, un
         }
         else
         {
-            // A gap was found and if not updating the current wal range then add the current range to the list
+            // A gap was found and if not updating the current WAL range then add the current range to the list
             // else update the current range.
             if (addWal)
                 lstAdd(archiveIdResult->walRangeList, &walRange);
@@ -683,7 +686,7 @@ verifyArchive(void *data)
                             archiveResult->pgWalInfo.version = walInfo.version;
                         }
 
-                        // Add total number of WAL file in the directory to the total WAL - this number will include duplicates,
+                        // Add total number of WAL files in the directory to the total WAL - this number will include duplicates,
                         // if any, that will be filtered out and not checked but will be reported as errors in the log
                         archiveResult->totalWalFile += strLstSize(jobData->walFileList);
 
@@ -849,13 +852,10 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);                          // Pointer to the job data
-        FUNCTION_TEST_PARAM(UINT, clientIdx);                       // Client index (not used for this process)
+        (void)clientIdx;                                            // Client index (not used for this process)
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
-
-    // No special logic based on the client, since only operating against the repo, so just get the next job
-    (void)clientIdx;
 
     // Initialize the result
     ProtocolParallelJob *result = NULL;
@@ -959,9 +959,7 @@ setBackupCheckArchive(
             StringList *archiveIdHistoryList = strLstNew();
 
             for (unsigned int histIdx = 0; histIdx < infoPgDataTotal(pgHistory); histIdx++)
-            {
                 strLstAdd(archiveIdHistoryList, infoPgArchiveId(pgHistory, histIdx));
-            }
 
             // Sort the history list
             strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc);
@@ -972,6 +970,7 @@ setBackupCheckArchive(
             for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(archiveIdList); archiveIdx++)
             {
                 String *archiveId = strLstGet(archiveIdList, archiveIdx);
+
                 if (!strLstExists(archiveIdHistoryList, archiveId))
                     strCat(missingFromHistory, (strEmpty(missingFromHistory) ? archiveId : strNewFmt(", %s", strZ(archiveId))));
             }
@@ -1012,8 +1011,8 @@ addInvalidWalFile(List *walRangeList, VerifyResult fileResult, String *fileName,
     {
         WalRange *walRange = lstGet(walRangeList, walIdx);
 
-        // If the WAL segment is less/equal to the stop file then it falls in this range since ranges
-        // are sorted by stop file in ascending order, therefore first one found is the range.
+        // If the WAL segment is less/equal to the stop file then it falls in this range since ranges are sorted by stop file in
+        // ascending order, therefore first one found is the range
         if (strCmp(walRange->stop, walSegment) >= 0)
         {
             InvalidFile invalidFile =
@@ -1184,7 +1183,7 @@ verifyProcess(unsigned int *errorTotal)
             // Only begin processing if there are some archives or backups in the repo
             if (strLstSize(jobData.archiveIdList) > 0 || strLstSize(jobData.backupList) > 0)
             {
-                // WARN if there are no archives or there are no backups in the repo so that the callback need not try to
+                // Warn if there are no archives or there are no backups in the repo so that the callback need not try to
                 // distinguish between having processed all of the list or if the list was missing in the first place
                 if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
                     LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
@@ -1225,7 +1224,7 @@ verifyProcess(unsigned int *errorTotal)
                         // Get archiveId result data
                         if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                         {
-                            // Find the archiveId in the list - ASSERT if not found since this should never happen
+                            // Find the archiveId in the list - assert if not found since this should never happen
                             String *archiveId = strLstGet(filePathLst, 0);
                             unsigned int index = lstFindIdx(jobData.archiveIdResultList, &archiveId);
                             ASSERT(index != LIST_NOT_FOUND);
@@ -1297,7 +1296,7 @@ verifyProcess(unsigned int *errorTotal)
                 }
                 while (!protocolParallelDone(parallelExec));
 
-                // HERE we will need to do the final reconciliation - checking backup required WAL against, valid WAL
+                // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 
                 // Report results
                 if (lstSize(jobData.archiveIdResultList) > 0)

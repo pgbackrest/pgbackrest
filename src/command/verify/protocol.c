@@ -41,11 +41,11 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
             VerifyResult result = verifyFile(
-                varStr(varLstGet(paramList, 0)),                                                    // full filename
-                varStr(varLstGet(paramList, 1)),                                                    // checksum
-                varBool(varLstGet(paramList, 2)),                                                   // check file size?
-                varUInt64(varLstGet(paramList, 3)),                                                 // file size
-                varStr(varLstGet(paramList, 4)));                                                   // cipher pass
+                varStr(varLstGet(paramList, 0)),                                                    // Full filename
+                varStr(varLstGet(paramList, 1)),                                                    // Checksum
+                varBool(varLstGet(paramList, 2)),                                                   // Check file size?
+                varUInt64(varLstGet(paramList, 3)),                                                 // File size
+                varStr(varLstGet(paramList, 4)));                                                   // Cipher pass
 
             protocolServerResponse(server, varNewInt(result));
         }
