@@ -343,6 +343,11 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
             result = verifyManifestInfo.manifest;
             manifestMove(result, memContextPrior());
 
+            // The current in-progress backup is only notional until the main file is checked because the backup may have
+            // completed by the time the main manifest is checked here. So having a main manifest file means this backup is not
+            // (or is no longer) the currentBackup.
+            (*currentBackup) = false;
+
             // Attempt to load the copy and report on it's status but don't keep it in memory
             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
                 strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
@@ -359,13 +364,11 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
         else
         {
             // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
-            // currentBackup is only notional until the main file is checked because the backup.info file may not have existed or
-            // the backup may have completed by the time we get here. If the main manifest is simply missing, it is assumed
-            // the backup is an in-progress backup and verification is skipped, otherwise, it is no longer considered an in-progress
-            // backup and an attempt will be made to load the manifest copy.
-            if (!(*currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
+            // If the main manifest is simply missing, it is assumed the backup is an in-progress backup and verification is skipped
+            // otherwise, if the main is not simply missing, or this is not an in-progress backup then attempt to load the copy.
+            if (!((*currentBackup) && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
             {
-                *currentBackup = false;
+                (*currentBackup) = false;
 
                 VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
                     strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
@@ -783,6 +786,10 @@ verifyBackup(void *data)
             .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
         };
 
+        // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the backup.info
+        // file was read) and this is the same label, then set inProgessBackup to true, else false. inProgressBackup may
+        // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
+        // the verify process.
         bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
 
         // Get a usable backup manifest file

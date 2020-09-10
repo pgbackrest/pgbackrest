@@ -149,18 +149,9 @@ testRun(void)
             "[backup:db]\n"                                                                                                        \
             "db-catalog-version=201409291\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
-            "db-id=0\n"                                                                                                            \
-            "db-system-id=0\n"                                                                                                     \
+            "db-id=1\n"                                                                                                            \
+            "db-system-id=6625592122879095702\n"                                                                                   \
             "db-version=\"9.4\"\n"
-
-        #define TEST_MANIFEST_DB_11                                                                                                \
-            "\n"                                                                                                                   \
-            "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201909212\n"                                                                                       \
-            "db-control-version=1201\n"                                                                                            \
-            "db-id=0\n"                                                                                                            \
-            "db-system-id=0\n"                                                                                                     \
-            "db-version=\"11\"\n"
 
         #define TEST_MANIFEST_OPTION_ALL                                                                                           \
             "\n"                                                                                                                   \
@@ -247,7 +238,7 @@ testRun(void)
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
-            TEST_MANIFEST_DB_94
+            TEST_MANIFEST_DB_92
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -264,22 +255,59 @@ testRun(void)
         harnessCfgLoad(cfgCmdVerify, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest exists, no manifest.copy");
+        TEST_TITLE("manifest exists, no manifest.copy, manifest db is not in the history");
 
         Manifest *manifest = NULL;
         String *backupLabel = strNew("20181119-152138F");
+        bool currentBackup = false;
 
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest,
             strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
             "write manifest");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, false, infoPg), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_RESULT_BOOL(currentBackup, false, "currentBackup not changed");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest exists, no manifest.copy, manifest db is in the history, backup was current");
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            TEST_MANIFEST_DB_94
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        currentBackup = true;
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest,
+            strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
+            "write manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_RESULT_BOOL(currentBackup, false, "currentBackup changed");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel))));
     }
 
     // *****************************************************************************************************************************
