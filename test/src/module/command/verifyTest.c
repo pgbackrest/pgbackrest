@@ -123,104 +123,164 @@ testRun(void)
 
     const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
 
-    #define TEST_MANIFEST_HEADER                                                                                               \
-        "[backup]\n"                                                                                                           \
-        "backup-label=null\n"                                                                                                  \
-        "backup-timestamp-copy-start=0\n"                                                                                      \
-        "backup-timestamp-start=0\n"                                                                                           \
-        "backup-timestamp-stop=0\n"                                                                                            \
-        "backup-type=\"full\"\n"
 
-    #define TEST_MANIFEST_DB_92                                                                                                \
-        "\n"                                                                                                                   \
-        "[backup:db]\n"                                                                                                        \
-        "db-catalog-version=201204301\n"                                                                                       \
-        "db-control-version=922\n"                                                                                             \
-        "db-id=0\n"                                                                                                            \
-        "db-system-id=0\n"                                                                                                     \
-        "db-version=\"9.2\"\n"
+    // *****************************************************************************************************************************
+    if (testBegin("verifyManifestFile()"))
+    {
+        #define TEST_MANIFEST_HEADER                                                                                               \
+            "[backup]\n"                                                                                                           \
+            "backup-label=null\n"                                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
 
-    #define TEST_MANIFEST_DB_94                                                                                                \
-        "\n"                                                                                                                   \
-        "[backup:db]\n"                                                                                                        \
-        "db-catalog-version=201409291\n"                                                                                       \
-        "db-control-version=942\n"                                                                                             \
-        "db-id=0\n"                                                                                                            \
-        "db-system-id=0\n"                                                                                                     \
-        "db-version=\"9.4\"\n"
+        #define TEST_MANIFEST_DB_92                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201204301\n"                                                                                       \
+            "db-control-version=922\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.2\"\n"
 
-    #define TEST_MANIFEST_DB_11                                                                                                \
-        "\n"                                                                                                                   \
-        "[backup:db]\n"                                                                                                        \
-        "db-catalog-version=201909212\n"                                                                                       \
-        "db-control-version=1201\n"                                                                                            \
-        "db-id=0\n"                                                                                                            \
-        "db-system-id=0\n"                                                                                                     \
-        "db-version=\"11\"\n"
+        #define TEST_MANIFEST_DB_94                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201409291\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.4\"\n"
 
-    #define TEST_MANIFEST_OPTION_ALL                                                                                           \
-        "\n"                                                                                                                   \
-        "[backup:option]\n"                                                                                                    \
-        "option-archive-check=false\n"                                                                                         \
-        "option-archive-copy=false\n"                                                                                          \
-        "option-checksum-page=false\n"                                                                                         \
-        "option-compress=false\n"                                                                                              \
-        "option-compress-type=\"none\"\n"                                                                                      \
-        "option-hardlink=false\n"                                                                                              \
-        "option-online=false\n"
+        #define TEST_MANIFEST_DB_11                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201909212\n"                                                                                       \
+            "db-control-version=1201\n"                                                                                            \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"11\"\n"
 
-    #define TEST_MANIFEST_OPTION_ARCHIVE                                                                                       \
-        "\n"                                                                                                                   \
-        "[backup:option]\n"                                                                                                    \
-        "option-archive-check=false\n"                                                                                         \
-        "option-archive-copy=false\n"
+        #define TEST_MANIFEST_OPTION_ALL                                                                                           \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-checksum-page=false\n"                                                                                         \
+            "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
 
-    #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE                                                                           \
-        "option-checksum-page=false\n"
+        #define TEST_MANIFEST_OPTION_ARCHIVE_TRUE                                                                                  \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=true\n"                                                                                          \
+            "option-archive-copy=true\n"
 
-    #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_TRUE                                                                            \
-        "option-checksum-page=true\n"
+        #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE                                                                           \
+            "option-checksum-page=false\n"
 
-    #define TEST_MANIFEST_OPTION_ONLINE_FALSE                                                                                  \
-        "option-compress=false\n"                                                                                              \
-        "option-compress-type=\"none\"\n"                                                                                      \
-        "option-hardlink=false\n"                                                                                              \
-        "option-online=false\n"
+        #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_TRUE                                                                            \
+            "option-checksum-page=true\n"
 
-    #define TEST_MANIFEST_OPTION_ONLINE_TRUE                                                                                   \
-        "option-compress=false\n"                                                                                              \
-        "option-compress-type=\"none\"\n"                                                                                      \
-        "option-hardlink=false\n"                                                                                              \
-        "option-online=true\n"
+        #define TEST_MANIFEST_OPTION_ONLINE_FALSE                                                                                  \
+            "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
 
-    #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE                                                                           \
-        "\n"                                                                                                                   \
-        "[target:file:default]\n"                                                                                              \
-        "group=\"{[group]}\"\n"                                                                                                \
-        "master=false\n"                                                                                                       \
-        "mode=\"0400\"\n"                                                                                                      \
-        "user=\"{[user]}\"\n"
+        #define TEST_MANIFEST_OPTION_ONLINE_TRUE                                                                                   \
+            "option-compress=false\n"                                                                                              \
+            "option-compress-type=\"none\"\n"                                                                                      \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=true\n"
 
-    #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE                                                                            \
-        "\n"                                                                                                                   \
-        "[target:file:default]\n"                                                                                              \
-        "group=\"{[group]}\"\n"                                                                                                \
-        "master=true\n"                                                                                                        \
-        "mode=\"0400\"\n"                                                                                                      \
-        "user=\"{[user]}\"\n"
+        #define TEST_MANIFEST_TARGET                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:target]\n"                                                                                                    \
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
 
-    #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
-        "\n"                                                                                                                   \
-        "[target:link:default]\n"                                                                                              \
-        "group=\"{[group]}\"\n"                                                                                                \
-        "user=\"{[user]}\"\n"
+        #define TEST_MANIFEST_DB                                                                                                   \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
 
-    #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
-        "\n"                                                                                                                   \
-        "[target:path:default]\n"                                                                                              \
-        "group=\"{[group]}\"\n"                                                                                                \
-        "mode=\"0700\"\n"                                                                                                      \
-        "user=\"{[user]}\"\n"
+        #define TEST_MANIFEST_FILE                                                                                                 \
+            "\n"                                                                                                                   \
+            "[target:file]\n"                                                                                                      \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
+                ",\"size\":4,\"timestamp\":1565282114}\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"group1\"\n"                                                                                                   \
+            "master=false\n"                                                                                                       \
+            "mode=\"0600\"\n"                                                                                                      \
+            "user=\"user1\"\n"
+
+        #define TEST_MANIFEST_LINK                                                                                                 \
+            "\n"                                                                                                                   \
+            "[target:link]\n"                                                                                                      \
+            "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"
+
+        #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:link:default]\n"                                                                                              \
+            "group=\"group1\"\n"                                                                                                   \
+            "user=false\n"
+
+        #define TEST_MANIFEST_PATH                                                                                                 \
+            "\n"                                                                                                                   \
+            "[target:path]\n"                                                                                                      \
+            "pg_data={\"user\":\"user1\"}\n"                                                                                       \
+
+        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=false\n"                                                                                                        \
+            "mode=\"0700\"\n"                                                                                                      \
+            "user=\"user1\"\n"
+
+        const Buffer *contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            TEST_MANIFEST_DB_94
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest exists, no manifest.copy");
+
+        Manifest *manifest = NULL;
+        String *backupLabel = strNew("20181119-152138F");
+
+        InfoArchive *archiveInfo = NULL;
+        TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
+        InfoPg *infoPg = infoArchivePg(archiveInfo);
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(),
+            strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
+            "write manifest");
+
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, false, infoPg), "verify manifest");
+        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("createArchiveIdRange()"))
