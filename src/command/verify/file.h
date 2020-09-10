@@ -12,7 +12,7 @@ File result
 ***********************************************************************************************************************************/
 typedef enum
 {
-    verifyOk,                                                       // default result - file OK
+    verifyOk,                                                       // Default result - file OK
     verifyFileMissing,
     verifyChecksumMismatch,
     verifySizeInvalid,

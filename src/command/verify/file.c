@@ -14,13 +14,14 @@ Verify File
 #include "common/log.h"
 #include "storage/helper.h"
 
+/**********************************************************************************************************************************/
 VerifyResult
 verifyFile(
     const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
-        FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum that the file should be
+        FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(BOOL, sizeCheck);                        // Can the size be verified? With --fast option WAL cannot
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file (if checkable, else 0)
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
@@ -65,9 +66,7 @@ verifyFile(
             }
             // If the size can be checked, do so
             else if (sizeCheck && fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
-            {
                 result = verifySizeInvalid;
-            }
         }
         else
             result = verifyFileMissing;

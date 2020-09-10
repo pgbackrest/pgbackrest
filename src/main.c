@@ -258,20 +258,20 @@ main(int argListSize, const char *argList[])
                     break;
                 }
 
+                // Verify command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdVerify:
+                {
+                    cmdVerify();
+                    break;
+                }
+
                 // Display version
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdVersion:
                 {
                     printf(PROJECT_NAME " " PROJECT_VERSION "\n");
                     fflush(stdout);
-                    break;
-                }
-
-                // Display version
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdVerify:
-                {
-                    cmdVerify();
                     break;
                 }
             }
