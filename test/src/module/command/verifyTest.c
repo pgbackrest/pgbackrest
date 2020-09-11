@@ -140,8 +140,8 @@ testRun(void)
             "[backup:db]\n"                                                                                                        \
             "db-catalog-version=201204301\n"                                                                                       \
             "db-control-version=922\n"                                                                                             \
-            "db-id=0\n"                                                                                                            \
-            "db-system-id=0\n"                                                                                                     \
+            "db-id=1\n"                                                                                                            \
+            "db-system-id=6625592122879095702\n"                                                                                   \
             "db-version=\"9.2\"\n"
 
         #define TEST_MANIFEST_DB_94                                                                                                \
@@ -255,31 +255,136 @@ testRun(void)
         harnessCfgLoad(cfgCmdVerify, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest exists, no manifest.copy, manifest db is not in the history");
+        TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
 
         Manifest *manifest = NULL;
         String *backupLabel = strNew("20181119-152138F");
         String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
         String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
         bool currentBackup = false;
-
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy db section mismatch");
         TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
-        TEST_RESULT_BOOL(currentBackup, false, "currentBackup not changed");
         harnessLogResult(
             strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
             "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest exists, no manifest.copy, manifest db is in the history, backup was current");
+        TEST_TITLE("rerun copy test with db-system-id invalid");
 
+        contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=0\n"
+            "db-version=\"9.4\"\n"
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
+
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
+            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rerun copy test with db-id invalid");
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=0\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
+
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
+            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("current backup true");
+
+        currentBackup = true;
+
+        // Only manifest copy exists
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set");
+        TEST_RESULT_BOOL(currentBackup, true, "current backup not changed");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel))));
+
+        contentLoad = BUFSTRDEF(
+            "[backrest]\n"
+            "backrest-checksum=\"BOGUS\"\n"
+            "backrest-format=5\n"
+            "backrest-version=\"2.28\"\n");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write invalid manifest");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write invalid manifest copy");
+
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set");
+        TEST_RESULT_BOOL(currentBackup, false, "current backup changed");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE "\n"
+            "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(backupLabel), strZ(backupLabel))));
+
+        // Write a valid manifest with a manifest copy that is invalid
         contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
@@ -298,15 +403,20 @@ testRun(void)
         currentBackup = true;
 
         TEST_RESULT_VOID(
-            storageCopy(storageNewReadP(storageTest, manifestFile), storageNewWriteP(storageTest, manifestFileCopy)),
-            "copy manifest that will not match main");
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest,
-            strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
-            "write manifest");
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest");
+
         TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
-        TEST_RESULT_BOOL(currentBackup, false, "currentBackup changed");
+        TEST_RESULT_BOOL(currentBackup, false, "current backup changed");
         harnessLogResult("P00   WARN: backup.manifest.copy does not match backup.manifest");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid manifest and copy");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy");
+        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
     }
 
     // *****************************************************************************************************************************
