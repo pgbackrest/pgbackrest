@@ -259,16 +259,15 @@ testRun(void)
 
         Manifest *manifest = NULL;
         String *backupLabel = strNew("20181119-152138F");
+        String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
+        String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
         bool currentBackup = false;
 
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest,
-            strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
-            "write manifest");
-
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest");
         TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_BOOL(currentBackup, false, "currentBackup not changed");
@@ -298,16 +297,16 @@ testRun(void)
 
         currentBackup = true;
 
+        TEST_RESULT_VOID(
+            storageCopy(storageNewReadP(storageTest, manifestFile), storageNewWriteP(storageTest, manifestFileCopy)),
+            "copy manifest that will not match main");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest,
             strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel))), contentLoad),
             "write manifest");
         TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_BOOL(currentBackup, false, "currentBackup changed");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel))));
+        harnessLogResult("P00   WARN: backup.manifest.copy does not match backup.manifest");
     }
 
     // *****************************************************************************************************************************
