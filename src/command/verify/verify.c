@@ -98,6 +98,7 @@ typedef struct BackupResult
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
+    CompressType optionCompressType;                                // Compression type used for the backup
     bool optionArchiveCheck;                                        // Was the WAL required to be archived before backup completed?
     bool optionArchiveCopy;                                         // Was the WAL copied to the backup repository?
     BackupResultStatus status;
@@ -828,32 +829,63 @@ verifyBackup(void *data)
 
                 // Remove this backup from the processing list
                 strLstRemoveIdx(jobData->backupList, 0);
+
+                // No files to process so break from the loop to the next backup in the list
+                break;
             }
             // Else get the files to process from the manifest
             else
             {
-    // CSHANG Problem here because the manifest pointer is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
-
                 const ManifestData *manData = manifestData(manifest);
                 backupResult.archiveStart = strDup(manData->archiveStart);
                 backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
                 backupResult.optionArchiveCheck = manData->backupOptionArchiveCheck;
                 backupResult.optionArchiveCopy = manData->backupOptionArchiveCopy;
+                backupResult.optionCompressType = manData->backupOptionCompressType;
 
                 lstAdd(jobData->backupResultList, &backupResult);
 
                 // Get the cipher subpass used to decrypt files in the backup
                 jobData->backupCipherPass = manifestCipherSubPass(manifest);
-    // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reads the file off disk)
-    // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
-    // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
 
-    // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
+                // Add the backup files from the manifest to the job data
+                for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+                {
+                    const ManifestFile *file = manifestFile(manifest, fileIdx);
+                    lstAdd(jobData->backupFileList, &file);
+                }
+// CSHANG But what about freeing the ManifestData and the ManifestFile?
+                // Free the manifest since it is no longer needed
+                manifestFree(manifest);
             }
         }
 
-        // Get the archive id info for the current (last) archive id being processed
-        BackupResult *backupResult = lstGetLast(jobData->backupResultList);
+        if (strLstSize(jobData->backupFileList) > 0))
+        {
+            // Get the backup data for the current (last) backup being processed
+            BackupResult *backupResult = lstGetLast(jobData->backupResultList);
+
+            do
+            {
+                ManifestFile *backupFileData = (ManifestFile *)lstGet(jobData->backupFileList, 0);
+                String *backupFileName = strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s%s", strZ(backupFileData->name), strZ(compressExtStr(backupResult->optionCompressType));
+
+                // Return to process the job found
+                break;
+            }
+            while (strLstSize(jobData->backupFileList) > 0));
+        }
+        else
+        {
+// CSHANG Should this be an error or a warn? and should we check for it earlier?
+            // No backup files found in the manifest to process, remove this backup from the processing list
+            strLstRemoveIdx(jobData->backupList, 0);
+        }
+
+        // If a job was found to be processed then break out to process it
+        if (result != NULL)
+            break;
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -1173,7 +1205,7 @@ verifyProcess(unsigned int *errorTotal)
             {
                 .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
-                .backupFileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),,
+                .backupFileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
                 .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
@@ -1246,7 +1278,8 @@ verifyProcess(unsigned int *errorTotal)
 
                             archiveIdResult = lstGet(jobData.archiveIdResultList, index);
                         }
-
+    // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
+    // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
