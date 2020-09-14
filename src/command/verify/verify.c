@@ -95,9 +95,11 @@ typedef enum
 typedef struct BackupResult
 {
     String *backupLabel;
-    String *backupPrior;
+    String *backupPrior;                                            // Prior backup that this backup depends on, if any
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
+    bool optionArchiveCheck;                                        // Was the WAL required to be archived before backup completed?
+    bool optionArchiveCopy;                                         // Was the WAL copied to the backup repository?
     BackupResultStatus status;
     List *invalidFileList;
 } BackupResult;
@@ -109,7 +111,7 @@ typedef struct VerifyJobData
     StringList *walPathList;                                        // WAL path list for a single archive id
     StringList *walFileList;                                        // WAL file list for a single WAL path
     StringList *backupList;                                         // List of backups to verify
-    StringList *backupFileList;                                     // List of files in a single backup directory
+    List *backupFileList;                                           // List of files in a single backup to check
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
@@ -784,61 +786,74 @@ verifyBackup(void *data)
     {
         result = NULL;
 
-        BackupResult backupResult =
+        // If result list is empty or the last processed is not equal to the backup being processed, then intialize the backup
+        // data and results
+        if (lstSize(jobData->backupResultList)== 0 ||
+            !strEq(((BackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
         {
-            .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
-        };
-
-        // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the backup.info
-        // file was read) and this is the same label, then set inProgessBackup to true, else false. inProgressBackup may
-        // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
-        // the verify process.
-        bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
-
-        // Get a usable backup manifest file
-        const Manifest *manifest = verifyManifestFile(
-            backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
-
-        // If a usable backup.manifest file is not found
-        if (manifest == NULL)
-        {
-            // Warn if it is not actually the current in-progress backup
-            if (!inProgressBackup)
+            BackupResult backupResult =
             {
-                backupResult.status = backupMissingManifest;
+                .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
+            };
 
-                LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
+            // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the backup.info
+            // file was read) and this is the same label, then set inProgessBackup to true, else false. inProgressBackup may
+            // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
+            // the verify process.
+            bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
+
+            // Get a usable backup manifest file
+            const Manifest *manifest = verifyManifestFile(
+                backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
+
+            // If a usable backup.manifest file is not found
+            if (manifest == NULL)
+            {
+                // Warn if it is not actually the current in-progress backup
+                if (!inProgressBackup)
+                {
+                    backupResult.status = backupMissingManifest;
+
+                    LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult.backupLabel));
+                }
+                else
+                {
+                    backupResult.status = backupInProgress;
+
+                    LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
+                }
+
+                // Update the result status and skip
+                lstAdd(jobData->backupResultList, &backupResult);
+
+                // Remove this backup from the processing list
+                strLstRemoveIdx(jobData->backupList, 0);
             }
+            // Else get the files to process from the manifest
             else
             {
-                backupResult.status = backupInProgress;
+    // CSHANG Problem here because the manifest pointer is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
 
-                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult.backupLabel));
+                const ManifestData *manData = manifestData(manifest);
+                backupResult.archiveStart = strDup(manData->archiveStart);
+                backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
+                backupResult.optionArchiveCheck = manData->backupOptionArchiveCheck;
+                backupResult.optionArchiveCopy = manData->backupOptionArchiveCopy;
+
+                lstAdd(jobData->backupResultList, &backupResult);
+
+                // Get the cipher subpass used to decrypt files in the backup
+                jobData->backupCipherPass = manifestCipherSubPass(manifest);
+    // CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reads the file off disk)
+    // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
+    // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
+
+    // CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
             }
-
-            // Update the result status and skip
-            lstAdd(jobData->backupResultList, &backupResult);
-
-            // Remove this backup from the processing list
-            strLstRemoveIdx(jobData->backupList, 0);
         }
-        // Else process the files in the manifest
-        else
-        {
-// CSHANG Problem here because the manifest poiinter is declared const - but I want to change it each time: jobData->manifest = manifest; but do I really need to store it? Or just the manData (which is also a const) - so maybe I neeed to MOVE it into the the jobData?
 
-            const ManifestData *manData = manifestData(manifest);
-            backupResult.archiveStart = strDup(manData->archiveStart);
-            backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
-
-            // Get the cipher subpass used to decrypt files in the backup
-            jobData->backupCipherPass = manifestCipherSubPass(manifest);
-// CSHANG Need compress-type so can create the name of the file (LOOK at restore for how it constructs the name and reads the file off disk)
-// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
-// CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
-
-// CSHANG Should free the manifest after complete here in order to get it out of memory and start on a new one
-        }
+        // Get the archive id info for the current (last) archive id being processed
+        BackupResult *backupResult = lstGetLast(jobData->backupResultList);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -1158,7 +1173,7 @@ verifyProcess(unsigned int *errorTotal)
             {
                 .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
                 .walFileList = strLstNew(),
-                .backupFileList = strLstNew(),
+                .backupFileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),,
                 .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),

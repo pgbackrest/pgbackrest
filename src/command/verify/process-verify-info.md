@@ -545,8 +545,12 @@ TESTING
 -->
 
 After all WAL have been checked, check the backups
+ <!--
+ CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
+ CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
+ -->
 
-Find the WAL range where walRange.stop >= backup stop.
+Find the WAL range where walRange.stop >= backup stop.   <!-- but what if the backup.stop is NULL? -->
 IF walRange.start <= backup start
 THEN
     Range is found
