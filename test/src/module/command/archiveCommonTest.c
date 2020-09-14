@@ -208,8 +208,10 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(
-            walPath(strNew("relative/path"), pgPathLink, strNew("test")), AssertError,
-            hrnReplaceKey("working path '/' is not the same path as '{[path]}/pg-link'"));
+            walPath(strNew("relative/path"), pgPathLink, strNew("test")), OptionInvalidValueError,
+            hrnReplaceKey(
+                "PostgreSQL working directory '/' is not the same as option pg1-path '{[path]}/pg-link'\n"
+                    "HINT: is the PostgreSQL data_directory configured the same as the pg1-path option?"));
 
         TEST_ERROR(
             walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
