@@ -373,6 +373,10 @@ typedef struct FullTransactionId
 
 /***********************************************************************************************************************************
 Types from src/include/catalog/pg_control.h
+
+When more than one PostgreSQL version shares a control version then #define PG_CONTROL_VERSION_DUPLICATE so the catalog version will
+also be used to identify the PostgreSQL version. Newer versions of PostgreSQL have reliably bumped the control version but that has
+not always been the case.
 ***********************************************************************************************************************************/
 
 // PG_CONTROL_VERSION define
@@ -409,6 +413,9 @@ Types from src/include/catalog/pg_control.h
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	942
 
+/* 9.4 and 9.5 have the same control version */
+#define PG_CONTROL_VERSION_DUPLICATE
+
 #elif PG_VERSION >= PG_VERSION_93
 
 /* Version identifier for this pg_control format */
@@ -423,6 +430,9 @@ Types from src/include/catalog/pg_control.h
 
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	903
+
+/* 9.1 and 9.2 have the same control version */
+#define PG_CONTROL_VERSION_DUPLICATE
 
 #elif PG_VERSION >= PG_VERSION_84
 
