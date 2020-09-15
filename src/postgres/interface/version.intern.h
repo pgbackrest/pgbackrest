@@ -165,7 +165,7 @@ Create a pg_control file for testing
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
+            .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
         };                                                                                                                         \

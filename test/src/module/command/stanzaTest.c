@@ -63,7 +63,8 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - no files exist");
 
@@ -387,7 +388,8 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699, .catalogVersion = 201204301}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -413,7 +415,8 @@ testRun(void)
         // Create pg_control with different version
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699, .catalogVersion = 201105231}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -432,7 +435,8 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699, .catalogVersion = 201204301}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -461,12 +465,14 @@ testRun(void)
         // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699, .catalogVersion = 201204301}));
 
         // Create pg_control for standby
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700, .catalogVersion = 201409291}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -479,6 +485,7 @@ testRun(void)
         TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
         TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
         TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
+        TEST_RESULT_UINT(pgControl.catalogVersion, 201204301, "    catalogVersion set");
     }
 
     // *****************************************************************************************************************************
@@ -492,7 +499,8 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
 
@@ -545,7 +553,8 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
 
@@ -837,7 +846,8 @@ testRun(void)
         // Create pg_control for stanza-create
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanzaOther))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
 
@@ -865,7 +875,8 @@ testRun(void)
         // Create pg_control for stanza-create
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            pgControlTestToBuffer(
+                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza to be deleted");
         TEST_RESULT_BOOL(
