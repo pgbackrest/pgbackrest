@@ -352,10 +352,16 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             char newWorkDir[4096];
             THROW_ON_SYS_ERROR(getcwd(newWorkDir, sizeof(newWorkDir)) == NULL, FormatError, "unable to get cwd");
 
-            // Error if the new working directory is not equal to the original current working directory.  This means that
-            // PostgreSQL and pgBackrest have a different idea about where the PostgreSQL data directory is located.
+            // Error if the new working directory is not equal to the original current working directory. This means that PostgreSQL
+            // and pgBackrest have a different idea about where the PostgreSQL data directory is located.
             if (strcmp(currentWorkDir, newWorkDir) != 0)
-                THROW_FMT(AssertError, "working path '%s' is not the same path as '%s'", currentWorkDir, strZ(pgPath));
+            {
+                THROW_FMT(
+                    OptionInvalidValueError,
+                    PG_NAME " working directory '%s' is not the same as option " CFGOPT_PG1_PATH " '%s'\n"
+                        "HINT: is the " PG_NAME " data_directory configured the same as the " CFGOPT_PG1_PATH " option?",
+                    currentWorkDir, strZ(pgPath));
+            }
         }
 
         result = strNewFmt("%s/%s", strZ(pgPath), strZ(walFile));
