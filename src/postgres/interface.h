@@ -109,6 +109,7 @@ typedef struct PgControl
 {
     unsigned int version;
     uint64_t systemId;
+    unsigned int catalogVersion;
 
     unsigned int pageSize;
     unsigned int walSegmentSize;
@@ -129,9 +130,6 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get the catalog version for a PostgreSQL version
-uint32_t pgCatalogVersion(unsigned int pgVersion);
-
 // Get info from pg_control
 PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);

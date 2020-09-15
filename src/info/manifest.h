@@ -61,6 +61,7 @@ typedef struct ManifestData
     unsigned int pgId;                                              // PostgreSQL id in backup.info
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
+    unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
@@ -170,9 +171,10 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 // Set remaining values before the final save
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, unsigned int pgCatalogVersion,
+    const VariantList *dbList, bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize,
+    unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
+    bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions

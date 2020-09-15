@@ -47,7 +47,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679),
+            infoPg, infoPgSet(infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679, 201409291),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -55,20 +55,24 @@ testRun(void)
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_94, "  version set");
+        TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
 
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999), "infoPgSet - infoPgArchive second db");
+            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999, 201409291),
+            "infoPgSet - infoPgArchive second db");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "  2 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 2, "  current id updated");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665999, "  system-id updated");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "  version updated");
+        TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass not set");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679),
+            infoPg,
+            infoPgSet(infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679, 201409290),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -76,6 +80,7 @@ testRun(void)
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_94, "  version set");
+        TEST_RESULT_UINT(pgData.catalogVersion, 201409290, "  catalog version updated");
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
     }
 

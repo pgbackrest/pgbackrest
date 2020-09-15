@@ -75,6 +75,8 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_VAR,           MANIFEST_KEY_CHECKSUM_PAGE);
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,     MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
+#define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
+    STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
 #define MANIFEST_KEY_DB_ID                                          "db-id"
     STRING_STATIC(MANIFEST_KEY_DB_ID_STR,                           MANIFEST_KEY_DB_ID);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_ID_VAR,                   MANIFEST_KEY_DB_ID);
@@ -1232,9 +1234,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, unsigned int pgCatalogVersion,
+    const VariantList *dbList, bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize,
+    unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
     bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1247,6 +1249,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(STRING, archiveStop);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
@@ -1269,6 +1272,7 @@ manifestBuildComplete(
         this->data.archiveStop = strDup(archiveStop);
         this->data.pgId = pgId;
         this->data.pgSystemId = pgSystemId;
+        this->data.pgCatalogVersion = pgCatalogVersion;
 
         // Save db list
         if (dbList != NULL)
@@ -1679,6 +1683,8 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             manifest->data.pgId = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_SYSTEM_ID_STR))
             manifest->data.pgSystemId = varUInt64(value);
+        else if (strEq(key, MANIFEST_KEY_DB_CATALOG_VERSION_STR))
+            manifest->data.pgCatalogVersion = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_VERSION_STR))
             manifest->data.pgVersion = pgVersionFromStr(varStr(value));
     }
@@ -1934,8 +1940,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, sectionNext))
     {
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-catalog-version"),
-            jsonFromUInt(pgCatalogVersion(manifest->data.pgVersion)));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
+            jsonFromUInt(manifest->data.pgCatalogVersion));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
             jsonFromUInt(pgControlVersion(manifest->data.pgVersion)));

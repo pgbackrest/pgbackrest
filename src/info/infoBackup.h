@@ -60,7 +60,7 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
+InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub);
 
 // Create new object and load contents from IoRead
 InfoBackup *infoBackupNewLoad(IoRead *read);
@@ -85,7 +85,7 @@ StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expres
 
 // PostgreSQL info
 InfoPg *infoBackupPg(const InfoBackup *this);
-InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
 // Return a structure of the backup data from a specific index
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);

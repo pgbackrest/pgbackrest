@@ -85,6 +85,7 @@ Read the version specific pg_control into a general data structure
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
+            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
@@ -103,6 +104,7 @@ Read the version specific pg_control into a general data structure
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
+            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
         };                                                                                                                         \

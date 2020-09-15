@@ -47,7 +47,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_83                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=200711281\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=833\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -56,7 +56,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_84                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=200904091\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=843\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -65,7 +65,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_90                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201008051\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=903\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -74,7 +74,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_91                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201105231\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=903\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -83,7 +83,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_92                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201204301\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=922\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -92,7 +92,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_94                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=942\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -101,7 +101,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_12                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201909212\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=1201\n"                                                                                            \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -110,7 +110,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_13                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=202007201\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=1300\n"                                                                                            \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -1230,7 +1230,7 @@ testRun(void)
             "backup-type=\"incr\"\n"                                                                                               \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201608131\n"                                                                                       \
+            "db-catalog-version=0\n"                                                                                               \
             "db-control-version=960\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -1833,7 +1833,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
 
         // Create db list
@@ -1860,7 +1860,7 @@ testRun(void)
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
-                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, dbList,
+                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, 201409291, dbList,
                 true, true, 16384, 3, 6, true, 32, false),
             "manifest complete with db");
 
