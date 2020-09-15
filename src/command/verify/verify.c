@@ -361,7 +361,6 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
     {
         .start = NULL,
         .stop = NULL,
-        .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
     };
 
     // If there is a WAL range for this archiveID, get the last one. If there is no timeline change then continue updating the last
@@ -425,6 +424,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         {
             walRange.start = walSegment;
             walRange.stop = walSegment;
+            walRange.invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr);
             walFileIdx++;
             continue;
         }
@@ -474,7 +474,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
     }
     while (walFileIdx < strLstSize(walFileList));
 
-    // If walRange containes a range, then add the last walRange to the list
+    // If walRange contains a range, then add the last walRange to the list
     if (addWal && walRange.start != NULL)
         lstAdd(archiveIdResult->walRangeList, &walRange);
 
