@@ -203,8 +203,10 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
 
-/**********************************************************************************************************************************/
-void
+/***********************************************************************************************************************************
+Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
+***********************************************************************************************************************************/
+static void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
