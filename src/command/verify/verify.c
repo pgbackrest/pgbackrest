@@ -787,9 +787,9 @@ verifyBackup(void *data)
         // If result list is empty or the last processed is not equal to the backup being processed, then intialize the backup
         // data and results
         if (lstSize(jobData->backupResultList)== 0 ||
-            !strEq(((BackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
+            !strEq(((VerifyBackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
         {
-            BackupResult backupResult =
+            VerifyBackupResult backupResult =
             {
                 .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
             };
@@ -860,7 +860,7 @@ verifyBackup(void *data)
         if (strLstSize(jobData->backupFileList) > 0))
         {
             // Get the backup data for the current (last) backup being processed
-            BackupResult *backupResult = lstGetLast(jobData->backupResultList);
+            VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
             do
             {
@@ -1207,7 +1207,7 @@ verifyProcess(unsigned int *errorTotal)
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator),
-                .backupResultList = lstNewP(sizeof(BackupResult), .comparator =  lstComparatorStr),
+                .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator =  lstComparatorStr),
             };
 
             // Get a list of backups in the repo
