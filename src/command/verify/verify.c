@@ -674,7 +674,7 @@ static String *
 verifyErrorMsg(VerifyResult verifyResult)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, verifyResult);                    // Result code from the verifyFile() function
+        FUNCTION_TEST_PARAM(ENUM, verifyResult);                    // Result code from the verifyFile() function
     FUNCTION_TEST_END();
 
     String *result = strNew("");
@@ -689,6 +689,35 @@ verifyErrorMsg(VerifyResult verifyResult)
         result = strCatZ(result, "invalid verify");
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Helper function to output a log message based on job result that is not verifyOk and return an error count
+***********************************************************************************************************************************/
+static unsigned int
+verifyLogInvalidResult(VerifyResult verifyResult, unsigned int processId, String *filePathName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, verifyResult);                    // Result code from the verifyFile() function
+        FUNCTION_TEST_PARAM(UINT, processId);                       // Process Id reporting the result
+        FUNCTION_TEST_PARAM(STRING, filePathName);                  // File for which results are being reported
+    FUNCTION_TEST_END();
+
+    ASSERT(filePathName != NULL);
+
+    // Log a warning because the WAL may have gone missing if expire came through and removed it
+    // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
+    if (verifyResult == verifyFileMissing)
+    {
+        LOG_WARN_PID_FMT(processId, "%s '%s'", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
+        FUNCTION_TEST_RETURN(0);
+    }
+    else
+    {
+        LOG_ERROR_PID_FMT(
+            processId, errorTypeCode(&FileInvalidError), "%s '%s'", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
+        FUNCTION_TEST_RETURN(1);
+    }
 }
 
 /***********************************************************************************************************************************
@@ -1008,22 +1037,7 @@ verifyProcess(unsigned int *errorTotal)
                                 archiveIdResult->totalValidWal++;
                             else
                             {
-                                // Log a warning because the WAL may have gone missing if expire came through and removed it
-                                // legitimately so it is not necessarily an error so the jobErrorTotal should not be incremented
-                                if (verifyResult == verifyFileMissing)  // {uncovered - unable to cover in test harness}
-                                {
-                                    LOG_WARN_PID_FMT(                   // {+uncovered}
-                                        processId, "%s: %s", strZ(verifyErrorMsg(verifyResult)),
-                                        strZ(filePathName));
-                                }
-                                else
-                                {
-                                    LOG_ERROR_PID_FMT(
-                                        processId, errorTypeCode(&FileInvalidError),
-                                        "%s %s", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
-
-                                    jobData.jobErrorTotal++;
-                                }
+                                jobData.jobErrorTotal += verifyLogInvalidResult(verifyResult, processId, filePathName);
 
                                 // Add invalid file with reason from result of verifyFile to range list
                                 verifyAddInvalidWalFile(
