@@ -92,7 +92,7 @@ typedef enum
     backupInProgress,
 } VerifyBackupResultStatus;
 
-typedef struct BackupResult
+typedef struct VerifyBackupResult
 {
     String *backupLabel;
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
@@ -103,7 +103,7 @@ typedef struct BackupResult
     bool optionArchiveCopy;                                         // Was the WAL copied to the backup repository?
     VerifyBackupResultStatus status;
     List *invalidFileList;
-} BackupResult;
+} VerifyBackupResult;
 
 // Job data stucture for processing and results collection
 typedef struct VerifyJobData
