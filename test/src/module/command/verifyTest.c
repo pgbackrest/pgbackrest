@@ -656,7 +656,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("verifySetBackupCheckArchive(), verifyErrorMsg(), verifyRender()"))
+    if (testBegin("verifySetBackupCheckArchive(), verifyLogInvalidResult(), verifyRender()"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifySetBackupCheckArchive()");
@@ -704,9 +704,10 @@ testRun(void)
         harnessLogResult("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyErrorMsg() - missing file");
+        TEST_TITLE("verifyLogInvalidResult() - missing file");
 
-        TEST_RESULT_STR_Z(verifyErrorMsg(verifyFileMissing), "file missing", "file missing message");
+        TEST_RESULT_UINT(verifyLogInvalidResult(verifyFileMissing, 0, strNew("missingfilename")), 0, "file missing message");
+        harnessLogResult("P00   WARN: file missing 'missingfilename'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
@@ -1100,9 +1101,9 @@ testRun(void)
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
-                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
-                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1145,9 +1146,9 @@ testRun(void)
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
-                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
-                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001")));
@@ -1173,9 +1174,9 @@ testRun(void)
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
-                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
-                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P01  ERROR: [039]: invalid verify "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
                     "local-1 protocol: unable to open file "
