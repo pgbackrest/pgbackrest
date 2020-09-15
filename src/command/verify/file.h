@@ -30,7 +30,7 @@ typedef struct VerifyFileResult
 
 // Verify a file in the pgBackRest repository
 VerifyResult verifyFile(
-    const String *filePathName, const String *fileChecksum, bool sizeCheck, uint64_t fileSize, const String *cipherPass);
+    const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
