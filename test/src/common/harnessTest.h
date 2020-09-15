@@ -108,7 +108,7 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                TestError, "EXPECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),               \
+                TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
