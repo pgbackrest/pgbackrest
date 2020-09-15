@@ -90,7 +90,7 @@ typedef enum
     backupInProgress,
 } VerifyBackupResultStatus;
 
-typedef struct BackupResult
+typedef struct VerifyBackupResult
 {
     String *backupLabel;
     String *backupPrior;
@@ -98,7 +98,7 @@ typedef struct BackupResult
     String *archiveStop;                                            // Last WAL segment in the backup
     VerifyBackupResultStatus status;
     List *invalidFileList;
-} BackupResult;
+} VerifyBackupResult;
 
 // Job data stucture for processing and results collection
 typedef struct VerifyJobData
