@@ -602,7 +602,6 @@ verifyArchive(void *data)
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                         protocolCommandParamAdd(command, VARSTR(filePathName));
                         protocolCommandParamAdd(command, VARSTR(checksum));
-                        protocolCommandParamAdd(command, VARBOOL(true));
                         protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
                         protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 

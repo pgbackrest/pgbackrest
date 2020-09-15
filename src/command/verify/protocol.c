@@ -43,9 +43,8 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
             VerifyResult result = verifyFile(
                 varStr(varLstGet(paramList, 0)),                                                    // Full filename
                 varStr(varLstGet(paramList, 1)),                                                    // Checksum
-                varBool(varLstGet(paramList, 2)),                                                   // Check file size?
-                varUInt64(varLstGet(paramList, 3)),                                                 // File size
-                varStr(varLstGet(paramList, 4)));                                                   // Cipher pass
+                varUInt64(varLstGet(paramList, 2)),                                                 // File size
+                varStr(varLstGet(paramList, 3)));                                                   // Cipher pass
 
             protocolServerResponse(server, varNewInt(result));
         }

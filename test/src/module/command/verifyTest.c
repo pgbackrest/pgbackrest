@@ -620,7 +620,7 @@ testRun(void)
 
         String *filePathName =  strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF("")), "put zero-sized file");
-        TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), true, 0, NULL), verifyOk, "file ok");
+        TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
 
         const char *fileContents = "acefile";
         uint64_t fileSize = 7;
@@ -628,14 +628,13 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put file");
 
-        TEST_RESULT_UINT(verifyFile(filePathName, checksum, false, 0, NULL), verifyOk, "file ok");
-        TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, fileSize, NULL), verifyOk, "file size ok");
-        TEST_RESULT_UINT(verifyFile(filePathName, checksum, true, 0, NULL), verifySizeInvalid, "file size invalid");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, fileSize, NULL), verifyOk, "file size ok");
+        TEST_RESULT_UINT(verifyFile(filePathName, checksum, 0, NULL), verifySizeInvalid, "file size invalid");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, strNew("badchecksum"), false, 0, NULL), verifyChecksumMismatch, "file checksum mismatch");
+            verifyFile(filePathName, strNew("badchecksum"), fileSize, NULL), verifyChecksumMismatch, "file checksum mismatch");
         TEST_RESULT_UINT(
             verifyFile(
-                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), checksum, false, 0, NULL), verifyFileMissing, "file missing");
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), checksum, 0, NULL), verifyFileMissing, "file missing");
 
         // Create a compressed encrypted repo file
         filePathName = strNew(STORAGE_REPO_BACKUP "/testfile.gz");
@@ -646,10 +645,10 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(write, BUFSTRZ(fileContents)), "write encrypted, compressed file");
 
         TEST_RESULT_UINT(
-            verifyFile(filePathName, checksum, true, fileSize, strNew("pass")), verifyOk, "file encrypted compressed ok");
+            verifyFile(filePathName, checksum, fileSize, strNew("pass")), verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, strNew("badchecksum"), false, 0, strNew("pass")), verifyChecksumMismatch,
+                filePathName, strNew("badchecksum"), fileSize, strNew("pass")), verifyChecksumMismatch,
                 "file encrypted compressed checksum mismatch");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -665,8 +664,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(filePathName));
         varLstAdd(paramList, varNewStr(checksum));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(0));
+        varLstAdd(paramList, varNewUInt64(fileSize));
         varLstAdd(paramList, varNewStrZ("pass"));
 
         TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
