@@ -81,25 +81,6 @@ typedef struct VerifyInvalidFile
     VerifyResult reason;                                            // Reason file is invalid (e.g. incorrect checksum)
 } VerifyInvalidFile;
 
-// Status result of a backup
-typedef enum
-{
-    backupConsistent,
-    backupConsistentWithPITR,
-    backupMissingManifest,
-    backupInProgress,
-} VerifyBackupResultStatus;
-
-typedef struct VerifyBackupResult
-{
-    String *backupLabel;
-    String *backupPrior;
-    String *archiveStart;                                           // First WAL segment in the backup
-    String *archiveStop;                                            // Last WAL segment in the backup
-    VerifyBackupResultStatus status;
-    List *invalidFileList;
-} VerifyBackupResult;
-
 // Job data stucture for processing and results collection
 typedef struct VerifyJobData
 {
