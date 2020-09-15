@@ -378,9 +378,6 @@ generateNeededArchivesList(
     ASSERT(archiveStart != NULL);
     ASSERT(archiveStop != NULL);
 
-    // Until we find a way to get the WAL segment size from e.g. the archive.info, let's use the PG default size
-    unsigned int PG_WAL_SEGMENT_SIZE_DEFAULT = 16 * 1024 * 1024;
-
     // Get .history file if timelines don't match
     uint32_t startTimeline = (uint32_t)strtol(strZ(strSubN(archiveStart, 0, 8)), NULL, 16);
     uint32_t stopTimeline = (uint32_t)strtol(strZ(strSubN(archiveStop, 0, 8)), NULL, 16);
@@ -478,6 +475,7 @@ generateNeededArchivesList(
 
     while(!strEq(nextWalSegment, archiveStop))
     {
+        // !!! Use the default WAL segment size for now until we have another way to get it
         nextWalSegment = walSegmentNext(nextWalSegment, PG_WAL_SEGMENT_SIZE_DEFAULT, pgVersion);
 
         if(strLstExists(timelineSwitchWal, nextWalSegment))
