@@ -843,8 +843,8 @@ verifyRender(List *archiveIdResultList)
     {
         VerifyArchiveResult *archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
         strCatFmt(
-            result, "  archiveId: %s, total WAL checked: %u, total valid WAL: %u\n", strZ(archiveIdResult->archiveId),
-            archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
+            result, "%s  archiveId: %s, total WAL checked: %u, total valid WAL: %u", (archiveIdx > 0 ? "\n" : ""),
+            strZ(archiveIdResult->archiveId), archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
 
         if (archiveIdResult->totalWalFile > 0)
         {
@@ -882,7 +882,7 @@ verifyRender(List *archiveIdResultList)
 
             strCatFmt(
                 result,
-                "    missing: %u, checksum invalid: %u, size invalid: %u, other: %u\n",
+                "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u",
                 errMissing, errChecksum, errSize, errOther);
         }
     }
@@ -1107,9 +1107,9 @@ cmdVerify(void)
         unsigned int errorTotal = 0;
         String *result = verifyProcess(&errorTotal);
 
-        // !!! Output results but need to make conditional based on an option not whether there are errors or not
-        if (errorTotal == 0)
-            ioFdWriteOneStr(STDOUT_FILENO, result);
+        // ??? Output results but need to make conditional based on an option, not whether there are errors or not
+        if (errorTotal == 0 && strSize(result) > 0)
+            LOG_INFO_FMT("%s", strZ(result));
 
         // Throw an error if any encountered
         if (errorTotal > 0)

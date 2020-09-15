@@ -433,7 +433,7 @@ testRun(void)
             verifyRender(archiveIdResultList),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n", "no invalid file list");
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "no invalid file list");
 
         VerifyInvalidFile invalidFile =
         {
@@ -446,7 +446,7 @@ testRun(void)
             verifyRender(archiveIdResultList),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
-            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n", "file missing");
+            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0", "file missing");
 
         // Coverage test
         TEST_RESULT_VOID(
@@ -454,7 +454,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdVerify(), verifyProcess() - info files"))
+    if (testBegin("cmdVerify() - info files"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -597,15 +597,11 @@ testRun(void)
             storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
             "create empty path for archiveId");
 
-        unsigned int errorTotal = 0;
-        TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal),
-            "Results:\n"
-            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n",
-            "no jobs - empty archive id and backup label paths");
-        TEST_RESULT_UINT(errorTotal, 0, "no errors");
-
-        harnessLogResult("P00   WARN: archive path '9.4-1' is empty");
+        TEST_RESULT_VOID(cmdVerify(), "no jobs - empty archive id and backup label paths");
+        harnessLogResult(
+            "P00   WARN: archive path '9.4-1' is empty\n"
+            "P00   INFO: Results:\n"
+            "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0");
     }
 
     // *****************************************************************************************************************************
@@ -675,7 +671,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdVerify()"))
+    if (testBegin("cmdVerify(), verifyProcess()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -790,7 +786,7 @@ testRun(void)
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0",
             "process results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
@@ -835,7 +831,7 @@ testRun(void)
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 7, total valid WAL: 5\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n",
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0",
             "process new timeline results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
