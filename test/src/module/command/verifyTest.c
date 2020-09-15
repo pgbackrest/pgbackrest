@@ -122,20 +122,20 @@ testRun(void)
     const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
 
     // *****************************************************************************************************************************
-    if (testBegin("createArchiveIdRange()"))
+    if (testBegin("verifyCreateArchiveIdRange()"))
     {
-        WalRange *walRangeResult = NULL;
+        VerifyWalRange *walRangeResult = NULL;
         unsigned int errTotal = 0;
         StringList *walFileList = strLstNew();
 
-        ArchiveResult archiveResult =
+        VerifyArchiveResult archiveResult =
         {
             .archiveId = strNew("9.4-1"),
-            .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
         };
-        List *archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
         lstAdd(archiveIdResultList, &archiveResult);
-        ArchiveResult *archiveIdResult = lstGetLast(archiveIdResultList);
+        VerifyArchiveResult *archiveIdResult = lstGetLast(archiveIdResultList);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Single WAL");
@@ -145,11 +145,12 @@ testRun(void)
 
         strLstAddZ(walFileList, "000000020000000200000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 1, "single range");
+        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
+            "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
 
@@ -161,7 +162,7 @@ testRun(void)
         // Add a duplicate
         strLstAddZ(walFileList, "000000020000000200000000");
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
@@ -181,13 +182,14 @@ testRun(void)
         strLstAddZ(walFileList, "000000020000000200000001");
         strLstAddZ(walFileList, "000000020000000200000001");
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "triplicate WAL error at beginning, duplicate WAL at end");
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
         TEST_RESULT_UINT(lstSize(archiveIdResultList), 1, "single archiveId result");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 1, "single range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
+            "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         harnessLogResult(
@@ -207,15 +209,16 @@ testRun(void)
         strLstAddZ(walFileList, "000000020000000200000001");
         strLstAddZ(walFileList, "000000020000000200000002");
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
+            "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -238,15 +241,16 @@ testRun(void)
         lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "error reported");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0), "get range");
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
+            "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
@@ -263,21 +267,21 @@ testRun(void)
         strLstAddZ(walFileList, "000000020000000200000003-123456");
         strLstAddZ(walFileList, "000000020000000200000004-123456");
 
-        TEST_RESULT_VOID(createArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 3, "multiple ranges");
+        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 3, "multiple ranges");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
             "get first range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
             "get second range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_ASSIGN(
-            walRangeResult, (WalRange *)lstGet(((ArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 2),
+            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 2),
             "get third range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
@@ -354,10 +358,10 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("setBackupCheckArchive(), verifyErrorMsg(), verifyRender()"))
+    if (testBegin("verifySetBackupCheckArchive(), verifyErrorMsg(), verifyRender()"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("setBackupCheckArchive()");
+        TEST_TITLE("verifySetBackupCheckArchive()");
 
         InfoBackup *backupInfo = NULL;
         InfoArchive *archiveInfo = NULL;
@@ -375,10 +379,11 @@ testRun(void)
         unsigned int errTotal = 0;
 
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(strLstNew(), backupInfo, strLstNew(), pgHistory, &errTotal), NULL, "no archives or backups");
+            verifySetBackupCheckArchive(
+                strLstNew(), backupInfo, strLstNew(), pgHistory, &errTotal), NULL, "no archives or backups");
         TEST_RESULT_UINT(errTotal, 0, "no error");
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(
+            verifySetBackupCheckArchive(
                 backupList, backupInfo, archiveIdList, pgHistory, &errTotal), NULL, "no current backup, no missing archive");
         TEST_RESULT_UINT(errTotal, 0, "no error");
 
@@ -387,7 +392,7 @@ testRun(void)
         strLstAddZ(archiveIdList, "12-3");
 
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
+            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "current backup, missing archive");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
         harnessLogResult("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
@@ -395,7 +400,7 @@ testRun(void)
         errTotal = 0;
         strLstAddZ(archiveIdList, "13-4");
         TEST_RESULT_STR_Z(
-            setBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
+            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "test multiple archiveIds on disk not in archive.info");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
         harnessLogResult("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
@@ -408,18 +413,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
 
-        List *archiveIdResultList = lstNewP(sizeof(ArchiveResult), .comparator =  archiveIdComparator);
-        ArchiveResult archiveIdResult =
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        VerifyArchiveResult archiveIdResult =
         {
             .archiveId = strNew("9.6-1"),
             .totalWalFile = 1,
-            .walRangeList = lstNewP(sizeof(WalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
         };
-        WalRange walRange =
+        VerifyWalRange walRange =
         {
             .start = strNew("0"),
             .stop = strNew("2"),
-            .invalidFileList = lstNewP(sizeof(InvalidFile), .comparator =  lstComparatorStr),
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
         };
 
         lstAdd(archiveIdResult.walRangeList, &walRange);
@@ -430,7 +435,7 @@ testRun(void)
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n", "no invalid file list");
 
-        InvalidFile invalidFile =
+        VerifyInvalidFile invalidFile =
         {
             .fileName = strNew("file"),
             .reason = verifyFileMissing,
@@ -445,7 +450,7 @@ testRun(void)
 
         // Coverage test
         TEST_RESULT_VOID(
-            addInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, strNew("test"), strNew("3")), "coverage test");
+            verifyAddInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, strNew("test"), strNew("3")), "coverage test");
     }
 
     // *****************************************************************************************************************************
@@ -795,8 +800,10 @@ testRun(void)
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01  ERROR: [028]: invalid checksum 11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-                "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P01  ERROR: [028]: invalid checksum "
+                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01  ERROR: [028]: invalid size "
+                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -838,8 +845,10 @@ testRun(void)
                 "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01  ERROR: [028]: invalid checksum 11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-                "P01  ERROR: [028]: invalid size 11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
+                "P01  ERROR: [028]: invalid checksum "
+                    "11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+                "P01  ERROR: [028]: invalid size "
+                    "11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000002\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001")));
