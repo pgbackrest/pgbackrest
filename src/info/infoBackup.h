@@ -62,6 +62,9 @@ Constructors
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
 
+// Create new object and load contents from IoRead
+InfoBackup *infoBackupNewLoad(IoRead *read);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -70,6 +73,9 @@ void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 
 // Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
+
+// Move to a new parent mem context
+InfoBackup *infoBackupMove(InfoBackup *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters/Setters

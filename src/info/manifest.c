@@ -164,6 +164,7 @@ struct Manifest
 };
 
 OBJECT_DEFINE_MOVE(MANIFEST);
+OBJECT_DEFINE_FREE(MANIFEST);
 
 /***********************************************************************************************************************************
 Internal functions to add types to their lists
@@ -607,6 +608,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels
                     strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
+                    // Skip backup_manifest/tmp in versions where it is created
+                    ((strEqZ(info->name, PG_FILE_BACKUPMANIFEST) || strEqZ(info->name, PG_FILE_BACKUPMANIFEST_TMP)) &&
+                        pgVersion >= PG_VERSION_13) ||
                     // Skip running process options
                     strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
