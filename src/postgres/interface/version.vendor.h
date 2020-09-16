@@ -180,10 +180,14 @@ Types from src/include/catalog/catversion.h
 //
 // Add CATALOG_VERSION_NO when more than one PostgreSQL version shares a control version so the PostgreSQL version can be reliably
 // identified. Newer versions of PostgreSQL have bumped the control version but that has not always been the case.
+//
+// Undef CATALOG_VERSION_NO in PostgreSQL versions where it is not required to improve readability.
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_96
+
+#undef CATALOG_VERSION_NO
 
 #elif PG_VERSION >= PG_VERSION_95
 
@@ -213,6 +217,8 @@ Types from src/include/catalog/catversion.h
 
 #elif PG_VERSION >= PG_VERSION_92
 
+#undef CATALOG_VERSION_NO
+
 #elif PG_VERSION >= PG_VERSION_91
 
 /*
@@ -240,6 +246,8 @@ Types from src/include/catalog/catversion.h
 #define CATALOG_VERSION_NO	201008051
 
 #elif PG_VERSION >= PG_VERSION_83
+
+#undef CATALOG_VERSION_NO
 
 #endif
 
