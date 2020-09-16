@@ -1025,8 +1025,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920, .catalogVersion = 201204301}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1049,8 +1048,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000, .catalogVersion = 201707211}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1075,8 +1073,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830, .catalogVersion = 200711281}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1098,8 +1095,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840, .catalogVersion = 200904091}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1121,8 +1117,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .catalogVersion = 201306121}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1153,9 +1148,7 @@ testRun(void)
         // Create pg_control with page checksums
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .catalogVersion = 201306121,
-                .pageChecksum = true}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1180,7 +1173,7 @@ testRun(void)
         // Create pg_control without page checksums
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .catalogVersion = 201306121}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1214,7 +1207,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .catalogVersion = 201306121}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1435,8 +1428,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840, .catalogVersion = 200904091}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1611,8 +1603,7 @@ testRun(void)
                 storageNewWriteP(
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
                     .timeModified = backupTimeStart),
-                pgControlTestToBuffer(
-                    (PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950, .catalogVersion = 201510051}));
+                pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
 
             // Create stanza
             StringList *argList = strLstNew();
@@ -2068,8 +2059,7 @@ testRun(void)
                 storageNewWriteP(
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
                     .timeModified = backupTimeStart),
-                pgControlTestToBuffer(
-                    (PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960, .catalogVersion = 201608131}));
+                pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
 
             // Update version
             storagePutP(
@@ -2212,8 +2202,8 @@ testRun(void)
                     .timeModified = backupTimeStart),
                 pgControlTestToBuffer(
                     (PgControl){
-                        .version = PG_VERSION_11, .systemId = 1000000000000001100, .catalogVersion = 201809051,
-                        .pageChecksum = true, .walSegmentSize = 1024 * 1024}));
+                        .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
+                        .walSegmentSize = 1024 * 1024}));
 
             // Update version
             storagePutP(

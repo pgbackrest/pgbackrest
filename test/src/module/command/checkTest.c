@@ -146,8 +146,7 @@ testRun(void)
         // Create pg_control for standby
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679, .catalogVersion = 201204301}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
@@ -206,8 +205,7 @@ testRun(void)
         // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg8))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679, .catalogVersion = 201204301}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         // Create info files
         storagePutP(
@@ -509,8 +507,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679, .catalogVersion = 201608131}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");

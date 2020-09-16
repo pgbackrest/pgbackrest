@@ -120,8 +120,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_96, .systemId = 0xFACEFACEFACEFACE, .catalogVersion = 201608131}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 0xFACEFACEFACEFACE}));
 
         // Create incorrect archive info
         storagePutP(
@@ -214,8 +213,7 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE, .catalogVersion = 201809051}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
 
         storagePutP(
             storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),
@@ -500,8 +498,7 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-            pgControlTestToBuffer(
-                (PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD, .catalogVersion = 201409291}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}));
 
         storagePutP(
             storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info")),

@@ -68,9 +68,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer(
-                (PgControl){
-                    .version = PG_VERSION_11, .systemId = 0xFACEFACE, .catalogVersion = 201809051, .walSegmentSize = 1024 * 1024}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACE, .walSegmentSize = 1024 * 1024}));
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
@@ -89,7 +87,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024, .catalogVersion = 201510051}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024}));
 
         TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 

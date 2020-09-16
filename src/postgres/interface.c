@@ -66,9 +66,6 @@ typedef struct PgInterface
     // Version of PostgreSQL supported by this interface
     unsigned int version;
 
-    // Get the catalog version for this version of PostgreSQL
-    uint32_t (*catalogVersion)(void);
-
     // Does pg_control match this version of PostgreSQL?
     bool (*controlIs)(const unsigned char *);
 
@@ -85,6 +82,8 @@ typedef struct PgInterface
     PgWal (*wal)(const unsigned char *);
 
 #ifdef DEBUG
+    // Catalog version for testing
+    unsigned int catalogVersion;
 
     // Create pg_control for testing
     void (*controlTest)(PgControl, unsigned char *);
@@ -107,6 +106,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal130,
 
 #ifdef DEBUG
+        .catalogVersion = 202007201,
+
         .controlTest = pgInterfaceControlTest130,
         .walTest = pgInterfaceWalTest130,
 #endif
@@ -122,6 +123,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal120,
 
 #ifdef DEBUG
+        .catalogVersion = 201909212,
+
         .controlTest = pgInterfaceControlTest120,
         .walTest = pgInterfaceWalTest120,
 #endif
@@ -137,6 +140,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal110,
 
 #ifdef DEBUG
+        .catalogVersion = 201809051,
+
         .controlTest = pgInterfaceControlTest110,
         .walTest = pgInterfaceWalTest110,
 #endif
@@ -152,6 +157,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal100,
 
 #ifdef DEBUG
+        .catalogVersion = 201707211,
+
         .controlTest = pgInterfaceControlTest100,
         .walTest = pgInterfaceWalTest100,
 #endif
@@ -167,6 +174,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal096,
 
 #ifdef DEBUG
+        .catalogVersion = 201608131,
+
         .controlTest = pgInterfaceControlTest096,
         .walTest = pgInterfaceWalTest096,
 #endif
@@ -182,6 +191,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal095,
 
 #ifdef DEBUG
+        .catalogVersion = 201510051,
+
         .controlTest = pgInterfaceControlTest095,
         .walTest = pgInterfaceWalTest095,
 #endif
@@ -197,6 +208,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal094,
 
 #ifdef DEBUG
+        .catalogVersion = 201409291,
+
         .controlTest = pgInterfaceControlTest094,
         .walTest = pgInterfaceWalTest094,
 #endif
@@ -212,6 +225,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal093,
 
 #ifdef DEBUG
+        .catalogVersion = 201306121,
+
         .controlTest = pgInterfaceControlTest093,
         .walTest = pgInterfaceWalTest093,
 #endif
@@ -227,6 +242,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal092,
 
 #ifdef DEBUG
+        .catalogVersion = 201204301,
+
         .controlTest = pgInterfaceControlTest092,
         .walTest = pgInterfaceWalTest092,
 #endif
@@ -242,6 +259,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal091,
 
 #ifdef DEBUG
+        .catalogVersion = 201105231,
+
         .controlTest = pgInterfaceControlTest091,
         .walTest = pgInterfaceWalTest091,
 #endif
@@ -257,6 +276,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal090,
 
 #ifdef DEBUG
+        .catalogVersion = 201008051,
+
         .controlTest = pgInterfaceControlTest090,
         .walTest = pgInterfaceWalTest090,
 #endif
@@ -272,6 +293,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal084,
 
 #ifdef DEBUG
+        .catalogVersion = 200904091,
+
         .controlTest = pgInterfaceControlTest084,
         .walTest = pgInterfaceWalTest084,
 #endif
@@ -287,6 +310,8 @@ static const PgInterface pgInterface[] =
         .wal = pgInterfaceWal083,
 
 #ifdef DEBUG
+        .catalogVersion = 200711281,
+
         .controlTest = pgInterfaceControlTest083,
         .walTest = pgInterfaceWalTest083,
 #endif
@@ -732,6 +757,8 @@ pgControlTestToBuffer(PgControl pgControl)
     // Set defaults if values are not passed
     pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
+    pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
+        pgInterfaceVersion(pgControl.version)->catalogVersion : pgControl.catalogVersion;
 
     // Create the buffer and clear it
     Buffer *result = bufNew(PG_CONTROL_SIZE);
