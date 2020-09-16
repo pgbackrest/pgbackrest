@@ -76,7 +76,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
         TEST_RESULT_UINT(info.systemId, 0xFACEFACE, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
-        TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -101,7 +101,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
-        TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check catalog version");
     }
 
     // *****************************************************************************************************************************
