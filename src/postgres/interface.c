@@ -747,6 +747,21 @@ pgXactPath(unsigned int pgVersion)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
+unsigned int
+pgCatalogTestVersion(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion);
+}
+
+#endif
+
+/**********************************************************************************************************************************/
+#ifdef DEBUG
+
 Buffer *
 pgControlTestToBuffer(PgControl pgControl)
 {

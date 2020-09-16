@@ -238,7 +238,7 @@ testRun(void)
         MEM_CONTEXT_BEGIN(testContext)
         {
             TEST_ASSIGN(
-                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 201105231, false, false, NULL, NULL),
+                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL),
                 "build with %" PRIu64 " files", driver.fileTotal);
         }
         MEM_CONTEXT_END();

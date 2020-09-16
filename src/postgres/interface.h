@@ -178,6 +178,9 @@ const String *pgXactPath(unsigned int pgVersion);
 Test Functions
 ***********************************************************************************************************************************/
 #ifdef DEBUG
+    // Get the catalog version for a PostgreSQL version for testing
+    unsigned int pgCatalogTestVersion(unsigned int pgVersion);
+
     // Create pg_control for testing
     Buffer *pgControlTestToBuffer(PgControl pgControl);
 

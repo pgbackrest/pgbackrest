@@ -59,7 +59,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, 201409291, NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94), NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
@@ -74,7 +74,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, 201707211,
+                PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10),
                 strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
@@ -92,7 +92,9 @@ testRun(void)
         // Add pg info
         // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, 201409291), "add another infoPg");
+        TEST_RESULT_VOID(
+            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94)),
+            "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
@@ -697,7 +699,9 @@ testRun(void)
             "20190818-084777F, 20190923-164324F", "confirm backups on disk");
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
-        TEST_ASSIGN(infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, 201809051), "upgrade db");
+        TEST_ASSIGN(
+            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, pgCatalogTestVersion(PG_VERSION_11)),
+            "upgrade db");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "save backup info");
@@ -825,7 +829,7 @@ testRun(void)
             "HINT: has a stanza-create been performed?",
             testPath(), testPath(), testPath(), testPath());
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, 201707211, NULL);
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
 
