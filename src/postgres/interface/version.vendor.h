@@ -178,8 +178,8 @@ Types from src/include/catalog/catversion.h
 
 // CATALOG_VERSION_NO define
 //
-// Add CATALOG_VERSION_NO when more than one PostgreSQL version shares a control version so the version can be reliably identified.
-// Newer versions of PostgreSQL have reliably bumped the control version but that has not always been the case.
+// Add CATALOG_VERSION_NO when more than one PostgreSQL version shares a control version so the PostgreSQL version can be reliably
+// identified. Newer versions of PostgreSQL have bumped the control version but that has not always been the case.
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 

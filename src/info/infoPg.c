@@ -205,10 +205,8 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
 
-/***********************************************************************************************************************************
-Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
-***********************************************************************************************************************************/
-static void
+/**********************************************************************************************************************************/
+void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -332,7 +330,9 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             {
                 kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
 
-                // These need to be saved because older pgBackRest versions expect them
+                // These need to be saved because older pgBackRest versions expect them. Archive info does not contain the catalog
+                // version so check that it is not zero to make sure we are not trying to save it in archive info.
+                ASSERT(pgData.catalogVersion != 0);
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
             }
