@@ -855,12 +855,13 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
-    const VariantList *tablespaceList)
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
+    const StringList *excludeList, const VariantList *tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
@@ -879,6 +880,7 @@ manifestNewBuild(
         this->info = infoNew(NULL);
         this->data.backrestVersion = strNew(PROJECT_VERSION);
         this->data.pgVersion = pgVersion;
+        this->data.pgCatalogVersion = pgCatalogVersion;
         this->data.backupOptionOnline = online;
         this->data.backupOptionChecksumPage = varNewBool(checksumPage);
 
@@ -889,7 +891,7 @@ manifestNewBuild(
             {
                 .manifest = this,
                 .storagePg = storagePg,
-                .tablespaceId = pgTablespaceId(pgVersion),
+                .tablespaceId = pgTablespaceId(pgVersion, pgCatalogVersion),
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
@@ -1234,9 +1236,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, unsigned int pgCatalogVersion,
-    const VariantList *dbList, bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize,
-    unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
     bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1249,7 +1251,6 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(STRING, archiveStop);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
@@ -1272,7 +1273,6 @@ manifestBuildComplete(
         this->data.archiveStop = strDup(archiveStop);
         this->data.pgId = pgId;
         this->data.pgSystemId = pgSystemId;
-        this->data.pgCatalogVersion = pgCatalogVersion;
 
         // Save db list
         if (dbList != NULL)

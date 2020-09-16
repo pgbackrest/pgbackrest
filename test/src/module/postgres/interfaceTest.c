@@ -30,15 +30,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgControlVersion() and pgCatalogVersion()"))
+    if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_83), 833, "8.3 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
-
-        TEST_ERROR(pgCatalogVersion(70900), AssertError, "invalid PostgreSQL version 70900");
-        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_83), 200711281, "8.3 catalog version");
-        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_11), 201809051, "11 catalog version");
     }
 
     // *****************************************************************************************************************************
@@ -90,7 +86,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024, .catalogVersion = 201510051}));
 
         TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 
@@ -169,10 +165,9 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84), NULL, "check 8.4 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90), "PG_9.0_201008051", "check 9.0 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94), "PG_9.4_201409291", "check 9.4 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_11), "PG_11_201809051", "check 11 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84, 200904091), NULL, "check 8.4 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90, 201008051), "PG_9.0_201008051", "check 9.0 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 999999999), "PG_9.4_999999999", "check 9.4 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_10), "wal", "check wal name");

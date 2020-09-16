@@ -177,71 +177,13 @@ Types from src/include/catalog/catversion.h
 ***********************************************************************************************************************************/
 
 // CATALOG_VERSION_NO define
+//
+// Add CATALOG_VERSION_NO when more than one PostgreSQL version shares a control version so the version can be reliably identified.
+// Newer versions of PostgreSQL have reliably bumped the control version but that has not always been the case.
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_13
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	202007201
-
-#elif PG_VERSION >= PG_VERSION_12
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201909212
-
-#elif PG_VERSION >= PG_VERSION_11
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201809051
-
-#elif PG_VERSION >= PG_VERSION_10
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201707211
-
 #elif PG_VERSION >= PG_VERSION_96
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201608131
 
 #elif PG_VERSION >= PG_VERSION_95
 
@@ -269,31 +211,7 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201409291
 
-#elif PG_VERSION >= PG_VERSION_93
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201306121
-
 #elif PG_VERSION >= PG_VERSION_92
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201204301
 
 #elif PG_VERSION >= PG_VERSION_91
 
@@ -321,31 +239,7 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201008051
 
-#elif PG_VERSION >= PG_VERSION_84
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	200904091
-
 #elif PG_VERSION >= PG_VERSION_83
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	200711281
 
 #endif
 
@@ -373,10 +267,6 @@ typedef struct FullTransactionId
 
 /***********************************************************************************************************************************
 Types from src/include/catalog/pg_control.h
-
-When more than one PostgreSQL version shares a control version then #define PG_CONTROL_VERSION_DUPLICATE so the catalog version will
-also be used to identify the PostgreSQL version. Newer versions of PostgreSQL have reliably bumped the control version but that has
-not always been the case.
 ***********************************************************************************************************************************/
 
 // PG_CONTROL_VERSION define
@@ -413,9 +303,6 @@ not always been the case.
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	942
 
-/* 9.4 and 9.5 have the same control version */
-#define PG_CONTROL_VERSION_DUPLICATE
-
 #elif PG_VERSION >= PG_VERSION_93
 
 /* Version identifier for this pg_control format */
@@ -430,9 +317,6 @@ not always been the case.
 
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	903
-
-/* 9.1 and 9.2 have the same control version */
-#define PG_CONTROL_VERSION_DUPLICATE
 
 #elif PG_VERSION >= PG_VERSION_84
 

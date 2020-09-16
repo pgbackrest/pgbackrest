@@ -1646,7 +1646,7 @@ testRun(void)
             storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_95), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, 201510051, true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -1733,7 +1733,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, 201510051, true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -1926,7 +1926,7 @@ testRun(void)
             manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, 201510051, true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;
@@ -2300,7 +2300,7 @@ testRun(void)
 
             storagePutP(
                 storageNewWriteP(
-                    storageTest, strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11))),
+                    storageTest, strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, 201809051))),
                     .timeModified = backupTimeStart),
                 NULL);
 

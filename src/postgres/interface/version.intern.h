@@ -18,29 +18,13 @@ Each version of PostgreSQL will need a vXXX.c file to contain the version-specif
 #include "postgres/interface/version.vendor.h"
 
 /***********************************************************************************************************************************
-Get the catalog version
-***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-#define PG_INTERFACE_CATALOG_VERSION(version)                                                                                      \
-    uint32_t                                                                                                                       \
-    pgInterfaceCatalogVersion##version(void)                                                                                       \
-    {                                                                                                                              \
-        return CATALOG_VERSION_NO;                                                                                                 \
-    }
-
-#endif
-
-/***********************************************************************************************************************************
 Determine if the supplied pg_control is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_83
 
-#ifdef PG_CONTROL_VERSION_DUPLICATE
+#ifdef CATALOG_VERSION_NO
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     bool                                                                                                                           \
@@ -64,7 +48,7 @@ Determine if the supplied pg_control is for this version of PostgreSQL
         return ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION;                                         \
     }
 
-#endif // PG_CONTROL_VERSION_DUPLICATE
+#endif // CATALOG_VERSION_NO
 
 #endif
 
@@ -145,7 +129,7 @@ Create a pg_control file for testing
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
+            .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
@@ -237,7 +221,6 @@ Create a WAL file file for testing
 Call all macros with a single macro to make the vXXX.c files as simple as possible
 ***********************************************************************************************************************************/
 #define PG_INTERFACE_BASE(version)                                                                                                 \
-    PG_INTERFACE_CATALOG_VERSION(version)                                                                                          \
     PG_INTERFACE_CONTROL_IS(version)                                                                                               \
     PG_INTERFACE_CONTROL(version)                                                                                                  \
     PG_INTERFACE_CONTROL_VERSION(version)                                                                                          \

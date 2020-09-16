@@ -99,8 +99,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_13,
 
-        .catalogVersion = pgInterfaceCatalogVersion130,
-
         .controlIs = pgInterfaceControlIs130,
         .control = pgInterfaceControl130,
         .controlVersion = pgInterfaceControlVersion130,
@@ -115,8 +113,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_12,
-
-        .catalogVersion = pgInterfaceCatalogVersion120,
 
         .controlIs = pgInterfaceControlIs120,
         .control = pgInterfaceControl120,
@@ -133,8 +129,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_11,
 
-        .catalogVersion = pgInterfaceCatalogVersion110,
-
         .controlIs = pgInterfaceControlIs110,
         .control = pgInterfaceControl110,
         .controlVersion = pgInterfaceControlVersion110,
@@ -149,8 +143,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_10,
-
-        .catalogVersion = pgInterfaceCatalogVersion100,
 
         .controlIs = pgInterfaceControlIs100,
         .control = pgInterfaceControl100,
@@ -167,8 +159,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_96,
 
-        .catalogVersion = pgInterfaceCatalogVersion096,
-
         .controlIs = pgInterfaceControlIs096,
         .control = pgInterfaceControl096,
         .controlVersion = pgInterfaceControlVersion096,
@@ -183,8 +173,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_95,
-
-        .catalogVersion = pgInterfaceCatalogVersion095,
 
         .controlIs = pgInterfaceControlIs095,
         .control = pgInterfaceControl095,
@@ -201,8 +189,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_94,
 
-        .catalogVersion = pgInterfaceCatalogVersion094,
-
         .controlIs = pgInterfaceControlIs094,
         .control = pgInterfaceControl094,
         .controlVersion = pgInterfaceControlVersion094,
@@ -217,8 +203,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_93,
-
-        .catalogVersion = pgInterfaceCatalogVersion093,
 
         .controlIs = pgInterfaceControlIs093,
         .control = pgInterfaceControl093,
@@ -235,8 +219,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_92,
 
-        .catalogVersion = pgInterfaceCatalogVersion092,
-
         .controlIs = pgInterfaceControlIs092,
         .control = pgInterfaceControl092,
         .controlVersion = pgInterfaceControlVersion092,
@@ -251,8 +233,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_91,
-
-        .catalogVersion = pgInterfaceCatalogVersion091,
 
         .controlIs = pgInterfaceControlIs091,
         .control = pgInterfaceControl091,
@@ -269,8 +249,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_90,
 
-        .catalogVersion = pgInterfaceCatalogVersion090,
-
         .controlIs = pgInterfaceControlIs090,
         .control = pgInterfaceControl090,
         .controlVersion = pgInterfaceControlVersion090,
@@ -286,8 +264,6 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_84,
 
-        .catalogVersion = pgInterfaceCatalogVersion084,
-
         .controlIs = pgInterfaceControlIs084,
         .control = pgInterfaceControl084,
         .controlVersion = pgInterfaceControlVersion084,
@@ -302,8 +278,6 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_83,
-
-        .catalogVersion = pgInterfaceCatalogVersion083,
 
         .controlIs = pgInterfaceControlIs083,
         .control = pgInterfaceControl083,
@@ -359,17 +333,6 @@ pgInterfaceVersion(unsigned int pgVersion)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-uint32_t
-pgCatalogVersion(unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion());
 }
 
 /***********************************************************************************************************************************
@@ -559,10 +522,11 @@ pgWalFromFile(const String *walFile, const Storage *storage)
 
 /**********************************************************************************************************************************/
 String *
-pgTablespaceId(unsigned int pgVersion)
+pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(UINT, pgCatalogVersion);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -575,7 +539,7 @@ pgTablespaceId(unsigned int pgVersion)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion(pgVersion));
+                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion);
             }
             MEM_CONTEXT_PRIOR_END();
         }

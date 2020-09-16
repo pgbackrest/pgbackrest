@@ -47,7 +47,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_83                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=200711281\n"                                                                                       \
             "db-control-version=833\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -56,7 +56,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_84                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=200904091\n"                                                                                       \
             "db-control-version=843\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -65,7 +65,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_90                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201008051\n"                                                                                       \
             "db-control-version=903\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -74,7 +74,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_91                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201105231\n"                                                                                       \
             "db-control-version=903\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -83,7 +83,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_92                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201204301\n"                                                                                       \
             "db-control-version=922\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -92,7 +92,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_94                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201409291\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -101,7 +101,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_12                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201909212\n"                                                                                       \
             "db-control-version=1201\n"                                                                                            \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -110,7 +110,7 @@ testRun(void)
         #define TEST_MANIFEST_DB_13                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=202007201\n"                                                                                       \
             "db-control-version=1300\n"                                                                                            \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -278,7 +278,8 @@ testRun(void)
         strLstAddZ(exclusionList, "bogus/");
 
         Manifest *manifest = NULL;
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_83, false, false, exclusionList, NULL), "build manifest");
+        TEST_ASSIGN(
+            manifest, manifestNewBuild(storagePg, PG_VERSION_83, 200711281, false, false, exclusionList, NULL), "build manifest");
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -401,7 +402,7 @@ testRun(void)
             BUFSTRDEF("TEMP_RELATION"));
 
         // Test manifest - mode stored for shared cluster tablespace dir, pg_xlog contents ignored because online
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_84, true, false, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_84, 200904091, true, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -514,7 +515,7 @@ testRun(void)
         varLstAdd(tablespaceList, varNewVarLst(tablespace));
 
         // Test tablespace error
-        TEST_ERROR(manifestNewBuild(storagePg, PG_VERSION_90, false, false, NULL, tablespaceList), AssertError,
+        TEST_ERROR(manifestNewBuild(storagePg, PG_VERSION_90, 201008051, false, false, NULL, tablespaceList), AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
             "HINT: was a tablespace created or dropped during the backup?");
 
@@ -525,7 +526,8 @@ testRun(void)
         varLstAdd(tablespaceList, varNewVarLst(tablespace));
 
         // Test manifest - temp tables and pg_notify files ignored
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_90, false, false, NULL, tablespaceList), "build manifest");
+        TEST_ASSIGN(
+            manifest, manifestNewBuild(storagePg, PG_VERSION_90, 201008051, false, false, NULL, tablespaceList), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -616,7 +618,7 @@ testRun(void)
             BUFSTRDEF("WALDATA"));
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, true, false, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, 201105231, true, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -699,7 +701,7 @@ testRun(void)
             NULL);
 
         // Test manifest - pg_snapshots files ignored
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_92, false, false, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_92, 201204301, false, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -839,7 +841,7 @@ testRun(void)
             BUFSTRDEF("TESTDATA"));
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, true, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -933,7 +935,7 @@ testRun(void)
 
         // Tablespace link errors when correct verion not found
         TEST_ERROR_FMT(
-            manifestNewBuild(storagePg, PG_VERSION_12, false, false, NULL, NULL), FileOpenError,
+            manifestNewBuild(storagePg, PG_VERSION_12, 201909212, false, false, NULL, NULL), FileOpenError,
             "unable to get info for missing path/file '%s/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or directory",
             testPath());
 
@@ -960,7 +962,7 @@ testRun(void)
         // Test manifest - 'pg_data/pg_tblspc' will appear in manifest but 'pg_tblspc' will not (no links). Recovery signal files
         // and backup_label ignored. Old recovery files and pg_xlog are now just another file/directory and will not be ignored.
         // pg_wal contents will be ignored online. pg_clog pgVersion > 10 master:true, pg_xact pgVersion > 10 master:false
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_12, true, false, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_12, 201909212, true, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1030,7 +1032,7 @@ testRun(void)
         TEST_TITLE("run 13, offline");
 
         // pg_wal not ignored
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_13, false, false, NULL, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_13, 202007201, false, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1102,7 +1104,7 @@ testRun(void)
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkDestinationError,
+            manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, false, NULL, NULL), LinkDestinationError,
             hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
 
         THROW_ON_SYS_ERROR(
@@ -1114,7 +1116,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"), .mode = 0700, .noParentCreate = true);
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkExpectedError,
+            manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, false, NULL, NULL), LinkExpectedError,
             "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         storagePathRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"));
@@ -1125,7 +1127,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkExpectedError,
+            manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, false, NULL, NULL), LinkExpectedError,
             "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         storageRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile"));
@@ -1138,7 +1140,7 @@ testRun(void)
             "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), FileOpenError,
+            manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, true, NULL, NULL), FileOpenError,
             hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
 
         THROW_ON_SYS_ERROR(
@@ -1156,7 +1158,7 @@ testRun(void)
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR_FMT(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkDestinationError,
+            manifestNewBuild(storagePg, PG_VERSION_94, 201409291, false, false, NULL, NULL), LinkDestinationError,
             "link '%s/pg/linktolink' cannot reference another link '%s/linktest'", testPath(), testPath());
 
         #undef TEST_MANIFEST_HEADER
@@ -1230,7 +1232,7 @@ testRun(void)
             "backup-type=\"incr\"\n"                                                                                               \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=0\n"                                                                                               \
+            "db-catalog-version=201608131\n"                                                                                       \
             "db-control-version=960\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
@@ -1267,6 +1269,7 @@ testRun(void)
         Manifest *manifest = manifestNewInternal();
         manifest->info = infoNew(NULL);
         manifest->data.pgVersion = PG_VERSION_96;
+        manifest->data.pgCatalogVersion = 201608131;
         manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
 
         manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
@@ -1833,7 +1836,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
 
         // Create db list
@@ -1860,7 +1863,7 @@ testRun(void)
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
-                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, 201409291, dbList,
+                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, dbList,
                 true, true, 16384, 3, 6, true, 32, false),
             "manifest complete with db");
 
