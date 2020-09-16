@@ -146,6 +146,53 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when unable to select any pg_settings");
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+            HRNPQ_MACRO_SET_SEARCH_PATH(1),
+            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
+
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
+                    " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
+                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",
+                .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 4},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = ""},
+            {.session = 1, .function = HRNPQ_GETISNULL, .param = "[0,3]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // Close primary
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg-1: [DbQueryError] unable to select some rows from pg_settings\n"
+            "            HINT: is the backup running as the postgres user?\n"
+            "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 8.3 start backup with no start fast");
 
         harnessPqScriptSet((HarnessPq [])
@@ -301,53 +348,6 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStopResult.tablespaceMap, NULL, "check tablespace map is not set");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 10 without pg_read_all_settings");
-
-        harnessPqScriptSet((HarnessPq [])
-        {
-            // Connect to primary
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
-            HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-
-            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
-                "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
-                    " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",
-                .resultInt = 1},
-            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
-            {.session = 1, .function = HRNPQ_ISBUSY},
-            {.session = 1, .function = HRNPQ_GETRESULT},
-            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-            {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 4},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = ""},
-            {.session = 1, .function = HRNPQ_GETISNULL, .param = "[0,3]", .resultInt = 1},
-            {.session = 1, .function = HRNPQ_CLEAR},
-            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
-
-            // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
-
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
-
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg-1: [DbQueryError] unable to select rows from pg_settings\n"
-            "            HINT: does the user have select privileges on pg_settings?\n"
-            "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start backup from standby");

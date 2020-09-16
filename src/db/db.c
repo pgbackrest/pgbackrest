@@ -219,16 +219,16 @@ dbOpen(Db *this)
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
 
-        // Check that none of the return values are null, which indicates the user does not have select on pg_settings
+        // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
         {
             if (varLstGet(row, columnIdx) == NULL)
             {
                 THROW(
                     DbQueryError,
-                    "unable to select rows from pg_settings\n"
-                        "HINT: does the user have select privileges on pg_settings?\n"
-                        "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR);
+                    "unable to select some rows from pg_settings\n"
+                        "HINT: is the backup running as the postgres user?\n"
+                        "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR "?");
             }
         }
 
