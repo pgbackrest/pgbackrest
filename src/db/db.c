@@ -219,6 +219,19 @@ dbOpen(Db *this)
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
 
+        // Check that none of the return values are null, which indicates the user does not have select on pg_settings
+        for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
+        {
+            if (varLstGet(row, columnIdx) == NULL)
+            {
+                THROW(
+                    DbQueryError,
+                    "unable to select rows from pg_settings\n"
+                        "HINT: does the user have select privileges on pg_settings?\n"
+                        "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR);
+            }
+        }
+
         // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
         // running an old minor version.
         this->pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
