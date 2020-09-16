@@ -97,7 +97,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    ASSERT(pgVersion > 0 && pgSystemId > 0);
+    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
 
     InfoBackup *this = NULL;
 

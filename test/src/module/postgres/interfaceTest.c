@@ -68,12 +68,15 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACE, .walSegmentSize = 1024 * 1024}));
+            pgControlTestToBuffer(
+                (PgControl){
+                    .version = PG_VERSION_11, .systemId = 0xFACEFACE, .catalogVersion = 201809051, .walSegmentSize = 1024 * 1024}));
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
         TEST_RESULT_UINT(info.systemId, 0xFACEFACE, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -93,11 +96,12 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .catalogVersion = 200711281}));
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check version");
     }
 
     // *****************************************************************************************************************************

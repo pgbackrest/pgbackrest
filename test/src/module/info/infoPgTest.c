@@ -199,8 +199,11 @@ testRun(void)
         pgDataTest.id = (unsigned int)4294967295;
         pgDataTest.version = (unsigned int)4294967295;
         pgDataTest.systemId = 18446744073709551615U;
+        pgDataTest.catalogVersion = 200101011;
+
         TEST_RESULT_STR_Z(
-            infoPgDataToLog(&pgDataTest), "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615}",
+            infoPgDataToLog(&pgDataTest),
+            "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 200101011}",
             "    check max format");
     }
 }

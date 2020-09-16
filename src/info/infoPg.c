@@ -330,9 +330,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             {
                 kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
 
-                // These need to be saved because older pgBackRest versions expect them. Archive info does not contain the catalog
-                // version so check that it is not zero to make sure we are not trying to save it in archive info.
-                ASSERT(pgData.catalogVersion != 0);
+                // These need to be saved because older pgBackRest versions expect them
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
             }
@@ -494,5 +492,7 @@ infoPgCurrentDataId(const InfoPg *this)
 String *
 infoPgDataToLog(const InfoPgData *this)
 {
-    return strNewFmt("{id: %u, version: %u, systemId: %" PRIu64 "}", this->id, this->version, this->systemId);
+    return strNewFmt(
+        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
+        this->catalogVersion);
 }
