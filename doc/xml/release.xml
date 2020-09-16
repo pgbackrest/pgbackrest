@@ -27,6 +27,16 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <postgres/> version identification.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
