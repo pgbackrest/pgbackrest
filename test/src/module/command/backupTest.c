@@ -411,40 +411,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             harnessPqScriptSet((HarnessPq [])
             {
                 // Connect to primary
-                // HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
-
-                // Connect to primary
-                HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
-                HRNPQ_MACRO_SET_SEARCH_PATH(1),
-                HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-
-                {.session = 1, .function = HRNPQ_SENDQUERY, .param =
-                    "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
-                        " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
-                        " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                        " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",
-                    .resultInt = 1},
-                {.session = 1, .function = HRNPQ_CONSUMEINPUT},
-                {.session = 1, .function = HRNPQ_ISBUSY},
-                {.session = 1, .function = HRNPQ_GETRESULT},
-                {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-                {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
-                {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 4},
-                {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
-                {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
-                {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
-                {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
-                {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90600"},
-                {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = ""},
-                {.session = 1, .function = HRNPQ_GETISNULL, .param = "[0,1]", .resultInt = 1},
-                {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "on"},
-                {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = "pgbackrest"},
-                {.session = 1, .function = HRNPQ_CLEAR},
-                {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
-
-                HRNPQ_MACRO_SET_APPLICATION_NAME(1),
-                HRNPQ_MACRO_SET_MAX_PARALLEL_WORKERS_PER_GATHER(1),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
 
                 // Get start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
