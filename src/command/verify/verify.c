@@ -415,7 +415,10 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         }
 
         // Initialize the range if it has not yet been initialized and continue to next
-        if (walRange == NULL)
+        if (walRange == NULL ||
+            !strEq(
+                walSegmentNext(
+                    walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
         {
             // Add the initialized wal range to the range list
             MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
@@ -433,15 +436,9 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
 
             // Set the current wal range being processed to what was just added
             walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
-
-            walFileIdx++;
-            continue;
         }
-
         // If the next WAL is the appropriate distance away, then there is no gap
-        if (strEq(
-            walSegmentNext(
-                walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
+        else
         {
             MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
@@ -449,24 +446,6 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
                 walRange->stop = strDup(walSegment);
             }
             MEM_CONTEXT_END();
-        }
-        else
-        {
-            // A gap was found so start a new range
-            MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
-            {
-                VerifyWalRange walRangeNew =
-                {
-                    .start = strDup(walSegment),
-                    .stop = strDup(walSegment),
-                    .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
-                };
-
-                lstAdd(archiveIdResult->walRangeList, &walRangeNew);
-            }
-            MEM_CONTEXT_END();
-
-            walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
         }
 
         walFileIdx++;
