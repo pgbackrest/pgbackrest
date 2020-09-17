@@ -489,14 +489,9 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
     ASSERT(walFileList != NULL);
 
     unsigned int walFileIdx = 0;
-    bool addWal = true;
 
     // Initialize the WAL range
-    VerifyWalRange walRange =
-    {
-        .start = NULL,
-        .stop = NULL,
-    };
+    VerifyWalRange *walRange = NULL;
 
     // If there is a WAL range for this archiveID, get the last one. If there is no timeline change then continue updating the last
     // WAL range.
@@ -505,8 +500,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
             strSubN(((VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList))->stop, 0, 8),
             strSubN(strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE), 0, 8)))
     {
-        walRange = *(VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
-        addWal = false;
+        walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
     }
 
     do
@@ -554,64 +548,52 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
             }
         }
 
-        // Initialize the range if it has not yet been initialized with a segment and continue to next
-        if (walRange.start == NULL)
+        // Initialize the range if it has not yet been initialized and continue to next
+        if (walRange == NULL)
         {
-            walRange.start = walSegment;
-            walRange.stop = walSegment;
-            walRange.invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr);
+            VerifyWalRange walRangeNew =
+            {
+                .start = walSegment,
+                .stop = walSegment,
+                .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+            };
+
+            // Add the initialized wal range to the range list the set the current wal range being processed to what was just added
+            lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+            walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
+
             walFileIdx++;
             continue;
         }
 
         // If the next WAL is the appropriate distance away, then there is no gap
         if (strEq(
-            walSegmentNext(walRange.stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
+            walSegmentNext(
+                walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
         {
-            walRange.stop = walSegment;
-
-            // Update the archiveId range if WAL range is already added to the archiveId
-            if (!addWal)
+            MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
-                MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
-                {
-                    ((VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList))->stop = strDup(walRange.stop);
-                }
-                MEM_CONTEXT_END();
+                walRange->stop = strDup(walSegment);
             }
+            MEM_CONTEXT_END();
         }
         else
         {
-            // A gap was found and if not updating the current WAL range then add the current range to the list
-            // else update the current range.
-            if (addWal)
-                lstAdd(archiveIdResult->walRangeList, &walRange);
-            else
+            // A gap was found so start a new range
+            VerifyWalRange walRangeNew =
             {
-                MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
-                {
-                    ((VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList))->stop = strDup(walRange.stop);
-                }
-                MEM_CONTEXT_END();
-            }
-
-            // Start a new range
-            walRange = (VerifyWalRange)
-            {
-                .start = strDup(walSegment),
-                .stop = strDup(walSegment),
+                .start = walSegment,
+                .stop = walSegment,
                 .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
             };
-            addWal = true;
+
+            lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+            walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
         }
 
         walFileIdx++;
     }
     while (walFileIdx < strLstSize(walFileList));
-
-    // If walRange contains a range, then add the last walRange to the list
-    if (addWal && walRange.start != NULL)
-        lstAdd(archiveIdResult->walRangeList, &walRange);
 
     FUNCTION_TEST_RETURN_VOID();
 }
