@@ -19,6 +19,8 @@
                         <release-item-contributor-list>
                             <release-item-ideator id="mohamed.insaf.k"/>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Error with hints when backup user cannot read <id>pg_settings</id>.</p>
