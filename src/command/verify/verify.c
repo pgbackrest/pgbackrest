@@ -112,6 +112,7 @@ typedef struct VerifyBackupResult
 // Job data stucture for processing and results collection
 typedef struct VerifyJobData
 {
+    MemContext *memContext;                                         // Context for memory allocations in this struct
     StringList *archiveIdList;                                      // List of archive ids to verify
     StringList *walPathList;                                        // WAL path list for a single archive id
     StringList *walFileList;                                        // WAL file list for a single WAL path
@@ -552,15 +553,21 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         // Initialize the range if it has not yet been initialized and continue to next
         if (walRange == NULL)
         {
-            VerifyWalRange walRangeNew =
+            // Add the initialized wal range to the range list
+            MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
-                .start = walSegment,
-                .stop = walSegment,
-                .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
-            };
+                VerifyWalRange walRangeNew =
+                {
+                    .start = strDup(walSegment),
+                    .stop = strDup(walSegment),
+                    .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+                };
 
-            // Add the initialized wal range to the range list the set the current wal range being processed to what was just added
-            lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+                lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+            }
+            MEM_CONTEXT_END();
+
+            // Set the current wal range being processed to what was just added
             walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
 
             walFileIdx++;
@@ -574,6 +581,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         {
             MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
+                strFree(walRange->stop);
                 walRange->stop = strDup(walSegment);
             }
             MEM_CONTEXT_END();
@@ -581,14 +589,19 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         else
         {
             // A gap was found so start a new range
-            VerifyWalRange walRangeNew =
+            MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
-                .start = walSegment,
-                .stop = walSegment,
-                .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
-            };
+                VerifyWalRange walRangeNew =
+                {
+                    .start = strDup(walSegment),
+                    .stop = strDup(walSegment),
+                    .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+                };
 
-            lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+                lstAdd(archiveIdResult->walRangeList, &walRangeNew);
+            }
+            MEM_CONTEXT_END();
+
             walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
         }
 
@@ -623,21 +636,32 @@ verifyArchive(void *data)
             !strEq(
                 ((VerifyArchiveResult *)lstGetLast(jobData->archiveIdResultList))->archiveId, strLstGet(jobData->archiveIdList, 0)))
         {
-            VerifyArchiveResult archiveIdResult =
-            {
-                .archiveId = strDup(strLstGet(jobData->archiveIdList, 0)),
-                .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
-            };
+            const String *archiveId = strLstGet(jobData->archiveIdList, 0);
 
-            lstAdd(jobData->archiveIdResultList, &archiveIdResult);
+            MEM_CONTEXT_BEGIN(lstMemContext(jobData->archiveIdResultList))
+            {
+                VerifyArchiveResult archiveIdResult =
+                {
+                    .archiveId = strDup(archiveId),
+                    .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
+                };
+
+                lstAdd(jobData->archiveIdResultList, &archiveIdResult);
+            }
+            MEM_CONTEXT_END();
+
+            // Free the old WAL path list
+            strLstFree(jobData->walPathList);
 
             // Get the WAL paths for the archive Id
-            jobData->walPathList =
-                strLstSort(
-                    storageListP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveIdResult.archiveId)),
-                        .expression = WAL_SEGMENT_DIR_REGEXP_STR),
-                    sortOrderAsc);
+            const String *archiveIdPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId));
+
+            MEM_CONTEXT_BEGIN(jobData->memContext)
+            {
+                jobData->walPathList = strLstSort(
+                    storageListP(storageRepo(), archiveIdPath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
+            }
+            MEM_CONTEXT_END();
         }
 
         // If there are WAL paths then get the file lists
@@ -653,13 +677,19 @@ verifyArchive(void *data)
                 // Get the WAL files for the first item in the WAL paths list and initialize WAL info and ranges
                 if (strLstSize(jobData->walFileList) == 0)
                 {
-                    jobData->walFileList =
-                        strLstSort(
-                            storageListP(
-                                storageRepo(),
-                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveResult->archiveId), strZ(walPath)),
-                                .expression = WAL_SEGMENT_FILE_REGEXP_STR),
-                            sortOrderAsc);
+                    // Free the old WAL file list
+                    strLstFree(jobData->walFileList);
+
+                    // Get WAL file list
+                    const String *walFilePath = strNewFmt(
+                        STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveResult->archiveId), strZ(walPath));
+
+                    MEM_CONTEXT_BEGIN(jobData->memContext)
+                    {
+                        jobData->walFileList = strLstSort(
+                            storageListP(storageRepo(), walFilePath, .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
+                    }
+                    MEM_CONTEXT_END();
 
                     if (strLstSize(jobData->walFileList) > 0)
                     {
@@ -935,27 +965,23 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW - will later have a memContext management
     // {
     // Get a new job if there are any left
-    VerifyJobData *jobData = data;
-
-    if (!jobData->backupProcessing)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = verifyArchive(data);
-        jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
+        VerifyJobData *jobData = data;
 
-        // If there is a result from archiving, then return it
-        if (result != NULL)
-            FUNCTION_TEST_RETURN(result);  // CSHANG can only do if don't have a temp mem context
+        if (!jobData->backupProcessing)
+        {
+            result = protocolParallelJobMove(verifyArchive(data), memContextPrior());
+            jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
+        }
+
+        // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
+        if (jobData->backupProcessing)
+        {
+            result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
+        }
     }
-
-    // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
-    if (jobData->backupProcessing)
-    {
-        result = verifyBackup(data);
-
-        // If there is a result from backups, then return it
-        if (result != NULL)
-            FUNCTION_TEST_RETURN(result);
-    }
+    MEM_CONTEXT_TEMP_END();
 
     // }
     // MEM_CONTEXT_TEMP_END();
@@ -1257,7 +1283,8 @@ verifyProcess(unsigned int *errorTotal)
             // Initialize the job data
             VerifyJobData jobData =
             {
-                .walPathList = strLstNew(),  // cshang need to create memcontex and later after processing loop, memContextDiscard(); see manifest.c line 1793
+                .memContext = memContextCurrent(),
+                .walPathList = NULL,
                 .walFileList = strLstNew(),
                 .backupFileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
                 .pgHistory = infoArchivePg(archiveInfo),
