@@ -155,7 +155,7 @@ testRun(void)
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
 
-            // Return NULL for data_directory in pg_settings
+            // Return NULL for a row in pg_settings
             {.session = 1, .function = HRNPQ_SENDQUERY, .param =
                 "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                     " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
