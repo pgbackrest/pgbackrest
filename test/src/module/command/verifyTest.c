@@ -274,7 +274,8 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not in the "
+                "backup.info history",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -310,7 +311,8 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the "
+                "backup.info history",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -346,7 +348,8 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data is not in the backup.info history",
+            "P00   WARN: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not in the "
+                "backup.info history",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------

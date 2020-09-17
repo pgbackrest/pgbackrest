@@ -96,6 +96,9 @@ typedef struct VerifyBackupResult
 {
     String *backupLabel;
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
+    unsigned int pgId;                                              // PostgreSQL id in backup.info
+    unsigned int pgVersion;                                         // PostgreSQL version
+    uint64_t pgSystemId;                                            // PostgreSQL system identifier
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
     CompressType optionCompressType;                                // Compression type used for the backup
@@ -410,7 +413,12 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
 
             // If the PG data is not found in the backup.info history, then warn but check all the files anyway
             if (!found)
-                LOG_WARN_FMT("'%s' may not be recoverable - PG data is not in the backup.info history", strZ(backupLabel));
+            {
+                LOG_WARN_FMT(
+                    "'%s' may not be recoverable - PG data (id %u, version %s, system-id %"
+                    PRIu64 ") is not in the backup.info history",
+                    manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId, strZ(backupLabel));
+            }
         }
 
     }
@@ -834,6 +842,9 @@ verifyBackup(void *data)
             else
             {
                 const ManifestData *manData = manifestData(manifest);
+                backupResult.pgId = manData->pgId;
+                backupResult.pgVersion = manData->pgVersion;
+                backupResult.pgSystemId = manData->pgSystemId;
                 backupResult.archiveStart = strDup(manData->archiveStart);
                 backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
                 backupResult.optionArchiveCheck = manData->backupOptionArchiveCheck;
@@ -851,7 +862,7 @@ verifyBackup(void *data)
                     const ManifestFile *file = manifestFile(manifest, fileIdx);
                     lstAdd(jobData->backupFileList, &file);
                 }
-// CSHANG But what about freeing the ManifestData and the ManifestFile?
+
                 // Free the manifest since it is no longer needed
                 manifestFree(manifest);
             }
@@ -859,15 +870,25 @@ verifyBackup(void *data)
 
         if (strLstSize(jobData->backupFileList) > 0))
         {
-            // Get the backup data for the current (last) backup being processed
+            // Get the backup result data for the current (last) backup being processed
             VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
             do
             {
-                ManifestFile *backupFileData = (ManifestFile *)lstGet(jobData->backupFileList, 0);
-                String *backupFileName = strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s%s", strZ(backupFileData->name), strZ(compressExtStr(backupResult->optionCompressType));
+                const ManifestFile *backupFileData = (ManifestFile *)lstGet(jobData->backupFileList, 0);
+                String *filePathName = strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(backupFileData->name),
+                    strZ(compressExtStr(backupResult->optionCompressType));
 
+                // Set up the job
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                protocolCommandParamAdd(command, VARSTR(filePathName));
+                protocolCommandParamAdd(command, VARSTR(backupFileData->checksumSha1));
+                protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
+                protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+
+                // Assign job to result
+                result = protocolParallelJobNew(VARSTR(filePathName), command);
                 // Return to process the job found
                 break;
             }
