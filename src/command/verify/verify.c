@@ -5,8 +5,9 @@ Verify the contents of the repository.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "command/archive/common.h"
 #include "command/check/common.h"
@@ -417,7 +418,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
                 LOG_WARN_FMT(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %"
                     PRIu64 ") is not in the backup.info history",
-                    manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId, strZ(backupLabel));
+                    strZ(backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
             }
         }
 
@@ -791,7 +792,7 @@ verifyBackup(void *data)
             bool inProgressBackup = strEq(jobData->currentBackup, backupResult.backupLabel);
 
             // Get a usable backup manifest file
-            const Manifest *manifest = verifyManifestFile(
+            Manifest *manifest = verifyManifestFile(
                 backupResult.backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
 
             // If a usable backup.manifest file is not found
@@ -825,8 +826,8 @@ verifyBackup(void *data)
             {
                 const ManifestData *manData = manifestData(manifest);
                 backupResult.pgId = manData->pgId;
-                backupResult.pgVersion = manData->pgVersion;
-                backupResult.pgSystemId = manData->pgSystemId;
+                backupResult.pgVersion = manData->pgVersion;  // CSHANG May not need?
+                backupResult.pgSystemId = manData->pgSystemId;  // CSHANG May not need?
                 backupResult.archiveStart = strDup(manData->archiveStart);
                 backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
                 backupResult.optionArchiveCheck = manData->backupOptionArchiveCheck;
@@ -842,7 +843,23 @@ verifyBackup(void *data)
                 for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
                 {
                     const ManifestFile *file = manifestFile(manifest, fileIdx);
-                    lstAdd(jobData->backupFileList, &file);
+                    String *fileName = NULL;
+
+                    // Check if the file is referenced in a prior backup
+                    if (file->reference != NULL)
+                    {
+                        // If there is a reference and the prior backup is not in the list then add the file
+                        // NOTE: backups are processed from oldest to newest so if a single backup is being verified, then it would
+                        // not be in the list)
+                        if (lstFindIdx(jobData->backupResultList, &file->reference) == LIST_NOT_FOUND)
+                            fileName = strNewFmt("%s/%s", strZ(file->reference), strZ(file->name));
+                    }
+                    else
+                        fileName = strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(file->name));
+
+                    if (fileName != NULL)
+                        lstAdd(jobData->backupFileList, &file);
+
                 }
 
                 // Free the manifest since it is no longer needed
@@ -850,31 +867,39 @@ verifyBackup(void *data)
             }
         }
 
-        if (strLstSize(jobData->backupFileList) > 0))
+        if (lstSize(jobData->backupFileList) > 0)
         {
             // Get the backup result data for the current (last) backup being processed
             VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
             do
             {
-                const ManifestFile *backupFileData = (ManifestFile *)lstGet(jobData->backupFileList, 0);
+                const ManifestFile *backupFileData = lstGet(jobData->backupFileList, 0);
                 String *filePathName = strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(backupFileData->name),
-                    strZ(compressExtStr(backupResult->optionCompressType));
+                    strZ(compressExtStr(backupResult->optionCompressType)));
 
                 // Set up the job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                 protocolCommandParamAdd(command, VARSTR(filePathName));
-                protocolCommandParamAdd(command, VARSTR(backupFileData->checksumSha1));
-                protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
-                protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+                protocolCommandParamAdd(command, VARSTRZ(backupFileData->checksumSha1));
+                protocolCommandParamAdd(command, VARUINT64(backupFileData->size));  // CSHANG Not sure if this should be size or repoSize
+                protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
 
                 // Assign job to result
                 result = protocolParallelJobNew(VARSTR(filePathName), command);
+
+                // Remove the file to process from the list
+                lstRemoveIdx(jobData->backupFileList, 0);
+
+                // If this is the last file to process for this backup, then remove the backup from the list
+                if (lstSize(jobData->backupFileList) == 0)
+                    strLstRemoveIdx(jobData->backupList, 0);
+
                 // Return to process the job found
                 break;
             }
-            while (strLstSize(jobData->backupFileList) > 0));
+            while (lstSize(jobData->backupFileList) > 0);
         }
         else
         {
@@ -1242,14 +1267,14 @@ verifyProcess(unsigned int *errorTotal)
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator =  lstComparatorStr),
             };
 
-            // Get a list of backups in the repo
+            // Get a list of backups in the repo sorted ascending
             jobData.backupList = strLstSort(
                 storageListP(
                     storage, STORAGE_REPO_BACKUP_STR,
                     .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                 sortOrderAsc);
 
-            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash)
+            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
             jobData.archiveIdList = strLstSort(
                 strLstComparatorSet(
                     storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
