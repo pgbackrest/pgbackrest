@@ -502,7 +502,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
             strSubN(((VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList))->stop, 0, 8),
             strSubN(strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE), 0, 8)))
     {
-        walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
+        walRange = lstGetLast(archiveIdResult->walRangeList);
     }
 
     do
@@ -571,7 +571,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
             MEM_CONTEXT_END();
 
             // Set the current wal range being processed to what was just added
-            walRange = (VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList);
+            walRange = lstGetLast(archiveIdResult->walRangeList);
         }
         // If the next WAL is the appropriate distance away, then there is no gap
         else
