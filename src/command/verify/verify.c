@@ -46,12 +46,11 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "VerifyWalRange", buffer, bufferSize)
 
-// Structure for verifying archive, backup, and manifest info files
+// Structure for verifying repository info files
 typedef struct VerifyInfoFile
 {
     InfoBackup *backup;                                             // Backup.info file contents
     InfoArchive *archive;                                           // Archive.info file contents
-    Manifest *manifest;                                             // Manifest file contents
     const String *checksum;                                         // File checksum
     int errorCode;                                                  // Error code else 0 for no error
 } VerifyInfoFile;
@@ -89,17 +88,12 @@ typedef struct VerifyJobData
     StringList *walPathList;                                        // WAL path list for a single archive id
     StringList *walFileList;                                        // WAL file list for a single WAL path
     StringList *backupList;                                         // List of backups to verify
-    StringList *backupFileList;                                     // List of files in a single backup directory
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
-    bool backupProcessing;                                          // Are we processing WAL or are we processing backups
-    const String *manifestCipherPass;                               // Cipher pass for reading backup manifests
+    bool backupProcessing;                                          // Are we processing WAL or are we processing backup
     const String *walCipherPass;                                    // Cipher pass for reading WAL files
-    const String *backupCipherPass;                                 // Cipher pass for reading backup files referenced in a manifest
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
-    List *backupResultList;                                         // Backup results
-    Manifest *manifest;                                             // Manifest currently being processed
 } VerifyJobData;
 
 /***********************************************************************************************************************************
@@ -955,9 +949,7 @@ verifyProcess(unsigned int *errorTotal)
                 .memContext = memContextCurrent(),
                 .walPathList = NULL,
                 .walFileList = strLstNew(),
-                .backupFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
-                .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator),
             };
@@ -1007,7 +999,6 @@ verifyProcess(unsigned int *errorTotal)
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
                         StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
-                        // String *fileType = strLstGet(filePathLst, 0);
                         strLstRemoveIdx(filePathLst, 0);
                         String *filePathName = strLstJoin(filePathLst, "/");
 
