@@ -479,6 +479,7 @@ testRun(void)
         TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
         TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
         TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
+        TEST_RESULT_UINT(pgControl.catalogVersion, 201204301, "    catalogVersion set");
     }
 
     // *****************************************************************************************************************************
