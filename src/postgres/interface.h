@@ -109,6 +109,7 @@ typedef struct PgControl
 {
     unsigned int version;
     uint64_t systemId;
+    unsigned int catalogVersion;
 
     unsigned int pageSize;
     unsigned int walSegmentSize;
@@ -129,9 +130,6 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get the catalog version for a PostgreSQL version
-uint32_t pgCatalogVersion(unsigned int pgVersion);
-
 // Get info from pg_control
 PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
@@ -148,7 +146,7 @@ PgWal pgWalFromFile(const String *walFile, const Storage *storage);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
-String *pgTablespaceId(unsigned int pgVersion);
+String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 
 // Convert a string to an lsn and vice versa
 uint64_t pgLsnFromStr(const String *lsn);
@@ -180,6 +178,9 @@ const String *pgXactPath(unsigned int pgVersion);
 Test Functions
 ***********************************************************************************************************************************/
 #ifdef DEBUG
+    // Get the catalog version for a PostgreSQL version for testing
+    unsigned int pgCatalogTestVersion(unsigned int pgVersion);
+
     // Create pg_control for testing
     Buffer *pgControlTestToBuffer(PgControl pgControl);
 
