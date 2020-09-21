@@ -157,7 +157,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 7, true), "set pg7-path valid");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPath + 7, cfgSourceParam, VARSTRDEF("/path")), "set pg7-path");
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 1), false, "pg option group index 1 is not set");
-        TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 7), true, "pg option group index 7 is not set");
+        TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 7), true, "pg option group index 7 is set");
         TEST_RESULT_UINT(cfgOptionGroupIndexTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
 
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 5, true), "set pg5-path valid");

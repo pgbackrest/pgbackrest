@@ -1027,7 +1027,6 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
         {
             // If this option is in a group then set the value in the group for the option's index. This indicates that there is at
             // least one option set in the group for that index.
-
             if (configOptionData[optionId].group && source != cfgSourceDefault)
             {
                 unsigned int groupId = configOptionData[optionId].groupId;
