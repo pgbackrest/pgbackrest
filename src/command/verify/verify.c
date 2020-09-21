@@ -941,9 +941,6 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     // Initialize the result
     ProtocolParallelJob *result = NULL;
 
-    // MEM_CONTEXT_TEMP_BEGIN() // cshang remove temp block FOR NOW - will later have a memContext management
-    // {
-    // Get a new job if there are any left
     MEM_CONTEXT_TEMP_BEGIN()
     {
         VerifyJobData *jobData = data;
@@ -954,16 +951,12 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
         }
 
-        // Process backups - get manifest and verify it first thru function here vs sending verifyFile, log errors and incr job error
-        if (jobData->backupProcessing)
+        if (result == NULL && jobData->backupProcessing)
         {
             result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
         }
     }
     MEM_CONTEXT_TEMP_END();
-
-    // }
-    // MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1294,6 +1287,10 @@ verifyProcess(unsigned int *errorTotal)
                 // distinguish between having processed all of the list or if the list was missing in the first place
                 if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
                     LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
+
+                // If there are no archives to process, then set the processing flag to skip to processing the backups
+                if (strLstSize(jobData.archiveIdList) == 0)
+                    jobData.backupProcessing = true;
 
                 // Set current backup if there is one and verify the archive history on disk is in the database history
                 jobData.currentBackup = verifySetBackupCheckArchive(
