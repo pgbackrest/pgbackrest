@@ -52,7 +52,7 @@ static struct StackTraceLocal
 static struct StackTraceBackLocal
 {
     struct backtrace_state *backTraceState;                         // Backtrace state struct
-} stackTraceBackLocal
+} stackTraceBackLocal;
 
 void
 stackTraceInit(const char *exe)

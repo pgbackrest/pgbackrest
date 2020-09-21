@@ -75,6 +75,8 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_VAR,           MANIFEST_KEY_CHECKSUM_PAGE);
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,     MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
+#define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
+    STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
 #define MANIFEST_KEY_DB_ID                                          "db-id"
     STRING_STATIC(MANIFEST_KEY_DB_ID_STR,                           MANIFEST_KEY_DB_ID);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_ID_VAR,                   MANIFEST_KEY_DB_ID);
@@ -853,12 +855,13 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
-    const VariantList *tablespaceList)
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
+    const StringList *excludeList, const VariantList *tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
@@ -877,6 +880,7 @@ manifestNewBuild(
         this->info = infoNew(NULL);
         this->data.backrestVersion = strNew(PROJECT_VERSION);
         this->data.pgVersion = pgVersion;
+        this->data.pgCatalogVersion = pgCatalogVersion;
         this->data.backupOptionOnline = online;
         this->data.backupOptionChecksumPage = varNewBool(checksumPage);
 
@@ -887,7 +891,7 @@ manifestNewBuild(
             {
                 .manifest = this,
                 .storagePg = storagePg,
-                .tablespaceId = pgTablespaceId(pgVersion),
+                .tablespaceId = pgTablespaceId(pgVersion, pgCatalogVersion),
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
@@ -1679,6 +1683,8 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             manifest->data.pgId = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_SYSTEM_ID_STR))
             manifest->data.pgSystemId = varUInt64(value);
+        else if (strEq(key, MANIFEST_KEY_DB_CATALOG_VERSION_STR))
+            manifest->data.pgCatalogVersion = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_VERSION_STR))
             manifest->data.pgVersion = pgVersionFromStr(varStr(value));
     }
@@ -1934,8 +1940,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, sectionNext))
     {
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-catalog-version"),
-            jsonFromUInt(pgCatalogVersion(manifest->data.pgVersion)));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
+            jsonFromUInt(manifest->data.pgCatalogVersion));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
             jsonFromUInt(pgControlVersion(manifest->data.pgVersion)));
